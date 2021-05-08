@@ -7,6 +7,7 @@
 #include "OpenGL/gl3.h"
 #include "GLUT/glut.h"
 #include "shaders/shader_loader.h"
+#include "utils.h"
 
 const int testVertexCount = 3;
 float testVertexData[] = {
@@ -38,15 +39,14 @@ void initVertexBuffer(const float *vertexData, int vertexCount) {
 void offsetVertexes(const float *vertexData, int vertexCount, float xOffset, float yOffset) {
     float offsetVertexData[vertexCount * 4];
     for (int i = 0; i < vertexCount; ++i) {
-        offsetVertexData[i * 4] = vertexData[i * 4] + xOffset;
-        offsetVertexData[(i + 1) * 4] = vertexData[(i + 1) * 4] + yOffset;
-        offsetVertexData[(i + 2) * 4] = vertexData[(i + 2) * 4];
-        offsetVertexData[(i + 3) * 4] = vertexData[(i + 3) * 4];
+        offsetVertexData[i * 4 + 0] = vertexData[i * 4 + 0] + xOffset;
+        offsetVertexData[i * 4 + 1] = vertexData[i * 4 + 1] + yOffset;
+        offsetVertexData[i * 4 + 2] = vertexData[i * 4 + 2];
+        offsetVertexData[i * 4 + 3] = vertexData[i * 4 + 3];
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(offsetVertexData), &offsetVertexData);
-
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * vertexCount * 4, &offsetVertexData);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -79,13 +79,15 @@ void initProgram(int shaderCount, GLuint *shaders) {
     }
 }
 
-void calcOffsets(float *xOffset, float *yOffset) {
-    const float period = 5000;
+void calcCircleOffsets(float *xOffset, float *yOffset) {
+    const float period = 2000;
+    const float radius = 0.5f;
 
     float time = (float) glutGet(GLUT_ELAPSED_TIME);
+    float phase = fmodf(time, period) / period;
 
-    *xOffset = sinf((float) fmodf(time, period));
-    *yOffset = cosf((float) fmodf(time, period));
+    *xOffset = sinf(phase * 2 * M_PI) * radius;
+    *yOffset = cosf(phase * 2 * M_PI) * radius;
 }
 
 void display() {
@@ -93,7 +95,7 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     float xOffset, yOffset;
-    calcOffsets(&xOffset, &yOffset);
+    calcCircleOffsets(&xOffset, &yOffset);
     offsetVertexes((const float *) &testVertexData, 3, xOffset, yOffset);
 
     glUseProgram(program);

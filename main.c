@@ -9,6 +9,7 @@
 #include "shaders/shader_loader.h"
 #include "utils.h"
 
+const float loopDuration = 3000;
 const int testVertexCount = 3;
 float testVertexData[] = {
         0, 0.25f, 0, 1.0f,
@@ -33,20 +34,6 @@ void initVertexBuffer(const float *vertexData, int vertexCount) {
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexCount * 4 * 2, vertexData, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void offsetVertexes(const float *vertexData, int vertexCount, float xOffset, float yOffset) {
-    float offsetVertexData[vertexCount * 4];
-    for (int i = 0; i < vertexCount; ++i) {
-        offsetVertexData[i * 4 + 0] = vertexData[i * 4 + 0] + xOffset;
-        offsetVertexData[i * 4 + 1] = vertexData[i * 4 + 1] + yOffset;
-        offsetVertexData[i * 4 + 2] = vertexData[i * 4 + 2];
-        offsetVertexData[i * 4 + 3] = vertexData[i * 4 + 3];
-    }
-
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * vertexCount * 4, &offsetVertexData);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -79,12 +66,8 @@ void initProgram(int shaderCount, GLuint *shaders) {
     }
 }
 
-void calcCircleOffsets(float *xOffset, float *yOffset) {
-    const float period = 2000;
+void calcCircleOffsets(float *xOffset, float *yOffset, float phase) {
     const float radius = 0.5f;
-
-    float time = (float) glutGet(GLUT_ELAPSED_TIME);
-    float phase = fmodf(time, period) / period;
 
     *xOffset = sinf(phase * 2 * M_PI) * radius;
     *yOffset = cosf(phase * 2 * M_PI) * radius;
@@ -94,9 +77,8 @@ void display() {
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    float xOffset, yOffset;
-    calcCircleOffsets(&xOffset, &yOffset);
-    offsetVertexes((const float *) &testVertexData, 3, xOffset, yOffset);
+    float time = (float) glutGet(GLUT_ELAPSED_TIME);
+    float phase = fmodf(time, loopDuration) / loopDuration;
 
     glUseProgram(program);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
@@ -105,9 +87,33 @@ void display() {
     glEnableVertexAttribArray(1);
 
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * 3 * 4));
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 4));
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    GLint offsetLocation = glGetUniformLocation(program, "vertexOffset");
+    GLint timeLocation = glGetUniformLocation(program, "time");
+    GLint loopDurationLocation = glGetUniformLocation(program, "loopDuration");
+
+    glUniform1f(loopDurationLocation, loopDuration);
+
+    float xOffset, yOffset;
+
+    // first triangle
+    {
+        calcCircleOffsets(&xOffset, &yOffset, phase);
+        glUniform2f(offsetLocation, xOffset, yOffset);
+        glUniform1f(timeLocation, time);
+
+        glDrawArrays(GL_TRIANGLES, 0, testVertexCount);
+    }
+
+    // second triangle
+    {
+        calcCircleOffsets(&xOffset, &yOffset, fmodf(phase + 0.5f, 1.0f));
+        glUniform2f(offsetLocation, xOffset, yOffset);
+        glUniform1f(timeLocation, time + loopDuration / 2.0f);
+
+        glDrawArrays(GL_TRIANGLES, 0, testVertexCount);
+    }
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);

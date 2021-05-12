@@ -10,15 +10,73 @@
 #include "utils.h"
 
 const float loopDuration = 3000;
-const int testVertexCount = 3;
+const int testVertexCount = 24;
 float testVertexData[] = {
-        0, 0.25f, 0, 1.0f,
-        0.25f, -0.25f, 0, 1.0f,
-        -0.25f, -0.25f, 0, 1.0f,
+        // front triangle
+        0, 0.25f, -1, 1,
+        0.25f, -0.25f, -1, 1,
+        -0.25f, -0.25f, -1, 1,
+        // back triangle
+        -0.25f, -0.25f, -2, 1,
+        0.25f, -0.25f, -2, 1,
+        0, 0.25f, -2, 1,
+        //bottom side
+        -0.25f, -0.25f, -1, 1,
+        0.25f, -0.25f, -1, 1,
+        0.25f, -0.25f, -2, 1,
+        -0.25f, -0.25f, -1, 1,
+        0.25f, -0.25f, -2, 1,
+        -0.25f, -0.25f, -2, 1,
+        // left side
+        0, 0.25f, -2, 1,
+        0, 0.25f, -1, 1,
+        -0.25f, -0.25f, -1, 1,
+        -0.25f, -0.25f, -2, 1,
+        0, 0.25f, -2, 1,
+        -0.25f, -0.25f, -1, 1,
+        // right side
+        0.25f, -0.25f, -1, 1,
+        0, 0.25f, -1, 1,
+        0, 0.25f, -2, 1,
+        0.25f, -0.25f, -1, 1,
+        0, 0.25f, -2, 1,
+        0.25f, -0.25f, -2, 1,
+
+        // colors
+        // front and back – red
         1, 0, 0, 1,
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        // bottom - green
         0, 1, 0, 1,
-        0, 0, 1, 1
+        0, 1, 0, 1,
+        0, 1, 0, 1,
+        0, 1, 0, 1,
+        0, 1, 0, 1,
+        0, 1, 0, 1,
+        // sides - blue
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
 };
+
+const float frustumScale = 1;
+const float zNear = 0.5f;
+const float zFar = 3;
 
 GLuint vao;
 GLuint vertexBuffer;
@@ -35,6 +93,29 @@ void initVertexBuffer(const float *vertexData, int vertexCount) {
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexCount * 4 * 2, vertexData, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void initPerspectiveMatrix(){
+    float perspectiveMatrix[16];
+    for (int i = 0; i < 16; ++i)
+        perspectiveMatrix[i] = 0;
+
+    perspectiveMatrix[0] = frustumScale;
+    perspectiveMatrix[5] = frustumScale;
+    perspectiveMatrix[10] = (zFar + zNear) / (zNear - zFar);
+    perspectiveMatrix[11] = -1;
+    perspectiveMatrix[14] = (2 * zFar * zNear) / (zNear - zFar);
+
+    glUseProgram(program);
+    GLint perspectiveMatrixLocation = glGetUniformLocation(program, "perspectiveMatrix");
+    glUniformMatrix4fv(perspectiveMatrixLocation, 1, GL_FALSE, &perspectiveMatrix[0]);
+    glUseProgram(0);
+}
+
+void initCulling(){
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CW);
 }
 
 void initProgram(int shaderCount, GLuint *shaders) {
@@ -141,6 +222,8 @@ int main(int argc, char **argv) {
 
     initVertexArrayObject();
     initVertexBuffer((const float *) &testVertexData, testVertexCount);
+    initPerspectiveMatrix();
+    initCulling();
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);

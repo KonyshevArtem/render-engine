@@ -78,6 +78,9 @@ const float frustumScale = 1;
 const float zNear = 0.5f;
 const float zFar = 3;
 
+float perspectiveMatrix[16];
+float viewMatrix[16];
+
 GLuint vao;
 GLuint vertexBuffer;
 GLuint program;
@@ -95,21 +98,41 @@ void initVertexBuffer(const float *vertexData, int vertexCount) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void initPerspectiveMatrix(){
-    float perspectiveMatrix[16];
-    for (int i = 0; i < 16; ++i)
-        perspectiveMatrix[i] = 0;
-
-    perspectiveMatrix[0] = frustumScale;
+void updatePerspectiveMatrix(int width, int height){
+    perspectiveMatrix[0] = frustumScale * (float) height / (float) width;
     perspectiveMatrix[5] = frustumScale;
-    perspectiveMatrix[10] = (zFar + zNear) / (zNear - zFar);
-    perspectiveMatrix[11] = -1;
-    perspectiveMatrix[14] = (2 * zFar * zNear) / (zNear - zFar);
 
     glUseProgram(program);
     GLint perspectiveMatrixLocation = glGetUniformLocation(program, "perspectiveMatrix");
     glUniformMatrix4fv(perspectiveMatrixLocation, 1, GL_FALSE, &perspectiveMatrix[0]);
     glUseProgram(0);
+}
+
+void initPerspectiveMatrix(int width, int height){
+    for (int i = 0; i < 16; ++i)
+        perspectiveMatrix[i] = 0;
+
+    perspectiveMatrix[10] = (zFar + zNear) / (zNear - zFar);
+    perspectiveMatrix[11] = -1;
+    perspectiveMatrix[14] = (2 * zFar * zNear) / (zNear - zFar);
+
+    updatePerspectiveMatrix(width, height);
+}
+
+void initViewMatrix() {
+    for (int i = 0; i < 16; ++i)
+        viewMatrix[i] = 0;
+
+    viewMatrix[0] = 1;
+    viewMatrix[5] = 1;
+    viewMatrix[10] = 1;
+    viewMatrix[13] = -0.5f;
+    viewMatrix[15] = 1;
+
+    glUseProgram(program);
+    GLint viewMatrixLocation = glGetUniformLocation(program, "viewMatrix");
+    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0]);
+    glUseProgram(program);
 }
 
 void initCulling(){
@@ -206,6 +229,7 @@ void display() {
 
 void reshape(int width, int height) {
     glViewport(0, 0, width, height);
+    updatePerspectiveMatrix(width, height);
 }
 
 int main(int argc, char **argv) {
@@ -222,8 +246,10 @@ int main(int argc, char **argv) {
 
     initVertexArrayObject();
     initVertexBuffer((const float *) &testVertexData, testVertexCount);
-    initPerspectiveMatrix();
+
     initCulling();
+    initPerspectiveMatrix(1024, 720);
+    initViewMatrix();
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);

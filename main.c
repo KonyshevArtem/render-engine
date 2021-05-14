@@ -10,37 +10,33 @@
 #include "utils.h"
 
 const float loopDuration = 3000;
-const int testVertexCount = 24;
+const int testVertexCount = 18;
+const int testTrianglesCount = 24;
+
 float testVertexData[] = {
         // front triangle
-        0, 0.25f, -1, 1,
-        0.25f, -0.25f, -1, 1,
-        -0.25f, -0.25f, -1, 1,
+        0, 0.25f, -1,               // 0
+        0.25f, -0.25f, -1,          // 1
+        -0.25f, -0.25f, -1,         // 2
         // back triangle
-        -0.25f, -0.25f, -2, 1,
-        0.25f, -0.25f, -2, 1,
-        0, 0.25f, -2, 1,
+        -0.25f, -0.25f, -2,         // 3
+        0.25f, -0.25f, -2,          // 4
+        0, 0.25f, -2,               // 5
         //bottom side
-        -0.25f, -0.25f, -1, 1,
-        0.25f, -0.25f, -1, 1,
-        0.25f, -0.25f, -2, 1,
-        -0.25f, -0.25f, -1, 1,
-        0.25f, -0.25f, -2, 1,
-        -0.25f, -0.25f, -2, 1,
+        -0.25f, -0.25f, -1,         // 6
+        0.25f, -0.25f, -1,          // 7
+        0.25f, -0.25f, -2,          // 8
+        -0.25f, -0.25f, -2,         // 9
         // left side
-        0, 0.25f, -2, 1,
-        0, 0.25f, -1, 1,
-        -0.25f, -0.25f, -1, 1,
-        -0.25f, -0.25f, -2, 1,
-        0, 0.25f, -2, 1,
-        -0.25f, -0.25f, -1, 1,
+        0, 0.25f, -2,               // 10
+        0, 0.25f, -1,               // 11
+        -0.25f, -0.25f, -1,         // 12
+        -0.25f, -0.25f, -2,         // 13
         // right side
-        0.25f, -0.25f, -1, 1,
-        0, 0.25f, -1, 1,
-        0, 0.25f, -2, 1,
-        0.25f, -0.25f, -1, 1,
-        0, 0.25f, -2, 1,
-        0.25f, -0.25f, -2, 1,
+        0.25f, -0.25f, -1,          // 14
+        0, 0.25f, -1,               // 15
+        0, 0.25f, -2,               // 16
+        0.25f, -0.25f, -2,          // 17
 
         // colors
         // front and back – red
@@ -55,8 +51,6 @@ float testVertexData[] = {
         0, 1, 0, 1,
         0, 1, 0, 1,
         0, 1, 0, 1,
-        0, 1, 0, 1,
-        0, 1, 0, 1,
         // sides - blue
         0, 0, 1, 1,
         0, 0, 1, 1,
@@ -66,12 +60,22 @@ float testVertexData[] = {
         0, 0, 1, 1,
         0, 0, 1, 1,
         0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
+};
+
+int testVertexIndexes[] = {
+        // front
+        0, 1, 2,
+        // back
+        3, 4, 5,
+        // bottom
+        6, 7, 8,
+        6, 7, 9,
+        // left
+        10, 11, 12,
+        10, 12, 13,
+        // right
+        14, 15, 16,
+        14, 16, 17
 };
 
 const float frustumScale = 1;
@@ -83,6 +87,7 @@ float viewMatrix[16];
 
 GLuint vao;
 GLuint vertexBuffer;
+GLuint indexBuffer;
 GLuint program;
 
 void initVertexArrayObject() {
@@ -90,12 +95,17 @@ void initVertexArrayObject() {
     glBindVertexArray(vao);
 }
 
-void initVertexBuffer(const float *vertexData, int vertexCount) {
+void initVertexBuffer(const float *vertexData, const int *vertexIndexes, int vertexCount, int trianglesCount) {
     glGenBuffers(1, &vertexBuffer);
+    glGenBuffers(1, &indexBuffer);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexCount * 4 * 2, vertexData, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (vertexCount * 3 + vertexCount * 4), vertexData, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * trianglesCount, vertexIndexes, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void updatePerspectiveMatrix(int width, int height){
@@ -186,12 +196,13 @@ void display() {
 
     glUseProgram(program);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 4));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 3));
 
     GLint offsetLocation = glGetUniformLocation(program, "vertexOffset");
     GLint timeLocation = glGetUniformLocation(program, "time");
@@ -207,7 +218,7 @@ void display() {
         glUniform2f(offsetLocation, xOffset, yOffset);
         glUniform1f(timeLocation, time);
 
-        glDrawArrays(GL_TRIANGLES, 0, testVertexCount);
+        glDrawElements(GL_TRIANGLES, testTrianglesCount, GL_UNSIGNED_INT, 0);
     }
 
     // second triangle
@@ -216,7 +227,7 @@ void display() {
         glUniform2f(offsetLocation, xOffset, yOffset);
         glUniform1f(timeLocation, time + loopDuration / 2.0f);
 
-        glDrawArrays(GL_TRIANGLES, 0, testVertexCount);
+        glDrawElements(GL_TRIANGLES, testTrianglesCount, GL_UNSIGNED_INT, 0);
     }
 
     glDisableVertexAttribArray(0);
@@ -245,7 +256,7 @@ int main(int argc, char **argv) {
     free(shaders);
 
     initVertexArrayObject();
-    initVertexBuffer((const float *) &testVertexData, testVertexCount);
+    initVertexBuffer((const float *) &testVertexData, (const int *) &testVertexIndexes, testVertexCount, testTrianglesCount);
 
     initCulling();
     initPerspectiveMatrix(1024, 720);

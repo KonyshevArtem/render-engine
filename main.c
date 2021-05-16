@@ -85,14 +85,28 @@ const float zFar = 3;
 float perspectiveMatrix[16];
 float viewMatrix[16];
 
-GLuint vao;
+GLuint* vertexArrayObjects;
 GLuint vertexBuffer;
 GLuint indexBuffer;
 GLuint program;
 
 void initVertexArrayObject() {
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    vertexArrayObjects = malloc(2 * sizeof(GLuint));
+    glGenVertexArrays(2, vertexArrayObjects);
+
+    for (int i = 0; i < 2; ++i) {
+        glBindVertexArray(vertexArrayObjects[i]);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 3));
+    }
+
+    glBindVertexArray(0);
 }
 
 void initVertexBuffer(const float *vertexData, const int *vertexIndexes, int vertexCount, int trianglesCount) {
@@ -195,43 +209,25 @@ void display() {
     float phase = fmodf(time, loopDuration) / loopDuration;
 
     glUseProgram(program);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 3));
 
     GLint offsetLocation = glGetUniformLocation(program, "vertexOffset");
     GLint timeLocation = glGetUniformLocation(program, "time");
     GLint loopDurationLocation = glGetUniformLocation(program, "loopDuration");
 
-    glUniform1f(loopDurationLocation, loopDuration);
+    for (int i = 0; i < 2; ++i){
+        glBindVertexArray(vertexArrayObjects[0]);
 
-    float xOffset, yOffset;
+        float xOffset, yOffset;
+        calcCircleOffsets(&xOffset, &yOffset, fmodf(phase + (float) i * 0.5f, 1.0f));
 
-    // first triangle
-    {
-        calcCircleOffsets(&xOffset, &yOffset, phase);
+        glUniform1f(loopDurationLocation, loopDuration);
         glUniform2f(offsetLocation, xOffset, yOffset);
-        glUniform1f(timeLocation, time);
+        glUniform1f(timeLocation, time + (float) i * loopDuration / 2.0f);
 
         glDrawElements(GL_TRIANGLES, testTrianglesCount, GL_UNSIGNED_INT, 0);
     }
 
-    // second triangle
-    {
-        calcCircleOffsets(&xOffset, &yOffset, fmodf(phase + 0.5f, 1.0f));
-        glUniform2f(offsetLocation, xOffset, yOffset);
-        glUniform1f(timeLocation, time + loopDuration / 2.0f);
-
-        glDrawElements(GL_TRIANGLES, testTrianglesCount, GL_UNSIGNED_INT, 0);
-    }
-
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
+    glBindVertexArray(0);
     glUseProgram(0);
 
     glutSwapBuffers();
@@ -255,8 +251,8 @@ int main(int argc, char **argv) {
     initProgram(2, shaders);
     free(shaders);
 
-    initVertexArrayObject();
     initVertexBuffer((const float *) &testVertexData, (const int *) &testVertexIndexes, testVertexCount, testTrianglesCount);
+    initVertexArrayObject();
 
     initCulling();
     initPerspectiveMatrix(1024, 720);

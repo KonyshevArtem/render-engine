@@ -38,6 +38,30 @@ float testVertexData[] = {
         0, 0.25f, -2,               // 16
         0.25f, -0.25f, -2,          // 17
 
+        // front triangle
+        -1, 0.25f, -1.5f,           // 0
+        -1, -0.25f, -1,             // 1
+        -1, -0.25f, -2.5f,          // 2
+        // back triangle
+        1, -0.25f, -2.5f,           // 3
+        1, -0.25f, -1,              // 4
+        1, 0.25f, -1.5f,            // 5
+        //bottom side
+        1, -0.25f, -2.5f,           // 6
+        -1, -0.25f, -2.5f,          // 7
+        -1, -0.25f, -1,             // 8
+        1, -0.25f, -1,              // 9
+        // left side
+        -1, 0.25f, -1.5f,           // 10
+        -1, -0.25f, -2.5f,          // 11
+        1, -0.25f, -2.5f,           // 12
+        1, 0.25f, -1.5f,            // 13
+        // right side
+        -1, 0.25f, -1.5f,           // 14
+        1, 0.25f, -1.5f,            // 15
+        1, -0.25f, -1,              // 16
+        -1, -0.25f, -1,             // 17
+
         // colors
         // front and back – red
         1, 0, 0, 1,
@@ -102,8 +126,8 @@ void initVertexArrayObject() {
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 3));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * i * testVertexCount * 3));
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 3 * 2));
     }
 
     glBindVertexArray(0);
@@ -114,7 +138,7 @@ void initVertexBuffer(const float *vertexData, const int *vertexIndexes, int ver
     glGenBuffers(1, &indexBuffer);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (vertexCount * 3 + vertexCount * 4), vertexData, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (vertexCount * 3 * 2 + vertexCount * 4), vertexData, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -165,6 +189,13 @@ void initCulling(){
     glFrontFace(GL_CW);
 }
 
+void initDepth(){
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
+    glDepthRange(0, 1);
+}
+
 void initProgram(int shaderCount, GLuint *shaders) {
     program = glCreateProgram();
 
@@ -203,7 +234,8 @@ void calcCircleOffsets(float *xOffset, float *yOffset, float phase) {
 
 void display() {
     glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClearDepth(1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     float time = (float) glutGet(GLUT_ELAPSED_TIME);
     float phase = fmodf(time, loopDuration) / loopDuration;
@@ -215,7 +247,7 @@ void display() {
     GLint loopDurationLocation = glGetUniformLocation(program, "loopDuration");
 
     for (int i = 0; i < 2; ++i){
-        glBindVertexArray(vertexArrayObjects[0]);
+        glBindVertexArray(vertexArrayObjects[i]);
 
         float xOffset, yOffset;
         calcCircleOffsets(&xOffset, &yOffset, fmodf(phase + (float) i * 0.5f, 1.0f));
@@ -241,7 +273,7 @@ void reshape(int width, int height) {
 
 int main(int argc, char **argv) {
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_3_2_CORE_PROFILE);
+    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_3_2_CORE_PROFILE | GLUT_DEPTH);
     glutInitWindowSize(1024, 720);
     glutCreateWindow("OpenGL");
 
@@ -257,6 +289,7 @@ int main(int argc, char **argv) {
     initCulling();
     initPerspectiveMatrix(1024, 720);
     initViewMatrix();
+    initDepth();
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);

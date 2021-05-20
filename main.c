@@ -7,7 +7,8 @@
 #include "OpenGL/gl3.h"
 #include "GLUT/glut.h"
 #include "shaders/shader_loader.h"
-#include "utils.h"
+#include "utils/utils.h"
+#include "matrix4x4/matrix4x4.h"
 
 const float loopDuration = 3000;
 const int testVertexCount = 18;
@@ -106,8 +107,8 @@ const float frustumScale = 1;
 const float zNear = 0.5f;
 const float zFar = 3;
 
-float perspectiveMatrix[16];
-float viewMatrix[16];
+matrix4x4 perspectiveMatrix;
+matrix4x4 viewMatrix;
 
 GLuint* vertexArrayObjects;
 GLuint vertexBuffer;
@@ -147,39 +148,32 @@ void initVertexBuffer(const float *vertexData, const int *vertexIndexes, int ver
 }
 
 void updatePerspectiveMatrix(int width, int height){
-    perspectiveMatrix[0] = frustumScale * (float) height / (float) width;
-    perspectiveMatrix[5] = frustumScale;
+    perspectiveMatrix.m00 = frustumScale * (float) height / (float) width;
+    perspectiveMatrix.m11 = frustumScale;
 
     glUseProgram(program);
     GLint perspectiveMatrixLocation = glGetUniformLocation(program, "perspectiveMatrix");
-    glUniformMatrix4fv(perspectiveMatrixLocation, 1, GL_FALSE, &perspectiveMatrix[0]);
+    glUniformMatrix4fv(perspectiveMatrixLocation, 1, GL_FALSE, (const GLfloat *) &perspectiveMatrix);
     glUseProgram(0);
 }
 
 void initPerspectiveMatrix(int width, int height){
-    for (int i = 0; i < 16; ++i)
-        perspectiveMatrix[i] = 0;
+    perspectiveMatrix = getZeroMatrix();
 
-    perspectiveMatrix[10] = (zFar + zNear) / (zNear - zFar);
-    perspectiveMatrix[11] = -1;
-    perspectiveMatrix[14] = (2 * zFar * zNear) / (zNear - zFar);
+    perspectiveMatrix.m22 = (zFar + zNear) / (zNear - zFar);
+    perspectiveMatrix.m23 = -1;
+    perspectiveMatrix.m32 = (2 * zFar * zNear) / (zNear - zFar);
 
     updatePerspectiveMatrix(width, height);
 }
 
 void initViewMatrix() {
-    for (int i = 0; i < 16; ++i)
-        viewMatrix[i] = 0;
-
-    viewMatrix[0] = 1;
-    viewMatrix[5] = 1;
-    viewMatrix[10] = 1;
-    viewMatrix[13] = -0.5f;
-    viewMatrix[15] = 1;
+    viewMatrix = getIdentityMatrix();
+    viewMatrix.m31 = -0.5f;
 
     glUseProgram(program);
     GLint viewMatrixLocation = glGetUniformLocation(program, "viewMatrix");
-    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0]);
+    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, (const GLfloat *) &viewMatrix);
     glUseProgram(program);
 }
 

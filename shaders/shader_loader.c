@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "shader_loader.h"
-#include "../utils.h"
+#include "../utils/utils.h"
 
 GLuint loadShader(GLenum shaderType, char *path) {
     char *shaderSource = readFile(path);

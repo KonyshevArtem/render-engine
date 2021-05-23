@@ -1,6 +1,6 @@
 #include "matrix4x4.h"
 
-matrix4x4 getZeroMatrix() {
+matrix4x4 matrix4x4_zero() {
     matrix4x4 zero;
     zero.m00 = 0;
     zero.m01 = 0;
@@ -21,11 +21,19 @@ matrix4x4 getZeroMatrix() {
     return zero;
 }
 
-matrix4x4 getIdentityMatrix() {
-    matrix4x4 identity = getZeroMatrix();
+matrix4x4 matrix4x4_identity() {
+    matrix4x4 identity = matrix4x4_zero();
     identity.m00 = 1;
     identity.m11 = 1;
     identity.m22 = 1;
     identity.m33 = 1;
     return identity;
+}
+
+matrix4x4 matrix4x4_translation(vector4 translation) {
+    matrix4x4 translationMatrix = matrix4x4_identity();
+    translationMatrix.m30 = translation.x;
+    translationMatrix.m31 = translation.y;
+    translationMatrix.m32 = translation.z;
+    return translationMatrix;
 }

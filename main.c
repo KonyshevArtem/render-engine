@@ -8,6 +8,8 @@
 #include "GLUT/glut.h"
 #include "shaders/shader_loader.h"
 #include "utils/utils.h"
+
+#include "vector4/vector4.h"
 #include "matrix4x4/matrix4x4.h"
 
 const float loopDuration = 3000;
@@ -110,7 +112,7 @@ const float zFar = 3;
 matrix4x4 perspectiveMatrix;
 matrix4x4 viewMatrix;
 
-GLuint* vertexArrayObjects;
+GLuint *vertexArrayObjects;
 GLuint vertexBuffer;
 GLuint indexBuffer;
 GLuint program;
@@ -147,7 +149,7 @@ void initVertexBuffer(const float *vertexData, const int *vertexIndexes, int ver
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void updatePerspectiveMatrix(int width, int height){
+void updatePerspectiveMatrix(int width, int height) {
     perspectiveMatrix.m00 = frustumScale * (float) height / (float) width;
     perspectiveMatrix.m11 = frustumScale;
 
@@ -157,8 +159,8 @@ void updatePerspectiveMatrix(int width, int height){
     glUseProgram(0);
 }
 
-void initPerspectiveMatrix(int width, int height){
-    perspectiveMatrix = getZeroMatrix();
+void initPerspectiveMatrix(int width, int height) {
+    perspectiveMatrix = matrix4x4_zero();
 
     perspectiveMatrix.m22 = (zFar + zNear) / (zNear - zFar);
     perspectiveMatrix.m23 = -1;
@@ -168,8 +170,7 @@ void initPerspectiveMatrix(int width, int height){
 }
 
 void initViewMatrix() {
-    viewMatrix = getIdentityMatrix();
-    viewMatrix.m31 = -0.5f;
+    viewMatrix = matrix4x4_translation(vector4_build(0, -0.5f, 0, 0));
 
     glUseProgram(program);
     GLint viewMatrixLocation = glGetUniformLocation(program, "viewMatrix");
@@ -177,13 +178,13 @@ void initViewMatrix() {
     glUseProgram(program);
 }
 
-void initCulling(){
+void initCulling() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
 }
 
-void initDepth(){
+void initDepth() {
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LEQUAL);
@@ -240,7 +241,7 @@ void display() {
     GLint timeLocation = glGetUniformLocation(program, "time");
     GLint loopDurationLocation = glGetUniformLocation(program, "loopDuration");
 
-    for (int i = 0; i < 2; ++i){
+    for (int i = 0; i < 2; ++i) {
         glBindVertexArray(vertexArrayObjects[i]);
 
         float xOffset, yOffset;
@@ -277,7 +278,12 @@ int main(int argc, char **argv) {
     initProgram(2, shaders);
     free(shaders);
 
-    initVertexBuffer((const float *) &testVertexData, (const int *) &testVertexIndexes, testVertexCount, testTrianglesCount);
+    initVertexBuffer(
+            (const float *) &testVertexData,
+            (const int *) &testVertexIndexes,
+            testVertexCount,
+            testTrianglesCount
+    );
     initVertexArrayObject();
 
     initCulling();

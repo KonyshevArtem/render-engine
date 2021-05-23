@@ -12,7 +12,8 @@ add_executable(
         utils/utils.h
         matrix4x4/matrix4x4.c
         matrix4x4/matrix4x4.h
-)
+        vector4/vector4.c
+        vector4/vector4.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

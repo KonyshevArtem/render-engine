@@ -1,6 +1,8 @@
 #ifndef OPENGL_STUDY_MATRIX4X4_H
 #define OPENGL_STUDY_MATRIX4X4_H
 
+#include "../vector4/vector4.h"
+
 typedef struct {
     float m00;
     float m01;
@@ -20,7 +22,10 @@ typedef struct {
     float m33;
 } matrix4x4;
 
-matrix4x4 getZeroMatrix();
-matrix4x4 getIdentityMatrix();
+matrix4x4 matrix4x4_zero();
+
+matrix4x4 matrix4x4_identity();
+
+matrix4x4 matrix4x4_translation(vector4 translation);
 
 #endif //OPENGL_STUDY_MATRIX4X4_H

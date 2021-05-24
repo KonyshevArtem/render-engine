@@ -170,7 +170,8 @@ void initPerspectiveMatrix(int width, int height) {
 }
 
 void initViewMatrix() {
-    viewMatrix = matrix4x4_translation(vector4_build(0, -0.5f, 0, 0));
+    vector4 offset = vector4_build(0, -0.5f, 0, 0);
+    viewMatrix = matrix4x4_translation(&offset);
 
     glUseProgram(program);
     GLint viewMatrixLocation = glGetUniformLocation(program, "viewMatrix");

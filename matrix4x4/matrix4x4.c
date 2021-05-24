@@ -30,10 +30,26 @@ matrix4x4 matrix4x4_identity() {
     return identity;
 }
 
-matrix4x4 matrix4x4_translation(vector4 translation) {
+matrix4x4 matrix4x4_translation(const vector4 *translation) {
     matrix4x4 translationMatrix = matrix4x4_identity();
-    translationMatrix.m30 = translation.x;
-    translationMatrix.m31 = translation.y;
-    translationMatrix.m32 = translation.z;
+    translationMatrix.m30 = translation->x;
+    translationMatrix.m31 = translation->y;
+    translationMatrix.m32 = translation->z;
     return translationMatrix;
+}
+
+float matrix4x4_getElement(const matrix4x4 *matrix, int column, int row) {
+    float *floatPtr = (float *) matrix;
+    return *(floatPtr + 4 * column + row);
+}
+
+void matrix4x4_setElement(const matrix4x4 *matrix, int column, int row, float value) {
+    float *floatPtr = (float *) matrix;
+    *(floatPtr + 4 * column + row) = value;
+}
+
+matrix4x4 matrix4x4_multiply(const matrix4x4 *a, const matrix4x4 *b) {
+    matrix4x4 result = matrix4x4_zero();
+    // TODO
+    return result;
 }

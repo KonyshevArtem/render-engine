@@ -26,6 +26,12 @@ matrix4x4 matrix4x4_zero();
 
 matrix4x4 matrix4x4_identity();
 
-matrix4x4 matrix4x4_translation(vector4 translation);
+matrix4x4 matrix4x4_translation(const vector4 *translation);
+
+float matrix4x4_getElement(const matrix4x4 *matrix, int column, int row);
+
+void matrix4x4_setElement(const matrix4x4 *matrix, int column, int row, float value);
+
+matrix4x4 matrix4x4_multiply(const matrix4x4 *a, const matrix4x4 *b);
 
 #endif //OPENGL_STUDY_MATRIX4X4_H

@@ -50,6 +50,13 @@ void matrix4x4_setElement(const matrix4x4 *matrix, int column, int row, float va
 
 matrix4x4 matrix4x4_multiply(const matrix4x4 *a, const matrix4x4 *b) {
     matrix4x4 result = matrix4x4_zero();
-    // TODO
+    for (int i = 0; i < 4; ++i){
+        for (int j = 0; j < 4; ++j){
+            float sum = 0;
+            for (int k = 0; k < 4; ++k)
+                sum += matrix4x4_getElement(a, k, j) * matrix4x4_getElement(b, i, k);
+            matrix4x4_setElement(&result, i, j, sum);
+        }
+    }
     return result;
 }

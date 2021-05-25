@@ -152,11 +152,6 @@ void initVertexBuffer(const float *vertexData, const int *vertexIndexes, int ver
 void updatePerspectiveMatrix(int width, int height) {
     perspectiveMatrix.m00 = frustumScale * (float) height / (float) width;
     perspectiveMatrix.m11 = frustumScale;
-
-    glUseProgram(program);
-    GLint perspectiveMatrixLocation = glGetUniformLocation(program, "perspectiveMatrix");
-    glUniformMatrix4fv(perspectiveMatrixLocation, 1, GL_FALSE, (const GLfloat *) &perspectiveMatrix);
-    glUseProgram(0);
 }
 
 void initPerspectiveMatrix(int width, int height) {
@@ -172,11 +167,6 @@ void initPerspectiveMatrix(int width, int height) {
 void initViewMatrix() {
     vector4 offset = vector4_build(0, -0.5f, 0, 0);
     viewMatrix = matrix4x4_translation(&offset);
-
-    glUseProgram(program);
-    GLint viewMatrixLocation = glGetUniformLocation(program, "viewMatrix");
-    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, (const GLfloat *) &viewMatrix);
-    glUseProgram(program);
 }
 
 void initCulling() {
@@ -221,11 +211,13 @@ void initProgram(int shaderCount, GLuint *shaders) {
     }
 }
 
-void calcCircleOffsets(float *xOffset, float *yOffset, float phase) {
+vector4 calcCircleOffsets(float phase) {
     const float radius = 0.5f;
 
-    *xOffset = sinf(phase * 2 * M_PI) * radius;
-    *yOffset = cosf(phase * 2 * M_PI) * radius;
+    float xOffset = sinf(phase * 2 * M_PI) * radius;
+    float yOffset = cosf(phase * 2 * M_PI) * radius;
+
+    return vector4_build(xOffset, yOffset, 0, 0);
 }
 
 void display() {
@@ -238,18 +230,21 @@ void display() {
 
     glUseProgram(program);
 
-    GLint offsetLocation = glGetUniformLocation(program, "vertexOffset");
+    GLint matrixLocation = glGetUniformLocation(program, "matrix");
     GLint timeLocation = glGetUniformLocation(program, "time");
     GLint loopDurationLocation = glGetUniformLocation(program, "loopDuration");
+
+    matrix4x4 vpMatrix = matrix4x4_multiply(&perspectiveMatrix, &viewMatrix);
 
     for (int i = 0; i < 2; ++i) {
         glBindVertexArray(vertexArrayObjects[i]);
 
-        float xOffset, yOffset;
-        calcCircleOffsets(&xOffset, &yOffset, fmodf(phase + (float) i * 0.5f, 1.0f));
+        vector4 offset = calcCircleOffsets(fmodf(phase + (float) i * 0.5f, 1.0f));
+        matrix4x4 modelMatrix = matrix4x4_translation(&offset);
+        matrix4x4 mvpMatrix = matrix4x4_multiply(&vpMatrix, &modelMatrix);
 
+        glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, (const GLfloat *) &mvpMatrix);
         glUniform1f(loopDurationLocation, loopDuration);
-        glUniform2f(offsetLocation, xOffset, yOffset);
         glUniform1f(timeLocation, time + (float) i * loopDuration / 2.0f);
 
         glDrawElements(GL_TRIANGLES, testTrianglesCount, GL_UNSIGNED_INT, 0);

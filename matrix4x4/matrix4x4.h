@@ -28,10 +28,14 @@ matrix4x4 matrix4x4_identity();
 
 matrix4x4 matrix4x4_translation(const vector4 *translation);
 
+matrix4x4 matrix4x4_scale(const vector4 *scale);
+
 float matrix4x4_getElement(const matrix4x4 *matrix, int column, int row);
 
 void matrix4x4_setElement(const matrix4x4 *matrix, int column, int row, float value);
 
 matrix4x4 matrix4x4_multiply(const matrix4x4 *a, const matrix4x4 *b);
+
+void matrix4x4_print(const matrix4x4 *matrix);
 
 #endif //OPENGL_STUDY_MATRIX4X4_H

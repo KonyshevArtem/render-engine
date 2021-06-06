@@ -31,3 +31,7 @@ char *readFile(char *path) {
 
     return content;
 }
+
+float float_lerp(float a, float b, float t) {
+    return (1 - t) * a + t * b;
+}

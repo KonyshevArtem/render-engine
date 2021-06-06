@@ -13,101 +13,30 @@
 #include "matrix4x4/matrix4x4.h"
 
 const float loopDuration = 3000;
-const int testVertexCount = 18;
-const int testTrianglesCount = 24;
+const int testVertexCount = 4;
+const int testTrianglesCount = 2;
 
 float testVertexData[] = {
-        // front triangle
-        0, 0.25f, -1,               // 0
-        0.25f, -0.25f, -1,          // 1
-        -0.25f, -0.25f, -1,         // 2
-        // back triangle
-        -0.25f, -0.25f, -2,         // 3
-        0.25f, -0.25f, -2,          // 4
-        0, 0.25f, -2,               // 5
-        //bottom side
-        -0.25f, -0.25f, -1,         // 6
-        0.25f, -0.25f, -1,          // 7
-        0.25f, -0.25f, -2,          // 8
-        -0.25f, -0.25f, -2,         // 9
-        // left side
-        0, 0.25f, -2,               // 10
-        0, 0.25f, -1,               // 11
-        -0.25f, -0.25f, -1,         // 12
-        -0.25f, -0.25f, -2,         // 13
-        // right side
-        0.25f, -0.25f, -1,          // 14
-        0, 0.25f, -1,               // 15
-        0, 0.25f, -2,               // 16
-        0.25f, -0.25f, -2,          // 17
-
-        // front triangle
-        -1, 0.25f, -1.5f,           // 0
-        -1, -0.25f, -1,             // 1
-        -1, -0.25f, -2.5f,          // 2
-        // back triangle
-        1, -0.25f, -2.5f,           // 3
-        1, -0.25f, -1,              // 4
-        1, 0.25f, -1.5f,            // 5
-        //bottom side
-        1, -0.25f, -2.5f,           // 6
-        -1, -0.25f, -2.5f,          // 7
-        -1, -0.25f, -1,             // 8
-        1, -0.25f, -1,              // 9
-        // left side
-        -1, 0.25f, -1.5f,           // 10
-        -1, -0.25f, -2.5f,          // 11
-        1, -0.25f, -2.5f,           // 12
-        1, 0.25f, -1.5f,            // 13
-        // right side
-        -1, 0.25f, -1.5f,           // 14
-        1, 0.25f, -1.5f,            // 15
-        1, -0.25f, -1,              // 16
-        -1, -0.25f, -1,             // 17
+        -1, 1, 0,     // 0
+        1, 1, 0,      // 1
+        1, -1, 0,     // 2
+        -1, -1, 0,    // 3
 
         // colors
-        // front and back – red
-        1, 0, 0, 1,
-        1, 0, 0, 1,
-        1, 0, 0, 1,
-        1, 0, 0, 1,
-        1, 0, 0, 1,
-        1, 0, 0, 1,
-        // bottom - green
-        0, 1, 0, 1,
-        0, 1, 0, 1,
-        0, 1, 0, 1,
-        0, 1, 0, 1,
-        // sides - blue
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
+        1, 1, 0, 1,
+        1, 1, 0, 1,
+        1, 1, 0, 1,
+        1, 1, 0, 1,
 };
 
 int testVertexIndexes[] = {
-        // front
-        0, 1, 2,
-        // back
-        3, 4, 5,
-        // bottom
-        6, 7, 8,
-        6, 7, 9,
-        // left
-        10, 11, 12,
-        10, 12, 13,
-        // right
-        14, 15, 16,
-        14, 16, 17
+        0, 1, 3,
+        1, 2, 3,
 };
 
-const float frustumScale = 1;
+const float fov = 85;
 const float zNear = 0.5f;
-const float zFar = 3;
+const float zFar = 100;
 
 matrix4x4 perspectiveMatrix;
 matrix4x4 viewMatrix;
@@ -129,8 +58,8 @@ void initVertexArrayObject() {
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * i * testVertexCount * 3));
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 3 * 2));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 3));
     }
 
     glBindVertexArray(0);
@@ -141,27 +70,30 @@ void initVertexBuffer(const float *vertexData, const int *vertexIndexes, int ver
     glGenBuffers(1, &indexBuffer);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (vertexCount * 3 * 2 + vertexCount * 4), vertexData, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (vertexCount * 3 + vertexCount * 4), vertexData, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * trianglesCount, vertexIndexes, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * trianglesCount * 3, vertexIndexes, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
-
-void updatePerspectiveMatrix(int width, int height) {
-    perspectiveMatrix.m00 = frustumScale * (float) height / (float) width;
-    perspectiveMatrix.m11 = frustumScale;
 }
 
 void initPerspectiveMatrix(int width, int height) {
     perspectiveMatrix = matrix4x4_zero();
 
-    perspectiveMatrix.m22 = (zFar + zNear) / (zNear - zFar);
-    perspectiveMatrix.m23 = -1;
-    perspectiveMatrix.m32 = (2 * zFar * zNear) / (zNear - zFar);
+    float aspect = (float) width / (float) height;
+    float top = zNear + ((float) M_PI / 180 * fov / 2);
+    float bottom = -top;
+    float right = aspect * top;
+    float left = -right;
 
-    updatePerspectiveMatrix(width, height);
+    perspectiveMatrix.m00 = 2 * zNear / (right - left);
+    perspectiveMatrix.m11 = 2 * zNear / (top - bottom);
+    perspectiveMatrix.m20 = (right + left) / (right - left);
+    perspectiveMatrix.m21 = (top + bottom) / (top - bottom);
+    perspectiveMatrix.m22 = -(zFar + zNear) / (zFar - zNear);
+    perspectiveMatrix.m23 = -1;
+    perspectiveMatrix.m32 = -2 * zFar * zNear / (zFar - zNear);
 }
 
 void initViewMatrix() {
@@ -211,13 +143,18 @@ void initProgram(int shaderCount, GLuint *shaders) {
     }
 }
 
-vector4 calcCircleOffsets(float phase) {
-    const float radius = 0.5f;
+vector4 calcTranslation(float phase, float z) {
+    const float radius = 2;
 
-    float xOffset = sinf(phase * 2 * M_PI) * radius;
-    float yOffset = cosf(phase * 2 * M_PI) * radius;
+    float xOffset = sinf(phase * 2 * (float) M_PI) * radius;
+    float yOffset = cosf(phase * 2 * (float) M_PI) * radius;
 
-    return vector4_build(xOffset, yOffset, 0, 0);
+    return vector4_build(xOffset, yOffset, z, 0);
+}
+
+vector4 calcScale(float phase) {
+    float scale = float_lerp(1, 3, (sinf(phase * 2 * (float) M_PI) + 1) * 0.5f);
+    return vector4_build(scale, scale, scale, 1);
 }
 
 void display() {
@@ -226,28 +163,32 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     float time = (float) glutGet(GLUT_ELAPSED_TIME);
-    float phase = fmodf(time, loopDuration) / loopDuration;
 
     glUseProgram(program);
 
-    GLint matrixLocation = glGetUniformLocation(program, "matrix");
-    GLint timeLocation = glGetUniformLocation(program, "time");
-    GLint loopDurationLocation = glGetUniformLocation(program, "loopDuration");
+    GLint mvpMatrixLocation = glGetUniformLocation(program, "mvpMatrix");
+    GLint phaseLocation = glGetUniformLocation(program, "phase");
 
     matrix4x4 vpMatrix = matrix4x4_multiply(&perspectiveMatrix, &viewMatrix);
 
     for (int i = 0; i < 2; ++i) {
+        float phase = fmodf(fmodf(time, loopDuration) / loopDuration + (float) i * 0.5f, 1.0f);
+
         glBindVertexArray(vertexArrayObjects[i]);
 
-        vector4 offset = calcCircleOffsets(fmodf(phase + (float) i * 0.5f, 1.0f));
-        matrix4x4 modelMatrix = matrix4x4_translation(&offset);
+        vector4 translation = calcTranslation(phase, -3 * ((float) i + 1));
+        vector4 scale = calcScale(phase);
+
+        matrix4x4 translationMatrix = matrix4x4_translation(&translation);
+        matrix4x4 scaleMatrix = matrix4x4_scale(&scale);
+        matrix4x4 modelMatrix = matrix4x4_multiply(&translationMatrix, &scaleMatrix);
+
         matrix4x4 mvpMatrix = matrix4x4_multiply(&vpMatrix, &modelMatrix);
 
-        glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, (const GLfloat *) &mvpMatrix);
-        glUniform1f(loopDurationLocation, loopDuration);
-        glUniform1f(timeLocation, time + (float) i * loopDuration / 2.0f);
+        glUniformMatrix4fv(mvpMatrixLocation, 1, GL_FALSE, (const GLfloat *) &mvpMatrix);
+        glUniform1f(phaseLocation, phase);
 
-        glDrawElements(GL_TRIANGLES, testTrianglesCount, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, testTrianglesCount * 3, GL_UNSIGNED_INT, 0);
     }
 
     glBindVertexArray(0);
@@ -259,7 +200,7 @@ void display() {
 
 void reshape(int width, int height) {
     glViewport(0, 0, width, height);
-    updatePerspectiveMatrix(width, height);
+    initPerspectiveMatrix(width, height);
 }
 
 int main(int argc, char **argv) {
@@ -283,7 +224,6 @@ int main(int argc, char **argv) {
     initVertexArrayObject();
 
     initCulling();
-    initPerspectiveMatrix(1024, 720);
     initViewMatrix();
     initDepth();
 

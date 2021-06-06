@@ -3,11 +3,11 @@
 layout(location = 0) in vec4 vertPosition;
 layout(location = 1) in vec4 vertColor;
 
-uniform mat4 matrix;
+uniform mat4 mvpMatrix;
 
 smooth out vec4 color;
 
 void main(){
-    gl_Position = matrix * vertPosition;
+    gl_Position = mvpMatrix * vertPosition;
     color = vertColor;
 }

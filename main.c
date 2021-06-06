@@ -9,8 +9,9 @@
 #include "shaders/shader_loader.h"
 #include "utils/utils.h"
 
-#include "vector4/vector4.h"
-#include "matrix4x4/matrix4x4.h"
+#include "math/vector4/vector4.h"
+#include "math/matrix4x4/matrix4x4.h"
+#include "math/quaternion/quaternion.h"
 
 const float loopDuration = 3000;
 const int testVertexCount = 4;
@@ -152,6 +153,11 @@ vector4 calcTranslation(float phase, float z) {
     return vector4_build(xOffset, yOffset, z, 0);
 }
 
+quaternion calcRotation(float phase, int i) {
+    vector4 axis = vector4_build(0, i == 0 ? 0 : 1, i == 0 ? 1 : 0, 0);
+    return quaternion_angle_axis(360 * phase, &axis);
+}
+
 vector4 calcScale(float phase) {
     float scale = float_lerp(1, 3, (sinf(phase * 2 * (float) M_PI) + 1) * 0.5f);
     return vector4_build(scale, scale, scale, 1);
@@ -177,11 +183,15 @@ void display() {
         glBindVertexArray(vertexArrayObjects[i]);
 
         vector4 translation = calcTranslation(phase, -3 * ((float) i + 1));
+        quaternion rotation = calcRotation(phase, i);
         vector4 scale = calcScale(phase);
 
         matrix4x4 translationMatrix = matrix4x4_translation(&translation);
+        matrix4x4 rotationMatrix = matrix4x4_rotation(&rotation);
         matrix4x4 scaleMatrix = matrix4x4_scale(&scale);
-        matrix4x4 modelMatrix = matrix4x4_multiply(&translationMatrix, &scaleMatrix);
+
+        matrix4x4 modelMatrix = matrix4x4_multiply(&translationMatrix, &rotationMatrix);
+        modelMatrix = matrix4x4_multiply(&modelMatrix, &scaleMatrix);
 
         matrix4x4 mvpMatrix = matrix4x4_multiply(&vpMatrix, &modelMatrix);
 

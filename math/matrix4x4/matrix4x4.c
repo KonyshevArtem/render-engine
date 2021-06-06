@@ -80,3 +80,25 @@ void matrix4x4_print(const matrix4x4 *matrix) {
         );
     }
 }
+
+matrix4x4 matrix4x4_rotation(const quaternion *quaternion) {
+    matrix4x4 result = matrix4x4_identity();
+    float x = quaternion->x;
+    float y = quaternion->y;
+    float z = quaternion->z;
+    float w = quaternion->w;
+
+    result.m00 = 1 - 2 * y * y - 2 * z * z;
+    result.m01 = 2 * x * y + 2 * z * w;
+    result.m02 = 2 * x * z - 2 * y * w;
+
+    result.m10 = 2 * x * y - 2 * z * w;
+    result.m11 = 1 - 2 * x * x - 2 * z * z;
+    result.m12 = 2 * y * z + 2 * x * w;
+
+    result.m20 = 2 * x * z + 2 * y * w;
+    result.m21 = 2 * y * z - 2 * x * w;
+    result.m22 = 1 - 2 * x * x - 2 * y * y;
+
+    return result;
+}

@@ -10,10 +10,10 @@ add_executable(
         shaders/shader_loader.c
         utils/utils.c
         utils/utils.h
-        matrix4x4/matrix4x4.c
-        matrix4x4/matrix4x4.h
-        vector4/vector4.c
-        vector4/vector4.h)
+        math/matrix4x4/matrix4x4.c
+        math/matrix4x4/matrix4x4.h
+        math/vector4/vector4.c
+        math/vector4/vector4.h math/quaternion/quaternion.c math/quaternion/quaternion.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_MATRIX4X4_H
 
 #include "../vector4/vector4.h"
+#include "../quaternion/quaternion.h"
 
 typedef struct {
     float m00;
@@ -27,6 +28,8 @@ matrix4x4 matrix4x4_zero();
 matrix4x4 matrix4x4_identity();
 
 matrix4x4 matrix4x4_translation(const vector4 *translation);
+
+matrix4x4 matrix4x4_rotation(const quaternion *quaternion);
 
 matrix4x4 matrix4x4_scale(const vector4 *scale);
 

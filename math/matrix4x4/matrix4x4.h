@@ -1,10 +1,11 @@
 #ifndef OPENGL_STUDY_MATRIX4X4_H
 #define OPENGL_STUDY_MATRIX4X4_H
 
-#include "../vector4/vector4.h"
 #include "../quaternion/quaternion.h"
+#include "../vector4/vector4.h"
 
-typedef struct {
+typedef struct matrix4x4
+{
     float m00;
     float m01;
     float m02;
@@ -41,4 +42,4 @@ matrix4x4 matrix4x4_multiply(const matrix4x4 *a, const matrix4x4 *b);
 
 void matrix4x4_print(const matrix4x4 *matrix);
 
-#endif //OPENGL_STUDY_MATRIX4X4_H
+#endif//OPENGL_STUDY_MATRIX4X4_H

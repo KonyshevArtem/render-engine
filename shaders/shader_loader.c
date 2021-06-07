@@ -1,9 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "shader_loader.h"
 #include "../utils/utils.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-GLuint loadShader(GLenum shaderType, char *path) {
+GLuint loadShader(GLenum shaderType, char *path)
+{
     char *shaderSource = readFile(path);
 
     GLuint shader = glCreateShader(shaderType);
@@ -13,7 +14,8 @@ GLuint loadShader(GLenum shaderType, char *path) {
 
     GLint status;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-    if (status == GL_FALSE) {
+    if (status == GL_FALSE)
+    {
         GLint infoLogLength;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
 
@@ -23,9 +25,9 @@ GLuint loadShader(GLenum shaderType, char *path) {
         fprintf(stderr, "Shader compilation failed: %s\n%s\n", path, logMsg);
 
         free(logMsg);
-    } else {
-        printf("Shader compile success: %s\n", path);
     }
+    else
+        printf("Shader compile success: %s\n", path);
 
     free(shaderSource);
 

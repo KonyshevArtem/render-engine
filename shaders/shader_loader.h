@@ -7,4 +7,4 @@
 
 GLuint loadShader(GLenum shaderType, char *path);
 
-#endif //OPENGL_STUDY_SHADER_LOADER_H
+#endif//OPENGL_STUDY_SHADER_LOADER_H

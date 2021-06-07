@@ -1,8 +1,9 @@
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "utils.h"
 
-char *readFile(char *path) {
+char *readFile(char *path)
+{
     FILE *file = fopen(path, "r");
     if (file == NULL)
         return NULL;
@@ -18,12 +19,11 @@ char *readFile(char *path) {
         return NULL;
 
     char *content = malloc(fileSize + 1);
-    int c;
-    long i = 0;
+    int   c;
+    long  i = 0;
 
-    while ((c = fgetc(file)) != EOF) {
+    while ((c = fgetc(file)) != EOF)
         content[i++] = (char) c;
-    }
 
     content[fileSize] = 0;
 
@@ -32,6 +32,7 @@ char *readFile(char *path) {
     return content;
 }
 
-float float_lerp(float a, float b, float t) {
+float float_lerp(float a, float b, float t)
+{
     return (1 - t) * a + t * b;
 }

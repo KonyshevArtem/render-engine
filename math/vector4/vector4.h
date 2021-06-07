@@ -1,7 +1,8 @@
 #ifndef OPENGL_STUDY_VECTOR4_H
 #define OPENGL_STUDY_VECTOR4_H
 
-typedef struct {
+typedef struct vector4
+{
     float x;
     float y;
     float z;
@@ -18,4 +19,4 @@ float vector4_length(const vector4 *vector);
 
 vector4 vector4_normalize(const vector4 *vector);
 
-#endif //OPENGL_STUDY_VECTOR4_H
+#endif//OPENGL_STUDY_VECTOR4_H

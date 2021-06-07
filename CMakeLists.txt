@@ -13,7 +13,11 @@ add_executable(
         math/matrix4x4/matrix4x4.c
         math/matrix4x4/matrix4x4.h
         math/vector4/vector4.c
-        math/vector4/vector4.h math/quaternion/quaternion.c math/quaternion/quaternion.h)
+        math/vector4/vector4.h
+        math/quaternion/quaternion.c
+        math/quaternion/quaternion.h
+        core/gameObject/gameObject.c
+        core/gameObject/gameObject.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

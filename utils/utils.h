@@ -7,4 +7,4 @@ char *readFile(char *path);
 
 float float_lerp(float a, float b, float t);
 
-#endif //OPENGL_STUDY_UTILS_H
+#endif//OPENGL_STUDY_UTILS_H

@@ -1,7 +1,8 @@
 #include "matrix4x4.h"
 #include <stdio.h>
 
-matrix4x4 matrix4x4_zero() {
+matrix4x4 matrix4x4_zero()
+{
     matrix4x4 zero;
     zero.m00 = 0;
     zero.m01 = 0;
@@ -22,71 +23,32 @@ matrix4x4 matrix4x4_zero() {
     return zero;
 }
 
-matrix4x4 matrix4x4_identity() {
+matrix4x4 matrix4x4_identity()
+{
     matrix4x4 identity = matrix4x4_zero();
-    identity.m00 = 1;
-    identity.m11 = 1;
-    identity.m22 = 1;
-    identity.m33 = 1;
+    identity.m00       = 1;
+    identity.m11       = 1;
+    identity.m22       = 1;
+    identity.m33       = 1;
     return identity;
 }
 
-matrix4x4 matrix4x4_translation(const vector4 *translation) {
+matrix4x4 matrix4x4_translation(const vector4 *translation)
+{
     matrix4x4 translationMatrix = matrix4x4_identity();
-    translationMatrix.m30 = translation->x;
-    translationMatrix.m31 = translation->y;
-    translationMatrix.m32 = translation->z;
+    translationMatrix.m30       = translation->x;
+    translationMatrix.m31       = translation->y;
+    translationMatrix.m32       = translation->z;
     return translationMatrix;
 }
 
-matrix4x4 matrix4x4_scale(const vector4 *scale) {
+matrix4x4 matrix4x4_rotation(const quaternion *quaternion)
+{
     matrix4x4 result = matrix4x4_identity();
-    result.m00 = scale->x;
-    result.m11 = scale->y;
-    result.m22 = scale->z;
-    return result;
-}
-
-float matrix4x4_getElement(const matrix4x4 *matrix, int column, int row) {
-    float *floatPtr = (float *) matrix;
-    return *(floatPtr + 4 * column + row);
-}
-
-void matrix4x4_setElement(const matrix4x4 *matrix, int column, int row, float value) {
-    float *floatPtr = (float *) matrix;
-    *(floatPtr + 4 * column + row) = value;
-}
-
-matrix4x4 matrix4x4_multiply(const matrix4x4 *a, const matrix4x4 *b) {
-    matrix4x4 result = matrix4x4_zero();
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            float sum = 0;
-            for (int k = 0; k < 4; ++k)
-                sum += matrix4x4_getElement(a, k, j) * matrix4x4_getElement(b, i, k);
-            matrix4x4_setElement(&result, i, j, sum);
-        }
-    }
-    return result;
-}
-
-void matrix4x4_print(const matrix4x4 *matrix) {
-    for (int i = 0; i < 4; ++i) {
-        printf("%f %f %f %f\n",
-               matrix4x4_getElement(matrix, 0, i),
-               matrix4x4_getElement(matrix, 1, i),
-               matrix4x4_getElement(matrix, 2, i),
-               matrix4x4_getElement(matrix, 3, i)
-        );
-    }
-}
-
-matrix4x4 matrix4x4_rotation(const quaternion *quaternion) {
-    matrix4x4 result = matrix4x4_identity();
-    float x = quaternion->x;
-    float y = quaternion->y;
-    float z = quaternion->z;
-    float w = quaternion->w;
+    float     x      = quaternion->x;
+    float     y      = quaternion->y;
+    float     z      = quaternion->z;
+    float     w      = quaternion->w;
 
     result.m00 = 1 - 2 * y * y - 2 * z * z;
     result.m01 = 2 * x * y + 2 * z * w;
@@ -101,4 +63,53 @@ matrix4x4 matrix4x4_rotation(const quaternion *quaternion) {
     result.m22 = 1 - 2 * x * x - 2 * y * y;
 
     return result;
+}
+
+matrix4x4 matrix4x4_scale(const vector4 *scale)
+{
+    matrix4x4 result = matrix4x4_identity();
+    result.m00       = scale->x;
+    result.m11       = scale->y;
+    result.m22       = scale->z;
+    return result;
+}
+
+float matrix4x4_getElement(const matrix4x4 *matrix, int column, int row)
+{
+    float *floatPtr = (float *) matrix;
+    return *(floatPtr + 4 * column + row);
+}
+
+void matrix4x4_setElement(const matrix4x4 *matrix, int column, int row, float value)
+{
+    float *floatPtr                = (float *) matrix;
+    *(floatPtr + 4 * column + row) = value;
+}
+
+matrix4x4 matrix4x4_multiply(const matrix4x4 *a, const matrix4x4 *b)
+{
+    matrix4x4 result = matrix4x4_zero();
+    for (int i = 0; i < 4; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            float sum = 0;
+            for (int k = 0; k < 4; ++k)
+                sum += matrix4x4_getElement(a, k, j) * matrix4x4_getElement(b, i, k);
+            matrix4x4_setElement(&result, i, j, sum);
+        }
+    }
+    return result;
+}
+
+void matrix4x4_print(const matrix4x4 *matrix)
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        printf("%f %f %f %f\n",
+               matrix4x4_getElement(matrix, 0, i),
+               matrix4x4_getElement(matrix, 1, i),
+               matrix4x4_getElement(matrix, 2, i),
+               matrix4x4_getElement(matrix, 3, i));
+    }
 }

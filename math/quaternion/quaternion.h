@@ -3,7 +3,8 @@
 
 #include "../vector4/vector4.h"
 
-typedef struct {
+typedef struct quaternion
+{
     float x;
     float y;
     float z;
@@ -14,4 +15,4 @@ quaternion quaternion_build(float x, float y, float z, float w);
 
 quaternion quaternion_angle_axis(float angle_deg, const vector4 *axis);
 
-#endif //OPENGL_STUDY_QUATERNION_H
+#endif//OPENGL_STUDY_QUATERNION_H

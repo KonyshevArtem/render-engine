@@ -4,8 +4,9 @@
 #include "../quaternion/quaternion.h"
 #include "../vector4/vector4.h"
 
-typedef struct matrix4x4
+struct Matrix4x4
 {
+public:
     float m00;
     float m01;
     float m02;
@@ -22,24 +23,24 @@ typedef struct matrix4x4
     float m31;
     float m32;
     float m33;
-} matrix4x4;
 
-matrix4x4 matrix4x4_zero();
+    static Matrix4x4 Zero();
 
-matrix4x4 matrix4x4_identity();
+    static Matrix4x4 Identity();
 
-matrix4x4 matrix4x4_translation(const vector4 *translation);
+    static Matrix4x4 Translation(Vector4 translation);
 
-matrix4x4 matrix4x4_rotation(const quaternion *quaternion);
+    static Matrix4x4 Rotation(Quaternion quaternion);
 
-matrix4x4 matrix4x4_scale(const vector4 *scale);
+    static Matrix4x4 Scale(Vector4 scale);
 
-float matrix4x4_getElement(const matrix4x4 *matrix, int column, int row);
+    float GetElement(int column, int row) const;
 
-void matrix4x4_setElement(const matrix4x4 *matrix, int column, int row, float value);
+    void SetElement(int column, int row, float value);
 
-matrix4x4 matrix4x4_multiply(const matrix4x4 *a, const matrix4x4 *b);
+    static Matrix4x4 Multiply(Matrix4x4 a, Matrix4x4 b);
 
-void matrix4x4_print(const matrix4x4 *matrix);
+    void Print() const;
+};
 
 #endif//OPENGL_STUDY_MATRIX4X4_H

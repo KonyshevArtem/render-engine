@@ -1,24 +1,25 @@
 #include "utils.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "string"
+#include <cstdio>
 
-char *readFile(char *path)
+
+char *Utils::ReadFile(const std::string &path)
 {
-    FILE *file = fopen(path, "r");
-    if (file == NULL)
-        return NULL;
+    FILE *file = fopen(path.c_str(), "r");
+    if (file == nullptr)
+        return nullptr;
 
     if (fseek(file, 0, SEEK_END) != 0)
-        return NULL;
+        return nullptr;
 
     long fileSize = ftell(file);
     if (fileSize == -1L)
-        return NULL;
+        return nullptr;
 
     if (fseek(file, 0, SEEK_SET) != 0)
-        return NULL;
+        return nullptr;
 
-    char *content = malloc(fileSize + 1);
+    char *content = new char[fileSize + 1];
     int   c;
     long  i = 0;
 
@@ -30,9 +31,4 @@ char *readFile(char *path)
     fclose(file);
 
     return content;
-}
-
-float float_lerp(float a, float b, float t)
-{
-    return (1 - t) * a + t * b;
 }

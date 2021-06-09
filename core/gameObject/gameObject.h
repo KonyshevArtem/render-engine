@@ -3,13 +3,15 @@
 
 #include "../../math/quaternion/quaternion.h"
 #include "../../math/vector4/vector4.h"
+#include "vector"
 
-typedef struct gameObject
+class GameObject
 {
-    struct gameObject *parent;
-    vector4            localPosition;
-    quaternion         localRotation;
-    vector4            localScale;
-} gameObject;
+    GameObject *              parent;
+    std::vector<GameObject *> children;
+    Vector4                   localPosition;
+    Quaternion                localRotation;
+    Vector4                   localScale;
+};
 
 #endif//OPENGL_STUDY_GAMEOBJECT_H

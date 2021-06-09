@@ -3,8 +3,12 @@
 
 #define CHECK_GL_ERROR printf("%s\n", gluErrorString(glGetError()));
 
-char *readFile(char *path);
+#include "string"
 
-float float_lerp(float a, float b, float t);
+class Utils
+{
+public:
+    static char *ReadFile(const std::string &path);
+};
 
 #endif//OPENGL_STUDY_UTILS_H

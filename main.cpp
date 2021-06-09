@@ -1,6 +1,5 @@
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdio>
 
 #define GL_SILENCE_DEPRECATION
 
@@ -9,6 +8,7 @@
 #include "shaders/shader_loader.h"
 #include "utils/utils.h"
 
+#include "math/math_utils.h"
 #include "math/matrix4x4/matrix4x4.h"
 #include "math/quaternion/quaternion.h"
 #include "math/vector4/vector4.h"
@@ -41,8 +41,8 @@ const float fov   = 85;
 const float zNear = 0.5f;
 const float zFar  = 100;
 
-matrix4x4 perspectiveMatrix;
-matrix4x4 viewMatrix;
+Matrix4x4 perspectiveMatrix;
+Matrix4x4 viewMatrix;
 
 GLuint *vertexArrayObjects;
 GLuint  vertexBuffer;
@@ -51,7 +51,7 @@ GLuint  program;
 
 void initVertexArrayObject()
 {
-    vertexArrayObjects = malloc(2 * sizeof(GLuint));
+    vertexArrayObjects = new GLuint[2];
     glGenVertexArrays(2, vertexArrayObjects);
 
     for (int i = 0; i < 2; ++i)
@@ -63,7 +63,7 @@ void initVertexArrayObject()
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 3));
     }
 
@@ -86,7 +86,7 @@ void initVertexBuffer(const float *vertexData, const int *vertexIndexes, int ver
 
 void initPerspectiveMatrix(int width, int height)
 {
-    perspectiveMatrix = matrix4x4_zero();
+    perspectiveMatrix = Matrix4x4::Zero();
 
     float aspect = (float) width / (float) height;
     float top    = zNear + ((float) M_PI / 180 * fov / 2);
@@ -105,8 +105,7 @@ void initPerspectiveMatrix(int width, int height)
 
 void initViewMatrix()
 {
-    vector4 offset = vector4_build(0, -0.5f, 0, 0);
-    viewMatrix     = matrix4x4_translation(&offset);
+    viewMatrix = Matrix4x4::Translation(Vector4(0, -0.5f, 0, 0));
 }
 
 void initCulling()
@@ -140,8 +139,8 @@ void initProgram(int shaderCount, GLuint *shaders)
         GLint infoLogLength;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
 
-        GLchar *logMsg = malloc(infoLogLength + 1);
-        glGetProgramInfoLog(program, infoLogLength, NULL, logMsg);
+        auto *logMsg = new GLchar[infoLogLength + 1];
+        glGetProgramInfoLog(program, infoLogLength, nullptr, logMsg);
         fprintf(stderr, "Program link failed\n%s", logMsg);
 
         free(shaders);
@@ -153,26 +152,26 @@ void initProgram(int shaderCount, GLuint *shaders)
         glDetachShader(program, shaders[i]);
 }
 
-vector4 calcTranslation(float phase, float z)
+Vector4 calcTranslation(float phase, float z)
 {
     const float radius = 2;
 
     float xOffset = sinf(phase * 2 * (float) M_PI) * radius;
     float yOffset = cosf(phase * 2 * (float) M_PI) * radius;
 
-    return vector4_build(xOffset, yOffset, z, 0);
+    return {xOffset, yOffset, z, 0};
 }
 
-quaternion calcRotation(float phase, int i)
+Quaternion calcRotation(float phase, int i)
 {
-    vector4 axis = vector4_build(0, i == 0 ? 0 : 1, i == 0 ? 1 : 0, 0);
-    return quaternion_angle_axis(360 * phase, &axis);
+    Vector4 axis = Vector4(0, i == 0 ? 0 : 1, i == 0 ? 1 : 0, 0);
+    return Quaternion::AngleAxis(360 * phase, axis);
 }
 
-vector4 calcScale(float phase)
+Vector4 calcScale(float phase)
 {
-    float scale = float_lerp(1, 3, (sinf(phase * 2 * (float) M_PI) + 1) * 0.5f);
-    return vector4_build(scale, scale, scale, 1);
+    float scale = Math::Lerp(1, 3, (sinf(phase * 2 * (float) M_PI) + 1) * 0.5f);
+    return {scale, scale, scale, 1};
 }
 
 void display()
@@ -181,14 +180,14 @@ void display()
     glClearDepth(1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    float time = (float) glutGet(GLUT_ELAPSED_TIME);
+    auto time = (float) glutGet(GLUT_ELAPSED_TIME);
 
     glUseProgram(program);
 
     GLint mvpMatrixLocation = glGetUniformLocation(program, "mvpMatrix");
     GLint phaseLocation     = glGetUniformLocation(program, "phase");
 
-    matrix4x4 vpMatrix = matrix4x4_multiply(&perspectiveMatrix, &viewMatrix);
+    Matrix4x4 vpMatrix = Matrix4x4::Multiply(perspectiveMatrix, viewMatrix);
 
     for (int i = 0; i < 2; ++i)
     {
@@ -196,23 +195,23 @@ void display()
 
         glBindVertexArray(vertexArrayObjects[i]);
 
-        vector4    translation = calcTranslation(phase, -3 * ((float) i + 1));
-        quaternion rotation    = calcRotation(phase, i);
-        vector4    scale       = calcScale(phase);
+        Vector4    translation = calcTranslation(phase, -3 * ((float) i + 1));
+        Quaternion rotation    = calcRotation(phase, i);
+        Vector4    scale       = calcScale(phase);
 
-        matrix4x4 translationMatrix = matrix4x4_translation(&translation);
-        matrix4x4 rotationMatrix    = matrix4x4_rotation(&rotation);
-        matrix4x4 scaleMatrix       = matrix4x4_scale(&scale);
+        Matrix4x4 translationMatrix = Matrix4x4::Translation(translation);
+        Matrix4x4 rotationMatrix    = Matrix4x4::Rotation(rotation);
+        Matrix4x4 scaleMatrix       = Matrix4x4::Scale(scale);
 
-        matrix4x4 modelMatrix = matrix4x4_multiply(&translationMatrix, &rotationMatrix);
-        modelMatrix           = matrix4x4_multiply(&modelMatrix, &scaleMatrix);
+        Matrix4x4 modelMatrix = Matrix4x4::Multiply(translationMatrix, rotationMatrix);
+        modelMatrix           = Matrix4x4::Multiply(modelMatrix, scaleMatrix);
 
-        matrix4x4 mvpMatrix = matrix4x4_multiply(&vpMatrix, &modelMatrix);
+        Matrix4x4 mvpMatrix = Matrix4x4::Multiply(vpMatrix, modelMatrix);
 
         glUniformMatrix4fv(mvpMatrixLocation, 1, GL_FALSE, (const GLfloat *) &mvpMatrix);
         glUniform1f(phaseLocation, phase);
 
-        glDrawElements(GL_TRIANGLES, testTrianglesCount * 3, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, testTrianglesCount * 3, GL_UNSIGNED_INT, nullptr);
     }
 
     glBindVertexArray(0);
@@ -235,9 +234,9 @@ int main(int argc, char **argv)
     glutInitWindowSize(1024, 720);
     glutCreateWindow("OpenGL");
 
-    GLuint *shaders = malloc(sizeof(GLuint) * 2);
-    shaders[0]      = loadShader(GL_VERTEX_SHADER, "shaders/vert.glsl");
-    shaders[1]      = loadShader(GL_FRAGMENT_SHADER, "shaders/frag.glsl");
+    auto *shaders = new GLuint[2];
+    shaders[0]    = ShaderLoader::LoadShader(GL_VERTEX_SHADER, "shaders/vert.glsl");
+    shaders[1]    = ShaderLoader::LoadShader(GL_FRAGMENT_SHADER, "shaders/frag.glsl");
     initProgram(2, shaders);
     free(shaders);
 

@@ -1,22 +1,23 @@
 #ifndef OPENGL_STUDY_VECTOR4_H
 #define OPENGL_STUDY_VECTOR4_H
 
-typedef struct vector4
+struct Vector4
 {
+public:
     float x;
     float y;
     float z;
     float w;
-} vector4;
 
-vector4 vector4_zero();
+    Vector4(float x, float y, float z, float w);
 
-vector4 vector4_build(float x, float y, float z, float w);
+    static Vector4 Zero();
 
-vector4 vector4_toVector3(const vector4 *vector);
+    Vector4 ToVector3() const;
 
-float vector4_length(const vector4 *vector);
+    float Length() const;
 
-vector4 vector4_normalize(const vector4 *vector);
+    Vector4 Normalize() const;
+};
 
 #endif//OPENGL_STUDY_VECTOR4_H

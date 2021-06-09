@@ -1,23 +1,25 @@
 cmake_minimum_required(VERSION 3.19)
-project(OpenGL_Study C)
+project(OpenGL_Study)
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 11)
 
 add_executable(
         OpenGL_Study
-        main.c
+        main.cpp
         shaders/shader_loader.h
-        shaders/shader_loader.c
-        utils/utils.c
+        shaders/shader_loader.cpp
+        utils/utils.cpp
         utils/utils.h
-        math/matrix4x4/matrix4x4.c
+        math/matrix4x4/matrix4x4.cpp
         math/matrix4x4/matrix4x4.h
-        math/vector4/vector4.c
+        math/vector4/vector4.cpp
         math/vector4/vector4.h
-        math/quaternion/quaternion.c
+        math/quaternion/quaternion.cpp
         math/quaternion/quaternion.h
-        core/gameObject/gameObject.c
-        core/gameObject/gameObject.h)
+        core/gameObject/gameObject.h
+        core/gameObject/gameObject.cpp
+        math/math_utils.cpp
+        math/math_utils.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

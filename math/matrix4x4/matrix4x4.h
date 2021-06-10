@@ -34,6 +34,8 @@ public:
 
     static Matrix4x4 Scale(Vector4 scale);
 
+    static Matrix4x4 TRS(Vector4 translation, Quaternion rotation, Vector4 scale);
+
     float GetElement(int column, int row) const;
 
     void SetElement(int column, int row, float value);

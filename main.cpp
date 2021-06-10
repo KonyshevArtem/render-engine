@@ -17,6 +17,9 @@ const float loopDuration       = 3000;
 const int   testVertexCount    = 4;
 const int   testTrianglesCount = 2;
 
+float lightDirection[] = {-1, 0, -1};
+float lightColor[]     = {1, 0.5f, 0, 1};
+
 // clang-format off
 float testVertexData[] = {
         -1, 1, 0,     // 0
@@ -29,6 +32,12 @@ float testVertexData[] = {
         1, 1, 0, 1,
         1, 1, 0, 1,
         1, 1, 0, 1,
+
+        // normals
+        0, 0, 1,
+        0, 0, 1,
+        0, 0, 1,
+        0, 0, 1,
 };
 
 int testVertexIndexes[] = {
@@ -62,9 +71,11 @@ void initVertexArrayObject()
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 3));
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * (testVertexCount * 3 + testVertexCount * 4)));
     }
 
     glBindVertexArray(0);
@@ -76,7 +87,7 @@ void initVertexBuffer(const float *vertexData, const int *vertexIndexes, int ver
     glGenBuffers(1, &indexBuffer);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (vertexCount * 3 + vertexCount * 4), vertexData, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (vertexCount * 3 * 2 + vertexCount * 4), vertexData, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -184,10 +195,15 @@ void display()
 
     glUseProgram(program);
 
-    GLint mvpMatrixLocation = glGetUniformLocation(program, "mvpMatrix");
-    GLint phaseLocation     = glGetUniformLocation(program, "phase");
+    GLint projMatrixLocation     = glGetUniformLocation(program, "projMatrix");
+    GLint viewMatrixLocation     = glGetUniformLocation(program, "viewMatrix");
+    GLint modelMatrixLocation    = glGetUniformLocation(program, "modelMatrix");
+    GLint lightDirectionLocation = glGetUniformLocation(program, "lightDirection");
+    GLint lightColorLocation     = glGetUniformLocation(program, "lightColor");
 
-    Matrix4x4 vpMatrix = Matrix4x4::Multiply(perspectiveMatrix, viewMatrix);
+    glUniformMatrix4fv(projMatrixLocation, 1, GL_FALSE, (const GLfloat *) &perspectiveMatrix);
+    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, (const GLfloat *) &viewMatrix);
+    glUniform4fv(lightColorLocation, 1, (const GLfloat *) &lightColor);
 
     for (int i = 0; i < 2; ++i)
     {
@@ -195,21 +211,13 @@ void display()
 
         glBindVertexArray(vertexArrayObjects[i]);
 
-        Vector4    translation = calcTranslation(phase, -3 * ((float) i + 1));
-        Quaternion rotation    = calcRotation(phase, i);
-        Vector4    scale       = calcScale(phase);
+        Matrix4x4 modelMatrix = Matrix4x4::TRS(
+                calcTranslation(phase, -3 * ((float) i + 1)),
+                calcRotation(phase, i),
+                calcScale(phase));
 
-        Matrix4x4 translationMatrix = Matrix4x4::Translation(translation);
-        Matrix4x4 rotationMatrix    = Matrix4x4::Rotation(rotation);
-        Matrix4x4 scaleMatrix       = Matrix4x4::Scale(scale);
-
-        Matrix4x4 modelMatrix = Matrix4x4::Multiply(translationMatrix, rotationMatrix);
-        modelMatrix           = Matrix4x4::Multiply(modelMatrix, scaleMatrix);
-
-        Matrix4x4 mvpMatrix = Matrix4x4::Multiply(vpMatrix, modelMatrix);
-
-        glUniformMatrix4fv(mvpMatrixLocation, 1, GL_FALSE, (const GLfloat *) &mvpMatrix);
-        glUniform1f(phaseLocation, phase);
+        glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelMatrix);
+        glUniform3fv(lightDirectionLocation, 1, (const GLfloat *) &lightDirection);
 
         glDrawElements(GL_TRIANGLES, testTrianglesCount * 3, GL_UNSIGNED_INT, nullptr);
     }

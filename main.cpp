@@ -14,35 +14,150 @@
 #include "math/vector4/vector4.h"
 
 const float loopDuration       = 3000;
-const int   testVertexCount    = 4;
-const int   testTrianglesCount = 2;
+const int   testVertexCount    = 24;
+const int   testTrianglesCount = 12;
 
-float lightDirection[] = {-1, 0, -1};
-float lightColor[]     = {1, 0.5f, 0, 1};
+float lightDirection[] = {-1, -1, -1};
+float lightColor[]     = {1, 1, 1, 1};
+float ambientLight[]   = {0.2f, 0.2f, 0.2f, 1};
 
 // clang-format off
 float testVertexData[] = {
-        -1, 1, 0,     // 0
-        1, 1, 0,      // 1
-        1, -1, 0,     // 2
-        -1, -1, 0,    // 3
+        // front
+        -1, 1, 1,     // 0
+        1, 1, 1,      // 1
+        1, -1, 1,     // 2
+        -1, -1, 1,    // 3
+
+        // back
+        -1, 1, -1,      // 4
+        1, 1, -1,       // 5
+        1, -1, -1,      // 6
+        -1, -1, -1,     // 7
+
+        // left
+        -1, 1, 1,      // 8
+        -1, 1, -1,     // 9
+        -1, -1, -1,    // 10
+        -1, -1, 1,     // 11
+
+        // right
+        1, 1, 1,      // 12
+        1, 1, -1,     // 13
+        1, -1, -1,    // 14
+        1, -1, 1,     // 15
+
+        // top
+        1, 1, 1,      // 16
+        1, 1, -1,     // 17
+        -1, 1, -1,    // 18
+        -1, 1, 1,     // 19
+
+        // bottom
+        1, -1, 1,      // 20
+        1, -1, -1,     // 21
+        -1, -1, -1,    // 22
+        -1, -1, 1,     // 23
 
         // colors
+        // front
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+
+        // back
+        0, 1, 0, 1,
+        0, 1, 0, 1,
+        0, 1, 0, 1,
+        0, 1, 0, 1,
+
+        // left
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+        0, 0, 1, 1,
+
+        // right
         1, 1, 0, 1,
         1, 1, 0, 1,
         1, 1, 0, 1,
         1, 1, 0, 1,
 
+        // top
+        1, 0, 1, 1,
+        1, 0, 1, 1,
+        1, 0, 1, 1,
+        1, 0, 1, 1,
+
+        // bottom
+        0, 1, 1, 1,
+        0, 1, 1, 1,
+        0, 1, 1, 1,
+        0, 1, 1, 1,
+
         // normals
+        // front
         0, 0, 1,
         0, 0, 1,
         0, 0, 1,
         0, 0, 1,
+
+        // back
+        0, 0, -1,
+        0, 0, -1,
+        0, 0, -1,
+        0, 0, -1,
+
+        // left
+        -1, 0, 0,
+        -1, 0, 0,
+        -1, 0, 0,
+        -1, 0, 0,
+
+        // right
+        1, 0, 0,
+        1, 0, 0,
+        1, 0, 0,
+        1, 0, 0,
+
+        // top
+        0, 1, 0,
+        0, 1, 0,
+        0, 1, 0,
+        0, 1, 0,
+
+        // bottom
+        0, -1, 0,
+        0, -1, 0,
+        0, -1, 0,
+        0, -1, 0,
 };
 
 int testVertexIndexes[] = {
+        // front
         0, 1, 3,
         1, 2, 3,
+
+        // back
+        5, 4, 7,
+        7, 6, 5,
+
+        // left
+        9, 8, 10,
+        8, 11, 10,
+
+        // right
+        12, 13, 14,
+        12, 14, 15,
+
+        // top
+        16, 19, 18,
+        16, 18, 17,
+
+        // bottom
+        20, 21, 22,
+        20, 22, 23
 };
 // clang-format on
 
@@ -175,13 +290,13 @@ Vector4 calcTranslation(float phase, float z)
 
 Quaternion calcRotation(float phase, int i)
 {
-    Vector4 axis = Vector4(0, i == 0 ? 0 : 1, i == 0 ? 1 : 0, 0);
+    Vector4 axis = Vector4(i == 0 ? 1 : 0, i == 0 ? 0 : 1, 0, 0);
     return Quaternion::AngleAxis(360 * phase, axis);
 }
 
 Vector4 calcScale(float phase)
 {
-    float scale = Math::Lerp(1, 3, (sinf(phase * 2 * (float) M_PI) + 1) * 0.5f);
+    float scale = Math::Lerp(1, 2, (sinf(phase * 2 * (float) M_PI) + 1) * 0.5f);
     return {scale, scale, scale, 1};
 }
 
@@ -195,15 +310,18 @@ void display()
 
     glUseProgram(program);
 
-    GLint projMatrixLocation     = glGetUniformLocation(program, "projMatrix");
-    GLint viewMatrixLocation     = glGetUniformLocation(program, "viewMatrix");
-    GLint modelMatrixLocation    = glGetUniformLocation(program, "modelMatrix");
+    GLint projMatrixLocation  = glGetUniformLocation(program, "projMatrix");
+    GLint viewMatrixLocation  = glGetUniformLocation(program, "viewMatrix");
+    GLint modelMatrixLocation = glGetUniformLocation(program, "modelMatrix");
+
     GLint lightDirectionLocation = glGetUniformLocation(program, "lightDirection");
     GLint lightColorLocation     = glGetUniformLocation(program, "lightColor");
+    GLint ambientLightLocation   = glGetUniformLocation(program, "ambientLight");
 
     glUniformMatrix4fv(projMatrixLocation, 1, GL_FALSE, (const GLfloat *) &perspectiveMatrix);
     glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, (const GLfloat *) &viewMatrix);
     glUniform4fv(lightColorLocation, 1, (const GLfloat *) &lightColor);
+    glUniform4fv(ambientLightLocation, 1, (const GLfloat *) &ambientLight);
 
     for (int i = 0; i < 2; ++i)
     {
@@ -212,7 +330,7 @@ void display()
         glBindVertexArray(vertexArrayObjects[i]);
 
         Matrix4x4 modelMatrix = Matrix4x4::TRS(
-                calcTranslation(phase, -3 * ((float) i + 1)),
+                calcTranslation(phase, -5 * ((float) i + 1)),
                 calcRotation(phase, i),
                 calcScale(phase));
 

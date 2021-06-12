@@ -4,13 +4,20 @@ layout(location = 0) in vec4 vertPosition;
 layout(location = 1) in vec4 vertColor;
 layout(location = 2) in vec3 vertNormal;
 
-uniform mat4 projMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 modelMatrix;
+layout(std140) uniform Matrices
+{
+    mat4 projMatrix;
+    mat4 viewMatrix;
+};
 
-uniform vec3 lightDirection;
-uniform vec4 lightColor;
-uniform vec4 ambientLight;
+layout(std140) uniform Lighting
+{
+    vec3 directionalLightDirection;
+    vec4 directionalLightColor;
+    vec4 ambientLightColor;
+};
+
+uniform mat4 modelMatrix;
 
 smooth out vec4 color;
 
@@ -19,7 +26,9 @@ void main(){
     gl_Position = projMatrix * mvMatrix * vertPosition;
 
     vec3 viewNormal = normalize((mvMatrix * vec4(vertNormal, 0)).xyz);
-    vec3 viewLightDirection = normalize((viewMatrix * vec4(normalize(-lightDirection), 0)).xyz);
+    vec3 viewLightDirection = normalize((viewMatrix * vec4(normalize(-directionalLightDirection), 0)).xyz);
 
-    color = vertColor * lightColor * clamp(dot(viewNormal, viewLightDirection), 0, 1) + vertColor * ambientLight;
+    vec4 directionalColor = vertColor * directionalLightColor * clamp(dot(viewNormal, viewLightDirection), 0, 1);
+    vec4 ambientColor = vertColor * ambientLightColor;
+    color = directionalColor + ambientColor;
 }

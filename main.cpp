@@ -17,10 +17,6 @@ const float loopDuration       = 3000;
 const int   testVertexCount    = 24;
 const int   testTrianglesCount = 12;
 
-float lightDirection[] = {-1, -1, -1};
-float lightColor[]     = {1, 1, 1, 1};
-float ambientLight[]   = {0.2f, 0.2f, 0.2f, 1};
-
 // clang-format off
 float testVertexData[] = {
         // front
@@ -172,6 +168,8 @@ GLuint *vertexArrayObjects;
 GLuint  vertexBuffer;
 GLuint  indexBuffer;
 GLuint  program;
+GLuint  matricesUniformBuffer;
+GLuint  lightingUniformBuffer;
 
 void initVertexArrayObject()
 {
@@ -210,6 +208,33 @@ void initVertexBuffer(const float *vertexData, const int *vertexIndexes, int ver
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+void initUniformBlocks()
+{
+    GLuint matricesUniformIndex = glGetUniformBlockIndex(program, "Matrices");
+    GLuint lightingUniformIndex = glGetUniformBlockIndex(program, "Lighting");
+
+    glUniformBlockBinding(program, matricesUniformIndex, 0);
+    glUniformBlockBinding(program, lightingUniformIndex, 1);
+
+    GLint matricesSize;
+    GLint lightingSize;
+    glGetActiveUniformBlockiv(program, matricesUniformIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &matricesSize);
+    glGetActiveUniformBlockiv(program, lightingUniformIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &lightingSize);
+
+    glGenBuffers(1, &matricesUniformBuffer);
+    glBindBuffer(GL_UNIFORM_BUFFER, matricesUniformBuffer);
+    glBufferData(GL_UNIFORM_BUFFER, matricesSize, nullptr, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glGenBuffers(1, &lightingUniformBuffer);
+    glBindBuffer(GL_UNIFORM_BUFFER, lightingUniformBuffer);
+    glBufferData(GL_UNIFORM_BUFFER, lightingSize, nullptr, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, matricesUniformBuffer, 0, matricesSize);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 1, lightingUniformBuffer, 0, lightingSize);
+}
+
 void initPerspectiveMatrix(int width, int height)
 {
     perspectiveMatrix = Matrix4x4::Zero();
@@ -227,11 +252,33 @@ void initPerspectiveMatrix(int width, int height)
     perspectiveMatrix.m22 = -(zFar + zNear) / (zFar - zNear);
     perspectiveMatrix.m23 = -1;
     perspectiveMatrix.m32 = -2 * zFar * zNear / (zFar - zNear);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, matricesUniformBuffer);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Matrix4x4), &perspectiveMatrix);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void initViewMatrix()
 {
     viewMatrix = Matrix4x4::Translation(Vector4(0, -0.5f, 0, 0));
+
+    long size = sizeof(Matrix4x4);
+    glBindBuffer(GL_UNIFORM_BUFFER, matricesUniformBuffer);
+    glBufferSubData(GL_UNIFORM_BUFFER, size, size, &viewMatrix);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void initLighting()
+{
+    float   directionalLightDirection[] = {-1, -1, -1};
+    Vector4 directionalLightColor       = Vector4(1, 1, 1, 1);
+    Vector4 ambientLight                = Vector4(0.2f, 0.2f, 0.2f, 1);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, lightingUniformBuffer);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float) * 3, &directionalLightDirection);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 3, sizeof(Vector4), &directionalLightColor);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 3 + sizeof(Vector4), sizeof(Vector4), &ambientLight);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void initCulling()
@@ -310,18 +357,7 @@ void display()
 
     glUseProgram(program);
 
-    GLint projMatrixLocation  = glGetUniformLocation(program, "projMatrix");
-    GLint viewMatrixLocation  = glGetUniformLocation(program, "viewMatrix");
     GLint modelMatrixLocation = glGetUniformLocation(program, "modelMatrix");
-
-    GLint lightDirectionLocation = glGetUniformLocation(program, "lightDirection");
-    GLint lightColorLocation     = glGetUniformLocation(program, "lightColor");
-    GLint ambientLightLocation   = glGetUniformLocation(program, "ambientLight");
-
-    glUniformMatrix4fv(projMatrixLocation, 1, GL_FALSE, (const GLfloat *) &perspectiveMatrix);
-    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, (const GLfloat *) &viewMatrix);
-    glUniform4fv(lightColorLocation, 1, (const GLfloat *) &lightColor);
-    glUniform4fv(ambientLightLocation, 1, (const GLfloat *) &ambientLight);
 
     for (int i = 0; i < 2; ++i)
     {
@@ -335,7 +371,6 @@ void display()
                 calcScale(phase));
 
         glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelMatrix);
-        glUniform3fv(lightDirectionLocation, 1, (const GLfloat *) &lightDirection);
 
         glDrawElements(GL_TRIANGLES, testTrianglesCount * 3, GL_UNSIGNED_INT, nullptr);
     }
@@ -372,10 +407,12 @@ int main(int argc, char **argv)
             testVertexCount,
             testTrianglesCount);
     initVertexArrayObject();
+    initUniformBlocks();
 
     initCulling();
     initViewMatrix();
     initDepth();
+    initLighting();
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);

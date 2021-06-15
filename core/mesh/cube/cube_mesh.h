@@ -9,10 +9,17 @@ public:
     int GetTrianglesCount() override;
 
 protected:
-    void GetVertexes(const GLuint &vertexBuffer) override;
-    void GetColors(const GLuint &vertexBuffer) override;
-    void GetNormals(const GLuint &vertexBuffer) override;
-    void GetIndexes(const GLuint &indexBuffer) override;
+    void *GetVertexData() override;
+    long  GetVertexDataSize() override;
+
+    void *GetColorsData() override;
+    long  GetColorsDataSize() override;
+
+    void *GetNormalsData() override;
+    long  GetNormalsDataSize() override;
+
+    void *GetIndexData() override;
+    long  GetIndexDataSize() override;
 };
 
 

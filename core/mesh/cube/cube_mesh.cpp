@@ -3,12 +3,12 @@
 #include "cube_mesh.h"
 
 
-static const int   vertexCount    = 24;
-static const int   trianglesCount = 12;
-static const GLint vertexSize     = sizeof(float) * vertexCount * 3;
-static const GLint colorsSize     = sizeof(float) * vertexCount * 4;
-static const GLint normalsSize    = sizeof(float) * vertexCount * 3;
-static const GLint indexesSize    = sizeof(int) * trianglesCount * 3;
+static const int  vertexCount    = 24;
+static const int  trianglesCount = 12;
+static const long vertexSize     = sizeof(float) * vertexCount * 3;
+static const long colorsSize     = sizeof(float) * vertexCount * 4;
+static const long normalsSize    = sizeof(float) * vertexCount * 3;
+static const long indexesSize    = sizeof(int) * trianglesCount * 3;
 
 // clang-format off
 static const float vertexData[] = {
@@ -157,35 +157,42 @@ int CubeMesh::GetTrianglesCount()
     return trianglesCount;
 }
 
-void CubeMesh::GetVertexes(const GLuint &vertexBuffer)
+void *CubeMesh::GetVertexData()
 {
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, vertexSize + colorsSize + normalsSize, nullptr, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-    glBufferSubData(GL_ARRAY_BUFFER, 0, vertexSize, &vertexData);
+    return (void *) &vertexData;
 }
 
-void CubeMesh::GetColors(const GLuint &vertexBuffer)
+long CubeMesh::GetVertexDataSize()
 {
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) vertexSize);
-
-    glBufferSubData(GL_ARRAY_BUFFER, vertexSize, colorsSize, &colorsData);
+    return vertexSize;
 }
 
-void CubeMesh::GetNormals(const GLuint &vertexBuffer)
+void *CubeMesh::GetColorsData()
 {
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void *) (vertexSize + colorsSize));
-
-    glBufferSubData(GL_ARRAY_BUFFER, vertexSize + colorsSize, normalsSize, &normalsData);
+    return (void *) &colorsData;
 }
 
-void CubeMesh::GetIndexes(const GLuint &indexBuffer)
+long CubeMesh::GetColorsDataSize()
 {
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexesSize, &indexData, GL_STATIC_DRAW);
+    return colorsSize;
+}
+
+void *CubeMesh::GetNormalsData()
+{
+    return (void *) &normalsData;
+}
+
+long CubeMesh::GetNormalsDataSize()
+{
+    return normalsSize;
+}
+
+void *CubeMesh::GetIndexData()
+{
+    return (void *) &indexData;
+}
+
+long CubeMesh::GetIndexDataSize()
+{
+    return indexesSize;
 }

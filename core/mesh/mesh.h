@@ -15,10 +15,17 @@ public:
     virtual int GetTrianglesCount() = 0;
 
 protected:
-    virtual void GetVertexes(const GLuint &vertexBuffer) = 0;
-    virtual void GetColors(const GLuint &vertexBuffer)   = 0;
-    virtual void GetNormals(const GLuint &vertexBuffer)  = 0;
-    virtual void GetIndexes(const GLuint &indexBuffer)   = 0;
+    virtual void *GetVertexData()     = 0;
+    virtual long  GetVertexDataSize() = 0;
+
+    virtual void *GetColorsData()     = 0;
+    virtual long  GetColorsDataSize() = 0;
+
+    virtual void *GetNormalsData()     = 0;
+    virtual long  GetNormalsDataSize() = 0;
+
+    virtual void *GetIndexData()     = 0;
+    virtual long  GetIndexDataSize() = 0;
 
 private:
     GLuint vertexArrayObject;

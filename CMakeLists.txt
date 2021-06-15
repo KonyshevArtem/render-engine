@@ -19,7 +19,11 @@ add_executable(
         core/gameObject/gameObject.h
         core/gameObject/gameObject.cpp
         math/math_utils.cpp
-        math/math_utils.h)
+        math/math_utils.h
+        core/mesh/mesh.cpp
+        core/mesh/mesh.h
+        core/mesh/cube/cube_mesh.cpp
+        core/mesh/cube/cube_mesh.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

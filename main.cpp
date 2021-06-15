@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cstdio>
+#include <vector>
 
 #define GL_SILENCE_DEPRECATION
 
@@ -8,154 +9,14 @@
 #include "shaders/shader_loader.h"
 #include "utils/utils.h"
 
+#include "core/mesh/cube/cube_mesh.h"
+#include "core/mesh/mesh.h"
 #include "math/math_utils.h"
 #include "math/matrix4x4/matrix4x4.h"
 #include "math/quaternion/quaternion.h"
 #include "math/vector4/vector4.h"
 
-const float loopDuration       = 3000;
-const int   testVertexCount    = 24;
-const int   testTrianglesCount = 12;
-
-// clang-format off
-float testVertexData[] = {
-        // front
-        -1, 1, 1,     // 0
-        1, 1, 1,      // 1
-        1, -1, 1,     // 2
-        -1, -1, 1,    // 3
-
-        // back
-        -1, 1, -1,      // 4
-        1, 1, -1,       // 5
-        1, -1, -1,      // 6
-        -1, -1, -1,     // 7
-
-        // left
-        -1, 1, 1,      // 8
-        -1, 1, -1,     // 9
-        -1, -1, -1,    // 10
-        -1, -1, 1,     // 11
-
-        // right
-        1, 1, 1,      // 12
-        1, 1, -1,     // 13
-        1, -1, -1,    // 14
-        1, -1, 1,     // 15
-
-        // top
-        1, 1, 1,      // 16
-        1, 1, -1,     // 17
-        -1, 1, -1,    // 18
-        -1, 1, 1,     // 19
-
-        // bottom
-        1, -1, 1,      // 20
-        1, -1, -1,     // 21
-        -1, -1, -1,    // 22
-        -1, -1, 1,     // 23
-
-        // colors
-        // front
-        1, 0, 0, 1,
-        1, 0, 0, 1,
-        1, 0, 0, 1,
-        1, 0, 0, 1,
-
-        // back
-        0, 1, 0, 1,
-        0, 1, 0, 1,
-        0, 1, 0, 1,
-        0, 1, 0, 1,
-
-        // left
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-        0, 0, 1, 1,
-
-        // right
-        1, 1, 0, 1,
-        1, 1, 0, 1,
-        1, 1, 0, 1,
-        1, 1, 0, 1,
-
-        // top
-        1, 0, 1, 1,
-        1, 0, 1, 1,
-        1, 0, 1, 1,
-        1, 0, 1, 1,
-
-        // bottom
-        0, 1, 1, 1,
-        0, 1, 1, 1,
-        0, 1, 1, 1,
-        0, 1, 1, 1,
-
-        // normals
-        // front
-        0, 0, 1,
-        0, 0, 1,
-        0, 0, 1,
-        0, 0, 1,
-
-        // back
-        0, 0, -1,
-        0, 0, -1,
-        0, 0, -1,
-        0, 0, -1,
-
-        // left
-        -1, 0, 0,
-        -1, 0, 0,
-        -1, 0, 0,
-        -1, 0, 0,
-
-        // right
-        1, 0, 0,
-        1, 0, 0,
-        1, 0, 0,
-        1, 0, 0,
-
-        // top
-        0, 1, 0,
-        0, 1, 0,
-        0, 1, 0,
-        0, 1, 0,
-
-        // bottom
-        0, -1, 0,
-        0, -1, 0,
-        0, -1, 0,
-        0, -1, 0,
-};
-
-int testVertexIndexes[] = {
-        // front
-        0, 1, 3,
-        1, 2, 3,
-
-        // back
-        5, 4, 7,
-        7, 6, 5,
-
-        // left
-        9, 8, 10,
-        8, 11, 10,
-
-        // right
-        12, 13, 14,
-        12, 14, 15,
-
-        // top
-        16, 19, 18,
-        16, 18, 17,
-
-        // bottom
-        20, 21, 22,
-        20, 22, 23
-};
-// clang-format on
+const float loopDuration = 3000;
 
 const float fov   = 85;
 const float zNear = 0.5f;
@@ -164,49 +25,11 @@ const float zFar  = 100;
 Matrix4x4 perspectiveMatrix;
 Matrix4x4 viewMatrix;
 
-GLuint *vertexArrayObjects;
-GLuint  vertexBuffer;
-GLuint  indexBuffer;
-GLuint  program;
-GLuint  matricesUniformBuffer;
-GLuint  lightingUniformBuffer;
+GLuint program;
+GLuint matricesUniformBuffer;
+GLuint lightingUniformBuffer;
 
-void initVertexArrayObject()
-{
-    vertexArrayObjects = new GLuint[2];
-    glGenVertexArrays(2, vertexArrayObjects);
-
-    for (int i = 0; i < 2; ++i)
-    {
-        glBindVertexArray(vertexArrayObjects[i]);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * testVertexCount * 3));
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void *) (sizeof(float) * (testVertexCount * 3 + testVertexCount * 4)));
-    }
-
-    glBindVertexArray(0);
-}
-
-void initVertexBuffer(const float *vertexData, const int *vertexIndexes, int vertexCount, int trianglesCount)
-{
-    glGenBuffers(1, &vertexBuffer);
-    glGenBuffers(1, &indexBuffer);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (vertexCount * 3 * 2 + vertexCount * 4), vertexData, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * trianglesCount * 3, vertexIndexes, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
+std::vector<Mesh *> meshes;
 
 void initUniformBlocks()
 {
@@ -359,11 +182,11 @@ void display()
 
     GLint modelMatrixLocation = glGetUniformLocation(program, "modelMatrix");
 
-    for (int i = 0; i < 2; ++i)
+    for (int i = 0; i < meshes.size(); ++i)
     {
         float phase = fmodf(fmodf(time, loopDuration) / loopDuration + (float) i * 0.5f, 1.0f);
 
-        glBindVertexArray(vertexArrayObjects[i]);
+        glBindVertexArray(meshes[i]->GetVertexArrayObject());
 
         Matrix4x4 modelMatrix = Matrix4x4::TRS(
                 calcTranslation(phase, -5 * ((float) i + 1)),
@@ -372,7 +195,7 @@ void display()
 
         glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelMatrix);
 
-        glDrawElements(GL_TRIANGLES, testTrianglesCount * 3, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, meshes[i]->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
     }
 
     glBindVertexArray(0);
@@ -401,12 +224,12 @@ int main(int argc, char **argv)
     initProgram(2, shaders);
     free(shaders);
 
-    initVertexBuffer(
-            (const float *) &testVertexData,
-            (const int *) &testVertexIndexes,
-            testVertexCount,
-            testTrianglesCount);
-    initVertexArrayObject();
+    Mesh *cube = new CubeMesh();
+    cube->Init();
+
+    meshes.push_back(cube);
+    meshes.push_back(cube);
+
     initUniformBlocks();
 
     initCulling();

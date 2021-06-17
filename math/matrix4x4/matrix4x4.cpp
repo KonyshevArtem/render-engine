@@ -76,7 +76,7 @@ Matrix4x4 Matrix4x4::Scale(Vector4 scale)
 
 Matrix4x4 Matrix4x4::TRS(Vector4 translation, Quaternion rotation, Vector4 scale)
 {
-    return Multiply(Multiply(Translation(translation), Scale(scale)), Rotation(rotation));
+    return Multiply(Multiply(Translation(translation), Rotation(rotation)), Scale(scale));
 }
 
 float Matrix4x4::GetElement(int column, int row) const

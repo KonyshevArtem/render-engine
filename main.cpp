@@ -10,6 +10,7 @@
 #include "utils/utils.h"
 
 #include "core/mesh/cube/cube_mesh.h"
+#include "core/mesh/cylinder/cylinder_mesh.h"
 #include "core/mesh/mesh.h"
 #include "math/math_utils.h"
 #include "math/matrix4x4/matrix4x4.h"
@@ -227,8 +228,11 @@ int main(int argc, char **argv)
     Mesh *cube = new CubeMesh();
     cube->Init();
 
+    Mesh *cylinder = new CylinderMesh();
+    cylinder->Init();
+
     meshes.push_back(cube);
-    meshes.push_back(cube);
+    meshes.push_back(cylinder);
 
     initUniformBlocks();
 

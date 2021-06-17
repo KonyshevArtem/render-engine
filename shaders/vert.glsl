@@ -18,14 +18,15 @@ layout(std140) uniform Lighting
 };
 
 uniform mat4 modelMatrix;
+uniform mat4 modelNormalMatrix;
 
 smooth out vec4 color;
 
 void main(){
-    mat4 mvMatrix = viewMatrix * modelMatrix;
-    gl_Position = projMatrix * mvMatrix * vertPosition;
+    gl_Position = projMatrix * viewMatrix * modelMatrix * vertPosition;
 
-    vec3 viewNormal = normalize((mvMatrix * vec4(vertNormal, 0)).xyz);
+    mat4 normalMatrix = viewMatrix * modelNormalMatrix;
+    vec3 viewNormal = normalize((normalMatrix * vec4(vertNormal, 0)).xyz);
     vec3 viewLightDirection = normalize((viewMatrix * vec4(normalize(-directionalLightDirection), 0)).xyz);
 
     vec4 directionalColor = vertColor * directionalLightColor * clamp(dot(viewNormal, viewLightDirection), 0, 1);

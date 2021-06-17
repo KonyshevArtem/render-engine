@@ -3,6 +3,7 @@
 
 #include "../quaternion/quaternion.h"
 #include "../vector4/vector4.h"
+#include "string"
 
 struct Matrix4x4
 {
@@ -40,9 +41,13 @@ public:
 
     void SetElement(int column, int row, float value);
 
-    static Matrix4x4 Multiply(Matrix4x4 a, Matrix4x4 b);
+    Matrix4x4 operator*(const Matrix4x4 &matrix) const;
 
-    void Print() const;
+    Matrix4x4 Invert() const;
+
+    Matrix4x4 Transpose() const;
+
+    std::string ToString() const;
 };
 
 #endif//OPENGL_STUDY_MATRIX4X4_H

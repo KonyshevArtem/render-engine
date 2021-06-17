@@ -181,7 +181,8 @@ void display()
 
     glUseProgram(program);
 
-    GLint modelMatrixLocation = glGetUniformLocation(program, "modelMatrix");
+    GLint modelMatrixLocation       = glGetUniformLocation(program, "modelMatrix");
+    GLint modelNormalMatrixLocation = glGetUniformLocation(program, "modelNormalMatrix");
 
     for (int i = 0; i < meshes.size(); ++i)
     {
@@ -189,12 +190,20 @@ void display()
 
         glBindVertexArray(meshes[i]->GetVertexArrayObject());
 
-        Matrix4x4 modelMatrix = Matrix4x4::TRS(
-                calcTranslation(phase, -5 * ((float) i + 1)),
-                calcRotation(phase, i),
-                calcScale(phase));
+        Matrix4x4 translation = Matrix4x4::Translation(calcTranslation(phase, -5));
+        Matrix4x4 rotation    = Matrix4x4::Rotation(calcRotation(phase, i));
+        Matrix4x4 scale       = Matrix4x4::Scale(calcScale(phase));
+
+        Matrix4x4 modelMatrix = Matrix4x4::Identity();
+        if (i == 0)
+            modelMatrix = translation * rotation * scale;
+        else
+            modelMatrix = Matrix4x4::TRS(Vector4(0, -3, -4, 0), calcRotation(phase, i), Vector4(2, 1, 0.5f, 1));
+
+        Matrix4x4 modelNormalMatrix = (rotation * scale).Invert().Transpose();
 
         glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelMatrix);
+        glUniformMatrix4fv(modelNormalMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelNormalMatrix);
 
         glDrawElements(GL_TRIANGLES, meshes[i]->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
     }

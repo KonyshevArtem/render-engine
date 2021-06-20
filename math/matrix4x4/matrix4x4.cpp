@@ -32,7 +32,7 @@ Matrix4x4 Matrix4x4::Identity()
     return identity;
 }
 
-Matrix4x4 Matrix4x4::Translation(Vector4 translation)
+Matrix4x4 Matrix4x4::Translation(Vector3 translation)
 {
     Matrix4x4 translationMatrix = Matrix4x4::Identity();
     translationMatrix.m30       = translation.x;
@@ -64,7 +64,7 @@ Matrix4x4 Matrix4x4::Rotation(Quaternion quaternion)
     return result;
 }
 
-Matrix4x4 Matrix4x4::Scale(Vector4 scale)
+Matrix4x4 Matrix4x4::Scale(Vector3 scale)
 {
     Matrix4x4 result = Matrix4x4::Identity();
     result.m00       = scale.x;
@@ -73,7 +73,7 @@ Matrix4x4 Matrix4x4::Scale(Vector4 scale)
     return result;
 }
 
-Matrix4x4 Matrix4x4::TRS(Vector4 translation, Quaternion rotation, Vector4 scale)
+Matrix4x4 Matrix4x4::TRS(Vector3 translation, Quaternion rotation, Vector3 scale)
 {
     return Translation(translation) * Rotation(rotation) * Scale(scale);
 }

@@ -9,11 +9,11 @@ public:
     float z;
     float w;
 
+    Vector4();
+
     Vector4(float x, float y, float z, float w);
 
     static Vector4 Zero();
-
-    Vector4 ToVector3() const;
 
     float Length() const;
 

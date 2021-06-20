@@ -15,6 +15,7 @@
 #include "math/math_utils.h"
 #include "math/matrix4x4/matrix4x4.h"
 #include "math/quaternion/quaternion.h"
+#include "math/vector3/vector3.h"
 #include "math/vector4/vector4.h"
 
 const float loopDuration = 3000;
@@ -31,6 +32,16 @@ GLuint matricesUniformBuffer;
 GLuint lightingUniformBuffer;
 
 std::vector<Mesh *> meshes;
+
+struct LightData
+{
+public:
+    Vector3 PosOrDirWS;
+    float   p1;             // used for padding bytes
+    Vector4 Intensity;
+    int     IsDirectional;
+    float   p2[3];          // used for padding bytes
+};
 
 void initUniformBlocks()
 {
@@ -84,7 +95,7 @@ void initPerspectiveMatrix(int width, int height)
 
 void initViewMatrix()
 {
-    viewMatrix = Matrix4x4::Translation(Vector4(0, -0.5f, 0, 0));
+    viewMatrix = Matrix4x4::Translation(Vector3(0, -0.5f, 0));
 
     long size = sizeof(Matrix4x4);
     glBindBuffer(GL_UNIFORM_BUFFER, matricesUniformBuffer);
@@ -94,14 +105,23 @@ void initViewMatrix()
 
 void initLighting()
 {
-    float   directionalLightDirection[] = {-1, -1, -1};
-    Vector4 directionalLightColor       = Vector4(1, 1, 1, 1);
-    Vector4 ambientLight                = Vector4(0.2f, 0.2f, 0.2f, 1);
+    int       lightsCount = 1;
+    LightData lights[lightsCount];
 
+    LightData dirLight;
+    dirLight.PosOrDirWS    = Vector3 {-1, -1, -1};
+    dirLight.Intensity     = Vector4(1, 1, 1, 1);
+    dirLight.IsDirectional = true;
+
+    lights[0] = dirLight;
+
+    Vector4 ambientLight = Vector4(0.2f, 0.2f, 0.2f, 1);
+
+    long lightDataSize = sizeof(LightData) * lightsCount;
     glBindBuffer(GL_UNIFORM_BUFFER, lightingUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float) * 3, &directionalLightDirection);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 3, sizeof(Vector4), &directionalLightColor);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 3 + sizeof(Vector4), sizeof(Vector4), &ambientLight);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, lightDataSize, &lights);
+    glBufferSubData(GL_UNIFORM_BUFFER, lightDataSize, sizeof(Vector4), &ambientLight);
+    glBufferSubData(GL_UNIFORM_BUFFER, lightDataSize + sizeof(Vector4), sizeof(int), &lightsCount);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
@@ -149,26 +169,26 @@ void initProgram(int shaderCount, GLuint *shaders)
         glDetachShader(program, shaders[i]);
 }
 
-Vector4 calcTranslation(float phase, float z)
+Vector3 calcTranslation(float phase, float z)
 {
     const float radius = 2;
 
     float xOffset = sinf(phase * 2 * (float) M_PI) * radius;
     float yOffset = cosf(phase * 2 * (float) M_PI) * radius;
 
-    return {xOffset, yOffset, z, 0};
+    return {xOffset, yOffset, z};
 }
 
 Quaternion calcRotation(float phase, int i)
 {
-    Vector4 axis = Vector4(i == 0 ? 1 : 0, i == 0 ? 0 : 1, 0, 0);
+    Vector3 axis = Vector3(i == 0 ? 1 : 0, i == 0 ? 0 : 1, 0);
     return Quaternion::AngleAxis(360 * phase, axis);
 }
 
-Vector4 calcScale(float phase)
+Vector3 calcScale(float phase)
 {
     float scale = Math::Lerp(1, 2, (sinf(phase * 2 * (float) M_PI) + 1) * 0.5f);
-    return {scale, scale, scale, 1};
+    return {scale, scale, scale};
 }
 
 void display()
@@ -198,7 +218,7 @@ void display()
         if (i == 0)
             modelMatrix = translation * rotation * scale;
         else
-            modelMatrix = Matrix4x4::TRS(Vector4(0, -3, -4, 0), calcRotation(phase, i), Vector4(2, 1, 0.5f, 1));
+            modelMatrix = Matrix4x4::TRS(Vector3(0, -3, -4), calcRotation(phase, i), Vector3(2, 1, 0.5f));
 
         Matrix4x4 modelNormalMatrix = (rotation * scale).Invert().Transpose();
 

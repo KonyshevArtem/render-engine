@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_QUATERNION_H
 #define OPENGL_STUDY_QUATERNION_H
 
-#include "../vector4/vector4.h"
+#include "../vector3/vector3.h"
 
 struct Quaternion
 {
@@ -13,7 +13,7 @@ public:
 
     Quaternion(float x, float y, float z, float w);
 
-    static Quaternion AngleAxis(float angleDeg, Vector4 axis);
+    static Quaternion AngleAxis(float angleDeg, Vector3 axis);
 };
 
 #endif//OPENGL_STUDY_QUATERNION_H

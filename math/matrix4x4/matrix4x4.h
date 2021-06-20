@@ -2,7 +2,7 @@
 #define OPENGL_STUDY_MATRIX4X4_H
 
 #include "../quaternion/quaternion.h"
-#include "../vector4/vector4.h"
+#include "../vector3/vector3.h"
 #include "string"
 
 struct Matrix4x4
@@ -29,13 +29,13 @@ public:
 
     static Matrix4x4 Identity();
 
-    static Matrix4x4 Translation(Vector4 translation);
+    static Matrix4x4 Translation(Vector3 translation);
 
     static Matrix4x4 Rotation(Quaternion quaternion);
 
-    static Matrix4x4 Scale(Vector4 scale);
+    static Matrix4x4 Scale(Vector3 scale);
 
-    static Matrix4x4 TRS(Vector4 translation, Quaternion rotation, Vector4 scale);
+    static Matrix4x4 TRS(Vector3 translation, Quaternion rotation, Vector3 scale);
 
     float GetElement(int column, int row) const;
 

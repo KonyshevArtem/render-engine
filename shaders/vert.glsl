@@ -1,8 +1,8 @@
 #version 410
 
-layout(location = 0) in vec4 vertPosition;
+layout(location = 0) in vec4 vertPositionOS;
 layout(location = 1) in vec4 vertColor;
-layout(location = 2) in vec3 vertNormal;
+layout(location = 2) in vec3 vertNormalOS;
 
 layout(std140) uniform Matrices
 {
@@ -10,11 +10,18 @@ layout(std140) uniform Matrices
     mat4 viewMatrix;
 };
 
-layout(std140) uniform Lighting
+layout(std140) struct LightData // 48 bytes
 {
-    vec3 directionalLightDirection;
-    vec4 directionalLightColor;
-    vec4 ambientLightColor;
+    vec3 posOrDirWS;        // 0  16
+    vec4 intensity;         // 16 32
+    bool isDirectional;     // 32 48 - padding of each struct member is max padding
+};
+
+layout(std140) uniform Lighting // 80 bytes (68 bytes round up by 16)
+{
+    LightData lights[1];        // 0  48
+    vec4 ambientLightColor;     // 48 64
+    int lightsCount;            // 64 68
 };
 
 uniform mat4 modelMatrix;
@@ -23,13 +30,14 @@ uniform mat4 modelNormalMatrix;
 smooth out vec4 color;
 
 void main(){
-    gl_Position = projMatrix * viewMatrix * modelMatrix * vertPosition;
+    gl_Position = projMatrix * viewMatrix * modelMatrix * vertPositionOS;
 
-    mat4 normalMatrix = viewMatrix * modelNormalMatrix;
-    vec3 viewNormal = normalize((normalMatrix * vec4(vertNormal, 0)).xyz);
-    vec3 viewLightDirection = normalize((viewMatrix * vec4(normalize(-directionalLightDirection), 0)).xyz);
+    vec3 normalWS = normalize((modelNormalMatrix * vec4(vertNormalOS, 0)).xyz);
 
-    vec4 directionalColor = vertColor * directionalLightColor * clamp(dot(viewNormal, viewLightDirection), 0, 1);
-    vec4 ambientColor = vertColor * ambientLightColor;
-    color = directionalColor + ambientColor;
+    color = vertColor * ambientLightColor;
+    for (int i = 0; i < lightsCount; ++i)
+    {
+        vec3 lightDirWS = normalize(-lights[i].posOrDirWS);
+        color += vertColor * lights[i].intensity * clamp(dot(normalWS, lightDirWS), 0, 1);
+    }
 }

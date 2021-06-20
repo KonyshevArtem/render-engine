@@ -1,6 +1,11 @@
 #include "vector4.h"
 #include <cmath>
 
+Vector4::Vector4()
+{
+    x = y = z = w = 0;
+}
+
 Vector4::Vector4(float x, float y, float z, float w)
 {
     this->x = x;
@@ -12,11 +17,6 @@ Vector4::Vector4(float x, float y, float z, float w)
 Vector4 Vector4::Zero()
 {
     return {0, 0, 0, 0};
-}
-
-Vector4 Vector4::ToVector3() const
-{
-    return {this->x, this->y, this->z, 0};
 }
 
 float Vector4::Length() const

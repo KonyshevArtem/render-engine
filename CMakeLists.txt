@@ -14,6 +14,8 @@ add_executable(
         math/matrix4x4/matrix4x4.h
         math/vector4/vector4.cpp
         math/vector4/vector4.h
+        math/vector3/vector3.cpp
+        math/vector3/vector3.h
         math/quaternion/quaternion.cpp
         math/quaternion/quaternion.h
         core/gameObject/gameObject.h

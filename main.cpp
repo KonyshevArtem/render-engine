@@ -9,6 +9,7 @@
 #include "shaders/shader_loader.h"
 #include "utils/utils.h"
 
+#include "core/light/light_data.h"
 #include "core/mesh/cube/cube_mesh.h"
 #include "core/mesh/cylinder/cylinder_mesh.h"
 #include "core/mesh/mesh.h"
@@ -32,16 +33,6 @@ GLuint matricesUniformBuffer;
 GLuint lightingUniformBuffer;
 
 std::vector<Mesh *> meshes;
-
-struct LightData
-{
-public:
-    Vector3 PosOrDirWS;
-    float   p1;             // used for padding bytes
-    Vector4 Intensity;
-    int     IsDirectional;
-    float   p2[3];          // used for padding bytes
-};
 
 void initUniformBlocks()
 {
@@ -105,7 +96,7 @@ void initViewMatrix()
 
 void initLighting()
 {
-    int       lightsCount = 1;
+    int       lightsCount = 2;
     LightData lights[lightsCount];
 
     LightData dirLight;
@@ -113,7 +104,14 @@ void initLighting()
     dirLight.Intensity     = Vector4(1, 1, 1, 1);
     dirLight.IsDirectional = true;
 
+    LightData pointLight;
+    pointLight.PosOrDirWS    = Vector3(-3, -3, -4);
+    pointLight.Intensity     = Vector4(1, 0, 0, 1);
+    pointLight.IsDirectional = false;
+    pointLight.Attenuation   = 0.3f;
+
     lights[0] = dirLight;
+    lights[1] = pointLight;
 
     Vector4 ambientLight = Vector4(0.2f, 0.2f, 0.2f, 1);
 

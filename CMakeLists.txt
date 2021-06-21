@@ -27,7 +27,8 @@ add_executable(
         core/mesh/cube/cube_mesh.cpp
         core/mesh/cube/cube_mesh.h
         core/mesh/cylinder/cylinder_mesh.cpp
-        core/mesh/cylinder/cylinder_mesh.h)
+        core/mesh/cylinder/cylinder_mesh.h
+        core/light/light_data.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

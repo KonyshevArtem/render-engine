@@ -217,7 +217,7 @@ int main(int argc, char **argv)
     glutInitWindowSize(1024, 720);
     glutCreateWindow("OpenGL");
 
-    program = ShaderLoader::LoadShader("shaders/fragmentLit");
+    program = ShaderLoader::LoadShader("shaders/vertexLit");
 
     Mesh *cubeMesh = new CubeMesh();
     cubeMesh->Init();

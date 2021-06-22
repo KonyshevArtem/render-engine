@@ -1,6 +1,12 @@
 #include "quaternion.h"
 #include <cmath>
 
+Quaternion::Quaternion()
+{
+    x = y = z = 0;
+    w         = 1;
+}
+
 Quaternion::Quaternion(float x, float y, float z, float w)
 {
     this->x = x;

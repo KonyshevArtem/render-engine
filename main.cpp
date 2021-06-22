@@ -1,5 +1,4 @@
 #include <cmath>
-#include <cstdio>
 #include <vector>
 
 #define GL_SILENCE_DEPRECATION
@@ -9,6 +8,7 @@
 #include "shaders/shader_loader.h"
 #include "utils/utils.h"
 
+#include "core/gameObject/gameObject.h"
 #include "core/light/light_data.h"
 #include "core/mesh/cube/cube_mesh.h"
 #include "core/mesh/cylinder/cylinder_mesh.h"
@@ -19,20 +19,11 @@
 #include "math/vector3/vector3.h"
 #include "math/vector4/vector4.h"
 
-const float loopDuration = 3000;
-
-const float fov   = 85;
-const float zNear = 0.5f;
-const float zFar  = 100;
-
-Matrix4x4 perspectiveMatrix;
-Matrix4x4 viewMatrix;
-
 GLuint program;
 GLuint matricesUniformBuffer;
 GLuint lightingUniformBuffer;
 
-std::vector<Mesh *> meshes;
+std::vector<GameObject *> gameObjects;
 
 void initUniformBlocks()
 {
@@ -63,7 +54,11 @@ void initUniformBlocks()
 
 void initPerspectiveMatrix(int width, int height)
 {
-    perspectiveMatrix = Matrix4x4::Zero();
+    Matrix4x4 perspectiveMatrix = Matrix4x4::Zero();
+
+    const float fov   = 85;
+    const float zNear = 0.5f;
+    const float zFar  = 100;
 
     float aspect = (float) width / (float) height;
     float top    = zNear + ((float) M_PI / 180 * fov / 2);
@@ -86,7 +81,7 @@ void initPerspectiveMatrix(int width, int height)
 
 void initViewMatrix()
 {
-    viewMatrix = Matrix4x4::Translation(Vector3(0, -0.5f, 0));
+    Matrix4x4 viewMatrix = Matrix4x4::Translation(Vector3(3, -0.5f, 0));
 
     long size = sizeof(Matrix4x4);
     glBindBuffer(GL_UNIFORM_BUFFER, matricesUniformBuffer);
@@ -138,43 +133,14 @@ void initDepth()
     glDepthRange(0, 1);
 }
 
-void initProgram(int shaderCount, GLuint *shaders)
-{
-    program = glCreateProgram();
-
-    for (int i = 0; i < shaderCount; ++i)
-        glAttachShader(program, shaders[i]);
-
-    glLinkProgram(program);
-
-    GLint status;
-    glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (status == GL_FALSE)
-    {
-        GLint infoLogLength;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
-
-        auto *logMsg = new GLchar[infoLogLength + 1];
-        glGetProgramInfoLog(program, infoLogLength, nullptr, logMsg);
-        fprintf(stderr, "Program link failed\n%s", logMsg);
-
-        free(shaders);
-        free(logMsg);
-        exit(1);
-    }
-
-    for (int i = 0; i < shaderCount; ++i)
-        glDetachShader(program, shaders[i]);
-}
-
-Vector3 calcTranslation(float phase, float z)
+Vector3 calcTranslation(float phase)
 {
     const float radius = 2;
 
     float xOffset = sinf(phase * 2 * (float) M_PI) * radius;
     float yOffset = cosf(phase * 2 * (float) M_PI) * radius;
 
-    return {xOffset, yOffset, z};
+    return {xOffset, yOffset, -5};
 }
 
 Quaternion calcRotation(float phase, int i)
@@ -189,41 +155,46 @@ Vector3 calcScale(float phase)
     return {scale, scale, scale};
 }
 
+void update()
+{
+    const float loopDuration = 3000;
+    auto        time         = (float) glutGet(GLUT_ELAPSED_TIME);
+    float       phase        = fmodf(fmodf(time, loopDuration) / loopDuration, 1.0f);
+
+    gameObjects[0]->LocalPosition = calcTranslation(phase);
+    gameObjects[0]->LocalRotation = calcRotation(phase, 0);
+    gameObjects[0]->LocalScale    = calcScale(phase);
+
+    gameObjects[1]->LocalRotation = calcRotation(phase, 1);
+}
+
 void display()
 {
+    update();
+
     glClearColor(0, 0, 0, 0);
     glClearDepth(1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    auto time = (float) glutGet(GLUT_ELAPSED_TIME);
 
     glUseProgram(program);
 
     GLint modelMatrixLocation       = glGetUniformLocation(program, "modelMatrix");
     GLint modelNormalMatrixLocation = glGetUniformLocation(program, "modelNormalMatrix");
 
-    for (int i = 0; i < meshes.size(); ++i)
+    for (auto go: gameObjects)
     {
-        float phase = fmodf(fmodf(time, loopDuration) / loopDuration + (float) i * 0.5f, 1.0f);
+        if (go->Mesh == nullptr)
+            continue;
 
-        glBindVertexArray(meshes[i]->GetVertexArrayObject());
+        glBindVertexArray(go->Mesh->GetVertexArrayObject());
 
-        Matrix4x4 translation = Matrix4x4::Translation(calcTranslation(phase, -5));
-        Matrix4x4 rotation    = Matrix4x4::Rotation(calcRotation(phase, i));
-        Matrix4x4 scale       = Matrix4x4::Scale(calcScale(phase));
-
-        Matrix4x4 modelMatrix = Matrix4x4::Identity();
-        if (i == 0)
-            modelMatrix = translation * rotation * scale;
-        else
-            modelMatrix = Matrix4x4::TRS(Vector3(0, -3, -4), calcRotation(phase, i), Vector3(2, 1, 0.5f));
-
-        Matrix4x4 modelNormalMatrix = (rotation * scale).Invert().Transpose();
+        Matrix4x4 modelMatrix       = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
+        Matrix4x4 modelNormalMatrix = modelMatrix.Invert().Transpose();
 
         glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelMatrix);
         glUniformMatrix4fv(modelNormalMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelNormalMatrix);
 
-        glDrawElements(GL_TRIANGLES, meshes[i]->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, go->Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
     }
 
     glBindVertexArray(0);
@@ -246,20 +217,38 @@ int main(int argc, char **argv)
     glutInitWindowSize(1024, 720);
     glutCreateWindow("OpenGL");
 
-    auto *shaders = new GLuint[2];
-    shaders[0]    = ShaderLoader::LoadShader(GL_VERTEX_SHADER, "shaders/vert.glsl");
-    shaders[1]    = ShaderLoader::LoadShader(GL_FRAGMENT_SHADER, "shaders/frag.glsl");
-    initProgram(2, shaders);
-    free(shaders);
+    program = ShaderLoader::LoadShader("shaders/fragmentLit");
 
-    Mesh *cube = new CubeMesh();
-    cube->Init();
+    Mesh *cubeMesh = new CubeMesh();
+    cubeMesh->Init();
 
-    Mesh *cylinder = new CylinderMesh();
-    cylinder->Init();
+    Mesh *cylinderMesh = new CylinderMesh();
+    cylinderMesh->Init();
 
-    meshes.push_back(cube);
-    meshes.push_back(cylinder);
+    auto *rotatingCube = new GameObject();
+    rotatingCube->Mesh = cubeMesh;
+
+    auto *rotatingCylinder          = new GameObject();
+    rotatingCylinder->Mesh          = cylinderMesh;
+    rotatingCylinder->LocalPosition = Vector3(0, -3, -4);
+    rotatingCylinder->LocalScale    = Vector3(2, 1, 0.5f);
+
+    auto floorVertexLit           = new GameObject();
+    floorVertexLit->Mesh          = cubeMesh;
+    floorVertexLit->LocalPosition = Vector3(-9, -5, -5.5f);
+    floorVertexLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
+    floorVertexLit->LocalScale    = Vector3(5, 1, 2);
+
+    auto floorFragmentLit           = new GameObject();
+    floorFragmentLit->Mesh          = cubeMesh;
+    floorFragmentLit->LocalPosition = Vector3(3, -5, -5.5f);
+    floorFragmentLit->LocalRotation = Quaternion::AngleAxis(10, Vector3(0, 1, 0));
+    floorFragmentLit->LocalScale    = Vector3(5, 1, 2);
+
+    gameObjects.push_back(rotatingCube);
+    gameObjects.push_back(rotatingCylinder);
+    gameObjects.push_back(floorVertexLit);
+    gameObjects.push_back(floorFragmentLit);
 
     initUniformBlocks();
 

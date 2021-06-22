@@ -9,7 +9,11 @@
 class ShaderLoader
 {
 public:
-    static GLuint LoadShader(GLenum shaderType, const std::string& path);
+    static GLuint LoadShader(const std::string &path);
+
+private:
+    static GLuint CompileShaderPart(GLuint shaderPartType, const std::string &path);
+    static GLuint LinkShader(GLuint vertexPart, GLuint fragmentPart);
 };
 
-#endif//OPENGL_STUDY_SHADER_LOADER_H
+#endif //OPENGL_STUDY_SHADER_LOADER_H

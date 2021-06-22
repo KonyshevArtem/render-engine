@@ -3,15 +3,20 @@
 
 #include "../../math/quaternion/quaternion.h"
 #include "../../math/vector3/vector3.h"
+#include "../mesh/mesh.h"
 #include "vector"
 
 class GameObject
 {
-    GameObject *              parent;
-    std::vector<GameObject *> children;
-    Vector3                   localPosition;
-    Quaternion                localRotation;
-    Vector3                   localScale;
+public:
+    GameObject *              Parent;
+    std::vector<GameObject *> Children;
+    Vector3                   LocalPosition;
+    Quaternion                LocalRotation;
+    Vector3                   LocalScale;
+    Mesh *                    Mesh;
+
+    GameObject();
 };
 
-#endif//OPENGL_STUDY_GAMEOBJECT_H
+#endif //OPENGL_STUDY_GAMEOBJECT_H

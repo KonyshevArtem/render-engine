@@ -18,6 +18,11 @@ Vector3 Vector3::Zero()
     return {0, 0, 0};
 }
 
+Vector3 Vector3::One()
+{
+    return {1, 1, 1};
+}
+
 float Vector3::Length() const
 {
     return sqrtf(this->x * this->x +

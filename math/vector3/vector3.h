@@ -14,6 +14,8 @@ public:
 
     static Vector3 Zero();
 
+    static Vector3 One();
+
     float Length() const;
 
     Vector3 Normalize() const;

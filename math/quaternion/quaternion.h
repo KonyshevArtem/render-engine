@@ -11,6 +11,8 @@ public:
     float z;
     float w;
 
+    Quaternion();
+
     Quaternion(float x, float y, float z, float w);
 
     static Quaternion AngleAxis(float angleDeg, Vector3 axis);

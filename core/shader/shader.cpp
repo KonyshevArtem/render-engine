@@ -1,17 +1,32 @@
-#include "shader_loader.h"
-#include "../utils/utils.h"
+#include "shader.h"
+#include "../../utils/utils.h"
+#include "OpenGL/gl3.h"
 #include "string"
 #include <cstdio>
 #include <cstdlib>
 
-GLuint ShaderLoader::LoadShader(const std::string &path)
+Shader::Shader(GLuint program)
 {
-    GLuint vertexPart   = ShaderLoader::CompileShaderPart(GL_VERTEX_SHADER, path + "/vert.glsl");
-    GLuint fragmentPart = ShaderLoader::CompileShaderPart(GL_FRAGMENT_SHADER, path + "/frag.glsl");
-    return ShaderLoader::LinkShader(vertexPart, fragmentPart);
+    Program                   = program;
+    ModelMatrixLocation       = glGetUniformLocation(program, "modelMatrix");
+    ModelNormalMatrixLocation = glGetUniformLocation(program, "modelNormalMatrix");
+    MatricesUniformIndex      = glGetUniformBlockIndex(program, "Matrices");
+    LightingUniformIndex      = glGetUniformBlockIndex(program, "Lighting");
+
+    glUniformBlockBinding(program, MatricesUniformIndex, 0);
+    glUniformBlockBinding(program, LightingUniformIndex, 1);
 }
 
-GLuint ShaderLoader::CompileShaderPart(GLuint shaderPartType, const std::string &path)
+Shader *Shader::Load(const std::string &path)
+{
+    GLuint vertexPart   = Shader::CompileShaderPart(GL_VERTEX_SHADER, path + "/vert.glsl");
+    GLuint fragmentPart = Shader::CompileShaderPart(GL_FRAGMENT_SHADER, path + "/frag.glsl");
+
+    GLuint program = Shader::LinkProgram(vertexPart, fragmentPart);
+    return new Shader(program);
+}
+
+GLuint Shader::CompileShaderPart(GLuint shaderPartType, const std::string &path)
 {
     char *shaderSource = Utils::ReadFile(path);
 
@@ -42,7 +57,7 @@ GLuint ShaderLoader::CompileShaderPart(GLuint shaderPartType, const std::string 
     return shader;
 }
 
-GLuint ShaderLoader::LinkShader(GLuint vertexPart, GLuint fragmentPart)
+GLuint Shader::LinkProgram(GLuint vertexPart, GLuint fragmentPart)
 {
     GLuint program = glCreateProgram();
 

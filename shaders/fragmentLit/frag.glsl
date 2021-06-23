@@ -1,14 +1,10 @@
 #version 410
 
-layout(location = 0) in vec4 vertPositionOS;
-layout(location = 1) in vec4 vertColor;
-layout(location = 2) in vec3 vertNormalOS;
+smooth in vec4 positionWS;
+smooth in vec3 normalWS;
+smooth in vec4 color;
 
-layout(std140) uniform Matrices // 128 bytes
-{
-    mat4 projMatrix;
-    mat4 viewMatrix;
-};
+out vec4 outColor;
 
 layout(std140) struct LightData // 48 bytes (40 bytes round up by 16)
 {
@@ -25,14 +21,8 @@ layout(std140) uniform Lighting // 128 bytes (116 bytes round up by 16)
     int lightsCount;            // 112 116
 };
 
-uniform mat4 modelMatrix;
-uniform mat4 modelNormalMatrix;
-
-smooth out vec4 color;
-
-vec4 getLight(vec3 vertPositionWS){
+vec4 getLight(){
     vec4 light = vec4(0, 0, 0, 0);
-    vec3 normalWS = normalize((modelNormalMatrix * vec4(vertNormalOS, 0)).xyz);
 
     for (int i = 0; i < lightsCount; ++i)
     {
@@ -41,8 +31,8 @@ vec4 getLight(vec3 vertPositionWS){
             light += lights[i].intensity * clamp(dot(normalWS, lightDirWS), 0, 1);
         }
         else {
-            vec3 lightDirWS = normalize(lights[i].posOrDirWS - vertPositionWS);
-            float distance = distance(lights[i].posOrDirWS, vertPositionWS);
+            vec3 lightDirWS = normalize(lights[i].posOrDirWS - positionWS.xyz);
+            float distance = distance(lights[i].posOrDirWS, positionWS.xyz);
             light += lights[i].intensity * clamp(dot(normalWS, lightDirWS), 0, 1) / (1 + lights[i].attenuation * distance * distance);
         }
     }
@@ -51,9 +41,6 @@ vec4 getLight(vec3 vertPositionWS){
 }
 
 void main(){
-    vec4 vertPositionWS = modelMatrix * vertPositionOS;
-    gl_Position = projMatrix * viewMatrix * vertPositionWS;
-
-    color = vertColor * ambientLightColor;
-    color += vertColor * getLight(vertPositionWS.xyz);
+    outColor = color * ambientLightColor;
+    outColor += color * getLight();
 }

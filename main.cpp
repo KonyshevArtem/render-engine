@@ -1,11 +1,13 @@
 #include <cmath>
 #include <vector>
 
+#define MATRICES_UNIFORM_SIZE 128
+#define LIGHTING_UNIFORM_SIZE 128
+
 #define GL_SILENCE_DEPRECATION
 
 #include "GLUT/glut.h"
 #include "OpenGL/gl3.h"
-#include "shaders/shader_loader.h"
 #include "utils/utils.h"
 
 #include "core/gameObject/gameObject.h"
@@ -13,13 +15,13 @@
 #include "core/mesh/cube/cube_mesh.h"
 #include "core/mesh/cylinder/cylinder_mesh.h"
 #include "core/mesh/mesh.h"
+#include "core/shader/shader.h"
 #include "math/math_utils.h"
 #include "math/matrix4x4/matrix4x4.h"
 #include "math/quaternion/quaternion.h"
 #include "math/vector3/vector3.h"
 #include "math/vector4/vector4.h"
 
-GLuint program;
 GLuint matricesUniformBuffer;
 GLuint lightingUniformBuffer;
 
@@ -27,29 +29,18 @@ std::vector<GameObject *> gameObjects;
 
 void initUniformBlocks()
 {
-    GLuint matricesUniformIndex = glGetUniformBlockIndex(program, "Matrices");
-    GLuint lightingUniformIndex = glGetUniformBlockIndex(program, "Lighting");
-
-    glUniformBlockBinding(program, matricesUniformIndex, 0);
-    glUniformBlockBinding(program, lightingUniformIndex, 1);
-
-    GLint matricesSize;
-    GLint lightingSize;
-    glGetActiveUniformBlockiv(program, matricesUniformIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &matricesSize);
-    glGetActiveUniformBlockiv(program, lightingUniformIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &lightingSize);
-
     glGenBuffers(1, &matricesUniformBuffer);
     glBindBuffer(GL_UNIFORM_BUFFER, matricesUniformBuffer);
-    glBufferData(GL_UNIFORM_BUFFER, matricesSize, nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, MATRICES_UNIFORM_SIZE, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glGenBuffers(1, &lightingUniformBuffer);
     glBindBuffer(GL_UNIFORM_BUFFER, lightingUniformBuffer);
-    glBufferData(GL_UNIFORM_BUFFER, lightingSize, nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, LIGHTING_UNIFORM_SIZE, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, matricesUniformBuffer, 0, matricesSize);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 1, lightingUniformBuffer, 0, lightingSize);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, matricesUniformBuffer, 0, MATRICES_UNIFORM_SIZE);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 1, lightingUniformBuffer, 0, LIGHTING_UNIFORM_SIZE);
 }
 
 void initPerspectiveMatrix(int width, int height)
@@ -166,6 +157,8 @@ void update()
     gameObjects[0]->LocalScale    = calcScale(phase);
 
     gameObjects[1]->LocalRotation = calcRotation(phase, 1);
+
+    gameObjects[2]->LocalRotation = calcRotation(phase, 1);
 }
 
 void display()
@@ -176,23 +169,19 @@ void display()
     glClearDepth(1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUseProgram(program);
-
-    GLint modelMatrixLocation       = glGetUniformLocation(program, "modelMatrix");
-    GLint modelNormalMatrixLocation = glGetUniformLocation(program, "modelNormalMatrix");
-
     for (auto go: gameObjects)
     {
-        if (go->Mesh == nullptr)
+        if (go->Mesh == nullptr || go->Shader == nullptr)
             continue;
 
+        glUseProgram(go->Shader->Program);
         glBindVertexArray(go->Mesh->GetVertexArrayObject());
 
         Matrix4x4 modelMatrix       = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
         Matrix4x4 modelNormalMatrix = modelMatrix.Invert().Transpose();
 
-        glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelMatrix);
-        glUniformMatrix4fv(modelNormalMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelNormalMatrix);
+        glUniformMatrix4fv(go->Shader->ModelMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelMatrix);
+        glUniformMatrix4fv(go->Shader->ModelNormalMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelNormalMatrix);
 
         glDrawElements(GL_TRIANGLES, go->Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
     }
@@ -217,7 +206,8 @@ int main(int argc, char **argv)
     glutInitWindowSize(1024, 720);
     glutCreateWindow("OpenGL");
 
-    program = ShaderLoader::LoadShader("shaders/vertexLit");
+    Shader *vertexLitShader   = Shader::Load("shaders/vertexLit");
+    Shader *fragmentLitShader = Shader::Load("shaders/fragmentLit");
 
     Mesh *cubeMesh = new CubeMesh();
     cubeMesh->Init();
@@ -225,28 +215,39 @@ int main(int argc, char **argv)
     Mesh *cylinderMesh = new CylinderMesh();
     cylinderMesh->Init();
 
-    auto *rotatingCube = new GameObject();
-    rotatingCube->Mesh = cubeMesh;
+    auto *rotatingCube   = new GameObject();
+    rotatingCube->Mesh   = cubeMesh;
+    rotatingCube->Shader = vertexLitShader;
 
     auto *rotatingCylinder          = new GameObject();
     rotatingCylinder->Mesh          = cylinderMesh;
+    rotatingCylinder->Shader        = vertexLitShader;
     rotatingCylinder->LocalPosition = Vector3(0, -3, -4);
     rotatingCylinder->LocalScale    = Vector3(2, 1, 0.5f);
 
+    auto *cylinderFragmentLit          = new GameObject();
+    cylinderFragmentLit->Mesh          = cylinderMesh;
+    cylinderFragmentLit->Shader        = fragmentLitShader;
+    cylinderFragmentLit->LocalPosition = Vector3(-3, -3, -6);
+    cylinderFragmentLit->LocalScale    = Vector3(2, 1, 0.5f);
+
     auto floorVertexLit           = new GameObject();
     floorVertexLit->Mesh          = cubeMesh;
-    floorVertexLit->LocalPosition = Vector3(-9, -5, -5.5f);
-    floorVertexLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
+    floorVertexLit->Shader        = vertexLitShader;
+    floorVertexLit->LocalPosition = Vector3(3, -5, -5.5f);
+    floorVertexLit->LocalRotation = Quaternion::AngleAxis(10, Vector3(0, 1, 0));
     floorVertexLit->LocalScale    = Vector3(5, 1, 2);
 
     auto floorFragmentLit           = new GameObject();
     floorFragmentLit->Mesh          = cubeMesh;
-    floorFragmentLit->LocalPosition = Vector3(3, -5, -5.5f);
-    floorFragmentLit->LocalRotation = Quaternion::AngleAxis(10, Vector3(0, 1, 0));
+    floorFragmentLit->Shader        = fragmentLitShader;
+    floorFragmentLit->LocalPosition = Vector3(-9, -5, -5.5f);
+    floorFragmentLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
     floorFragmentLit->LocalScale    = Vector3(5, 1, 2);
 
     gameObjects.push_back(rotatingCube);
     gameObjects.push_back(rotatingCylinder);
+    gameObjects.push_back(cylinderFragmentLit);
     gameObjects.push_back(floorVertexLit);
     gameObjects.push_back(floorFragmentLit);
 

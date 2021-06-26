@@ -47,12 +47,12 @@ void initPerspectiveMatrix(int width, int height)
 {
     Matrix4x4 perspectiveMatrix = Matrix4x4::Zero();
 
-    const float fov   = 85;
+    const float fov   = 120;
     const float zNear = 0.5f;
     const float zFar  = 100;
 
     float aspect = (float) width / (float) height;
-    float top    = zNear + ((float) M_PI / 180 * fov / 2);
+    float top    = zNear * ((float) M_PI / 180 * fov / 2);
     float bottom = -top;
     float right  = aspect * top;
     float left   = -right;

@@ -2,7 +2,8 @@
 #include <vector>
 
 #define MATRICES_UNIFORM_SIZE 128
-#define LIGHTING_UNIFORM_SIZE 128
+#define LIGHTING_UNIFORM_SIZE 176
+#define CAMERA_DATA_UNIFORM_SIZE 16
 
 #define GL_SILENCE_DEPRECATION
 
@@ -24,6 +25,7 @@
 
 GLuint matricesUniformBuffer;
 GLuint lightingUniformBuffer;
+GLuint cameraDataUniformBuffer;
 
 std::vector<GameObject *> gameObjects;
 
@@ -39,8 +41,14 @@ void initUniformBlocks()
     glBufferData(GL_UNIFORM_BUFFER, LIGHTING_UNIFORM_SIZE, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+    glGenBuffers(1, &cameraDataUniformBuffer);
+    glBindBuffer(GL_UNIFORM_BUFFER, cameraDataUniformBuffer);
+    glBufferData(GL_UNIFORM_BUFFER, CAMERA_DATA_UNIFORM_SIZE, nullptr, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
     glBindBufferRange(GL_UNIFORM_BUFFER, 0, matricesUniformBuffer, 0, MATRICES_UNIFORM_SIZE);
     glBindBufferRange(GL_UNIFORM_BUFFER, 1, lightingUniformBuffer, 0, LIGHTING_UNIFORM_SIZE);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 2, cameraDataUniformBuffer, 0, CAMERA_DATA_UNIFORM_SIZE);
 }
 
 void initPerspectiveMatrix(int width, int height)
@@ -72,21 +80,26 @@ void initPerspectiveMatrix(int width, int height)
 
 void initViewMatrix()
 {
-    Matrix4x4 viewMatrix = Matrix4x4::Translation(Vector3(3, -0.5f, 0));
+    Vector3   cameraPosWS = Vector3(-10, 0.5f, 5);
+    Matrix4x4 viewMatrix  = Matrix4x4::Translation(Vector3(-cameraPosWS.x, -cameraPosWS.y, -cameraPosWS.z));
 
     long size = sizeof(Matrix4x4);
     glBindBuffer(GL_UNIFORM_BUFFER, matricesUniformBuffer);
     glBufferSubData(GL_UNIFORM_BUFFER, size, size, &viewMatrix);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, cameraDataUniformBuffer);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Vector4), &cameraPosWS);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void initLighting()
 {
-    int       lightsCount = 2;
+    int       lightsCount = 3;
     LightData lights[lightsCount];
 
     LightData dirLight;
-    dirLight.PosOrDirWS    = Vector3 {-1, -1, -1};
+    dirLight.PosOrDirWS    = Vector3 {0, -0.3f, 1};
     dirLight.Intensity     = Vector4(1, 1, 1, 1);
     dirLight.IsDirectional = true;
 
@@ -182,6 +195,7 @@ void display()
 
         glUniformMatrix4fv(go->Shader->ModelMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelMatrix);
         glUniformMatrix4fv(go->Shader->ModelNormalMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelNormalMatrix);
+        glUniform1f(go->Shader->SmoothnessLocation, go->Smoothness);
 
         glDrawElements(GL_TRIANGLES, go->Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
     }
@@ -230,6 +244,7 @@ int main(int argc, char **argv)
     cylinderFragmentLit->Shader        = fragmentLitShader;
     cylinderFragmentLit->LocalPosition = Vector3(-3, -3, -6);
     cylinderFragmentLit->LocalScale    = Vector3(2, 1, 0.5f);
+    cylinderFragmentLit->Smoothness    = 5;
 
     auto floorVertexLit           = new GameObject();
     floorVertexLit->Mesh          = cubeMesh;
@@ -244,6 +259,7 @@ int main(int argc, char **argv)
     floorFragmentLit->LocalPosition = Vector3(-9, -5, -5.5f);
     floorFragmentLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
     floorFragmentLit->LocalScale    = Vector3(5, 1, 2);
+    floorFragmentLit->Smoothness    = 10;
 
     gameObjects.push_back(rotatingCube);
     gameObjects.push_back(rotatingCylinder);

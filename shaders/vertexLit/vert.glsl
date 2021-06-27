@@ -18,11 +18,11 @@ layout(std140) struct LightData // 48 bytes (40 bytes round up by 16)
     float attenuation;      // 36 40
 };
 
-layout(std140) uniform Lighting // 128 bytes (116 bytes round up by 16)
+layout(std140) uniform Lighting // 176 bytes (164 bytes round up by 16)
 {
-    LightData lights[2];        // 0   96
-    vec4 ambientLightColor;     // 96  112
-    int lightsCount;            // 112 116
+    LightData lights[3];        // 0   144
+    vec4 ambientLightColor;     // 144 160
+    int lightsCount;            // 160 164
 };
 
 uniform mat4 modelMatrix;

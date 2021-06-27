@@ -6,6 +6,8 @@ smooth in vec4 color;
 
 out vec4 outColor;
 
+uniform float smoothness;
+
 layout(std140) struct LightData // 48 bytes (40 bytes round up by 16)
 {
     vec3 posOrDirWS;        // 0  16
@@ -14,27 +16,55 @@ layout(std140) struct LightData // 48 bytes (40 bytes round up by 16)
     float attenuation;      // 36 40
 };
 
-layout(std140) uniform Lighting // 128 bytes (116 bytes round up by 16)
+layout(std140) uniform Lighting // 176 bytes (164 bytes round up by 16)
 {
-    LightData lights[2];        // 0   96
-    vec4 ambientLightColor;     // 96  112
-    int lightsCount;            // 112 116
+    LightData lights[3];        // 0   144
+    vec4 ambientLightColor;     // 144 160
+    int lightsCount;            // 160 164
 };
+
+layout(std140) uniform CameraData // 16 bytes (12 bytes round up by 16)
+{
+    vec3 cameraPosWS; // 12 bytes
+};
+
+vec3 getLightDirWS(LightData light){
+    if (light.isDirectional)
+        return normalize(-light.posOrDirWS);
+    else
+        return normalize(light.posOrDirWS - positionWS.xyz);
+}
+
+float getAttenuationTerm(LightData light){
+    if (light.isDirectional)
+        return 1;
+    else
+    {
+        float distance = distance(light.posOrDirWS, positionWS.xyz);
+        return 1 / (1 + light.attenuation * distance * distance);
+    }
+}
+
+float getSpecularTerm(vec3 lightDirWS, float lightAngleCos){
+    vec3 viewDirWS = normalize(cameraPosWS - positionWS.xyz);
+    vec3 halfAngle = normalize(lightDirWS + viewDirWS);
+    float blinnTerm = clamp(dot(normalWS, halfAngle), 0, 1);
+    blinnTerm = lightAngleCos != 0 ? blinnTerm : 0;
+    blinnTerm = pow(blinnTerm, smoothness);
+    return blinnTerm;
+}
 
 vec4 getLight(){
     vec4 light = vec4(0, 0, 0, 0);
 
     for (int i = 0; i < lightsCount; ++i)
     {
-        if (lights[i].isDirectional){
-            vec3 lightDirWS = normalize(-lights[i].posOrDirWS);
-            light += lights[i].intensity * clamp(dot(normalWS, lightDirWS), 0, 1);
-        }
-        else {
-            vec3 lightDirWS = normalize(lights[i].posOrDirWS - positionWS.xyz);
-            float distance = distance(lights[i].posOrDirWS, positionWS.xyz);
-            light += lights[i].intensity * clamp(dot(normalWS, lightDirWS), 0, 1) / (1 + lights[i].attenuation * distance * distance);
-        }
+        vec3 lightDirWS = getLightDirWS(lights[i]);
+        float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
+        float attenuationTerm = getAttenuationTerm(lights[i]);
+        float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos);
+        light += lights[i].intensity * lightAngleCos * attenuationTerm;
+        light += lightAngleCos * specularTerm * attenuationTerm;
     }
 
     return light;

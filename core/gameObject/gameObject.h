@@ -17,6 +17,7 @@ public:
     Vector3                   LocalScale;
     Mesh *                    Mesh;
     Shader *                  Shader;
+    float                     Smoothness;
 
     GameObject();
 };

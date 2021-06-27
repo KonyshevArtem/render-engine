@@ -12,8 +12,7 @@ public:
     GLuint Program;
     GLint  ModelMatrixLocation;
     GLint  ModelNormalMatrixLocation;
-    GLuint MatricesUniformIndex;
-    GLuint LightingUniformIndex;
+    GLint  SmoothnessLocation;
 
     static Shader *Load(const std::string &path);
 

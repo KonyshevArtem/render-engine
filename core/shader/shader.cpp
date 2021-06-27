@@ -7,14 +7,17 @@
 
 Shader::Shader(GLuint program)
 {
-    Program                   = program;
-    ModelMatrixLocation       = glGetUniformLocation(program, "modelMatrix");
-    ModelNormalMatrixLocation = glGetUniformLocation(program, "modelNormalMatrix");
-    MatricesUniformIndex      = glGetUniformBlockIndex(program, "Matrices");
-    LightingUniformIndex      = glGetUniformBlockIndex(program, "Lighting");
+    Program                       = program;
+    ModelMatrixLocation           = glGetUniformLocation(program, "modelMatrix");
+    ModelNormalMatrixLocation     = glGetUniformLocation(program, "modelNormalMatrix");
+    SmoothnessLocation            = glGetUniformLocation(program, "smoothness");
+    GLuint matricesUniformIndex   = glGetUniformBlockIndex(program, "Matrices");
+    GLuint lightingUniformIndex   = glGetUniformBlockIndex(program, "Lighting");
+    GLuint cameraDataUniformIndex = glGetUniformBlockIndex(program, "CameraData");
 
-    glUniformBlockBinding(program, MatricesUniformIndex, 0);
-    glUniformBlockBinding(program, LightingUniformIndex, 1);
+    glUniformBlockBinding(program, matricesUniformIndex, 0);
+    glUniformBlockBinding(program, lightingUniformIndex, 1);
+    glUniformBlockBinding(program, cameraDataUniformIndex, 2);
 }
 
 Shader *Shader::Load(const std::string &path)

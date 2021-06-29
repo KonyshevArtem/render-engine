@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(OpenGL_Study)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
 
 add_executable(
         OpenGL_Study

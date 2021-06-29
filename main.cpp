@@ -1,4 +1,5 @@
 #include <cmath>
+#include <unordered_set>
 #include <vector>
 
 #define MATRICES_UNIFORM_SIZE 128
@@ -27,7 +28,17 @@ GLuint matricesUniformBuffer;
 GLuint lightingUniformBuffer;
 GLuint cameraDataUniformBuffer;
 
-std::vector<GameObject *> gameObjects;
+Vector3 mouseCoord;
+Vector3 mouseDelta;
+float   prevDisplayTime;
+
+GameObject *camera;
+Vector3     cameraEulerAngles;
+const float cameraRotSpeed  = 0.005f;
+const float cameraMoveSpeed = 0.1f;
+
+std::vector<GameObject *>         gameObjects;
+std::unordered_set<unsigned char> inputs;
 
 void initUniformBlocks()
 {
@@ -78,10 +89,9 @@ void initPerspectiveMatrix(int width, int height)
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void initViewMatrix()
+void initCameraData()
 {
-    Vector3   cameraPosWS = Vector3(-10, 0.5f, 5);
-    Matrix4x4 viewMatrix  = Matrix4x4::Translation(Vector3(-cameraPosWS.x, -cameraPosWS.y, -cameraPosWS.z));
+    Matrix4x4 viewMatrix = Matrix4x4::Rotation(camera->LocalRotation.Inverse()) * Matrix4x4::Translation(-camera->LocalPosition);
 
     long size = sizeof(Matrix4x4);
     glBindBuffer(GL_UNIFORM_BUFFER, matricesUniformBuffer);
@@ -89,7 +99,7 @@ void initViewMatrix()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, cameraDataUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Vector4), &cameraPosWS);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Vector4), &(camera->LocalPosition));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
@@ -161,8 +171,37 @@ Vector3 calcScale(float phase)
 
 void update()
 {
+    auto time       = (float) glutGet(GLUT_ELAPSED_TIME);
+    auto deltaTime  = time - prevDisplayTime;
+    prevDisplayTime = time;
+
+    cameraEulerAngles = cameraEulerAngles + mouseDelta * cameraRotSpeed * deltaTime;
+    if (cameraEulerAngles.x < 0)
+        cameraEulerAngles.x = 360;
+    if (cameraEulerAngles.x > 360)
+        cameraEulerAngles.x = 0;
+    if (cameraEulerAngles.y < 0)
+        cameraEulerAngles.y = 360;
+    if (cameraEulerAngles.y > 360)
+        cameraEulerAngles.y = 0;
+
+    Quaternion xRot       = Quaternion::AngleAxis(cameraEulerAngles.y, Vector3(1, 0, 0));
+    Quaternion yRot       = Quaternion::AngleAxis(cameraEulerAngles.x, Vector3(0, 1, 0));
+    camera->LocalRotation = yRot * xRot;
+
+    Vector3 cameraFwd   = camera->LocalRotation * Vector3(0, 0, -1);
+    Vector3 cameraRight = camera->LocalRotation * Vector3(1, 0, 0);
+    if (inputs.contains('w'))
+        camera->LocalPosition = camera->LocalPosition + cameraFwd * cameraMoveSpeed;
+    if (inputs.contains('s'))
+        camera->LocalPosition = camera->LocalPosition - cameraFwd * cameraMoveSpeed;
+    if (inputs.contains('d'))
+        camera->LocalPosition = camera->LocalPosition + cameraRight * cameraMoveSpeed;
+    if (inputs.contains('a'))
+        camera->LocalPosition = camera->LocalPosition - cameraRight * cameraMoveSpeed;
+
+
     const float loopDuration = 3000;
-    auto        time         = (float) glutGet(GLUT_ELAPSED_TIME);
     float       phase        = fmodf(fmodf(time, loopDuration) / loopDuration, 1.0f);
 
     gameObjects[0]->LocalPosition = calcTranslation(phase);
@@ -181,6 +220,8 @@ void display()
     glClearColor(0, 0, 0, 0);
     glClearDepth(1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    initCameraData();
 
     for (auto go: gameObjects)
     {
@@ -211,6 +252,25 @@ void reshape(int width, int height)
 {
     glViewport(0, 0, width, height);
     initPerspectiveMatrix(width, height);
+}
+
+void mouseMove(int x, int y)
+{
+    Vector3 newMouseCoord = Vector3((float) x, (float) y, 0);
+    mouseDelta            = mouseCoord - newMouseCoord;
+    mouseCoord            = newMouseCoord;
+}
+
+void keyboardDown(unsigned char key, int x, int y)
+{
+    if (!inputs.contains(key))
+        inputs.insert(key);
+}
+
+void keyboardUp(unsigned char key, int x, int y)
+{
+    if (inputs.contains(key))
+        inputs.erase(key);
 }
 
 int main(int argc, char **argv)
@@ -261,6 +321,9 @@ int main(int argc, char **argv)
     floorFragmentLit->LocalScale    = Vector3(5, 1, 2);
     floorFragmentLit->Smoothness    = 10;
 
+    camera                = new GameObject();
+    camera->LocalPosition = Vector3(-10, 0.5f, 5);
+
     gameObjects.push_back(rotatingCube);
     gameObjects.push_back(rotatingCylinder);
     gameObjects.push_back(cylinderFragmentLit);
@@ -270,12 +333,14 @@ int main(int argc, char **argv)
     initUniformBlocks();
 
     initCulling();
-    initViewMatrix();
     initDepth();
     initLighting();
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
+    glutPassiveMotionFunc(mouseMove);
+    glutKeyboardFunc(keyboardDown);
+    glutKeyboardUpFunc(keyboardUp);
 
     glutMainLoop();
 

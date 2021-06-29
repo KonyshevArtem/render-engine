@@ -39,3 +39,33 @@ Vector3 Vector3::Normalize() const
             this->z / length,
     };
 }
+
+Vector3 Vector3::operator-() const
+{
+    return {-x, -y, -z};
+}
+
+Vector3 Vector3::operator+(const Vector3 &vector) const
+{
+    return {x + vector.x, y + vector.y, z + vector.z};
+}
+
+Vector3 Vector3::operator-(const Vector3 &vector) const
+{
+    return *this + (-vector);
+}
+
+Vector3 Vector3::operator*(float value) const
+{
+    return {value * x, value * y, value * z};
+}
+
+float Vector3::Dot(const Vector3 &a, const Vector3 &b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+Vector3 Vector3::Cross(const Vector3 &a, const Vector3 &b)
+{
+    return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
+}

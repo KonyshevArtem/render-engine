@@ -28,8 +28,8 @@ GLuint matricesUniformBuffer;
 GLuint lightingUniformBuffer;
 GLuint cameraDataUniformBuffer;
 
-Vector3 mouseCoord;
-Vector3 mouseDelta;
+Vector3 mouseCoord = Vector3::Zero();
+Vector3 mouseDelta = Vector3::Zero();
 float   prevDisplayTime;
 
 GameObject *camera;
@@ -105,8 +105,9 @@ void initCameraData()
 
 void initLighting()
 {
-    int       lightsCount = 3;
-    LightData lights[lightsCount];
+    const float gammaCorrection = 1.0f / 2.2f;
+    const int   lightsCount     = 3;
+    LightData   lights[lightsCount];
 
     LightData dirLight;
     dirLight.PosOrDirWS    = Vector3 {0, -0.3f, 1};
@@ -122,13 +123,14 @@ void initLighting()
     lights[0] = dirLight;
     lights[1] = pointLight;
 
-    Vector4 ambientLight = Vector4(0.2f, 0.2f, 0.2f, 1);
+    Vector4 ambientLight = Vector4(0.05f, 0.05f, 0.05f, 1);
 
     long lightDataSize = sizeof(LightData) * lightsCount;
     glBindBuffer(GL_UNIFORM_BUFFER, lightingUniformBuffer);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, lightDataSize, &lights);
     glBufferSubData(GL_UNIFORM_BUFFER, lightDataSize, sizeof(Vector4), &ambientLight);
     glBufferSubData(GL_UNIFORM_BUFFER, lightDataSize + sizeof(Vector4), sizeof(int), &lightsCount);
+    glBufferSubData(GL_UNIFORM_BUFFER, lightDataSize + sizeof(Vector4) + sizeof(int), sizeof(float), &gammaCorrection);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 

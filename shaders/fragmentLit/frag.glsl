@@ -16,11 +16,12 @@ layout(std140) struct LightData // 48 bytes (40 bytes round up by 16)
     float attenuation;      // 36 40
 };
 
-layout(std140) uniform Lighting // 176 bytes (164 bytes round up by 16)
+layout(std140) uniform Lighting // 176 bytes (168 bytes round up by 16)
 {
     LightData lights[3];        // 0   144
     vec4 ambientLightColor;     // 144 160
     int lightsCount;            // 160 164
+    float gammaCorrection;      // 164 168
 };
 
 layout(std140) uniform CameraData // 16 bytes (12 bytes round up by 16)
@@ -73,4 +74,7 @@ vec4 getLight(){
 void main(){
     outColor = color * ambientLightColor;
     outColor += color * getLight();
+
+    vec4 gamma = vec4(gammaCorrection, gammaCorrection, gammaCorrection, 1);
+    outColor = pow(outColor, gamma);
 }

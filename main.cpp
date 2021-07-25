@@ -16,7 +16,6 @@
 #include "core/light/light_data.h"
 #include "core/mesh/cube/cube_mesh.h"
 #include "core/mesh/cylinder/cylinder_mesh.h"
-#include "core/mesh/mesh.h"
 #include "core/shader/shader.h"
 #include "core/texture/texture.h"
 #include "math/math_utils.h"
@@ -24,6 +23,8 @@
 #include "math/quaternion/quaternion.h"
 #include "math/vector3/vector3.h"
 #include "math/vector4/vector4.h"
+
+using namespace std;
 
 GLuint matricesUniformBuffer;
 GLuint lightingUniformBuffer;
@@ -33,13 +34,13 @@ Vector3 mouseCoord = Vector3::Zero();
 Vector3 mouseDelta = Vector3::Zero();
 float   prevDisplayTime;
 
-GameObject *camera;
-Vector3     cameraEulerAngles;
-const float cameraRotSpeed  = 0.005f;
-const float cameraMoveSpeed = 0.1f;
+unique_ptr<GameObject> camera;
+Vector3                cameraEulerAngles;
+const float            cameraRotSpeed  = 0.005f;
+const float            cameraMoveSpeed = 0.1f;
 
-std::vector<GameObject *>         gameObjects;
-std::unordered_set<unsigned char> inputs;
+vector<shared_ptr<GameObject>> gameObjects;
+unordered_set<unsigned char>   inputs;
 
 void initUniformBlocks()
 {
@@ -174,6 +175,12 @@ Vector3 calcScale(float phase)
 
 void update()
 {
+    if (inputs.contains('q'))
+    {
+        glutDestroyWindow(glutGetWindow());
+        exit(0);
+    }
+
     auto time       = (float) glutGet(GLUT_ELAPSED_TIME);
     auto deltaTime  = time - prevDisplayTime;
     prevDisplayTime = time;
@@ -226,7 +233,7 @@ void display()
 
     initCameraData();
 
-    for (auto go: gameObjects)
+    for (const auto& go: gameObjects)
     {
         if (go->Mesh == nullptr || go->Shader == nullptr)
             continue;
@@ -244,7 +251,7 @@ void display()
         if (go->Texture != nullptr)
         {
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, go->Texture->texture);
+            glBindTexture(GL_TEXTURE_2D, go->Texture->Ptr);
             glUniform1i(go->Shader->AlbedoLocation, 0);
         }
 
@@ -291,31 +298,31 @@ int main(int argc, char **argv)
     glutInitWindowSize(1024, 720);
     glutCreateWindow("OpenGL");
 
-    Texture *grassTexture = Texture::Load("textures/grass.png", 800, 600);
-    Texture *defaultWhite = Texture::White();
+    auto grassTexture = Texture::Load("textures/grass.png", 800, 600);
+    auto defaultWhite = Texture::White();
 
-    Shader *vertexLitShader   = Shader::Load("shaders/vertexLit");
-    Shader *fragmentLitShader = Shader::Load("shaders/fragmentLit");
+    auto vertexLitShader   = Shader::Load("shaders/vertexLit");
+    auto fragmentLitShader = Shader::Load("shaders/fragmentLit");
 
-    Mesh *cubeMesh = new CubeMesh();
+    auto cubeMesh = make_shared<CubeMesh>();
     cubeMesh->Init();
 
-    Mesh *cylinderMesh = new CylinderMesh();
+    auto cylinderMesh = make_shared<CylinderMesh>();
     cylinderMesh->Init();
 
-    auto *rotatingCube    = new GameObject();
+    auto rotatingCube     = make_shared<GameObject>();
     rotatingCube->Mesh    = cubeMesh;
     rotatingCube->Shader  = vertexLitShader;
     rotatingCube->Texture = grassTexture;
 
-    auto *rotatingCylinder          = new GameObject();
+    auto rotatingCylinder           = make_shared<GameObject>();
     rotatingCylinder->Mesh          = cylinderMesh;
     rotatingCylinder->Shader        = vertexLitShader;
     rotatingCylinder->LocalPosition = Vector3(0, -3, -4);
     rotatingCylinder->LocalScale    = Vector3(2, 1, 0.5f);
     rotatingCylinder->Texture       = defaultWhite;
 
-    auto *cylinderFragmentLit          = new GameObject();
+    auto cylinderFragmentLit           = make_shared<GameObject>();
     cylinderFragmentLit->Mesh          = cylinderMesh;
     cylinderFragmentLit->Shader        = fragmentLitShader;
     cylinderFragmentLit->LocalPosition = Vector3(-3, -3, -6);
@@ -323,7 +330,7 @@ int main(int argc, char **argv)
     cylinderFragmentLit->Smoothness    = 5;
     cylinderFragmentLit->Texture       = defaultWhite;
 
-    auto floorVertexLit           = new GameObject();
+    auto floorVertexLit           = make_shared<GameObject>();
     floorVertexLit->Mesh          = cubeMesh;
     floorVertexLit->Shader        = vertexLitShader;
     floorVertexLit->LocalPosition = Vector3(3, -5, -5.5f);
@@ -331,7 +338,7 @@ int main(int argc, char **argv)
     floorVertexLit->LocalScale    = Vector3(5, 1, 2);
     floorVertexLit->Texture       = defaultWhite;
 
-    auto floorFragmentLit           = new GameObject();
+    auto floorFragmentLit           = make_shared<GameObject>();
     floorFragmentLit->Mesh          = cubeMesh;
     floorFragmentLit->Shader        = fragmentLitShader;
     floorFragmentLit->LocalPosition = Vector3(-9, -5, -5.5f);
@@ -340,7 +347,7 @@ int main(int argc, char **argv)
     floorFragmentLit->Smoothness    = 10;
     floorFragmentLit->Texture       = grassTexture;
 
-    camera                = new GameObject();
+    camera                = make_unique<GameObject>();
     camera->LocalPosition = Vector3(-10, 0.5f, 5);
 
     gameObjects.push_back(rotatingCube);

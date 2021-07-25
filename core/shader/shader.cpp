@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+using namespace std;
+
 Shader::Shader(GLuint program)
 {
     Program                       = program;
@@ -21,16 +23,16 @@ Shader::Shader(GLuint program)
     glUniformBlockBinding(program, cameraDataUniformIndex, 2);
 }
 
-Shader *Shader::Load(const std::string &path)
+shared_ptr<Shader> Shader::Load(const string &path)
 {
     GLuint vertexPart   = Shader::CompileShaderPart(GL_VERTEX_SHADER, path + "/vert.glsl");
     GLuint fragmentPart = Shader::CompileShaderPart(GL_FRAGMENT_SHADER, path + "/frag.glsl");
 
     GLuint program = Shader::LinkProgram(vertexPart, fragmentPart);
-    return new Shader(program);
+    return shared_ptr<Shader>(new Shader(program));
 }
 
-GLuint Shader::CompileShaderPart(GLuint shaderPartType, const std::string &path)
+GLuint Shader::CompileShaderPart(GLuint shaderPartType, const string &path)
 {
     char *shaderSource = Utils::ReadFile(path);
 

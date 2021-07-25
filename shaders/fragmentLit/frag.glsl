@@ -48,10 +48,10 @@ float getAttenuationTerm(LightData light){
     }
 }
 
-float getSpecularTerm(vec3 lightDirWS, float lightAngleCos){
+float getSpecularTerm(vec3 lightDirWS, float lightAngleCos, vec3 normal){
     vec3 viewDirWS = normalize(cameraPosWS - positionWS.xyz);
     vec3 halfAngle = normalize(lightDirWS + viewDirWS);
-    float blinnTerm = clamp(dot(normalWS, halfAngle), 0, 1);
+    float blinnTerm = clamp(dot(normal, halfAngle), 0, 1);
     blinnTerm = lightAngleCos != 0 ? blinnTerm : 0;
     blinnTerm = pow(blinnTerm, smoothness);
     return blinnTerm;
@@ -59,13 +59,14 @@ float getSpecularTerm(vec3 lightDirWS, float lightAngleCos){
 
 vec4 getLight(){
     vec4 light = vec4(0, 0, 0, 0);
+    vec3 normal = normalize(normalWS);
 
     for (int i = 0; i < lightsCount; ++i)
     {
         vec3 lightDirWS = getLightDirWS(lights[i]);
-        float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
+        float lightAngleCos = clamp(dot(normal, lightDirWS), 0, 1);
         float attenuationTerm = getAttenuationTerm(lights[i]);
-        float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos);
+        float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, normal);
         light += lights[i].intensity * lightAngleCos * attenuationTerm;
         light += lightAngleCos * specularTerm * attenuationTerm;
     }

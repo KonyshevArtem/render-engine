@@ -6,6 +6,8 @@
 #include "GLUT/glut.h"
 #include "string"
 
+using namespace std;
+
 class Shader
 {
 public:
@@ -15,12 +17,12 @@ public:
     GLint  SmoothnessLocation;
     GLint  AlbedoLocation;
 
-    static Shader *Load(const std::string &path);
+    static shared_ptr<Shader> Load(const string &path);
 
 private:
     explicit Shader(GLuint program);
 
-    static GLuint CompileShaderPart(GLuint shaderPartType, const std::string &path);
+    static GLuint CompileShaderPart(GLuint shaderPartType, const string &path);
     static GLuint LinkProgram(GLuint vertexPart, GLuint fragmentPart);
 };
 

@@ -6,13 +6,17 @@
 #include "GLUT/glut.h"
 #include "OpenGL/gl3.h"
 
-Texture *Texture::Load(const std::string &path, unsigned int width, unsigned int height)
-{
-    auto *t   = new Texture();
-    t->width  = width;
-    t->height = height;
+using namespace std;
 
-    unsigned error = lodepng::decode(t->data, width, height, path, LCT_RGB);
+static shared_ptr<Texture> WhiteTexture = nullptr;
+
+shared_ptr<Texture> Texture::Load(const string &path, unsigned int width, unsigned int height)
+{
+    auto t    = make_shared<Texture>();
+    t->Width  = width;
+    t->Height = height;
+
+    unsigned error = lodepng::decode(t->Data, width, height, path, LCT_RGB);
     if (error != 0)
     {
         printf("Error loading texture: %u: %s\n", error, lodepng_error_text(error));
@@ -24,29 +28,32 @@ Texture *Texture::Load(const std::string &path, unsigned int width, unsigned int
     return t;
 }
 
-Texture *Texture::White()
+shared_ptr<Texture> Texture::White()
 {
-    auto *t   = new Texture();
-    t->width  = 1;
-    t->height = 1;
+    if (WhiteTexture != nullptr)
+        return WhiteTexture;
 
-    t->data.push_back(255);
-    t->data.push_back(255);
-    t->data.push_back(255);
+    WhiteTexture  = make_shared<Texture>();
+    WhiteTexture->Width  = 1;
+    WhiteTexture->Height = 1;
 
-    t->Init();
+    WhiteTexture->Data.push_back(255);
+    WhiteTexture->Data.push_back(255);
+    WhiteTexture->Data.push_back(255);
 
-    return t;
+    WhiteTexture->Init();
+
+    return WhiteTexture;
 }
 
 void Texture::Init()
 {
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glGenTextures(1, &Ptr);
+    glBindTexture(GL_TEXTURE_2D, Ptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &data[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, &Data[0]);
     glBindTexture(GL_TEXTURE_2D, 0);
 }

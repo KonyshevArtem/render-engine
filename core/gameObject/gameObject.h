@@ -8,18 +8,20 @@
 #include "../texture/texture.h"
 #include "vector"
 
+using namespace std;
+
 class GameObject
 {
 public:
-    GameObject *              Parent;
-    std::vector<GameObject *> Children;
-    Vector3                   LocalPosition;
-    Quaternion                LocalRotation;
-    Vector3                   LocalScale;
-    Mesh *                    Mesh;
-    Shader *                  Shader;
-    float                     Smoothness;
-    Texture *                 Texture;
+    shared_ptr<GameObject>         Parent;
+    vector<shared_ptr<GameObject>> Children;
+    Vector3                        LocalPosition;
+    Quaternion                     LocalRotation;
+    Vector3                        LocalScale;
+    shared_ptr<Mesh>               Mesh;
+    shared_ptr<Shader>             Shader;
+    float                          Smoothness;
+    shared_ptr<Texture>            Texture;
 
     GameObject();
 };

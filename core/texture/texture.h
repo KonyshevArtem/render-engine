@@ -6,16 +6,18 @@
 #include "string"
 #include "vector"
 
+using namespace std;
+
 class Texture
 {
 public:
-    unsigned int               width;
-    unsigned int               height;
-    std::vector<unsigned char> data;
-    GLuint                     texture;
+    unsigned int          Width;
+    unsigned int          Height;
+    vector<unsigned char> Data;
+    GLuint                Ptr;
 
-    static Texture *Load(const std::string &path, unsigned int width, unsigned int height);
-    static Texture *White();
+    static shared_ptr<Texture> Load(const string &path, unsigned int width, unsigned int height);
+    static shared_ptr<Texture> White();
 
 private:
     void Init();

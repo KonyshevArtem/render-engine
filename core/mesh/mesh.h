@@ -5,7 +5,7 @@
 
 #include "OpenGL/gl3.h"
 
-class Mesh// NOLINT(cppcoreguidelines-pro-type-member-init)
+class Mesh // NOLINT(cppcoreguidelines-pro-type-member-init)
 {
 public:
     const GLuint &GetVertexArrayObject() const;
@@ -27,9 +27,12 @@ protected:
     virtual void *GetIndexData()     = 0;
     virtual long  GetIndexDataSize() = 0;
 
+    virtual void *GetUVData()     = 0;
+    virtual long  GetUVDataSize() = 0;
+
 private:
     GLuint vertexArrayObject;
 };
 
 
-#endif//OPENGL_STUDY_MESH_H
+#endif //OPENGL_STUDY_MESH_H

@@ -28,7 +28,11 @@ add_executable(
         core/mesh/cylinder/cylinder_mesh.h
         core/light/light_data.h
         core/shader/shader.h
-        core/shader/shader.cpp)
+        core/shader/shader.cpp
+        core/texture/texture.cpp
+        core/texture/texture.h
+        utils/lodepng.cpp
+        utils/lodepng.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

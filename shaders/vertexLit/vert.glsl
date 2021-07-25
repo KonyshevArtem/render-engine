@@ -3,6 +3,7 @@
 layout(location = 0) in vec4 vertPositionOS;
 layout(location = 1) in vec4 vertColor;
 layout(location = 2) in vec3 vertNormalOS;
+layout(location = 3) in vec2 texCoord;
 
 layout(std140) uniform Matrices // 128 bytes
 {
@@ -30,6 +31,7 @@ uniform mat4 modelMatrix;
 uniform mat4 modelNormalMatrix;
 
 smooth out vec4 color;
+smooth out vec2 uv;
 
 vec4 getLight(vec3 vertPositionWS){
     vec4 light = vec4(0, 0, 0, 0);
@@ -60,4 +62,6 @@ void main(){
 
     vec4 gamma = vec4(gammaCorrection, gammaCorrection, gammaCorrection, 1);
     color = pow(color, gamma);
+
+    uv = texCoord;
 }

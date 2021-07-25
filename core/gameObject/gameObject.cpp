@@ -6,4 +6,6 @@ GameObject::GameObject()
     Parent     = nullptr;
     Mesh       = nullptr;
     Shader     = nullptr;
+    Texture    = nullptr;
+    Smoothness = 0;
 }

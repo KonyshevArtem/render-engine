@@ -13,6 +13,7 @@ public:
     GLint  ModelMatrixLocation;
     GLint  ModelNormalMatrixLocation;
     GLint  SmoothnessLocation;
+    GLint  AlbedoLocation;
 
     static Shader *Load(const std::string &path);
 

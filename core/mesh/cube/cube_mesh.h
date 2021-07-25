@@ -20,6 +20,9 @@ protected:
 
     void *GetIndexData() override;
     long  GetIndexDataSize() override;
+
+    void *GetUVData() override;
+    long GetUVDataSize() override;
 };
 
 

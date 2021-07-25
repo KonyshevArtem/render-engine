@@ -5,6 +5,7 @@
 #include "../../math/vector3/vector3.h"
 #include "../mesh/mesh.h"
 #include "../shader/shader.h"
+#include "../texture/texture.h"
 #include "vector"
 
 class GameObject
@@ -18,6 +19,7 @@ public:
     Mesh *                    Mesh;
     Shader *                  Shader;
     float                     Smoothness;
+    Texture *                 Texture;
 
     GameObject();
 };

@@ -3,9 +3,11 @@
 smooth in vec4 positionWS;
 smooth in vec3 normalWS;
 smooth in vec4 color;
+smooth in vec2 uv;
 
 out vec4 outColor;
 
+uniform sampler2D albedo;
 uniform float smoothness;
 
 layout(std140) struct LightData // 48 bytes (40 bytes round up by 16)
@@ -72,8 +74,9 @@ vec4 getLight(){
 }
 
 void main(){
-    outColor = color * ambientLightColor;
-    outColor += color * getLight();
+    vec4 albedoColor = texture(albedo, uv) * color;
+    outColor = albedoColor * ambientLightColor;
+    outColor += albedoColor * getLight();
 
     vec4 gamma = vec4(gammaCorrection, gammaCorrection, gammaCorrection, 1);
     outColor = pow(outColor, gamma);

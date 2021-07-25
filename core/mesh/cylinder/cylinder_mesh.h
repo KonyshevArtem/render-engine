@@ -24,6 +24,9 @@ protected:
     void *GetIndexData() override;
     long  GetIndexDataSize() override;
 
+    void *GetUVData() override;
+    long GetUVDataSize() override;
+
 private:
     std::vector<float> vertexes;
     std::vector<float> colors;

@@ -9,6 +9,7 @@ static const long vertexSize     = sizeof(float) * vertexCount * 3;
 static const long colorsSize     = sizeof(float) * vertexCount * 4;
 static const long normalsSize    = sizeof(float) * vertexCount * 3;
 static const long indexesSize    = sizeof(int) * trianglesCount * 3;
+static const long uvSize         = sizeof(float) * vertexCount * 2;
 
 // clang-format off
 static const float vertexData[] = {
@@ -125,6 +126,44 @@ static const float normalsData[] = {
         0, -1, 0,
 };
 
+static const float uvData[] = {
+        // front
+        0.5f, 0.33f,    // 0
+        0.5f, 0.66f,    // 1
+        0.25f, 0.66f,   // 2
+        0.25f, 0.33f,   // 3
+
+        // back
+        0.75f, 0.66f,      // 4
+        0.75f, 0.33f,      // 5
+        1.0f, 0.33f,       // 6
+        1.0f, 0.66f,       // 7
+
+        // left
+        0.25f, 0,        // 8
+        0, 0,            // 9
+        0, 0.33f,        // 10
+        0.25f, 0.33f,    // 11
+
+        // right
+        0.25f, 1.0f,      // 12
+        0, 1.0f,          // 13
+        0, 0.66f,         // 14
+        0.25f, 0.66f,     // 15
+
+        // top
+        0.5f, 0.33f,      // 16
+        0.75f, 0.33f,     // 17
+        0.75f, 0.66f,     // 18
+        0.5f, 0.66f,      // 19
+
+        // bottom
+        0, 0.33f,         // 20
+        0.25f, 0.33f,     // 21
+        0.25f, 0.66f,     // 22
+        0, 0.66f,         // 23
+};
+
 static const int indexData[] = {
         // front
         0, 1, 3,
@@ -195,4 +234,14 @@ void *CubeMesh::GetIndexData()
 long CubeMesh::GetIndexDataSize()
 {
     return indexesSize;
+}
+
+void *CubeMesh::GetUVData()
+{
+    return (void *) &uvData;
+}
+
+long CubeMesh::GetUVDataSize()
+{
+    return uvSize;
 }

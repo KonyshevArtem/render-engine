@@ -18,6 +18,7 @@
 #include "core/mesh/cylinder/cylinder_mesh.h"
 #include "core/mesh/mesh.h"
 #include "core/shader/shader.h"
+#include "core/texture/texture.h"
 #include "math/math_utils.h"
 #include "math/matrix4x4/matrix4x4.h"
 #include "math/quaternion/quaternion.h"
@@ -240,11 +241,19 @@ void display()
         glUniformMatrix4fv(go->Shader->ModelNormalMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelNormalMatrix);
         glUniform1f(go->Shader->SmoothnessLocation, go->Smoothness);
 
-        glDrawElements(GL_TRIANGLES, go->Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
-    }
+        if (go->Texture != nullptr)
+        {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, go->Texture->texture);
+            glUniform1i(go->Shader->AlbedoLocation, 0);
+        }
 
-    glBindVertexArray(0);
-    glUseProgram(0);
+        glDrawElements(GL_TRIANGLES, go->Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindVertexArray(0);
+        glUseProgram(0);
+    }
 
     glutSwapBuffers();
     glutPostRedisplay();
@@ -282,6 +291,9 @@ int main(int argc, char **argv)
     glutInitWindowSize(1024, 720);
     glutCreateWindow("OpenGL");
 
+    Texture *grassTexture = Texture::Load("textures/grass.png", 800, 600);
+    Texture *defaultWhite = Texture::White();
+
     Shader *vertexLitShader   = Shader::Load("shaders/vertexLit");
     Shader *fragmentLitShader = Shader::Load("shaders/fragmentLit");
 
@@ -291,15 +303,17 @@ int main(int argc, char **argv)
     Mesh *cylinderMesh = new CylinderMesh();
     cylinderMesh->Init();
 
-    auto *rotatingCube   = new GameObject();
-    rotatingCube->Mesh   = cubeMesh;
-    rotatingCube->Shader = vertexLitShader;
+    auto *rotatingCube    = new GameObject();
+    rotatingCube->Mesh    = cubeMesh;
+    rotatingCube->Shader  = vertexLitShader;
+    rotatingCube->Texture = grassTexture;
 
     auto *rotatingCylinder          = new GameObject();
     rotatingCylinder->Mesh          = cylinderMesh;
     rotatingCylinder->Shader        = vertexLitShader;
     rotatingCylinder->LocalPosition = Vector3(0, -3, -4);
     rotatingCylinder->LocalScale    = Vector3(2, 1, 0.5f);
+    rotatingCylinder->Texture       = defaultWhite;
 
     auto *cylinderFragmentLit          = new GameObject();
     cylinderFragmentLit->Mesh          = cylinderMesh;
@@ -307,6 +321,7 @@ int main(int argc, char **argv)
     cylinderFragmentLit->LocalPosition = Vector3(-3, -3, -6);
     cylinderFragmentLit->LocalScale    = Vector3(2, 1, 0.5f);
     cylinderFragmentLit->Smoothness    = 5;
+    cylinderFragmentLit->Texture       = defaultWhite;
 
     auto floorVertexLit           = new GameObject();
     floorVertexLit->Mesh          = cubeMesh;
@@ -314,6 +329,7 @@ int main(int argc, char **argv)
     floorVertexLit->LocalPosition = Vector3(3, -5, -5.5f);
     floorVertexLit->LocalRotation = Quaternion::AngleAxis(10, Vector3(0, 1, 0));
     floorVertexLit->LocalScale    = Vector3(5, 1, 2);
+    floorVertexLit->Texture       = defaultWhite;
 
     auto floorFragmentLit           = new GameObject();
     floorFragmentLit->Mesh          = cubeMesh;
@@ -322,6 +338,7 @@ int main(int argc, char **argv)
     floorFragmentLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
     floorFragmentLit->LocalScale    = Vector3(5, 1, 2);
     floorFragmentLit->Smoothness    = 10;
+    floorFragmentLit->Texture       = grassTexture;
 
     camera                = new GameObject();
     camera->LocalPosition = Vector3(-10, 0.5f, 5);

@@ -125,3 +125,13 @@ void CylinderMesh::AddTriangle(int v1, int v2, int v3)
     indexes.push_back(v2);
     indexes.push_back(v3);
 }
+
+void *CylinderMesh::GetUVData()
+{
+    return nullptr;
+}
+
+long CylinderMesh::GetUVDataSize()
+{
+    return 0;
+}

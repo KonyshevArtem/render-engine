@@ -32,7 +32,9 @@ add_executable(
         core/texture/texture.cpp
         core/texture/texture.h
         utils/lodepng.cpp
-        utils/lodepng.h)
+        utils/lodepng.h
+        core/material/material.cpp
+        core/material/material.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

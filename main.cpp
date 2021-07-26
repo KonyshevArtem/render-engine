@@ -235,24 +235,24 @@ void display()
 
     for (const auto& go: gameObjects)
     {
-        if (go->Mesh == nullptr || go->Shader == nullptr)
+        if (go->Mesh == nullptr || go->Material == nullptr)
             continue;
 
-        glUseProgram(go->Shader->Program);
+        glUseProgram(go->Material->ShaderPtr->Program);
         glBindVertexArray(go->Mesh->GetVertexArrayObject());
 
         Matrix4x4 modelMatrix       = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
         Matrix4x4 modelNormalMatrix = modelMatrix.Invert().Transpose();
 
-        glUniformMatrix4fv(go->Shader->ModelMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelMatrix);
-        glUniformMatrix4fv(go->Shader->ModelNormalMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelNormalMatrix);
-        glUniform1f(go->Shader->SmoothnessLocation, go->Smoothness);
+        glUniformMatrix4fv(go->Material->ShaderPtr->ModelMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelMatrix);
+        glUniformMatrix4fv(go->Material->ShaderPtr->ModelNormalMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelNormalMatrix);
+        glUniform1f(go->Material->ShaderPtr->SmoothnessLocation, go->Material->Smoothness);
 
-        if (go->Texture != nullptr)
+        if (go->Material->Texture != nullptr)
         {
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, go->Texture->Ptr);
-            glUniform1i(go->Shader->AlbedoLocation, 0);
+            glBindTexture(GL_TEXTURE_2D, go->Material->Texture->Ptr);
+            glUniform1i(go->Material->ShaderPtr->AlbedoLocation, 0);
         }
 
         glDrawElements(GL_TRIANGLES, go->Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
@@ -298,63 +298,73 @@ int main(int argc, char **argv)
     glutInitWindowSize(1024, 720);
     glutCreateWindow("OpenGL");
 
+    // init textures
     auto grassTexture = Texture::Load("textures/grass.png", 800, 600);
-    auto defaultWhite = Texture::White();
 
+    // init shaders
     auto vertexLitShader   = Shader::Load("shaders/vertexLit");
     auto fragmentLitShader = Shader::Load("shaders/fragmentLit");
 
+    // init meshes
     auto cubeMesh = make_shared<CubeMesh>();
     cubeMesh->Init();
 
     auto cylinderMesh = make_shared<CylinderMesh>();
     cylinderMesh->Init();
 
-    auto rotatingCube     = make_shared<GameObject>();
-    rotatingCube->Mesh    = cubeMesh;
-    rotatingCube->Shader  = vertexLitShader;
-    rotatingCube->Texture = grassTexture;
+    // init materials
+    auto vertexLitMaterial   = make_shared<Material>(vertexLitShader);
+
+    auto vertexLitGrassMaterial     = make_shared<Material>(vertexLitShader);
+    vertexLitGrassMaterial->Texture = grassTexture;
+
+    auto fragmentLitMaterial        = make_shared<Material>(fragmentLitShader);
+    fragmentLitMaterial->Smoothness = 5;
+
+    auto fragmentLitGrassMaterial        = make_shared<Material>(fragmentLitShader);
+    fragmentLitGrassMaterial->Texture    = grassTexture;
+    fragmentLitGrassMaterial->Smoothness = 10;
+
+    // init gameObjects
+    auto rotatingCube      = make_shared<GameObject>();
+    rotatingCube->Mesh     = cubeMesh;
+    rotatingCube->Material = vertexLitGrassMaterial;
 
     auto rotatingCylinder           = make_shared<GameObject>();
     rotatingCylinder->Mesh          = cylinderMesh;
-    rotatingCylinder->Shader        = vertexLitShader;
+    rotatingCylinder->Material      = vertexLitMaterial;
     rotatingCylinder->LocalPosition = Vector3(0, -3, -4);
     rotatingCylinder->LocalScale    = Vector3(2, 1, 0.5f);
-    rotatingCylinder->Texture       = defaultWhite;
 
     auto cylinderFragmentLit           = make_shared<GameObject>();
     cylinderFragmentLit->Mesh          = cylinderMesh;
-    cylinderFragmentLit->Shader        = fragmentLitShader;
+    cylinderFragmentLit->Material      = fragmentLitMaterial;
     cylinderFragmentLit->LocalPosition = Vector3(-3, -3, -6);
     cylinderFragmentLit->LocalScale    = Vector3(2, 1, 0.5f);
-    cylinderFragmentLit->Smoothness    = 5;
-    cylinderFragmentLit->Texture       = defaultWhite;
 
     auto floorVertexLit           = make_shared<GameObject>();
     floorVertexLit->Mesh          = cubeMesh;
-    floorVertexLit->Shader        = vertexLitShader;
+    floorVertexLit->Material      = vertexLitMaterial;
     floorVertexLit->LocalPosition = Vector3(3, -5, -5.5f);
     floorVertexLit->LocalRotation = Quaternion::AngleAxis(10, Vector3(0, 1, 0));
     floorVertexLit->LocalScale    = Vector3(5, 1, 2);
-    floorVertexLit->Texture       = defaultWhite;
 
     auto floorFragmentLit           = make_shared<GameObject>();
     floorFragmentLit->Mesh          = cubeMesh;
-    floorFragmentLit->Shader        = fragmentLitShader;
+    floorFragmentLit->Material      = fragmentLitGrassMaterial;
     floorFragmentLit->LocalPosition = Vector3(-9, -5, -5.5f);
     floorFragmentLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
     floorFragmentLit->LocalScale    = Vector3(5, 1, 2);
-    floorFragmentLit->Smoothness    = 10;
-    floorFragmentLit->Texture       = grassTexture;
-
-    camera                = make_unique<GameObject>();
-    camera->LocalPosition = Vector3(-10, 0.5f, 5);
 
     gameObjects.push_back(rotatingCube);
     gameObjects.push_back(rotatingCylinder);
     gameObjects.push_back(cylinderFragmentLit);
     gameObjects.push_back(floorVertexLit);
     gameObjects.push_back(floorFragmentLit);
+
+    // init camera
+    camera                = make_unique<GameObject>();
+    camera->LocalPosition = Vector3(-10, 0.5f, 5);
 
     initUniformBlocks();
 

@@ -3,9 +3,8 @@
 
 #include "../../math/quaternion/quaternion.h"
 #include "../../math/vector3/vector3.h"
+#include "../material/material.h"
 #include "../mesh/mesh.h"
-#include "../shader/shader.h"
-#include "../texture/texture.h"
 #include "vector"
 
 using namespace std;
@@ -19,9 +18,7 @@ public:
     Quaternion                     LocalRotation;
     Vector3                        LocalScale;
     shared_ptr<Mesh>               Mesh;
-    shared_ptr<Shader>             Shader;
-    float                          Smoothness;
-    shared_ptr<Texture>            Texture;
+    shared_ptr<Material>           Material;
 
     GameObject();
 };

@@ -34,10 +34,11 @@ shared_ptr<Shader> Shader::Load(const string &path)
 
 GLuint Shader::CompileShaderPart(GLuint shaderPartType, const string &path)
 {
-    char *shaderSource = Utils::ReadFile(path);
+    string      shaderSource    = Utils::ReadFileWithIncludes(path);
+    const char *shaderSourcePtr = shaderSource.c_str();
 
     GLuint shader = glCreateShader(shaderPartType);
-    glShaderSource(shader, 1, &shaderSource, nullptr);
+    glShaderSource(shader, 1, &shaderSourcePtr, nullptr);
 
     glCompileShader(shader);
 
@@ -56,9 +57,9 @@ GLuint Shader::CompileShaderPart(GLuint shaderPartType, const string &path)
         free(logMsg);
     }
     else
-        printf("Shader compile success: %s\n", path.c_str());
-
-    free(shaderSource);
+    {
+//        printf("Shader compile success: %s\n", path.c_str());
+    }
 
     return shader;
 }

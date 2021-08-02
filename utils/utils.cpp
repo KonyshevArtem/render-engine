@@ -1,27 +1,28 @@
 #include "utils.h"
+#include "regex"
 #include "string"
 #include <cstdio>
+#include <filesystem>
 
-
-char *Utils::ReadFile(const std::string &path)
+string Utils::ReadFile(const filesystem::path &path)
 {
     FILE *file = fopen(path.c_str(), "r");
     if (file == nullptr)
-        return nullptr;
+        return "";
 
     if (fseek(file, 0, SEEK_END) != 0)
-        return nullptr;
+        return "";
 
     long fileSize = ftell(file);
     if (fileSize == -1L)
-        return nullptr;
+        return "";
 
     if (fseek(file, 0, SEEK_SET) != 0)
-        return nullptr;
+        return "";
 
-    char *content = new char[fileSize + 1];
-    int   c;
-    long  i = 0;
+    string content(fileSize, ' ');
+    int    c;
+    long   i = 0;
 
     while ((c = fgetc(file)) != EOF)
         content[i++] = (char) c;
@@ -31,4 +32,19 @@ char *Utils::ReadFile(const std::string &path)
     fclose(file);
 
     return content;
+}
+
+string Utils::ReadFileWithIncludes(const filesystem::path &path)
+{
+    string file = ReadFile(path);
+
+    regex  expression("\\s*#include\\s+\\\"(.*)\\\"\\s*\n");
+    smatch match;
+    while (regex_search(file.cbegin(), file.cend(), match, expression))
+    {
+        string includedFile = ReadFileWithIncludes(path.parent_path() / match[1].str());
+        file                = file.replace(match.position() + 1, match.length() - 2, includedFile);
+    }
+
+    return file;
 }

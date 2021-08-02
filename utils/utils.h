@@ -4,11 +4,15 @@
 #define CHECK_GL_ERROR printf("%s\n", gluErrorString(glGetError()));
 
 #include "string"
+#include "filesystem"
+
+using namespace std;
 
 class Utils
 {
 public:
-    static char *ReadFile(const std::string &path);
+    static string ReadFile(const filesystem::path &path);
+    static string ReadFileWithIncludes(const filesystem::path &path);
 };
 
-#endif//OPENGL_STUDY_UTILS_H
+#endif //OPENGL_STUDY_UTILS_H

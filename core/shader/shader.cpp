@@ -58,7 +58,7 @@ GLuint Shader::CompileShaderPart(GLuint shaderPartType, const string &path)
     }
     else
     {
-//        printf("Shader compile success: %s\n", path.c_str());
+        printf("Shader compile success: %s\n", path.c_str());
     }
 
     return shader;

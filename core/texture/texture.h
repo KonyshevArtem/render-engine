@@ -15,6 +15,7 @@ public:
     unsigned int          Height;
     vector<unsigned char> Data;
     GLuint                Ptr;
+    GLuint                Sampler;
 
     static shared_ptr<Texture> Load(const string &path, unsigned int width, unsigned int height);
     static shared_ptr<Texture> White();

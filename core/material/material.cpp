@@ -3,6 +3,7 @@
 Material::Material(shared_ptr<Shader> shader)
 {
     ShaderPtr  = shader;
-    Texture    = Texture::White();
+    Albedo     = Texture::White();
+    AlbedoST   = Vector4(0, 0, 1, 1);
     Smoothness = 0;
 }

@@ -2,6 +2,8 @@
 #include "../attributes.glsl"
 #include "../lighting.glsl"
 
+uniform vec4 albedoST;
+
 smooth out vec4 color;
 smooth out vec2 uv;
 
@@ -14,5 +16,5 @@ void main(){
     color += vertColor * getLight(vertPositionWS.xyz, normalWS, false, 0, vec3(0, 0, 0));
     color = doGammaCorrection(color);
 
-    uv = texCoord;
+    uv = texCoord * albedoST.zw + albedoST.xy;
 }

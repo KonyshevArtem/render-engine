@@ -14,6 +14,7 @@ Shader::Shader(GLuint program)
     ModelNormalMatrixLocation     = glGetUniformLocation(program, "modelNormalMatrix");
     SmoothnessLocation            = glGetUniformLocation(program, "smoothness");
     AlbedoLocation                = glGetUniformLocation(program, "albedo");
+    AlbedoSTLocation              = glGetUniformLocation(program, "albedoST");
     GLuint matricesUniformIndex   = glGetUniformBlockIndex(program, "Matrices");
     GLuint lightingUniformIndex   = glGetUniformBlockIndex(program, "Lighting");
     GLuint cameraDataUniformIndex = glGetUniformBlockIndex(program, "CameraData");

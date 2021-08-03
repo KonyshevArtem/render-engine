@@ -16,6 +16,7 @@ public:
     GLint  ModelNormalMatrixLocation;
     GLint  SmoothnessLocation;
     GLint  AlbedoLocation;
+    GLint  AlbedoSTLocation;
 
     static shared_ptr<Shader> Load(const string &path);
 

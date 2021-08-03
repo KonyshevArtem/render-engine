@@ -2,7 +2,6 @@
 
 #include "texture.h"
 #include "../../utils/lodepng.h"
-#include "../../utils/utils.h"
 #include "GLUT/glut.h"
 #include "OpenGL/gl3.h"
 
@@ -33,7 +32,7 @@ shared_ptr<Texture> Texture::White()
     if (WhiteTexture != nullptr)
         return WhiteTexture;
 
-    WhiteTexture  = make_shared<Texture>();
+    WhiteTexture         = make_shared<Texture>();
     WhiteTexture->Width  = 1;
     WhiteTexture->Height = 1;
 
@@ -49,11 +48,12 @@ shared_ptr<Texture> Texture::White()
 void Texture::Init()
 {
     glGenTextures(1, &Ptr);
+    glGenSamplers(1, &Sampler);
     glBindTexture(GL_TEXTURE_2D, Ptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glSamplerParameteri(Sampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glSamplerParameteri(Sampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glSamplerParameteri(Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glSamplerParameteri(Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, &Data[0]);
     glBindTexture(GL_TEXTURE_2D, 0);
 }

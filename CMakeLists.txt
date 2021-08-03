@@ -34,7 +34,9 @@ add_executable(
         utils/lodepng.cpp
         utils/lodepng.h
         core/material/material.cpp
-        core/material/material.h)
+        core/material/material.h
+        core/mesh/plane/plane_mesh.cpp
+        core/mesh/plane/plane_mesh.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

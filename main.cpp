@@ -2,9 +2,8 @@
 #include <unordered_set>
 #include <vector>
 
-#define MATRICES_UNIFORM_SIZE 128
 #define LIGHTING_UNIFORM_SIZE 176
-#define CAMERA_DATA_UNIFORM_SIZE 16
+#define CAMERA_DATA_UNIFORM_SIZE 144
 
 #define GL_SILENCE_DEPRECATION
 
@@ -27,7 +26,6 @@
 
 using namespace std;
 
-GLuint matricesUniformBuffer;
 GLuint lightingUniformBuffer;
 GLuint cameraDataUniformBuffer;
 
@@ -48,11 +46,6 @@ shared_ptr<Material> waterMaterial;
 
 void initUniformBlocks()
 {
-    glGenBuffers(1, &matricesUniformBuffer);
-    glBindBuffer(GL_UNIFORM_BUFFER, matricesUniformBuffer);
-    glBufferData(GL_UNIFORM_BUFFER, MATRICES_UNIFORM_SIZE, nullptr, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
     glGenBuffers(1, &lightingUniformBuffer);
     glBindBuffer(GL_UNIFORM_BUFFER, lightingUniformBuffer);
     glBufferData(GL_UNIFORM_BUFFER, LIGHTING_UNIFORM_SIZE, nullptr, GL_DYNAMIC_DRAW);
@@ -63,9 +56,8 @@ void initUniformBlocks()
     glBufferData(GL_UNIFORM_BUFFER, CAMERA_DATA_UNIFORM_SIZE, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, matricesUniformBuffer, 0, MATRICES_UNIFORM_SIZE);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, cameraDataUniformBuffer, 0, CAMERA_DATA_UNIFORM_SIZE);
     glBindBufferRange(GL_UNIFORM_BUFFER, 1, lightingUniformBuffer, 0, LIGHTING_UNIFORM_SIZE);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 2, cameraDataUniformBuffer, 0, CAMERA_DATA_UNIFORM_SIZE);
 }
 
 void initPerspectiveMatrix(int width, int height)
@@ -90,7 +82,7 @@ void initPerspectiveMatrix(int width, int height)
     perspectiveMatrix.m23 = -1;
     perspectiveMatrix.m32 = -2 * zFar * zNear / (zFar - zNear);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, matricesUniformBuffer);
+    glBindBuffer(GL_UNIFORM_BUFFER, cameraDataUniformBuffer);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Matrix4x4), &perspectiveMatrix);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
@@ -99,13 +91,13 @@ void initCameraData()
 {
     Matrix4x4 viewMatrix = Matrix4x4::Rotation(camera->LocalRotation.Inverse()) * Matrix4x4::Translation(-camera->LocalPosition);
 
-    long size = sizeof(Matrix4x4);
-    glBindBuffer(GL_UNIFORM_BUFFER, matricesUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, size, size, &viewMatrix);
+    long matrixSize = sizeof(Matrix4x4);
+    glBindBuffer(GL_UNIFORM_BUFFER, cameraDataUniformBuffer);
+    glBufferSubData(GL_UNIFORM_BUFFER, matrixSize, matrixSize, &viewMatrix);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, cameraDataUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Vector4), &(camera->LocalPosition));
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * matrixSize, sizeof(Vector4), &(camera->LocalPosition));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 

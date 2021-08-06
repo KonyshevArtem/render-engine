@@ -10,18 +10,16 @@ using namespace std;
 Shader::Shader(GLuint program)
 {
     Program                       = program;
-    ModelMatrixLocation           = glGetUniformLocation(program, "modelMatrix");
-    ModelNormalMatrixLocation     = glGetUniformLocation(program, "modelNormalMatrix");
-    SmoothnessLocation            = glGetUniformLocation(program, "smoothness");
-    AlbedoLocation                = glGetUniformLocation(program, "albedo");
-    AlbedoSTLocation              = glGetUniformLocation(program, "albedoST");
-    GLuint matricesUniformIndex   = glGetUniformBlockIndex(program, "Matrices");
+    ModelMatrixLocation           = glGetUniformLocation(program, "_ModelMatrix");
+    ModelNormalMatrixLocation     = glGetUniformLocation(program, "_ModelNormalMatrix");
+    SmoothnessLocation            = glGetUniformLocation(program, "_Smoothness");
+    AlbedoLocation                = glGetUniformLocation(program, "_Albedo");
+    AlbedoSTLocation              = glGetUniformLocation(program, "_AlbedoST");
     GLuint lightingUniformIndex   = glGetUniformBlockIndex(program, "Lighting");
     GLuint cameraDataUniformIndex = glGetUniformBlockIndex(program, "CameraData");
 
-    glUniformBlockBinding(program, matricesUniformIndex, 0);
+    glUniformBlockBinding(program, cameraDataUniformIndex, 0);
     glUniformBlockBinding(program, lightingUniformIndex, 1);
-    glUniformBlockBinding(program, cameraDataUniformIndex, 2);
 }
 
 shared_ptr<Shader> Shader::Load(const string &path)

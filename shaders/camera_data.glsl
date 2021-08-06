@@ -1,9 +1,11 @@
 #ifndef CAMERA_DATA
 #define CAMERA_DATA
 
-layout(std140) uniform CameraData // 16 bytes (12 bytes round up by 16)
+layout(std140) uniform CameraData // 144 bytes
 {
-    vec3 cameraPosWS; // 12 bytes
+    mat4 _ProjMatrix;  // 0   64
+    mat4 _ViewMatrix;  // 64  128
+    vec3 _CameraPosWS; // 128 144
 };
 
 #endif //CAMERA_DATA

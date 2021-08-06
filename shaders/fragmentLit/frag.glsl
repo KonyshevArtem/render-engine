@@ -9,12 +9,12 @@ smooth in vec2 uv;
 
 out vec4 outColor;
 
-uniform sampler2D albedo;
-uniform float smoothness;
+uniform sampler2D _Albedo;
+uniform float _Smoothness;
 
 void main(){
-    vec4 albedoColor = texture(albedo, uv) * color;
-    outColor = albedoColor * ambientLightColor;
-    outColor += albedoColor * getLight(positionWS.xyz, normalize(normalWS), true, smoothness, cameraPosWS);
+    vec4 albedoColor = texture(_Albedo, uv) * color;
+    outColor = albedoColor * _AmbientLightColor;
+    outColor += albedoColor * getLight(positionWS.xyz, normalize(normalWS), true, _Smoothness, _CameraPosWS);
     outColor = doGammaCorrection(outColor);
 }

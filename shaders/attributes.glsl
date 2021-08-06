@@ -6,13 +6,7 @@ layout(location = 1) in vec4 vertColor;
 layout(location = 2) in vec3 vertNormalOS;
 layout(location = 3) in vec2 texCoord;
 
-layout(std140) uniform Matrices// 128 bytes
-{
-    mat4 projMatrix;
-    mat4 viewMatrix;
-};
-
-uniform mat4 modelMatrix;
-uniform mat4 modelNormalMatrix;
+uniform mat4 _ModelMatrix;
+uniform mat4 _ModelNormalMatrix;
 
 #endif // ATTRIBUTES

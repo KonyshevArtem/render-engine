@@ -11,10 +11,10 @@ layout(std140) struct LightData // 48 bytes (40 bytes round up by 16)
 
 layout(std140) uniform Lighting // 176 bytes (168 bytes round up by 16)
 {
-    LightData lights[3];        // 0   144
-    vec4 ambientLightColor;     // 144 160
-    int lightsCount;            // 160 164
-    float gammaCorrection;      // 164 168
+    LightData _Lights[3];        // 0   144
+    vec4 _AmbientLightColor;     // 144 160
+    int _LightsCount;            // 160 164
+    float _GammaCorrection;      // 164 168
 };
 
 vec3 getLightDirWS(LightData light, vec3 posWS){
@@ -46,12 +46,12 @@ float getSpecularTerm(float smoothness, vec3 lightDirWS, float lightAngleCos, ve
 vec4 getLight(vec3 posWS, vec3 normalWS, bool calcSpecular, float smoothness, vec3 cameraPosWS){
     vec4 light = vec4(0, 0, 0, 0);
 
-    for (int i = 0; i < lightsCount; ++i)
+    for (int i = 0; i < _LightsCount; ++i)
     {
-        vec3 lightDirWS = getLightDirWS(lights[i], posWS);
+        vec3 lightDirWS = getLightDirWS(_Lights[i], posWS);
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
-        float attenuationTerm = getAttenuationTerm(lights[i], posWS);
-        light += lights[i].intensity * lightAngleCos * attenuationTerm;
+        float attenuationTerm = getAttenuationTerm(_Lights[i], posWS);
+        light += _Lights[i].intensity * lightAngleCos * attenuationTerm;
 
         if (calcSpecular)
         {
@@ -64,7 +64,7 @@ vec4 getLight(vec3 posWS, vec3 normalWS, bool calcSpecular, float smoothness, ve
 }
 
 vec4 doGammaCorrection(vec4 color){
-    vec4 gamma = vec4(gammaCorrection, gammaCorrection, gammaCorrection, 1);
+    vec4 gamma = vec4(_GammaCorrection, _GammaCorrection, _GammaCorrection, 1);
     return pow(color, gamma);
 }
 

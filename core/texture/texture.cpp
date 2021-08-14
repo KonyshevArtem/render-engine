@@ -54,6 +54,6 @@ void Texture::Init()
     glSamplerParameteri(Sampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glSamplerParameteri(Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glSamplerParameteri(Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, &Data[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, &Data[0]);
     glBindTexture(GL_TEXTURE_2D, 0);
 }

@@ -63,9 +63,4 @@ vec4 getLight(vec3 posWS, vec3 normalWS, bool calcSpecular, float smoothness, ve
     return light;
 }
 
-vec4 doGammaCorrection(vec4 color){
-    vec4 gamma = vec4(_GammaCorrection, _GammaCorrection, _GammaCorrection, 1);
-    return pow(color, gamma);
-}
-
 #endif //LIGHTING

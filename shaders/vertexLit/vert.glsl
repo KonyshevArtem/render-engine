@@ -15,7 +15,6 @@ void main(){
     vec3 normalWS = normalize((_ModelNormalMatrix * vec4(vertNormalOS, 0)).xyz);
     color = vertColor * _AmbientLightColor;
     color += vertColor * getLight(vertPositionWS.xyz, normalWS, false, 0, vec3(0, 0, 0));
-    color = doGammaCorrection(color);
 
     uv = texCoord * _AlbedoST.zw + _AlbedoST.xy;
 }

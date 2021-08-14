@@ -394,6 +394,7 @@ int main(int argc, char **argv)
     initCulling();
     initDepth();
     initLighting();
+    glEnable(GL_FRAMEBUFFER_SRGB);
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);

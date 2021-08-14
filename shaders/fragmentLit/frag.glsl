@@ -16,5 +16,4 @@ void main(){
     vec4 albedoColor = texture(_Albedo, uv) * color;
     outColor = albedoColor * _AmbientLightColor;
     outColor += albedoColor * getLight(positionWS.xyz, normalize(normalWS), true, _Smoothness, _CameraPosWS);
-    outColor = doGammaCorrection(outColor);
 }

@@ -90,5 +90,13 @@ GLuint Shader::LinkProgram(GLuint vertexPart, GLuint fragmentPart)
     glDetachShader(program, vertexPart);
     glDetachShader(program, fragmentPart);
 
+    glDeleteShader(vertexPart);
+    glDeleteShader(fragmentPart);
+
     return program;
+}
+
+Shader::~Shader()
+{
+    glDeleteProgram(Program);
 }

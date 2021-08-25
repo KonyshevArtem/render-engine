@@ -57,3 +57,9 @@ void Texture::Init()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, &Data[0]);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+Texture::~Texture()
+{
+    glDeleteTextures(1, &Ptr);
+    glDeleteSamplers(1, &Sampler);
+}

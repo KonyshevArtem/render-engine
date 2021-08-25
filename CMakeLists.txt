@@ -36,7 +36,12 @@ add_executable(
         core/material/material.cpp
         core/material/material.h
         core/mesh/plane/plane_mesh.cpp
-        core/mesh/plane/plane_mesh.h)
+        core/mesh/plane/plane_mesh.h
+        core/scene/scene.h
+        scenes/test_scene.cpp
+        scenes/test_scene.h
+        core/input/input.cpp
+        core/input/input.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

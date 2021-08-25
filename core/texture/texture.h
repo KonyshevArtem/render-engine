@@ -20,6 +20,8 @@ public:
     static shared_ptr<Texture> Load(const string &path, unsigned int width, unsigned int height);
     static shared_ptr<Texture> White();
 
+    ~Texture();
+
 private:
     void Init();
 };

@@ -14,6 +14,8 @@ public:
 
     virtual int GetTrianglesCount() = 0;
 
+    virtual ~Mesh();
+
 protected:
     virtual void *GetVertexData()     = 0;
     virtual long  GetVertexDataSize() = 0;

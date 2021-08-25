@@ -20,6 +20,8 @@ public:
 
     static shared_ptr<Shader> Load(const string &path);
 
+    ~Shader();
+
 private:
     explicit Shader(GLuint program);
 

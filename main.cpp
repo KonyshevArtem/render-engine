@@ -1,6 +1,4 @@
 #include <cmath>
-#include <unordered_set>
-#include <vector>
 
 #define LIGHTING_UNIFORM_SIZE 176
 #define CAMERA_DATA_UNIFORM_SIZE 144
@@ -12,37 +10,25 @@
 #include "utils/utils.h"
 
 #include "core/gameObject/gameObject.h"
+#include "core/input/input.h"
 #include "core/light/light_data.h"
-#include "core/mesh/cube/cube_mesh.h"
-#include "core/mesh/cylinder/cylinder_mesh.h"
-#include "core/mesh/plane/plane_mesh.h"
-#include "core/shader/shader.h"
-#include "core/texture/texture.h"
-#include "math/math_utils.h"
 #include "math/matrix4x4/matrix4x4.h"
 #include "math/quaternion/quaternion.h"
 #include "math/vector3/vector3.h"
 #include "math/vector4/vector4.h"
+#include "scenes/test_scene.h"
 
 using namespace std;
 
 GLuint lightingUniformBuffer;
 GLuint cameraDataUniformBuffer;
 
-Vector3 mouseCoord    = Vector3::Zero();
-Vector3 mouseDelta    = Vector3::Zero();
-Vector3 oldMouseCoord = Vector3::Zero();
-float   prevDisplayTime;
+float prevDisplayTime;
 
 unique_ptr<GameObject> camera;
 Vector3                cameraEulerAngles;
 const float            cameraRotSpeed  = 0.005f;
 const float            cameraMoveSpeed = 0.1f;
-
-vector<shared_ptr<GameObject>> gameObjects;
-unordered_set<unsigned char>   inputs;
-
-shared_ptr<Material> waterMaterial;
 
 void initUniformBlocks()
 {
@@ -147,40 +133,16 @@ void initDepth()
     glDepthRange(0, 1);
 }
 
-Vector3 calcTranslation(float phase)
-{
-    const float radius = 2;
-
-    float xOffset = sinf(phase * 2 * (float) M_PI) * radius;
-    float yOffset = cosf(phase * 2 * (float) M_PI) * radius;
-
-    return {xOffset, yOffset, -5};
-}
-
-Quaternion calcRotation(float phase, int i)
-{
-    Vector3 axis = Vector3(i == 0 ? 1 : 0, i == 0 ? 0 : 1, 0);
-    return Quaternion::AngleAxis(360 * phase, axis);
-}
-
-Vector3 calcScale(float phase)
-{
-    float scale = Math::Lerp(1, 2, (sinf(phase * 2 * (float) M_PI) + 1) * 0.5f);
-    return {scale, scale, scale};
-}
-
 void update()
 {
+    Input::Update();
+
     // process quit input
-    if (inputs.contains('q'))
+    if (Input::IsKeyDown('q'))
     {
         glutDestroyWindow(glutGetWindow());
         exit(0);
     }
-
-    // calculate correct mouse coordinate delta
-    mouseDelta    = oldMouseCoord - mouseCoord;
-    oldMouseCoord = mouseCoord;
 
     // calculate time delta from previous update
     auto time       = (float) glutGet(GLUT_ELAPSED_TIME);
@@ -188,7 +150,7 @@ void update()
     prevDisplayTime = time;
 
     // update camera rotation
-    cameraEulerAngles = cameraEulerAngles + mouseDelta * cameraRotSpeed * deltaTime;
+    cameraEulerAngles = cameraEulerAngles + Input::GetMouseDelta() * cameraRotSpeed * deltaTime;
     if (cameraEulerAngles.x < 0)
         cameraEulerAngles.x = 360;
     if (cameraEulerAngles.x > 360)
@@ -204,30 +166,17 @@ void update()
 
     Vector3 cameraFwd   = camera->LocalRotation * Vector3(0, 0, -1);
     Vector3 cameraRight = camera->LocalRotation * Vector3(1, 0, 0);
-    if (inputs.contains('w'))
+    if (Input::IsKeyDown('w'))
         camera->LocalPosition = camera->LocalPosition + cameraFwd * cameraMoveSpeed;
-    if (inputs.contains('s'))
+    if (Input::IsKeyDown('s'))
         camera->LocalPosition = camera->LocalPosition - cameraFwd * cameraMoveSpeed;
-    if (inputs.contains('d'))
+    if (Input::IsKeyDown('d'))
         camera->LocalPosition = camera->LocalPosition + cameraRight * cameraMoveSpeed;
-    if (inputs.contains('a'))
+    if (Input::IsKeyDown('a'))
         camera->LocalPosition = camera->LocalPosition - cameraRight * cameraMoveSpeed;
 
-    // animate gameObjects
-    const float loopDuration = 3000;
-    float       phase        = fmodf(fmodf(time, loopDuration) / loopDuration, 1.0f);
-
-    gameObjects[0]->LocalPosition = calcTranslation(phase);
-    gameObjects[0]->LocalRotation = calcRotation(phase, 0);
-    gameObjects[0]->LocalScale    = calcScale(phase);
-
-    gameObjects[1]->LocalRotation = calcRotation(phase, 1);
-
-    gameObjects[2]->LocalRotation = calcRotation(phase, 1);
-
-    // animateWater
-    float offset            = Math::Lerp(0, 1, phase);
-    waterMaterial->AlbedoST = Vector4(offset, offset, 3, 3);
+    if (Scene::Current != nullptr)
+        Scene::Current->Update(time, deltaTime);
 }
 
 void display()
@@ -240,7 +189,7 @@ void display()
 
     initCameraData();
 
-    for (const auto &go: gameObjects)
+    for (const auto &go: Scene::Current->GameObjects)
     {
         if (go->Mesh == nullptr || go->Material == nullptr)
             continue;
@@ -282,23 +231,6 @@ void reshape(int width, int height)
     initPerspectiveMatrix(width, height);
 }
 
-void mouseMove(int x, int y)
-{
-    mouseCoord = Vector3((float) x, (float) y, 0);
-}
-
-void keyboardDown(unsigned char key, int x, int y)
-{
-    if (!inputs.contains(key))
-        inputs.insert(key);
-}
-
-void keyboardUp(unsigned char key, int x, int y)
-{
-    if (inputs.contains(key))
-        inputs.erase(key);
-}
-
 int main(int argc, char **argv)
 {
     glutInit(&argc, argv);
@@ -306,84 +238,9 @@ int main(int argc, char **argv)
     glutInitWindowSize(1024, 720);
     glutCreateWindow("OpenGL");
 
-    // init textures
-    auto grassTexture = Texture::Load("textures/grass.png", 800, 600);
-    auto waterTexture = Texture::Load("textures/water.png", 512, 512);
+    Input::Init();
 
-    // init shaders
-    auto vertexLitShader   = Shader::Load("shaders/vertexLit");
-    auto fragmentLitShader = Shader::Load("shaders/fragmentLit");
-
-    // init meshes
-    auto cubeMesh = make_shared<CubeMesh>();
-    cubeMesh->Init();
-
-    auto cylinderMesh = make_shared<CylinderMesh>();
-    cylinderMesh->Init();
-
-    auto planeMesh = make_shared<PlaneMesh>();
-    planeMesh->Init();
-
-    // init materials
-    auto vertexLitMaterial = make_shared<Material>(vertexLitShader);
-
-    auto vertexLitGrassMaterial    = make_shared<Material>(vertexLitShader);
-    vertexLitGrassMaterial->Albedo = grassTexture;
-
-    auto fragmentLitMaterial        = make_shared<Material>(fragmentLitShader);
-    fragmentLitMaterial->Smoothness = 5;
-
-    auto fragmentLitGrassMaterial        = make_shared<Material>(fragmentLitShader);
-    fragmentLitGrassMaterial->Albedo     = grassTexture;
-    fragmentLitGrassMaterial->Smoothness = 10;
-
-    waterMaterial             = make_shared<Material>(fragmentLitShader);
-    waterMaterial->Albedo     = waterTexture;
-    waterMaterial->Smoothness = 20;
-
-    // init gameObjects
-    auto rotatingCube      = make_shared<GameObject>();
-    rotatingCube->Mesh     = cubeMesh;
-    rotatingCube->Material = vertexLitGrassMaterial;
-
-    auto rotatingCylinder           = make_shared<GameObject>();
-    rotatingCylinder->Mesh          = cylinderMesh;
-    rotatingCylinder->Material      = vertexLitMaterial;
-    rotatingCylinder->LocalPosition = Vector3(0, -3, -4);
-    rotatingCylinder->LocalScale    = Vector3(2, 1, 0.5f);
-
-    auto cylinderFragmentLit           = make_shared<GameObject>();
-    cylinderFragmentLit->Mesh          = cylinderMesh;
-    cylinderFragmentLit->Material      = fragmentLitMaterial;
-    cylinderFragmentLit->LocalPosition = Vector3(-3, -3, -6);
-    cylinderFragmentLit->LocalScale    = Vector3(2, 1, 0.5f);
-
-    auto floorVertexLit           = make_shared<GameObject>();
-    floorVertexLit->Mesh          = cubeMesh;
-    floorVertexLit->Material      = vertexLitMaterial;
-    floorVertexLit->LocalPosition = Vector3(3, -5, -5.5f);
-    floorVertexLit->LocalRotation = Quaternion::AngleAxis(10, Vector3(0, 1, 0));
-    floorVertexLit->LocalScale    = Vector3(5, 1, 2);
-
-    auto floorFragmentLit           = make_shared<GameObject>();
-    floorFragmentLit->Mesh          = cubeMesh;
-    floorFragmentLit->Material      = fragmentLitGrassMaterial;
-    floorFragmentLit->LocalPosition = Vector3(-9, -5, -5.5f);
-    floorFragmentLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
-    floorFragmentLit->LocalScale    = Vector3(5, 1, 2);
-
-    auto water           = make_shared<GameObject>();
-    water->Mesh          = planeMesh;
-    water->Material      = waterMaterial;
-    water->LocalPosition = Vector3(0, -10, -10);
-    water->LocalScale    = Vector3(20, 1, 20);
-
-    gameObjects.push_back(rotatingCube);
-    gameObjects.push_back(rotatingCylinder);
-    gameObjects.push_back(cylinderFragmentLit);
-    gameObjects.push_back(floorVertexLit);
-    gameObjects.push_back(floorFragmentLit);
-    gameObjects.push_back(water);
+    TestScene::Load();
 
     // init camera
     camera                = make_unique<GameObject>();
@@ -398,9 +255,6 @@ int main(int argc, char **argv)
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
-    glutPassiveMotionFunc(mouseMove);
-    glutKeyboardFunc(keyboardDown);
-    glutKeyboardUpFunc(keyboardUp);
 
     glutMainLoop();
 

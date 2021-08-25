@@ -48,3 +48,8 @@ void Mesh::Init()
 
     glBindVertexArray(0);
 }
+
+Mesh::~Mesh()
+{
+    glDeleteVertexArrays(1, &vertexArrayObject);
+}

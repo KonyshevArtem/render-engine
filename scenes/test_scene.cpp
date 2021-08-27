@@ -1,9 +1,14 @@
 #include "test_scene.h"
+#include "../core/camera/camera.h"
 #include "../core/mesh/cube/cube_mesh.h"
 #include "../core/mesh/cylinder/cylinder_mesh.h"
 #include "../core/mesh/plane/plane_mesh.h"
+#include "../core/time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "../math/math_utils.h"
 #include <cmath>
+#include <memory>
+
+using namespace std;
 
 void TestScene::Load()
 {
@@ -39,7 +44,7 @@ void TestScene::Init()
     vertexLitGrassMaterial->Albedo = grassTexture;
 
     auto fragmentLitMaterial        = make_shared<Material>(fragmentLitShader);
-    fragmentLitMaterial->Smoothness = 5;
+    fragmentLitMaterial->Smoothness = 50;
 
     auto fragmentLitGrassMaterial        = make_shared<Material>(fragmentLitShader);
     fragmentLitGrassMaterial->Albedo     = grassTexture;
@@ -92,6 +97,9 @@ void TestScene::Init()
     GameObjects.push_back(floorVertexLit);
     GameObjects.push_back(floorFragmentLit);
     GameObjects.push_back(water);
+
+    Camera::Current->Position = Vector3(-10, 0.5f, 5);
+    CameraFlyControl          = make_unique<CameraFlyController>();
 }
 
 Vector3 TestScene::CalcTranslation(float phase)
@@ -116,9 +124,11 @@ Vector3 TestScene::CalcScale(float phase)
     return {scale, scale, scale};
 }
 
-void TestScene::Update(float time, float deltaTime)
+void TestScene::UpdateInternal()
 {
-    float phase = fmodf(fmodf(time, LoopDuration) / LoopDuration, 1.0f);
+    CameraFlyControl->Update();
+
+    float phase = fmodf(fmodf(Time::TimePassed, LoopDuration) / LoopDuration, 1.0f);
 
     GameObjects[0]->LocalPosition = CalcTranslation(phase);
     GameObjects[0]->LocalRotation = CalcRotation(phase, 0);

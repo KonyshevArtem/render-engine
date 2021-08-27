@@ -14,7 +14,6 @@ layout(std140) uniform Lighting // 176 bytes (168 bytes round up by 16)
     LightData _Lights[3];        // 0   144
     vec4 _AmbientLightColor;     // 144 160
     int _LightsCount;            // 160 164
-    float _GammaCorrection;      // 164 168
 };
 
 vec3 getLightDirWS(LightData light, vec3 posWS){
@@ -56,7 +55,7 @@ vec4 getLight(vec3 posWS, vec3 normalWS, bool calcSpecular, float smoothness, ve
         if (calcSpecular)
         {
             float specularTerm = getSpecularTerm(smoothness, lightDirWS, lightAngleCos, posWS, normalWS, cameraPosWS);
-            light += lightAngleCos * specularTerm * attenuationTerm;
+            light += specularTerm * attenuationTerm;
         }
     }
 

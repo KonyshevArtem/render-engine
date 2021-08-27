@@ -40,8 +40,17 @@ add_executable(
         core/scene/scene.h
         scenes/test_scene.cpp
         scenes/test_scene.h
+        core/scene/scene.cpp
         core/input/input.cpp
-        core/input/input.h)
+        core/input/input.h
+        core/graphics/graphics.cpp
+        core/graphics/graphics.h
+        core/camera/camera.cpp
+        core/camera/camera.h
+        core/time/time.cpp
+        core/time/time.h
+        scripts/camera_fly_controller/camera_fly_controller.cpp
+        scripts/camera_fly_controller/camera_fly_controller.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

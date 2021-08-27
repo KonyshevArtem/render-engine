@@ -9,7 +9,10 @@ public:
     inline static shared_ptr<Scene> Current = nullptr;
     vector<shared_ptr<GameObject>>  GameObjects;
 
-    virtual void Update(float time, float deltaTime) = 0;
+    static void Update();
+
+private:
+    virtual void UpdateInternal() = 0;
 };
 
 #endif //OPENGL_STUDY_SCENE_H

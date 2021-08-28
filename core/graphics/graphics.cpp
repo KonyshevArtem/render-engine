@@ -79,17 +79,20 @@ void Graphics::Render()
         Matrix4x4 modelMatrix       = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
         Matrix4x4 modelNormalMatrix = modelMatrix.Invert().Transpose();
 
-        glUniformMatrix4fv(go->Material->ShaderPtr->ModelMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelMatrix);
-        glUniformMatrix4fv(go->Material->ShaderPtr->ModelNormalMatrixLocation, 1, GL_FALSE, (const GLfloat *) &modelNormalMatrix);
-        glUniform1f(go->Material->ShaderPtr->SmoothnessLocation, go->Material->Smoothness);
+        go->Material->ShaderPtr->SetUniform("_ModelMatrix", &modelMatrix);
+        go->Material->ShaderPtr->SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
+        go->Material->ShaderPtr->SetUniform("_Smoothness", &go->Material->Smoothness);
 
         if (go->Material->Albedo != nullptr)
         {
-            glActiveTexture(GL_TEXTURE0);
+            int textureUnit = 0;
+
+            glActiveTexture(GL_TEXTURE0 + textureUnit);
             glBindTexture(GL_TEXTURE_2D, go->Material->Albedo->Ptr);
-            glBindSampler(0, go->Material->Albedo->Sampler);
-            glUniform1i(go->Material->ShaderPtr->AlbedoLocation, 0);
-            glUniform4fv(go->Material->ShaderPtr->AlbedoSTLocation, 1, (const GLfloat *) &go->Material->AlbedoST);
+            glBindSampler(textureUnit, go->Material->Albedo->Sampler);
+
+            go->Material->ShaderPtr->SetUniform("_Albedo", &textureUnit);
+            go->Material->ShaderPtr->SetUniform("_AlbedoST", &go->Material->AlbedoST);
         }
 
         glDrawElements(GL_TRIANGLES, go->Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);

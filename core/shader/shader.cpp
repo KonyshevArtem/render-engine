@@ -10,16 +10,33 @@ using namespace std;
 Shader::Shader(GLuint _program)
 {
     Program                       = _program;
-    ModelMatrixLocation           = glGetUniformLocation(_program, "_ModelMatrix");
-    ModelNormalMatrixLocation     = glGetUniformLocation(_program, "_ModelNormalMatrix");
-    SmoothnessLocation            = glGetUniformLocation(_program, "_Smoothness");
-    AlbedoLocation                = glGetUniformLocation(_program, "_Albedo");
-    AlbedoSTLocation              = glGetUniformLocation(_program, "_AlbedoST");
-    GLuint lightingUniformIndex   = glGetUniformBlockIndex(_program, "Lighting");
-    GLuint cameraDataUniformIndex = glGetUniformBlockIndex(_program, "CameraData");
+    GLuint lightingUniformIndex   = glGetUniformBlockIndex(Program, "Lighting");
+    GLuint cameraDataUniformIndex = glGetUniformBlockIndex(Program, "CameraData");
 
-    glUniformBlockBinding(_program, cameraDataUniformIndex, 0);
-    glUniformBlockBinding(_program, lightingUniformIndex, 1);
+    glUniformBlockBinding(Program, cameraDataUniformIndex, 0);
+    glUniformBlockBinding(Program, lightingUniformIndex, 1);
+
+    GLint count;
+    GLint buffSize;
+    glGetProgramiv(Program, GL_ACTIVE_UNIFORMS, &count);
+    glGetProgramiv(Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffSize);
+
+    GLsizei length;
+    GLenum  type;
+    GLchar  name[buffSize];
+    for (int i = 0; i < count; ++i)
+    {
+        glGetActiveUniform(Program, i, buffSize, &length, nullptr, &type, &name[0]);
+        string nameStr(&name[0], length);
+
+        UniformInfo info {};
+        info.Location       = glGetUniformLocation(Program, &nameStr[0]);
+        info.Type           = ConvertUniformType(type);
+        m_Uniforms[nameStr] = info;
+
+        if (info.Type == UNKNOWN)
+            fprintf(stderr, "Unknown OpenGL type for uniform %s: %d\n", &nameStr[0], type);
+    }
 }
 
 shared_ptr<Shader> Shader::Load(const string &_path)
@@ -96,7 +113,65 @@ GLuint Shader::LinkProgram(GLuint _vertexPart, GLuint _fragmentPart)
     return program;
 }
 
+UniformType Shader::ConvertUniformType(GLenum _type)
+{
+    switch (_type)
+    {
+        case GL_INT:
+            return INT;
+
+        case GL_FLOAT:
+            return FLOAT;
+        case GL_FLOAT_VEC3:
+            return FLOAT_VEC3;
+        case GL_FLOAT_VEC4:
+            return FLOAT_VEC4;
+        case GL_FLOAT_MAT4:
+            return FLOAT_MAT4;
+
+        case GL_BOOL:
+            return BOOL;
+
+        case GL_SAMPLER_2D:
+            return SAMPLER_2D;
+
+        default:
+            return UNKNOWN;
+    }
+}
+
 Shader::~Shader()
 {
     glDeleteProgram(Program);
+}
+
+void Shader::SetUniform(const string &_name, const void *_data)
+{
+    if (!m_Uniforms.contains(_name))
+        return;
+
+    UniformInfo info = m_Uniforms[_name];
+
+    switch (info.Type)
+    {
+        case UNKNOWN:
+            break;
+        case INT: // NOLINT(bugprone-branch-clone)
+        case BOOL:
+        case SAMPLER_2D:
+            glUniform1i(info.Location, *((GLint *) _data));
+            break;
+        case FLOAT:
+            glUniform1f(info.Location, *((GLfloat *) _data));
+            break;
+        case FLOAT_VEC3:
+            glUniform3fv(info.Location, 1, (GLfloat *) _data);
+            break;
+        case FLOAT_VEC4:
+            glUniform4fv(info.Location, 1, (GLfloat *) _data);
+            break;
+        case FLOAT_MAT4:
+            glUniformMatrix4fv(info.Location, 1, GL_FALSE, (GLfloat *) _data);
+            break;
+    }
 }

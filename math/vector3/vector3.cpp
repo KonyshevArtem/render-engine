@@ -1,21 +1,16 @@
 #include "vector3.h"
 #include <cmath>
 
-Vector3::Vector3()
+Vector3::Vector3() :
+    Vector3(0, 0, 0)
 {
-    x = y = z = 0;
 }
 
-Vector3::Vector3(float x, float y, float z)
+Vector3::Vector3(float _x, float _y, float _z)
 {
-    this->x = x;
-    this->y = y;
-    this->z = z;
-}
-
-Vector3 Vector3::Zero()
-{
-    return {0, 0, 0};
+    this->x = _x;
+    this->y = _y;
+    this->z = _z;
 }
 
 Vector3 Vector3::One()
@@ -45,27 +40,27 @@ Vector3 Vector3::operator-() const
     return {-x, -y, -z};
 }
 
-Vector3 Vector3::operator+(const Vector3 &vector) const
+Vector3 Vector3::operator+(const Vector3 &_vector) const
 {
-    return {x + vector.x, y + vector.y, z + vector.z};
+    return {x + _vector.x, y + _vector.y, z + _vector.z};
 }
 
-Vector3 Vector3::operator-(const Vector3 &vector) const
+Vector3 Vector3::operator-(const Vector3 &_vector) const
 {
-    return *this + (-vector);
+    return *this + (-_vector);
 }
 
-Vector3 Vector3::operator*(float value) const
+Vector3 Vector3::operator*(float _value) const
 {
-    return {value * x, value * y, value * z};
+    return {_value * x, _value * y, _value * z};
 }
 
-float Vector3::Dot(const Vector3 &a, const Vector3 &b)
+float Vector3::Dot(const Vector3 &_a, const Vector3 &_b)
 {
-    return a.x * b.x + a.y * b.y + a.z * b.z;
+    return _a.x * _b.x + _a.y * _b.y + _a.z * _b.z;
 }
 
-Vector3 Vector3::Cross(const Vector3 &a, const Vector3 &b)
+Vector3 Vector3::Cross(const Vector3 &_a, const Vector3 &_b)
 {
-    return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
+    return {_a.y * _b.z - _a.z * _b.y, _a.z * _b.x - _a.x * _b.z, _a.x * _b.y - _a.y * _b.x};
 }

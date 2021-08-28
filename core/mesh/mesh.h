@@ -1,14 +1,17 @@
 #ifndef OPENGL_STUDY_MESH_H
 #define OPENGL_STUDY_MESH_H
 
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
 #define GL_SILENCE_DEPRECATION
+#pragma clang diagnostic pop
 
 #include "OpenGL/gl3.h"
 
-class Mesh // NOLINT(cppcoreguidelines-pro-type-member-init)
+class Mesh
 {
 public:
-    const GLuint &GetVertexArrayObject() const;
+    [[nodiscard]] const GLuint &GetVertexArrayObject() const;
 
     void Init();
 
@@ -33,7 +36,7 @@ protected:
     virtual long  GetUVDataSize() = 0;
 
 private:
-    GLuint vertexArrayObject;
+    GLuint m_VertexArrayObject = 0;
 };
 
 

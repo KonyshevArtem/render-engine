@@ -1,7 +1,9 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
 #define GL_SILENCE_DEPRECATION
+#pragma clang diagnostic pop
 
 #include "cube_mesh.h"
-
 
 static const int  vertexCount    = 24;
 static const int  trianglesCount = 12;

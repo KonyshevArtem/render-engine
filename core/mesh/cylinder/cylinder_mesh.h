@@ -25,19 +25,19 @@ protected:
     long  GetIndexDataSize() override;
 
     void *GetUVData() override;
-    long GetUVDataSize() override;
+    long  GetUVDataSize() override;
 
 private:
-    std::vector<float> vertexes;
-    std::vector<float> colors;
-    std::vector<float> normals;
-    std::vector<int>   indexes;
+    std::vector<float> m_Vertexes;
+    std::vector<float> m_Colors;
+    std::vector<float> m_Normals;
+    std::vector<int>   m_Indexes;
 
-    void AddVertex(float x, float y, float z);
-    void AddColor(float r, float g, float b, float a);
-    void AddNormal(float x, float y, float z);
-    void AddTriangle(int v1, int v2, int v3);
+    void AddVertex(float _x, float _y, float _z);
+    void AddColor(float _r, float _g, float _b, float _a);
+    void AddNormal(float _x, float _y, float _z);
+    void AddTriangle(int _v1, int _v2, int _v3);
 };
 
 
-#endif//OPENGL_STUDY_CYLINDER_MESH_H
+#endif //OPENGL_STUDY_CYLINDER_MESH_H

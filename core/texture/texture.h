@@ -17,7 +17,7 @@ public:
     GLuint                Ptr;
     GLuint                Sampler;
 
-    static shared_ptr<Texture> Load(const string &path, unsigned int width, unsigned int height);
+    static shared_ptr<Texture> Load(const string &_path, unsigned int _width, unsigned int _height);
     static shared_ptr<Texture> White();
 
     ~Texture();

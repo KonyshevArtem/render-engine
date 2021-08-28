@@ -1,4 +1,7 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
 #define GL_SILENCE_DEPRECATION
+#pragma clang diagnostic pop
 
 #include "graphics.h"
 #include "../camera/camera.h"
@@ -7,9 +10,9 @@
 #include "GLUT/glut.h"
 #include "OpenGL/gl3.h"
 
-void Graphics::Init(int argc, char **argv)
+void Graphics::Init(int _argc, char **_argv)
 {
-    glutInit(&argc, argv);
+    glutInit(&_argc, _argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_3_2_CORE_PROFILE | GLUT_DEPTH);
     glutInitWindowSize(1024, 720);
     glutCreateWindow("OpenGL");
@@ -101,26 +104,26 @@ void Graphics::Render()
     glutPostRedisplay();
 }
 
-void Graphics::Reshape(int width, int height)
+void Graphics::Reshape(int _width, int _height)
 {
-    ScreenWidth  = width;
-    ScreenHeight = height;
-    glViewport(0, 0, width, height);
+    ScreenWidth  = _width;
+    ScreenHeight = _height;
+    glViewport(0, 0, _width, _height);
 }
 
-void Graphics::UpdateCameraData(Vector3 cameraPosWS, Matrix4x4 viewMatrix, Matrix4x4 projectionMatrix)
+void Graphics::UpdateCameraData(Vector3 _cameraPosWs, Matrix4x4 _viewMatrix, Matrix4x4 _projectionMatrix)
 {
     long matrixSize = sizeof(Matrix4x4);
     glBindBuffer(GL_UNIFORM_BUFFER, CameraDataUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, matrixSize, matrixSize, &viewMatrix);
+    glBufferSubData(GL_UNIFORM_BUFFER, matrixSize, matrixSize, &_viewMatrix);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, CameraDataUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, 2 * matrixSize, sizeof(Vector4), &cameraPosWS);
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * matrixSize, sizeof(Vector4), &_cameraPosWs);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, CameraDataUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, matrixSize, &projectionMatrix);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, matrixSize, &_projectionMatrix);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
@@ -149,7 +152,7 @@ void Graphics::UpdateLightingData()
     glBindBuffer(GL_UNIFORM_BUFFER, LightingUniformBuffer);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, lightDataSize, &lights);
     glBufferSubData(GL_UNIFORM_BUFFER, lightDataSize, sizeof(Vector4), &ambientLight);
-    glBufferSubData(GL_UNIFORM_BUFFER, lightDataSize + sizeof(Vector4), sizeof(int), &lightsCount);
+    glBufferSubData(GL_UNIFORM_BUFFER, lightDataSize + sizeof(Vector4), sizeof(int), &lightsCount); // NOLINT(cppcoreguidelines-narrowing-conversions)
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 

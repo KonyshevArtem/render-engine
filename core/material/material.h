@@ -10,7 +10,7 @@ using namespace std;
 class Material
 {
 public:
-    explicit Material(shared_ptr<Shader> shader);
+    explicit Material(shared_ptr<Shader> _shader);
 
     shared_ptr<Shader>  ShaderPtr;
     shared_ptr<Texture> Albedo;

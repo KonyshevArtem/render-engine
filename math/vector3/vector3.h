@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_VECTOR3_H
 #define OPENGL_STUDY_VECTOR3_H
 
-struct Vector3
+struct [[nodiscard]] Vector3
 {
 public:
     float x;
@@ -10,27 +10,25 @@ public:
 
     Vector3();
 
-    Vector3(float x, float y, float z);
-
-    static Vector3 Zero();
+    Vector3(float _x, float _y, float _z);
 
     static Vector3 One();
 
-    float Length() const;
+    [[nodiscard]] float Length() const;
 
     Vector3 Normalize() const;
 
     Vector3 operator-() const;
 
-    Vector3 operator+(const Vector3 &vector) const;
+    Vector3 operator+(const Vector3 &_vector) const;
 
-    Vector3 operator-(const Vector3 &vector) const;
+    Vector3 operator-(const Vector3 &_vector) const;
 
-    Vector3 operator*(float value) const;
+    Vector3 operator*(float _value) const;
 
-    static float Dot(const Vector3 &a, const Vector3 &b);
+    static float Dot(const Vector3 &_a, const Vector3 &_b);
 
-    static Vector3 Cross(const Vector3 &a, const Vector3 &b);
+    static Vector3 Cross(const Vector3 &_a, const Vector3 &_b);
 };
 
-#endif//OPENGL_STUDY_VECTOR3_H
+#endif //OPENGL_STUDY_VECTOR3_H

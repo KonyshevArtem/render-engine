@@ -50,9 +50,9 @@ void TestScene::Init()
     fragmentLitGrassMaterial->Albedo     = grassTexture;
     fragmentLitGrassMaterial->Smoothness = 10;
 
-    WaterMaterial             = make_shared<Material>(fragmentLitShader);
-    WaterMaterial->Albedo     = waterTexture;
-    WaterMaterial->Smoothness = 20;
+    m_WaterMaterial             = make_shared<Material>(fragmentLitShader);
+    m_WaterMaterial->Albedo     = waterTexture;
+    m_WaterMaterial->Smoothness = 20;
 
     // init gameObjects
     auto rotatingCube      = make_shared<GameObject>();
@@ -87,7 +87,7 @@ void TestScene::Init()
 
     auto water           = make_shared<GameObject>();
     water->Mesh          = planeMesh;
-    water->Material      = WaterMaterial;
+    water->Material      = m_WaterMaterial;
     water->LocalPosition = Vector3(0, -10, -10);
     water->LocalScale    = Vector3(20, 1, 20);
 
@@ -99,36 +99,36 @@ void TestScene::Init()
     GameObjects.push_back(water);
 
     Camera::Current->Position = Vector3(-10, 0.5f, 5);
-    CameraFlyControl          = make_unique<CameraFlyController>();
+    m_CameraFlyControl        = make_unique<CameraFlyController>();
 }
 
-Vector3 TestScene::CalcTranslation(float phase)
+Vector3 TestScene::CalcTranslation(float _phase)
 {
     const float radius = 2;
 
-    float xOffset = sinf(phase * 2 * (float) M_PI) * radius;
-    float yOffset = cosf(phase * 2 * (float) M_PI) * radius;
+    float xOffset = sinf(_phase * 2 * (float) M_PI) * radius;
+    float yOffset = cosf(_phase * 2 * (float) M_PI) * radius;
 
     return {xOffset, yOffset, -5};
 }
 
-Quaternion TestScene::CalcRotation(float phase, int i)
+Quaternion TestScene::CalcRotation(float _phase, int _i)
 {
-    Vector3 axis = Vector3(i == 0 ? 1 : 0, i == 0 ? 0 : 1, 0);
-    return Quaternion::AngleAxis(360 * phase, axis);
+    Vector3 axis = Vector3(_i == 0 ? 1 : 0, _i == 0 ? 0 : 1, 0);
+    return Quaternion::AngleAxis(360 * _phase, axis);
 }
 
-Vector3 TestScene::CalcScale(float phase)
+Vector3 TestScene::CalcScale(float _phase)
 {
-    float scale = Math::Lerp(1, 2, (sinf(phase * 2 * (float) M_PI) + 1) * 0.5f);
+    float scale = Math::Lerp(1, 2, (sinf(_phase * 2 * (float) M_PI) + 1) * 0.5f);
     return {scale, scale, scale};
 }
 
 void TestScene::UpdateInternal()
 {
-    CameraFlyControl->Update();
+    m_CameraFlyControl->Update();
 
-    float phase = fmodf(fmodf(Time::TimePassed, LoopDuration) / LoopDuration, 1.0f);
+    float phase = fmodf(fmodf(Time::TimePassed, LOOP_DURATION) / LOOP_DURATION, 1.0f);
 
     GameObjects[0]->LocalPosition = CalcTranslation(phase);
     GameObjects[0]->LocalRotation = CalcRotation(phase, 0);
@@ -139,6 +139,6 @@ void TestScene::UpdateInternal()
     GameObjects[2]->LocalRotation = CalcRotation(phase, 1);
 
     // animateWater
-    float offset            = Math::Lerp(0, 1, phase);
-    WaterMaterial->AlbedoST = Vector4(offset, offset, 3, 3);
+    float offset              = Math::Lerp(0, 1, phase);
+    m_WaterMaterial->AlbedoST = Vector4(offset, offset, 3, 3);
 }

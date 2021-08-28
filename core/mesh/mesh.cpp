@@ -2,13 +2,13 @@
 
 const GLuint &Mesh::GetVertexArrayObject() const
 {
-    return this->vertexArrayObject;
+    return this->m_VertexArrayObject;
 }
 
 void Mesh::Init()
 {
-    glGenVertexArrays(1, &this->vertexArrayObject);
-    glBindVertexArray(this->vertexArrayObject);
+    glGenVertexArrays(1, &this->m_VertexArrayObject);
+    glBindVertexArray(this->m_VertexArrayObject);
 
     GLuint vertexBuffer;
     GLuint indexBuffer;
@@ -51,5 +51,5 @@ void Mesh::Init()
 
 Mesh::~Mesh()
 {
-    glDeleteVertexArrays(1, &vertexArrayObject);
+    glDeleteVertexArrays(1, &m_VertexArrayObject);
 }

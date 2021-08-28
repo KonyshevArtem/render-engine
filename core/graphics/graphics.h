@@ -8,9 +8,9 @@
 class Graphics
 {
 public:
-    static void Init(int argc, char **argv);
+    static void Init(int _argc, char **_argv);
     static void Render();
-    static void Reshape(int width, int height);
+    static void Reshape(int _width, int _height);
 
     inline static int ScreenWidth  = 0;
     inline static int ScreenHeight = 0;
@@ -29,7 +29,7 @@ private:
     static void InitFramebuffer();
     static void InitUniformBlocks();
 
-    static void UpdateCameraData(Vector3 cameraPosWS, Matrix4x4 viewMatrix, Matrix4x4 projectionMatrix);
+    static void UpdateCameraData(Vector3 _cameraPosWs, Matrix4x4 _viewMatrix, Matrix4x4 _projectionMatrix);
     static void UpdateLightingData();
 };
 

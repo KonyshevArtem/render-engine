@@ -4,9 +4,9 @@
 #include <cstdio>
 #include <filesystem>
 
-string Utils::ReadFile(const filesystem::path &path)
+string Utils::ReadFile(const filesystem::path &_path)
 {
-    FILE *file = fopen(path.c_str(), "r");
+    FILE *file = fopen(_path.c_str(), "r");
     if (file == nullptr)
         return "";
 
@@ -34,15 +34,15 @@ string Utils::ReadFile(const filesystem::path &path)
     return content;
 }
 
-string Utils::ReadFileWithIncludes(const filesystem::path &path)
+string Utils::ReadFileWithIncludes(const filesystem::path &_path)
 {
-    string file = ReadFile(path);
+    string file = ReadFile(_path);
 
     regex  expression("\\s*#include\\s+\\\"(.*)\\\"\\s*\n");
     smatch match;
     while (regex_search(file.cbegin(), file.cend(), match, expression))
     {
-        string includedFile = ReadFileWithIncludes(path.parent_path() / match[1].str());
+        string includedFile = ReadFileWithIncludes(_path.parent_path() / match[1].str());
         file                = file.replace(match.position() + 1, match.length() - 2, includedFile);
     }
 

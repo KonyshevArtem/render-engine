@@ -11,18 +11,18 @@ using namespace std;
 class Camera
 {
 public:
-    static void Init(float fov, float zNear, float zFar);
-    Matrix4x4   GetViewMatrix();
-    Matrix4x4   GetProjectionMatrix();
+    static void Init(float _fov, float _nearZ, float _farZ);
+    Matrix4x4   GetViewMatrix() const;
+    Matrix4x4   GetProjectionMatrix() const;
 
     inline static unique_ptr<Camera> Current  = nullptr;
-    Vector3                          Position = Vector3::Zero();
+    Vector3                          Position = Vector3();
     Quaternion                       Rotation = Quaternion();
 
 private:
-    float Fov;
-    float zNear;
-    float zFar;
+    float m_Fov   = 0;
+    float m_NearZ = 0;
+    float m_FarZ  = 0;
 };
 
 #endif //OPENGL_STUDY_CAMERA_H

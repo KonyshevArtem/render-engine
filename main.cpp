@@ -1,6 +1,9 @@
 #include <cmath>
 
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
 #define GL_SILENCE_DEPRECATION
+#pragma clang diagnostic pop
 
 #include "GLUT/glut.h"
 #include "utils/utils.h"
@@ -27,9 +30,9 @@ void display()
     Graphics::Render();
 }
 
-void reshape(int width, int height)
+void reshape(int _width, int _height)
 {
-    Graphics::Reshape(width, height);
+    Graphics::Reshape(_width, _height);
 }
 
 int main(int argc, char **argv)

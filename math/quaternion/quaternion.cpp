@@ -1,24 +1,23 @@
 #include "quaternion.h"
 #include <cmath>
 
-Quaternion::Quaternion()
+Quaternion::Quaternion() :
+    Quaternion(0, 0, 0, 1)
 {
-    x = y = z = 0;
-    w         = 1;
 }
 
-Quaternion::Quaternion(float x, float y, float z, float w)
+Quaternion::Quaternion(float _x, float _y, float _z, float _w)
 {
-    this->x = x;
-    this->y = y;
-    this->z = z;
-    this->w = w;
+    this->x = _x;
+    this->y = _y;
+    this->z = _z;
+    this->w = _w;
 }
 
-Quaternion Quaternion::AngleAxis(float angleDeg, Vector3 axis)
+Quaternion Quaternion::AngleAxis(float _angleDeg, Vector3 _axis)
 {
-    Vector3 normAxis     = axis.Normalize();
-    float   angleRadians = angleDeg * (float) M_PI / 180;
+    Vector3 normAxis     = _axis.Normalize();
+    float   angleRadians = _angleDeg * (float) M_PI / 180;
     float   sin          = sinf(angleRadians / 2);
     return {
             normAxis.x * sin,
@@ -32,18 +31,18 @@ Quaternion Quaternion::Inverse() const
     return {-x, -y, -z, w};
 }
 
-Quaternion Quaternion::operator*(const Quaternion &quaternion) const
+Quaternion Quaternion::operator*(const Quaternion &_quaternion) const
 {
     return {
-            x * quaternion.w + y * quaternion.z - z * quaternion.y + w * quaternion.x,
-            -x * quaternion.z + y * quaternion.w + z * quaternion.x + w * quaternion.y,
-            x * quaternion.y - y * quaternion.x + z * quaternion.w + w * quaternion.z,
-            -x * quaternion.x - y * quaternion.y - z * quaternion.z + w * quaternion.w};
+            x * _quaternion.w + y * _quaternion.z - z * _quaternion.y + w * _quaternion.x,
+            -x * _quaternion.z + y * _quaternion.w + z * _quaternion.x + w * _quaternion.y,
+            x * _quaternion.y - y * _quaternion.x + z * _quaternion.w + w * _quaternion.z,
+            -x * _quaternion.x - y * _quaternion.y - z * _quaternion.z + w * _quaternion.w};
 }
 
-Vector3 Quaternion::operator*(const Vector3 &vector) const
+Vector3 Quaternion::operator*(const Vector3 &_vector) const
 {
     Vector3 u = Vector3(x, y, z);
-    Vector3 t = Vector3::Cross(u, vector) * 2;
-    return vector + t * w + Vector3::Cross(u, t);
+    Vector3 t = Vector3::Cross(u, _vector) * 2;
+    return _vector + t * w + Vector3::Cross(u, t);
 }

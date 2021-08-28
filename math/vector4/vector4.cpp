@@ -1,22 +1,17 @@
 #include "vector4.h"
 #include <cmath>
 
-Vector4::Vector4()
+Vector4::Vector4() :
+    Vector4(0, 0, 0, 0)
 {
-    x = y = z = w = 0;
 }
 
-Vector4::Vector4(float x, float y, float z, float w)
+Vector4::Vector4(float _x, float _y, float _z, float _w)
 {
-    this->x = x;
-    this->y = y;
-    this->z = z;
-    this->w = w;
-}
-
-Vector4 Vector4::Zero()
-{
-    return {0, 0, 0, 0};
+    this->x = _x;
+    this->y = _y;
+    this->z = _z;
+    this->w = _w;
 }
 
 float Vector4::Length() const

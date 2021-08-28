@@ -7,36 +7,36 @@
 
 using namespace std;
 
-Shader::Shader(GLuint program)
+Shader::Shader(GLuint _program)
 {
-    Program                       = program;
-    ModelMatrixLocation           = glGetUniformLocation(program, "_ModelMatrix");
-    ModelNormalMatrixLocation     = glGetUniformLocation(program, "_ModelNormalMatrix");
-    SmoothnessLocation            = glGetUniformLocation(program, "_Smoothness");
-    AlbedoLocation                = glGetUniformLocation(program, "_Albedo");
-    AlbedoSTLocation              = glGetUniformLocation(program, "_AlbedoST");
-    GLuint lightingUniformIndex   = glGetUniformBlockIndex(program, "Lighting");
-    GLuint cameraDataUniformIndex = glGetUniformBlockIndex(program, "CameraData");
+    Program                       = _program;
+    ModelMatrixLocation           = glGetUniformLocation(_program, "_ModelMatrix");
+    ModelNormalMatrixLocation     = glGetUniformLocation(_program, "_ModelNormalMatrix");
+    SmoothnessLocation            = glGetUniformLocation(_program, "_Smoothness");
+    AlbedoLocation                = glGetUniformLocation(_program, "_Albedo");
+    AlbedoSTLocation              = glGetUniformLocation(_program, "_AlbedoST");
+    GLuint lightingUniformIndex   = glGetUniformBlockIndex(_program, "Lighting");
+    GLuint cameraDataUniformIndex = glGetUniformBlockIndex(_program, "CameraData");
 
-    glUniformBlockBinding(program, cameraDataUniformIndex, 0);
-    glUniformBlockBinding(program, lightingUniformIndex, 1);
+    glUniformBlockBinding(_program, cameraDataUniformIndex, 0);
+    glUniformBlockBinding(_program, lightingUniformIndex, 1);
 }
 
-shared_ptr<Shader> Shader::Load(const string &path)
+shared_ptr<Shader> Shader::Load(const string &_path)
 {
-    GLuint vertexPart   = Shader::CompileShaderPart(GL_VERTEX_SHADER, path + "/vert.glsl");
-    GLuint fragmentPart = Shader::CompileShaderPart(GL_FRAGMENT_SHADER, path + "/frag.glsl");
+    GLuint vertexPart   = Shader::CompileShaderPart(GL_VERTEX_SHADER, _path + "/vert.glsl");
+    GLuint fragmentPart = Shader::CompileShaderPart(GL_FRAGMENT_SHADER, _path + "/frag.glsl");
 
     GLuint program = Shader::LinkProgram(vertexPart, fragmentPart);
     return shared_ptr<Shader>(new Shader(program));
 }
 
-GLuint Shader::CompileShaderPart(GLuint shaderPartType, const string &path)
+GLuint Shader::CompileShaderPart(GLuint _shaderPartType, const string &_path)
 {
-    string      shaderSource    = Utils::ReadFileWithIncludes(path);
+    string      shaderSource    = Utils::ReadFileWithIncludes(_path);
     const char *shaderSourcePtr = shaderSource.c_str();
 
-    GLuint shader = glCreateShader(shaderPartType);
+    GLuint shader = glCreateShader(_shaderPartType);
     glShaderSource(shader, 1, &shaderSourcePtr, nullptr);
 
     glCompileShader(shader);
@@ -51,24 +51,24 @@ GLuint Shader::CompileShaderPart(GLuint shaderPartType, const string &path)
         auto *logMsg = new GLchar[infoLogLength + 1];
         glGetShaderInfoLog(shader, infoLogLength, nullptr, logMsg);
 
-        fprintf(stderr, "Shader compilation failed: %s\n%s\n", path.c_str(), logMsg);
+        fprintf(stderr, "Shader compilation failed: %s\n%s\n", _path.c_str(), logMsg);
 
         free(logMsg);
     }
     else
     {
-        printf("Shader compile success: %s\n", path.c_str());
+        printf("Shader compile success: %s\n", _path.c_str());
     }
 
     return shader;
 }
 
-GLuint Shader::LinkProgram(GLuint vertexPart, GLuint fragmentPart)
+GLuint Shader::LinkProgram(GLuint _vertexPart, GLuint _fragmentPart)
 {
     GLuint program = glCreateProgram();
 
-    glAttachShader(program, vertexPart);
-    glAttachShader(program, fragmentPart);
+    glAttachShader(program, _vertexPart);
+    glAttachShader(program, _fragmentPart);
 
     glLinkProgram(program);
 
@@ -87,11 +87,11 @@ GLuint Shader::LinkProgram(GLuint vertexPart, GLuint fragmentPart)
         exit(1);
     }
 
-    glDetachShader(program, vertexPart);
-    glDetachShader(program, fragmentPart);
+    glDetachShader(program, _vertexPart);
+    glDetachShader(program, _fragmentPart);
 
-    glDeleteShader(vertexPart);
-    glDeleteShader(fragmentPart);
+    glDeleteShader(_vertexPart);
+    glDeleteShader(_fragmentPart);
 
     return program;
 }

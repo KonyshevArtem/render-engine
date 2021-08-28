@@ -13,13 +13,13 @@ public:
 private:
     void Init();
 
-    static Vector3    CalcTranslation(float phase);
-    static Quaternion CalcRotation(float phase, int i);
-    static Vector3    CalcScale(float phase);
+    static Vector3    CalcTranslation(float _phase);
+    static Quaternion CalcRotation(float _phase, int _i);
+    static Vector3    CalcScale(float _phase);
 
-    const float                     LoopDuration = 3000;
-    shared_ptr<Material>            WaterMaterial;
-    unique_ptr<CameraFlyController> CameraFlyControl;
+    const float                     LOOP_DURATION = 3000;
+    shared_ptr<Material>            m_WaterMaterial;
+    unique_ptr<CameraFlyController> m_CameraFlyControl;
 };
 
 #endif //OPENGL_STUDY_TEST_SCENE_H

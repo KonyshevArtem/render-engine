@@ -3,7 +3,7 @@
 
 #include "../vector3/vector3.h"
 
-struct Quaternion
+struct [[nodiscard]] Quaternion
 {
 public:
     float x;
@@ -13,15 +13,15 @@ public:
 
     Quaternion();
 
-    Quaternion(float x, float y, float z, float w);
+    Quaternion(float _x, float _y, float _z, float _w);
 
-    static Quaternion AngleAxis(float angleDeg, Vector3 axis);
+    static Quaternion AngleAxis(float _angleDeg, Vector3 _axis);
 
     Quaternion Inverse() const;
 
-    Quaternion operator *(const Quaternion &quaternion) const;
+    Quaternion operator*(const Quaternion &_quaternion) const;
 
-    Vector3 operator *(const Vector3 &vector) const;
+    Vector3 operator*(const Vector3 &_vector) const;
 };
 
-#endif//OPENGL_STUDY_QUATERNION_H
+#endif //OPENGL_STUDY_QUATERNION_H

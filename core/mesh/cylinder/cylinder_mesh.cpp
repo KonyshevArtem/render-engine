@@ -9,7 +9,7 @@ CylinderMesh::CylinderMesh()
 
     for (int i = 0; i < baseCircleVertexes; ++i)
     {
-        float rad = (float) i / baseCircleVertexes * 2 * M_PI;
+        float rad = (float) i / baseCircleVertexes * 2 * M_PI; // NOLINT(cppcoreguidelines-narrowing-conversions)
         float x   = cosf(rad);
         float z   = sinf(rad);
         AddVertex(x, -1, z);
@@ -23,7 +23,7 @@ CylinderMesh::CylinderMesh()
 
     for (int i = 0; i < baseCircleVertexes; ++i)
     {
-        float rad = (float) i / baseCircleVertexes * 2 * M_PI;
+        float rad = (float) i / baseCircleVertexes * 2 * M_PI; // NOLINT(cppcoreguidelines-narrowing-conversions)
         float x   = cosf(rad);
         float z   = sinf(rad);
         AddVertex(x, 1, z);
@@ -34,7 +34,7 @@ CylinderMesh::CylinderMesh()
     offset = baseCircleVertexes * 2 + 2;
     for (int i = 0; i < baseCircleVertexes; ++i)
     {
-        float rad = (float) i / baseCircleVertexes * 2 * M_PI;
+        float rad = (float) i / baseCircleVertexes * 2 * M_PI; // NOLINT(cppcoreguidelines-narrowing-conversions)
         float x   = cosf(rad);
         float z   = sinf(rad);
         AddVertex(x, -1, z);
@@ -48,82 +48,82 @@ CylinderMesh::CylinderMesh()
         AddTriangle(offset + next, offset + next + 1, offset + curr + 1);
     }
 
-    for (int i = 0; i < vertexes.size(); ++i)
+    for (int i = 0; i < m_Vertexes.size(); ++i)
         AddColor(1, 1, 1, 1);
 }
 
 int CylinderMesh::GetTrianglesCount()
 {
-    return (int) indexes.size() / 3;
+    return (int) m_Indexes.size() / 3;
 }
 
 void *CylinderMesh::GetVertexData()
 {
-    return vertexes.data();
+    return m_Vertexes.data();
 }
 
 long CylinderMesh::GetVertexDataSize()
 {
-    return sizeof(float) * vertexes.size();// NOLINT(cppcoreguidelines-narrowing-conversions)
+    return sizeof(float) * m_Vertexes.size(); // NOLINT(cppcoreguidelines-narrowing-conversions)
 }
 
 void *CylinderMesh::GetColorsData()
 {
-    return colors.data();
+    return m_Colors.data();
 }
 
 long CylinderMesh::GetColorsDataSize()
 {
-    return sizeof(float) * colors.size();// NOLINT(cppcoreguidelines-narrowing-conversions)
+    return sizeof(float) * m_Colors.size(); // NOLINT(cppcoreguidelines-narrowing-conversions)
 }
 
 void *CylinderMesh::GetNormalsData()
 {
-    return normals.data();
+    return m_Normals.data();
 }
 
 long CylinderMesh::GetNormalsDataSize()
 {
-    return sizeof(float) * normals.size();// NOLINT(cppcoreguidelines-narrowing-conversions)
+    return sizeof(float) * m_Normals.size(); // NOLINT(cppcoreguidelines-narrowing-conversions)
 }
 
 void *CylinderMesh::GetIndexData()
 {
-    return indexes.data();
+    return m_Indexes.data();
 }
 
 long CylinderMesh::GetIndexDataSize()
 {
-    return sizeof(int) * indexes.size();// NOLINT(cppcoreguidelines-narrowing-conversions)
+    return sizeof(int) * m_Indexes.size(); // NOLINT(cppcoreguidelines-narrowing-conversions)
 }
 
-void CylinderMesh::AddVertex(float x, float y, float z)
+void CylinderMesh::AddVertex(float _x, float _y, float _z)
 {
-    vertexes.push_back(x);
-    vertexes.push_back(y);
-    vertexes.push_back(z);
+    m_Vertexes.push_back(_x);
+    m_Vertexes.push_back(_y);
+    m_Vertexes.push_back(_z);
 }
 
-void CylinderMesh::AddColor(float r, float g, float b, float a)
+void CylinderMesh::AddColor(float _r, float _g, float _b, float _a)
 {
-    colors.push_back(r);
-    colors.push_back(g);
-    colors.push_back(b);
-    colors.push_back(a);
+    m_Colors.push_back(_r);
+    m_Colors.push_back(_g);
+    m_Colors.push_back(_b);
+    m_Colors.push_back(_a);
 }
 
-void CylinderMesh::AddNormal(float x, float y, float z)
+void CylinderMesh::AddNormal(float _x, float _y, float _z)
 {
-    normals.push_back(x);
-    normals.push_back(y);
-    normals.push_back(z);
+    m_Normals.push_back(_x);
+    m_Normals.push_back(_y);
+    m_Normals.push_back(_z);
 }
 
-void CylinderMesh::AddTriangle(int v1, int v2, int v3)
+void CylinderMesh::AddTriangle(int _v1, int _v2, int _v3)
 {
-    indexes.push_back(v1);
-    indexes.push_back(v2);
-    indexes.push_back(v3);
+    m_Indexes.push_back(_v1);
+    m_Indexes.push_back(_v2);
+    m_Indexes.push_back(_v3);
 }
 
 void *CylinderMesh::GetUVData()

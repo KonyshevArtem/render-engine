@@ -1,57 +1,65 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
 #define GL_SILENCE_DEPRECATION
+#pragma clang diagnostic pop
 
 #include "input.h"
 #include "GLUT/glut.h"
 
 void Input::Init()
 {
-    Instance = make_unique<Input>();
-    glutPassiveMotionFunc(Instance->MouseMove);
-    glutKeyboardFunc(Instance->KeyboardDown);
-    glutKeyboardUpFunc(Instance->KeyboardUp);
+    m_Instance = make_unique<Input>();
+    glutPassiveMotionFunc(m_Instance->MouseMove);
+    glutKeyboardFunc(m_Instance->KeyboardDown);
+    glutKeyboardUpFunc(m_Instance->KeyboardUp);
 }
 
-void Input::MouseMove(int x, int y)
+void Input::MouseMove(int _x, int _y)
 {
-    if (Instance != nullptr)
-        Instance->MousePosition = Vector3((float) x, (float) y, 0);
+    if (m_Instance != nullptr)
+        m_Instance->m_MousePosition = Vector3((float) _x, (float) _y, 0);
 }
 
-void Input::KeyboardDown(unsigned char key, int x, int y)
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "UnusedParameter"
+
+void Input::KeyboardDown(unsigned char _key, int _x, int _y)
 {
-    if (Instance != nullptr && !Instance->Inputs.contains(key))
-        Instance->Inputs.insert(key);
+    if (m_Instance != nullptr && !m_Instance->m_Inputs.contains(_key))
+        m_Instance->m_Inputs.insert(_key);
 }
 
-void Input::KeyboardUp(unsigned char key, int x, int y)
+void Input::KeyboardUp(unsigned char _key, int _x, int _y)
 {
-    if (Instance != nullptr && Instance->Inputs.contains(key))
-        Instance->Inputs.erase(key);
+    if (m_Instance != nullptr && m_Instance->m_Inputs.contains(_key))
+        m_Instance->m_Inputs.erase(_key);
 }
+
+#pragma clang diagnostic pop
 
 void Input::Update()
 {
-    if (Instance != nullptr)
-        Instance->Update_Internal();
+    if (m_Instance != nullptr)
+        m_Instance->Update_Internal();
 }
 
 void Input::Update_Internal()
 {
-    MouseDelta       = OldMousePosition - MousePosition;
-    OldMousePosition = MousePosition;
+    m_MouseDelta       = m_OldMousePosition - m_MousePosition;
+    m_OldMousePosition = m_MousePosition;
 }
 
-bool Input::IsKeyDown(unsigned char key)
+bool Input::IsKeyDown(unsigned char _key)
 {
-    return Instance != nullptr && Instance->Inputs.contains(key);
+    return m_Instance != nullptr && m_Instance->m_Inputs.contains(_key);
 }
 
 Vector3 Input::GetMousePosition()
 {
-    return Instance != nullptr ? Instance->MousePosition : Vector3::Zero();
+    return m_Instance != nullptr ? m_Instance->m_MousePosition : Vector3();
 }
 
 Vector3 Input::GetMouseDelta()
 {
-    return Instance != nullptr ? Instance->MouseDelta : Vector3::Zero();
+    return m_Instance != nullptr ? m_Instance->m_MouseDelta : Vector3();
 }

@@ -32,22 +32,22 @@ Matrix4x4 Matrix4x4::Identity()
     return identity;
 }
 
-Matrix4x4 Matrix4x4::Translation(Vector3 translation)
+Matrix4x4 Matrix4x4::Translation(Vector3 _translation)
 {
     Matrix4x4 translationMatrix = Matrix4x4::Identity();
-    translationMatrix.m30       = translation.x;
-    translationMatrix.m31       = translation.y;
-    translationMatrix.m32       = translation.z;
+    translationMatrix.m30       = _translation.x;
+    translationMatrix.m31       = _translation.y;
+    translationMatrix.m32       = _translation.z;
     return translationMatrix;
 }
 
-Matrix4x4 Matrix4x4::Rotation(Quaternion quaternion)
+Matrix4x4 Matrix4x4::Rotation(Quaternion _quaternion)
 {
     Matrix4x4 result = Matrix4x4::Identity();
-    float     x      = quaternion.x;
-    float     y      = quaternion.y;
-    float     z      = quaternion.z;
-    float     w      = quaternion.w;
+    float     x      = _quaternion.x;
+    float     y      = _quaternion.y;
+    float     z      = _quaternion.z;
+    float     w      = _quaternion.w;
 
     result.m00 = 1 - 2 * y * y - 2 * z * z;
     result.m01 = 2 * x * y + 2 * z * w;
@@ -64,33 +64,33 @@ Matrix4x4 Matrix4x4::Rotation(Quaternion quaternion)
     return result;
 }
 
-Matrix4x4 Matrix4x4::Scale(Vector3 scale)
+Matrix4x4 Matrix4x4::Scale(Vector3 _scale)
 {
     Matrix4x4 result = Matrix4x4::Identity();
-    result.m00       = scale.x;
-    result.m11       = scale.y;
-    result.m22       = scale.z;
+    result.m00       = _scale.x;
+    result.m11       = _scale.y;
+    result.m22       = _scale.z;
     return result;
 }
 
-Matrix4x4 Matrix4x4::TRS(Vector3 translation, Quaternion rotation, Vector3 scale)
+Matrix4x4 Matrix4x4::TRS(Vector3 _translation, Quaternion _rotation, Vector3 _scale)
 {
-    return Translation(translation) * Rotation(rotation) * Scale(scale);
+    return Translation(_translation) * Rotation(_rotation) * Scale(_scale);
 }
 
-float Matrix4x4::GetElement(int column, int row) const
+float Matrix4x4::GetElement(int _column, int _row) const
 {
     auto *floatPtr = (float *) this;
-    return *(floatPtr + 4 * column + row);
+    return *(floatPtr + 4 * _column + _row);
 }
 
-void Matrix4x4::SetElement(int column, int row, float value)
+void Matrix4x4::SetElement(int _column, int _row, float _value)
 {
-    auto *floatPtr                 = (float *) this;
-    *(floatPtr + 4 * column + row) = value;
+    auto *floatPtr                   = (float *) this;
+    *(floatPtr + 4 * _column + _row) = _value;
 }
 
-Matrix4x4 Matrix4x4::operator*(const Matrix4x4 &matrix) const
+Matrix4x4 Matrix4x4::operator*(const Matrix4x4 &_matrix) const
 {
     Matrix4x4 result = Matrix4x4::Zero();
     for (int i = 0; i < 4; ++i)
@@ -99,7 +99,7 @@ Matrix4x4 Matrix4x4::operator*(const Matrix4x4 &matrix) const
         {
             float sum = 0;
             for (int k = 0; k < 4; ++k)
-                sum += GetElement(k, j) * matrix.GetElement(i, k);
+                sum += GetElement(k, j) * _matrix.GetElement(i, k);
             result.SetElement(i, j, sum);
         }
     }

@@ -1,7 +1,10 @@
 #ifndef OPENGL_STUDY_SHADER_H
 #define OPENGL_STUDY_SHADER_H
 
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
 #define GL_SILENCE_DEPRECATION
+#pragma clang diagnostic pop
 
 #include "GLUT/glut.h"
 #include "string"
@@ -18,15 +21,15 @@ public:
     GLint  AlbedoLocation;
     GLint  AlbedoSTLocation;
 
-    static shared_ptr<Shader> Load(const string &path);
+    static shared_ptr<Shader> Load(const string &_path);
 
     ~Shader();
 
 private:
-    explicit Shader(GLuint program);
+    explicit Shader(GLuint _program);
 
-    static GLuint CompileShaderPart(GLuint shaderPartType, const string &path);
-    static GLuint LinkProgram(GLuint vertexPart, GLuint fragmentPart);
+    static GLuint CompileShaderPart(GLuint _shaderPartType, const string &_path);
+    static GLuint LinkProgram(GLuint _vertexPart, GLuint _fragmentPart);
 };
 
 #endif //OPENGL_STUDY_SHADER_H

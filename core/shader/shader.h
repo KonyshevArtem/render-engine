@@ -39,7 +39,7 @@ struct UniformInfo
 class Shader
 {
 public:
-    static shared_ptr<Shader> Load(const string &_path);
+    static shared_ptr<Shader> Load(const string &_path, bool _silent = true);
 
     void SetUniform(const string &_name, const void *_data);
 
@@ -51,8 +51,11 @@ private:
     GLuint                             m_Program;
     unordered_map<string, UniformInfo> m_Uniforms;
 
-    static GLuint CompileShaderPart(GLuint _shaderPartType, const string &_path);
-    static GLuint LinkProgram(GLuint _vertexPart, GLuint _fragmentPart);
+    inline static shared_ptr<Shader> FallbackShader = nullptr;
+    static shared_ptr<Shader>        GetFallbackShader();
+
+    static bool TryCompileShaderPart(GLuint _shaderPartType, const string &_path, GLuint &_shaderPart);
+    static bool TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program);
 
     static UniformType ConvertUniformType(GLenum _type);
 

@@ -1,4 +1,5 @@
 #include "shader.h"
+#include "../../core/graphics/graphics.h"
 #include "../../utils/utils.h"
 #include "OpenGL/gl3.h"
 #include "string"
@@ -39,22 +40,41 @@ Shader::Shader(GLuint _program)
     }
 }
 
-shared_ptr<Shader> Shader::Load(const string &_path)
+shared_ptr<Shader> Shader::Load(const string &_path, bool _silent)
 {
-    GLuint vertexPart   = Shader::CompileShaderPart(GL_VERTEX_SHADER, _path + "/vert.glsl");
-    GLuint fragmentPart = Shader::CompileShaderPart(GL_FRAGMENT_SHADER, _path + "/frag.glsl");
+    GLuint vertexPart;
+    GLuint fragmentPart;
+    GLuint program;
 
-    GLuint program = Shader::LinkProgram(vertexPart, fragmentPart);
+    bool success = Shader::TryCompileShaderPart(GL_VERTEX_SHADER, _path + "/vert.glsl", vertexPart);
+    success &= Shader::TryCompileShaderPart(GL_FRAGMENT_SHADER, _path + "/frag.glsl", fragmentPart);
+    success &= Shader::TryLinkProgram(vertexPart, fragmentPart, program);
+
+    if (!success)
+    {
+        if (_silent)
+            return GetFallbackShader();
+        else
+            exit(1);
+    }
+
     return shared_ptr<Shader>(new Shader(program));
 }
 
-GLuint Shader::CompileShaderPart(GLuint _shaderPartType, const string &_path)
+bool Shader::TryCompileShaderPart(GLuint _shaderPartType, const string &_path, GLuint &_shaderPart)
 {
     string      shaderSource    = Utils::ReadFileWithIncludes(_path);
     const char *shaderSourcePtr = shaderSource.c_str();
 
+    const vector<string> &defines = Graphics::GetShaderCompilationDefines();
+    const char *          sources[defines.size() + 1];
+
+    for (int i = 0; i < defines.size(); ++i)
+        sources[i] = defines[i].c_str();
+    sources[defines.size()] = shaderSourcePtr;
+
     GLuint shader = glCreateShader(_shaderPartType);
-    glShaderSource(shader, 1, &shaderSourcePtr, nullptr);
+    glShaderSource(shader, 3, sources, nullptr);
 
     glCompileShader(shader);
 
@@ -71,16 +91,18 @@ GLuint Shader::CompileShaderPart(GLuint _shaderPartType, const string &_path)
         fprintf(stderr, "Shader compilation failed: %s\n%s\n", _path.c_str(), logMsg);
 
         free(logMsg);
+        return false;
     }
     else
     {
         printf("Shader compile success: %s\n", _path.c_str());
     }
 
-    return shader;
+    _shaderPart = shader;
+    return true;
 }
 
-GLuint Shader::LinkProgram(GLuint _vertexPart, GLuint _fragmentPart)
+bool Shader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program)
 {
     GLuint program = glCreateProgram();
 
@@ -101,7 +123,7 @@ GLuint Shader::LinkProgram(GLuint _vertexPart, GLuint _fragmentPart)
         fprintf(stderr, "Program link failed\n%s", logMsg);
 
         free(logMsg);
-        exit(1);
+        return false;
     }
 
     glDetachShader(program, _vertexPart);
@@ -110,7 +132,8 @@ GLuint Shader::LinkProgram(GLuint _vertexPart, GLuint _fragmentPart)
     glDeleteShader(_vertexPart);
     glDeleteShader(_fragmentPart);
 
-    return program;
+    _program = program;
+    return true;
 }
 
 UniformType Shader::ConvertUniformType(GLenum _type)
@@ -174,4 +197,11 @@ void Shader::SetUniform(const string &_name, const void *_data)
             glUniformMatrix4fv(info.Location, 1, GL_FALSE, (GLfloat *) _data);
             break;
     }
+}
+
+shared_ptr<Shader> Shader::GetFallbackShader()
+{
+    if (FallbackShader == nullptr)
+        FallbackShader = Shader::Load("shaders/fallback", false);
+    return FallbackShader;
 }

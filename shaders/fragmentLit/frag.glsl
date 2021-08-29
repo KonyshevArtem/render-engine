@@ -1,4 +1,3 @@
-#version 410
 #include "../lighting.glsl"
 #include "../camera_data.glsl"
 

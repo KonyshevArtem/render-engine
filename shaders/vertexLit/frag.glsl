@@ -1,5 +1,3 @@
-#version 410
-
 smooth in vec4 color;
 smooth in vec2 uv;
 

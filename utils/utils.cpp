@@ -43,7 +43,9 @@ string Utils::ReadFileWithIncludes(const filesystem::path &_path)
     while (regex_search(file.cbegin(), file.cend(), match, expression))
     {
         string includedFile = ReadFileWithIncludes(_path.parent_path() / match[1].str());
-        file                = file.replace(match.position() + 1, match.length() - 2, includedFile);
+        long   matchStart   = match.position();
+        matchStart          = matchStart == 0 ? 0 : matchStart + 1;
+        file                = file.replace(matchStart, match.length() - 2, includedFile);
     }
 
     return file;

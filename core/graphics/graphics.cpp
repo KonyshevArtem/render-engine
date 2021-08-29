@@ -127,8 +127,7 @@ void Graphics::UpdateCameraData(Vector3 _cameraPosWs, Matrix4x4 _viewMatrix, Mat
 
 void Graphics::UpdateLightingData()
 {
-    const int lightsCount = 3;
-    LightData lights[lightsCount];
+    LightData lights[MAX_LIGHT_SOURCES];
 
     LightData dirLight;
     dirLight.PosOrDirWS    = Vector3 {0, -0.3f, 1};
@@ -146,7 +145,8 @@ void Graphics::UpdateLightingData()
 
     Vector4 ambientLight = Vector4(0.05f, 0.05f, 0.05f, 1);
 
-    long lightDataSize = sizeof(LightData) * lightsCount;
+    int  lightsCount   = 2;
+    long lightDataSize = sizeof(LightData) * MAX_LIGHT_SOURCES;
     glBindBuffer(GL_UNIFORM_BUFFER, LightingUniformBuffer);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, lightDataSize, &lights);
     glBufferSubData(GL_UNIFORM_BUFFER, lightDataSize, sizeof(Vector4), &ambientLight);
@@ -202,4 +202,15 @@ void Graphics::TransferUniformsFromMaterial(const shared_ptr<Material> &_materia
         _material->m_Shader->SetUniform(pair.first, &pair.second);
     for (const auto &pair: _material->m_Floats)
         _material->m_Shader->SetUniform(pair.first, &pair.second);
+}
+
+const vector<string> &Graphics::GetShaderCompilationDefines()
+{
+    if (ShaderCompilationDefines.empty())
+    {
+        ShaderCompilationDefines.push_back("#version " + to_string(GLSL_VERSION) + "\n");
+        ShaderCompilationDefines.push_back("#define MAX_LIGHT_SOURCES " + to_string(MAX_LIGHT_SOURCES) + "\n");
+    }
+
+    return ShaderCompilationDefines;
 }

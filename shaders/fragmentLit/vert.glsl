@@ -1,4 +1,3 @@
-#version 410
 #include "../attributes.glsl"
 #include "../camera_data.glsl"
 

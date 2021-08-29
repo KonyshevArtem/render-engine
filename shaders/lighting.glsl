@@ -11,9 +11,9 @@ layout(std140) struct LightData // 48 bytes (40 bytes round up by 16)
 
 layout(std140) uniform Lighting // 176 bytes (168 bytes round up by 16)
 {
-    LightData _Lights[3];        // 0   144
-    vec4 _AmbientLightColor;     // 144 160
-    int _LightsCount;            // 160 164
+    LightData _Lights[MAX_LIGHT_SOURCES];   // 0   144
+    vec4 _AmbientLightColor;                // 144 160
+    int _LightsCount;                       // 160 164
 };
 
 vec3 getLightDirWS(LightData light, vec3 posWS){

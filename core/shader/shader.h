@@ -54,8 +54,9 @@ private:
     inline static shared_ptr<Shader> FallbackShader = nullptr;
     static shared_ptr<Shader>        GetFallbackShader();
 
-    static bool TryCompileShaderPart(GLuint _shaderPartType, const string &_path, GLuint &_shaderPart);
-    static bool TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program);
+    static bool        TryCompileShaderPart(GLuint _shaderPartType, const string &_path, const char *_source, GLuint &_shaderPart);
+    static bool        TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program);
+    static const char *GetShaderPartDefine(GLuint _shaderPartType);
 
     static UniformType ConvertUniformType(GLenum _type);
 

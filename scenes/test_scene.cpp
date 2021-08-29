@@ -24,8 +24,8 @@ void TestScene::Init()
     auto waterTexture = Texture::Load("textures/water.png", 512, 512);
 
     // init shaders
-    auto vertexLitShader   = Shader::Load("shaders/vertexLit");
-    auto fragmentLitShader = Shader::Load("shaders/fragmentLit");
+    auto vertexLitShader   = Shader::Load("shaders/vertexLit.glsl");
+    auto fragmentLitShader = Shader::Load("shaders/fragmentLit.glsl");
 
     // init meshes
     auto cubeMesh = make_shared<CubeMesh>();

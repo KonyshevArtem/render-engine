@@ -204,13 +204,15 @@ void Graphics::TransferUniformsFromMaterial(const shared_ptr<Material> &_materia
         _material->m_Shader->SetUniform(pair.first, &pair.second);
 }
 
-const vector<string> &Graphics::GetShaderCompilationDefines()
+const string &Graphics::GetShaderCompilationDefines()
 {
-    if (ShaderCompilationDefines.empty())
+    if (ShaderCompilationDefine.empty())
     {
-        ShaderCompilationDefines.push_back("#version " + to_string(GLSL_VERSION) + "\n");
-        ShaderCompilationDefines.push_back("#define MAX_LIGHT_SOURCES " + to_string(MAX_LIGHT_SOURCES) + "\n");
+        ShaderCompilationDefine = "#version " + to_string(GLSL_VERSION) +
+                                  "\n"
+                                  "#define MAX_LIGHT_SOURCES " + to_string(MAX_LIGHT_SOURCES) +
+                                  "\n";
     }
 
-    return ShaderCompilationDefines;
+    return ShaderCompilationDefine;
 }

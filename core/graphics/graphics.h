@@ -10,10 +10,10 @@
 class Graphics
 {
 public:
-    static void                  Init(int _argc, char **_argv);
-    static void                  Render();
-    static void                  Reshape(int _width, int _height);
-    static const vector<string> &GetShaderCompilationDefines();
+    static void          Init(int _argc, char **_argv);
+    static void          Render();
+    static void          Reshape(int _width, int _height);
+    static const string &GetShaderCompilationDefines();
 
     inline static int ScreenWidth  = 0;
     inline static int ScreenHeight = 0;
@@ -26,9 +26,9 @@ private:
     static const int MAX_LIGHT_SOURCES        = 3;
     static const int GLSL_VERSION             = 410;
 
-    inline static GLuint         LightingUniformBuffer   = 0;
-    inline static GLuint         CameraDataUniformBuffer = 0;
-    inline static vector<string> ShaderCompilationDefines;
+    inline static GLuint LightingUniformBuffer   = 0;
+    inline static GLuint CameraDataUniformBuffer = 0;
+    inline static string ShaderCompilationDefine;
 
     static void InitCulling();
     static void InitDepth();

@@ -46,8 +46,10 @@ shared_ptr<Shader> Shader::Load(const string &_path, bool _silent)
     GLuint fragmentPart;
     GLuint program;
 
-    bool success = Shader::TryCompileShaderPart(GL_VERTEX_SHADER, _path + "/vert.glsl", vertexPart);
-    success &= Shader::TryCompileShaderPart(GL_FRAGMENT_SHADER, _path + "/frag.glsl", fragmentPart);
+    string shaderSource = Utils::ReadFileWithIncludes(_path);
+
+    bool success = Shader::TryCompileShaderPart(GL_VERTEX_SHADER, _path, shaderSource.c_str(), vertexPart);
+    success &= Shader::TryCompileShaderPart(GL_FRAGMENT_SHADER, _path, shaderSource.c_str(), fragmentPart);
     success &= Shader::TryLinkProgram(vertexPart, fragmentPart, program);
 
     if (!success)
@@ -61,20 +63,18 @@ shared_ptr<Shader> Shader::Load(const string &_path, bool _silent)
     return shared_ptr<Shader>(new Shader(program));
 }
 
-bool Shader::TryCompileShaderPart(GLuint _shaderPartType, const string &_path, GLuint &_shaderPart)
+bool Shader::TryCompileShaderPart(GLuint _shaderPartType, const string &_path, const char *_source, GLuint &_shaderPart)
 {
-    string      shaderSource    = Utils::ReadFileWithIncludes(_path);
-    const char *shaderSourcePtr = shaderSource.c_str();
+    const string &defines      = Graphics::GetShaderCompilationDefines();
+    int           sourcesCount = 3;
+    const char *  sources[sourcesCount];
 
-    const vector<string> &defines = Graphics::GetShaderCompilationDefines();
-    const char *          sources[defines.size() + 1];
-
-    for (int i = 0; i < defines.size(); ++i)
-        sources[i] = defines[i].c_str();
-    sources[defines.size()] = shaderSourcePtr;
+    sources[0] = defines.c_str();
+    sources[1] = GetShaderPartDefine(_shaderPartType);
+    sources[2] = _source;
 
     GLuint shader = glCreateShader(_shaderPartType);
-    glShaderSource(shader, 3, sources, nullptr);
+    glShaderSource(shader, sourcesCount, sources, nullptr);
 
     glCompileShader(shader);
 
@@ -93,13 +93,24 @@ bool Shader::TryCompileShaderPart(GLuint _shaderPartType, const string &_path, G
         free(logMsg);
         return false;
     }
-    else
-    {
-        printf("Shader compile success: %s\n", _path.c_str());
-    }
 
     _shaderPart = shader;
     return true;
+}
+
+const char *Shader::GetShaderPartDefine(GLuint _shaderPartType)
+{
+    switch (_shaderPartType)
+    {
+        case GL_VERTEX_SHADER:
+            return "#define VERTEX\n"
+                   "#define VAR out\n";
+        case GL_FRAGMENT_SHADER:
+            return "#define FRAGMENT\n"
+                   "#define VAR in\n";
+        default:
+            return "";
+    }
 }
 
 bool Shader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program)
@@ -202,6 +213,6 @@ void Shader::SetUniform(const string &_name, const void *_data)
 shared_ptr<Shader> Shader::GetFallbackShader()
 {
     if (FallbackShader == nullptr)
-        FallbackShader = Shader::Load("shaders/fallback", false);
+        FallbackShader = Shader::Load("shaders/fallback.glsl", false);
     return FallbackShader;
 }

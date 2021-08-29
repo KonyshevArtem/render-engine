@@ -73,32 +73,27 @@ void Graphics::Render()
         if (go->Mesh == nullptr || go->Material == nullptr)
             continue;
 
-        glUseProgram(go->Material->ShaderPtr->Program);
-        glBindVertexArray(go->Mesh->GetVertexArrayObject());
+        auto shader = go->Material->m_Shader;
+
+        glUseProgram(shader->m_Program);
+        glBindVertexArray(go->Mesh->m_VertexArrayObject);
 
         Matrix4x4 modelMatrix       = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
         Matrix4x4 modelNormalMatrix = modelMatrix.Invert().Transpose();
 
-        go->Material->ShaderPtr->SetUniform("_ModelMatrix", &modelMatrix);
-        go->Material->ShaderPtr->SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
-        go->Material->ShaderPtr->SetUniform("_Smoothness", &go->Material->Smoothness);
+        shader->SetUniform("_ModelMatrix", &modelMatrix);
+        shader->SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
 
-        if (go->Material->Albedo != nullptr)
-        {
-            int textureUnit = 0;
-
-            glActiveTexture(GL_TEXTURE0 + textureUnit);
-            glBindTexture(GL_TEXTURE_2D, go->Material->Albedo->Ptr);
-            glBindSampler(textureUnit, go->Material->Albedo->Sampler);
-
-            go->Material->ShaderPtr->SetUniform("_Albedo", &textureUnit);
-            go->Material->ShaderPtr->SetUniform("_AlbedoST", &go->Material->AlbedoST);
-        }
+        int textureUnits = 0;
+        BindDefaultTextures(shader, textureUnits);
+        TransferUniformsFromMaterial(go->Material);
 
         glDrawElements(GL_TRIANGLES, go->Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
 
         glBindTexture(GL_TEXTURE_2D, 0);
-        glBindSampler(0, 0);
+        for (int i = 0; i < textureUnits; ++i)
+            glBindSampler(i, 0);
+
         glBindVertexArray(0);
         glUseProgram(0);
     }
@@ -163,4 +158,48 @@ Graphics::~Graphics()
 {
     glDeleteBuffers(1, &CameraDataUniformBuffer);
     glDeleteBuffers(1, &LightingUniformBuffer);
+}
+
+void Graphics::BindDefaultTextures(const shared_ptr<Shader> &_shader, int &_textureUnits)
+{
+    shared_ptr<Texture> white = Texture::White();
+
+    for (const auto &pair: _shader->m_Uniforms)
+    {
+        if (pair.second.Type != SAMPLER_2D)
+            continue;
+
+        glActiveTexture(GL_TEXTURE0 + _textureUnits);
+        glBindTexture(GL_TEXTURE_2D, white->m_Texture);
+        glBindSampler(_textureUnits, white->m_Sampler);
+
+        Vector4 st = Vector4(0, 0, 1, 1);
+        _shader->SetUniform(pair.first, &_textureUnits);
+        _shader->SetUniform(pair.first + "ST", &st);
+
+        ++_textureUnits;
+    }
+}
+
+void Graphics::TransferUniformsFromMaterial(const shared_ptr<Material> &_material)
+{
+    int textureUnit = 0;
+    for (const auto &pair: _material->m_Textures)
+    {
+        if (pair.second == nullptr)
+            continue;
+
+        glActiveTexture(GL_TEXTURE0 + textureUnit);
+        glBindTexture(GL_TEXTURE_2D, pair.second->m_Texture);
+        glBindSampler(textureUnit, pair.second->m_Sampler);
+
+        _material->m_Shader->SetUniform(pair.first, &textureUnit);
+
+        ++textureUnit;
+    }
+
+    for (const auto &pair: _material->m_Vectors4)
+        _material->m_Shader->SetUniform(pair.first, &pair.second);
+    for (const auto &pair: _material->m_Floats)
+        _material->m_Shader->SetUniform(pair.first, &pair.second);
 }

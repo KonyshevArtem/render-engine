@@ -40,19 +40,19 @@ void TestScene::Init()
     // init materials
     auto vertexLitMaterial = make_shared<Material>(vertexLitShader);
 
-    auto vertexLitGrassMaterial    = make_shared<Material>(vertexLitShader);
-    vertexLitGrassMaterial->Albedo = grassTexture;
+    auto vertexLitGrassMaterial = make_shared<Material>(vertexLitShader);
+    vertexLitGrassMaterial->SetTexture("_Albedo", grassTexture);
 
-    auto fragmentLitMaterial        = make_shared<Material>(fragmentLitShader);
-    fragmentLitMaterial->Smoothness = 50;
+    auto fragmentLitMaterial = make_shared<Material>(fragmentLitShader);
+    fragmentLitMaterial->SetFloat("_Smoothness", 50);
 
-    auto fragmentLitGrassMaterial        = make_shared<Material>(fragmentLitShader);
-    fragmentLitGrassMaterial->Albedo     = grassTexture;
-    fragmentLitGrassMaterial->Smoothness = 10;
+    auto fragmentLitGrassMaterial = make_shared<Material>(fragmentLitShader);
+    fragmentLitGrassMaterial->SetTexture("_Albedo", grassTexture);
+    fragmentLitGrassMaterial->SetFloat("_Smoothness", 10);
 
-    m_WaterMaterial             = make_shared<Material>(fragmentLitShader);
-    m_WaterMaterial->Albedo     = waterTexture;
-    m_WaterMaterial->Smoothness = 20;
+    m_WaterMaterial = make_shared<Material>(fragmentLitShader);
+    m_WaterMaterial->SetTexture("_Albedo", waterTexture);
+    m_WaterMaterial->SetFloat("_Smoothness", 20);
 
     // init gameObjects
     auto rotatingCube      = make_shared<GameObject>();
@@ -139,6 +139,6 @@ void TestScene::UpdateInternal()
     GameObjects[2]->LocalRotation = CalcRotation(phase, 1);
 
     // animateWater
-    float offset              = Math::Lerp(0, 1, phase);
-    m_WaterMaterial->AlbedoST = Vector4(offset, offset, 3, 3);
+    float offset = Math::Lerp(0, 1, phase);
+    m_WaterMaterial->SetVector4("_AlbedoST", Vector4(offset, offset, 3, 3));
 }

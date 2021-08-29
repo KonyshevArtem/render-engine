@@ -18,7 +18,7 @@ shared_ptr<Texture> Texture::Load(const string &_path, unsigned int _width, unsi
     t->Width  = _width;
     t->Height = _height;
 
-    unsigned error = lodepng::decode(t->Data, _width, _height, _path, LCT_RGB);
+    unsigned error = lodepng::decode(t->m_Data, _width, _height, _path, LCT_RGB);
     if (error != 0)
     {
         printf("Error loading texture: %u: %s\n", error, lodepng_error_text(error));
@@ -39,9 +39,9 @@ shared_ptr<Texture> Texture::White()
     WhiteTexture->Width  = 1;
     WhiteTexture->Height = 1;
 
-    WhiteTexture->Data.push_back(255);
-    WhiteTexture->Data.push_back(255);
-    WhiteTexture->Data.push_back(255);
+    WhiteTexture->m_Data.push_back(255);
+    WhiteTexture->m_Data.push_back(255);
+    WhiteTexture->m_Data.push_back(255);
 
     WhiteTexture->Init();
 
@@ -50,19 +50,19 @@ shared_ptr<Texture> Texture::White()
 
 void Texture::Init()
 {
-    glGenTextures(1, &Ptr);
-    glGenSamplers(1, &Sampler);
-    glBindTexture(GL_TEXTURE_2D, Ptr);
-    glSamplerParameteri(Sampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glSamplerParameteri(Sampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glSamplerParameteri(Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glSamplerParameteri(Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, &Data[0]); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    glGenTextures(1, &m_Texture);
+    glGenSamplers(1, &m_Sampler);
+    glBindTexture(GL_TEXTURE_2D, m_Texture);
+    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, &m_Data[0]); // NOLINT(cppcoreguidelines-narrowing-conversions)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 Texture::~Texture()
 {
-    glDeleteTextures(1, &Ptr);
-    glDeleteSamplers(1, &Sampler);
+    glDeleteTextures(1, &m_Texture);
+    glDeleteSamplers(1, &m_Sampler);
 }

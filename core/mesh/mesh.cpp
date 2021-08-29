@@ -1,10 +1,5 @@
 #include "mesh.h"
 
-const GLuint &Mesh::GetVertexArrayObject() const
-{
-    return this->m_VertexArrayObject;
-}
-
 void Mesh::Init()
 {
     glGenVertexArrays(1, &this->m_VertexArrayObject);

@@ -9,28 +9,28 @@ using namespace std;
 
 Shader::Shader(GLuint _program)
 {
-    Program                       = _program;
-    GLuint lightingUniformIndex   = glGetUniformBlockIndex(Program, "Lighting");
-    GLuint cameraDataUniformIndex = glGetUniformBlockIndex(Program, "CameraData");
+    m_Program                     = _program;
+    GLuint lightingUniformIndex   = glGetUniformBlockIndex(m_Program, "Lighting");
+    GLuint cameraDataUniformIndex = glGetUniformBlockIndex(m_Program, "CameraData");
 
-    glUniformBlockBinding(Program, cameraDataUniformIndex, 0);
-    glUniformBlockBinding(Program, lightingUniformIndex, 1);
+    glUniformBlockBinding(m_Program, cameraDataUniformIndex, 0);
+    glUniformBlockBinding(m_Program, lightingUniformIndex, 1);
 
     GLint count;
     GLint buffSize;
-    glGetProgramiv(Program, GL_ACTIVE_UNIFORMS, &count);
-    glGetProgramiv(Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffSize);
+    glGetProgramiv(m_Program, GL_ACTIVE_UNIFORMS, &count);
+    glGetProgramiv(m_Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffSize);
 
     GLsizei length;
     GLenum  type;
     GLchar  name[buffSize];
     for (int i = 0; i < count; ++i)
     {
-        glGetActiveUniform(Program, i, buffSize, &length, nullptr, &type, &name[0]);
+        glGetActiveUniform(m_Program, i, buffSize, &length, nullptr, &type, &name[0]);
         string nameStr(&name[0], length);
 
         UniformInfo info {};
-        info.Location       = glGetUniformLocation(Program, &nameStr[0]);
+        info.Location       = glGetUniformLocation(m_Program, &nameStr[0]);
         info.Type           = ConvertUniformType(type);
         m_Uniforms[nameStr] = info;
 
@@ -142,7 +142,7 @@ UniformType Shader::ConvertUniformType(GLenum _type)
 
 Shader::~Shader()
 {
-    glDeleteProgram(Program);
+    glDeleteProgram(m_Program);
 }
 
 void Shader::SetUniform(const string &_name, const void *_data)

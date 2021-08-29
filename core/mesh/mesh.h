@@ -11,8 +11,6 @@
 class Mesh
 {
 public:
-    [[nodiscard]] const GLuint &GetVertexArrayObject() const;
-
     void Init();
 
     virtual int GetTrianglesCount() = 0;
@@ -37,6 +35,8 @@ protected:
 
 private:
     GLuint m_VertexArrayObject = 0;
+
+    friend class Graphics;
 };
 
 

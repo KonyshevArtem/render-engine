@@ -39,8 +39,6 @@ struct UniformInfo
 class Shader
 {
 public:
-    GLuint Program;
-
     static shared_ptr<Shader> Load(const string &_path);
 
     void SetUniform(const string &_name, const void *_data);
@@ -50,12 +48,15 @@ public:
 private:
     explicit Shader(GLuint _program);
 
+    GLuint                             m_Program;
     unordered_map<string, UniformInfo> m_Uniforms;
 
     static GLuint CompileShaderPart(GLuint _shaderPartType, const string &_path);
     static GLuint LinkProgram(GLuint _vertexPart, GLuint _fragmentPart);
 
     static UniformType ConvertUniformType(GLenum _type);
+
+    friend class Graphics;
 };
 
 #endif //OPENGL_STUDY_SHADER_H

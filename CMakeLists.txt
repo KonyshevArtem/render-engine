@@ -26,7 +26,7 @@ add_executable(
         core/mesh/cube/cube_mesh.h
         core/mesh/cylinder/cylinder_mesh.cpp
         core/mesh/cylinder/cylinder_mesh.h
-        core/light/light_data.h
+        core/light/light.h
         core/shader/shader.h
         core/shader/shader.cpp
         core/texture/texture.cpp
@@ -50,7 +50,9 @@ add_executable(
         core/time/time.cpp
         core/time/time.h
         scripts/camera_fly_controller/camera_fly_controller.cpp
-        scripts/camera_fly_controller/camera_fly_controller.h)
+        scripts/camera_fly_controller/camera_fly_controller.h
+        core/graphics/uniform_block.cpp
+        core/graphics/uniform_block.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

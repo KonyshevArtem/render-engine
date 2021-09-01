@@ -33,6 +33,7 @@ Shader::Shader(GLuint _program)
         UniformInfo info {};
         info.Location       = glGetUniformLocation(m_Program, &nameStr[0]);
         info.Type           = ConvertUniformType(type);
+        info.Index          = i;
         m_Uniforms[nameStr] = info;
 
         if (info.Type == UNKNOWN)
@@ -215,4 +216,21 @@ shared_ptr<Shader> Shader::GetFallbackShader()
     if (FallbackShader == nullptr)
         FallbackShader = Shader::Load("shaders/fallback.glsl", false);
     return FallbackShader;
+}
+
+shared_ptr<Shader> Shader::LoadForInit(const string &_path)
+{
+    GLuint vertexPart;
+    GLuint program;
+
+    string shaderSource = Utils::ReadFileWithIncludes(_path);
+    shaderSource += "\nvoid main(){}\n";
+
+    bool success = Shader::TryCompileShaderPart(GL_VERTEX_SHADER, _path, shaderSource.c_str(), vertexPart);
+    success &= Shader::TryLinkProgram(vertexPart, 0, program);
+
+    if (!success)
+        exit(1);
+
+    return shared_ptr<Shader>(new Shader(program));
 }

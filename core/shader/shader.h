@@ -8,6 +8,7 @@
 
 #include "../../math/matrix4x4/matrix4x4.h"
 #include "../../math/vector4/vector4.h"
+#include "../graphics/uniform_block.h"
 #include "GLUT/glut.h"
 #include "string"
 #include "unordered_map"
@@ -34,6 +35,7 @@ struct UniformInfo
 {
     UniformType Type;
     GLint       Location;
+    int         Index;
 };
 
 class Shader
@@ -60,7 +62,10 @@ private:
 
     static UniformType ConvertUniformType(GLenum _type);
 
+    static shared_ptr<Shader> LoadForInit(const string &_path);
+
     friend class Graphics;
+    friend class UniformBlock;
 };
 
 #endif //OPENGL_STUDY_SHADER_H

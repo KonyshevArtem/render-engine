@@ -1,19 +1,19 @@
 #ifndef LIGHTING
 #define LIGHTING
 
-layout(std140) struct LightData // 48 bytes (40 bytes round up by 16)
+layout(std140) struct LightData
 {
-    vec3 posOrDirWS;        // 0  16
-    vec4 intensity;         // 16 32
-    bool isDirectional;     // 32 36
-    float attenuation;      // 36 40
+    vec3 posOrDirWS;
+    vec4 intensity;
+    bool isDirectional;
+    float attenuation;
 };
 
-layout(std140) uniform Lighting // 176 bytes (168 bytes round up by 16)
+layout(std140) uniform Lighting
 {
-    LightData _Lights[MAX_LIGHT_SOURCES];   // 0   144
-    vec4 _AmbientLightColor;                // 144 160
-    int _LightsCount;                       // 160 164
+    LightData _Lights[MAX_LIGHT_SOURCES];
+    vec4 _AmbientLightColor;
+    int _LightsCount;
 };
 
 vec3 getLightDirWS(LightData light, vec3 posWS){
@@ -62,4 +62,4 @@ vec4 getLight(vec3 posWS, vec3 normalWS, bool calcSpecular, float smoothness, ve
     return light;
 }
 
-#endif //LIGHTING
+    #endif//LIGHTING

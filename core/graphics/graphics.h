@@ -19,16 +19,12 @@ public:
     inline static int ScreenHeight = 0;
 
 private:
-    ~Graphics();
+    static const int MAX_LIGHT_SOURCES = 3;
+    static const int GLSL_VERSION      = 410;
 
-    static const int LIGHTING_UNIFORM_SIZE    = 176;
-    static const int CAMERA_DATA_UNIFORM_SIZE = 144;
-    static const int MAX_LIGHT_SOURCES        = 3;
-    static const int GLSL_VERSION             = 410;
-
-    inline static GLuint LightingUniformBuffer   = 0;
-    inline static GLuint CameraDataUniformBuffer = 0;
-    inline static string ShaderCompilationDefine;
+    inline static unique_ptr<UniformBlock> LightingDataBlock = nullptr;
+    inline static unique_ptr<UniformBlock> CameraDataBlock   = nullptr;
+    inline static string                   ShaderCompilationDefine;
 
     static void InitCulling();
     static void InitDepth();
@@ -37,7 +33,7 @@ private:
 
     static void BindDefaultTextures(const shared_ptr<Shader> &_shader, int &_textureUnits);
     static void TransferUniformsFromMaterial(const shared_ptr<Material> &_material);
-    static void UpdateCameraData(Vector3 _cameraPosWs, Matrix4x4 _viewMatrix, Matrix4x4 _projectionMatrix);
+    static void UpdateCameraData(Vector3 _cameraPosWS, Matrix4x4 _viewMatrix, Matrix4x4 _projectionMatrix);
     static void UpdateLightingData();
 };
 

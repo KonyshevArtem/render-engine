@@ -5,10 +5,11 @@
 
 #include "graphics.h"
 #include "../camera/camera.h"
-#include "../light/light_data.h"
+#include "../light/light.h"
 #include "../scene/scene.h"
 #include "GLUT/glut.h"
 #include "OpenGL/gl3.h"
+#include <memory>
 
 void Graphics::Init(int _argc, char **_argv)
 {
@@ -45,18 +46,8 @@ void Graphics::InitFramebuffer()
 
 void Graphics::InitUniformBlocks()
 {
-    glGenBuffers(1, &LightingUniformBuffer);
-    glBindBuffer(GL_UNIFORM_BUFFER, LightingUniformBuffer);
-    glBufferData(GL_UNIFORM_BUFFER, LIGHTING_UNIFORM_SIZE, nullptr, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    glGenBuffers(1, &CameraDataUniformBuffer);
-    glBindBuffer(GL_UNIFORM_BUFFER, CameraDataUniformBuffer);
-    glBufferData(GL_UNIFORM_BUFFER, CAMERA_DATA_UNIFORM_SIZE, nullptr, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, CameraDataUniformBuffer, 0, CAMERA_DATA_UNIFORM_SIZE);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 1, LightingUniformBuffer, 0, LIGHTING_UNIFORM_SIZE);
+    CameraDataBlock   = make_unique<UniformBlock>("shaders/common/camera_data.glsl", "CameraData", 0);
+    LightingDataBlock = make_unique<UniformBlock>("shaders/common/lighting.glsl", "Lighting", 1);
 }
 
 void Graphics::Render()
@@ -109,32 +100,25 @@ void Graphics::Reshape(int _width, int _height)
     glViewport(0, 0, _width, _height);
 }
 
-void Graphics::UpdateCameraData(Vector3 _cameraPosWs, Matrix4x4 _viewMatrix, Matrix4x4 _projectionMatrix)
+void Graphics::UpdateCameraData(Vector3 _cameraPosWS, Matrix4x4 _viewMatrix, Matrix4x4 _projectionMatrix)
 {
     long matrixSize = sizeof(Matrix4x4);
-    glBindBuffer(GL_UNIFORM_BUFFER, CameraDataUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, matrixSize, matrixSize, &_viewMatrix);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, CameraDataUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, 2 * matrixSize, sizeof(Vector4), &_cameraPosWs);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    glBindBuffer(GL_UNIFORM_BUFFER, CameraDataUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, matrixSize, &_projectionMatrix);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    CameraDataBlock->SetUniform("_ProjMatrix", &_projectionMatrix, matrixSize);
+    CameraDataBlock->SetUniform("_ViewMatrix", &_viewMatrix, matrixSize);
+    CameraDataBlock->SetUniform("_CameraPosWS", &_cameraPosWS, sizeof(Vector4));
 }
 
 void Graphics::UpdateLightingData()
 {
-    LightData lights[MAX_LIGHT_SOURCES];
+    Light lights[MAX_LIGHT_SOURCES];
 
-    LightData dirLight;
+    Light dirLight;
     dirLight.PosOrDirWS    = Vector3 {0, -0.3f, 1};
     dirLight.Intensity     = Vector4(1, 1, 1, 1);
     dirLight.IsDirectional = true;
 
-    LightData pointLight;
+    Light pointLight;
     pointLight.PosOrDirWS    = Vector3(-3, -3, -4);
     pointLight.Intensity     = Vector4(1, 0, 0, 1);
     pointLight.IsDirectional = false;
@@ -145,19 +129,19 @@ void Graphics::UpdateLightingData()
 
     Vector4 ambientLight = Vector4(0.05f, 0.05f, 0.05f, 1);
 
-    int  lightsCount   = 2;
-    long lightDataSize = sizeof(LightData) * MAX_LIGHT_SOURCES;
-    glBindBuffer(GL_UNIFORM_BUFFER, LightingUniformBuffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, lightDataSize, &lights);
-    glBufferSubData(GL_UNIFORM_BUFFER, lightDataSize, sizeof(Vector4), &ambientLight);
-    glBufferSubData(GL_UNIFORM_BUFFER, lightDataSize + sizeof(Vector4), sizeof(int), &lightsCount); // NOLINT(cppcoreguidelines-narrowing-conversions)
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-}
+    int lightsCount = 2;
 
-Graphics::~Graphics()
-{
-    glDeleteBuffers(1, &CameraDataUniformBuffer);
-    glDeleteBuffers(1, &LightingUniformBuffer);
+    LightingDataBlock->SetUniform("_LightsCount", &lightsCount, sizeof(int));
+    LightingDataBlock->SetUniform("_AmbientLightColor", &ambientLight, sizeof(Vector4));
+
+    for (int i = 0; i < lightsCount; ++i)
+    {
+        string prefix = "_Lights[" + to_string(i) + "].";
+        LightingDataBlock->SetUniform(prefix + "posOrDirWS", &lights[i].PosOrDirWS, sizeof(Vector3));
+        LightingDataBlock->SetUniform(prefix + "intensity", &lights[i].Intensity, sizeof(Vector4));
+        LightingDataBlock->SetUniform(prefix + "isDirectional", &lights[i].IsDirectional, sizeof(bool));
+        LightingDataBlock->SetUniform(prefix + "attenuation", &lights[i].Attenuation, sizeof(float));
+    }
 }
 
 void Graphics::BindDefaultTextures(const shared_ptr<Shader> &_shader, int &_textureUnits)

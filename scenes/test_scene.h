@@ -19,6 +19,7 @@ private:
 
     const float                     LOOP_DURATION = 3000;
     shared_ptr<Material>            m_WaterMaterial;
+    shared_ptr<Light>               m_SpotLight;
     unique_ptr<CameraFlyController> m_CameraFlyControl;
 };
 

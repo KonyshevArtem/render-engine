@@ -14,6 +14,15 @@ layout(std140) struct PointLight
     float Attenuation;
 };
 
+layout(std140) struct SpotLight
+{
+    vec3 PositionWS;
+    vec3 DirectionWS;
+    vec4 Intensity;
+    float Attenuation;
+    float CutOffCos;
+};
+
 layout(std140) uniform Lighting
 {
     vec4 _AmbientLight;
@@ -23,6 +32,9 @@ layout(std140) uniform Lighting
 
     PointLight _PointLights[MAX_LIGHT_SOURCES];
     int _PointLightsCount;
+
+    SpotLight _SpotLights[MAX_LIGHT_SOURCES];
+    int _SpotLightsCount;
 };
 
 float getSpecularTerm(vec3 lightDirWS, float lightAngleCos, vec3 posWS, vec3 normalWS){
@@ -56,6 +68,20 @@ vec4 getLight(vec3 posWS, vec3 normalWS){
         float attenuationTerm = 1 / (1 + _PointLights[i].Attenuation * distance * distance);
         float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
         light += _PointLights[i].Intensity * lightAngleCos * attenuationTerm + specularTerm * attenuationTerm;
+    }
+
+    for (int i = 0; i < _SpotLightsCount; ++i){
+        vec3 lightDirWS = normalize(_SpotLights[i].PositionWS - posWS);
+        float cutOffCos = clamp(dot(_SpotLights[i].DirectionWS, -lightDirWS), 0, 1);
+        if (cutOffCos > _SpotLights[i].CutOffCos)
+        {
+            float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
+            float distance = distance(_SpotLights[i].PositionWS, posWS);
+            float attenuationTerm = 1 / (1 + _SpotLights[i].Attenuation * distance * distance);
+            attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0, 1);
+            float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
+            light += _SpotLights[i].Intensity * lightAngleCos * attenuationTerm + specularTerm * attenuationTerm;
+        }
     }
 
     return light;

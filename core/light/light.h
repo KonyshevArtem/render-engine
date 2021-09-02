@@ -7,7 +7,8 @@
 enum LightType
 {
     DIRECTIONAL,
-    POINT
+    POINT,
+    SPOT
 };
 
 class Light
@@ -18,6 +19,7 @@ public:
     LightType  Type;
     Vector4    Intensity;
     float      Attenuation;
+    float      CutOffAngle;
 };
 
 #endif //OPENGL_STUDY_LIGHT_H

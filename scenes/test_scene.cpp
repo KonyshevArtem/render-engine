@@ -102,7 +102,7 @@ void TestScene::Init()
     auto dirLight       = make_shared<Light>();
     dirLight->Position  = Vector3(0, -0.3f, 1);
     dirLight->Rotation  = Quaternion::AngleAxis(180, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(-1, 0, 0));
-    dirLight->Intensity = Vector4(1, 1, 1, 1);
+    dirLight->Intensity = Vector4(0.2f, 0.2f, 0.2f, 1);
     dirLight->Type      = DIRECTIONAL;
 
     auto pointLight         = make_shared<Light>();
@@ -111,10 +111,17 @@ void TestScene::Init()
     pointLight->Attenuation = 0.3f;
     pointLight->Type        = POINT;
 
+    m_SpotLight              = make_shared<Light>();
+    m_SpotLight->Intensity   = Vector4(1, 1, 1, 1);
+    m_SpotLight->Attenuation = 0.05f;
+    m_SpotLight->CutOffAngle = 15;
+    m_SpotLight->Type        = SPOT;
+
     AmbientLight = Vector4(0.05f, 0.05f, 0.05f, 1);
 
     Lights.push_back(dirLight);
     Lights.push_back(pointLight);
+    Lights.push_back(m_SpotLight);
 
     // init camera
     Camera::Current->Position = Vector3(-10, 0.5f, 5);
@@ -160,4 +167,7 @@ void TestScene::UpdateInternal()
     // animateWater
     float offset = Math::Lerp(0, 1, phase);
     m_WaterMaterial->SetVector4("_AlbedoST", Vector4(offset, offset, 3, 3));
+
+    m_SpotLight->Position = Camera::Current->Position + Camera::Current->Rotation * Vector3(-3, 0, 0);
+    m_SpotLight->Rotation = Camera::Current->Rotation;
 }

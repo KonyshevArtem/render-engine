@@ -114,6 +114,7 @@ void Graphics::UpdateLightingData(Vector4 _ambient, const vector<shared_ptr<Ligh
     LightingDataBlock->SetUniform("_AmbientLight", &_ambient, sizeof(Vector4));
 
     int  pointLightsCount    = 0;
+    int  spotLightsCount     = 0;
     bool hasDirectionalLight = false;
 
     for (const auto &light: _lights)
@@ -133,9 +134,22 @@ void Graphics::UpdateLightingData(Vector4 _ambient, const vector<shared_ptr<Ligh
             LightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
             ++pointLightsCount;
         }
+        else if (light->Type == SPOT && spotLightsCount < MAX_LIGHT_SOURCES)
+        {
+            Vector3 dir       = light->Rotation * Vector3(0, 0, -1);
+            float   cutOffCos = cosf(light->CutOffAngle * (float) M_PI / 180);
+            string  prefix    = "_SpotLights[" + to_string(spotLightsCount) + "].";
+            LightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
+            LightingDataBlock->SetUniform(prefix + "DirectionWS", &dir, sizeof(Vector3));
+            LightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector4));
+            LightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
+            LightingDataBlock->SetUniform(prefix + "CutOffCos", &cutOffCos, sizeof(float));
+            ++spotLightsCount;
+        }
     }
 
     LightingDataBlock->SetUniform("_PointLightsCount", &pointLightsCount, sizeof(int));
+    LightingDataBlock->SetUniform("_SpotLightsCount", &spotLightsCount, sizeof(int));
     LightingDataBlock->SetUniform("_HasDirectionalLight", &hasDirectionalLight, sizeof(bool));
 }
 

@@ -1,10 +1,7 @@
 #include "common/attributes.glsl"
+#include "common/input.glsl"
 #include "common/camera_data.glsl"
 #include "common/lighting.glsl"
-
-uniform sampler2D _Albedo;
-uniform vec4 _AlbedoST;
-uniform float _Smoothness;
 
 smooth VAR vec4 positionWS;
 smooth VAR vec3 normalWS;
@@ -26,7 +23,7 @@ out vec4 outColor;
 
 void main(){
     vec4 albedoColor = texture(_Albedo, uv) * color;
-    outColor = albedoColor * _AmbientLightColor;
-    outColor += albedoColor * getLight(positionWS.xyz, normalize(normalWS), true, _Smoothness, _CameraPosWS);
+    outColor = albedoColor * _AmbientLight;
+    outColor += albedoColor * getLight(positionWS.xyz, normalize(normalWS));
 }
 #endif //FRAGMENT

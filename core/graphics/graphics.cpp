@@ -56,7 +56,7 @@ void Graphics::Render()
     glClearDepth(1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    UpdateLightingData();
+    UpdateLightingData(Scene::Current->AmbientLight, Scene::Current->Lights);
     UpdateCameraData(Camera::Current->Position, Camera::Current->GetViewMatrix(), Camera::Current->GetProjectionMatrix());
 
     for (const auto &go: Scene::Current->GameObjects)
@@ -109,39 +109,34 @@ void Graphics::UpdateCameraData(Vector3 _cameraPosWS, Matrix4x4 _viewMatrix, Mat
     CameraDataBlock->SetUniform("_CameraPosWS", &_cameraPosWS, sizeof(Vector4));
 }
 
-void Graphics::UpdateLightingData()
+void Graphics::UpdateLightingData(Vector4 _ambient, const vector<shared_ptr<Light>> &_lights)
 {
-    Light lights[MAX_LIGHT_SOURCES];
+    LightingDataBlock->SetUniform("_AmbientLight", &_ambient, sizeof(Vector4));
 
-    Light dirLight;
-    dirLight.PosOrDirWS    = Vector3 {0, -0.3f, 1};
-    dirLight.Intensity     = Vector4(1, 1, 1, 1);
-    dirLight.IsDirectional = true;
+    int  pointLightsCount    = 0;
+    bool hasDirectionalLight = false;
 
-    Light pointLight;
-    pointLight.PosOrDirWS    = Vector3(-3, -3, -4);
-    pointLight.Intensity     = Vector4(1, 0, 0, 1);
-    pointLight.IsDirectional = false;
-    pointLight.Attenuation   = 0.3f;
-
-    lights[0] = dirLight;
-    lights[1] = pointLight;
-
-    Vector4 ambientLight = Vector4(0.05f, 0.05f, 0.05f, 1);
-
-    int lightsCount = 2;
-
-    LightingDataBlock->SetUniform("_LightsCount", &lightsCount, sizeof(int));
-    LightingDataBlock->SetUniform("_AmbientLightColor", &ambientLight, sizeof(Vector4));
-
-    for (int i = 0; i < lightsCount; ++i)
+    for (const auto &light: _lights)
     {
-        string prefix = "_Lights[" + to_string(i) + "].";
-        LightingDataBlock->SetUniform(prefix + "posOrDirWS", &lights[i].PosOrDirWS, sizeof(Vector3));
-        LightingDataBlock->SetUniform(prefix + "intensity", &lights[i].Intensity, sizeof(Vector4));
-        LightingDataBlock->SetUniform(prefix + "isDirectional", &lights[i].IsDirectional, sizeof(bool));
-        LightingDataBlock->SetUniform(prefix + "attenuation", &lights[i].Attenuation, sizeof(float));
+        if (light->Type == DIRECTIONAL && !hasDirectionalLight)
+        {
+            hasDirectionalLight = true;
+            Vector3 dir         = light->Rotation * Vector3(0, 0, -1);
+            LightingDataBlock->SetUniform("_DirectionalLight.DirectionWS", &dir, sizeof(Vector3));
+            LightingDataBlock->SetUniform("_DirectionalLight.Intensity", &light->Intensity, sizeof(Vector4));
+        }
+        else if (light->Type == POINT && pointLightsCount < MAX_LIGHT_SOURCES)
+        {
+            string prefix = "_PointLights[" + to_string(pointLightsCount) + "].";
+            LightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
+            LightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector4));
+            LightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
+            ++pointLightsCount;
+        }
     }
+
+    LightingDataBlock->SetUniform("_PointLightsCount", &pointLightsCount, sizeof(int));
+    LightingDataBlock->SetUniform("_HasDirectionalLight", &hasDirectionalLight, sizeof(bool));
 }
 
 void Graphics::BindDefaultTextures(const shared_ptr<Shader> &_shader, int &_textureUnits)

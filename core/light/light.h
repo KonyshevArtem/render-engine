@@ -4,21 +4,20 @@
 #include "../../math/vector3/vector3.h"
 #include "../../math/vector4/vector4.h"
 
+enum LightType
+{
+    DIRECTIONAL,
+    POINT
+};
+
 class Light
 {
 public:
-    Vector3 PosOrDirWS;
-
-private:
-    float p1; // padding
-
-public:
-    Vector4 Intensity;
-    int     IsDirectional;
-    float   Attenuation;
-
-private:
-    float p3[2]; // padding
+    Vector3    Position;
+    Quaternion Rotation;
+    LightType  Type;
+    Vector4    Intensity;
+    float      Attenuation;
 };
 
 #endif //OPENGL_STUDY_LIGHT_H

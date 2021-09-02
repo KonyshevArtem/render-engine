@@ -41,7 +41,7 @@ Shader::Shader(GLuint _program)
     }
 }
 
-shared_ptr<Shader> Shader::Load(const string &_path, bool _silent)
+shared_ptr<Shader> Shader::Load(const string &_path, const vector<string> &_keywords, bool _silent)
 {
     GLuint vertexPart;
     GLuint fragmentPart;
@@ -49,8 +49,8 @@ shared_ptr<Shader> Shader::Load(const string &_path, bool _silent)
 
     string shaderSource = Utils::ReadFileWithIncludes(_path);
 
-    bool success = Shader::TryCompileShaderPart(GL_VERTEX_SHADER, _path, shaderSource.c_str(), vertexPart);
-    success &= Shader::TryCompileShaderPart(GL_FRAGMENT_SHADER, _path, shaderSource.c_str(), fragmentPart);
+    bool success = Shader::TryCompileShaderPart(GL_VERTEX_SHADER, _path, shaderSource.c_str(), vertexPart, _keywords);
+    success &= Shader::TryCompileShaderPart(GL_FRAGMENT_SHADER, _path, shaderSource.c_str(), fragmentPart, _keywords);
     success &= Shader::TryLinkProgram(vertexPart, fragmentPart, program);
 
     if (!success)
@@ -64,15 +64,24 @@ shared_ptr<Shader> Shader::Load(const string &_path, bool _silent)
     return shared_ptr<Shader>(new Shader(program));
 }
 
-bool Shader::TryCompileShaderPart(GLuint _shaderPartType, const string &_path, const char *_source, GLuint &_shaderPart)
+bool Shader::TryCompileShaderPart(GLuint                _shaderPartType,
+                                  const string &        _path,
+                                  const char *          _source,
+                                  GLuint &              _shaderPart,
+                                  const vector<string> &_keywords)
 {
     const string &defines      = Graphics::GetShaderCompilationDefines();
-    int           sourcesCount = 3;
+    int           sourcesCount = 4;
     const char *  sources[sourcesCount];
+
+    string keywordsDefines;
+    for (const auto &keyword: _keywords)
+        keywordsDefines += "#define " + keyword + "\n";
 
     sources[0] = defines.c_str();
     sources[1] = GetShaderPartDefine(_shaderPartType);
-    sources[2] = _source;
+    sources[2] = keywordsDefines.c_str();
+    sources[3] = _source;
 
     GLuint shader = glCreateShader(_shaderPartType);
     glShaderSource(shader, sourcesCount, sources, nullptr);
@@ -214,7 +223,7 @@ void Shader::SetUniform(const string &_name, const void *_data)
 shared_ptr<Shader> Shader::GetFallbackShader()
 {
     if (FallbackShader == nullptr)
-        FallbackShader = Shader::Load("shaders/fallback.glsl", false);
+        FallbackShader = Shader::Load("shaders/fallback.glsl", vector<string>(), false);
     return FallbackShader;
 }
 
@@ -226,7 +235,7 @@ shared_ptr<Shader> Shader::LoadForInit(const string &_path)
     string shaderSource = Utils::ReadFileWithIncludes(_path);
     shaderSource += "\nvoid main(){}\n";
 
-    bool success = Shader::TryCompileShaderPart(GL_VERTEX_SHADER, _path, shaderSource.c_str(), vertexPart);
+    bool success = Shader::TryCompileShaderPart(GL_VERTEX_SHADER, _path, shaderSource.c_str(), vertexPart, vector<string>());
     success &= Shader::TryLinkProgram(vertexPart, 0, program);
 
     if (!success)

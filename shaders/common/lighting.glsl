@@ -1,62 +1,61 @@
 #ifndef LIGHTING
 #define LIGHTING
 
-layout(std140) struct LightData
+layout(std140) struct DirectionalLight
 {
-    vec3 posOrDirWS;
-    vec4 intensity;
-    bool isDirectional;
-    float attenuation;
+    vec3 DirectionWS;
+    vec4 Intensity;
+};
+
+layout(std140) struct PointLight
+{
+    vec3 PositionWS;
+    vec4 Intensity;
+    float Attenuation;
 };
 
 layout(std140) uniform Lighting
 {
-    LightData _Lights[MAX_LIGHT_SOURCES];
-    vec4 _AmbientLightColor;
-    int _LightsCount;
+    vec4 _AmbientLight;
+
+    DirectionalLight _DirectionalLight;
+    bool _HasDirectionalLight;
+
+    PointLight _PointLights[MAX_LIGHT_SOURCES];
+    int _PointLightsCount;
 };
 
-vec3 getLightDirWS(LightData light, vec3 posWS){
-    if (light.isDirectional)
-    return normalize(-light.posOrDirWS);
-    else
-    return normalize(light.posOrDirWS - posWS);
-}
-
-float getAttenuationTerm(LightData light, vec3 posWS){
-    if (light.isDirectional)
-    return 1;
-    else
-    {
-        float distance = distance(light.posOrDirWS, posWS);
-        return 1 / (1 + light.attenuation * distance * distance);
-    }
-}
-
-float getSpecularTerm(float smoothness, vec3 lightDirWS, float lightAngleCos, vec3 posWS, vec3 normalWS, vec3 cameraPosWS){
-    vec3 viewDirWS = normalize(cameraPosWS - posWS);
+float getSpecularTerm(vec3 lightDirWS, float lightAngleCos, vec3 posWS, vec3 normalWS){
+    #ifdef _SMOOTHNESS
+    vec3 viewDirWS = normalize(_CameraPosWS - posWS);
     vec3 halfAngle = normalize(lightDirWS + viewDirWS);
     float blinnTerm = clamp(dot(normalWS, halfAngle), 0, 1);
     blinnTerm = lightAngleCos != 0 ? blinnTerm : 0;
-    blinnTerm = pow(blinnTerm, smoothness);
+    blinnTerm = pow(blinnTerm, _Smoothness);
     return blinnTerm;
+    #else
+    return 0;
+    #endif
 }
 
-vec4 getLight(vec3 posWS, vec3 normalWS, bool calcSpecular, float smoothness, vec3 cameraPosWS){
+vec4 getLight(vec3 posWS, vec3 normalWS){
     vec4 light = vec4(0, 0, 0, 0);
 
-    for (int i = 0; i < _LightsCount; ++i)
-    {
-        vec3 lightDirWS = getLightDirWS(_Lights[i], posWS);
+    if (_HasDirectionalLight){
+        vec3 lightDirWS = normalize(-_DirectionalLight.DirectionWS);
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
-        float attenuationTerm = getAttenuationTerm(_Lights[i], posWS);
-        light += _Lights[i].intensity * lightAngleCos * attenuationTerm;
+        float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
+        light += _DirectionalLight.Intensity * lightAngleCos + specularTerm;
+    }
 
-        if (calcSpecular)
-        {
-            float specularTerm = getSpecularTerm(smoothness, lightDirWS, lightAngleCos, posWS, normalWS, cameraPosWS);
-            light += specularTerm * attenuationTerm;
-        }
+    for (int i = 0; i < _PointLightsCount; ++i)
+    {
+        vec3 lightDirWS = normalize(_PointLights[i].PositionWS - posWS);
+        float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
+        float distance = distance(_PointLights[i].PositionWS, posWS);
+        float attenuationTerm = 1 / (1 + _PointLights[i].Attenuation * distance * distance);
+        float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
+        light += _PointLights[i].Intensity * lightAngleCos * attenuationTerm + specularTerm * attenuationTerm;
     }
 
     return light;

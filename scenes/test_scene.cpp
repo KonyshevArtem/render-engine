@@ -24,8 +24,8 @@ void TestScene::Init()
     auto waterTexture = Texture::Load("textures/water.png", 512, 512);
 
     // init shaders
-    auto vertexLitShader   = Shader::Load("shaders/vertexLit.glsl");
-    auto fragmentLitShader = Shader::Load("shaders/fragmentLit.glsl");
+    auto vertexLitShader   = Shader::Load("shaders/vertexLit.glsl", vector<string>());
+    auto fragmentLitShader = Shader::Load("shaders/fragmentLit.glsl", vector<string> {"_SMOOTHNESS"});
 
     // init meshes
     auto cubeMesh = make_shared<CubeMesh>();
@@ -98,6 +98,25 @@ void TestScene::Init()
     GameObjects.push_back(floorFragmentLit);
     GameObjects.push_back(water);
 
+    // init lights
+    auto dirLight       = make_shared<Light>();
+    dirLight->Position  = Vector3(0, -0.3f, 1);
+    dirLight->Rotation  = Quaternion::AngleAxis(180, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(-1, 0, 0));
+    dirLight->Intensity = Vector4(1, 1, 1, 1);
+    dirLight->Type      = DIRECTIONAL;
+
+    auto pointLight         = make_shared<Light>();
+    pointLight->Position    = Vector3(-3, -3, -4);
+    pointLight->Intensity   = Vector4(1, 0, 0, 1);
+    pointLight->Attenuation = 0.3f;
+    pointLight->Type        = POINT;
+
+    AmbientLight = Vector4(0.05f, 0.05f, 0.05f, 1);
+
+    Lights.push_back(dirLight);
+    Lights.push_back(pointLight);
+
+    // init camera
     Camera::Current->Position = Vector3(-10, 0.5f, 5);
     m_CameraFlyControl        = make_unique<CameraFlyController>();
 }

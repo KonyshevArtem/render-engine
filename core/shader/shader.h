@@ -31,23 +31,23 @@ enum UniformType
     SAMPLER_2D
 };
 
-struct UniformInfo
-{
-    UniformType Type;
-    GLint       Location;
-    int         Index;
-};
-
 class Shader
 {
 public:
-    static shared_ptr<Shader> Load(const string &_path, bool _silent = true);
+    static shared_ptr<Shader> Load(const string &_path, const vector<string> &_keywords, bool _silent = true);
 
     void SetUniform(const string &_name, const void *_data);
 
     ~Shader();
 
 private:
+    struct UniformInfo
+    {
+        UniformType Type;
+        GLint       Location;
+        int         Index;
+    };
+
     explicit Shader(GLuint _program);
 
     GLuint                             m_Program;
@@ -56,7 +56,12 @@ private:
     inline static shared_ptr<Shader> FallbackShader = nullptr;
     static shared_ptr<Shader>        GetFallbackShader();
 
-    static bool        TryCompileShaderPart(GLuint _shaderPartType, const string &_path, const char *_source, GLuint &_shaderPart);
+    static bool TryCompileShaderPart(GLuint                _shaderPartType,
+                                     const string &        _path,
+                                     const char *          _source,
+                                     GLuint &              _shaderPart,
+                                     const vector<string> &_keywords);
+
     static bool        TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program);
     static const char *GetShaderPartDefine(GLuint _shaderPartType);
 

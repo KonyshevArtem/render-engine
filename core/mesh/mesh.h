@@ -21,9 +21,6 @@ protected:
     virtual void *GetVertexData()     = 0;
     virtual long  GetVertexDataSize() = 0;
 
-    virtual void *GetColorsData()     = 0;
-    virtual long  GetColorsDataSize() = 0;
-
     virtual void *GetNormalsData()     = 0;
     virtual long  GetNormalsDataSize() = 0;
 

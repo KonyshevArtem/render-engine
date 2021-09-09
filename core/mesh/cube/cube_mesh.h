@@ -12,9 +12,6 @@ protected:
     void *GetVertexData() override;
     long  GetVertexDataSize() override;
 
-    void *GetColorsData() override;
-    long  GetColorsDataSize() override;
-
     void *GetNormalsData() override;
     long  GetNormalsDataSize() override;
 

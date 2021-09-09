@@ -37,6 +37,8 @@ public:
 
     static Matrix4x4 TRS(Vector3 _translation, Quaternion _rotation, Vector3 _scale);
 
+    static Matrix4x4 Perspective(float _fov, float _aspect, float _nearZ, float _farZ);
+
     [[nodiscard]] float GetElement(int _column, int _row) const;
 
     void SetElement(int _column, int _row, float _value);

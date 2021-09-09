@@ -11,7 +11,7 @@ using namespace std;
 class Camera
 {
 public:
-    static void Init(float _fov, float _nearZ, float _farZ);
+    static void Init(float _fov, float _nearClipPlane, float _farClipPlane);
     Matrix4x4   GetViewMatrix() const;
     Matrix4x4   GetProjectionMatrix() const;
 
@@ -19,10 +19,11 @@ public:
     Vector3                          Position = Vector3();
     Quaternion                       Rotation = Quaternion();
 
+    float NearClipPlane = 0;
+    float FarClipPlane  = 0;
+
 private:
-    float m_Fov   = 0;
-    float m_NearZ = 0;
-    float m_FarZ  = 0;
+    float m_Fov = 0;
 };
 
 #endif //OPENGL_STUDY_CAMERA_H

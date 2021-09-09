@@ -14,8 +14,11 @@ Shader::Shader(GLuint _program)
     GLuint lightingUniformIndex   = glGetUniformBlockIndex(m_Program, "Lighting");
     GLuint cameraDataUniformIndex = glGetUniformBlockIndex(m_Program, "CameraData");
 
-    glUniformBlockBinding(m_Program, cameraDataUniformIndex, 0);
-    glUniformBlockBinding(m_Program, lightingUniformIndex, 1);
+    if (cameraDataUniformIndex != GL_INVALID_INDEX)
+        glUniformBlockBinding(m_Program, cameraDataUniformIndex, 0);
+
+    if (lightingUniformIndex != GL_INVALID_INDEX)
+        glUniformBlockBinding(m_Program, lightingUniformIndex, 1);
 
     GLint count;
     GLint buffSize;
@@ -51,7 +54,7 @@ shared_ptr<Shader> Shader::Load(const string &_path, const vector<string> &_keyw
 
     bool success = Shader::TryCompileShaderPart(GL_VERTEX_SHADER, _path, shaderSource.c_str(), vertexPart, _keywords);
     success &= Shader::TryCompileShaderPart(GL_FRAGMENT_SHADER, _path, shaderSource.c_str(), fragmentPart, _keywords);
-    success &= Shader::TryLinkProgram(vertexPart, fragmentPart, program);
+    success &= Shader::TryLinkProgram(vertexPart, fragmentPart, program, _path);
 
     if (!success)
     {
@@ -79,9 +82,9 @@ bool Shader::TryCompileShaderPart(GLuint                _shaderPartType,
         keywordsDefines += "#define " + keyword + "\n";
 
     sources[0] = defines.c_str();
-    sources[1] = GetShaderPartDefine(_shaderPartType);
-    sources[2] = keywordsDefines.c_str();
-    sources[3] = _source;
+    sources[1] = keywordsDefines.c_str();
+    sources[2] = _source;
+    sources[3] = GetShaderPartDefine(_shaderPartType);
 
     GLuint shader = glCreateShader(_shaderPartType);
     glShaderSource(shader, sourcesCount, sources, nullptr);
@@ -113,22 +116,25 @@ const char *Shader::GetShaderPartDefine(GLuint _shaderPartType)
     switch (_shaderPartType)
     {
         case GL_VERTEX_SHADER:
-            return "#define VERTEX\n"
-                   "#define VAR out\n";
+            return "\nout VARYINGS vars;\nvoid main(){vars=VERTEX();gl_Position=vars.PositionCS;}\n";
         case GL_FRAGMENT_SHADER:
-            return "#define FRAGMENT\n"
-                   "#define VAR in\n";
+            return "\nin VARYINGS vars;\nout vec4 outColor;\nvoid main(){outColor=FRAGMENT(vars);}\n";
         default:
             return "";
     }
 }
 
-bool Shader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program)
+bool Shader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program, const string &_path)
 {
     GLuint program = glCreateProgram();
 
-    glAttachShader(program, _vertexPart);
-    glAttachShader(program, _fragmentPart);
+    bool hasVertex   = glIsShader(_vertexPart);
+    bool hasFragment = glIsShader(_fragmentPart);
+
+    if (hasVertex)
+        glAttachShader(program, _vertexPart);
+    if (hasFragment)
+        glAttachShader(program, _fragmentPart);
 
     glLinkProgram(program);
 
@@ -141,17 +147,23 @@ bool Shader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_p
 
         auto *logMsg = new GLchar[infoLogLength + 1];
         glGetProgramInfoLog(program, infoLogLength, nullptr, logMsg);
-        fprintf(stderr, "Program link failed\n%s", logMsg);
+        fprintf(stderr, "Program link failed: %s\n%s", _path.c_str(), logMsg);
 
         free(logMsg);
         return false;
     }
 
-    glDetachShader(program, _vertexPart);
-    glDetachShader(program, _fragmentPart);
+    if (hasVertex)
+    {
+        glDetachShader(program, _vertexPart);
+        glDeleteShader(_vertexPart);
+    }
 
-    glDeleteShader(_vertexPart);
-    glDeleteShader(_fragmentPart);
+    if (hasFragment)
+    {
+        glDetachShader(program, _fragmentPart);
+        glDeleteShader(_fragmentPart);
+    }
 
     _program = program;
     return true;
@@ -233,10 +245,10 @@ shared_ptr<Shader> Shader::LoadForInit(const string &_path)
     GLuint program;
 
     string shaderSource = Utils::ReadFileWithIncludes(_path);
-    shaderSource += "\nvoid main(){}\n";
+    shaderSource += "\nVARYINGS VERTEX(){\nVARYINGS vars;\nreturn vars;\n}\n";
 
     bool success = Shader::TryCompileShaderPart(GL_VERTEX_SHADER, _path, shaderSource.c_str(), vertexPart, vector<string>());
-    success &= Shader::TryLinkProgram(vertexPart, 0, program);
+    success &= Shader::TryLinkProgram(vertexPart, 0, program, _path);
 
     if (!success)
         exit(1);

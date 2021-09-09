@@ -8,7 +8,6 @@
 static const int  vertexCount    = 24;
 static const int  trianglesCount = 12;
 static const long vertexSize     = sizeof(float) * vertexCount * 3;
-static const long colorsSize     = sizeof(float) * vertexCount * 4;
 static const long normalsSize    = sizeof(float) * vertexCount * 3;
 static const long indexesSize    = sizeof(int) * trianglesCount * 3;
 static const long uvSize         = sizeof(float) * vertexCount * 2;
@@ -50,44 +49,6 @@ static const float vertexData[] = {
         1, -1, -1,     // 21
         -1, -1, -1,    // 22
         -1, -1, 1,     // 23
-};
-
-static const float colorsData[] = {
-        // front
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-
-        // back
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-
-        // left
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-
-        // right
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-
-        // top
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-
-        // bottom
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
 };
 
 static const float normalsData[] = {
@@ -206,16 +167,6 @@ void *CubeMesh::GetVertexData()
 long CubeMesh::GetVertexDataSize()
 {
     return vertexSize;
-}
-
-void *CubeMesh::GetColorsData()
-{
-    return (void *) &colorsData;
-}
-
-long CubeMesh::GetColorsDataSize()
-{
-    return colorsSize;
 }
 
 void *CubeMesh::GetNormalsData()

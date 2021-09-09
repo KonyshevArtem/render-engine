@@ -11,5 +11,5 @@ VARYINGS vert(){
 }
 
 vec4 frag(VARYINGS vars){
-    return vec4(1, 0, 1, 1);
+    return vec4(1);
 }

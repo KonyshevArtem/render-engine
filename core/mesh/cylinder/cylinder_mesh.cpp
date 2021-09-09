@@ -47,9 +47,6 @@ CylinderMesh::CylinderMesh()
         AddTriangle(offset + curr, offset + next, offset + curr + 1);
         AddTriangle(offset + next, offset + next + 1, offset + curr + 1);
     }
-
-    for (int i = 0; i < m_Vertexes.size(); ++i)
-        AddColor(1, 1, 1, 1);
 }
 
 int CylinderMesh::GetTrianglesCount()
@@ -65,16 +62,6 @@ void *CylinderMesh::GetVertexData()
 long CylinderMesh::GetVertexDataSize()
 {
     return sizeof(float) * m_Vertexes.size(); // NOLINT(cppcoreguidelines-narrowing-conversions)
-}
-
-void *CylinderMesh::GetColorsData()
-{
-    return m_Colors.data();
-}
-
-long CylinderMesh::GetColorsDataSize()
-{
-    return sizeof(float) * m_Colors.size(); // NOLINT(cppcoreguidelines-narrowing-conversions)
 }
 
 void *CylinderMesh::GetNormalsData()
@@ -102,14 +89,6 @@ void CylinderMesh::AddVertex(float _x, float _y, float _z)
     m_Vertexes.push_back(_x);
     m_Vertexes.push_back(_y);
     m_Vertexes.push_back(_z);
-}
-
-void CylinderMesh::AddColor(float _r, float _g, float _b, float _a)
-{
-    m_Colors.push_back(_r);
-    m_Colors.push_back(_g);
-    m_Colors.push_back(_b);
-    m_Colors.push_back(_a);
 }
 
 void CylinderMesh::AddNormal(float _x, float _y, float _z)

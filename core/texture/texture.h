@@ -16,11 +16,12 @@ public:
 
     static shared_ptr<Texture> Load(const string &_path, unsigned int _width, unsigned int _height);
     static shared_ptr<Texture> White();
+    static shared_ptr<Texture> ShadowMap(unsigned int _width, unsigned int _height);
 
     ~Texture();
 
 private:
-    void Init();
+    void Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode);
 
     GLuint                m_Texture;
     GLuint                m_Sampler;

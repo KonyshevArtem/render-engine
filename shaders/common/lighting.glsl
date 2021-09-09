@@ -1,6 +1,9 @@
 #ifndef LIGHTING
 #define LIGHTING
 
+#include "attributes.glsl"
+#include "shadows.glsl"
+
 layout(std140) struct DirectionalLight
 {
     vec3 DirectionWS;
@@ -30,10 +33,10 @@ layout(std140) uniform Lighting
     DirectionalLight _DirectionalLight;
     bool _HasDirectionalLight;
 
-    PointLight _PointLights[MAX_LIGHT_SOURCES];
+    PointLight _PointLights[MAX_POINT_LIGHT_SOURCES];
     int _PointLightsCount;
 
-    SpotLight _SpotLights[MAX_LIGHT_SOURCES];
+    SpotLight _SpotLights[MAX_SPOT_LIGHT_SOURCES];
     int _SpotLightsCount;
 };
 
@@ -50,8 +53,11 @@ float getSpecularTerm(vec3 lightDirWS, float lightAngleCos, vec3 posWS, vec3 nor
     #endif
 }
 
-vec4 getLight(vec3 posWS, vec3 normalWS){
+vec4 getLight(VARYINGS varyings){
     vec4 light = vec4(0, 0, 0, 0);
+
+    vec3 posWS = vec3(varyings.PositionWS);
+    vec3 normalWS = normalize(varyings.NormalWS);
 
     if (_HasDirectionalLight){
         vec3 lightDirWS = normalize(-_DirectionalLight.DirectionWS);
@@ -80,11 +86,12 @@ vec4 getLight(vec3 posWS, vec3 normalWS){
             float attenuationTerm = 1 / (1 + _SpotLights[i].Attenuation * distance * distance);
             attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0, 1);
             float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
-            light += _SpotLights[i].Intensity * lightAngleCos * attenuationTerm + specularTerm * attenuationTerm;
+            float shadowTerm = getSpotLightShadowTerm(varyings, lightAngleCos);
+            light += (_SpotLights[i].Intensity * lightAngleCos * attenuationTerm + specularTerm * attenuationTerm) * shadowTerm;
         }
     }
 
-    return light;
+    return light + _AmbientLight;
 }
 
-    #endif//LIGHTING
+#endif //LIGHTING

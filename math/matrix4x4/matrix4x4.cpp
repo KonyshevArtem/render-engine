@@ -198,3 +198,21 @@ Matrix4x4 Matrix4x4::Transpose() const
 
     return transposed;
 }
+
+Matrix4x4 Matrix4x4::Perspective(float _fov, float _aspect, float _nearZ, float _farZ)
+{
+    float top    = _nearZ * ((float) M_PI / 180 * _fov / 2);
+    float bottom = -top;
+    float right  = _aspect * top;
+    float left   = -right;
+
+    Matrix4x4 matrix = Matrix4x4::Zero();
+    matrix.m00       = 2 * _nearZ / (right - left);
+    matrix.m11       = 2 * _nearZ / (top - bottom);
+    matrix.m20       = (right + left) / (right - left);
+    matrix.m21       = (top + bottom) / (top - bottom);
+    matrix.m22       = -(_farZ + _nearZ) / (_farZ - _nearZ);
+    matrix.m23       = -1;
+    matrix.m32       = -2 * _farZ * _nearZ / (_farZ - _nearZ);
+    return matrix;
+}

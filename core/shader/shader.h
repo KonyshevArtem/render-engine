@@ -62,7 +62,7 @@ private:
                                      GLuint &              _shaderPart,
                                      const vector<string> &_keywords);
 
-    static bool        TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program);
+    static bool        TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program, const string &_path);
     static const char *GetShaderPartDefine(GLuint _shaderPartType);
 
     static UniformType ConvertUniformType(GLenum _type);

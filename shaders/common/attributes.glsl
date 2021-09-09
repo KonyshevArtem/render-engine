@@ -2,11 +2,22 @@
 #define ATTRIBUTES
 
 layout(location = 0) in vec4 vertPositionOS;
-layout(location = 1) in vec4 vertColor;
-layout(location = 2) in vec3 vertNormalOS;
-layout(location = 3) in vec2 texCoord;
+layout(location = 1) in vec3 vertNormalOS;
+layout(location = 2) in vec2 texCoord;
 
 uniform mat4 _ModelMatrix;
 uniform mat4 _ModelNormalMatrix;
+
+struct VARYINGS
+{
+    vec4 PositionWS;
+    vec4 PositionCS;
+    vec3 NormalWS;
+    vec2 UV;
+    vec4 Color;
+    #ifdef _RECEIVE_SHADOWS
+    vec4 PositionLS;
+    #endif
+};
 
 #endif // ATTRIBUTES

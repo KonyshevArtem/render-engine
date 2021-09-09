@@ -22,6 +22,7 @@ void Graphics::Init(int _argc, char **_argv)
     InitDepth();
     InitFramebuffer();
     InitUniformBlocks();
+    InitShadows();
 }
 
 void Graphics::InitCulling()
@@ -50,13 +51,100 @@ void Graphics::InitUniformBlocks()
     LightingDataBlock = make_unique<UniformBlock>("shaders/common/lighting.glsl", "Lighting", 1);
 }
 
+void Graphics::InitShadows()
+{
+    glGenFramebuffers(1, &ShadowFramebuffer);
+    ShadowMap          = Texture::ShadowMap(1024, 1024);
+    ShadowCasterShader = Shader::Load("shaders/shadowCaster.glsl", vector<string>());
+
+    glBindFramebuffer(GL_FRAMEBUFFER, ShadowFramebuffer);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, ShadowMap->m_Texture, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+
+    GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (Status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        printf("Failed to init shadow framebuffer, status: 0x%x\n", Status);
+        glDeleteFramebuffers(1, &ShadowFramebuffer);
+        ShadowMap          = nullptr;
+        ShadowCasterShader = nullptr;
+    }
+
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void Graphics::Render()
 {
     glClearColor(0, 0, 0, 0);
     glClearDepth(1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     UpdateLightingData(Scene::Current->AmbientLight, Scene::Current->Lights);
+
+    ShadowCasterPass();
+    RenderPass();
+
+    glutSwapBuffers();
+    glutPostRedisplay();
+}
+
+Matrix4x4 m_Test;
+
+void Graphics::ShadowCasterPass()
+{
+    if (ShadowMap == nullptr || ShadowCasterShader == nullptr)
+        return;
+
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, ShadowFramebuffer);
+    glViewport(0, 0, 1024, 1024);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    shared_ptr<Light> light = nullptr;
+    for (const auto &l: Scene::Current->Lights)
+    {
+        if (l->Type == SPOT)
+        {
+            light = l;
+            break;
+        }
+    }
+
+    if (light == nullptr)
+        return;
+
+    Matrix4x4 view = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
+    Matrix4x4 proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, 100);
+    m_Test         = proj * view;
+    UpdateCameraData(
+            light->Position,
+            view,
+            proj);
+
+    glUseProgram(ShadowCasterShader->m_Program);
+
+    for (const auto &go: Scene::Current->GameObjects)
+    {
+        glBindVertexArray(go->Mesh->m_VertexArrayObject);
+
+        Matrix4x4 modelMatrix = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
+        ShadowCasterShader->SetUniform("_ModelMatrix", &modelMatrix);
+
+        glDrawElements(GL_TRIANGLES, go->Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
+
+        glBindVertexArray(0);
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(0);
+}
+
+void Graphics::RenderPass()
+{
+    glViewport(0, 0, ScreenWidth, ScreenHeight);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     UpdateCameraData(Camera::Current->Position, Camera::Current->GetViewMatrix(), Camera::Current->GetProjectionMatrix());
 
     for (const auto &go: Scene::Current->GameObjects)
@@ -64,7 +152,7 @@ void Graphics::Render()
         if (go->Mesh == nullptr || go->Material == nullptr)
             continue;
 
-        auto shader = go->Material->m_Shader;
+        auto shader = go->Material->m_Shader != nullptr ? go->Material->m_Shader : Shader::FallbackShader;
 
         glUseProgram(shader->m_Program);
         glBindVertexArray(go->Mesh->m_VertexArrayObject);
@@ -75,22 +163,31 @@ void Graphics::Render()
         shader->SetUniform("_ModelMatrix", &modelMatrix);
         shader->SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
 
-        int textureUnits = 0;
+        unordered_map<string, int> textureUnits;
         BindDefaultTextures(shader, textureUnits);
         TransferUniformsFromMaterial(go->Material);
 
+        if (ShadowMap != nullptr && textureUnits.contains("_ShadowMap"))
+        {
+            int unit = textureUnits["_ShadowMap"];
+            glActiveTexture(GL_TEXTURE0 + unit);
+            glBindTexture(GL_TEXTURE_2D, ShadowMap->m_Texture);
+            glBindSampler(unit, ShadowMap->m_Sampler);
+            shader->SetUniform("_LightViewProjMatrix", &m_Test);
+        }
+
         glDrawElements(GL_TRIANGLES, go->Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
 
-        glBindTexture(GL_TEXTURE_2D, 0);
-        for (int i = 0; i < textureUnits; ++i)
-            glBindSampler(i, 0);
+        for (const auto &pair: textureUnits)
+        {
+            glActiveTexture(GL_TEXTURE0 + pair.second);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glBindSampler(pair.second, 0);
+        }
 
         glBindVertexArray(0);
         glUseProgram(0);
     }
-
-    glutSwapBuffers();
-    glutPostRedisplay();
 }
 
 void Graphics::Reshape(int _width, int _height)
@@ -107,6 +204,8 @@ void Graphics::UpdateCameraData(Vector3 _cameraPosWS, Matrix4x4 _viewMatrix, Mat
     CameraDataBlock->SetUniform("_ProjMatrix", &_projectionMatrix, matrixSize);
     CameraDataBlock->SetUniform("_ViewMatrix", &_viewMatrix, matrixSize);
     CameraDataBlock->SetUniform("_CameraPosWS", &_cameraPosWS, sizeof(Vector4));
+    CameraDataBlock->SetUniform("_NearClipPlane", &Camera::Current->NearClipPlane, sizeof(float));
+    CameraDataBlock->SetUniform("_FarClipPlane", &Camera::Current->FarClipPlane, sizeof(float));
 }
 
 void Graphics::UpdateLightingData(Vector4 _ambient, const vector<shared_ptr<Light>> &_lights)
@@ -126,7 +225,7 @@ void Graphics::UpdateLightingData(Vector4 _ambient, const vector<shared_ptr<Ligh
             LightingDataBlock->SetUniform("_DirectionalLight.DirectionWS", &dir, sizeof(Vector3));
             LightingDataBlock->SetUniform("_DirectionalLight.Intensity", &light->Intensity, sizeof(Vector4));
         }
-        else if (light->Type == POINT && pointLightsCount < MAX_LIGHT_SOURCES)
+        else if (light->Type == POINT && pointLightsCount < MAX_POINT_LIGHT_SOURCES)
         {
             string prefix = "_PointLights[" + to_string(pointLightsCount) + "].";
             LightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
@@ -134,7 +233,7 @@ void Graphics::UpdateLightingData(Vector4 _ambient, const vector<shared_ptr<Ligh
             LightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
             ++pointLightsCount;
         }
-        else if (light->Type == SPOT && spotLightsCount < MAX_LIGHT_SOURCES)
+        else if (light->Type == SPOT && spotLightsCount < MAX_POINT_LIGHT_SOURCES)
         {
             Vector3 dir       = light->Rotation * Vector3(0, 0, -1);
             float   cutOffCos = cosf(light->CutOffAngle * (float) M_PI / 180);
@@ -153,24 +252,26 @@ void Graphics::UpdateLightingData(Vector4 _ambient, const vector<shared_ptr<Ligh
     LightingDataBlock->SetUniform("_HasDirectionalLight", &hasDirectionalLight, sizeof(bool));
 }
 
-void Graphics::BindDefaultTextures(const shared_ptr<Shader> &_shader, int &_textureUnits)
+void Graphics::BindDefaultTextures(const shared_ptr<Shader> &_shader, unordered_map<string, int> &_textureUnits)
 {
     shared_ptr<Texture> white = Texture::White();
 
+    int unit = 0;
     for (const auto &pair: _shader->m_Uniforms)
     {
         if (pair.second.Type != SAMPLER_2D)
             continue;
 
-        glActiveTexture(GL_TEXTURE0 + _textureUnits);
+        glActiveTexture(GL_TEXTURE0 + unit);
         glBindTexture(GL_TEXTURE_2D, white->m_Texture);
-        glBindSampler(_textureUnits, white->m_Sampler);
+        glBindSampler(unit, white->m_Sampler);
 
         Vector4 st = Vector4(0, 0, 1, 1);
-        _shader->SetUniform(pair.first, &_textureUnits);
+        _shader->SetUniform(pair.first, &unit);
         _shader->SetUniform(pair.first + "ST", &st);
 
-        ++_textureUnits;
+        _textureUnits[pair.first] = unit;
+        ++unit;
     }
 }
 
@@ -201,11 +302,17 @@ const string &Graphics::GetShaderCompilationDefines()
 {
     if (ShaderCompilationDefine.empty())
     {
-        ShaderCompilationDefine = "#version " + to_string(GLSL_VERSION) +
-                                  "\n"
-                                  "#define MAX_LIGHT_SOURCES " + to_string(MAX_LIGHT_SOURCES) +
-                                  "\n";
+        // clang-format off
+        ShaderCompilationDefine = "#version " + to_string(GLSL_VERSION) + "\n"
+                                  "#define MAX_POINT_LIGHT_SOURCES " + to_string(MAX_POINT_LIGHT_SOURCES) + "\n"
+                                  "#define MAX_SPOT_LIGHT_SOURCES " + to_string(MAX_SPOT_LIGHT_SOURCES) + "\n";
+        // clang-format on
     }
 
     return ShaderCompilationDefine;
+}
+
+Graphics::~Graphics()
+{
+    glDeleteFramebuffers(1, &ShadowFramebuffer);
 }

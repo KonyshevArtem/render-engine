@@ -8,7 +8,7 @@ layout(location = 2) in vec2 texCoord;
 uniform mat4 _ModelMatrix;
 uniform mat4 _ModelNormalMatrix;
 
-struct VARYINGS
+struct Varyings
 {
     vec4 PositionWS;
     vec4 PositionCS;
@@ -16,7 +16,7 @@ struct VARYINGS
     vec2 UV;
     vec4 Color;
     #ifdef _RECEIVE_SHADOWS
-    vec4 PositionLS;
+    vec4 SpotLightShadowCoords[MAX_SPOT_LIGHT_SOURCES];
     #endif
 };
 

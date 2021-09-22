@@ -8,7 +8,6 @@
 
 #include "../../math/matrix4x4/matrix4x4.h"
 #include "../../math/vector4/vector4.h"
-#include "../graphics/uniform_block.h"
 #include "GLUT/glut.h"
 #include "string"
 #include "unordered_map"
@@ -28,7 +27,8 @@ enum UniformType
 
     BOOL,
 
-    SAMPLER_2D
+    SAMPLER_2D,
+    SAMPLER_2D_ARRAY
 };
 
 class Shader
@@ -67,10 +67,9 @@ private:
 
     static UniformType ConvertUniformType(GLenum _type);
 
-    static shared_ptr<Shader> LoadForInit(const string &_path);
-
-    friend class Graphics;
     friend class UniformBlock;
+    friend class RenderPass;
+    friend class ShadowCasterPass;
 };
 
 #endif //OPENGL_STUDY_SHADER_H

@@ -3,18 +3,18 @@
 #define GL_SILENCE_DEPRECATION
 #pragma clang diagnostic pop
 
-#include "texture.h"
+#include "texture_2d.h"
 #include "../../utils/lodepng.h"
 #include "GLUT/glut.h"
 #include "OpenGL/gl3.h"
 
 using namespace std;
 
-static shared_ptr<Texture> WhiteTexture = nullptr;
+static shared_ptr<Texture2D> WhiteTexture = nullptr;
 
-shared_ptr<Texture> Texture::Load(const string &_path, unsigned int _width, unsigned int _height)
+shared_ptr<Texture2D> Texture2D::Load(const string &_path, unsigned int _width, unsigned int _height)
 {
-    auto t    = make_shared<Texture>();
+    auto t    = make_shared<Texture2D>();
     t->Width  = _width;
     t->Height = _height;
 
@@ -30,12 +30,12 @@ shared_ptr<Texture> Texture::Load(const string &_path, unsigned int _width, unsi
     return t;
 }
 
-shared_ptr<Texture> Texture::White()
+shared_ptr<Texture2D> Texture2D::White()
 {
     if (WhiteTexture != nullptr)
         return WhiteTexture;
 
-    WhiteTexture         = make_shared<Texture>();
+    WhiteTexture         = make_shared<Texture2D>();
     WhiteTexture->Width  = 1;
     WhiteTexture->Height = 1;
 
@@ -48,19 +48,7 @@ shared_ptr<Texture> Texture::White()
     return WhiteTexture;
 }
 
-shared_ptr<Texture> Texture::ShadowMap(unsigned int _width, unsigned int _height)
-{
-    auto texture    = make_shared<Texture>();
-    texture->Width  = _width;
-    texture->Height = _height;
-
-    texture->Init(GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, GL_CLAMP_TO_BORDER);
-    glSamplerParameterf(texture->m_Sampler, GL_TEXTURE_BORDER_COLOR, 1.0f);
-
-    return texture;
-}
-
-void Texture::Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode)
+void Texture2D::Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode)
 {
     glGenTextures(1, &m_Texture);
     glGenSamplers(1, &m_Sampler);
@@ -73,7 +61,7 @@ void Texture::Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _w
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-Texture::~Texture()
+Texture2D::~Texture2D()
 {
     glDeleteTextures(1, &m_Texture);
     glDeleteSamplers(1, &m_Sampler);

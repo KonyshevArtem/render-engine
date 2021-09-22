@@ -33,7 +33,8 @@ protected:
 private:
     GLuint m_VertexArrayObject = 0;
 
-    friend class Graphics;
+    friend class RenderPass;
+    friend class ShadowCasterPass;
 };
 
 

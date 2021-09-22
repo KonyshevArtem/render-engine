@@ -1,8 +1,6 @@
 #ifndef CAMERA_DATA
 #define CAMERA_DATA
 
-#include "attributes.glsl"
-
 layout(std140) uniform CameraData
 {
     mat4 _ProjMatrix;

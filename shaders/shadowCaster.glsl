@@ -4,12 +4,12 @@
 #define VERTEX vert
 #define FRAGMENT frag
 
-VARYINGS vert(){
-    VARYINGS vars;
+Varyings vert(){
+    Varyings vars;
     vars.PositionCS = _ProjMatrix * _ViewMatrix * _ModelMatrix * vertPositionOS;
     return vars;
 }
 
-vec4 frag(VARYINGS vars){
+vec4 frag(Varyings vars){
     return vec4(1);
 }

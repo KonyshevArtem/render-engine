@@ -1,13 +1,29 @@
 #ifndef SHADOWS
 #define SHADOWS
 
-#include "attributes.glsl"
 #include "camera_data.glsl"
 
 #ifdef _RECEIVE_SHADOWS
-uniform sampler2D _ShadowMap;
-uniform mat4x4 _LightViewProjMatrix;
+layout(std140) struct ShadowData
+{
+    mat4x4 LightViewProjMatrix;
+};
+
+layout(std140) uniform Shadows
+{
+    ShadowData _SpotLightShadows[MAX_SPOT_LIGHT_SOURCES];
+};
+
+uniform sampler2DArray _SpotLightShadowMapArray;
 #endif
+
+void transferShadowCoords(inout Varyings vars, int pointLightsCount, int spotLightsCount){
+    #ifdef _RECEIVE_SHADOWS
+    for (int i = 0; i < spotLightsCount; ++i){
+        vars.SpotLightShadowCoords[i] = _SpotLightShadows[i].LightViewProjMatrix * vec4(vars.PositionWS.xyz, 1);
+    }
+    #endif
+}
 
 float linearizeDepth(float depth){
     float z = depth * 2 - 1;
@@ -15,18 +31,17 @@ float linearizeDepth(float depth){
     return z / _FarClipPlane;
 }
 
-float getSpotLightShadowTerm(VARYINGS varyings, float lightAngleCos)
+float getSpotLightShadowTerm(Varyings vars, int index, float lightAngleCos)
 {
-    float shadowFactor = 1;
     #ifdef _RECEIVE_SHADOWS
-    vec3 perspectivePosLS = varyings.PositionLS.xyz / varyings.PositionLS.w;
-    vec3 shadowCoord = perspectivePosLS * 0.5 + 0.5;
-    float depth = texture(_ShadowMap, shadowCoord.xy).x;
+    vec3 shadowCoord = vars.SpotLightShadowCoords[index].xyz / vars.SpotLightShadowCoords[index].w;
+    shadowCoord = shadowCoord * 0.5 + 0.5;
+    float depth = texture(_SpotLightShadowMapArray, vec3(shadowCoord.xy, index)).x;
     float bias = max(0.05 * (1 - lightAngleCos), 0.005);
     if (linearizeDepth(depth) < linearizeDepth(shadowCoord.z) - bias)
-        shadowFactor = 0;
+        return 0;
     #endif
-    return shadowFactor;
+    return 1;
 }
 
 #endif

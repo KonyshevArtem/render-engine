@@ -13,12 +13,16 @@ Shader::Shader(GLuint _program)
     m_Program                     = _program;
     GLuint lightingUniformIndex   = glGetUniformBlockIndex(m_Program, "Lighting");
     GLuint cameraDataUniformIndex = glGetUniformBlockIndex(m_Program, "CameraData");
+    GLuint shadowDataUniformIndex = glGetUniformBlockIndex(m_Program, "Shadows");
 
     if (cameraDataUniformIndex != GL_INVALID_INDEX)
         glUniformBlockBinding(m_Program, cameraDataUniformIndex, 0);
 
     if (lightingUniformIndex != GL_INVALID_INDEX)
         glUniformBlockBinding(m_Program, lightingUniformIndex, 1);
+
+    if (shadowDataUniformIndex != GL_INVALID_INDEX)
+        glUniformBlockBinding(m_Program, shadowDataUniformIndex, 2);
 
     GLint count;
     GLint buffSize;
@@ -39,8 +43,10 @@ Shader::Shader(GLuint _program)
         info.Index          = i;
         m_Uniforms[nameStr] = info;
 
+        // TODO: correctly parse arrays
+
         if (info.Type == UNKNOWN)
-            fprintf(stderr, "Unknown OpenGL type for uniform %s: %d\n", &nameStr[0], type);
+            fprintf(stderr, "Shader init error: Unknown OpenGL type for uniform %s: %d\n", &nameStr[0], type);
     }
 }
 
@@ -116,9 +122,9 @@ const char *Shader::GetShaderPartDefine(GLuint _shaderPartType)
     switch (_shaderPartType)
     {
         case GL_VERTEX_SHADER:
-            return "\nout VARYINGS vars;\nvoid main(){vars=VERTEX();gl_Position=vars.PositionCS;}\n";
+            return "\nout Varyings vars;\nvoid main(){vars=VERTEX();gl_Position=vars.PositionCS;}\n";
         case GL_FRAGMENT_SHADER:
-            return "\nin VARYINGS vars;\nout vec4 outColor;\nvoid main(){outColor=FRAGMENT(vars);}\n";
+            return "\nin Varyings vars;\nout vec4 outColor;\nvoid main(){outColor=FRAGMENT(vars);}\n";
         default:
             return "";
     }
@@ -190,6 +196,8 @@ UniformType Shader::ConvertUniformType(GLenum _type)
 
         case GL_SAMPLER_2D:
             return SAMPLER_2D;
+        case GL_SAMPLER_2D_ARRAY:
+            return SAMPLER_2D_ARRAY;
 
         default:
             return UNKNOWN;
@@ -215,6 +223,7 @@ void Shader::SetUniform(const string &_name, const void *_data)
         case INT: // NOLINT(bugprone-branch-clone)
         case BOOL:
         case SAMPLER_2D:
+        case SAMPLER_2D_ARRAY:
             glUniform1i(info.Location, *((GLint *) _data));
             break;
         case FLOAT:
@@ -237,21 +246,4 @@ shared_ptr<Shader> Shader::GetFallbackShader()
     if (FallbackShader == nullptr)
         FallbackShader = Shader::Load("shaders/fallback.glsl", vector<string>(), false);
     return FallbackShader;
-}
-
-shared_ptr<Shader> Shader::LoadForInit(const string &_path)
-{
-    GLuint vertexPart;
-    GLuint program;
-
-    string shaderSource = Utils::ReadFileWithIncludes(_path);
-    shaderSource += "\nVARYINGS VERTEX(){\nVARYINGS vars;\nreturn vars;\n}\n";
-
-    bool success = Shader::TryCompileShaderPart(GL_VERTEX_SHADER, _path, shaderSource.c_str(), vertexPart, vector<string>());
-    success &= Shader::TryLinkProgram(vertexPart, 0, program, _path);
-
-    if (!success)
-        exit(1);
-
-    return shared_ptr<Shader>(new Shader(program));
 }

@@ -1,7 +1,6 @@
 #ifndef LIGHTING
 #define LIGHTING
 
-#include "attributes.glsl"
 #include "shadows.glsl"
 
 layout(std140) struct DirectionalLight
@@ -53,7 +52,7 @@ float getSpecularTerm(vec3 lightDirWS, float lightAngleCos, vec3 posWS, vec3 nor
     #endif
 }
 
-vec4 getLight(VARYINGS varyings){
+vec4 getLight(Varyings varyings){
     vec4 light = vec4(0, 0, 0, 0);
 
     vec3 posWS = vec3(varyings.PositionWS);
@@ -86,7 +85,7 @@ vec4 getLight(VARYINGS varyings){
             float attenuationTerm = 1 / (1 + _SpotLights[i].Attenuation * distance * distance);
             attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0, 1);
             float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
-            float shadowTerm = getSpotLightShadowTerm(varyings, lightAngleCos);
+            float shadowTerm = getSpotLightShadowTerm(varyings, i, lightAngleCos);
             light += (_SpotLights[i].Intensity * lightAngleCos * attenuationTerm + specularTerm * attenuationTerm) * shadowTerm;
         }
     }

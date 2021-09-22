@@ -6,8 +6,8 @@
 #define VERTEX vert
 #define FRAGMENT frag
 
-VARYINGS vert(){
-    VARYINGS vars;
+Varyings vert(){
+    Varyings vars;
 
     vars.PositionWS = _ModelMatrix * vertPositionOS;
     vars.PositionCS = _ProjMatrix * _ViewMatrix * vars.PositionWS;
@@ -21,13 +21,13 @@ VARYINGS vert(){
     #endif
 
     #ifdef _RECEIVE_SHADOWS
-    vars.PositionLS = _LightViewProjMatrix * vec4(vars.PositionWS.xyz, 1);
+    transferShadowCoords(vars, _PointLightsCount, _SpotLightsCount);
     #endif
 
     return vars;
 }
 
-vec4 frag(VARYINGS varyings){
+vec4 frag(Varyings varyings){
     #ifdef _VERTEX_LIGHT
     vec4 light = varyings.Color;
     #else

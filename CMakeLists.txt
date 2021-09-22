@@ -29,8 +29,8 @@ add_executable(
         core/light/light.h
         core/shader/shader.h
         core/shader/shader.cpp
-        core/texture/texture.cpp
-        core/texture/texture.h
+        core/texture_2d/texture_2d.cpp
+        core/texture_2d/texture_2d.h
         utils/lodepng.cpp
         utils/lodepng.h
         core/material/material.cpp
@@ -52,7 +52,15 @@ add_executable(
         scripts/camera_fly_controller/camera_fly_controller.cpp
         scripts/camera_fly_controller/camera_fly_controller.h
         core/graphics/uniform_block.cpp
-        core/graphics/uniform_block.h)
+        core/graphics/uniform_block.h
+        core/graphics/context.cpp
+        core/graphics/context.h
+        core/graphics/passes/shadow_caster_pass.cpp
+        core/graphics/passes/shadow_caster_pass.h
+        core/graphics/passes/render_pass.cpp
+        core/graphics/passes/render_pass.h
+        core/texture_2d_array/texture_2d_array.cpp
+        core/texture_2d_array/texture_2d_array.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

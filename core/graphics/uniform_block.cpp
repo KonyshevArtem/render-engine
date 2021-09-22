@@ -4,40 +4,38 @@
 #pragma clang diagnostic pop
 
 #include "uniform_block.h"
-#include "../shader/shader.h"
 #include "OpenGL/gl3.h"
 #include "unordered_map"
 
 using namespace std;
 
-UniformBlock::UniformBlock(const string &_initShaderPath, const string &_blockName, unsigned int _index)
+UniformBlock::UniformBlock(const shared_ptr<Shader> &_shader, const string &_blockName, unsigned int _index)
 {
     m_Name = _blockName;
 
-    auto   initShader = Shader::LoadForInit(_initShaderPath);
-    GLuint blockIndex = glGetUniformBlockIndex(initShader->m_Program, m_Name.c_str());
+    GLuint blockIndex = glGetUniformBlockIndex(_shader->m_Program, m_Name.c_str());
 
     GLint uniformCount;
-    glGetActiveUniformBlockiv(initShader->m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformCount);
+    glGetActiveUniformBlockiv(_shader->m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformCount);
 
     GLint uniformIndexes[uniformCount];
-    glGetActiveUniformBlockiv(initShader->m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &uniformIndexes[0]);
+    glGetActiveUniformBlockiv(_shader->m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &uniformIndexes[0]);
 
     GLint uniformOffsets[uniformCount];
-    glGetActiveUniformsiv(initShader->m_Program, uniformCount, (const GLuint *) &uniformIndexes[0], GL_UNIFORM_OFFSET, &uniformOffsets[0]);
+    glGetActiveUniformsiv(_shader->m_Program, uniformCount, (const GLuint *) &uniformIndexes[0], GL_UNIFORM_OFFSET, &uniformOffsets[0]);
 
     unordered_map<GLint, GLint> indexToOffset;
     for (int i = 0; i < uniformCount; ++i)
         indexToOffset[uniformIndexes[i]] = uniformOffsets[i];
 
-    for (const auto &pair: initShader->m_Uniforms)
+    for (const auto &pair: _shader->m_Uniforms)
     {
         if (indexToOffset.contains(pair.second.Index))
             m_UniformOffsets[pair.first] = indexToOffset[pair.second.Index];
     }
 
     GLint blockSize;
-    glGetActiveUniformBlockiv(initShader->m_Program, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
+    glGetActiveUniformBlockiv(_shader->m_Program, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
 
     glGenBuffers(1, &m_Buffer);
     glBindBuffer(GL_UNIFORM_BUFFER, m_Buffer);

@@ -7,15 +7,15 @@ Material::Material(shared_ptr<Shader> _shader)
     m_Shader = std::move(_shader);
 }
 
-void Material::SetTexture(const string &_name, shared_ptr<Texture> _value)
+void Material::SetTexture(const string &_name, shared_ptr<Texture2D> _value)
 {
-    m_Textures[_name]        = std::move(_value);
+    m_Textures2D[_name]        = std::move(_value);
     m_Vectors4[_name + "ST"] = Vector4(0, 0, 1, 1);
 }
 
-shared_ptr<Texture> Material::GetTexture(const string &_name)
+shared_ptr<Texture2D> Material::GetTexture(const string &_name)
 {
-    return m_Textures.contains(_name) ? m_Textures[_name] : nullptr;
+    return m_Textures2D.contains(_name) ? m_Textures2D[_name] : nullptr;
 }
 
 void Material::SetVector4(const string &_name, Vector4 _value)

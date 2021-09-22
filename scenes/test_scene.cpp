@@ -20,8 +20,8 @@ void TestScene::Load()
 void TestScene::Init()
 {
     // init textures
-    auto grassTexture = Texture::Load("textures/grass.png", 800, 600);
-    auto waterTexture = Texture::Load("textures/water.png", 512, 512);
+    auto grassTexture = Texture2D::Load("textures/grass.png", 800, 600);
+    auto waterTexture = Texture2D::Load("textures/water.png", 512, 512);
 
     // init shaders
     auto vertexLitShader   = Shader::Load("shaders/standard.glsl", vector<string> {"_VERTEX_LIGHT"});
@@ -117,11 +117,20 @@ void TestScene::Init()
     m_SpotLight->CutOffAngle = 15;
     m_SpotLight->Type        = SPOT;
 
+    auto spotLight2         = make_shared<Light>();
+    spotLight2->Position    = Vector3(-9, 5, -5.5f);
+    spotLight2->Rotation    = Quaternion::AngleAxis(90, Vector3(-1, 0, 0));
+    spotLight2->Intensity   = Vector4(1, 1, 1, 1);
+    spotLight2->Attenuation = 0.01f;
+    spotLight2->CutOffAngle = 15;
+    spotLight2->Type        = SPOT;
+
     AmbientLight = Vector4(0.05f, 0.05f, 0.05f, 1);
 
     Lights.push_back(dirLight);
     Lights.push_back(pointLight);
     Lights.push_back(m_SpotLight);
+    Lights.push_back(spotLight2);
 
     // init camera
     Camera::Current->Position = Vector3(-10, 0.5f, 5);

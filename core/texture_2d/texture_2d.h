@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_TEXTURE_H
-#define OPENGL_STUDY_TEXTURE_H
+#ifndef OPENGL_STUDY_TEXTURE_2D_H
+#define OPENGL_STUDY_TEXTURE_2D_H
 
 #include "GLUT/glut.h"
 #include "OpenGL/gl3.h"
@@ -8,17 +8,16 @@
 
 using namespace std;
 
-class Texture
+class Texture2D
 {
 public:
     unsigned int Width;
     unsigned int Height;
 
-    static shared_ptr<Texture> Load(const string &_path, unsigned int _width, unsigned int _height);
-    static shared_ptr<Texture> White();
-    static shared_ptr<Texture> ShadowMap(unsigned int _width, unsigned int _height);
+    static shared_ptr<Texture2D> Load(const string &_path, unsigned int _width, unsigned int _height);
+    static shared_ptr<Texture2D> White();
 
-    ~Texture();
+    ~Texture2D();
 
 private:
     void Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode);
@@ -27,7 +26,8 @@ private:
     GLuint                m_Sampler;
     vector<unsigned char> m_Data;
 
-    friend class Graphics;
+    friend class RenderPass;
+    friend class ShadowCasterPass;
 };
 
-#endif //OPENGL_STUDY_TEXTURE_H
+#endif //OPENGL_STUDY_TEXTURE_2D_H

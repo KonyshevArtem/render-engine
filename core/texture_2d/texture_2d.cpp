@@ -5,6 +5,7 @@
 
 #include "texture_2d.h"
 #include "../../utils/lodepng.h"
+#include "../../utils/utils.h"
 #include "GLUT/glut.h"
 #include "OpenGL/gl3.h"
 
@@ -12,19 +13,21 @@ using namespace std;
 
 static shared_ptr<Texture2D> WhiteTexture = nullptr;
 
-shared_ptr<Texture2D> Texture2D::Load(const string &_path, unsigned int _width, unsigned int _height)
+shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path)
 {
-    auto t    = make_shared<Texture2D>();
-    t->Width  = _width;
-    t->Height = _height;
+    auto t = make_shared<Texture2D>();
 
-    unsigned error = lodepng::decode(t->m_Data, _width, _height, _path, LCT_RGB);
+    unsigned int width  = 0;
+    unsigned int height = 0;
+    unsigned     error  = lodepng::decode(t->m_Data, width, height, Utils::GetExecutableDirectory() / _path, LCT_RGB);
     if (error != 0)
     {
         printf("Error loading texture: %u: %s\n", error, lodepng_error_text(error));
         return nullptr;
     }
 
+    t->Width  = width;
+    t->Height = height;
     t->Init(GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
 
     return t;

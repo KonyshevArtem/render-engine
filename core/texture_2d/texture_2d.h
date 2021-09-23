@@ -5,6 +5,7 @@
 #include "OpenGL/gl3.h"
 #include "string"
 #include "vector"
+#include "filesystem"
 
 using namespace std;
 
@@ -14,7 +15,7 @@ public:
     unsigned int Width;
     unsigned int Height;
 
-    static shared_ptr<Texture2D> Load(const string &_path, unsigned int _width, unsigned int _height);
+    static shared_ptr<Texture2D> Load(const filesystem::path &_path);
     static shared_ptr<Texture2D> White();
 
     ~Texture2D();

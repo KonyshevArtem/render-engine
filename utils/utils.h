@@ -14,8 +14,12 @@ using namespace std;
 class Utils
 {
 public:
-    static string ReadFile(const filesystem::path &_path);
-    static string ReadFileWithIncludes(const filesystem::path &_path);
+    static string ReadFile(const filesystem::path &_relativePath);
+    static string ReadFileWithIncludes(const filesystem::path &_relativePath);
+    static filesystem::path GetExecutableDirectory();
+
+private:
+    static inline filesystem::path m_ExecutableDir;
 };
 
 #endif //OPENGL_STUDY_UTILS_H

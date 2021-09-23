@@ -20,8 +20,8 @@ void TestScene::Load()
 void TestScene::Init()
 {
     // init textures
-    auto grassTexture = Texture2D::Load("textures/grass.png", 800, 600);
-    auto waterTexture = Texture2D::Load("textures/water.png", 512, 512);
+    auto grassTexture = Texture2D::Load("textures/grass.png");
+    auto waterTexture = Texture2D::Load("textures/water.png");
 
     // init shaders
     auto vertexLitShader   = Shader::Load("shaders/standard.glsl", vector<string> {"_VERTEX_LIGHT"});

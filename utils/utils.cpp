@@ -1,12 +1,13 @@
 #include "utils.h"
+#include "mach-o/dyld.h"
 #include "regex"
 #include "string"
 #include <cstdio>
 #include <filesystem>
 
-string Utils::ReadFile(const filesystem::path &_path)
+string Utils::ReadFile(const filesystem::path &_relativePath)
 {
-    FILE *file = fopen(_path.c_str(), "r");
+    FILE *file = fopen((GetExecutableDirectory() / _relativePath).c_str(), "r");
     if (file == nullptr)
         return "";
 
@@ -34,15 +35,15 @@ string Utils::ReadFile(const filesystem::path &_path)
     return content;
 }
 
-string Utils::ReadFileWithIncludes(const filesystem::path &_path)
+string Utils::ReadFileWithIncludes(const filesystem::path &_relativePath)
 {
-    string file = ReadFile(_path);
+    string file = ReadFile(_relativePath);
 
     regex  expression("\\s*#include\\s+\\\"(.*)\\\"\\s*\n");
     smatch match;
     while (regex_search(file.cbegin(), file.cend(), match, expression))
     {
-        string includedFile = ReadFileWithIncludes(_path.parent_path() / match[1].str());
+        string includedFile = ReadFileWithIncludes(_relativePath.parent_path() / match[1].str());
         long   matchStart   = match.position();
         matchStart          = matchStart == 0 ? 0 : matchStart + 1;
         file                = file.replace(matchStart, match.length() - 2, includedFile);
@@ -50,3 +51,27 @@ string Utils::ReadFileWithIncludes(const filesystem::path &_path)
 
     return file;
 }
+
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "DanglingPointers"
+filesystem::path         Utils::GetExecutableDirectory()
+{
+    if (!m_ExecutableDir.empty())
+        return m_ExecutableDir;
+
+    char *   path = new char[10];
+    uint32_t size = 10;
+
+    if (_NSGetExecutablePath(&path[0], &size) != 0)
+    {
+        free(path);
+        path = new char[size];
+        _NSGetExecutablePath(path, &size);
+    }
+
+    string pathStr(path, size);
+    free(path);
+    m_ExecutableDir = filesystem::path(pathStr).parent_path();
+    return m_ExecutableDir;
+}
+#pragma clang diagnostic pop

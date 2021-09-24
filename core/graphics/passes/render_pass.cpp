@@ -1,4 +1,11 @@
 #include "render_pass.h"
+#include "../../gameObject/gameObject.h"
+#include "../../material/material.h"
+#include "../../mesh/mesh.h"
+#include "../../shader/shader.h"
+#include "../../texture_2d/texture_2d.h"
+#include "../../texture_2d_array/texture_2d_array.h"
+#include "../context.h"
 #include "../graphics.h"
 
 RenderPass::RenderPass()

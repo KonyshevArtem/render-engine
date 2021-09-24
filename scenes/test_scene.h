@@ -2,7 +2,11 @@
 #define OPENGL_STUDY_TEST_SCENE_H
 
 #include "../core/scene/scene.h"
-#include "../scripts/camera_fly_controller/camera_fly_controller.h"
+
+struct Vector3;
+struct Quaternion;
+class Material;
+class CameraFlyController;
 
 class TestScene: public Scene
 {

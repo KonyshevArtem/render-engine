@@ -3,9 +3,10 @@
 
 #include "../../math/quaternion/quaternion.h"
 #include "../../math/vector3/vector3.h"
-#include "../material/material.h"
-#include "../mesh/mesh.h"
 #include "vector"
+
+class Mesh;
+class Material;
 
 using namespace std;
 

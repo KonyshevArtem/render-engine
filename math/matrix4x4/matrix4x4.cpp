@@ -1,4 +1,6 @@
 #include "matrix4x4.h"
+#include "../quaternion/quaternion.h"
+#include "../vector3/vector3.h"
 
 Matrix4x4 Matrix4x4::Zero()
 {

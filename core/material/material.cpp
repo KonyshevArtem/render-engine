@@ -1,5 +1,5 @@
 #include "material.h"
-
+#include "../../math/vector4/vector4.h"
 #include <utility>
 
 Material::Material(shared_ptr<Shader> _shader)
@@ -9,7 +9,7 @@ Material::Material(shared_ptr<Shader> _shader)
 
 void Material::SetTexture(const string &_name, shared_ptr<Texture2D> _value)
 {
-    m_Textures2D[_name]        = std::move(_value);
+    m_Textures2D[_name]      = std::move(_value);
     m_Vectors4[_name + "ST"] = Vector4(0, 0, 1, 1);
 }
 

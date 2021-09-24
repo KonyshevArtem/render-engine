@@ -5,10 +5,20 @@
 
 #include "graphics.h"
 #include "../camera/camera.h"
+#include "../light/light.h"
+#include "../shader/shader.h"
 #include "GLUT/glut.h"
 #include "context.h"
+#include "passes/render_pass.h"
+#include "passes/shadow_caster_pass.h"
 #include "uniform_block.h"
 #include <memory>
+
+unique_ptr<UniformBlock>     Graphics::LightingDataBlock;
+unique_ptr<UniformBlock>     Graphics::CameraDataBlock;
+shared_ptr<UniformBlock>     Graphics::ShadowsDataBlock;
+unique_ptr<ShadowCasterPass> Graphics::m_ShadowCasterPass;
+unique_ptr<RenderPass>       Graphics::m_RenderPass;
 
 void Graphics::Init(int _argc, char **_argv)
 {

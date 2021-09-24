@@ -1,8 +1,12 @@
 #ifndef OPENGL_STUDY_RENDER_PASS_H
 #define OPENGL_STUDY_RENDER_PASS_H
 
-#include "../context.h"
 #include "memory"
+#include "unordered_map"
+
+class Shader;
+class Material;
+class Context;
 
 using namespace std;
 

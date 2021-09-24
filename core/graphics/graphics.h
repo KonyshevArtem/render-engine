@@ -1,12 +1,17 @@
 #ifndef OPENGL_STUDY_GRAPHICS_H
 #define OPENGL_STUDY_GRAPHICS_H
 
-#include "../../math/matrix4x4/matrix4x4.h"
 #include "OpenGL/gl3.h"
-#include "context.h"
-#include "passes/render_pass.h"
-#include "passes/shadow_caster_pass.h"
-#include "uniform_block.h"
+#include "string"
+
+struct Matrix4x4;
+struct Vector4;
+class RenderPass;
+class ShadowCasterPass;
+class UniformBlock;
+class Light;
+
+using namespace std;
 
 class Graphics
 {
@@ -26,13 +31,13 @@ private:
     static const inline int MAX_SPOT_LIGHT_SOURCES  = 3;
     static const inline int GLSL_VERSION            = 410;
 
-    inline static unique_ptr<UniformBlock> LightingDataBlock = nullptr;
-    inline static unique_ptr<UniformBlock> CameraDataBlock   = nullptr;
-    inline static shared_ptr<UniformBlock> ShadowsDataBlock  = nullptr;
-    inline static string                   ShaderCompilationDefine;
+    static unique_ptr<UniformBlock> LightingDataBlock;
+    static unique_ptr<UniformBlock> CameraDataBlock;
+    static shared_ptr<UniformBlock> ShadowsDataBlock;
+    inline static string            ShaderCompilationDefine;
 
-    inline static unique_ptr<ShadowCasterPass> m_ShadowCasterPass = nullptr;
-    inline static unique_ptr<RenderPass>       m_RenderPass       = nullptr;
+    static unique_ptr<ShadowCasterPass> m_ShadowCasterPass;
+    static unique_ptr<RenderPass>       m_RenderPass;
 
     static void InitCulling();
     static void InitDepth();

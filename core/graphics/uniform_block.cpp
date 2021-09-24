@@ -4,6 +4,7 @@
 #pragma clang diagnostic pop
 
 #include "uniform_block.h"
+#include "../shader/shader.h"
 #include "OpenGL/gl3.h"
 #include "unordered_map"
 

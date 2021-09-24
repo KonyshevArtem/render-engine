@@ -1,10 +1,13 @@
 #ifndef OPENGL_STUDY_MATERIAL_H
 #define OPENGL_STUDY_MATERIAL_H
 
-#include "../../math/vector4/vector4.h"
-#include "../shader/shader.h"
-#include "../texture_2d/texture_2d.h"
+#include "memory"
+#include "string"
 #include "unordered_map"
+
+struct Vector4;
+class Texture2D;
+class Shader;
 
 using namespace std;
 

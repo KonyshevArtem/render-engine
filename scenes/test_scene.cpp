@@ -1,10 +1,16 @@
 #include "test_scene.h"
 #include "../core/camera/camera.h"
+#include "../core/gameObject/gameObject.h"
+#include "../core/light/light.h"
+#include "../core/material/material.h"
 #include "../core/mesh/cube/cube_mesh.h"
 #include "../core/mesh/cylinder/cylinder_mesh.h"
 #include "../core/mesh/plane/plane_mesh.h"
+#include "../core/shader/shader.h"
+#include "../core/texture_2d/texture_2d.h"
 #include "../core/time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "../math/math_utils.h"
+#include "../scripts/camera_fly_controller/camera_fly_controller.h"
 #include <cmath>
 #include <memory>
 

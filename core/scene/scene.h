@@ -1,8 +1,14 @@
 #ifndef OPENGL_STUDY_SCENE_H
 #define OPENGL_STUDY_SCENE_H
 
-#include "../gameObject/gameObject.h"
-#include "../light/light.h"
+#include "../../math/vector4/vector4.h"
+#include "memory"
+#include "vector"
+
+class Light;
+class GameObject;
+
+using namespace std;
 
 class Scene
 {

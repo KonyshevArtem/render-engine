@@ -1,13 +1,17 @@
 #ifndef OPENGL_STUDY_SHADOW_CASTER_PASS_H
 #define OPENGL_STUDY_SHADOW_CASTER_PASS_H
 
-#include "../../shader/shader.h"
-#include "../../texture_2d/texture_2d.h"
-#include "../../texture_2d_array/texture_2d_array.h"
-#include "../context.h"
-#include "../uniform_block.h"
+#include "OpenGL/gl3.h"
+#include "memory"
 #include "vector"
 
+class UniformBlock;
+class Context;
+class Shader;
+class Texture2DArray;
+class GameObject;
+
+using namespace std;
 
 class ShadowCasterPass
 {

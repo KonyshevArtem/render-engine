@@ -1,5 +1,17 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
+#define GL_SILENCE_DEPRECATION
+#pragma clang diagnostic pop
+
 #include "shadow_caster_pass.h"
+#include "../../gameObject/gameObject.h"
+#include "../../light/light.h"
+#include "../../mesh/mesh.h"
+#include "../../shader/shader.h"
+#include "../../texture_2d_array/texture_2d_array.h"
+#include "../context.h"
 #include "../graphics.h"
+#include "../uniform_block.h"
 
 ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, const shared_ptr<UniformBlock> &_shadowsUniformBlock)
 {

@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_QUATERNION_H
 #define OPENGL_STUDY_QUATERNION_H
 
-#include "../vector3/vector3.h"
+struct Vector3;
 
 struct [[nodiscard]] Quaternion
 {

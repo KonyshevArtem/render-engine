@@ -3,14 +3,15 @@
 
 #include "../../math/matrix4x4/matrix4x4.h"
 #include "../../math/vector4/vector4.h"
-#include "../gameObject/gameObject.h"
-#include "../light/light.h"
-#include "../texture_2d/texture_2d.h"
-#include "../texture_2d_array/texture_2d_array.h"
 #include "memory"
 #include "string"
 #include "unordered_map"
 #include "vector"
+
+class GameObject;
+class Light;
+class Texture2D;
+class Texture2DArray;
 
 using namespace std;
 

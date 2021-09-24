@@ -6,11 +6,10 @@
 #define GL_SILENCE_DEPRECATION
 #pragma clang diagnostic pop
 
-#include "../../math/matrix4x4/matrix4x4.h"
-#include "../../math/vector4/vector4.h"
 #include "GLUT/glut.h"
 #include "string"
 #include "unordered_map"
+#include "vector"
 
 using namespace std;
 

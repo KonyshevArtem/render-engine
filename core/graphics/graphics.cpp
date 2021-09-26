@@ -11,6 +11,7 @@
 #include "context.h"
 #include "passes/render_pass.h"
 #include "passes/shadow_caster_pass.h"
+#include "passes/skybox_pass.h"
 #include "uniform_block.h"
 #include <memory>
 
@@ -19,6 +20,7 @@ unique_ptr<UniformBlock>     Graphics::CameraDataBlock;
 shared_ptr<UniformBlock>     Graphics::ShadowsDataBlock;
 unique_ptr<ShadowCasterPass> Graphics::m_ShadowCasterPass;
 unique_ptr<RenderPass>       Graphics::m_RenderPass;
+unique_ptr<SkyboxPass>       Graphics::m_SkyboxPass;
 
 void Graphics::Init(int _argc, char **_argv)
 {
@@ -66,6 +68,7 @@ void Graphics::InitPasses()
 {
     m_RenderPass       = make_unique<RenderPass>();
     m_ShadowCasterPass = make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, ShadowsDataBlock);
+    m_SkyboxPass       = make_unique<SkyboxPass>();
 }
 
 void Graphics::Render()
@@ -81,6 +84,8 @@ void Graphics::Render()
         m_ShadowCasterPass->Execute(ctx);
     if (m_RenderPass != nullptr)
         m_RenderPass->Execute(ctx);
+    if (m_SkyboxPass != nullptr)
+        m_SkyboxPass->Execute(ctx);
 
     glutSwapBuffers();
     glutPostRedisplay();
@@ -95,9 +100,8 @@ void Graphics::Reshape(int _width, int _height)
 
 void Graphics::SetCameraData(Matrix4x4 _viewMatrix, Matrix4x4 _projectionMatrix)
 {
-    long      matrixSize  = sizeof(Matrix4x4);
-    Matrix4x4 cameraWS    = _viewMatrix.Invert();
-    Vector3   cameraPosWS = Vector3(cameraWS.m30, cameraWS.m31, cameraWS.m32);
+    long    matrixSize  = sizeof(Matrix4x4);
+    Vector3 cameraPosWS = _viewMatrix.Invert().GetPosition();
 
     CameraDataBlock->SetUniform("_ProjMatrix", &_projectionMatrix, matrixSize);
     CameraDataBlock->SetUniform("_ViewMatrix", &_viewMatrix, matrixSize);

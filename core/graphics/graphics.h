@@ -8,6 +8,7 @@ struct Matrix4x4;
 struct Vector4;
 class RenderPass;
 class ShadowCasterPass;
+class SkyboxPass;
 class UniformBlock;
 class Light;
 
@@ -38,6 +39,7 @@ private:
 
     static unique_ptr<ShadowCasterPass> m_ShadowCasterPass;
     static unique_ptr<RenderPass>       m_RenderPass;
+    static unique_ptr<SkyboxPass>       m_SkyboxPass;
 
     static void InitCulling();
     static void InitDepth();

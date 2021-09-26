@@ -27,7 +27,8 @@ enum UniformType
     BOOL,
 
     SAMPLER_2D,
-    SAMPLER_2D_ARRAY
+    SAMPLER_2D_ARRAY,
+    SAMPLER_CUBE,
 };
 
 class Shader
@@ -69,6 +70,7 @@ private:
     friend class UniformBlock;
     friend class RenderPass;
     friend class ShadowCasterPass;
+    friend class SkyboxPass;
 };
 
 #endif //OPENGL_STUDY_SHADER_H

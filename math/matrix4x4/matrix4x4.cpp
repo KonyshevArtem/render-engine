@@ -218,3 +218,8 @@ Matrix4x4 Matrix4x4::Perspective(float _fov, float _aspect, float _nearZ, float 
     matrix.m32       = -2 * _farZ * _nearZ / (_farZ - _nearZ);
     return matrix;
 }
+
+Vector3 Matrix4x4::GetPosition() const
+{
+    return Vector3(m30, m31, m32);
+}

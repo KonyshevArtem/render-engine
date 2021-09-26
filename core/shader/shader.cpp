@@ -198,6 +198,8 @@ UniformType Shader::ConvertUniformType(GLenum _type)
             return SAMPLER_2D;
         case GL_SAMPLER_2D_ARRAY:
             return SAMPLER_2D_ARRAY;
+        case GL_SAMPLER_CUBE:
+            return SAMPLER_CUBE;
 
         default:
             return UNKNOWN;
@@ -224,6 +226,7 @@ void Shader::SetUniform(const string &_name, const void *_data)
         case BOOL:
         case SAMPLER_2D:
         case SAMPLER_2D_ARRAY:
+        case SAMPLER_CUBE:
             glUniform1i(info.Location, *((GLint *) _data));
             break;
         case FLOAT:

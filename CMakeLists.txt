@@ -60,7 +60,11 @@ add_executable(
         core/graphics/passes/render_pass.cpp
         core/graphics/passes/render_pass.h
         core/texture_2d_array/texture_2d_array.cpp
-        core/texture_2d_array/texture_2d_array.h)
+        core/texture_2d_array/texture_2d_array.h
+        core/cubemap/cubemap.cpp
+        core/cubemap/cubemap.h
+        core/graphics/passes/skybox_pass.cpp
+        core/graphics/passes/skybox_pass.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

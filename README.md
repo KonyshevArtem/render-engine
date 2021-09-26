@@ -15,6 +15,7 @@ game engines work
 * Shader introspection for obtaining all uniform locations
 to generalize work with uniforms
 * Shader preprocessor that implements `#include` feature
+* Skybox with cubemap
 
 ### How to build
 

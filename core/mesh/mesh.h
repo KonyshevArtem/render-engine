@@ -30,6 +30,7 @@ private:
 
     friend class RenderPass;
     friend class ShadowCasterPass;
+    friend class SkyboxPass;
 };
 
 

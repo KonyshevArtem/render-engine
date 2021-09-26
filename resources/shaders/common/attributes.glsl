@@ -14,6 +14,7 @@ struct Varyings
     vec4 PositionCS;
     vec3 NormalWS;
     vec2 UV;
+    vec3 CubemapUV;
     vec4 Color;
     #ifdef _RECEIVE_SHADOWS
     vec4 SpotLightShadowCoords[MAX_SPOT_LIGHT_SOURCES];

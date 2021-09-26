@@ -244,6 +244,6 @@ void Shader::SetUniform(const string &_name, const void *_data)
 shared_ptr<Shader> Shader::GetFallbackShader()
 {
     if (FallbackShader == nullptr)
-        FallbackShader = Shader::Load("shaders/fallback.glsl", vector<string>(), false);
+        FallbackShader = Shader::Load("resources/shaders/fallback.glsl", vector<string>(), false);
     return FallbackShader;
 }

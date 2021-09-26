@@ -68,5 +68,10 @@ include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
 
 target_link_libraries(OpenGL_Study ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
 
-file(COPY shaders DESTINATION ./)
-file(COPY textures DESTINATION ./)
+add_custom_target(PreBuild ALL
+        COMMAND ${CMAKE_COMMAND} -E rm -rf $<TARGET_FILE_DIR:OpenGL_Study>/resources
+        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:OpenGL_Study>/resources
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:OpenGL_Study>/resources
+        COMMAND ${CMAKE_COMMAND} -E echo \"[Pre Build] Resources copied\")
+
+add_dependencies(OpenGL_Study PreBuild)

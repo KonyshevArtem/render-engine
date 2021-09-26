@@ -26,12 +26,12 @@ void TestScene::Load()
 void TestScene::Init()
 {
     // init textures
-    auto grassTexture = Texture2D::Load("textures/grass.png");
-    auto waterTexture = Texture2D::Load("textures/water.png");
+    auto grassTexture = Texture2D::Load("resources/textures/grass.png");
+    auto waterTexture = Texture2D::Load("resources/textures/water.png");
 
     // init shaders
-    auto vertexLitShader   = Shader::Load("shaders/standard.glsl", vector<string> {"_VERTEX_LIGHT"});
-    auto fragmentLitShader = Shader::Load("shaders/standard.glsl", vector<string> {"_SMOOTHNESS", "_RECEIVE_SHADOWS"});
+    auto vertexLitShader   = Shader::Load("resources/shaders/standard.glsl", vector<string> {"_VERTEX_LIGHT"});
+    auto fragmentLitShader = Shader::Load("resources/shaders/standard.glsl", vector<string> {"_SMOOTHNESS", "_RECEIVE_SHADOWS"});
 
     // init meshes
     auto cubeMesh = make_shared<CubeMesh>();

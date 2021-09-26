@@ -22,11 +22,11 @@ Run this terminal commands inside source directory
 
 `cmake -S . -B build`
 
-Directory `build` will be created. Folders
-`shaders` and `textures` will be copied to build dir.
-Those are external resource that will be loaded at runtime.
-They should always be in the same directory as the executable
+Directory `build` will be created.
 
 `make -C build`
 
-Executable will be built to run application
+Executable will be built to run application. Folder
+`resources` will be copied before build.
+Resources from that folder will be loaded at runtime.
+It should always be in the same directory as the executable.

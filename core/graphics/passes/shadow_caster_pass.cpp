@@ -16,7 +16,7 @@
 ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, const shared_ptr<UniformBlock> &_shadowsUniformBlock)
 {
     m_ShadowsUniformBlock     = _shadowsUniformBlock;
-    m_ShadowCasterShader      = Shader::Load("shaders/shadowCaster.glsl", vector<string>());
+    m_ShadowCasterShader      = Shader::Load("resources/shaders/shadowCaster.glsl", vector<string>());
     m_SpotLightShadowMapArray = Texture2DArray::ShadowMapArray(SHADOW_MAP_SIZE, _spotLightsCount);
 
     glGenFramebuffers(1, &m_Framebuffer);

@@ -6,10 +6,10 @@
 
 Varyings vert(){
     Varyings vars;
-    vars.PositionCS = _ProjMatrix * _ViewMatrix * _ModelMatrix * vertPositionOS;
+    vars.PositionCS = _ProjMatrix * _ViewMatrix * _ModelMatrix * vec4(vertPositionOS, 1);
     return vars;
 }
 
 vec4 frag(Varyings vars){
-    return vec4(1);
+    return vec4(1, 0, 1, 1);
 }

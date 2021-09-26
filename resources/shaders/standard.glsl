@@ -9,7 +9,7 @@
 Varyings vert(){
     Varyings vars;
 
-    vars.PositionWS = _ModelMatrix * vertPositionOS;
+    vars.PositionWS = _ModelMatrix * vec4(vertPositionOS, 1);
     vars.PositionCS = _ProjMatrix * _ViewMatrix * vars.PositionWS;
     vars.NormalWS = normalize((_ModelNormalMatrix * vec4(vertNormalOS, 0)).xyz);
     vars.UV = texCoord;

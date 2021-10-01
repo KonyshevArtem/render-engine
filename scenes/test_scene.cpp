@@ -1,5 +1,6 @@
 #include "test_scene.h"
 #include "../core/camera/camera.h"
+#include "../core/cubemap/cubemap.h"
 #include "../core/gameObject/gameObject.h"
 #include "../core/light/light.h"
 #include "../core/material/material.h"
@@ -28,6 +29,14 @@ void TestScene::Init()
     // init textures
     auto grassTexture = Texture2D::Load("resources/textures/grass.png");
     auto waterTexture = Texture2D::Load("resources/textures/water.png");
+
+    // init skybox cubemap
+    Skybox = Cubemap::Load("resources/textures/skybox/x_positive.png",
+                           "resources/textures/skybox/x_negative.png",
+                           "resources/textures/skybox/y_positive.png",
+                           "resources/textures/skybox/y_negative.png",
+                           "resources/textures/skybox/z_positive.png",
+                           "resources/textures/skybox/z_negative.png");
 
     // init shaders
     auto vertexLitShader   = Shader::Load("resources/shaders/standard.glsl", vector<string> {"_VERTEX_LIGHT"});

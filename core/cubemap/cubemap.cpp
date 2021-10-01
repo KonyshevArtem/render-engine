@@ -4,7 +4,7 @@
 #pragma clang diagnostic pop
 
 #include "cubemap.h"
-#include "../../utils/lodepng.h"
+#include "../../external/lodepng/lodepng.h"
 #include "../../utils/utils.h"
 
 shared_ptr<Cubemap> Cubemap::Load(const filesystem::path &_xPositivePath,

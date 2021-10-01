@@ -15,13 +15,6 @@
 
 SkyboxPass::SkyboxPass()
 {
-    m_Cubemap = Cubemap::Load("resources/textures/skybox/x_positive.png",
-                              "resources/textures/skybox/x_negative.png",
-                              "resources/textures/skybox/y_positive.png",
-                              "resources/textures/skybox/y_negative.png",
-                              "resources/textures/skybox/z_positive.png",
-                              "resources/textures/skybox/z_negative.png");
-
     m_Shader = Shader::Load("resources/shaders/skybox.glsl", vector<string>());
 
     m_Mesh = make_shared<CubeMesh>();
@@ -30,7 +23,7 @@ SkyboxPass::SkyboxPass()
 
 void SkyboxPass::Execute(const shared_ptr<Context> &_ctx)
 {
-    if (m_Mesh == nullptr || m_Shader == nullptr || m_Cubemap == nullptr)
+    if (m_Mesh == nullptr || m_Shader == nullptr || _ctx->Skybox == nullptr)
         return;
 
     glCullFace(GL_FRONT);
@@ -46,8 +39,8 @@ void SkyboxPass::Execute(const shared_ptr<Context> &_ctx)
 
     int unit = 0;
     glActiveTexture(GL_TEXTURE0 + unit);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, m_Cubemap->m_Texture);
-    glBindSampler(unit, m_Cubemap->m_Sampler);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, _ctx->Skybox->m_Texture);
+    glBindSampler(unit, _ctx->Skybox->m_Sampler);
     m_Shader->SetUniform("_Skybox", &unit);
 
     glDrawElements(GL_TRIANGLES, m_Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);

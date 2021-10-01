@@ -7,6 +7,7 @@
 
 class Light;
 class GameObject;
+class Cubemap;
 
 using namespace std;
 
@@ -17,6 +18,7 @@ public:
     vector<shared_ptr<GameObject>>  GameObjects;
     vector<shared_ptr<Light>>       Lights;
     Vector4                         AmbientLight;
+    shared_ptr<Cubemap>             Skybox;
 
     static void Update();
 

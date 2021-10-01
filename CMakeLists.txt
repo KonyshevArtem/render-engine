@@ -3,6 +3,20 @@ project(OpenGL_Study)
 
 set(CMAKE_CXX_STANDARD 20)
 
+add_library(
+        libpng
+        external/lodepng/lodepng.cpp
+        external/lodepng/lodepng.h
+)
+
+add_library(
+        OpenFBX
+        external/OpenFBX/ofbx.cpp
+        external/OpenFBX/ofbx.h
+        external/OpenFBX/miniz.c
+        external/OpenFBX/miniz.h
+)
+
 add_executable(
         OpenGL_Study
         main.cpp
@@ -31,8 +45,6 @@ add_executable(
         core/shader/shader.cpp
         core/texture_2d/texture_2d.cpp
         core/texture_2d/texture_2d.h
-        utils/lodepng.cpp
-        utils/lodepng.h
         core/material/material.cpp
         core/material/material.h
         core/mesh/plane/plane_mesh.cpp
@@ -64,13 +76,20 @@ add_executable(
         core/cubemap/cubemap.cpp
         core/cubemap/cubemap.h
         core/graphics/passes/skybox_pass.cpp
-        core/graphics/passes/skybox_pass.h)
+        core/graphics/passes/skybox_pass.h
+)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
 
-target_link_libraries(OpenGL_Study ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
+target_link_libraries(
+        OpenGL_Study
+        ${OPENGL_LIBRARIES}
+        ${GLUT_LIBRARY}
+        libpng
+        OpenFBX
+)
 
 add_custom_target(PreBuild ALL
         COMMAND ${CMAKE_COMMAND} -E rm -rf $<TARGET_FILE_DIR:OpenGL_Study>/resources

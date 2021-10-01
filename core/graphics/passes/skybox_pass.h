@@ -4,7 +4,6 @@
 #include "memory"
 
 class Context;
-class Cubemap;
 class CubeMesh;
 class Shader;
 
@@ -18,7 +17,6 @@ public:
     void Execute(const shared_ptr<Context> &_ctx);
 
 private:
-    shared_ptr<Cubemap>  m_Cubemap;
     shared_ptr<CubeMesh> m_Mesh;
     shared_ptr<Shader>   m_Shader;
 };

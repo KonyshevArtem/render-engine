@@ -12,6 +12,7 @@ Context::Context()
     AmbientLight     = scene->AmbientLight;
     Lights           = scene->Lights;
     GameObjects      = scene->GameObjects;
+    Skybox           = scene->Skybox;
     ViewMatrix       = Camera::Current->GetViewMatrix();
     ProjectionMatrix = Camera::Current->GetProjectionMatrix();
 }

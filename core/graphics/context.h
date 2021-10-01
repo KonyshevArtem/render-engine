@@ -12,6 +12,7 @@ class GameObject;
 class Light;
 class Texture2D;
 class Texture2DArray;
+class Cubemap;
 
 using namespace std;
 
@@ -27,6 +28,7 @@ public:
     Matrix4x4                                         ProjectionMatrix = Matrix4x4();
     unordered_map<string, shared_ptr<Texture2D>>      Textures2D;
     unordered_map<string, shared_ptr<Texture2DArray>> Texture2DArrays;
+    shared_ptr<Cubemap>                               Skybox;
 };
 
 #endif //OPENGL_STUDY_CONTEXT_H

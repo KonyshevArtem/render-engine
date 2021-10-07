@@ -2,31 +2,36 @@
 #define OPENGL_STUDY_MESH_H
 
 #include "OpenGL/gl3.h"
+#include "vector"
+
+class Vector2;
+class Vector3;
+
+using namespace std;
 
 class Mesh
 {
 public:
+    Mesh(const vector<Vector3> &_vertices,
+         const vector<Vector3> &_normals,
+         const vector<int>     &_indexes,
+         const vector<Vector2> &_uvs);
+
     void Init();
 
-    virtual int GetTrianglesCount() = 0;
+    int GetTrianglesCount();
 
     virtual ~Mesh();
 
-protected:
-    virtual void *GetVertexData()     = 0;
-    virtual long  GetVertexDataSize() = 0;
-
-    virtual void *GetNormalsData()     = 0;
-    virtual long  GetNormalsDataSize() = 0;
-
-    virtual void *GetIndexData()     = 0;
-    virtual long  GetIndexDataSize() = 0;
-
-    virtual void *GetUVData()     = 0;
-    virtual long  GetUVDataSize() = 0;
-
 private:
     GLuint m_VertexArrayObject = 0;
+    GLuint m_VertexBuffer      = 0;
+    GLuint m_IndexBuffer       = 0;
+
+    vector<Vector3> m_Vertices;
+    vector<Vector3> m_Normals;
+    vector<int>     m_Indexes;
+    vector<Vector2> m_UVs;
 
     friend class RenderPass;
     friend class ShadowCasterPass;

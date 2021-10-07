@@ -4,7 +4,7 @@ project(OpenGL_Study)
 set(CMAKE_CXX_STANDARD 20)
 
 add_library(
-        libpng
+        LibPNG
         external/lodepng/lodepng.cpp
         external/lodepng/lodepng.h
 )
@@ -17,29 +17,31 @@ add_library(
         external/OpenFBX/miniz.h
 )
 
-add_executable(
-        OpenGL_Study
-        main.cpp
-        utils/utils.cpp
-        utils/utils.h
+add_library(
+        Math
         math/matrix4x4/matrix4x4.cpp
         math/matrix4x4/matrix4x4.h
         math/vector4/vector4.cpp
         math/vector4/vector4.h
         math/vector3/vector3.cpp
         math/vector3/vector3.h
+        math/vector2/vector2.cpp
+        math/vector2/vector2.h
         math/quaternion/quaternion.cpp
         math/quaternion/quaternion.h
-        core/gameObject/gameObject.h
-        core/gameObject/gameObject.cpp
         math/math_utils.cpp
         math/math_utils.h
+)
+
+add_executable(
+        OpenGL_Study
+        main.cpp
+        utils/utils.cpp
+        utils/utils.h
+        core/gameObject/gameObject.h
+        core/gameObject/gameObject.cpp
         core/mesh/mesh.cpp
         core/mesh/mesh.h
-        core/mesh/cube/cube_mesh.cpp
-        core/mesh/cube/cube_mesh.h
-        core/mesh/cylinder/cylinder_mesh.cpp
-        core/mesh/cylinder/cylinder_mesh.h
         core/light/light.h
         core/shader/shader.h
         core/shader/shader.cpp
@@ -47,8 +49,6 @@ add_executable(
         core/texture_2d/texture_2d.h
         core/material/material.cpp
         core/material/material.h
-        core/mesh/plane/plane_mesh.cpp
-        core/mesh/plane/plane_mesh.h
         core/scene/scene.h
         scenes/test_scene.cpp
         scenes/test_scene.h
@@ -77,7 +77,8 @@ add_executable(
         core/cubemap/cubemap.h
         core/graphics/passes/skybox_pass.cpp
         core/graphics/passes/skybox_pass.h
-)
+        core/fbx_asset/fbx_asset.cpp
+        core/fbx_asset/fbx_asset.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
@@ -87,7 +88,8 @@ target_link_libraries(
         OpenGL_Study
         ${OPENGL_LIBRARIES}
         ${GLUT_LIBRARY}
-        libpng
+        Math
+        LibPNG
         OpenFBX
 )
 

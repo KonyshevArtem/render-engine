@@ -8,7 +8,8 @@
 #include "../../../math/quaternion/quaternion.h"
 #include "../../../math/vector3/vector3.h"
 #include "../../cubemap/cubemap.h"
-#include "../../mesh/cube/cube_mesh.h"
+#include "../../fbx_asset/fbx_asset.h"
+#include "../../mesh/mesh.h"
 #include "../../shader/shader.h"
 #include "../context.h"
 #include "../graphics.h"
@@ -16,9 +17,7 @@
 SkyboxPass::SkyboxPass()
 {
     m_Shader = Shader::Load("resources/shaders/skybox.glsl", vector<string>());
-
-    m_Mesh = make_shared<CubeMesh>();
-    m_Mesh->Init();
+    m_Mesh   = FBXAsset::Load("resources/models/cube.fbx")->Meshes[0];
 }
 
 void SkyboxPass::Execute(const shared_ptr<Context> &_ctx)

@@ -4,7 +4,7 @@
 #include "memory"
 
 class Context;
-class CubeMesh;
+class Mesh;
 class Shader;
 
 using namespace std;
@@ -17,8 +17,8 @@ public:
     void Execute(const shared_ptr<Context> &_ctx);
 
 private:
-    shared_ptr<CubeMesh> m_Mesh;
-    shared_ptr<Shader>   m_Shader;
+    shared_ptr<Mesh>   m_Mesh;
+    shared_ptr<Shader> m_Shader;
 };
 
 #endif //OPENGL_STUDY_SKYBOX_PASS_H

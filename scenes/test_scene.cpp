@@ -1,12 +1,11 @@
 #include "test_scene.h"
 #include "../core/camera/camera.h"
 #include "../core/cubemap/cubemap.h"
+#include "../core/fbx_asset/fbx_asset.h"
 #include "../core/gameObject/gameObject.h"
 #include "../core/light/light.h"
 #include "../core/material/material.h"
-#include "../core/mesh/cube/cube_mesh.h"
-#include "../core/mesh/cylinder/cylinder_mesh.h"
-#include "../core/mesh/plane/plane_mesh.h"
+#include "../core/mesh/mesh.h"
 #include "../core/shader/shader.h"
 #include "../core/texture_2d/texture_2d.h"
 #include "../core/time/time.h" // NOLINT(modernize-deprecated-headers)
@@ -43,14 +42,13 @@ void TestScene::Init()
     auto fragmentLitShader = Shader::Load("resources/shaders/standard.glsl", vector<string> {"_SMOOTHNESS", "_RECEIVE_SHADOWS"});
 
     // init meshes
-    auto cubeMesh = make_shared<CubeMesh>();
-    cubeMesh->Init();
+    auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");
+    auto cylinderAsset = FBXAsset::Load("resources/models/cylinder.fbx");
+    auto planeAsset    = FBXAsset::Load("resources/models/plane.fbx");
 
-    auto cylinderMesh = make_shared<CylinderMesh>();
-    cylinderMesh->Init();
-
-    auto planeMesh = make_shared<PlaneMesh>();
-    planeMesh->Init();
+    auto cubeMesh     = cubeAsset->Meshes[0];
+    auto cylinderMesh = cylinderAsset->Meshes[0];
+    auto planeMesh    = planeAsset->Meshes[0];
 
     // init materials
     auto vertexLitMaterial = make_shared<Material>(vertexLitShader);

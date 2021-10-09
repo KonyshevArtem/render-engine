@@ -33,7 +33,6 @@ void ShadowCasterPass::Execute(shared_ptr<Context> &_ctx)
         return;
 
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, m_SpotLightShadowMapArray->m_Texture);
     glViewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
 
     int spotLightsCount = 0;
@@ -41,7 +40,7 @@ void ShadowCasterPass::Execute(shared_ptr<Context> &_ctx)
     {
         if (light->Type == SPOT)
         {
-            glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_SpotLightShadowMapArray->m_Texture, 0, spotLightsCount);
+            m_SpotLightShadowMapArray->Attach(GL_DEPTH_ATTACHMENT, spotLightsCount);
 
             Matrix4x4 view    = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
             Matrix4x4 proj    = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, 100);
@@ -73,18 +72,17 @@ void ShadowCasterPass::Render(const vector<shared_ptr<GameObject>> &_gameObjects
     glReadBuffer(GL_NONE);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(m_ShadowCasterShader->m_Program);
+
+    m_ShadowCasterShader->Use();
 
     for (const auto &go: _gameObjects)
     {
-        glBindVertexArray(go->Mesh->m_VertexArrayObject);
+        if (go->Mesh == nullptr)
+            continue;
 
         Matrix4x4 modelMatrix = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
         m_ShadowCasterShader->SetUniform("_ModelMatrix", &modelMatrix);
-
-        glDrawElements(GL_TRIANGLES, go->Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
-
-        glBindVertexArray(0);
+        go->Mesh->Draw();
     }
 
     glUseProgram(0);

@@ -1,6 +1,8 @@
 #include "shader.h"
 #include "../../core/graphics/graphics.h"
+#include "../../math/vector4/vector4.h"
 #include "../../utils/utils.h"
+#include "../texture_2d/texture_2d.h"
 #include "OpenGL/gl3.h"
 #include "string"
 #include <cstdio>
@@ -32,6 +34,7 @@ Shader::Shader(GLuint _program)
     GLsizei length;
     GLenum  type;
     GLchar  name[buffSize];
+    int     textureUnit = 0;
     for (int i = 0; i < count; ++i)
     {
         glGetActiveUniform(m_Program, i, buffSize, &length, nullptr, &type, &name[0]);
@@ -45,8 +48,10 @@ Shader::Shader(GLuint _program)
 
         // TODO: correctly parse arrays
 
-        if (info.Type == UNKNOWN)
+        if (info.Type == UniformType::UNKNOWN)
             fprintf(stderr, "Shader init error: Unknown OpenGL type for uniform %s: %d\n", &nameStr[0], type);
+        else if (UniformTypeUtils::IsTexture(info.Type))
+            m_TextureUnits[nameStr] = textureUnit++;
     }
 }
 
@@ -74,14 +79,14 @@ shared_ptr<Shader> Shader::Load(const string &_path, const vector<string> &_keyw
 }
 
 bool Shader::TryCompileShaderPart(GLuint                _shaderPartType,
-                                  const string &        _path,
-                                  const char *          _source,
-                                  GLuint &              _shaderPart,
+                                  const string         &_path,
+                                  const char           *_source,
+                                  GLuint               &_shaderPart,
                                   const vector<string> &_keywords)
 {
     const string &defines      = Graphics::GetShaderCompilationDefines();
     int           sourcesCount = 4;
-    const char *  sources[sourcesCount];
+    const char   *sources[sourcesCount];
 
     string keywordsDefines;
     for (const auto &keyword: _keywords)
@@ -180,29 +185,29 @@ UniformType Shader::ConvertUniformType(GLenum _type)
     switch (_type)
     {
         case GL_INT:
-            return INT;
+            return UniformType::INT;
 
         case GL_FLOAT:
-            return FLOAT;
+            return UniformType::FLOAT;
         case GL_FLOAT_VEC3:
-            return FLOAT_VEC3;
+            return UniformType::FLOAT_VEC3;
         case GL_FLOAT_VEC4:
-            return FLOAT_VEC4;
+            return UniformType::FLOAT_VEC4;
         case GL_FLOAT_MAT4:
-            return FLOAT_MAT4;
+            return UniformType::FLOAT_MAT4;
 
         case GL_BOOL:
-            return BOOL;
+            return UniformType::BOOL;
 
         case GL_SAMPLER_2D:
-            return SAMPLER_2D;
+            return UniformType::SAMPLER_2D;
         case GL_SAMPLER_2D_ARRAY:
-            return SAMPLER_2D_ARRAY;
+            return UniformType::SAMPLER_2D_ARRAY;
         case GL_SAMPLER_CUBE:
-            return SAMPLER_CUBE;
+            return UniformType::SAMPLER_CUBE;
 
         default:
-            return UNKNOWN;
+            return UniformType::UNKNOWN;
     }
 }
 
@@ -211,40 +216,76 @@ Shader::~Shader()
     glDeleteProgram(m_Program);
 }
 
-void Shader::SetUniform(const string &_name, const void *_data)
+void Shader::Use() const
+{
+    glUseProgram(m_Program);
+}
+
+const unordered_map<string, int> &Shader::GetTextureUnits() const
+{
+    return m_TextureUnits;
+}
+
+void Shader::SetUniform(const string &_name, const void *_data) const
 {
     if (!m_Uniforms.contains(_name))
         return;
 
-    UniformInfo info = m_Uniforms[_name];
+    UniformInfo info = m_Uniforms.at(_name);
 
     switch (info.Type)
     {
-        case UNKNOWN:
+        case UniformType::UNKNOWN:
             break;
-        case INT: // NOLINT(bugprone-branch-clone)
-        case BOOL:
-        case SAMPLER_2D:
-        case SAMPLER_2D_ARRAY:
-        case SAMPLER_CUBE:
+        case UniformType::INT: // NOLINT(bugprone-branch-clone)
+        case UniformType::BOOL:
+        case UniformType::SAMPLER_2D:
+        case UniformType::SAMPLER_2D_ARRAY:
+        case UniformType::SAMPLER_CUBE:
             glUniform1i(info.Location, *((GLint *) _data));
             break;
-        case FLOAT:
+        case UniformType::FLOAT:
             glUniform1f(info.Location, *((GLfloat *) _data));
             break;
-        case FLOAT_VEC3:
+        case UniformType::FLOAT_VEC3:
             glUniform3fv(info.Location, 1, (GLfloat *) _data);
             break;
-        case FLOAT_VEC4:
+        case UniformType::FLOAT_VEC4:
             glUniform4fv(info.Location, 1, (GLfloat *) _data);
             break;
-        case FLOAT_MAT4:
+        case UniformType::FLOAT_MAT4:
             glUniformMatrix4fv(info.Location, 1, GL_FALSE, (GLfloat *) _data);
             break;
     }
 }
 
-shared_ptr<Shader> Shader::GetFallbackShader()
+void Shader::BindDefaultTextures() const
+{
+    auto white = Texture2D::White();
+    auto units = GetTextureUnits();
+
+    for (const auto &pair: m_Uniforms)
+    {
+        if (!UniformTypeUtils::IsTexture(pair.second.Type) || !units.contains(pair.first))
+            continue;
+
+        int unit = units.at(pair.first);
+        if (pair.second.Type == UniformType::SAMPLER_2D)
+        {
+            white->Bind(unit);
+
+            Vector4 st = Vector4(0, 0, 1, 1);
+            SetUniform(pair.first, &unit);
+            SetUniform(pair.first + "ST", &st);
+        }
+        else if (pair.second.Type == UniformType::SAMPLER_2D_ARRAY)
+        {
+            // TODO: bind default texture array
+        }
+    }
+}
+
+const shared_ptr<Shader> &Shader::GetFallbackShader()
 {
     if (FallbackShader == nullptr)
         FallbackShader = Shader::Load("resources/shaders/fallback.glsl", vector<string>(), false);

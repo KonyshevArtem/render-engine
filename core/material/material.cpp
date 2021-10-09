@@ -1,5 +1,7 @@
 #include "material.h"
 #include "../../math/vector4/vector4.h"
+#include "../shader/shader.h"
+#include "../texture_2d/texture_2d.h"
 #include <utility>
 
 Material::Material(shared_ptr<Shader> _shader)
@@ -36,4 +38,27 @@ void Material::SetFloat(const string &_name, float _value)
 float Material::GetFloat(const string &_name)
 {
     return m_Floats.contains(_name) ? m_Floats[_name] : 0;
+}
+
+const shared_ptr<Shader> &Material::GetShader() const
+{
+    return m_Shader != nullptr ? m_Shader : Shader::GetFallbackShader();
+}
+
+void Material::TransferUniforms(const unordered_map<string, int> &_textureUnits) const
+{
+    for (const auto &pair: m_Textures2D)
+    {
+        if (pair.second == nullptr || !_textureUnits.contains(pair.first))
+            continue;
+
+        int unit = _textureUnits.at(pair.first);
+        pair.second->Bind(unit);
+        m_Shader->SetUniform(pair.first, &unit);
+    }
+
+    for (const auto &pair: m_Vectors4)
+        m_Shader->SetUniform(pair.first, &pair.second);
+    for (const auto &pair: m_Floats)
+        m_Shader->SetUniform(pair.first, &pair.second);
 }

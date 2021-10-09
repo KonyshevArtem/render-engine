@@ -29,7 +29,6 @@ private:
     GLuint                     m_Framebuffer             = 0;
     shared_ptr<Texture2DArray> m_SpotLightShadowMapArray = nullptr;
 
-
     void Render(const vector<shared_ptr<GameObject>> &_gameObjects);
 };
 

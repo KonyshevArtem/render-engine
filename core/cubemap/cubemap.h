@@ -21,14 +21,14 @@ public:
     unsigned int Width;
     unsigned int Height;
 
+    void Bind(int _unit) const;
+
 private:
     void Init();
 
     GLuint                        m_Texture;
     GLuint                        m_Sampler;
     vector<vector<unsigned char>> m_Data;
-
-    friend class SkyboxPass;
 };
 
 #endif

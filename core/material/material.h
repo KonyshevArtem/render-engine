@@ -24,13 +24,14 @@ public:
     Vector4               GetVector4(const string &_name);
     float                 GetFloat(const string &_name);
 
+    [[nodiscard]] const shared_ptr<Shader> &GetShader() const;
+    void                                    TransferUniforms(const unordered_map<string, int> &_textureUnits) const;
+
 private:
     shared_ptr<Shader>                           m_Shader;
     unordered_map<string, shared_ptr<Texture2D>> m_Textures2D;
     unordered_map<string, Vector4>               m_Vectors4;
     unordered_map<string, float>                 m_Floats;
-
-    friend class RenderPass; // TODO: get rid of friendship
 };
 
 #endif //OPENGL_STUDY_MATERIAL_H

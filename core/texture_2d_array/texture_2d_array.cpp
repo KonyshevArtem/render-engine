@@ -37,3 +37,15 @@ void Texture2DArray::Init(GLint _internalFormat, GLenum _format, GLenum _type, G
     glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, _internalFormat, Width, Height, Count, 0, _format, _type, &m_Data[0]); // NOLINT(cppcoreguidelines-narrowing-conversions)
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
+
+void Texture2DArray::Bind(int _unit) const
+{
+    glActiveTexture(GL_TEXTURE0 + _unit);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, m_Texture);
+    glBindSampler(_unit, m_Sampler);
+}
+
+void Texture2DArray::Attach(int _attachment, int _layer) const
+{
+    glFramebufferTextureLayer(GL_FRAMEBUFFER, _attachment, m_Texture, 0, _layer);
+}

@@ -30,21 +30,17 @@ void SkyboxPass::Execute(const shared_ptr<Context> &_ctx)
 
     Graphics::SetCameraData(_ctx->ViewMatrix, _ctx->ProjectionMatrix);
 
-    glUseProgram(m_Shader->m_Program);
-    glBindVertexArray(m_Mesh->m_VertexArrayObject);
+    m_Shader->Use();
 
     Matrix4x4 modelMatrix = Matrix4x4::Translation(_ctx->ViewMatrix.Invert().GetPosition());
     m_Shader->SetUniform("_ModelMatrix", &modelMatrix);
 
     int unit = 0;
-    glActiveTexture(GL_TEXTURE0 + unit);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, _ctx->Skybox->m_Texture);
-    glBindSampler(unit, _ctx->Skybox->m_Sampler);
+    _ctx->Skybox->Bind(unit);
     m_Shader->SetUniform("_Skybox", &unit);
 
-    glDrawElements(GL_TRIANGLES, m_Mesh->GetTrianglesCount() * 3, GL_UNSIGNED_INT, nullptr);
+    m_Mesh->Draw();
 
-    glBindVertexArray(0);
     glUseProgram(0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     glCullFace(GL_BACK);

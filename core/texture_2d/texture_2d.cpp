@@ -69,3 +69,10 @@ Texture2D::~Texture2D()
     glDeleteTextures(1, &m_Texture);
     glDeleteSamplers(1, &m_Sampler);
 }
+
+void Texture2D::Bind(int _unit) const
+{
+    glActiveTexture(GL_TEXTURE0 + _unit);
+    glBindTexture(GL_TEXTURE_2D, m_Texture);
+    glBindSampler(_unit, m_Sampler);
+}

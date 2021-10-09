@@ -89,6 +89,10 @@ void Graphics::Render()
 
     glutSwapBuffers();
     glutPostRedisplay();
+
+    GLenum error = glGetError();
+    if (error != 0)
+        printf("%s\n", gluGetString(error));
 }
 
 void Graphics::Reshape(int _width, int _height)

@@ -54,9 +54,11 @@ void Mesh::Init()
     glBindVertexArray(0);
 }
 
-int Mesh::GetTrianglesCount()
+void Mesh::Draw() const
 {
-    return m_Indexes.size() / 3;
+    glBindVertexArray(m_VertexArrayObject);
+    glDrawElements(GL_TRIANGLES, m_Indexes.size(), GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(0);
 }
 
 Mesh::~Mesh()

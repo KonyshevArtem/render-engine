@@ -52,3 +52,10 @@ void Cubemap::Init()
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, &m_Data[i][0]); // NOLINT(cppcoreguidelines-narrowing-conversions)
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
+
+void Cubemap::Bind(int _unit) const
+{
+    glActiveTexture(GL_TEXTURE0 + _unit);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_Texture);
+    glBindSampler(_unit, m_Sampler);
+}

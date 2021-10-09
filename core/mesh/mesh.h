@@ -18,8 +18,7 @@ public:
          const vector<Vector2> &_uvs);
 
     void Init();
-
-    int GetTrianglesCount();
+    void Draw() const;
 
     virtual ~Mesh();
 
@@ -32,10 +31,6 @@ private:
     vector<Vector3> m_Normals;
     vector<int>     m_Indexes;
     vector<Vector2> m_UVs;
-
-    friend class RenderPass;
-    friend class ShadowCasterPass;
-    friend class SkyboxPass;
 };
 
 

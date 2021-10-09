@@ -20,15 +20,14 @@ public:
 
     ~Texture2D();
 
+    void Bind(int _unit) const;
+
 private:
     void Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode);
 
     GLuint                m_Texture;
     GLuint                m_Sampler;
     vector<unsigned char> m_Data;
-
-    friend class RenderPass;
-    friend class ShadowCasterPass;
 };
 
 #endif //OPENGL_STUDY_TEXTURE_2D_H

@@ -3,9 +3,9 @@
 
 #include "GLUT/glut.h"
 #include "OpenGL/gl3.h"
+#include "filesystem"
 #include "string"
 #include "vector"
-#include "filesystem"
 
 using namespace std;
 
@@ -15,8 +15,9 @@ public:
     unsigned int Width;
     unsigned int Height;
 
-    static shared_ptr<Texture2D> Load(const filesystem::path &_path);
+    static shared_ptr<Texture2D> Load(const filesystem::path &_path, bool _srgb = true);
     static shared_ptr<Texture2D> White();
+    static shared_ptr<Texture2D> Normal();
 
     ~Texture2D();
 
@@ -28,6 +29,9 @@ private:
     GLuint                m_Texture;
     GLuint                m_Sampler;
     vector<unsigned char> m_Data;
+
+    static shared_ptr<Texture2D> m_White;
+    static shared_ptr<Texture2D> m_Normal;
 };
 
 #endif //OPENGL_STUDY_TEXTURE_2D_H

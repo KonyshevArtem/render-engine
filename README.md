@@ -16,6 +16,7 @@ game engines work
 to generalize work with uniforms
 * Shader preprocessor that implements `#include` feature
 * Skybox with cubemap
+* Normal mapping
 
 ### How to build
 

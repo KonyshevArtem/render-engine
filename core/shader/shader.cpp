@@ -55,7 +55,7 @@ Shader::Shader(GLuint _program)
     }
 }
 
-shared_ptr<Shader> Shader::Load(const string &_path, const vector<string> &_keywords, bool _silent)
+shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent)
 {
     GLuint vertexPart;
     GLuint fragmentPart;
@@ -261,8 +261,9 @@ void Shader::SetUniform(const string &_name, const void *_data) const
 
 void Shader::BindDefaultTextures() const
 {
-    auto white = Texture2D::White();
-    auto units = GetTextureUnits();
+    auto white  = Texture2D::White();
+    auto normal = Texture2D::Normal();
+    auto units  = GetTextureUnits();
 
     for (const auto &pair: m_Uniforms)
     {
@@ -272,7 +273,10 @@ void Shader::BindDefaultTextures() const
         int unit = units.at(pair.first);
         if (pair.second.Type == UniformType::SAMPLER_2D)
         {
-            white->Bind(unit);
+            if (pair.first == "_NormalMap") // TODO: rework
+                normal->Bind(unit);
+            else
+                white->Bind(unit);
 
             Vector4 st = Vector4(0, 0, 1, 1);
             SetUniform(pair.first, &unit);

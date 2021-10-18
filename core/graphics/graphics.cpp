@@ -92,7 +92,7 @@ void Graphics::Render()
 
     GLenum error = glGetError();
     if (error != 0)
-        printf("%s\n", gluGetString(error));
+        printf("%s\n", gluErrorString(error));
 }
 
 void Graphics::Reshape(int _width, int _height)

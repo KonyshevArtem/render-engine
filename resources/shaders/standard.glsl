@@ -12,6 +12,7 @@ Varyings vert(){
     vars.PositionWS = _ModelMatrix * vec4(vertPositionOS, 1);
     vars.PositionCS = _ProjMatrix * _ViewMatrix * vars.PositionWS;
     vars.NormalWS = normalize((_ModelNormalMatrix * vec4(vertNormalOS, 0)).xyz);
+    vars.TangentWS = normalize((_ModelNormalMatrix * vec4(vertTangentOS, 0)).xyz);
     vars.UV = texCoord;
 
     #ifdef _VERTEX_LIGHT

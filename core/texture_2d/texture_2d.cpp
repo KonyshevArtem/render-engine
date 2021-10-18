@@ -11,9 +11,10 @@
 
 using namespace std;
 
-static shared_ptr<Texture2D> WhiteTexture = nullptr;
+shared_ptr<Texture2D> Texture2D::m_White  = nullptr;
+shared_ptr<Texture2D> Texture2D::m_Normal = nullptr;
 
-shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path)
+shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb)
 {
     auto t = make_shared<Texture2D>();
 
@@ -28,27 +29,45 @@ shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path)
 
     t->Width  = width;
     t->Height = height;
-    t->Init(GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
+    t->Init(_srgb ? GL_SRGB : GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
 
     return t;
 }
 
 shared_ptr<Texture2D> Texture2D::White()
 {
-    if (WhiteTexture != nullptr)
-        return WhiteTexture;
+    if (m_White != nullptr)
+        return m_White;
 
-    WhiteTexture         = make_shared<Texture2D>();
-    WhiteTexture->Width  = 1;
-    WhiteTexture->Height = 1;
+    m_White         = make_shared<Texture2D>();
+    m_White->Width  = 1;
+    m_White->Height = 1;
 
-    WhiteTexture->m_Data.push_back(255);
-    WhiteTexture->m_Data.push_back(255);
-    WhiteTexture->m_Data.push_back(255);
+    m_White->m_Data.push_back(255);
+    m_White->m_Data.push_back(255);
+    m_White->m_Data.push_back(255);
 
-    WhiteTexture->Init(GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
+    m_White->Init(GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
 
-    return WhiteTexture;
+    return m_White;
+}
+
+shared_ptr<Texture2D> Texture2D::Normal()
+{
+    if (m_Normal != nullptr)
+        return m_Normal;
+    
+    m_Normal         = make_shared<Texture2D>();
+    m_Normal->Width  = 1;
+    m_Normal->Height = 1;
+
+    m_Normal->m_Data.push_back(125);
+    m_Normal->m_Data.push_back(125);
+    m_Normal->m_Data.push_back(255);
+
+    m_Normal->Init(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
+
+    return m_Normal;
 }
 
 void Texture2D::Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode)

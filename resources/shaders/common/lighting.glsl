@@ -52,11 +52,27 @@ float getSpecularTerm(vec3 lightDirWS, float lightAngleCos, vec3 posWS, vec3 nor
     #endif
 }
 
+vec3 getNormalWS(Varyings varyings)
+{
+    vec3 normalWS = normalize(varyings.NormalWS);
+    #ifdef _NORMAL_MAP
+    vec3 tangentWS = normalize(varyings.TangentWS);
+    // Gramm-Schmidt process to ensure that tangent and normal are still orthogonal after interpolation
+    tangentWS = normalize(tangentWS - dot(tangentWS, normalWS) * normalWS);
+    vec3 bitangentWS = cross(tangentWS, normalWS);
+    vec3 normalTS = texture(_NormalMap, varyings.UV * _NormalMapST.zw + _NormalMapST.xy).rgb;
+    normalTS = normalize(normalTS * 2.0 - 1.0);
+    mat3 TBN = mat3(tangentWS, bitangentWS, normalWS);
+    normalWS = normalize(TBN * normalTS);
+    #endif
+    return normalWS;
+}
+
 vec4 getLight(Varyings varyings){
     vec4 light = vec4(0, 0, 0, 0);
 
     vec3 posWS = vec3(varyings.PositionWS);
-    vec3 normalWS = normalize(varyings.NormalWS);
+    vec3 normalWS = getNormalWS(varyings);
 
     if (_HasDirectionalLight){
         vec3 lightDirWS = normalize(-_DirectionalLight.DirectionWS);
@@ -90,7 +106,7 @@ vec4 getLight(Varyings varyings){
         }
     }
 
-    return light + _AmbientLight;
+    return vec4((light + _AmbientLight).xyz, 1);
 }
 
 #endif //LIGHTING

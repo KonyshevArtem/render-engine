@@ -15,7 +15,8 @@ public:
     Mesh(const vector<Vector3> &_vertices,
          const vector<Vector3> &_normals,
          const vector<int>     &_indexes,
-         const vector<Vector2> &_uvs);
+         const vector<Vector2> &_uvs,
+         const vector<Vector3> &_tangents);
 
     void Init();
     void Draw() const;
@@ -29,6 +30,7 @@ private:
 
     vector<Vector3> m_Vertices;
     vector<Vector3> m_Normals;
+    vector<Vector3> m_Tangents;
     vector<int>     m_Indexes;
     vector<Vector2> m_UVs;
 };

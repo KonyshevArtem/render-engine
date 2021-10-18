@@ -26,8 +26,10 @@ void TestScene::Load()
 void TestScene::Init()
 {
     // init textures
-    auto grassTexture = Texture2D::Load("resources/textures/grass.png");
+    auto brickTexture = Texture2D::Load("resources/textures/brick.png");
+    auto brickNormal  = Texture2D::Load("resources/textures/brick_normal.png", false);
     auto waterTexture = Texture2D::Load("resources/textures/water.png");
+    auto waterNormal  = Texture2D::Load("resources/textures/water_normal.png", false);
 
     // init skybox cubemap
     Skybox = Cubemap::Load("resources/textures/skybox/x_positive.png",
@@ -39,7 +41,7 @@ void TestScene::Init()
 
     // init shaders
     auto vertexLitShader   = Shader::Load("resources/shaders/standard.glsl", vector<string> {"_VERTEX_LIGHT"});
-    auto fragmentLitShader = Shader::Load("resources/shaders/standard.glsl", vector<string> {"_SMOOTHNESS", "_RECEIVE_SHADOWS"});
+    auto fragmentLitShader = Shader::Load("resources/shaders/standard.glsl", vector<string> {"_SMOOTHNESS", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");
@@ -53,24 +55,26 @@ void TestScene::Init()
     // init materials
     auto vertexLitMaterial = make_shared<Material>(vertexLitShader);
 
-    auto vertexLitGrassMaterial = make_shared<Material>(vertexLitShader);
-    vertexLitGrassMaterial->SetTexture("_Albedo", grassTexture);
+    auto vertexLitBrickMaterial = make_shared<Material>(vertexLitShader);
+    vertexLitBrickMaterial->SetTexture("_Albedo", brickTexture);
 
     auto fragmentLitMaterial = make_shared<Material>(fragmentLitShader);
     fragmentLitMaterial->SetFloat("_Smoothness", 50);
 
-    auto fragmentLitGrassMaterial = make_shared<Material>(fragmentLitShader);
-    fragmentLitGrassMaterial->SetTexture("_Albedo", grassTexture);
-    fragmentLitGrassMaterial->SetFloat("_Smoothness", 10);
+    auto fragmentLitBrickMaterial = make_shared<Material>(fragmentLitShader);
+    fragmentLitBrickMaterial->SetTexture("_Albedo", brickTexture);
+    fragmentLitBrickMaterial->SetTexture("_NormalMap", brickNormal);
+    fragmentLitBrickMaterial->SetFloat("_Smoothness", 10);
 
     m_WaterMaterial = make_shared<Material>(fragmentLitShader);
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
+    m_WaterMaterial->SetTexture("_NormalMap", waterNormal);
     m_WaterMaterial->SetFloat("_Smoothness", 20);
 
     // init gameObjects
     auto rotatingCube      = make_shared<GameObject>();
     rotatingCube->Mesh     = cubeMesh;
-    rotatingCube->Material = vertexLitGrassMaterial;
+    rotatingCube->Material = vertexLitBrickMaterial;
 
     auto rotatingCylinder           = make_shared<GameObject>();
     rotatingCylinder->Mesh          = cylinderMesh;
@@ -93,7 +97,7 @@ void TestScene::Init()
 
     auto floorFragmentLit           = make_shared<GameObject>();
     floorFragmentLit->Mesh          = cubeMesh;
-    floorFragmentLit->Material      = fragmentLitGrassMaterial;
+    floorFragmentLit->Material      = fragmentLitBrickMaterial;
     floorFragmentLit->LocalPosition = Vector3(-9, -5, -5.5f);
     floorFragmentLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
     floorFragmentLit->LocalScale    = Vector3(5, 1, 2);
@@ -115,7 +119,7 @@ void TestScene::Init()
     auto dirLight       = make_shared<Light>();
     dirLight->Position  = Vector3(0, -0.3f, 1);
     dirLight->Rotation  = Quaternion::AngleAxis(180, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(-1, 0, 0));
-    dirLight->Intensity = Vector4(0.2f, 0.2f, 0.2f, 1);
+    dirLight->Intensity = Vector4(0.7f, 0.7f, 0.7f, 1);
     dirLight->Type      = DIRECTIONAL;
 
     auto pointLight         = make_shared<Light>();
@@ -187,8 +191,10 @@ void TestScene::UpdateInternal()
     GameObjects[2]->LocalRotation = CalcRotation(phase, 1);
 
     // animateWater
-    float offset = Math::Lerp(0, 1, phase);
-    m_WaterMaterial->SetVector4("_AlbedoST", Vector4(offset, offset, 3, 3));
+    float   offset = Math::Lerp(0, 1, phase);
+    Vector4 st     = Vector4(offset, offset, 3, 3);
+    m_WaterMaterial->SetVector4("_AlbedoST", st);
+    m_WaterMaterial->SetVector4("_NormalMapST", st);
 
     m_SpotLight->Position = Camera::Current->Position + Camera::Current->Rotation * Vector3(-3, 0, 0);
     m_SpotLight->Rotation = Camera::Current->Rotation;

@@ -48,27 +48,44 @@ FBXAsset::FBXAsset(ofbx::IScene *_scene)
 
         auto vertices = vector<Vector3>();
         auto normals  = vector<Vector3>();
+        auto tangents = vector<Vector3>();
         auto uvs      = vector<Vector2>();
         auto indexes  = vector<int>();
 
+        bool hasNormals  = geom->getNormals() != nullptr;
+        bool hasUVs      = geom->getUVs() != nullptr;
+        bool hasTangents = geom->getTangents() != nullptr;
+
         for (int j = 0; j < geom->getVertexCount(); ++j)
         {
-            auto v  = geom->getVertices()[j];
-            auto n  = geom->getNormals()[j];
-            auto uv = geom->getUVs()[j];
+            auto v = geom->getVertices()[j];
             vertices.emplace_back(v.x, v.y, v.z);
-            normals.emplace_back(n.x, n.y, n.z);
-            uvs.emplace_back(uv.x, uv.y);
+
+            if (hasNormals)
+            {
+                auto n = geom->getNormals()[j];
+                normals.emplace_back(n.x, n.y, n.z);
+            }
+            if (hasUVs)
+            {
+                auto uv = geom->getUVs()[j];
+                uvs.emplace_back(uv.x, uv.y);
+            }
+            if (hasTangents)
+            {
+                auto t = geom->getTangents()[j];
+                tangents.emplace_back(t.x, t.y, t.z);
+            }
         }
 
-        // index with negative value marks end of polygon and is also decreased by 1
+        // index with negative value marks end of polygon and is also decreased by 1 during triangulation
         for (int j = 0; j < geom->getIndexCount(); ++j)
         {
             int index = geom->getFaceIndices()[j];
             indexes.push_back(index < 0 ? -index - 1 : index);
         }
 
-        auto mesh = make_shared<Mesh>(vertices, normals, indexes, uvs);
+        auto mesh = make_shared<Mesh>(vertices, normals, indexes, uvs, tangents);
         mesh->Init();
 
         Meshes.push_back(mesh);

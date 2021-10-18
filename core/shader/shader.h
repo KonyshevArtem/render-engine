@@ -7,6 +7,7 @@
 #pragma clang diagnostic pop
 
 #include "GLUT/glut.h"
+#include "filesystem"
 #include "string"
 #include "uniform_type.h"
 #include "unordered_map"
@@ -17,7 +18,7 @@ using namespace std;
 class Shader
 {
 public:
-    static shared_ptr<Shader> Load(const string &_path, const vector<string> &_keywords, bool _silent = true);
+    static shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent = true);
 
     void                                            Use() const;
     [[nodiscard]] const unordered_map<string, int> &GetTextureUnits() const;

@@ -26,13 +26,19 @@ void Input::MouseMove(int _x, int _y)
 void Input::KeyboardDown(unsigned char _key, int _x, int _y)
 {
     if (m_Instance != nullptr && !m_Instance->m_Inputs.contains(_key))
+    {
         m_Instance->m_Inputs.insert(_key);
+        m_Instance->m_InputsDown.insert(_key);
+    }
 }
 
 void Input::KeyboardUp(unsigned char _key, int _x, int _y)
 {
     if (m_Instance != nullptr && m_Instance->m_Inputs.contains(_key))
+    {
         m_Instance->m_Inputs.erase(_key);
+        m_Instance->m_InputsUp.insert(_key);
+    }
 }
 
 #pragma clang diagnostic pop
@@ -43,13 +49,34 @@ void Input::Update()
         m_Instance->Update_Internal();
 }
 
+void Input::CleanUp()
+{
+    if (m_Instance != nullptr)
+        m_Instance->CleanUp_Internal();
+}
+
 void Input::Update_Internal()
 {
     m_MouseDelta       = m_OldMousePosition - m_MousePosition;
     m_OldMousePosition = m_MousePosition;
 }
 
-bool Input::IsKeyDown(unsigned char _key)
+void Input::CleanUp_Internal()
+{
+    m_InputsUp.clear();
+    m_InputsDown.clear();
+}
+
+bool Input::GetKeyDown(unsigned char _key)
+{
+    return m_Instance != nullptr && m_Instance->m_InputsDown.contains(_key);
+}
+bool Input::GetKeyUp(unsigned char _key)
+{
+    return m_Instance != nullptr && m_Instance->m_InputsUp.contains(_key);
+}
+
+bool Input::GetKey(unsigned char _key)
 {
     return m_Instance != nullptr && m_Instance->m_Inputs.contains(_key);
 }

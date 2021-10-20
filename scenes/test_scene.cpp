@@ -3,6 +3,7 @@
 #include "../core/cubemap/cubemap.h"
 #include "../core/fbx_asset/fbx_asset.h"
 #include "../core/gameObject/gameObject.h"
+#include "../core/input/input.h"
 #include "../core/light/light.h"
 #include "../core/material/material.h"
 #include "../core/mesh/mesh.h"
@@ -178,6 +179,9 @@ Vector3 TestScene::CalcScale(float _phase)
 
 void TestScene::UpdateInternal()
 {
+    if (Input::GetKeyDown('q'))
+        exit(0);
+
     m_CameraFlyControl->Update();
 
     float phase = fmodf(fmodf(Time::TimePassed, LOOP_DURATION) / LOOP_DURATION, 1.0f);

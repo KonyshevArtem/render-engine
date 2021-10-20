@@ -1,5 +1,3 @@
-#include <cmath>
-
 #pragma clang diagnostic push
 #pragma ide diagnostic   ignored "OCUnusedMacroInspection"
 #define GL_SILENCE_DEPRECATION
@@ -20,14 +18,11 @@ void display()
 {
     Time::Update();
     Input::Update();
-    if (Input::IsKeyDown('q'))
-    {
-        glutDestroyWindow(glutGetWindow());
-        exit(0);
-    }
-
     Scene::Update();
+
     Graphics::Render();
+
+    Input::CleanUp();
 }
 
 void reshape(int _width, int _height)

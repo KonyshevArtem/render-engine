@@ -124,14 +124,14 @@ void Graphics::SetLightingData(Vector4 _ambient, const vector<shared_ptr<Light>>
 
     for (const auto &light: _lights)
     {
-        if (light->Type == DIRECTIONAL && !hasDirectionalLight)
+        if (light->Type == LightType::DIRECTIONAL && !hasDirectionalLight)
         {
             hasDirectionalLight = true;
             Vector3 dir         = light->Rotation * Vector3(0, 0, -1);
             LightingDataBlock->SetUniform("_DirectionalLight.DirectionWS", &dir, sizeof(Vector3));
             LightingDataBlock->SetUniform("_DirectionalLight.Intensity", &light->Intensity, sizeof(Vector4));
         }
-        else if (light->Type == POINT && pointLightsCount < MAX_POINT_LIGHT_SOURCES)
+        else if (light->Type == LightType::POINT && pointLightsCount < MAX_POINT_LIGHT_SOURCES)
         {
             string prefix = "_PointLights[" + to_string(pointLightsCount) + "].";
             LightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
@@ -139,7 +139,7 @@ void Graphics::SetLightingData(Vector4 _ambient, const vector<shared_ptr<Light>>
             LightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
             ++pointLightsCount;
         }
-        else if (light->Type == SPOT && spotLightsCount < MAX_POINT_LIGHT_SOURCES)
+        else if (light->Type == LightType::SPOT && spotLightsCount < MAX_POINT_LIGHT_SOURCES)
         {
             Vector3 dir       = light->Rotation * Vector3(0, 0, -1);
             float   cutOffCos = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);

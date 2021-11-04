@@ -120,20 +120,20 @@ void TestScene::Init()
     auto dirLight       = make_shared<Light>();
     dirLight->Position  = Vector3(0, -0.3f, 1);
     dirLight->Rotation  = Quaternion::AngleAxis(180, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(-1, 0, 0));
-    dirLight->Intensity = Vector4(0.7f, 0.7f, 0.7f, 1);
-    dirLight->Type      = DIRECTIONAL;
+    dirLight->Intensity = Vector4(0.1f, 0.1f, 0.1f, 1);
+    dirLight->Type      = LightType::DIRECTIONAL;
 
     auto pointLight         = make_shared<Light>();
     pointLight->Position    = Vector3(-3, -3, -4);
     pointLight->Intensity   = Vector4(1, 0, 0, 1);
     pointLight->Attenuation = 0.3f;
-    pointLight->Type        = POINT;
+    pointLight->Type        = LightType::POINT;
 
     m_SpotLight              = make_shared<Light>();
     m_SpotLight->Intensity   = Vector4(1, 1, 1, 1);
     m_SpotLight->Attenuation = 0.05f;
     m_SpotLight->CutOffAngle = 15;
-    m_SpotLight->Type        = SPOT;
+    m_SpotLight->Type        = LightType::SPOT;
 
     auto spotLight2         = make_shared<Light>();
     spotLight2->Position    = Vector3(-9, 5, -5.5f);
@@ -141,7 +141,7 @@ void TestScene::Init()
     spotLight2->Intensity   = Vector4(1, 1, 1, 1);
     spotLight2->Attenuation = 0.01f;
     spotLight2->CutOffAngle = 15;
-    spotLight2->Type        = SPOT;
+    spotLight2->Type        = LightType::SPOT;
 
     AmbientLight = Vector4(0.05f, 0.05f, 0.05f, 1);
 

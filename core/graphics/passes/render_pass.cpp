@@ -9,7 +9,6 @@
 #include "../../mesh/mesh.h"
 #include "../../shader/shader.h"
 #include "../../texture_2d/texture_2d.h"
-#include "../../texture_2d_array/texture_2d_array.h"
 #include "../context.h"
 #include "../graphics.h"
 
@@ -40,39 +39,9 @@ void RenderPass::Execute(shared_ptr<Context> &_ctx)
         shader->SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
         shader->BindDefaultTextures();
 
-        auto textureUnits = shader->GetTextureUnits();
-        go->Material->TransferUniforms(textureUnits);
-
-        for (const auto &pair: _ctx->Textures2D)
-        {
-            if (!textureUnits.contains(pair.first))
-                continue;
-
-            int unit = textureUnits[pair.first];
-            pair.second->Bind(unit);
-            shader->SetUniform(pair.first, &unit);
-        }
-
-        for (const auto &pair: _ctx->Texture2DArrays)
-        {
-            if (!textureUnits.contains(pair.first))
-                continue;
-
-            int unit = textureUnits[pair.first];
-            pair.second->Bind(unit);
-            shader->SetUniform(pair.first, &unit);
-        }
-
+        go->Material->TransferUniforms();
         go->Mesh->Draw();
 
-        for (const auto &pair: textureUnits)
-        {
-            glActiveTexture(GL_TEXTURE0 + pair.second);
-            glBindTexture(GL_TEXTURE_2D, 0);
-            glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-            glBindSampler(pair.second, 0);
-        }
-
-        glUseProgram(0);
+        Shader::DetachCurrentShader();
     }
 }

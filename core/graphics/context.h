@@ -10,8 +10,7 @@
 
 class GameObject;
 class Light;
-class Texture2D;
-class Texture2DArray;
+class Texture;
 class Cubemap;
 
 using namespace std;
@@ -21,14 +20,12 @@ class Context
 public:
     Context();
 
-    Vector4                                           AmbientLight;
-    vector<shared_ptr<Light>>                         Lights;
-    vector<shared_ptr<GameObject>>                    GameObjects;
-    Matrix4x4                                         ViewMatrix       = Matrix4x4();
-    Matrix4x4                                         ProjectionMatrix = Matrix4x4();
-    unordered_map<string, shared_ptr<Texture2D>>      Textures2D;
-    unordered_map<string, shared_ptr<Texture2DArray>> Texture2DArrays;
-    shared_ptr<Cubemap>                               Skybox;
+    Vector4                        AmbientLight;
+    vector<shared_ptr<Light>>      Lights;
+    vector<shared_ptr<GameObject>> GameObjects;
+    Matrix4x4                      ViewMatrix       = Matrix4x4();
+    Matrix4x4                      ProjectionMatrix = Matrix4x4();
+    shared_ptr<Cubemap>            Skybox;
 };
 
 #endif //OPENGL_STUDY_CONTEXT_H

@@ -45,18 +45,10 @@ const shared_ptr<Shader> &Material::GetShader() const
     return m_Shader != nullptr ? m_Shader : Shader::GetFallbackShader();
 }
 
-void Material::TransferUniforms(const unordered_map<string, int> &_textureUnits) const
+void Material::TransferUniforms() const
 {
     for (const auto &pair: m_Textures2D)
-    {
-        if (pair.second == nullptr || !_textureUnits.contains(pair.first))
-            continue;
-
-        int unit = _textureUnits.at(pair.first);
-        pair.second->Bind(unit);
-        m_Shader->SetUniform(pair.first, &unit);
-    }
-
+        m_Shader->SetTextureUniform(pair.first, pair.second);
     for (const auto &pair: m_Vectors4)
         m_Shader->SetUniform(pair.first, &pair.second);
     for (const auto &pair: m_Floats)

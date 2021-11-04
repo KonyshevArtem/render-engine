@@ -25,7 +25,7 @@ public:
     float                 GetFloat(const string &_name);
 
     [[nodiscard]] const shared_ptr<Shader> &GetShader() const;
-    void                                    TransferUniforms(const unordered_map<string, int> &_textureUnits) const;
+    void                                    TransferUniforms() const;
 
 private:
     shared_ptr<Shader>                           m_Shader;

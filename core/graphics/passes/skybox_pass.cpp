@@ -41,7 +41,6 @@ void SkyboxPass::Execute(const shared_ptr<Context> &_ctx)
 
     m_Mesh->Draw();
 
-    glUseProgram(0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    Shader::DetachCurrentShader();
     glCullFace(GL_BACK);
 }

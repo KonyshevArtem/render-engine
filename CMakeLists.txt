@@ -79,7 +79,8 @@ add_executable(
         core/graphics/passes/skybox_pass.h
         core/fbx_asset/fbx_asset.cpp
         core/fbx_asset/fbx_asset.h
-        core/shader/uniform_type.h)
+        core/shader/uniform_type.h
+        core/texture/texture.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

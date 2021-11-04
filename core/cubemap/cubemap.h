@@ -1,6 +1,7 @@
 #ifndef OPENGL_STUDY_CUBEMAP_H
 #define OPENGL_STUDY_CUBEMAP_H
 
+#include "../texture/texture.h"
 #include <OpenGL/gl3.h>
 #include <filesystem>
 #include <memory>
@@ -8,7 +9,7 @@
 
 using namespace std;
 
-class Cubemap
+class Cubemap: public Texture
 {
 public:
     static shared_ptr<Cubemap> Load(const filesystem::path &_xPositivePath,
@@ -18,16 +19,11 @@ public:
                                     const filesystem::path &_zPositivePath,
                                     const filesystem::path &_zNegativePath);
 
-    unsigned int Width;
-    unsigned int Height;
-
-    void Bind(int _unit) const;
+    void Bind(int _unit) const override;
 
 private:
     void Init();
 
-    GLuint                        m_Texture;
-    GLuint                        m_Sampler;
     vector<vector<unsigned char>> m_Data;
 };
 

@@ -4,7 +4,7 @@
 #include "../../math/vector3/vector3.h"
 #include "../../math/vector4/vector4.h"
 
-enum LightType
+enum class LightType
 {
     DIRECTIONAL,
     POINT,

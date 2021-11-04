@@ -4,11 +4,15 @@
 #include "../../utils/utils.h"
 #include "../texture_2d/texture_2d.h"
 #include <OpenGL/gl3.h>
-#include <string>
 #include <cstdio>
 #include <cstdlib>
+#include <string>
 
 using namespace std;
+
+unordered_map<string, shared_ptr<Texture>> Shader::m_GlobalTextures = {};
+
+//region construction
 
 Shader::Shader(GLuint _program)
 {
@@ -53,6 +57,11 @@ Shader::Shader(GLuint _program)
         else if (UniformTypeUtils::IsTexture(info.Type))
             m_TextureUnits[nameStr] = textureUnit++;
     }
+}
+
+Shader::~Shader()
+{
+    glDeleteProgram(m_Program);
 }
 
 shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent) // NOLINT(misc-no-recursion)
@@ -180,6 +189,10 @@ bool Shader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_p
     return true;
 }
 
+//endregion
+
+//region inner types
+
 UniformType Shader::ConvertUniformType(GLenum _type)
 {
     switch (_type)
@@ -211,19 +224,18 @@ UniformType Shader::ConvertUniformType(GLenum _type)
     }
 }
 
-Shader::~Shader()
-{
-    glDeleteProgram(m_Program);
-}
+//endregion
+
+//region instance methods
 
 void Shader::Use() const
 {
-    glUseProgram(m_Program);
-}
+    m_CurrentShader = this;
 
-const unordered_map<string, int> &Shader::GetTextureUnits() const
-{
-    return m_TextureUnits;
+    glUseProgram(m_Program);
+
+    for (const auto &pair: m_GlobalTextures)
+        SetTextureUniform(pair.first, pair.second);
 }
 
 void Shader::SetUniform(const string &_name, const void *_data) const
@@ -259,27 +271,34 @@ void Shader::SetUniform(const string &_name, const void *_data) const
     }
 }
 
+void Shader::SetTextureUniform(const string &_name, const shared_ptr<Texture> &_texture) const
+{
+    if (_texture == nullptr || !m_TextureUnits.contains(_name))
+        return;
+
+    int unit = m_TextureUnits.at(_name);
+    _texture->Bind(unit);
+    SetUniform(_name, &unit);
+}
+
 void Shader::BindDefaultTextures() const
 {
     auto white  = Texture2D::White();
     auto normal = Texture2D::Normal();
-    auto units  = GetTextureUnits();
 
     for (const auto &pair: m_Uniforms)
     {
-        if (!UniformTypeUtils::IsTexture(pair.second.Type) || !units.contains(pair.first))
+        if (!UniformTypeUtils::IsTexture(pair.second.Type))
             continue;
 
-        int unit = units.at(pair.first);
         if (pair.second.Type == UniformType::SAMPLER_2D)
         {
             if (pair.first == "_NormalMap") // TODO: rework
-                normal->Bind(unit);
+                SetTextureUniform(pair.first, normal);
             else
-                white->Bind(unit);
+                SetTextureUniform(pair.first, white);
 
             Vector4 st = Vector4(0, 0, 1, 1);
-            SetUniform(pair.first, &unit);
             SetUniform(pair.first + "ST", &st);
         }
         else if (pair.second.Type == UniformType::SAMPLER_2D_ARRAY)
@@ -289,9 +308,40 @@ void Shader::BindDefaultTextures() const
     }
 }
 
+//endregion
+
+//region static methods
+
+void Shader::DetachCurrentShader()
+{
+    if (m_CurrentShader == nullptr)
+        return;
+
+    for (const auto &pair: m_CurrentShader->m_TextureUnits)
+    {
+        glActiveTexture(GL_TEXTURE0 + pair.second);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        glBindSampler(pair.second, 0);
+    }
+
+    glUseProgram(0);
+}
+
+void Shader::SetGlobalTexture(const string &_name, const shared_ptr<Texture> &_texture)
+{
+    m_GlobalTextures[_name] = _texture;
+
+    if (m_CurrentShader != nullptr)
+        m_CurrentShader->SetTextureUniform(_name, _texture);
+}
+
 const shared_ptr<Shader> &Shader::GetFallbackShader() // NOLINT(misc-no-recursion)
 {
-    if (FallbackShader == nullptr)
-        FallbackShader = Shader::Load("resources/shaders/fallback.glsl", vector<string>(), false);
-    return FallbackShader;
+    if (m_FallbackShader == nullptr)
+        m_FallbackShader = Shader::Load("resources/shaders/fallback.glsl", vector<string>(), false);
+    return m_FallbackShader;
 }
+
+//endregion

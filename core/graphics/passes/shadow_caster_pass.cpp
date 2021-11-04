@@ -19,6 +19,8 @@ ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, const shared_ptr<Unifor
     m_ShadowCasterShader      = Shader::Load("resources/shaders/shadowCaster.glsl", vector<string>());
     m_SpotLightShadowMapArray = Texture2DArray::ShadowMapArray(SHADOW_MAP_SIZE, _spotLightsCount);
 
+    Shader::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
+
     glGenFramebuffers(1, &m_Framebuffer);
 }
 
@@ -38,7 +40,7 @@ void ShadowCasterPass::Execute(shared_ptr<Context> &_ctx)
     int spotLightsCount = 0;
     for (const auto &light: _ctx->Lights)
     {
-        if (light->Type == SPOT)
+        if (light->Type == LightType::SPOT)
         {
             m_SpotLightShadowMapArray->Attach(GL_DEPTH_ATTACHMENT, spotLightsCount);
 
@@ -58,9 +60,6 @@ void ShadowCasterPass::Execute(shared_ptr<Context> &_ctx)
 
         Render(_ctx->GameObjects);
     }
-
-    if (spotLightsCount > 0)
-        _ctx->Texture2DArrays["_SpotLightShadowMapArray"] = m_SpotLightShadowMapArray;
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
@@ -85,5 +84,5 @@ void ShadowCasterPass::Render(const vector<shared_ptr<GameObject>> &_gameObjects
         go->Mesh->Draw();
     }
 
-    glUseProgram(0);
+    Shader::DetachCurrentShader();
 }

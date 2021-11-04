@@ -37,7 +37,6 @@ void RenderPass::Execute(shared_ptr<Context> &_ctx)
 
         shader->SetUniform("_ModelMatrix", &modelMatrix);
         shader->SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
-        shader->BindDefaultTextures();
 
         go->Material->TransferUniforms();
         go->Mesh->Draw();

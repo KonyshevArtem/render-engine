@@ -234,6 +234,7 @@ void Shader::Use() const
 
     glUseProgram(m_Program);
 
+    BindDefaultTextures();
     for (const auto &pair: m_GlobalTextures)
         SetTextureUniform(pair.first, pair.second);
 }

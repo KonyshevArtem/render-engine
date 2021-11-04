@@ -32,7 +32,6 @@ public:
     void Use() const;
     void SetUniform(const string &_name, const void *_data) const;
     void SetTextureUniform(const string &_name, const shared_ptr<Texture> &_texture) const;
-    void BindDefaultTextures() const;
 
     //endregion
 
@@ -81,6 +80,12 @@ private:
     static unordered_map<string, shared_ptr<Texture>> m_GlobalTextures;
     inline static shared_ptr<Shader>                  m_FallbackShader = nullptr;
     inline static const Shader                       *m_CurrentShader  = nullptr;
+
+    //endregion
+
+    //region instance methods
+
+    void BindDefaultTextures() const;
 
     //endregion
 

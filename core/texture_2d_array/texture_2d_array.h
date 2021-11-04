@@ -1,9 +1,9 @@
 #ifndef OPENGL_STUDY_TEXTURE_2D_ARRAY_H
 #define OPENGL_STUDY_TEXTURE_2D_ARRAY_H
 
-#include "OpenGL/gl3.h"
-#include "memory"
-#include "vector"
+#include <OpenGL/gl3.h>
+#include <memory>
+#include <vector>
 
 using namespace std;
 

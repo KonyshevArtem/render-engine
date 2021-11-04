@@ -17,7 +17,7 @@ void Input::Init()
 void Input::MouseMove(int _x, int _y)
 {
     if (m_Instance != nullptr)
-        m_Instance->m_MousePosition = Vector3((float) _x, (float) _y, 0);
+        m_Instance->m_MousePosition = Vector3(static_cast<float>(_x), static_cast<float>(_y), 0);
 }
 
 #pragma clang diagnostic push

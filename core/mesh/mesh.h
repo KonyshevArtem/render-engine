@@ -1,8 +1,8 @@
 #ifndef OPENGL_STUDY_MESH_H
 #define OPENGL_STUDY_MESH_H
 
-#include "OpenGL/gl3.h"
-#include "vector"
+#include <OpenGL/gl3.h>
+#include <vector>
 
 class Vector2;
 class Vector3;

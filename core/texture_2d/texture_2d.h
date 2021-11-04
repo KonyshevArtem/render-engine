@@ -1,11 +1,11 @@
 #ifndef OPENGL_STUDY_TEXTURE_2D_H
 #define OPENGL_STUDY_TEXTURE_2D_H
 
-#include "GLUT/glut.h"
-#include "OpenGL/gl3.h"
-#include "filesystem"
-#include "string"
-#include "vector"
+#include <GLUT/glut.h>
+#include <OpenGL/gl3.h>
+#include <filesystem>
+#include <string>
+#include <vector>
 
 using namespace std;
 

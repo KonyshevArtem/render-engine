@@ -3,8 +3,8 @@
 #include "../../math/vector4/vector4.h"
 #include "../../utils/utils.h"
 #include "../texture_2d/texture_2d.h"
-#include "OpenGL/gl3.h"
-#include "string"
+#include <OpenGL/gl3.h>
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 
@@ -55,7 +55,7 @@ Shader::Shader(GLuint _program)
     }
 }
 
-shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent)
+shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent) // NOLINT(misc-no-recursion)
 {
     GLuint vertexPart;
     GLuint fragmentPart;
@@ -114,7 +114,7 @@ bool Shader::TryCompileShaderPart(GLuint                _shaderPartType,
 
         fprintf(stderr, "Shader compilation failed: %s\n%s\n", _path.c_str(), logMsg);
 
-        free(logMsg);
+        delete[] logMsg;
         return false;
     }
 
@@ -160,7 +160,7 @@ bool Shader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_p
         glGetProgramInfoLog(program, infoLogLength, nullptr, logMsg);
         fprintf(stderr, "Program link failed: %s\n%s", _path.c_str(), logMsg);
 
-        free(logMsg);
+        delete[] logMsg;
         return false;
     }
 
@@ -289,7 +289,7 @@ void Shader::BindDefaultTextures() const
     }
 }
 
-const shared_ptr<Shader> &Shader::GetFallbackShader()
+const shared_ptr<Shader> &Shader::GetFallbackShader() // NOLINT(misc-no-recursion)
 {
     if (FallbackShader == nullptr)
         FallbackShader = Shader::Load("resources/shaders/fallback.glsl", vector<string>(), false);

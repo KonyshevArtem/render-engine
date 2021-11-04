@@ -5,8 +5,8 @@
 
 #include "uniform_block.h"
 #include "../shader/shader.h"
-#include "OpenGL/gl3.h"
-#include "unordered_map"
+#include <OpenGL/gl3.h>
+#include <unordered_map>
 
 using namespace std;
 
@@ -60,6 +60,6 @@ void UniformBlock::SetUniform(const string &_name, const void *_data, unsigned l
     }
 
     glBindBuffer(GL_UNIFORM_BUFFER, m_Buffer);
-    glBufferSubData(GL_UNIFORM_BUFFER, m_UniformOffsets[_name], (GLsizei) _size, _data);
+    glBufferSubData(GL_UNIFORM_BUFFER, m_UniformOffsets[_name], static_cast<GLsizei>(_size), _data);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }

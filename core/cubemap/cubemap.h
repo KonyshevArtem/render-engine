@@ -1,10 +1,10 @@
 #ifndef OPENGL_STUDY_CUBEMAP_H
 #define OPENGL_STUDY_CUBEMAP_H
 
-#include "OpenGL/gl3.h"
-#include "filesystem"
-#include "memory"
-#include "vector"
+#include <OpenGL/gl3.h>
+#include <filesystem>
+#include <memory>
+#include <vector>
 
 using namespace std;
 

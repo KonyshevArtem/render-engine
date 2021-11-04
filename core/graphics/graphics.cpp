@@ -7,7 +7,7 @@
 #include "../camera/camera.h"
 #include "../light/light.h"
 #include "../shader/shader.h"
-#include "GLUT/glut.h"
+#include <GLUT/glut.h>
 #include "context.h"
 #include "passes/render_pass.h"
 #include "passes/shadow_caster_pass.h"
@@ -142,7 +142,7 @@ void Graphics::SetLightingData(Vector4 _ambient, const vector<shared_ptr<Light>>
         else if (light->Type == SPOT && spotLightsCount < MAX_POINT_LIGHT_SOURCES)
         {
             Vector3 dir       = light->Rotation * Vector3(0, 0, -1);
-            float   cutOffCos = cosf(light->CutOffAngle * (float) M_PI / 180);
+            float   cutOffCos = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
             string  prefix    = "_SpotLights[" + to_string(spotLightsCount) + "].";
             LightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
             LightingDataBlock->SetUniform(prefix + "DirectionWS", &dir, sizeof(Vector3));

@@ -1,9 +1,9 @@
 #ifndef OPENGL_STUDY_SHADOW_CASTER_PASS_H
 #define OPENGL_STUDY_SHADOW_CASTER_PASS_H
 
-#include "OpenGL/gl3.h"
-#include "memory"
-#include "vector"
+#include <OpenGL/gl3.h>
+#include <memory>
+#include <vector>
 
 class UniformBlock;
 class Context;

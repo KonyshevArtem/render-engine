@@ -2,8 +2,8 @@
 #define OPENGL_STUDY_SCENE_H
 
 #include "../../math/vector4/vector4.h"
-#include "memory"
-#include "vector"
+#include <memory>
+#include <vector>
 
 class Light;
 class GameObject;

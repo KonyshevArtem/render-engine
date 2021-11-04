@@ -18,7 +18,7 @@ Quaternion::Quaternion(float _x, float _y, float _z, float _w)
 Quaternion Quaternion::AngleAxis(float _angleDeg, Vector3 _axis)
 {
     Vector3 normAxis     = _axis.Normalize();
-    float   angleRadians = _angleDeg * (float) M_PI / 180;
+    float   angleRadians = _angleDeg * static_cast<float>(M_PI) / 180;
     float   sin          = sinf(angleRadians / 2);
     return {
             normAxis.x * sin,

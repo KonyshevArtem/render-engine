@@ -1,8 +1,8 @@
 #ifndef OPENGL_STUDY_GRAPHICS_H
 #define OPENGL_STUDY_GRAPHICS_H
 
-#include "OpenGL/gl3.h"
-#include "string"
+#include <OpenGL/gl3.h>
+#include <string>
 
 struct Matrix4x4;
 struct Vector4;

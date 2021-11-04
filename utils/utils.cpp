@@ -26,7 +26,7 @@ string Utils::ReadFile(const filesystem::path &_relativePath)
     long   i = 0;
 
     while ((c = fgetc(file)) != EOF)
-        content[i++] = (char) c;
+        content[i++] = static_cast<char>(c);
 
     content[fileSize] = 0;
 
@@ -35,7 +35,7 @@ string Utils::ReadFile(const filesystem::path &_relativePath)
     return content;
 }
 
-string Utils::ReadFileWithIncludes(const filesystem::path &_relativePath)
+string Utils::ReadFileWithIncludes(const filesystem::path &_relativePath) // NOLINT(misc-no-recursion)
 {
     string file = ReadFile(_relativePath);
 
@@ -52,26 +52,27 @@ string Utils::ReadFileWithIncludes(const filesystem::path &_relativePath)
     return file;
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "DanglingPointers"
-filesystem::path         Utils::GetExecutableDirectory()
+filesystem::path Utils::GetExecutableDirectory()
 {
     if (!m_ExecutableDir.empty())
         return m_ExecutableDir;
 
-    char *   path = new char[10];
+    char    *path = new char[10];
     uint32_t size = 10;
 
     if (_NSGetExecutablePath(&path[0], &size) != 0)
     {
-        free(path);
+        delete[] path;
         path = new char[size];
         _NSGetExecutablePath(path, &size);
     }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "DanglingPointer"
     string pathStr(path, size);
-    free(path);
+    delete[] path;
+#pragma clang diagnostic pop
+
     m_ExecutableDir = filesystem::path(pathStr).parent_path();
     return m_ExecutableDir;
 }
-#pragma clang diagnostic pop

@@ -6,8 +6,8 @@
 #include "texture_2d.h"
 #include "../../external/lodepng/lodepng.h"
 #include "../../utils/utils.h"
-#include "GLUT/glut.h"
-#include "OpenGL/gl3.h"
+#include <GLUT/glut.h>
+#include <OpenGL/gl3.h>
 
 using namespace std;
 

@@ -1,10 +1,10 @@
 #ifndef OPENGL_STUDY_UNIFORM_BLOCK_H
 #define OPENGL_STUDY_UNIFORM_BLOCK_H
 
-#include "OpenGL/gl3.h"
-#include "memory"
-#include "string"
-#include "unordered_map"
+#include <OpenGL/gl3.h>
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 class Shader;
 

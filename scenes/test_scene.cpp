@@ -159,8 +159,8 @@ Vector3 TestScene::CalcTranslation(float _phase)
 {
     const float radius = 2;
 
-    float xOffset = sinf(_phase * 2 * (float) M_PI) * radius;
-    float yOffset = cosf(_phase * 2 * (float) M_PI) * radius;
+    float xOffset = sinf(_phase * 2 * static_cast<float>(M_PI)) * radius;
+    float yOffset = cosf(_phase * 2 * static_cast<float>(M_PI)) * radius;
 
     return {xOffset, yOffset, -5};
 }
@@ -173,7 +173,7 @@ Quaternion TestScene::CalcRotation(float _phase, int _i)
 
 Vector3 TestScene::CalcScale(float _phase)
 {
-    float scale = Math::Lerp(1, 2, (sinf(_phase * 2 * (float) M_PI) + 1) * 0.5f);
+    float scale = Math::Lerp(1, 2, (sinf(_phase * 2 * static_cast<float>(M_PI)) + 1) * 0.5f);
     return {scale, scale, scale};
 }
 

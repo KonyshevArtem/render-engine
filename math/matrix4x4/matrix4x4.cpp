@@ -203,7 +203,7 @@ Matrix4x4 Matrix4x4::Transpose() const
 
 Matrix4x4 Matrix4x4::Perspective(float _fov, float _aspect, float _nearZ, float _farZ)
 {
-    float top    = _nearZ * ((float) M_PI / 180 * _fov / 2);
+    float top    = _nearZ * (static_cast<float>(M_PI) / 180 * _fov / 2);
     float bottom = -top;
     float right  = _aspect * top;
     float left   = -right;

@@ -8,7 +8,7 @@
 
 void Time::Update()
 {
-    TimePassed = (float) glutGet(GLUT_ELAPSED_TIME);
+    TimePassed = static_cast<float>(glutGet(GLUT_ELAPSED_TIME));
     DeltaTime  = TimePassed - PrevTime;
     PrevTime   = TimePassed;
 }

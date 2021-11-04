@@ -6,12 +6,12 @@
 #define GL_SILENCE_DEPRECATION
 #pragma clang diagnostic pop
 
-#include "GLUT/glut.h"
-#include "filesystem"
-#include "string"
+#include <GLUT/glut.h>
+#include <filesystem>
+#include <string>
 #include "uniform_type.h"
-#include "unordered_map"
-#include "vector"
+#include <unordered_map>
+#include <vector>
 
 using namespace std;
 

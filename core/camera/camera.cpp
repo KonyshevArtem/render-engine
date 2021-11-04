@@ -17,6 +17,6 @@ Matrix4x4 Camera::GetViewMatrix() const
 
 Matrix4x4 Camera::GetProjectionMatrix() const
 {
-    float aspect = (float) Graphics::ScreenWidth / (float) Graphics::ScreenHeight;
+    float aspect = static_cast<float>(Graphics::ScreenWidth) / static_cast<float>(Graphics::ScreenHeight);
     return Matrix4x4::Perspective(m_Fov, aspect, NearClipPlane, FarClipPlane);
 }

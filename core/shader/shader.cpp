@@ -12,6 +12,41 @@ using namespace std;
 
 unordered_map<string, shared_ptr<Texture>> Shader::m_GlobalTextures = {};
 
+//region inner types
+
+UniformType Shader::ConvertUniformType(GLenum _type)
+{
+    switch (_type)
+    {
+        case GL_INT:
+            return UniformType::INT;
+
+        case GL_FLOAT:
+            return UniformType::FLOAT;
+        case GL_FLOAT_VEC3:
+            return UniformType::FLOAT_VEC3;
+        case GL_FLOAT_VEC4:
+            return UniformType::FLOAT_VEC4;
+        case GL_FLOAT_MAT4:
+            return UniformType::FLOAT_MAT4;
+
+        case GL_BOOL:
+            return UniformType::BOOL;
+
+        case GL_SAMPLER_2D:
+            return UniformType::SAMPLER_2D;
+        case GL_SAMPLER_2D_ARRAY:
+            return UniformType::SAMPLER_2D_ARRAY;
+        case GL_SAMPLER_CUBE:
+            return UniformType::SAMPLER_CUBE;
+
+        default:
+            return UniformType::UNKNOWN;
+    }
+}
+
+//endregion
+
 //region construction
 
 Shader::Shader(GLuint _program)
@@ -191,42 +226,7 @@ bool Shader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_p
 
 //endregion
 
-//region inner types
-
-UniformType Shader::ConvertUniformType(GLenum _type)
-{
-    switch (_type)
-    {
-        case GL_INT:
-            return UniformType::INT;
-
-        case GL_FLOAT:
-            return UniformType::FLOAT;
-        case GL_FLOAT_VEC3:
-            return UniformType::FLOAT_VEC3;
-        case GL_FLOAT_VEC4:
-            return UniformType::FLOAT_VEC4;
-        case GL_FLOAT_MAT4:
-            return UniformType::FLOAT_MAT4;
-
-        case GL_BOOL:
-            return UniformType::BOOL;
-
-        case GL_SAMPLER_2D:
-            return UniformType::SAMPLER_2D;
-        case GL_SAMPLER_2D_ARRAY:
-            return UniformType::SAMPLER_2D_ARRAY;
-        case GL_SAMPLER_CUBE:
-            return UniformType::SAMPLER_CUBE;
-
-        default:
-            return UniformType::UNKNOWN;
-    }
-}
-
-//endregion
-
-//region instance methods
+//region public methods
 
 void Shader::Use() const
 {
@@ -282,6 +282,43 @@ void Shader::SetTextureUniform(const string &_name, const shared_ptr<Texture> &_
     SetUniform(_name, &unit);
 }
 
+void Shader::DetachCurrentShader()
+{
+    if (m_CurrentShader == nullptr)
+        return;
+
+    for (const auto &pair: m_CurrentShader->m_TextureUnits)
+    {
+        glActiveTexture(GL_TEXTURE0 + pair.second);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        glBindSampler(pair.second, 0);
+    }
+
+    m_CurrentShader = nullptr;
+    glUseProgram(0);
+}
+
+void Shader::SetGlobalTexture(const string &_name, const shared_ptr<Texture> &_texture)
+{
+    m_GlobalTextures[_name] = _texture;
+
+    if (m_CurrentShader != nullptr)
+        m_CurrentShader->SetTextureUniform(_name, _texture);
+}
+
+const shared_ptr<Shader> &Shader::GetFallbackShader() // NOLINT(misc-no-recursion)
+{
+    if (m_FallbackShader == nullptr)
+        m_FallbackShader = Shader::Load("resources/shaders/fallback.glsl", vector<string>(), false);
+    return m_FallbackShader;
+}
+
+//endregion
+
+//region service methods
+
 void Shader::BindDefaultTextures() const
 {
     auto white  = Texture2D::White();
@@ -307,42 +344,6 @@ void Shader::BindDefaultTextures() const
             // TODO: bind default texture array
         }
     }
-}
-
-//endregion
-
-//region static methods
-
-void Shader::DetachCurrentShader()
-{
-    if (m_CurrentShader == nullptr)
-        return;
-
-    for (const auto &pair: m_CurrentShader->m_TextureUnits)
-    {
-        glActiveTexture(GL_TEXTURE0 + pair.second);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-        glBindSampler(pair.second, 0);
-    }
-
-    glUseProgram(0);
-}
-
-void Shader::SetGlobalTexture(const string &_name, const shared_ptr<Texture> &_texture)
-{
-    m_GlobalTextures[_name] = _texture;
-
-    if (m_CurrentShader != nullptr)
-        m_CurrentShader->SetTextureUniform(_name, _texture);
-}
-
-const shared_ptr<Shader> &Shader::GetFallbackShader() // NOLINT(misc-no-recursion)
-{
-    if (m_FallbackShader == nullptr)
-        m_FallbackShader = Shader::Load("resources/shaders/fallback.glsl", vector<string>(), false);
-    return m_FallbackShader;
 }
 
 //endregion

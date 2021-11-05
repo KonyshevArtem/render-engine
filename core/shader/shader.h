@@ -19,33 +19,8 @@ class Texture;
 
 class Shader
 {
-public:
-    //region construction
-
-    static shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent = true);
-    ~Shader();
-
-    //endregion
-
-    //region instance methods
-
-    void Use() const;
-    void SetUniform(const string &_name, const void *_data) const;
-    void SetTextureUniform(const string &_name, const shared_ptr<Texture> &_texture) const;
-
-    //endregion
-
-    //region static methods
-
-    static void                      DetachCurrentShader();
-    static void                      SetGlobalTexture(const string &_name, const shared_ptr<Texture> &_texture);
-    static const shared_ptr<Shader> &GetFallbackShader();
-
-    //endregion
-
-private:
     //region inner types
-
+private:
     struct UniformInfo
     {
         UniformType Type;
@@ -59,6 +34,11 @@ private:
 
     //region construction
 
+public:
+    static shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent = true);
+    ~Shader();
+
+private:
     explicit Shader(GLuint _program);
 
     static bool TryCompileShaderPart(GLuint                _shaderPartType,
@@ -74,6 +54,7 @@ private:
 
     //region fields
 
+private:
     GLuint                                            m_Program;
     unordered_map<string, UniformInfo>                m_Uniforms;
     unordered_map<string, int>                        m_TextureUnits;
@@ -83,8 +64,22 @@ private:
 
     //endregion
 
-    //region instance methods
+    //region public methods
 
+public:
+    void Use() const;
+    void SetUniform(const string &_name, const void *_data) const;
+    void SetTextureUniform(const string &_name, const shared_ptr<Texture> &_texture) const;
+
+    static void                      DetachCurrentShader();
+    static void                      SetGlobalTexture(const string &_name, const shared_ptr<Texture> &_texture);
+    static const shared_ptr<Shader> &GetFallbackShader();
+
+    //endregion
+
+    //region service methods
+
+private:
     void BindDefaultTextures() const;
 
     //endregion

@@ -1,9 +1,9 @@
 #include "utils.h"
-#include "mach-o/dyld.h"
-#include "regex"
-#include "string"
 #include <cstdio>
 #include <filesystem>
+#include <mach-o/dyld.h>
+#include <regex>
+#include <string>
 
 string Utils::ReadFile(const filesystem::path &_relativePath)
 {

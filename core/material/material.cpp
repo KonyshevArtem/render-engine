@@ -40,7 +40,7 @@ float Material::GetFloat(const string &_name)
     return m_Floats.contains(_name) ? m_Floats[_name] : 0;
 }
 
-const shared_ptr<Shader> &Material::GetShader() const
+shared_ptr<Shader> Material::GetShader() const
 {
     return m_Shader != nullptr ? m_Shader : Shader::GetFallbackShader();
 }

@@ -1,9 +1,9 @@
 #ifndef OPENGL_STUDY_MATERIAL_H
 #define OPENGL_STUDY_MATERIAL_H
 
-#include "memory"
-#include "string"
-#include "unordered_map"
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 struct Vector4;
 class Texture2D;
@@ -24,8 +24,8 @@ public:
     Vector4               GetVector4(const string &_name);
     float                 GetFloat(const string &_name);
 
-    [[nodiscard]] const shared_ptr<Shader> &GetShader() const;
-    void                                    TransferUniforms() const;
+    [[nodiscard]] shared_ptr<Shader> GetShader() const;
+    void                             TransferUniforms() const;
 
 private:
     shared_ptr<Shader>                           m_Shader;

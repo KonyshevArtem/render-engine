@@ -16,7 +16,7 @@ RenderPass::RenderPass()
 {
 }
 
-void RenderPass::Execute(shared_ptr<Context> &_ctx)
+void RenderPass::Execute(const shared_ptr<Context> &_ctx)
 {
     glViewport(0, 0, Graphics::ScreenWidth, Graphics::ScreenHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

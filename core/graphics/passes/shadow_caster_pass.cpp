@@ -4,6 +4,8 @@
 #pragma clang diagnostic pop
 
 #include "shadow_caster_pass.h"
+
+#include <utility>
 #include "../../gameObject/gameObject.h"
 #include "../../light/light.h"
 #include "../../mesh/mesh.h"
@@ -13,9 +15,9 @@
 #include "../graphics.h"
 #include "../uniform_block.h"
 
-ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, const shared_ptr<UniformBlock> &_shadowsUniformBlock)
+ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, shared_ptr<UniformBlock> _shadowsUniformBlock)
 {
-    m_ShadowsUniformBlock     = _shadowsUniformBlock;
+    m_ShadowsUniformBlock     = std::move(_shadowsUniformBlock);
     m_ShadowCasterShader      = Shader::Load("resources/shaders/shadowCaster.glsl", vector<string>());
     m_SpotLightShadowMapArray = Texture2DArray::ShadowMapArray(SHADOW_MAP_SIZE, _spotLightsCount);
 
@@ -29,7 +31,7 @@ ShadowCasterPass::~ShadowCasterPass()
     glDeleteFramebuffers(1, &m_Framebuffer);
 }
 
-void ShadowCasterPass::Execute(shared_ptr<Context> &_ctx)
+void ShadowCasterPass::Execute(const shared_ptr<Context> &_ctx)
 {
     if (m_ShadowCasterShader == nullptr)
         return;

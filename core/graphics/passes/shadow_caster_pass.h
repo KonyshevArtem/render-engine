@@ -16,10 +16,10 @@ using namespace std;
 class ShadowCasterPass
 {
 public:
-    explicit ShadowCasterPass(int _spotLightsCount, const shared_ptr<UniformBlock> &_shadowsUniformBlock);
+    explicit ShadowCasterPass(int _spotLightsCount, shared_ptr<UniformBlock> _shadowsUniformBlock);
     ~ShadowCasterPass();
 
-    void Execute(shared_ptr<Context> &_ctx);
+    void Execute(const shared_ptr<Context> &_ctx);
 
 private:
     const int SHADOW_MAP_SIZE = 1024;

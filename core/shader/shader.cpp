@@ -300,12 +300,12 @@ void Shader::DetachCurrentShader()
     glUseProgram(0);
 }
 
-void Shader::SetGlobalTexture(const string &_name, const shared_ptr<Texture> &_texture)
+void Shader::SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture)
 {
-    m_GlobalTextures[_name] = _texture;
+    m_GlobalTextures[_name] = std::move(_texture);
 
     if (m_CurrentShader != nullptr)
-        m_CurrentShader->SetTextureUniform(_name, _texture);
+        m_CurrentShader->SetTextureUniform(_name, m_GlobalTextures[_name]);
 }
 
 const shared_ptr<Shader> &Shader::GetFallbackShader() // NOLINT(misc-no-recursion)

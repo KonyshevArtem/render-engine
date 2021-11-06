@@ -34,7 +34,7 @@ shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb)
     return t;
 }
 
-shared_ptr<Texture2D> Texture2D::White()
+const shared_ptr<Texture2D> &Texture2D::White()
 {
     if (m_White != nullptr)
         return m_White;
@@ -52,11 +52,11 @@ shared_ptr<Texture2D> Texture2D::White()
     return m_White;
 }
 
-shared_ptr<Texture2D> Texture2D::Normal()
+const shared_ptr<Texture2D> &Texture2D::Normal()
 {
     if (m_Normal != nullptr)
         return m_Normal;
-    
+
     m_Normal         = make_shared<Texture2D>();
     m_Normal->Width  = 1;
     m_Normal->Height = 1;

@@ -72,7 +72,7 @@ public:
     void SetTextureUniform(const string &_name, const shared_ptr<Texture> &_texture) const;
 
     static void                      DetachCurrentShader();
-    static void                      SetGlobalTexture(const string &_name, const shared_ptr<Texture> &_texture);
+    static void                      SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture);
     static const shared_ptr<Shader> &GetFallbackShader();
 
     //endregion

@@ -39,7 +39,7 @@ string Utils::ReadFileWithIncludes(const filesystem::path &_relativePath) // NOL
 {
     string file = ReadFile(_relativePath);
 
-    regex  expression("\\s*#include\\s+\\\"(.*)\\\"\\s*\n");
+    regex  expression(R"(\s*#include\s+\"(.*)\"\s*\n)");
     smatch match;
     while (regex_search(file.cbegin(), file.cend(), match, expression))
     {

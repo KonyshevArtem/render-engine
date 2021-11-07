@@ -1,9 +1,6 @@
 #include "gameObject.h"
 
-GameObject::GameObject()
+GameObject::GameObject() :
+    LocalScale(Vector3::One()), Parent(nullptr), Mesh(nullptr), Material(nullptr)
 {
-    LocalScale = Vector3::One();
-    Parent     = nullptr;
-    Mesh       = nullptr;
-    Material   = nullptr;
 }

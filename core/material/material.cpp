@@ -4,9 +4,9 @@
 #include "../texture_2d/texture_2d.h"
 #include <utility>
 
-Material::Material(shared_ptr<Shader> _shader)
+Material::Material(shared_ptr<Shader> _shader) :
+    m_Shader(std::move(_shader))
 {
-    m_Shader = std::move(_shader);
 }
 
 void Material::SetTexture(const string &_name, shared_ptr<Texture2D> _value)

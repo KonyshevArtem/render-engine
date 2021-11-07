@@ -158,16 +158,16 @@ void Graphics::SetLightingData(Vector4 _ambient, const vector<shared_ptr<Light>>
     LightingDataBlock->SetUniform("_HasDirectionalLight", &hasDirectionalLight, sizeof(bool));
 }
 
-const string &Graphics::GetShaderCompilationDefines()
+const string &Graphics::GetGlobalShaderDirectives()
 {
-    if (ShaderCompilationDefine.empty())
+    if (m_GlobalShaderDirectives.empty())
     {
         // clang-format off
-        ShaderCompilationDefine = "#version " + to_string(GLSL_VERSION) + "\n"
+        m_GlobalShaderDirectives = "#version " + to_string(GLSL_VERSION) + "\n"
                                   "#define MAX_POINT_LIGHT_SOURCES " + to_string(MAX_POINT_LIGHT_SOURCES) + "\n"
                                   "#define MAX_SPOT_LIGHT_SOURCES " + to_string(MAX_SPOT_LIGHT_SOURCES) + "\n";
         // clang-format on
     }
 
-    return ShaderCompilationDefine;
+    return m_GlobalShaderDirectives;
 }

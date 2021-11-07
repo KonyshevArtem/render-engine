@@ -5,7 +5,6 @@
 
 #include "shadow_caster_pass.h"
 
-#include <utility>
 #include "../../gameObject/gameObject.h"
 #include "../../light/light.h"
 #include "../../mesh/mesh.h"
@@ -14,13 +13,13 @@
 #include "../context.h"
 #include "../graphics.h"
 #include "../uniform_block.h"
+#include <utility>
 
-ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, shared_ptr<UniformBlock> _shadowsUniformBlock)
+ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, shared_ptr<UniformBlock> _shadowsUniformBlock) :
+    m_ShadowsUniformBlock(std::move(_shadowsUniformBlock)),
+    m_ShadowCasterShader(Shader::Load("resources/shaders/shadowCaster.glsl", vector<string>())),
+    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SHADOW_MAP_SIZE, _spotLightsCount))
 {
-    m_ShadowsUniformBlock     = std::move(_shadowsUniformBlock);
-    m_ShadowCasterShader      = Shader::Load("resources/shaders/shadowCaster.glsl", vector<string>());
-    m_SpotLightShadowMapArray = Texture2DArray::ShadowMapArray(SHADOW_MAP_SIZE, _spotLightsCount);
-
     Shader::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
 
     glGenFramebuffers(1, &m_Framebuffer);

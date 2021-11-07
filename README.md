@@ -11,12 +11,26 @@ game engines work
 * Support for single directional light
 * Support for several point lights and spot lights
 * Casting shadows from all spot lights in scene
-* Albedo textures (textures loading with [lodepng](https://github.com/lvandeve/lodepng))
+* Albedo textures
 * Shader introspection for obtaining all uniform locations
 to generalize work with uniforms
 * Shader preprocessor that implements `#include` feature
 * Skybox with cubemap
 * Normal mapping
+
+### Requirements
+
+* OpenGL
+* GLUT
+* Boost
+
+OpenGL and GLUT should be installed by default on OSX. Boost can
+be installed with `brew install boost`
+
+### External Tools
+
+* [lodepng](https://github.com/lvandeve/lodepng)
+* [OpenFBX](https://github.com/nem0/OpenFBX)
 
 ### How to build
 

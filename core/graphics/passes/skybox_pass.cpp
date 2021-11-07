@@ -14,10 +14,10 @@
 #include "../context.h"
 #include "../graphics.h"
 
-SkyboxPass::SkyboxPass()
+SkyboxPass::SkyboxPass() :
+    m_Shader(Shader::Load("resources/shaders/skybox.glsl", vector<string>())),
+    m_Mesh(FBXAsset::Load("resources/models/cube.fbx")->Meshes[0])
 {
-    m_Shader = Shader::Load("resources/shaders/skybox.glsl", vector<string>());
-    m_Mesh   = FBXAsset::Load("resources/models/cube.fbx")->Meshes[0];
 }
 
 void SkyboxPass::Execute(const shared_ptr<Context> &_ctx)

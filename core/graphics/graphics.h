@@ -20,7 +20,7 @@ public:
     static void          Init(int _argc, char **_argv);
     static void          Render();
     static void          Reshape(int _width, int _height);
-    static const string &GetShaderCompilationDefines();
+    static const string &GetGlobalShaderDirectives();
 
     static void SetCameraData(Matrix4x4 _viewMatrix, Matrix4x4 _projectionMatrix);
 
@@ -35,7 +35,7 @@ private:
     static unique_ptr<UniformBlock> LightingDataBlock;
     static unique_ptr<UniformBlock> CameraDataBlock;
     static shared_ptr<UniformBlock> ShadowsDataBlock;
-    inline static string            ShaderCompilationDefine;
+    inline static string            m_GlobalShaderDirectives;
 
     static unique_ptr<ShadowCasterPass> m_ShadowCasterPass;
     static unique_ptr<RenderPass>       m_RenderPass;

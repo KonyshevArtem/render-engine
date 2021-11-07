@@ -79,17 +79,24 @@ add_executable(
         core/graphics/passes/skybox_pass.h
         core/fbx_asset/fbx_asset.cpp
         core/fbx_asset/fbx_asset.h
-        core/shader/uniform_type.h
-        core/texture/texture.h)
+        core/shader/uniform_type/uniform_type.cpp
+        core/shader/uniform_type/uniform_type.h
+        core/texture/texture.h
+        core/shader/shader_loader/shader_loader.cpp
+        core/shader/shader_loader/shader_loader.h
+        core/shader/uniform/base_uniform.cpp
+        core/shader/uniform/base_uniform.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
-include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
+find_package(Boost REQUIRED)
+include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 
 target_link_libraries(
         OpenGL_Study
         ${OPENGL_LIBRARIES}
         ${GLUT_LIBRARY}
+        ${Boost_LIBRARIES}
         Math
         LibPNG
         OpenFBX

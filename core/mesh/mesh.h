@@ -12,11 +12,11 @@ using namespace std;
 class Mesh
 {
 public:
-    Mesh(const vector<Vector3> &_vertices,
-         const vector<Vector3> &_normals,
-         const vector<int>     &_indexes,
-         const vector<Vector2> &_uvs,
-         const vector<Vector3> &_tangents);
+    Mesh(vector<Vector3> _vertices,
+         vector<Vector3> _normals,
+         vector<int>     _indexes,
+         vector<Vector2> _uvs,
+         vector<Vector3> _tangents);
 
     void Init();
     void Draw() const;

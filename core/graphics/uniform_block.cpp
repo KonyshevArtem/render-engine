@@ -5,15 +5,15 @@
 
 #include "uniform_block.h"
 #include "../shader/shader.h"
+#include "../shader/uniform/base_uniform.h"
 #include <OpenGL/gl3.h>
 #include <unordered_map>
 
 using namespace std;
 
-UniformBlock::UniformBlock(const shared_ptr<Shader> &_shader, const string &_blockName, unsigned int _index)
+UniformBlock::UniformBlock(const shared_ptr<Shader> &_shader, const string &_blockName, unsigned int _index) :
+    m_Name(_blockName)
 {
-    m_Name = _blockName;
-
     GLuint blockIndex = glGetUniformBlockIndex(_shader->m_Program, m_Name.c_str());
 
     GLint uniformCount;
@@ -31,8 +31,8 @@ UniformBlock::UniformBlock(const shared_ptr<Shader> &_shader, const string &_blo
 
     for (const auto &pair: _shader->m_Uniforms)
     {
-        if (indexToOffset.contains(pair.second.Index))
-            m_UniformOffsets[pair.first] = indexToOffset[pair.second.Index];
+        if (pair.second != nullptr && indexToOffset.contains(pair.second->GetIndex()))
+            m_UniformOffsets[pair.first] = indexToOffset[pair.second->GetIndex()];
     }
 
     GLint blockSize;

@@ -32,10 +32,9 @@ shared_ptr<FBXAsset> FBXAsset::Load(const filesystem::path &_path)
     return shared_ptr<FBXAsset>(new FBXAsset(scene));
 }
 
-FBXAsset::FBXAsset(ofbx::IScene *_scene)
+FBXAsset::FBXAsset(ofbx::IScene *_scene) :
+    m_Scene(_scene)
 {
-    m_Scene = _scene;
-
     for (int i = 0; i < m_Scene->getMeshCount(); ++i)
     {
         auto m = m_Scene->getMesh(i);

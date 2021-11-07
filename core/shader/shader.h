@@ -6,7 +6,7 @@
 #define GL_SILENCE_DEPRECATION
 #pragma clang diagnostic pop
 
-#include "uniform_type.h"
+#include "uniform_type/uniform_type.h"
 #include <GLUT/glut.h>
 #include <filesystem>
 #include <string>
@@ -16,51 +16,29 @@
 using namespace std;
 
 class Texture;
+class BaseUniform;
 
 class Shader
 {
-    //region inner types
-private:
-    struct UniformInfo
-    {
-        UniformType Type;
-        GLint       Location;
-        int         Index;
-    };
-
-    static UniformType ConvertUniformType(GLenum _type);
-
-    //endregion
-
     //region construction
 
 public:
     static shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent = true);
+
+    explicit Shader(GLuint _program, unordered_map<string, string> _defaultValues);
     ~Shader();
-
-private:
-    explicit Shader(GLuint _program);
-
-    static bool TryCompileShaderPart(GLuint                _shaderPartType,
-                                     const string         &_path,
-                                     const char           *_source,
-                                     GLuint               &_shaderPart,
-                                     const vector<string> &_keywords);
-
-    static bool        TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program, const string &_path);
-    static const char *GetShaderPartDefine(GLuint _shaderPartType);
 
     //endregion
 
     //region fields
 
 private:
-    GLuint                                            m_Program;
-    unordered_map<string, UniformInfo>                m_Uniforms;
-    unordered_map<string, int>                        m_TextureUnits;
-    static unordered_map<string, shared_ptr<Texture>> m_GlobalTextures;
-    inline static shared_ptr<Shader>                  m_FallbackShader = nullptr;
-    inline static const Shader                       *m_CurrentShader  = nullptr;
+    GLuint                                                   m_Program;
+    unordered_map<string, shared_ptr<BaseUniform>>           m_Uniforms;
+    unordered_map<string, int>                               m_TextureUnits;
+    unordered_map<string, string>                            m_DefaultValues;
+    inline static unordered_map<string, shared_ptr<Texture>> m_GlobalTextures = {};
+    inline static const Shader                              *m_CurrentShader  = nullptr;
 
     //endregion
 
@@ -80,7 +58,7 @@ public:
     //region service methods
 
 private:
-    void BindDefaultTextures() const;
+    void SetDefaultValues() const;
 
     //endregion
 

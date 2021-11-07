@@ -1,3 +1,6 @@
+#pragma default _Albedo white
+#pragma default _NormalMap normal
+
 uniform sampler2D _Albedo;
 uniform vec4 _AlbedoST;
 

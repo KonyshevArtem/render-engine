@@ -1,6 +1,8 @@
 #ifndef OPENGL_STUDY_UNIFORM_TYPE_H
 #define OPENGL_STUDY_UNIFORM_TYPE_H
 
+#include <OpenGL/gl3.h>
+
 enum class UniformType
 {
     UNKNOWN,
@@ -22,12 +24,8 @@ enum class UniformType
 class UniformTypeUtils
 {
 public:
-    static bool IsTexture(UniformType _uniformType)
-    {
-        return _uniformType == UniformType::SAMPLER_2D ||
-               _uniformType == UniformType::SAMPLER_2D_ARRAY ||
-               _uniformType == UniformType::SAMPLER_CUBE;
-    }
+    static bool        IsTexture(UniformType _uniformType);
+    static UniformType ConvertUniformType(GLenum _type);
 };
 
 #endif //OPENGL_STUDY_UNIFORM_TYPE_H

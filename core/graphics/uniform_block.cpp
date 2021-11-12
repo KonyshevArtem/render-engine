@@ -11,8 +11,8 @@
 
 using namespace std;
 
-UniformBlock::UniformBlock(const shared_ptr<Shader> &_shader, const string &_blockName, unsigned int _index) :
-    m_Name(_blockName)
+UniformBlock::UniformBlock(const shared_ptr<Shader> &_shader, string _blockName, unsigned int _index) :
+    m_Name(std::move(_blockName))
 {
     GLuint blockIndex = glGetUniformBlockIndex(_shader->m_Program, m_Name.c_str());
 

@@ -24,10 +24,10 @@ public:
 private:
     const int SHADOW_MAP_SIZE = 1024;
 
-    shared_ptr<UniformBlock>   m_ShadowsUniformBlock     = nullptr;
-    shared_ptr<Shader>         m_ShadowCasterShader      = nullptr;
-    GLuint                     m_Framebuffer             = 0;
-    shared_ptr<Texture2DArray> m_SpotLightShadowMapArray = nullptr;
+    shared_ptr<UniformBlock>   m_ShadowsUniformBlock;
+    shared_ptr<Shader>         m_ShadowCasterShader;
+    GLuint                     m_Framebuffer = 0;
+    shared_ptr<Texture2DArray> m_SpotLightShadowMapArray;
 
     void Render(const vector<shared_ptr<GameObject>> &_gameObjects);
 };

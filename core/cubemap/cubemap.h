@@ -19,12 +19,14 @@ public:
                                     const filesystem::path &_zPositivePath,
                                     const filesystem::path &_zNegativePath);
 
-    void Bind(int _unit) const override;
+    void                        Bind(int _unit) const override;
+    static shared_ptr<Cubemap> &White();
 
 private:
     void Init();
 
-    vector<vector<unsigned char>> m_Data;
+    vector<vector<unsigned char>>     m_Data;
+    inline static shared_ptr<Cubemap> m_White = nullptr;
 };
 
 #endif

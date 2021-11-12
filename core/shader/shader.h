@@ -33,12 +33,13 @@ public:
     //region fields
 
 private:
-    GLuint                                                   m_Program;
-    unordered_map<string, shared_ptr<BaseUniform>>           m_Uniforms;
-    unordered_map<string, int>                               m_TextureUnits;
-    unordered_map<string, string>                            m_DefaultValues;
-    inline static unordered_map<string, shared_ptr<Texture>> m_GlobalTextures = {};
-    inline static const Shader                              *m_CurrentShader  = nullptr;
+    GLuint                                                                               m_Program;
+    unordered_map<string, shared_ptr<BaseUniform>>                                       m_Uniforms;
+    unordered_map<string, int>                                                           m_TextureUnits;
+    unordered_map<string, string>                                                        m_DefaultValues;
+    inline static unordered_map<string, shared_ptr<Texture>>                             m_GlobalTextures  = {};
+    inline static unordered_map<string, unordered_map<UniformType, shared_ptr<Texture>>> m_DefaultTextures = {};
+    inline static const Shader                                                          *m_CurrentShader   = nullptr;
 
     //endregion
 
@@ -58,7 +59,8 @@ public:
     //region service methods
 
 private:
-    void SetDefaultValues() const;
+    static void InitDefaultTextures();
+    void        SetDefaultValues() const;
 
     //endregion
 

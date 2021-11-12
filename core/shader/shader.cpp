@@ -1,6 +1,7 @@
 #include "shader.h"
 #include "../../math/vector4/vector4.h"
 #include "../../utils/utils.h"
+#include "../cubemap/cubemap.h"
 #include "../texture_2d/texture_2d.h"
 #include "shader_loader/shader_loader.h"
 #include "uniform/base_uniform.h"
@@ -46,7 +47,7 @@ Shader::Shader(GLuint _program, unordered_map<string, string> _defaultValues) :
         string nameStr(&name[0], length);
 
         GLint location = glGetUniformLocation(m_Program, &nameStr[0]);
-        auto  uniform  = BaseUniform::Create(location, type, i);
+        auto  uniform  = make_shared<BaseUniform>(location, type, i);
 
         // TODO: correctly parse arrays
 
@@ -128,32 +129,42 @@ const shared_ptr<Shader> &Shader::GetFallbackShader() // NOLINT(misc-no-recursio
 
 //region service methods
 
+void Shader::InitDefaultTextures()
+{
+    if (!m_DefaultTextures.empty())
+        return;
+
+    m_DefaultTextures["white"][UniformType::SAMPLER_2D]   = Texture2D::White();
+    m_DefaultTextures["white"][UniformType::SAMPLER_CUBE] = Cubemap::White();
+    m_DefaultTextures["normal"][UniformType::SAMPLER_2D]  = Texture2D::Normal();
+}
+
 void Shader::SetDefaultValues() const
 {
-    auto white  = Texture2D::White();
-    auto normal = Texture2D::Normal();
+    InitDefaultTextures();
 
     for (const auto &pair: m_Uniforms)
     {
-        if (!m_DefaultValues.contains(pair.first) || pair.second == nullptr)
+        string uniformName = pair.first;
+        if (!m_DefaultValues.contains(uniformName) || pair.second == nullptr)
             continue;
 
-        string value = m_DefaultValues.at(pair.first);
+        string      value = m_DefaultValues.at(uniformName);
+        UniformType type  = pair.second->GetType();
 
-        // TODO: add support for default values for other types
-        if (pair.second->GetType() == UniformType::SAMPLER_2D)
+        if (UniformTypeUtils::IsTexture(type))
         {
-            if (value == "normal")
-                SetTextureUniform(pair.first, normal);
-            else if (value == "white")
-                SetTextureUniform(pair.first, white);
+            if (!m_DefaultTextures.contains(value) || !m_DefaultTextures.at(value).contains(type))
+                return;
+
+            SetTextureUniform(uniformName, m_DefaultTextures.at(value).at(type));
 
             Vector4 st = Vector4(0, 0, 1, 1);
-            SetUniform(pair.first + "ST", &st);
+            SetUniform(uniformName + "ST", &st);
         }
-        else if (pair.second->GetType() == UniformType::SAMPLER_2D_ARRAY)
+        else
         {
-            // TODO: bind default texture array
+            // TODO: add support for default values for other types
         }
     }
 }

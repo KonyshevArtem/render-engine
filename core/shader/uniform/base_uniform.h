@@ -26,9 +26,6 @@ private:
     //region construction
 
 public:
-    static shared_ptr<BaseUniform> Create(GLint _location, GLenum _type, int _index);
-
-private:
     BaseUniform(GLint _location, GLenum _type, int _index);
 
     //endregion
@@ -36,9 +33,9 @@ private:
     //region public methods
 
 public:
-    void        Set(const void *_value) const;
-    int         GetIndex() const;
-    UniformType GetType() const;
+    void                      Set(const void *_value) const;
+    [[nodiscard]] int         GetIndex() const;
+    [[nodiscard]] UniformType GetType() const;
 
     //endregion
 };

@@ -59,3 +59,24 @@ void Cubemap::Bind(int _unit) const
     glBindTexture(GL_TEXTURE_CUBE_MAP, m_Texture);
     glBindSampler(_unit, m_Sampler);
 }
+
+shared_ptr<Cubemap> &Cubemap::White()
+{
+    if (m_White != nullptr)
+        return m_White;
+
+    m_White         = make_shared<Cubemap>();
+    m_White->Width  = 1;
+    m_White->Height = 1;
+
+    m_White->m_Data.resize(6);
+    for (int i = 0; i < 6; ++i)
+    {
+        m_White->m_Data[i].push_back(255);
+        m_White->m_Data[i].push_back(255);
+        m_White->m_Data[i].push_back(255);
+    }
+
+    m_White->Init();
+    return m_White;
+}

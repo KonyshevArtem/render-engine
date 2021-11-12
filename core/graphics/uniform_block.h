@@ -13,7 +13,7 @@ using namespace std;
 class UniformBlock
 {
 public:
-    UniformBlock(const shared_ptr<Shader> &_shader, const string &_blockName, unsigned int _index);
+    UniformBlock(const shared_ptr<Shader> &_shader, string _blockName, unsigned int _index);
     ~UniformBlock();
 
     void SetUniform(const string &_name, const void *_data, unsigned long _size);

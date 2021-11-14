@@ -85,7 +85,11 @@ add_executable(
         core/shader/shader_loader/shader_loader.cpp
         core/shader/shader_loader/shader_loader.h
         core/shader/uniform/base_uniform.cpp
-        core/shader/uniform/base_uniform.h)
+        core/shader/uniform/base_uniform.h
+        core/renderer/renderer.cpp
+        core/renderer/renderer.h
+        core/renderer/mesh_renderer.cpp
+        core/renderer/mesh_renderer.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

@@ -7,6 +7,7 @@
 #include "../core/light/light.h"
 #include "../core/material/material.h"
 #include "../core/mesh/mesh.h"
+#include "../core/renderer/mesh_renderer.h"
 #include "../core/shader/shader.h"
 #include "../core/texture_2d/texture_2d.h"
 #include "../core/time/time.h" // NOLINT(modernize-deprecated-headers)
@@ -74,38 +75,32 @@ void TestScene::Init()
 
     // init gameObjects
     auto rotatingCube      = make_shared<GameObject>();
-    rotatingCube->Mesh     = cubeMesh;
-    rotatingCube->Material = vertexLitBrickMaterial;
+    rotatingCube->Renderer = make_shared<MeshRenderer>(rotatingCube, cubeMesh, vertexLitBrickMaterial);
 
     auto rotatingCylinder           = make_shared<GameObject>();
-    rotatingCylinder->Mesh          = cylinderMesh;
-    rotatingCylinder->Material      = vertexLitMaterial;
+    rotatingCylinder->Renderer      = make_shared<MeshRenderer>(rotatingCylinder, cylinderMesh, vertexLitMaterial);
     rotatingCylinder->LocalPosition = Vector3(0, -3, -4);
     rotatingCylinder->LocalScale    = Vector3(2, 1, 0.5f);
 
     auto cylinderFragmentLit           = make_shared<GameObject>();
-    cylinderFragmentLit->Mesh          = cylinderMesh;
-    cylinderFragmentLit->Material      = fragmentLitMaterial;
+    cylinderFragmentLit->Renderer      = make_shared<MeshRenderer>(cylinderFragmentLit, cylinderMesh, fragmentLitMaterial);
     cylinderFragmentLit->LocalPosition = Vector3(-3, -3, -6);
     cylinderFragmentLit->LocalScale    = Vector3(2, 1, 0.5f);
 
     auto floorVertexLit           = make_shared<GameObject>();
-    floorVertexLit->Mesh          = cubeMesh;
-    floorVertexLit->Material      = vertexLitMaterial;
+    floorVertexLit->Renderer      = make_shared<MeshRenderer>(floorVertexLit, cubeMesh, vertexLitMaterial);
     floorVertexLit->LocalPosition = Vector3(3, -5, -5.5f);
     floorVertexLit->LocalRotation = Quaternion::AngleAxis(10, Vector3(0, 1, 0));
     floorVertexLit->LocalScale    = Vector3(5, 1, 2);
 
     auto floorFragmentLit           = make_shared<GameObject>();
-    floorFragmentLit->Mesh          = cubeMesh;
-    floorFragmentLit->Material      = fragmentLitBrickMaterial;
+    floorFragmentLit->Renderer      = make_shared<MeshRenderer>(floorFragmentLit, cubeMesh, fragmentLitBrickMaterial);
     floorFragmentLit->LocalPosition = Vector3(-9, -5, -5.5f);
     floorFragmentLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
     floorFragmentLit->LocalScale    = Vector3(5, 1, 2);
 
     auto water           = make_shared<GameObject>();
-    water->Mesh          = planeMesh;
-    water->Material      = m_WaterMaterial;
+    water->Renderer      = make_shared<MeshRenderer>(water, planeMesh, m_WaterMaterial);
     water->LocalPosition = Vector3(0, -10, -10);
     water->LocalScale    = Vector3(20, 1, 20);
 

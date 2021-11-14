@@ -7,7 +7,7 @@
 
 #include "../../gameObject/gameObject.h"
 #include "../../light/light.h"
-#include "../../mesh/mesh.h"
+#include "../../renderer/renderer.h"
 #include "../../shader/shader.h"
 #include "../../texture_2d_array/texture_2d_array.h"
 #include "../context.h"
@@ -73,17 +73,9 @@ void ShadowCasterPass::Render(const vector<shared_ptr<GameObject>> &_gameObjects
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    m_ShadowCasterShader->Use();
-
     for (const auto &go: _gameObjects)
     {
-        if (go->Mesh == nullptr)
-            continue;
-
-        Matrix4x4 modelMatrix = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
-        m_ShadowCasterShader->SetUniform("_ModelMatrix", &modelMatrix);
-        go->Mesh->Draw();
+        if (go->Renderer != nullptr)
+            go->Renderer->Render(m_ShadowCasterShader);
     }
-
-    Shader::DetachCurrentShader();
 }

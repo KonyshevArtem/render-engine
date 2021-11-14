@@ -5,10 +5,7 @@
 
 #include "render_pass.h"
 #include "../../gameObject/gameObject.h"
-#include "../../material/material.h"
-#include "../../mesh/mesh.h"
-#include "../../shader/shader.h"
-#include "../../texture_2d/texture_2d.h"
+#include "../../renderer/renderer.h"
 #include "../context.h"
 #include "../graphics.h"
 
@@ -25,22 +22,7 @@ void RenderPass::Execute(const shared_ptr<Context> &_ctx)
 
     for (const auto &go: _ctx->GameObjects)
     {
-        if (go->Mesh == nullptr || go->Material == nullptr)
-            continue;
-
-        auto shader = go->Material->GetShader();
-
-        shader->Use();
-
-        Matrix4x4 modelMatrix       = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
-        Matrix4x4 modelNormalMatrix = modelMatrix.Invert().Transpose();
-
-        shader->SetUniform("_ModelMatrix", &modelMatrix);
-        shader->SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
-
-        go->Material->TransferUniforms();
-        go->Mesh->Draw();
-
-        Shader::DetachCurrentShader();
+        if (go->Renderer != nullptr)
+            go->Renderer->Render();
     }
 }

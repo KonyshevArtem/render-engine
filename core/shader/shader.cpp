@@ -80,13 +80,13 @@ void Shader::Use() const
 
 void Shader::SetUniform(const string &_name, const void *_data) const
 {
-    if (m_Uniforms.contains(_name) && m_Uniforms.at(_name) != nullptr)
+    if (this == m_CurrentShader && m_Uniforms.contains(_name) && m_Uniforms.at(_name) != nullptr)
         m_Uniforms.at(_name)->Set(_data);
 }
 
 void Shader::SetTextureUniform(const string &_name, const shared_ptr<Texture> &_texture) const
 {
-    if (_texture == nullptr || !m_TextureUnits.contains(_name))
+    if (this != m_CurrentShader || _texture == nullptr || !m_TextureUnits.contains(_name))
         return;
 
     int unit = m_TextureUnits.at(_name);

@@ -5,8 +5,7 @@
 #include "../../math/vector3/vector3.h"
 #include <vector>
 
-class Mesh;
-class Material;
+class Renderer;
 
 using namespace std;
 
@@ -18,8 +17,7 @@ public:
     Vector3                        LocalPosition;
     Quaternion                     LocalRotation;
     Vector3                        LocalScale;
-    shared_ptr<Mesh>               Mesh;
-    shared_ptr<Material>           Material;
+    shared_ptr<Renderer>           Renderer;
 
     GameObject();
 };

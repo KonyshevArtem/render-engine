@@ -1,8 +1,8 @@
 #include "common/attributes.glsl"
 #include "common/camera_data.glsl"
 
-#define VERTEX vert
-#define FRAGMENT frag
+#pragma vertex vert
+#pragma fragment frag
 
 Varyings vert(){
     Varyings vars;

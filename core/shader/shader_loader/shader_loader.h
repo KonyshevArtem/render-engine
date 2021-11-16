@@ -13,6 +13,16 @@ using namespace std;
 
 class ShaderLoader
 {
+    //region constants
+
+    const static string VERTEX_PART_REGEX_FORMAT;
+    const static string FRAGMENT_PART_REGEX_FORMAT;
+
+    const static string VERTEX_PART_CODE_FORMAT;
+    const static string FRAGMENT_PART_CODE_FORMAT;
+
+    //endregion
+
     //region fields
 
 private:
@@ -33,14 +43,24 @@ public:
 
 private:
     static bool TryCompileShaderPart(GLuint        _shaderPartType,
+                                     const string &_shaderPartFunctionName,
                                      const string &_path,
                                      const string &_source,
                                      const string &_keywordDirectives,
                                      GLuint       &_outShaderPart);
 
-    static bool          TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program, const string &_path);
-    static const string &GetShaderPartCode(GLuint _shaderPartType);
-    static void          ParseAdditionalInfo(const string &_shaderSource, unordered_map<string, string> &_defaultValues);
+    static bool TryLinkProgram(GLuint        _vertexPart,
+                               GLuint        _fragmentPart,
+                               GLuint       &_program,
+                               const string &_path);
+
+    static string GetShaderPartCode(GLuint        _shaderPartType,
+                                    const string &_source,
+                                    const string &_shaderPartFunctionName);
+
+    static void ParseAdditionalInfo(const string                  &_shaderSource,
+                                    unordered_map<string, string> &_defaultValues,
+                                    unordered_map<GLuint, string> &_shaderPartsFunctionNames);
 
     //endregion
 };

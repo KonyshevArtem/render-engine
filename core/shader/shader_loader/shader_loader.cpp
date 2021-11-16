@@ -3,14 +3,27 @@
 #include "../../graphics/graphics.h"
 #include "../shader.h"
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 #include <regex>
+
+// TODO use syntax analysis instead of regex
+
+//region constants
+
+const string ShaderLoader::VERTEX_PART_REGEX_FORMAT(R"(\s*(\w+)\s+%1%\(\s*\))");          // NOLINT(cert-err58-cpp)
+const string ShaderLoader::FRAGMENT_PART_REGEX_FORMAT(R"(\s*vec4\s+%1%\((\w+)\s+\w+\))"); // NOLINT(cert-err58-cpp)
+
+const string ShaderLoader::VERTEX_PART_CODE_FORMAT("\nout %1% vars;\nvoid main(){vars=%2%();gl_Position=vars.PositionCS;}\n");  // NOLINT(cert-err58-cpp)
+const string ShaderLoader::FRAGMENT_PART_CODE_FORMAT("\nin %1% vars;\nout vec4 outColor;\nvoid main(){outColor=%2%(vars);}\n"); // NOLINT(cert-err58-cpp)
+
+//endregion
 
 //region public methods
 
 shared_ptr<Shader> ShaderLoader::Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent) // NOLINT(misc-no-recursion)
 {
-    GLuint vertexPart;
-    GLuint fragmentPart;
+    GLuint vertexPart   = 0;
+    GLuint fragmentPart = 0;
     GLuint program;
 
     string shaderSource = Utils::ReadFileWithIncludes(_path);
@@ -18,8 +31,31 @@ shared_ptr<Shader> ShaderLoader::Load(const filesystem::path &_path, const vecto
     for (const auto &keyword: _keywords)
         keywordsDirectives += "#define " + keyword + "\n";
 
-    bool success = ShaderLoader::TryCompileShaderPart(GL_VERTEX_SHADER, _path, shaderSource, keywordsDirectives, vertexPart);
-    success &= ShaderLoader::TryCompileShaderPart(GL_FRAGMENT_SHADER, _path, shaderSource, keywordsDirectives, fragmentPart);
+    unordered_map<string, string> defaultValues {};
+    unordered_map<GLuint, string> shaderPartFunctionNames {};
+    ParseAdditionalInfo(shaderSource, defaultValues, shaderPartFunctionNames);
+
+    bool success = true;
+    if (shaderPartFunctionNames.contains(GL_VERTEX_SHADER))
+    {
+        success &= ShaderLoader::TryCompileShaderPart(GL_VERTEX_SHADER,
+                                                      shaderPartFunctionNames[GL_VERTEX_SHADER],
+                                                      _path,
+                                                      shaderSource,
+                                                      keywordsDirectives,
+                                                      vertexPart);
+    }
+
+    if (shaderPartFunctionNames.contains(GL_FRAGMENT_SHADER))
+    {
+        success &= ShaderLoader::TryCompileShaderPart(GL_FRAGMENT_SHADER,
+                                                      shaderPartFunctionNames[GL_FRAGMENT_SHADER],
+                                                      _path,
+                                                      shaderSource,
+                                                      keywordsDirectives,
+                                                      fragmentPart);
+    }
+
     success &= ShaderLoader::TryLinkProgram(vertexPart, fragmentPart, program, _path);
 
     if (!success)
@@ -29,9 +65,6 @@ shared_ptr<Shader> ShaderLoader::Load(const filesystem::path &_path, const vecto
         else
             exit(1);
     }
-
-    unordered_map<string, string> defaultValues {};
-    ParseAdditionalInfo(shaderSource, defaultValues);
 
     return shared_ptr<Shader>(new Shader(program, defaultValues));
 }
@@ -48,13 +81,14 @@ const shared_ptr<Shader> &ShaderLoader::GetFallbackShader() // NOLINT(misc-no-re
 //region service methods
 
 bool ShaderLoader::TryCompileShaderPart(GLuint        _shaderPartType,
+                                        const string &_shaderPartFunctionName,
                                         const string &_path,
                                         const string &_source,
                                         const string &_keywordDirectives,
                                         GLuint       &_outShaderPart)
 {
     const string &globalDirectives = Graphics::GetGlobalShaderDirectives();
-    const string &shaderPartCode   = GetShaderPartCode(_shaderPartType);
+    string        shaderPartCode   = GetShaderPartCode(_shaderPartType, _source, _shaderPartFunctionName);
     int           sourcesCount     = 4;
     const char   *sources[sourcesCount];
 
@@ -88,31 +122,33 @@ bool ShaderLoader::TryCompileShaderPart(GLuint        _shaderPartType,
     return true;
 }
 
-const string &ShaderLoader::GetShaderPartCode(GLuint _shaderPartType)
+string ShaderLoader::GetShaderPartCode(GLuint        _shaderPartType,
+                                       const string &_source,
+                                       const string &_shaderPartFunctionName)
 {
-    if (!m_ShaderPartCode.contains(_shaderPartType))
+    switch (_shaderPartType)
     {
-        switch (_shaderPartType)
+        case GL_VERTEX_SHADER:
         {
-            case GL_VERTEX_SHADER:
-            {
-                m_ShaderPartCode[_shaderPartType] = "\nout Varyings vars;\nvoid main(){vars=VERTEX();gl_Position=vars.PositionCS;}\n";
-                break;
-            }
-            case GL_FRAGMENT_SHADER:
-            {
-                m_ShaderPartCode[_shaderPartType] = "\nin Varyings vars;\nout vec4 outColor;\nvoid main(){outColor=FRAGMENT(vars);}\n";
-                break;
-            }
-            default:
-            {
-                m_ShaderPartCode[_shaderPartType] = "";
-                break;
-            }
+            string r = (boost::format(VERTEX_PART_REGEX_FORMAT) % _shaderPartFunctionName).str();
+            smatch match;
+            if (regex_search(_source.cbegin(), _source.cend(), match, regex(r)))
+                return (boost::format(VERTEX_PART_CODE_FORMAT) % match[1] % _shaderPartFunctionName).str();
+            break;
         }
+        case GL_FRAGMENT_SHADER:
+        {
+            string r = (boost::format(FRAGMENT_PART_REGEX_FORMAT) % _shaderPartFunctionName).str();
+            smatch match;
+            if (regex_search(_source.cbegin(), _source.cend(), match, regex(r)))
+                return (boost::format(FRAGMENT_PART_CODE_FORMAT) % match[1] % _shaderPartFunctionName).str();
+            break;
+        }
+        default:
+            return "";
     }
 
-    return m_ShaderPartCode.at(_shaderPartType);
+    return "";
 }
 
 bool ShaderLoader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program, const string &_path)
@@ -160,7 +196,9 @@ bool ShaderLoader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLui
     return true;
 }
 
-void ShaderLoader::ParseAdditionalInfo(const string &_shaderSource, unordered_map<string, string> &_defaultValues)
+void ShaderLoader::ParseAdditionalInfo(const string                  &_shaderSource,
+                                       unordered_map<string, string> &_defaultValues,
+                                       unordered_map<GLuint, string> &_shaderPartFunctionNames)
 {
     smatch                 match;
     regex                  expression(R"(\s*#pragma\s+(.+)\n)");
@@ -171,16 +209,32 @@ void ShaderLoader::ParseAdditionalInfo(const string &_shaderSource, unordered_ma
         string         info = match[1].str();
         vector<string> strings;
         boost::split(strings, info, boost::is_any_of(" "));
+        unsigned long length = strings.size();
 
         if (strings[0] == "default")
         {
-            if (strings.size() < 3)
+            if (length < 3)
             {
                 fprintf(stderr, "Default value info has incorrect format: %s\n", info.c_str());
                 continue;
             }
 
             _defaultValues[strings[1]] = strings[2];
+        }
+        else if (strings[0] == "vertex")
+        {
+            if (length >= 2)
+                _shaderPartFunctionNames[GL_VERTEX_SHADER] = strings[1];
+        }
+        else if (strings[0] == "geometry")
+        {
+            if (length >= 2)
+                _shaderPartFunctionNames[GL_GEOMETRY_SHADER] = strings[1];
+        }
+        else if (strings[0] == "fragment")
+        {
+            if (length >= 2)
+                _shaderPartFunctionNames[GL_FRAGMENT_SHADER] = strings[1];
         }
 
         searchStart = match.suffix().first;

@@ -89,7 +89,9 @@ add_executable(
         core/renderer/renderer.cpp
         core/renderer/renderer.h
         core/renderer/mesh_renderer.cpp
-        core/renderer/mesh_renderer.h)
+        core/renderer/mesh_renderer.h
+        core/renderer/billboard_renderer.cpp
+        core/renderer/billboard_renderer.h)
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)

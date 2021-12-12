@@ -1,15 +1,15 @@
 #include "base_uniform.h"
 
-//region construction
+#pragma region construction
 
 BaseUniform::BaseUniform(GLint _location, GLenum _type, int _index) :
     m_Location(_location), m_Type(UniformTypeUtils::ConvertUniformType(_type)), m_Index(_index)
 {
 }
 
-//endregion
+#pragma endregion
 
-//region public methods
+#pragma region public methods
 
 void BaseUniform::Set(const void *_value) const
 {
@@ -52,4 +52,4 @@ UniformType BaseUniform::GetType() const
     return m_Type;
 }
 
-//endregion
+#pragma endregion

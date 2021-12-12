@@ -58,7 +58,7 @@ void Graphics::InitFramebuffer()
 
 void Graphics::InitUniformBlocks()
 {
-    auto fullShader   = Shader::Load("resources/shaders/standard.glsl", vector<string> {"_RECEIVE_SHADOWS"});
+    auto fullShader   = Shader::Load("resources/shaders/standard/standard.shader", vector<string> {"_RECEIVE_SHADOWS"});
     CameraDataBlock   = make_unique<UniformBlock>(fullShader, "CameraData", 0);
     LightingDataBlock = make_unique<UniformBlock>(fullShader, "Lighting", 1);
     ShadowsDataBlock  = make_shared<UniformBlock>(fullShader, "Shadows", 2);

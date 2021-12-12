@@ -42,7 +42,7 @@ float Material::GetFloat(const string &_name)
 
 shared_ptr<Shader> Material::GetShader() const
 {
-    return m_Shader != nullptr ? m_Shader : Shader::GetFallbackShader();
+    return m_Shader;
 }
 
 void Material::TransferUniforms() const

@@ -15,7 +15,7 @@
 #include "../graphics.h"
 
 SkyboxPass::SkyboxPass() :
-    m_Shader(Shader::Load("resources/shaders/skybox.glsl", vector<string>())),
+    m_Shader(Shader::Load("resources/shaders/skybox/skybox.shader", vector<string>())),
     m_Mesh(FBXAsset::Load("resources/models/cube.fbx")->Meshes[0])
 {
 }

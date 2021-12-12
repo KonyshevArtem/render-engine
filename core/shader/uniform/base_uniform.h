@@ -14,30 +14,30 @@ using namespace std;
 
 class BaseUniform
 {
-    //region fields
+#pragma region fields
 
 private:
     UniformType m_Type;
     GLint       m_Location;
     int         m_Index;
 
-    //endregion
+#pragma endregion
 
-    //region construction
+#pragma region construction
 
 public:
     BaseUniform(GLint _location, GLenum _type, int _index);
 
-    //endregion
+#pragma endregion
 
-    //region public methods
+#pragma region public methods
 
 public:
     void                      Set(const void *_value) const;
     [[nodiscard]] int         GetIndex() const;
     [[nodiscard]] UniformType GetType() const;
 
-    //endregion
+#pragma endregion
 };
 
 #endif //OPENGL_STUDY_BASE_UNIFORM_H

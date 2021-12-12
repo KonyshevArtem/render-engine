@@ -50,11 +50,11 @@ void Mesh::Init()
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     if (hasNormals)
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (const void *) vertexSize);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void *>(vertexSize));
     if (hasUV)
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (const void *) (vertexSize + normalsSize));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void *>((vertexSize + normalsSize)));
     if (hasTangents)
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (const void *) (vertexSize + normalsSize + uvSize));
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void *>((vertexSize + normalsSize + uvSize)));
 
     glBufferData(GL_ARRAY_BUFFER, vertexSize + normalsSize + uvSize + tangentsSize, nullptr, GL_STATIC_DRAW);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexSize, m_Indexes.data(), GL_STATIC_DRAW);

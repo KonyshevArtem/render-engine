@@ -4,6 +4,8 @@
 #include <mach-o/dyld.h>
 #include <regex>
 #include <string>
+#include <iostream>
+#include <fstream>
 
 string Utils::ReadFile(const filesystem::path &_relativePath)
 {
@@ -52,12 +54,20 @@ string Utils::ReadFileWithIncludes(const filesystem::path &_relativePath) // NOL
     return file;
 }
 
+void Utils::WriteFile(const filesystem::path &_relativePath, const string &_content)
+{
+    std::ofstream o;
+    o.open(GetExecutableDirectory() / _relativePath, std::ios::trunc);
+    o << _content;
+    o.close();
+}
+
 filesystem::path Utils::GetExecutableDirectory()
 {
     if (!m_ExecutableDir.empty())
         return m_ExecutableDir;
 
-    char    *path = new char[10];
+    char *   path = new char[10];
     uint32_t size = 10;
 
     if (_NSGetExecutablePath(&path[0], &size) != 0)

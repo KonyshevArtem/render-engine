@@ -1,0 +1,38 @@
+#ifndef SHADOWS
+#define SHADOWS
+
+#ifdef _RECEIVE_SHADOWS
+layout(std140) struct ShadowData
+{
+    mat4x4 LightViewProjMatrix;
+};
+
+layout(std140) uniform Shadows
+{
+    ShadowData _SpotLightShadows[MAX_SPOT_LIGHT_SOURCES];
+};
+
+uniform sampler2DArray _SpotLightShadowMapArray;
+#endif
+
+float linearizeDepth(float depth, float nearClipPlane, float farClipPlane){
+    float z = depth * 2 - 1;
+    z = 2 * nearClipPlane * farClipPlane / (farClipPlane + nearClipPlane - z * (farClipPlane - nearClipPlane));
+    return z / farClipPlane;
+}
+
+float getSpotLightShadowTerm(int index, vec3 posWS, float lightAngleCos, float nearClipPlane, float farClipPlane)
+{
+    #ifdef _RECEIVE_SHADOWS
+    vec4 shadowCoord = _SpotLightShadows[index].LightViewProjMatrix * vec4(posWS, 1);
+    shadowCoord = shadowCoord / shadowCoord.w;
+    shadowCoord = shadowCoord * 0.5 + 0.5;
+    float depth = texture(_SpotLightShadowMapArray, vec3(shadowCoord.xy, index)).x;
+    float bias = max(0.05 * (1 - lightAngleCos), 0.005);
+    if (linearizeDepth(depth, nearClipPlane, farClipPlane) < linearizeDepth(shadowCoord.z, nearClipPlane, farClipPlane) - bias)
+        return 0;
+    #endif
+    return 1;
+}
+
+#endif

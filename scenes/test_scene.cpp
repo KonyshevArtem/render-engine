@@ -42,8 +42,8 @@ void TestScene::Init()
                            "resources/textures/skybox/z_negative.png");
 
     // init shaders
-    auto vertexLitShader   = Shader::Load("resources/shaders/standard.glsl", vector<string> {"_VERTEX_LIGHT"});
-    auto fragmentLitShader = Shader::Load("resources/shaders/standard.glsl", vector<string> {"_SMOOTHNESS", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
+    auto vertexLitShader   = Shader::Load("resources/shaders/standard/standard.shader", vector<string> {"_VERTEX_LIGHT"});
+    auto fragmentLitShader = Shader::Load("resources/shaders/standard/standard.shader", vector<string> {"_SMOOTHNESS", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");

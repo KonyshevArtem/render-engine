@@ -13,56 +13,38 @@ using namespace std;
 
 class ShaderLoader
 {
-    //region constants
+#pragma region constants
 
-    const static string VERTEX_PART_REGEX_FORMAT;
-    const static string FRAGMENT_PART_REGEX_FORMAT;
+    const static GLuint                        SUPPORTED_SHADER_PARTS[];
+    const static unordered_map<GLuint, string> SHADER_PART_NAMES;
 
-    const static string VERTEX_PART_CODE_FORMAT;
-    const static string FRAGMENT_PART_CODE_FORMAT;
+#pragma endregion
 
-    //endregion
-
-    //region fields
-
-private:
-    inline static unordered_map<GLuint, string> m_ShaderPartCode = {};
-    inline static shared_ptr<Shader>            m_FallbackShader = nullptr;
-
-    //endregion
-
-    //region public methods
+#pragma region public methods
 
 public:
-    static shared_ptr<Shader>        Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent = true);
-    static const shared_ptr<Shader> &GetFallbackShader();
+    static shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords);
 
-    //endregion
+#pragma endregion
 
-    // region service methods
+#pragma region service methods
 
 private:
     static bool TryCompileShaderPart(GLuint        _shaderPartType,
-                                     const string &_shaderPartFunctionName,
                                      const string &_path,
                                      const string &_source,
                                      const string &_keywordDirectives,
-                                     GLuint       &_outShaderPart);
+                                     GLuint &      _outShaderPart);
 
-    static bool TryLinkProgram(GLuint        _vertexPart,
-                               GLuint        _fragmentPart,
-                               GLuint       &_program,
-                               const string &_path);
+    static bool TryLinkProgram(const vector<GLuint> &_shaderParts,
+                               GLuint &              _program,
+                               const string &        _path);
 
-    static string GetShaderPartCode(GLuint        _shaderPartType,
-                                    const string &_source,
-                                    const string &_shaderPartFunctionName);
+    static void ParsePragmas(const string &                 _shaderSource,
+                             unordered_map<string, string> &_defaultValues,
+                             unordered_map<string, string> &_additionalParameters);
 
-    static void ParseAdditionalInfo(const string                  &_shaderSource,
-                                    unordered_map<string, string> &_defaultValues,
-                                    unordered_map<GLuint, string> &_shaderPartsFunctionNames);
-
-    //endregion
+#pragma endregion
 };
 
 #endif //OPENGL_STUDY_SHADER_LOADER_H

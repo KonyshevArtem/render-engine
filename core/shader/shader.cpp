@@ -9,11 +9,23 @@
 
 using namespace std;
 
-//region construction
+#pragma region construction
 
-shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent)
+shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<string> &_keywords)
 {
-    return ShaderLoader::Load(_path, _keywords, _silent);
+    auto shader = ShaderLoader::Load(_path, _keywords);
+
+    if (!shader)
+    {
+        auto fallback = ShaderLoader::Load("resources/shaders/fallback/fallback.shader", _keywords);
+
+        if (!fallback)
+            exit(1);
+
+        return fallback;
+    }
+
+    return shader;
 }
 
 Shader::Shader(GLuint _program, unordered_map<string, string> _defaultValues) :
@@ -65,7 +77,7 @@ Shader::~Shader()
     glDeleteProgram(m_Program);
 }
 
-//region public methods
+#pragma region public methods
 
 void Shader::Use() const
 {
@@ -120,14 +132,9 @@ void Shader::SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture)
         m_CurrentShader->SetTextureUniform(_name, m_GlobalTextures[_name]);
 }
 
-const shared_ptr<Shader> &Shader::GetFallbackShader() // NOLINT(misc-no-recursion)
-{
-    return ShaderLoader::GetFallbackShader();
-}
+#pragma endregion
 
-//endregion
-
-//region service methods
+#pragma region service methods
 
 void Shader::InitDefaultTextures()
 {
@@ -169,4 +176,4 @@ void Shader::SetDefaultValues() const
     }
 }
 
-//endregion
+#pragma endregion

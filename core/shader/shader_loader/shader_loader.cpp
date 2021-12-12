@@ -8,94 +8,69 @@
 
 // TODO use syntax analysis instead of regex
 
-//region constants
+#pragma region constants
 
-const string ShaderLoader::VERTEX_PART_REGEX_FORMAT(R"(\s*(\w+)\s+%1%\(\s*\))");          // NOLINT(cert-err58-cpp)
-const string ShaderLoader::FRAGMENT_PART_REGEX_FORMAT(R"(\s*vec4\s+%1%\((\w+)\s+\w+\))"); // NOLINT(cert-err58-cpp)
+const GLuint                        ShaderLoader::SUPPORTED_SHADER_PARTS[3] {GL_VERTEX_SHADER, GL_GEOMETRY_SHADER, GL_FRAGMENT_SHADER};
+const unordered_map<GLuint, string> ShaderLoader::SHADER_PART_NAMES {
+        {GL_VERTEX_SHADER, "vertex"},
+        {GL_GEOMETRY_SHADER, "geometry"},
+        {GL_FRAGMENT_SHADER, "fragment"}};
 
-const string ShaderLoader::VERTEX_PART_CODE_FORMAT("\nout %1% vars;\nvoid main(){vars=%2%();gl_Position=vars.PositionCS;}\n");  // NOLINT(cert-err58-cpp)
-const string ShaderLoader::FRAGMENT_PART_CODE_FORMAT("\nin %1% vars;\nout vec4 outColor;\nvoid main(){outColor=%2%(vars);}\n"); // NOLINT(cert-err58-cpp)
+#pragma endregion
 
-//endregion
+#pragma region public methods
 
-//region public methods
-
-shared_ptr<Shader> ShaderLoader::Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent) // NOLINT(misc-no-recursion)
+shared_ptr<Shader> ShaderLoader::Load(const filesystem::path &_path, const vector<string> &_keywords)
 {
-    GLuint vertexPart   = 0;
-    GLuint fragmentPart = 0;
-    GLuint program;
-
-    string shaderSource = Utils::ReadFileWithIncludes(_path);
+    auto shaderSource = Utils::ReadFileWithIncludes(_path);
     string keywordsDirectives;
     for (const auto &keyword: _keywords)
         keywordsDirectives += "#define " + keyword + "\n";
 
     unordered_map<string, string> defaultValues {};
-    unordered_map<GLuint, string> shaderPartFunctionNames {};
-    ParseAdditionalInfo(shaderSource, defaultValues, shaderPartFunctionNames);
+    unordered_map<string, string> additionalParameters {};
+    ParsePragmas(shaderSource, defaultValues, additionalParameters);
 
-    bool success = true;
-    if (shaderPartFunctionNames.contains(GL_VERTEX_SHADER))
+    bool           success = true;
+    vector<GLuint> shaderParts;
+    for (const auto &part: SUPPORTED_SHADER_PARTS)
     {
-        success &= ShaderLoader::TryCompileShaderPart(GL_VERTEX_SHADER,
-                                                      shaderPartFunctionNames[GL_VERTEX_SHADER],
-                                                      _path,
-                                                      shaderSource,
-                                                      keywordsDirectives,
-                                                      vertexPart);
+        const string &partName = SHADER_PART_NAMES.at(part);
+        if (!additionalParameters.contains(partName))
+            continue;
+
+        GLuint shaderPart   = 0;
+        auto & relativePath = additionalParameters[partName];
+        auto   partPath     = _path.parent_path() / relativePath;
+        string partSource   = Utils::ReadFileWithIncludes(partPath);
+        success &= ShaderLoader::TryCompileShaderPart(part, partPath, partSource, keywordsDirectives, shaderPart);
+
+        shaderParts.push_back(shaderPart);
     }
 
-    if (shaderPartFunctionNames.contains(GL_FRAGMENT_SHADER))
-    {
-        success &= ShaderLoader::TryCompileShaderPart(GL_FRAGMENT_SHADER,
-                                                      shaderPartFunctionNames[GL_FRAGMENT_SHADER],
-                                                      _path,
-                                                      shaderSource,
-                                                      keywordsDirectives,
-                                                      fragmentPart);
-    }
+    GLuint program;
+    success &= TryLinkProgram(shaderParts, program, _path);
 
-    success &= ShaderLoader::TryLinkProgram(vertexPart, fragmentPart, program, _path);
-
-    if (!success)
-    {
-        if (_silent)
-            return Shader::GetFallbackShader();
-        else
-            exit(1);
-    }
-
-    return shared_ptr<Shader>(new Shader(program, defaultValues));
+    return success ? make_shared<Shader>(program, defaultValues) : nullptr;
 }
 
-const shared_ptr<Shader> &ShaderLoader::GetFallbackShader() // NOLINT(misc-no-recursion)
-{
-    if (m_FallbackShader == nullptr)
-        m_FallbackShader = Load("resources/shaders/fallback.glsl", vector<string>(), false);
-    return m_FallbackShader;
-}
+#pragma endregion
 
-//endregion
-
-//region service methods
+#pragma region service methods
 
 bool ShaderLoader::TryCompileShaderPart(GLuint        _shaderPartType,
-                                        const string &_shaderPartFunctionName,
                                         const string &_path,
                                         const string &_source,
                                         const string &_keywordDirectives,
-                                        GLuint       &_outShaderPart)
+                                        GLuint &      _outShaderPart)
 {
     const string &globalDirectives = Graphics::GetGlobalShaderDirectives();
-    string        shaderPartCode   = GetShaderPartCode(_shaderPartType, _source, _shaderPartFunctionName);
-    int           sourcesCount     = 4;
-    const char   *sources[sourcesCount];
+    int           sourcesCount     = 3;
+    const char *  sources[sourcesCount];
 
     sources[0] = globalDirectives.c_str();
     sources[1] = _keywordDirectives.c_str();
     sources[2] = _source.c_str();
-    sources[3] = shaderPartCode.c_str();
 
     GLuint shader = glCreateShader(_shaderPartType);
     glShaderSource(shader, sourcesCount, sources, nullptr);
@@ -122,46 +97,15 @@ bool ShaderLoader::TryCompileShaderPart(GLuint        _shaderPartType,
     return true;
 }
 
-string ShaderLoader::GetShaderPartCode(GLuint        _shaderPartType,
-                                       const string &_source,
-                                       const string &_shaderPartFunctionName)
-{
-    switch (_shaderPartType)
-    {
-        case GL_VERTEX_SHADER:
-        {
-            string r = (boost::format(VERTEX_PART_REGEX_FORMAT) % _shaderPartFunctionName).str();
-            smatch match;
-            if (regex_search(_source.cbegin(), _source.cend(), match, regex(r)))
-                return (boost::format(VERTEX_PART_CODE_FORMAT) % match[1] % _shaderPartFunctionName).str();
-            break;
-        }
-        case GL_FRAGMENT_SHADER:
-        {
-            string r = (boost::format(FRAGMENT_PART_REGEX_FORMAT) % _shaderPartFunctionName).str();
-            smatch match;
-            if (regex_search(_source.cbegin(), _source.cend(), match, regex(r)))
-                return (boost::format(FRAGMENT_PART_CODE_FORMAT) % match[1] % _shaderPartFunctionName).str();
-            break;
-        }
-        default:
-            return "";
-    }
-
-    return "";
-}
-
-bool ShaderLoader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLuint &_program, const string &_path)
+bool ShaderLoader::TryLinkProgram(const vector<GLuint> &_shaderParts, GLuint &_program, const string &_path)
 {
     GLuint program = glCreateProgram();
 
-    bool hasVertex   = glIsShader(_vertexPart);
-    bool hasFragment = glIsShader(_fragmentPart);
-
-    if (hasVertex)
-        glAttachShader(program, _vertexPart);
-    if (hasFragment)
-        glAttachShader(program, _fragmentPart);
+    for (const auto &part: _shaderParts)
+    {
+        if (glIsShader(part))
+            glAttachShader(program, part);
+    }
 
     glLinkProgram(program);
 
@@ -180,25 +124,22 @@ bool ShaderLoader::TryLinkProgram(GLuint _vertexPart, GLuint _fragmentPart, GLui
         return false;
     }
 
-    if (hasVertex)
+    for (const auto &part: _shaderParts)
     {
-        glDetachShader(program, _vertexPart);
-        glDeleteShader(_vertexPart);
-    }
-
-    if (hasFragment)
-    {
-        glDetachShader(program, _fragmentPart);
-        glDeleteShader(_fragmentPart);
+        if (glIsShader(part))
+        {
+            glDetachShader(program, part);
+            glDeleteShader(part);
+        }
     }
 
     _program = program;
     return true;
 }
 
-void ShaderLoader::ParseAdditionalInfo(const string                  &_shaderSource,
-                                       unordered_map<string, string> &_defaultValues,
-                                       unordered_map<GLuint, string> &_shaderPartFunctionNames)
+void ShaderLoader::ParsePragmas(const string &                 _shaderSource,
+                                unordered_map<string, string> &_defaultValues,
+                                unordered_map<string, string> &_additionalParameters)
 {
     smatch                 match;
     regex                  expression(R"(\s*#pragma\s+(.+)\n)");
@@ -221,24 +162,15 @@ void ShaderLoader::ParseAdditionalInfo(const string                  &_shaderSou
 
             _defaultValues[strings[1]] = strings[2];
         }
-        else if (strings[0] == "vertex")
+
+        for (const auto &pair: SHADER_PART_NAMES)
         {
-            if (length >= 2)
-                _shaderPartFunctionNames[GL_VERTEX_SHADER] = strings[1];
-        }
-        else if (strings[0] == "geometry")
-        {
-            if (length >= 2)
-                _shaderPartFunctionNames[GL_GEOMETRY_SHADER] = strings[1];
-        }
-        else if (strings[0] == "fragment")
-        {
-            if (length >= 2)
-                _shaderPartFunctionNames[GL_FRAGMENT_SHADER] = strings[1];
+            if (strings[0] == pair.second && length >= 2)
+                _additionalParameters[pair.second] = strings[1];
         }
 
         searchStart = match.suffix().first;
     }
 }
 
-//endregion
+#pragma endregion

@@ -20,17 +20,17 @@ class BaseUniform;
 
 class Shader
 {
-    //region construction
+#pragma region construction
 
 public:
-    static shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords, bool _silent = true);
+    static shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords);
 
     explicit Shader(GLuint _program, unordered_map<string, string> _defaultValues);
     ~Shader();
 
-    //endregion
+#pragma endregion
 
-    //region fields
+#pragma region fields
 
 private:
     GLuint                                                                               m_Program;
@@ -39,30 +39,29 @@ private:
     unordered_map<string, string>                                                        m_DefaultValues;
     inline static unordered_map<string, shared_ptr<Texture>>                             m_GlobalTextures  = {};
     inline static unordered_map<string, unordered_map<UniformType, shared_ptr<Texture>>> m_DefaultTextures = {};
-    inline static const Shader                                                          *m_CurrentShader   = nullptr;
+    inline static const Shader *                                                         m_CurrentShader   = nullptr;
 
-    //endregion
+#pragma endregion
 
-    //region public methods
+#pragma region public methods
 
 public:
     void Use() const;
     void SetUniform(const string &_name, const void *_data) const;
     void SetTextureUniform(const string &_name, const shared_ptr<Texture> &_texture) const;
 
-    static void                      DetachCurrentShader();
-    static void                      SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture);
-    static const shared_ptr<Shader> &GetFallbackShader();
+    static void DetachCurrentShader();
+    static void SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture);
 
-    //endregion
+#pragma endregion
 
-    //region service methods
+#pragma region service methods
 
 private:
     static void InitDefaultTextures();
     void        SetDefaultValues() const;
 
-    //endregion
+#pragma endregion
 
     friend class UniformBlock;
 };

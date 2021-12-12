@@ -1,7 +1,7 @@
 #ifndef LIGHTING
 #define LIGHTING
 
-#include "shadows.glsl"
+#include "shadows.cg"
 
 layout(std140) struct DirectionalLight
 {
@@ -52,15 +52,15 @@ float getSpecularTerm(vec3 lightDirWS, float lightAngleCos, vec3 posWS, vec3 nor
     #endif
 }
 
-vec3 getNormalWS(Varyings varyings)
+vec3 getNormalWS(vec3 normalWS, vec3 tangentWS, vec2 uv)
 {
-    vec3 normalWS = normalize(varyings.NormalWS);
+    normalWS = normalize(normalWS);
     #ifdef _NORMAL_MAP
-    vec3 tangentWS = normalize(varyings.TangentWS);
+    tangentWS = normalize(tangentWS);
     // Gramm-Schmidt process to ensure that tangent and normal are still orthogonal after interpolation
     tangentWS = normalize(tangentWS - dot(tangentWS, normalWS) * normalWS);
     vec3 bitangentWS = cross(tangentWS, normalWS);
-    vec3 normalTS = texture(_NormalMap, varyings.UV * _NormalMapST.zw + _NormalMapST.xy).rgb;
+    vec3 normalTS = texture(_NormalMap, uv * _NormalMapST.zw + _NormalMapST.xy).rgb;
     normalTS = normalize(normalTS * 2.0 - 1.0);
     mat3 TBN = mat3(tangentWS, bitangentWS, normalWS);
     normalWS = normalize(TBN * normalTS);
@@ -68,11 +68,8 @@ vec3 getNormalWS(Varyings varyings)
     return normalWS;
 }
 
-vec4 getLight(Varyings varyings){
+vec4 getLight(vec3 posWS, vec3 normalWS, float farClipPlane, float nearClipPlane){
     vec4 light = vec4(0, 0, 0, 0);
-
-    vec3 posWS = vec3(varyings.PositionWS);
-    vec3 normalWS = getNormalWS(varyings);
 
     if (_HasDirectionalLight){
         vec3 lightDirWS = normalize(-_DirectionalLight.DirectionWS);
@@ -101,7 +98,7 @@ vec4 getLight(Varyings varyings){
             float attenuationTerm = 1 / (1 + _SpotLights[i].Attenuation * distance * distance);
             attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0, 1);
             float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
-            float shadowTerm = getSpotLightShadowTerm(varyings, i, lightAngleCos);
+            float shadowTerm = getSpotLightShadowTerm(i, posWS, lightAngleCos, farClipPlane, nearClipPlane);
             light += (_SpotLights[i].Intensity * lightAngleCos * attenuationTerm + specularTerm * attenuationTerm) * shadowTerm;
         }
     }

@@ -7,6 +7,7 @@
 #include "../core/light/light.h"
 #include "../core/material/material.h"
 #include "../core/mesh/mesh.h"
+#include "../core/renderer/billboard_renderer.h"
 #include "../core/renderer/mesh_renderer.h"
 #include "../core/shader/shader.h"
 #include "../core/texture_2d/texture_2d.h"
@@ -28,10 +29,11 @@ void TestScene::Load()
 void TestScene::Init()
 {
     // init textures
-    auto brickTexture = Texture2D::Load("resources/textures/brick.png");
-    auto brickNormal  = Texture2D::Load("resources/textures/brick_normal.png", false);
-    auto waterTexture = Texture2D::Load("resources/textures/water.png");
-    auto waterNormal  = Texture2D::Load("resources/textures/water_normal.png", false);
+    auto brickTexture  = Texture2D::Load("resources/textures/brick.png");
+    auto brickNormal   = Texture2D::Load("resources/textures/brick_normal.png", false);
+    auto waterTexture  = Texture2D::Load("resources/textures/water.png");
+    auto waterNormal   = Texture2D::Load("resources/textures/water_normal.png", false);
+    auto billboardTree = Texture2D::Load("resources/textures/billboard_tree.png");
 
     // init skybox cubemap
     Skybox = Cubemap::Load("resources/textures/skybox/x_positive.png",
@@ -104,12 +106,19 @@ void TestScene::Init()
     water->LocalPosition = Vector3(0, -10, -10);
     water->LocalScale    = Vector3(20, 1, 20);
 
+    auto billboard         = make_shared<GameObject>();
+    auto billboardRenderer = make_shared<BillboardRenderer>(billboard, billboardTree);
+    billboardRenderer->SetSize(5);
+    billboard->Renderer      = std::move(billboardRenderer);
+    billboard->LocalPosition = Vector3 {-10, -10, -20};
+
     GameObjects.push_back(rotatingCube);
     GameObjects.push_back(rotatingCylinder);
     GameObjects.push_back(cylinderFragmentLit);
     GameObjects.push_back(floorVertexLit);
     GameObjects.push_back(floorFragmentLit);
     GameObjects.push_back(water);
+    GameObjects.push_back(billboard);
 
     // init lights
     auto dirLight       = make_shared<Light>();

@@ -10,6 +10,7 @@ enum class UniformType
     INT,
 
     FLOAT,
+    FLOAT_VEC2,
     FLOAT_VEC3,
     FLOAT_VEC4,
     FLOAT_MAT4,

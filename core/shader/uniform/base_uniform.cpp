@@ -30,6 +30,9 @@ void BaseUniform::Set(const void *_value) const
         case UniformType::FLOAT:
             glUniform1f(m_Location, *(static_cast<const GLfloat *>(_value)));
             break;
+        case UniformType::FLOAT_VEC2:
+            glUniform2fv(m_Location, 1, static_cast<const GLfloat*>(_value));
+            break;
         case UniformType::FLOAT_VEC3:
             glUniform3fv(m_Location, 1, static_cast<const GLfloat *>(_value));
             break;

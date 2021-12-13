@@ -16,6 +16,8 @@ UniformType UniformTypeUtils::ConvertUniformType(GLenum _type)
 
         case GL_FLOAT:
             return UniformType::FLOAT;
+        case GL_FLOAT_VEC2:
+            return UniformType::FLOAT_VEC2;
         case GL_FLOAT_VEC3:
             return UniformType::FLOAT_VEC3;
         case GL_FLOAT_VEC4:

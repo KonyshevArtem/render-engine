@@ -14,13 +14,14 @@ using namespace std;
 shared_ptr<Texture2D> Texture2D::m_White  = nullptr;
 shared_ptr<Texture2D> Texture2D::m_Normal = nullptr;
 
-shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb)
+shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb, bool _hasAlpha)
 {
     auto t = make_shared<Texture2D>();
 
-    unsigned int width  = 0;
-    unsigned int height = 0;
-    unsigned     error  = lodepng::decode(t->m_Data, width, height, Utils::GetExecutableDirectory() / _path, LCT_RGB);
+    unsigned int     width     = 0;
+    unsigned int     height    = 0;
+    LodePNGColorType colorType = _hasAlpha ? LCT_RGBA : LCT_RGB;
+    unsigned         error     = lodepng::decode(t->m_Data, width, height, Utils::GetExecutableDirectory() / _path, colorType);
     if (error != 0)
     {
         printf("Error loading texture: %u: %s\n", error, lodepng_error_text(error));
@@ -29,7 +30,18 @@ shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb)
 
     t->Width  = width;
     t->Height = height;
-    t->Init(_srgb ? GL_SRGB : GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
+
+    GLint internalFormat = _srgb
+                                   ? _hasAlpha
+                                             ? GL_SRGB_ALPHA
+                                             : GL_SRGB
+                           : _hasAlpha
+                                   ? GL_RGBA
+                                   : GL_RGB;
+
+    GLint format = _hasAlpha ? GL_RGBA : GL_RGB;
+
+    t->Init(internalFormat, format, GL_UNSIGNED_BYTE, GL_REPEAT);
 
     return t;
 }

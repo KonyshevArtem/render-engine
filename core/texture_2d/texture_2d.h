@@ -13,7 +13,7 @@ using namespace std;
 class Texture2D: public Texture
 {
 public:
-    static shared_ptr<Texture2D>        Load(const filesystem::path &_path, bool _srgb = true);
+    static shared_ptr<Texture2D>        Load(const filesystem::path &_path, bool _srgb = true, bool _hasAlpha = false);
     static const shared_ptr<Texture2D> &White();
     static const shared_ptr<Texture2D> &Normal();
 

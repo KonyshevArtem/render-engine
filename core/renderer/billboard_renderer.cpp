@@ -53,6 +53,7 @@ void BillboardRenderer::Render()
     m_Shader->SetUniform("_Size", &size);
 
     glBindVertexArray(m_VertexArrayObject);
+    glBindBuffer(GL_ARRAY_BUFFER, m_PointsBuffer);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vector3), &m_GameObject->LocalPosition);
     glDrawArrays(GL_POINTS, 0, 1);
 

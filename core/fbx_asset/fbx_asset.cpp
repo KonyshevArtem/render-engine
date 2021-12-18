@@ -7,23 +7,22 @@
 
 shared_ptr<FBXAsset> FBXAsset::Load(const filesystem::path &_path)
 {
-    FILE *fp = fopen((Utils::GetExecutableDirectory() / _path).c_str(), "rb");
+    auto *fp = fopen((Utils::GetExecutableDirectory() / _path).c_str(), "rb");
     if (!fp)
         return nullptr;
 
     // determine fbx size
     fseek(fp, 0, SEEK_END);
-    long file_size = ftell(fp);
+    auto file_size = ftell(fp);
     fseek(fp, 0, SEEK_SET);
 
     // prepare buffer and read
-    auto *content = new ofbx::u8[file_size];
+    ofbx::u8 content[file_size];
     fread(content, 1, file_size, fp);
 
-    auto scene = ofbx::load((ofbx::u8 *) content, file_size, (ofbx::u64) ofbx::LoadFlags::TRIANGULATE); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    auto *scene = ofbx::load(&content[0], file_size, (ofbx::u64) ofbx::LoadFlags::TRIANGULATE); // NOLINT(cppcoreguidelines-narrowing-conversions)
 
     // clean up
-    delete[] content;
     fclose(fp);
 
     if (!scene)
@@ -32,16 +31,24 @@ shared_ptr<FBXAsset> FBXAsset::Load(const filesystem::path &_path)
     return shared_ptr<FBXAsset>(new FBXAsset(scene));
 }
 
+shared_ptr<Mesh> FBXAsset::GetMesh(unsigned int _index) const
+{
+    if (_index >= m_Meshes.size())
+        throw out_of_range("Index " + to_string(_index) + " out of range of m_Meshes.size()");
+
+    return m_Meshes.at(_index);
+}
+
 FBXAsset::FBXAsset(ofbx::IScene *_scene) :
     m_Scene(_scene)
 {
     for (int i = 0; i < m_Scene->getMeshCount(); ++i)
     {
-        auto m = m_Scene->getMesh(i);
+        auto *m = m_Scene->getMesh(i);
         if (m == nullptr)
             continue;
 
-        auto geom = m->getGeometry();
+        auto *geom = m->getGeometry();
         if (geom == nullptr)
             continue;
 
@@ -87,12 +94,15 @@ FBXAsset::FBXAsset(ofbx::IScene *_scene) :
         auto mesh = make_shared<Mesh>(vertices, normals, indexes, uvs, tangents);
         mesh->Init();
 
-        Meshes.push_back(mesh);
+        m_Meshes.push_back(mesh);
     }
 }
 
 FBXAsset::~FBXAsset()
 {
     if (m_Scene != nullptr)
+    {
         m_Scene->destroy();
+        m_Scene = nullptr;
+    }
 }

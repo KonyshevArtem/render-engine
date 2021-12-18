@@ -1,22 +1,21 @@
 #include "utils.h"
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <mach-o/dyld.h>
 #include <regex>
 #include <string>
-#include <iostream>
-#include <fstream>
 
 string Utils::ReadFile(const filesystem::path &_relativePath)
 {
-    FILE *file = fopen((GetExecutableDirectory() / _relativePath).c_str(), "r");
+    auto *file = fopen((GetExecutableDirectory() / _relativePath).c_str(), "r");
     if (file == nullptr)
         return "";
 
     if (fseek(file, 0, SEEK_END) != 0)
         return "";
 
-    long fileSize = ftell(file);
+    auto fileSize = ftell(file);
     if (fileSize == -1L)
         return "";
 
@@ -25,10 +24,10 @@ string Utils::ReadFile(const filesystem::path &_relativePath)
 
     string content(fileSize, ' ');
     int    c;
-    long   i = 0;
+    long   i = -1;
 
     while ((c = fgetc(file)) != EOF)
-        content[i++] = static_cast<char>(c);
+        content[++i] = static_cast<char>(c);
 
     content[fileSize] = 0;
 
@@ -39,16 +38,16 @@ string Utils::ReadFile(const filesystem::path &_relativePath)
 
 string Utils::ReadFileWithIncludes(const filesystem::path &_relativePath) // NOLINT(misc-no-recursion)
 {
-    string file = ReadFile(_relativePath);
+    auto file = ReadFile(_relativePath);
 
     regex  expression(R"(\s*#include\s+\"(.*)\"\s*\n)");
     smatch match;
     while (regex_search(file.cbegin(), file.cend(), match, expression))
     {
-        string includedFile = ReadFileWithIncludes(_relativePath.parent_path() / match[1].str());
-        long   matchStart   = match.position();
-        matchStart          = matchStart == 0 ? 0 : matchStart + 1;
-        file                = file.replace(matchStart, match.length() - 2, includedFile);
+        auto includedFile = ReadFileWithIncludes(_relativePath.parent_path() / match[1].str());
+        auto matchStart   = match.position();
+        matchStart        = matchStart == 0 ? 0 : matchStart + 1;
+        file              = file.replace(matchStart, match.length() - 2, includedFile);
     }
 
     return file;
@@ -62,27 +61,22 @@ void Utils::WriteFile(const filesystem::path &_relativePath, const string &_cont
     o.close();
 }
 
-filesystem::path Utils::GetExecutableDirectory()
+const filesystem::path &Utils::GetExecutableDirectory()
 {
     if (!m_ExecutableDir.empty())
         return m_ExecutableDir;
 
-    char *   path = new char[10];
-    uint32_t size = 10;
+    char     path[100];
+    uint32_t size = 100;
 
     if (_NSGetExecutablePath(&path[0], &size) != 0)
     {
-        delete[] path;
-        path = new char[size];
-        _NSGetExecutablePath(path, &size);
+        char longPath[size];
+        _NSGetExecutablePath(&longPath[0], &size);
+        m_ExecutableDir = filesystem::path(longPath).parent_path();
     }
+    else
+        m_ExecutableDir = filesystem::path(path).parent_path();
 
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "DanglingPointer"
-    string pathStr(path, size);
-    delete[] path;
-#pragma clang diagnostic pop
-
-    m_ExecutableDir = filesystem::path(pathStr).parent_path();
     return m_ExecutableDir;
 }

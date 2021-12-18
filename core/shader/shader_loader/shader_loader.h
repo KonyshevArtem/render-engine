@@ -4,6 +4,7 @@
 #include <OpenGL/gl3.h>
 #include <filesystem>
 #include <memory>
+#include <span>
 #include <string>
 #include <unordered_map>
 
@@ -13,10 +14,19 @@ using namespace std;
 
 class ShaderLoader
 {
+#pragma region construction
+
+private:
+    ShaderLoader()                     = delete;
+    ShaderLoader(const ShaderLoader &) = delete;
+
+#pragma endregion
+
 #pragma region constants
 
-    const static GLuint                        SUPPORTED_SHADER_PARTS[];
-    const static unordered_map<GLuint, string> SHADER_PART_NAMES;
+    static constexpr int SHADER_PART_COUNT = 3;
+    static const GLuint  SHADER_PARTS[SHADER_PART_COUNT];
+    static const string  SHADER_PART_NAMES[SHADER_PART_COUNT];
 
 #pragma endregion
 
@@ -36,9 +46,9 @@ private:
                                      const string &_keywordDirectives,
                                      GLuint &      _outShaderPart);
 
-    static bool TryLinkProgram(const vector<GLuint> &_shaderParts,
-                               GLuint &              _program,
-                               const string &        _path);
+    static bool TryLinkProgram(const span<GLuint> &_shaderParts,
+                               GLuint &            _outProgram,
+                               const string &      _path);
 
     static void ParsePragmas(const string &                 _shaderSource,
                              unordered_map<string, string> &_defaultValues,

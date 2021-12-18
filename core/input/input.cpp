@@ -4,11 +4,11 @@
 #pragma clang diagnostic pop
 
 #include "input.h"
-#include "GLUT/glut.h"
+#include <GLUT/glut.h>
 
 void Input::Init()
 {
-    m_Instance = make_unique<Input>();
+    m_Instance = unique_ptr<Input>(new Input());
     glutPassiveMotionFunc(m_Instance->MouseMove);
     glutKeyboardFunc(m_Instance->KeyboardDown);
     glutKeyboardUpFunc(m_Instance->KeyboardUp);
@@ -17,7 +17,7 @@ void Input::Init()
 void Input::MouseMove(int _x, int _y)
 {
     if (m_Instance != nullptr)
-        m_Instance->m_MousePosition = Vector3(static_cast<float>(_x), static_cast<float>(_y), 0);
+        m_Instance->m_MousePosition = Vector2(static_cast<float>(_x), static_cast<float>(_y));
 }
 
 #pragma clang diagnostic push
@@ -81,12 +81,12 @@ bool Input::GetKey(unsigned char _key)
     return m_Instance != nullptr && m_Instance->m_Inputs.contains(_key);
 }
 
-Vector3 Input::GetMousePosition()
+const Vector2 &Input::GetMousePosition()
 {
-    return m_Instance != nullptr ? m_Instance->m_MousePosition : Vector3();
+    return m_Instance != nullptr ? m_Instance->m_MousePosition : Vector2::Zero();
 }
 
-Vector3 Input::GetMouseDelta()
+const Vector2 &Input::GetMouseDelta()
 {
-    return m_Instance != nullptr ? m_Instance->m_MouseDelta : Vector3();
+    return m_Instance != nullptr ? m_Instance->m_MouseDelta : Vector2::Zero();
 }

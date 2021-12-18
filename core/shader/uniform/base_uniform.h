@@ -28,6 +28,9 @@ private:
 public:
     BaseUniform(GLint _location, GLenum _type, int _index);
 
+private:
+    BaseUniform(const BaseUniform &) = delete;
+
 #pragma endregion
 
 #pragma region public methods

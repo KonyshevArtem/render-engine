@@ -7,12 +7,13 @@
 #include "../camera/camera.h"
 #include "../light/light.h"
 #include "../shader/shader.h"
-#include <GLUT/glut.h>
 #include "context.h"
 #include "passes/render_pass.h"
 #include "passes/shadow_caster_pass.h"
 #include "passes/skybox_pass.h"
 #include "uniform_block.h"
+#include <GLUT/glut.h>
+#include <OpenGL/gl3.h>
 #include <memory>
 
 unique_ptr<UniformBlock>     Graphics::LightingDataBlock;
@@ -21,6 +22,11 @@ shared_ptr<UniformBlock>     Graphics::ShadowsDataBlock;
 unique_ptr<ShadowCasterPass> Graphics::m_ShadowCasterPass;
 unique_ptr<RenderPass>       Graphics::m_RenderPass;
 unique_ptr<SkyboxPass>       Graphics::m_SkyboxPass;
+
+string Graphics::m_GlobalShaderDirectives;
+
+int Graphics::m_ScreenWidth  = 0;
+int Graphics::m_ScreenHeight = 0;
 
 void Graphics::Init(int _argc, char **_argv)
 {
@@ -97,24 +103,26 @@ void Graphics::Render()
 
 void Graphics::Reshape(int _width, int _height)
 {
-    ScreenWidth  = _width;
-    ScreenHeight = _height;
+    m_ScreenWidth  = _width;
+    m_ScreenHeight = _height;
     glViewport(0, 0, _width, _height);
 }
 
-void Graphics::SetCameraData(Matrix4x4 _viewMatrix, Matrix4x4 _projectionMatrix)
+void Graphics::SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix)
 {
-    long    matrixSize  = sizeof(Matrix4x4);
-    Vector3 cameraPosWS = _viewMatrix.Invert().GetPosition();
+    auto matrixSize    = sizeof(Matrix4x4);
+    auto cameraPosWS   = _viewMatrix.Invert().GetPosition();
+    auto nearClipPlane = Camera::Current->GetNearClipPlane();
+    auto farClipPlane  = Camera::Current->GetFarClipPlane();
 
     CameraDataBlock->SetUniform("_ProjMatrix", &_projectionMatrix, matrixSize);
     CameraDataBlock->SetUniform("_ViewMatrix", &_viewMatrix, matrixSize);
     CameraDataBlock->SetUniform("_CameraPosWS", &cameraPosWS, sizeof(Vector4));
-    CameraDataBlock->SetUniform("_NearClipPlane", &Camera::Current->NearClipPlane, sizeof(float));
-    CameraDataBlock->SetUniform("_FarClipPlane", &Camera::Current->FarClipPlane, sizeof(float));
+    CameraDataBlock->SetUniform("_NearClipPlane", &nearClipPlane, sizeof(float));
+    CameraDataBlock->SetUniform("_FarClipPlane", &farClipPlane, sizeof(float));
 }
 
-void Graphics::SetLightingData(Vector4 _ambient, const vector<shared_ptr<Light>> &_lights)
+void Graphics::SetLightingData(const Vector4 &_ambient, const vector<shared_ptr<Light>> &_lights)
 {
     LightingDataBlock->SetUniform("_AmbientLight", &_ambient, sizeof(Vector4));
 
@@ -127,13 +135,13 @@ void Graphics::SetLightingData(Vector4 _ambient, const vector<shared_ptr<Light>>
         if (light->Type == LightType::DIRECTIONAL && !hasDirectionalLight)
         {
             hasDirectionalLight = true;
-            Vector3 dir         = light->Rotation * Vector3(0, 0, -1);
+            auto dir            = light->Rotation * Vector3(0, 0, -1);
             LightingDataBlock->SetUniform("_DirectionalLight.DirectionWS", &dir, sizeof(Vector3));
             LightingDataBlock->SetUniform("_DirectionalLight.Intensity", &light->Intensity, sizeof(Vector4));
         }
         else if (light->Type == LightType::POINT && pointLightsCount < MAX_POINT_LIGHT_SOURCES)
         {
-            string prefix = "_PointLights[" + to_string(pointLightsCount) + "].";
+            auto prefix = "_PointLights[" + to_string(pointLightsCount) + "].";
             LightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
             LightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector4));
             LightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
@@ -141,9 +149,9 @@ void Graphics::SetLightingData(Vector4 _ambient, const vector<shared_ptr<Light>>
         }
         else if (light->Type == LightType::SPOT && spotLightsCount < MAX_POINT_LIGHT_SOURCES)
         {
-            Vector3 dir       = light->Rotation * Vector3(0, 0, -1);
-            float   cutOffCos = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
-            string  prefix    = "_SpotLights[" + to_string(spotLightsCount) + "].";
+            auto dir       = light->Rotation * Vector3(0, 0, -1);
+            auto cutOffCos = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
+            auto prefix    = "_SpotLights[" + to_string(spotLightsCount) + "].";
             LightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
             LightingDataBlock->SetUniform(prefix + "DirectionWS", &dir, sizeof(Vector3));
             LightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector4));

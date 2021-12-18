@@ -6,9 +6,13 @@
 #include "time.h" // NOLINT(modernize-deprecated-headers)
 #include "GLUT/glut.h"
 
+float Time::m_ElapsedTime = 0;
+float Time::m_DeltaTime   = 0;
+float Time::m_PrevTime    = 0;
+
 void Time::Update()
 {
-    TimePassed = static_cast<float>(glutGet(GLUT_ELAPSED_TIME));
-    DeltaTime  = TimePassed - PrevTime;
-    PrevTime   = TimePassed;
+    m_ElapsedTime = static_cast<float>(glutGet(GLUT_ELAPSED_TIME));
+    m_DeltaTime   = m_ElapsedTime - m_PrevTime;
+    m_PrevTime    = m_ElapsedTime;
 }

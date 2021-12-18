@@ -7,7 +7,7 @@
 #pragma clang diagnostic pop
 
 #include "uniform_type/uniform_type.h"
-#include <GLUT/glut.h>
+#include <OpenGL/gl3.h>
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -25,21 +25,24 @@ class Shader
 public:
     static shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords);
 
-    explicit Shader(GLuint _program, unordered_map<string, string> _defaultValues);
-    ~Shader();
+    virtual ~Shader();
+
+private:
+    Shader(GLuint _program, unordered_map<string, string> _defaultValues);
+    Shader(const Shader &) = delete;
 
 #pragma endregion
 
 #pragma region fields
 
 private:
-    GLuint                                                                               m_Program;
-    unordered_map<string, shared_ptr<BaseUniform>>                                       m_Uniforms;
-    unordered_map<string, int>                                                           m_TextureUnits;
-    unordered_map<string, string>                                                        m_DefaultValues;
-    inline static unordered_map<string, shared_ptr<Texture>>                             m_GlobalTextures  = {};
-    inline static unordered_map<string, unordered_map<UniformType, shared_ptr<Texture>>> m_DefaultTextures = {};
-    inline static const Shader *                                                         m_CurrentShader   = nullptr;
+    GLuint                                                                        m_Program;
+    unordered_map<string, shared_ptr<BaseUniform>>                                m_Uniforms;
+    unordered_map<string, int>                                                    m_TextureUnits;
+    unordered_map<string, string>                                                 m_DefaultValues;
+    static unordered_map<string, shared_ptr<Texture>>                             m_GlobalTextures;
+    static unordered_map<string, unordered_map<UniformType, shared_ptr<Texture>>> m_DefaultTextures;
+    static const Shader *                                                         m_CurrentShader;
 
 #pragma endregion
 
@@ -63,6 +66,7 @@ private:
 
 #pragma endregion
 
+    friend class ShaderLoader;
     friend class UniformBlock;
 };
 

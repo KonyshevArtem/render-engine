@@ -26,17 +26,23 @@ public:
     float m32;
     float m33;
 
-    static Matrix4x4 Zero();
+    static inline const Matrix4x4 &Zero()
+    {
+        return m_Zero;
+    }
 
-    static Matrix4x4 Identity();
+    static inline const Matrix4x4 &Identity()
+    {
+        return m_Identity;
+    }
 
-    static Matrix4x4 Translation(Vector3 _translation);
+    static Matrix4x4 Translation(const Vector3 &_translation);
 
-    static Matrix4x4 Rotation(Quaternion _quaternion);
+    static Matrix4x4 Rotation(const Quaternion &_quaternion);
 
-    static Matrix4x4 Scale(Vector3 _scale);
+    static Matrix4x4 Scale(const Vector3 &_scale);
 
-    static Matrix4x4 TRS(Vector3 _translation, Quaternion _rotation, Vector3 _scale);
+    static Matrix4x4 TRS(const Vector3 &_translation, const Quaternion &_rotation, const Vector3 &_scale);
 
     static Matrix4x4 Perspective(float _fov, float _aspect, float _nearZ, float _farZ);
 
@@ -53,6 +59,10 @@ public:
     Vector3 GetPosition() const;
 
     [[nodiscard]] std::string ToString() const;
+
+private:
+    static const Matrix4x4 m_Zero;
+    static const Matrix4x4 m_Identity;
 };
 
 #endif //OPENGL_STUDY_MATRIX4X4_H

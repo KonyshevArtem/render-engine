@@ -2,7 +2,6 @@
 #define OPENGL_STUDY_CUBEMAP_H
 
 #include "../texture/texture.h"
-#include <OpenGL/gl3.h>
 #include <filesystem>
 #include <memory>
 #include <vector>
@@ -23,10 +22,15 @@ public:
     static shared_ptr<Cubemap> &White();
 
 private:
+    Cubemap()                = default;
+    Cubemap(const Cubemap &) = delete;
+
     void Init();
 
-    vector<vector<unsigned char>>     m_Data;
-    inline static shared_ptr<Cubemap> m_White = nullptr;
+    vector<vector<unsigned char>> m_Data;
+    static shared_ptr<Cubemap>    m_White;
+
+    static constexpr unsigned int SIDES_COUNT = 6;
 };
 
 #endif

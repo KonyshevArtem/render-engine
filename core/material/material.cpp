@@ -15,19 +15,19 @@ void Material::SetTexture(const string &_name, shared_ptr<Texture2D> _value)
     m_Vectors4[_name + "ST"] = Vector4(0, 0, 1, 1);
 }
 
-shared_ptr<Texture2D> Material::GetTexture(const string &_name)
+const shared_ptr<Texture2D> &Material::GetTexture(const string &_name) const
 {
-    return m_Textures2D.contains(_name) ? m_Textures2D[_name] : nullptr;
+    return m_Textures2D.contains(_name) ? m_Textures2D.at(_name) : Texture2D::Null();
 }
 
-void Material::SetVector4(const string &_name, Vector4 _value)
+void Material::SetVector4(const string &_name, const Vector4 &_value)
 {
     m_Vectors4[_name] = _value;
 }
 
-Vector4 Material::GetVector4(const string &_name)
+const Vector4 &Material::GetVector4(const string &_name) const
 {
-    return m_Vectors4.contains(_name) ? m_Vectors4[_name] : Vector4();
+    return m_Vectors4.contains(_name) ? m_Vectors4.at(_name) : Vector4::Zero();
 }
 
 void Material::SetFloat(const string &_name, float _value)
@@ -35,12 +35,12 @@ void Material::SetFloat(const string &_name, float _value)
     m_Floats[_name] = _value;
 }
 
-float Material::GetFloat(const string &_name)
+float Material::GetFloat(const string &_name) const
 {
-    return m_Floats.contains(_name) ? m_Floats[_name] : 0;
+    return m_Floats.contains(_name) ? m_Floats.at(_name) : 0;
 }
 
-shared_ptr<Shader> Material::GetShader() const
+const shared_ptr<Shader> &Material::GetShader() const
 {
     return m_Shader;
 }

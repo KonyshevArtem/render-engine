@@ -42,13 +42,18 @@ BillboardRenderer::~BillboardRenderer()
 
 void BillboardRenderer::Render()
 {
-    if (m_Shader == nullptr || m_Texture == nullptr || m_GameObject == nullptr || m_Texture->Width == 0 || m_Texture->Height == 0)
+    if (m_Shader == nullptr || m_Texture == nullptr || m_GameObject == nullptr)
+        return;
+
+    int width  = m_Texture->GetWidth();
+    int height = m_Texture->GetHeight();
+    if (width == 0 || height == 0)
         return;
 
     m_Shader->Use();
     m_Shader->SetTextureUniform("_Texture", m_Texture);
 
-    float aspect = static_cast<float>(m_Texture->Width) / m_Texture->Height;
+    auto    aspect = static_cast<float>(width) / height;
     Vector2 size {m_Size, m_Size / aspect};
     m_Shader->SetUniform("_Size", &size);
 

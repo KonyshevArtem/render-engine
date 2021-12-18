@@ -2,54 +2,25 @@
 #include "../quaternion/quaternion.h"
 #include "../vector3/vector3.h"
 
-Matrix4x4 Matrix4x4::Zero()
-{
-    Matrix4x4 zero = Matrix4x4();
-    zero.m00       = 0;
-    zero.m01       = 0;
-    zero.m02       = 0;
-    zero.m03       = 0;
-    zero.m10       = 0;
-    zero.m11       = 0;
-    zero.m12       = 0;
-    zero.m13       = 0;
-    zero.m20       = 0;
-    zero.m21       = 0;
-    zero.m22       = 0;
-    zero.m23       = 0;
-    zero.m30       = 0;
-    zero.m31       = 0;
-    zero.m32       = 0;
-    zero.m33       = 0;
-    return zero;
-}
+const Matrix4x4 Matrix4x4::m_Zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+const Matrix4x4 Matrix4x4::m_Identity {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-Matrix4x4 Matrix4x4::Identity()
+Matrix4x4 Matrix4x4::Translation(const Vector3 &_translation)
 {
-    Matrix4x4 identity = Matrix4x4();
-    identity.m00       = 1;
-    identity.m11       = 1;
-    identity.m22       = 1;
-    identity.m33       = 1;
-    return identity;
-}
-
-Matrix4x4 Matrix4x4::Translation(Vector3 _translation)
-{
-    Matrix4x4 translationMatrix = Matrix4x4::Identity();
-    translationMatrix.m30       = _translation.x;
-    translationMatrix.m31       = _translation.y;
-    translationMatrix.m32       = _translation.z;
+    auto translationMatrix = Matrix4x4::Identity();
+    translationMatrix.m30  = _translation.x;
+    translationMatrix.m31  = _translation.y;
+    translationMatrix.m32  = _translation.z;
     return translationMatrix;
 }
 
-Matrix4x4 Matrix4x4::Rotation(Quaternion _quaternion)
+Matrix4x4 Matrix4x4::Rotation(const Quaternion &_quaternion)
 {
-    Matrix4x4 result = Matrix4x4::Identity();
-    float     x      = _quaternion.x;
-    float     y      = _quaternion.y;
-    float     z      = _quaternion.z;
-    float     w      = _quaternion.w;
+    auto  result = Matrix4x4::Identity();
+    float x      = _quaternion.x;
+    float y      = _quaternion.y;
+    float z      = _quaternion.z;
+    float w      = _quaternion.w;
 
     result.m00 = 1 - 2 * y * y - 2 * z * z;
     result.m01 = 2 * x * y + 2 * z * w;
@@ -66,23 +37,23 @@ Matrix4x4 Matrix4x4::Rotation(Quaternion _quaternion)
     return result;
 }
 
-Matrix4x4 Matrix4x4::Scale(Vector3 _scale)
+Matrix4x4 Matrix4x4::Scale(const Vector3 &_scale)
 {
-    Matrix4x4 result = Matrix4x4::Identity();
-    result.m00       = _scale.x;
-    result.m11       = _scale.y;
-    result.m22       = _scale.z;
+    auto result = Matrix4x4::Identity();
+    result.m00  = _scale.x;
+    result.m11  = _scale.y;
+    result.m22  = _scale.z;
     return result;
 }
 
-Matrix4x4 Matrix4x4::TRS(Vector3 _translation, Quaternion _rotation, Vector3 _scale)
+Matrix4x4 Matrix4x4::TRS(const Vector3 &_translation, const Quaternion &_rotation, const Vector3 &_scale)
 {
     return Translation(_translation) * Rotation(_rotation) * Scale(_scale);
 }
 
 float Matrix4x4::GetElement(int _column, int _row) const
 {
-    auto *floatPtr = (float *) this;
+    const auto *floatPtr = reinterpret_cast<const float *>(this);
     return *(floatPtr + 4 * _column + _row);
 }
 
@@ -94,7 +65,7 @@ void Matrix4x4::SetElement(int _column, int _row, float _value)
 
 Matrix4x4 Matrix4x4::operator*(const Matrix4x4 &_matrix) const
 {
-    Matrix4x4 result = Matrix4x4::Zero();
+    auto result = Matrix4x4::Zero();
     for (int i = 0; i < 4; ++i)
     {
         for (int j = 0; j < 4; ++j)
@@ -127,56 +98,56 @@ std::string Matrix4x4::ToString() const
 
 Matrix4x4 Matrix4x4::Invert() const
 {
-    float A2323 = m22 * m33 - m23 * m32;
-    float A1323 = m21 * m33 - m23 * m31;
-    float A1223 = m21 * m32 - m22 * m31;
-    float A0323 = m20 * m33 - m23 * m30;
-    float A0223 = m20 * m32 - m22 * m30;
-    float A0123 = m20 * m31 - m21 * m30;
-    float A2313 = m12 * m33 - m13 * m32;
-    float A1313 = m11 * m33 - m13 * m31;
-    float A1213 = m11 * m32 - m12 * m31;
-    float A2312 = m12 * m23 - m13 * m22;
-    float A1312 = m11 * m23 - m13 * m21;
-    float A1212 = m11 * m22 - m12 * m21;
-    float A0313 = m10 * m33 - m13 * m30;
-    float A0213 = m10 * m32 - m12 * m30;
-    float A0312 = m10 * m23 - m13 * m20;
-    float A0212 = m10 * m22 - m12 * m20;
-    float A0113 = m10 * m31 - m11 * m30;
-    float A0112 = m10 * m21 - m11 * m20;
+    auto A2323 = m22 * m33 - m23 * m32;
+    auto A1323 = m21 * m33 - m23 * m31;
+    auto A1223 = m21 * m32 - m22 * m31;
+    auto A0323 = m20 * m33 - m23 * m30;
+    auto A0223 = m20 * m32 - m22 * m30;
+    auto A0123 = m20 * m31 - m21 * m30;
+    auto A2313 = m12 * m33 - m13 * m32;
+    auto A1313 = m11 * m33 - m13 * m31;
+    auto A1213 = m11 * m32 - m12 * m31;
+    auto A2312 = m12 * m23 - m13 * m22;
+    auto A1312 = m11 * m23 - m13 * m21;
+    auto A1212 = m11 * m22 - m12 * m21;
+    auto A0313 = m10 * m33 - m13 * m30;
+    auto A0213 = m10 * m32 - m12 * m30;
+    auto A0312 = m10 * m23 - m13 * m20;
+    auto A0212 = m10 * m22 - m12 * m20;
+    auto A0113 = m10 * m31 - m11 * m30;
+    auto A0112 = m10 * m21 - m11 * m20;
 
-    float det = m00 * (m11 * A2323 - m12 * A1323 + m13 * A1223) -
-                m01 * (m10 * A2323 - m12 * A0323 + m13 * A0223) +
-                m02 * (m10 * A1323 - m11 * A0323 + m13 * A0123) -
-                m03 * (m10 * A1223 - m11 * A0223 + m12 * A0123);
+    auto det = m00 * (m11 * A2323 - m12 * A1323 + m13 * A1223) -
+               m01 * (m10 * A2323 - m12 * A0323 + m13 * A0223) +
+               m02 * (m10 * A1323 - m11 * A0323 + m13 * A0123) -
+               m03 * (m10 * A1223 - m11 * A0223 + m12 * A0123);
     if (det == 0)
         return Zero();
 
     det = 1 / det;
 
-    Matrix4x4 inverted = Zero();
-    inverted.m00       = det * (m11 * A2323 - m12 * A1323 + m13 * A1223);
-    inverted.m01       = det * -(m01 * A2323 - m02 * A1323 + m03 * A1223);
-    inverted.m02       = det * (m01 * A2313 - m02 * A1313 + m03 * A1213);
-    inverted.m03       = det * -(m01 * A2312 - m02 * A1312 + m03 * A1212);
-    inverted.m10       = det * -(m10 * A2323 - m12 * A0323 + m13 * A0223);
-    inverted.m11       = det * (m00 * A2323 - m02 * A0323 + m03 * A0223);
-    inverted.m12       = det * -(m00 * A2313 - m02 * A0313 + m03 * A0213);
-    inverted.m13       = det * (m00 * A2312 - m02 * A0312 + m03 * A0212);
-    inverted.m20       = det * (m10 * A1323 - m11 * A0323 + m13 * A0123);
-    inverted.m21       = det * -(m00 * A1323 - m01 * A0323 + m03 * A0123);
-    inverted.m22       = det * (m00 * A1313 - m01 * A0313 + m03 * A0113);
-    inverted.m23       = det * -(m00 * A1312 - m01 * A0312 + m03 * A0112);
-    inverted.m30       = det * -(m10 * A1223 - m11 * A0223 + m12 * A0123);
-    inverted.m31       = det * (m00 * A1223 - m01 * A0223 + m02 * A0123);
-    inverted.m32       = det * -(m00 * A1213 - m01 * A0213 + m02 * A0113);
-    inverted.m33       = det * (m00 * A1212 - m01 * A0212 + m02 * A0112);
+    auto inverted = Zero();
+    inverted.m00  = det * (m11 * A2323 - m12 * A1323 + m13 * A1223);
+    inverted.m01  = det * -(m01 * A2323 - m02 * A1323 + m03 * A1223);
+    inverted.m02  = det * (m01 * A2313 - m02 * A1313 + m03 * A1213);
+    inverted.m03  = det * -(m01 * A2312 - m02 * A1312 + m03 * A1212);
+    inverted.m10  = det * -(m10 * A2323 - m12 * A0323 + m13 * A0223);
+    inverted.m11  = det * (m00 * A2323 - m02 * A0323 + m03 * A0223);
+    inverted.m12  = det * -(m00 * A2313 - m02 * A0313 + m03 * A0213);
+    inverted.m13  = det * (m00 * A2312 - m02 * A0312 + m03 * A0212);
+    inverted.m20  = det * (m10 * A1323 - m11 * A0323 + m13 * A0123);
+    inverted.m21  = det * -(m00 * A1323 - m01 * A0323 + m03 * A0123);
+    inverted.m22  = det * (m00 * A1313 - m01 * A0313 + m03 * A0113);
+    inverted.m23  = det * -(m00 * A1312 - m01 * A0312 + m03 * A0112);
+    inverted.m30  = det * -(m10 * A1223 - m11 * A0223 + m12 * A0123);
+    inverted.m31  = det * (m00 * A1223 - m01 * A0223 + m02 * A0123);
+    inverted.m32  = det * -(m00 * A1213 - m01 * A0213 + m02 * A0113);
+    inverted.m33  = det * (m00 * A1212 - m01 * A0212 + m02 * A0112);
     return inverted;
 }
 Matrix4x4 Matrix4x4::Transpose() const
 {
-    Matrix4x4 transposed = Zero();
+    auto transposed = Zero();
 
     transposed.m00 = m00;
     transposed.m01 = m10;
@@ -203,23 +174,23 @@ Matrix4x4 Matrix4x4::Transpose() const
 
 Matrix4x4 Matrix4x4::Perspective(float _fov, float _aspect, float _nearZ, float _farZ)
 {
-    float top    = _nearZ * (static_cast<float>(M_PI) / 180 * _fov / 2);
-    float bottom = -top;
-    float right  = _aspect * top;
-    float left   = -right;
+    auto top    = _nearZ * (static_cast<float>(M_PI) / 180 * _fov / 2);
+    auto bottom = -top;
+    auto right  = _aspect * top;
+    auto left   = -right;
 
-    Matrix4x4 matrix = Matrix4x4::Zero();
-    matrix.m00       = 2 * _nearZ / (right - left);
-    matrix.m11       = 2 * _nearZ / (top - bottom);
-    matrix.m20       = (right + left) / (right - left);
-    matrix.m21       = (top + bottom) / (top - bottom);
-    matrix.m22       = -(_farZ + _nearZ) / (_farZ - _nearZ);
-    matrix.m23       = -1;
-    matrix.m32       = -2 * _farZ * _nearZ / (_farZ - _nearZ);
+    auto matrix = Matrix4x4::Zero();
+    matrix.m00  = 2 * _nearZ / (right - left);
+    matrix.m11  = 2 * _nearZ / (top - bottom);
+    matrix.m20  = (right + left) / (right - left);
+    matrix.m21  = (top + bottom) / (top - bottom);
+    matrix.m22  = -(_farZ + _nearZ) / (_farZ - _nearZ);
+    matrix.m23  = -1;
+    matrix.m32  = -2 * _farZ * _nearZ / (_farZ - _nearZ);
     return matrix;
 }
 
 Vector3 Matrix4x4::GetPosition() const
 {
-    return Vector3(m30, m31, m32);
+    return {m30, m31, m32};
 }

@@ -1,21 +1,16 @@
 #include "vector3.h"
 #include <cmath>
 
+const Vector3 Vector3::m_One {1, 1, 1};
+
 Vector3::Vector3() :
     Vector3(0, 0, 0)
 {
 }
 
-Vector3::Vector3(float _x, float _y, float _z)
+Vector3::Vector3(float _x, float _y, float _z) :
+    x(_x), y(_y), z(_z)
 {
-    this->x = _x;
-    this->y = _y;
-    this->z = _z;
-}
-
-Vector3 Vector3::One()
-{
-    return {1, 1, 1};
 }
 
 float Vector3::Length() const
@@ -27,7 +22,10 @@ float Vector3::Length() const
 
 Vector3 Vector3::Normalize() const
 {
-    float length = this->Length();
+    auto length = this->Length();
+    if (length < std::numeric_limits<float>::epsilon())
+        return {0, 0, 0};
+
     return {
             this->x / length,
             this->y / length,

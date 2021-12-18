@@ -1,3 +1,8 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
+#define GL_SILENCE_DEPRECATION
+#pragma clang diagnostic pop
+
 #include "shader_loader.h"
 #include "../../../utils/utils.h"
 #include "../../graphics/graphics.h"
@@ -10,11 +15,15 @@
 
 #pragma region constants
 
-const GLuint                        ShaderLoader::SUPPORTED_SHADER_PARTS[3] {GL_VERTEX_SHADER, GL_GEOMETRY_SHADER, GL_FRAGMENT_SHADER};
-const unordered_map<GLuint, string> ShaderLoader::SHADER_PART_NAMES {
-        {GL_VERTEX_SHADER, "vertex"},
-        {GL_GEOMETRY_SHADER, "geometry"},
-        {GL_FRAGMENT_SHADER, "fragment"}};
+const GLuint ShaderLoader::SHADER_PARTS[SHADER_PART_COUNT] {
+        GL_VERTEX_SHADER,
+        GL_GEOMETRY_SHADER,
+        GL_FRAGMENT_SHADER};
+
+const string ShaderLoader::SHADER_PART_NAMES[SHADER_PART_COUNT] {
+        "vertex",
+        "geometry",
+        "fragment"};
 
 #pragma endregion
 
@@ -22,7 +31,7 @@ const unordered_map<GLuint, string> ShaderLoader::SHADER_PART_NAMES {
 
 shared_ptr<Shader> ShaderLoader::Load(const filesystem::path &_path, const vector<string> &_keywords)
 {
-    auto shaderSource = Utils::ReadFileWithIncludes(_path);
+    auto   shaderSource = Utils::ReadFileWithIncludes(_path);
     string keywordsDirectives;
     for (const auto &keyword: _keywords)
         keywordsDirectives += "#define " + keyword + "\n";
@@ -31,27 +40,30 @@ shared_ptr<Shader> ShaderLoader::Load(const filesystem::path &_path, const vecto
     unordered_map<string, string> additionalParameters {};
     ParsePragmas(shaderSource, defaultValues, additionalParameters);
 
-    bool           success = true;
-    vector<GLuint> shaderParts;
-    for (const auto &part: SUPPORTED_SHADER_PARTS)
+    bool   success = true;
+    GLuint shaderParts[SHADER_PART_COUNT];
+    size_t shaderPartCount = 0;
+
+    for (int i = 0; i < SHADER_PART_COUNT; ++i)
     {
-        const string &partName = SHADER_PART_NAMES.at(part);
+        auto        part     = SHADER_PARTS[i];
+        const auto &partName = SHADER_PART_NAMES[i];
         if (!additionalParameters.contains(partName))
             continue;
 
         GLuint shaderPart   = 0;
         auto & relativePath = additionalParameters[partName];
         auto   partPath     = _path.parent_path() / relativePath;
-        string partSource   = Utils::ReadFileWithIncludes(partPath);
+        auto   partSource   = Utils::ReadFileWithIncludes(partPath);
         success &= ShaderLoader::TryCompileShaderPart(part, partPath, partSource, keywordsDirectives, shaderPart);
 
-        shaderParts.push_back(shaderPart);
+        shaderParts[shaderPartCount++] = shaderPart;
     }
 
     GLuint program;
-    success &= TryLinkProgram(shaderParts, program, _path);
+    success &= TryLinkProgram(span<GLuint> {shaderParts, shaderPartCount}, program, _path);
 
-    return success ? make_shared<Shader>(program, defaultValues) : nullptr;
+    return success ? shared_ptr<Shader>(new Shader(program, defaultValues)) : nullptr;
 }
 
 #pragma endregion
@@ -64,76 +76,72 @@ bool ShaderLoader::TryCompileShaderPart(GLuint        _shaderPartType,
                                         const string &_keywordDirectives,
                                         GLuint &      _outShaderPart)
 {
-    const string &globalDirectives = Graphics::GetGlobalShaderDirectives();
-    int           sourcesCount     = 3;
+    const auto &  globalDirectives = Graphics::GetGlobalShaderDirectives();
+    constexpr int sourcesCount     = 3;
     const char *  sources[sourcesCount];
 
     sources[0] = globalDirectives.c_str();
     sources[1] = _keywordDirectives.c_str();
     sources[2] = _source.c_str();
 
-    GLuint shader = glCreateShader(_shaderPartType);
-    glShaderSource(shader, sourcesCount, sources, nullptr);
+    _outShaderPart = glCreateShader(_shaderPartType);
+    glShaderSource(_outShaderPart, sourcesCount, sources, nullptr);
 
-    glCompileShader(shader);
+    glCompileShader(_outShaderPart);
 
     GLint status;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+    glGetShaderiv(_outShaderPart, GL_COMPILE_STATUS, &status);
     if (status == GL_FALSE)
     {
         GLint infoLogLength;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
+        glGetShaderiv(_outShaderPart, GL_INFO_LOG_LENGTH, &infoLogLength);
 
-        auto *logMsg = new GLchar[infoLogLength + 1];
-        glGetShaderInfoLog(shader, infoLogLength, nullptr, logMsg);
+        GLchar logMsg[infoLogLength + 1];
+        glGetShaderInfoLog(_outShaderPart, infoLogLength, nullptr, logMsg);
 
         fprintf(stderr, "Shader compilation failed: %s\n%s\n", _path.c_str(), logMsg);
 
-        delete[] logMsg;
         return false;
     }
 
-    _outShaderPart = shader;
     return true;
 }
 
-bool ShaderLoader::TryLinkProgram(const vector<GLuint> &_shaderParts, GLuint &_program, const string &_path)
+bool ShaderLoader::TryLinkProgram(const span<GLuint> &_shaderParts, GLuint &_outProgram, const string &_path)
 {
-    GLuint program = glCreateProgram();
+    _outProgram = glCreateProgram();
 
     for (const auto &part: _shaderParts)
     {
         if (glIsShader(part))
-            glAttachShader(program, part);
+            glAttachShader(_outProgram, part);
     }
 
-    glLinkProgram(program);
-
-    GLint status;
-    glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (status == GL_FALSE)
-    {
-        GLint infoLogLength;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
-
-        auto *logMsg = new GLchar[infoLogLength + 1];
-        glGetProgramInfoLog(program, infoLogLength, nullptr, logMsg);
-        fprintf(stderr, "Program link failed: %s\n%s", _path.c_str(), logMsg);
-
-        delete[] logMsg;
-        return false;
-    }
+    glLinkProgram(_outProgram);
 
     for (const auto &part: _shaderParts)
     {
         if (glIsShader(part))
         {
-            glDetachShader(program, part);
+            glDetachShader(_outProgram, part);
             glDeleteShader(part);
         }
     }
 
-    _program = program;
+    GLint status;
+    glGetProgramiv(_outProgram, GL_LINK_STATUS, &status);
+    if (status == GL_FALSE)
+    {
+        GLint infoLogLength;
+        glGetProgramiv(_outProgram, GL_INFO_LOG_LENGTH, &infoLogLength);
+
+        GLchar logMsg[infoLogLength + 1];
+        glGetProgramInfoLog(_outProgram, infoLogLength, nullptr, logMsg);
+        fprintf(stderr, "Program link failed: %s\n%s", _path.c_str(), logMsg);
+
+        return false;
+    }
+
     return true;
 }
 
@@ -147,7 +155,7 @@ void ShaderLoader::ParsePragmas(const string &                 _shaderSource,
 
     while (regex_search(searchStart, _shaderSource.cend(), match, expression))
     {
-        string         info = match[1].str();
+        auto           info = match[1].str();
         vector<string> strings;
         boost::split(strings, info, boost::is_any_of(" "));
         unsigned long length = strings.size();
@@ -163,10 +171,10 @@ void ShaderLoader::ParsePragmas(const string &                 _shaderSource,
             _defaultValues[strings[1]] = strings[2];
         }
 
-        for (const auto &pair: SHADER_PART_NAMES)
+        for (const auto &name: SHADER_PART_NAMES)
         {
-            if (strings[0] == pair.second && length >= 2)
-                _additionalParameters[pair.second] = strings[1];
+            if (length >= 2 && strings[0] == name)
+                _additionalParameters[name] = strings[1];
         }
 
         searchStart = match.suffix().first;

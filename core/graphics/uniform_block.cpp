@@ -14,7 +14,7 @@ using namespace std;
 UniformBlock::UniformBlock(const shared_ptr<Shader> &_shader, string _blockName, unsigned int _index) :
     m_Name(std::move(_blockName))
 {
-    GLuint blockIndex = glGetUniformBlockIndex(_shader->m_Program, m_Name.c_str());
+    auto blockIndex = glGetUniformBlockIndex(_shader->m_Program, m_Name.c_str());
 
     GLint uniformCount;
     glGetActiveUniformBlockiv(_shader->m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformCount);
@@ -23,7 +23,7 @@ UniformBlock::UniformBlock(const shared_ptr<Shader> &_shader, string _blockName,
     glGetActiveUniformBlockiv(_shader->m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &uniformIndexes[0]);
 
     GLint uniformOffsets[uniformCount];
-    glGetActiveUniformsiv(_shader->m_Program, uniformCount, (const GLuint *) &uniformIndexes[0], GL_UNIFORM_OFFSET, &uniformOffsets[0]);
+    glGetActiveUniformsiv(_shader->m_Program, uniformCount, reinterpret_cast<const GLuint *>(&uniformIndexes[0]), GL_UNIFORM_OFFSET, &uniformOffsets[0]);
 
     unordered_map<GLint, GLint> indexToOffset;
     for (int i = 0; i < uniformCount; ++i)

@@ -17,17 +17,19 @@ public:
     explicit Material(shared_ptr<Shader> _shader);
 
     void SetTexture(const string &_name, shared_ptr<Texture2D> _value);
-    void SetVector4(const string &_name, Vector4 _value);
+    void SetVector4(const string &_name, const Vector4 &_value);
     void SetFloat(const string &_name, float _value);
 
-    shared_ptr<Texture2D> GetTexture(const string &_name);
-    Vector4               GetVector4(const string &_name);
-    float                 GetFloat(const string &_name);
+    const shared_ptr<Texture2D> &GetTexture(const string &_name) const;
+    const Vector4 &              GetVector4(const string &_name) const;
+    float                        GetFloat(const string &_name) const;
 
-    [[nodiscard]] shared_ptr<Shader> GetShader() const;
-    void                             TransferUniforms() const;
+    const shared_ptr<Shader> &GetShader() const;
+    void                      TransferUniforms() const;
 
 private:
+    Material(const Material &) = delete;
+
     shared_ptr<Shader>                           m_Shader;
     unordered_map<string, shared_ptr<Texture2D>> m_Textures2D;
     unordered_map<string, Vector4>               m_Vectors4;

@@ -16,6 +16,14 @@ public:
     [[nodiscard]] float Length() const;
 
     Vector4 Normalize() const;
+
+    static inline const Vector4 &Zero()
+    {
+        return m_Zero;
+    }
+
+private:
+    static const Vector4 m_Zero;
 };
 
 #endif //OPENGL_STUDY_VECTOR4_H

@@ -6,11 +6,23 @@ class Time
 public:
     static void Update();
 
-    inline static float TimePassed = 0;
-    inline static float DeltaTime  = 0;
+    static inline float GetElapsedTime()
+    {
+        return m_ElapsedTime;
+    }
+
+    static inline float GetDeltaTime()
+    {
+        return m_DeltaTime;
+    }
 
 private:
-    inline static float PrevTime = 0;
+    Time()             = delete;
+    Time(const Time &) = delete;
+
+    static float m_ElapsedTime;
+    static float m_DeltaTime;
+    static float m_PrevTime;
 };
 
 #endif //OPENGL_STUDY_TIME_H

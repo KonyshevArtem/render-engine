@@ -52,9 +52,9 @@ void TestScene::Init()
     auto cylinderAsset = FBXAsset::Load("resources/models/cylinder.fbx");
     auto planeAsset    = FBXAsset::Load("resources/models/plane.fbx");
 
-    auto cubeMesh     = cubeAsset->Meshes[0];
-    auto cylinderMesh = cylinderAsset->Meshes[0];
-    auto planeMesh    = planeAsset->Meshes[0];
+    auto cubeMesh     = cubeAsset->GetMesh(0);
+    auto cylinderMesh = cylinderAsset->GetMesh(0);
+    auto planeMesh    = planeAsset->GetMesh(0);
 
     // init materials
     auto vertexLitMaterial = make_shared<Material>(vertexLitShader);
@@ -158,8 +158,8 @@ void TestScene::Init()
     Lights.push_back(spotLight2);
 
     // init camera
-    Camera::Current->Position = Vector3(-10, 0.5f, 5);
-    m_CameraFlyControl        = make_unique<CameraFlyController>();
+    Camera::Current->SetPosition(Vector3(-10, 0.5f, 5));
+    m_CameraFlyControl = make_unique<CameraFlyController>();
 }
 
 Vector3 TestScene::CalcTranslation(float _phase)
@@ -191,7 +191,7 @@ void TestScene::UpdateInternal()
 
     m_CameraFlyControl->Update();
 
-    float phase = fmodf(fmodf(Time::TimePassed, LOOP_DURATION) / LOOP_DURATION, 1.0f);
+    float phase = fmodf(fmodf(Time::GetElapsedTime(), LOOP_DURATION) / LOOP_DURATION, 1.0f);
 
     GameObjects[0]->LocalPosition = CalcTranslation(phase);
     GameObjects[0]->LocalRotation = CalcRotation(phase, 0);
@@ -207,6 +207,6 @@ void TestScene::UpdateInternal()
     m_WaterMaterial->SetVector4("_AlbedoST", st);
     m_WaterMaterial->SetVector4("_NormalMapST", st);
 
-    m_SpotLight->Position = Camera::Current->Position + Camera::Current->Rotation * Vector3(-3, 0, 0);
-    m_SpotLight->Rotation = Camera::Current->Rotation;
+    m_SpotLight->Position = Camera::Current->GetPosition() + Camera::Current->GetRotation() * Vector3(-3, 0, 0);
+    m_SpotLight->Rotation = Camera::Current->GetRotation();
 }

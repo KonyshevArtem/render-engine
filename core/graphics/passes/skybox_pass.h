@@ -17,6 +17,8 @@ public:
     void Execute(const shared_ptr<Context> &_ctx);
 
 private:
+    SkyboxPass(const SkyboxPass &) = delete;
+
     shared_ptr<Mesh>   m_Mesh;
     shared_ptr<Shader> m_Shader;
 };

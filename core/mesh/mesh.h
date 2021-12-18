@@ -12,11 +12,11 @@ using namespace std;
 class Mesh
 {
 public:
-    Mesh(vector<Vector3> _vertices,
-         vector<Vector3> _normals,
-         vector<int>     _indexes,
-         vector<Vector2> _uvs,
-         vector<Vector3> _tangents);
+    Mesh(vector<Vector3> &_vertices,
+         vector<Vector3> &_normals,
+         vector<int> &    _indexes,
+         vector<Vector2> &_uvs,
+         vector<Vector3> &_tangents);
 
     void Init();
     void Draw() const;
@@ -24,6 +24,8 @@ public:
     virtual ~Mesh();
 
 private:
+    Mesh(const Mesh &) = delete;
+
     GLuint m_VertexArrayObject = 0;
     GLuint m_VertexBuffer      = 0;
     GLuint m_IndexBuffer       = 0;

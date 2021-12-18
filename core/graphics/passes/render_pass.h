@@ -14,6 +14,9 @@ public:
     RenderPass();
 
     void Execute(const shared_ptr<Context> &_ctx);
+
+private:
+    RenderPass(const RenderPass &) = delete;
 };
 
 #endif //OPENGL_STUDY_RENDER_PASS_H

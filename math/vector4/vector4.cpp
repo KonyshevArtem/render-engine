@@ -1,17 +1,16 @@
 #include "vector4.h"
 #include <cmath>
 
+const Vector4 Vector4::m_Zero = Vector4();
+
 Vector4::Vector4() :
     Vector4(0, 0, 0, 0)
 {
 }
 
-Vector4::Vector4(float _x, float _y, float _z, float _w)
+Vector4::Vector4(float _x, float _y, float _z, float _w) :
+    x(_x), y(_y), z(_z), w(_w)
 {
-    this->x = _x;
-    this->y = _y;
-    this->z = _z;
-    this->w = _w;
 }
 
 float Vector4::Length() const
@@ -24,7 +23,10 @@ float Vector4::Length() const
 
 Vector4 Vector4::Normalize() const
 {
-    float length = this->Length();
+    auto length = this->Length();
+    if (length < std::numeric_limits<float>::epsilon())
+        return {0, 0, 0, 0};
+
     return {
             this->x / length,
             this->y / length,

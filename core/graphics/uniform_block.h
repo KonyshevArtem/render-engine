@@ -19,6 +19,8 @@ public:
     void SetUniform(const string &_name, const void *_data, unsigned long _size);
 
 private:
+    UniformBlock(const UniformBlock &) = delete;
+
     string                       m_Name;
     GLuint                       m_Buffer = 0;
     unordered_map<string, GLint> m_UniformOffsets;

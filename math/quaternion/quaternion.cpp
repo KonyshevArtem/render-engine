@@ -7,19 +7,16 @@ Quaternion::Quaternion() :
 {
 }
 
-Quaternion::Quaternion(float _x, float _y, float _z, float _w)
+Quaternion::Quaternion(float _x, float _y, float _z, float _w) :
+    x(_x), y(_y), z(_z), w(_w)
 {
-    this->x = _x;
-    this->y = _y;
-    this->z = _z;
-    this->w = _w;
 }
 
-Quaternion Quaternion::AngleAxis(float _angleDeg, Vector3 _axis)
+Quaternion Quaternion::AngleAxis(float _angleDeg, const Vector3 &_axis)
 {
-    Vector3 normAxis     = _axis.Normalize();
-    float   angleRadians = _angleDeg * static_cast<float>(M_PI) / 180;
-    float   sin          = sinf(angleRadians / 2);
+    auto normAxis     = _axis.Normalize();
+    auto angleRadians = _angleDeg * static_cast<float>(M_PI) / 180;
+    auto sin          = sinf(angleRadians / 2);
     return {
             normAxis.x * sin,
             normAxis.y * sin,
@@ -43,7 +40,7 @@ Quaternion Quaternion::operator*(const Quaternion &_quaternion) const
 
 Vector3 Quaternion::operator*(const Vector3 &_vector) const
 {
-    Vector3 u = Vector3(x, y, z);
-    Vector3 t = Vector3::Cross(u, _vector) * 2;
+    auto u = Vector3(x, y, z);
+    auto t = Vector3::Cross(u, _vector) * 2;
     return _vector + t * w + Vector3::Cross(u, t);
 }

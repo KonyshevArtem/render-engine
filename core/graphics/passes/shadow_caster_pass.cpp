@@ -45,13 +45,13 @@ void ShadowCasterPass::Execute(const shared_ptr<Context> &_ctx)
         {
             m_SpotLightShadowMapArray->Attach(GL_DEPTH_ATTACHMENT, spotLightsCount);
 
-            Matrix4x4 view    = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
-            Matrix4x4 proj    = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, 100);
-            Matrix4x4 lightVP = proj * view;
+            auto view    = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
+            auto proj    = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, 100);
+            auto lightVP = proj * view;
 
             Graphics::SetCameraData(view, proj);
 
-            string index = to_string(spotLightsCount);
+            auto index = to_string(spotLightsCount);
             m_ShadowsUniformBlock->SetUniform("_SpotLightShadows[" + index + "].LightViewProjMatrix", &lightVP, sizeof(Matrix4x4));
 
             ++spotLightsCount;

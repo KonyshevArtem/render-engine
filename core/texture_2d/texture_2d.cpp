@@ -6,40 +6,35 @@
 #include "texture_2d.h"
 #include "../../external/lodepng/lodepng.h"
 #include "../../utils/utils.h"
-#include <GLUT/glut.h>
 #include <OpenGL/gl3.h>
 
 using namespace std;
 
+shared_ptr<Texture2D> Texture2D::m_Null   = nullptr;
 shared_ptr<Texture2D> Texture2D::m_White  = nullptr;
 shared_ptr<Texture2D> Texture2D::m_Normal = nullptr;
 
 shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb, bool _hasAlpha)
 {
-    auto t = make_shared<Texture2D>();
+    auto t = shared_ptr<Texture2D>(new Texture2D());
 
-    unsigned int     width     = 0;
-    unsigned int     height    = 0;
-    LodePNGColorType colorType = _hasAlpha ? LCT_RGBA : LCT_RGB;
-    unsigned         error     = lodepng::decode(t->m_Data, width, height, Utils::GetExecutableDirectory() / _path, colorType);
+    auto colorType = _hasAlpha ? LCT_RGBA : LCT_RGB;
+    auto error     = lodepng::decode(t->m_Data, t->m_Width, t->m_Height, Utils::GetExecutableDirectory() / _path, colorType);
     if (error != 0)
     {
         printf("Error loading texture: %u: %s\n", error, lodepng_error_text(error));
         return nullptr;
     }
 
-    t->Width  = width;
-    t->Height = height;
+    auto internalFormat = _srgb
+                                  ? _hasAlpha
+                                            ? GL_SRGB_ALPHA
+                                            : GL_SRGB
+                          : _hasAlpha
+                                  ? GL_RGBA
+                                  : GL_RGB;
 
-    GLint internalFormat = _srgb
-                                   ? _hasAlpha
-                                             ? GL_SRGB_ALPHA
-                                             : GL_SRGB
-                           : _hasAlpha
-                                   ? GL_RGBA
-                                   : GL_RGB;
-
-    GLint format = _hasAlpha ? GL_RGBA : GL_RGB;
+    auto format = _hasAlpha ? GL_RGBA : GL_RGB;
 
     t->Init(internalFormat, format, GL_UNSIGNED_BYTE, GL_REPEAT);
 
@@ -51,9 +46,9 @@ const shared_ptr<Texture2D> &Texture2D::White()
     if (m_White != nullptr)
         return m_White;
 
-    m_White         = make_shared<Texture2D>();
-    m_White->Width  = 1;
-    m_White->Height = 1;
+    m_White           = shared_ptr<Texture2D>(new Texture2D());
+    m_White->m_Width  = 1;
+    m_White->m_Height = 1;
 
     m_White->m_Data.push_back(255);
     m_White->m_Data.push_back(255);
@@ -69,9 +64,9 @@ const shared_ptr<Texture2D> &Texture2D::Normal()
     if (m_Normal != nullptr)
         return m_Normal;
 
-    m_Normal         = make_shared<Texture2D>();
-    m_Normal->Width  = 1;
-    m_Normal->Height = 1;
+    m_Normal           = shared_ptr<Texture2D>(new Texture2D());
+    m_Normal->m_Width  = 1;
+    m_Normal->m_Height = 1;
 
     m_Normal->m_Data.push_back(125);
     m_Normal->m_Data.push_back(125);
@@ -91,14 +86,8 @@ void Texture2D::Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint 
     glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, _wrapMode);
     glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, Width, Height, 0, _format, _type, &m_Data[0]); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, m_Width, m_Height, 0, _format, _type, &m_Data[0]); // NOLINT(cppcoreguidelines-narrowing-conversions)
     glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-Texture2D::~Texture2D()
-{
-    glDeleteTextures(1, &m_Texture);
-    glDeleteSamplers(1, &m_Sampler);
 }
 
 void Texture2D::Bind(int _unit) const

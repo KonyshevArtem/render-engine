@@ -7,7 +7,7 @@ Context::Context()
     if (Scene::Current == nullptr || Camera::Current == nullptr)
         return;
 
-    auto scene = Scene::Current;
+    const auto &scene = Scene::Current;
 
     AmbientLight     = scene->AmbientLight;
     Lights           = scene->Lights;

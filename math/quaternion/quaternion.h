@@ -15,7 +15,7 @@ public:
 
     Quaternion(float _x, float _y, float _z, float _w);
 
-    static Quaternion AngleAxis(float _angleDeg, Vector3 _axis);
+    static Quaternion AngleAxis(float _angleDeg, const Vector3 &_axis);
 
     Quaternion Inverse() const;
 

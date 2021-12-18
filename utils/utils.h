@@ -14,12 +14,15 @@ using namespace std;
 class Utils
 {
 public:
-    static string           ReadFile(const filesystem::path &_relativePath);
-    static string           ReadFileWithIncludes(const filesystem::path &_relativePath);
-    static void             WriteFile(const filesystem::path &_relativePath, const string &_content);
-    static filesystem::path GetExecutableDirectory();
+    static string                  ReadFile(const filesystem::path &_relativePath);
+    static string                  ReadFileWithIncludes(const filesystem::path &_relativePath);
+    static void                    WriteFile(const filesystem::path &_relativePath, const string &_content);
+    static const filesystem::path &GetExecutableDirectory();
 
 private:
+    Utils()              = delete;
+    Utils(const Utils &) = delete;
+
     static inline filesystem::path m_ExecutableDir;
 };
 

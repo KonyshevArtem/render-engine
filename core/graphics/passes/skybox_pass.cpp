@@ -5,7 +5,6 @@
 
 #include "skybox_pass.h"
 #include "../../../math/matrix4x4/matrix4x4.h"
-#include "../../../math/quaternion/quaternion.h"
 #include "../../../math/vector3/vector3.h"
 #include "../../cubemap/cubemap.h"
 #include "../../fbx_asset/fbx_asset.h"
@@ -16,7 +15,7 @@
 
 SkyboxPass::SkyboxPass() :
     m_Shader(Shader::Load("resources/shaders/skybox/skybox.shader", vector<string>())),
-    m_Mesh(FBXAsset::Load("resources/models/cube.fbx")->Meshes[0])
+    m_Mesh(FBXAsset::Load("resources/models/cube.fbx")->GetMesh(0))
 {
 }
 
@@ -26,7 +25,7 @@ void SkyboxPass::Execute(const shared_ptr<Context> &_ctx)
         return;
 
     glCullFace(GL_FRONT);
-    glViewport(0, 0, Graphics::ScreenWidth, Graphics::ScreenHeight);
+    glViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 
     Graphics::SetCameraData(_ctx->ViewMatrix, _ctx->ProjectionMatrix);
 

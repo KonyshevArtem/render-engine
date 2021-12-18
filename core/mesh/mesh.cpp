@@ -7,11 +7,11 @@
 #include "../../math/vector2/vector2.h"
 #include "../../math/vector3/vector3.h"
 
-Mesh::Mesh(vector<Vector3> _vertices,
-           vector<Vector3> _normals,
-           vector<int>     _indexes,
-           vector<Vector2> _uvs,
-           vector<Vector3> _tangents) :
+Mesh::Mesh(vector<Vector3> &_vertices,
+           vector<Vector3> &_normals,
+           vector<int> &    _indexes,
+           vector<Vector2> &_uvs,
+           vector<Vector3> &_tangents) :
     m_Vertices(std::move(_vertices)),
     m_Normals(std::move(_normals)),
     m_Indexes(std::move(_indexes)),

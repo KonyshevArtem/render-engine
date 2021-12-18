@@ -9,6 +9,10 @@
 
 using namespace std;
 
+unordered_map<string, shared_ptr<Texture>>                             Shader::m_GlobalTextures  = {};
+unordered_map<string, unordered_map<UniformType, shared_ptr<Texture>>> Shader::m_DefaultTextures = {};
+const Shader *                                                         Shader::m_CurrentShader   = nullptr;
+
 #pragma region construction
 
 shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<string> &_keywords)
@@ -31,9 +35,9 @@ shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<stri
 Shader::Shader(GLuint _program, unordered_map<string, string> _defaultValues) :
     m_Program(_program), m_DefaultValues(std::move(_defaultValues))
 {
-    GLuint lightingUniformIndex   = glGetUniformBlockIndex(m_Program, "Lighting");
-    GLuint cameraDataUniformIndex = glGetUniformBlockIndex(m_Program, "CameraData");
-    GLuint shadowDataUniformIndex = glGetUniformBlockIndex(m_Program, "Shadows");
+    auto lightingUniformIndex   = glGetUniformBlockIndex(m_Program, "Lighting");
+    auto cameraDataUniformIndex = glGetUniformBlockIndex(m_Program, "CameraData");
+    auto shadowDataUniformIndex = glGetUniformBlockIndex(m_Program, "Shadows");
 
     if (cameraDataUniformIndex != GL_INVALID_INDEX)
         glUniformBlockBinding(m_Program, cameraDataUniformIndex, 0);
@@ -58,8 +62,8 @@ Shader::Shader(GLuint _program, unordered_map<string, string> _defaultValues) :
         glGetActiveUniform(m_Program, i, buffSize, &length, nullptr, &type, &name[0]);
         string nameStr(&name[0], length);
 
-        GLint location = glGetUniformLocation(m_Program, &nameStr[0]);
-        auto  uniform  = make_shared<BaseUniform>(location, type, i);
+        auto location = glGetUniformLocation(m_Program, &nameStr[0]);
+        auto uniform  = make_shared<BaseUniform>(location, type, i);
 
         // TODO: correctly parse arrays
 
@@ -101,7 +105,7 @@ void Shader::SetTextureUniform(const string &_name, const shared_ptr<Texture> &_
     if (this != m_CurrentShader || _texture == nullptr || !m_TextureUnits.contains(_name))
         return;
 
-    int unit = m_TextureUnits.at(_name);
+    auto unit = m_TextureUnits.at(_name);
     _texture->Bind(unit);
     SetUniform(_name, &unit);
 }
@@ -152,19 +156,19 @@ void Shader::SetDefaultValues() const
 
     for (const auto &pair: m_Uniforms)
     {
-        string uniformName = pair.first;
+        auto uniformName = pair.first;
         if (!m_DefaultValues.contains(uniformName) || pair.second == nullptr)
             continue;
 
-        string      value = m_DefaultValues.at(uniformName);
-        UniformType type  = pair.second->GetType();
+        auto defaultValueLiteral = m_DefaultValues.at(uniformName);
+        auto type                = pair.second->GetType();
 
         if (UniformTypeUtils::IsTexture(type))
         {
-            if (!m_DefaultTextures.contains(value) || !m_DefaultTextures.at(value).contains(type))
+            if (!m_DefaultTextures.contains(defaultValueLiteral) || !m_DefaultTextures.at(defaultValueLiteral).contains(type))
                 return;
 
-            SetTextureUniform(uniformName, m_DefaultTextures.at(value).at(type));
+            SetTextureUniform(uniformName, m_DefaultTextures.at(defaultValueLiteral).at(type));
 
             Vector4 st = Vector4(0, 0, 1, 1);
             SetUniform(uniformName + "ST", &st);

@@ -10,29 +10,35 @@
 #include "../mesh/mesh.h"
 #include "../shader/shader.h"
 
-MeshRenderer::MeshRenderer(shared_ptr<GameObject> _gameObject,
-                           shared_ptr<Mesh>       _mesh,
-                           shared_ptr<Material>   _material) :
-    Renderer(std::move(_gameObject)),
+MeshRenderer::MeshRenderer(const shared_ptr<GameObject> &_gameObject,
+                           shared_ptr<Mesh>              _mesh,
+                           shared_ptr<Material>          _material) :
+    Renderer(_gameObject),
     m_Mesh(std::move(_mesh)),
     m_Material(std::move(_material))
 {
 }
 
-void MeshRenderer::Render()
+void MeshRenderer::Render() const
 {
-    Render(m_Material->GetShader());
+    const auto& shaderPtr = m_Material->GetShader();
+    if (shaderPtr != nullptr)
+        Render(*shaderPtr);
 }
 
-void MeshRenderer::Render(const shared_ptr<Shader> &_shader)
+void MeshRenderer::Render(const Shader &_shader) const
 {
-    _shader->Use();
+    if (m_GameObject.expired())
+        return;
 
-    Matrix4x4 modelMatrix       = Matrix4x4::TRS(m_GameObject->LocalPosition, m_GameObject->LocalRotation, m_GameObject->LocalScale);
+    _shader.Use();
+
+    auto      go                = m_GameObject.lock();
+    Matrix4x4 modelMatrix       = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
     Matrix4x4 modelNormalMatrix = modelMatrix.Invert().Transpose();
 
-    _shader->SetUniform("_ModelMatrix", &modelMatrix);
-    _shader->SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
+    _shader.SetUniform("_ModelMatrix", &modelMatrix);
+    _shader.SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
 
     m_Material->TransferUniforms();
     m_Mesh->Draw();

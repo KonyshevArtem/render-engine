@@ -14,13 +14,9 @@ public:
     static shared_ptr<Texture2D>        Load(const filesystem::path &_path, bool _srgb = true, bool _hasAlpha = false);
     static const shared_ptr<Texture2D> &White();
     static const shared_ptr<Texture2D> &Normal();
+    static const shared_ptr<Texture2D> &Null();
 
     void Bind(int _unit) const override;
-
-    static inline const shared_ptr<Texture2D> &Null()
-    {
-        return m_Null;
-    }
 
 private:
     Texture2D()                  = default;
@@ -29,10 +25,6 @@ private:
     void Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode);
 
     vector<unsigned char> m_Data;
-
-    static shared_ptr<Texture2D> m_Null;
-    static shared_ptr<Texture2D> m_White;
-    static shared_ptr<Texture2D> m_Normal;
 };
 
 #endif //OPENGL_STUDY_TEXTURE_2D_H

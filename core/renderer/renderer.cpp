@@ -1,6 +1,6 @@
 #include "renderer.h"
 
-Renderer::Renderer(shared_ptr<GameObject> _gameObject) :
-    m_GameObject(std::move(_gameObject))
+Renderer::Renderer(const shared_ptr<GameObject> &_gameObject) :
+    m_GameObject(_gameObject)
 {
 }

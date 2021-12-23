@@ -1,6 +1,7 @@
 #ifndef OPENGL_STUDY_LIGHT_H
 #define OPENGL_STUDY_LIGHT_H
 
+#include "../../math/quaternion/quaternion.h"
 #include "../../math/vector3/vector3.h"
 #include "../../math/vector4/vector4.h"
 

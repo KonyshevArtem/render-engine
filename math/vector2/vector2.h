@@ -11,10 +11,7 @@ public:
 
     Vector2(float _x, float _y);
 
-    inline static const Vector2 &Zero()
-    {
-        return m_Zero;
-    }
+    static const Vector2 &Zero();
 
     Vector2 operator-() const;
 
@@ -23,9 +20,6 @@ public:
     Vector2 operator-(const Vector2 &_vector) const;
 
     Vector2 operator*(float _value) const;
-
-private:
-    static const Vector2 m_Zero;
 };
 
 #endif //OPENGL_STUDY_VECTOR2_H

@@ -12,7 +12,7 @@ using namespace std;
 class GameObject
 {
 public:
-    shared_ptr<GameObject>         Parent;
+    weak_ptr<GameObject>           Parent;
     vector<shared_ptr<GameObject>> Children;
     Vector3                        LocalPosition;
     Quaternion                     LocalRotation;

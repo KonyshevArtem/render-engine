@@ -14,7 +14,7 @@ class SkyboxPass
 public:
     SkyboxPass();
 
-    void Execute(const shared_ptr<Context> &_ctx);
+    void Execute(const Context &_ctx);
 
 private:
     SkyboxPass(const SkyboxPass &) = delete;

@@ -6,87 +6,78 @@
 #include "input.h"
 #include <GLUT/glut.h>
 
-void Input::Init()
+namespace Input
 {
-    m_Instance = unique_ptr<Input>(new Input());
-    glutPassiveMotionFunc(m_Instance->MouseMove);
-    glutKeyboardFunc(m_Instance->KeyboardDown);
-    glutKeyboardUpFunc(m_Instance->KeyboardUp);
-}
+    unordered_set<unsigned char> inputs;
+    unordered_set<unsigned char> inputsDown;
+    unordered_set<unsigned char> inputsUp;
+    Vector2                      oldMousePosition = Vector2();
+    Vector2                      mousePosition    = Vector2();
+    Vector2                      mouseDelta       = Vector2();
 
-void Input::MouseMove(int _x, int _y)
-{
-    if (m_Instance != nullptr)
-        m_Instance->m_MousePosition = Vector2(static_cast<float>(_x), static_cast<float>(_y));
-}
-
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "UnusedParameter"
-
-void Input::KeyboardDown(unsigned char _key, int _x, int _y)
-{
-    if (m_Instance != nullptr && !m_Instance->m_Inputs.contains(_key))
+    void MouseMove(int _x, int _y)
     {
-        m_Instance->m_Inputs.insert(_key);
-        m_Instance->m_InputsDown.insert(_key);
+        mousePosition = Vector2(static_cast<float>(_x), static_cast<float>(_y));
     }
-}
 
-void Input::KeyboardUp(unsigned char _key, int _x, int _y)
-{
-    if (m_Instance != nullptr && m_Instance->m_Inputs.contains(_key))
+    void KeyboardDown(unsigned char _key, int, int)
     {
-        m_Instance->m_Inputs.erase(_key);
-        m_Instance->m_InputsUp.insert(_key);
+        if (!inputs.contains(_key))
+        {
+            inputs.insert(_key);
+            inputsDown.insert(_key);
+        }
     }
-}
 
-#pragma clang diagnostic pop
+    void KeyboardUp(unsigned char _key, int, int)
+    {
+        if (inputs.contains(_key))
+        {
+            inputs.erase(_key);
+            inputsUp.insert(_key);
+        }
+    }
 
-void Input::Update()
-{
-    if (m_Instance != nullptr)
-        m_Instance->Update_Internal();
-}
+    void Init()
+    {
+        glutPassiveMotionFunc(MouseMove);
+        glutKeyboardFunc(KeyboardDown);
+        glutKeyboardUpFunc(KeyboardUp);
+    }
 
-void Input::CleanUp()
-{
-    if (m_Instance != nullptr)
-        m_Instance->CleanUp_Internal();
-}
+    void Update()
+    {
+        mouseDelta       = oldMousePosition - mousePosition;
+        oldMousePosition = mousePosition;
+    }
 
-void Input::Update_Internal()
-{
-    m_MouseDelta       = m_OldMousePosition - m_MousePosition;
-    m_OldMousePosition = m_MousePosition;
-}
+    void CleanUp()
+    {
+        inputsUp.clear();
+        inputsDown.clear();
+    }
 
-void Input::CleanUp_Internal()
-{
-    m_InputsUp.clear();
-    m_InputsDown.clear();
-}
+    bool GetKeyDown(unsigned char _key)
+    {
+        return inputsDown.contains(_key);
+    }
+    bool GetKeyUp(unsigned char _key)
+    {
+        return inputsUp.contains(_key);
+    }
 
-bool Input::GetKeyDown(unsigned char _key)
-{
-    return m_Instance != nullptr && m_Instance->m_InputsDown.contains(_key);
-}
-bool Input::GetKeyUp(unsigned char _key)
-{
-    return m_Instance != nullptr && m_Instance->m_InputsUp.contains(_key);
-}
+    bool GetKey(unsigned char _key)
+    {
+        return inputs.contains(_key);
+    }
 
-bool Input::GetKey(unsigned char _key)
-{
-    return m_Instance != nullptr && m_Instance->m_Inputs.contains(_key);
-}
+    const Vector2 &GetMousePosition()
+    {
+        return mousePosition;
+    }
 
-const Vector2 &Input::GetMousePosition()
-{
-    return m_Instance != nullptr ? m_Instance->m_MousePosition : Vector2::Zero();
-}
-
-const Vector2 &Input::GetMouseDelta()
-{
-    return m_Instance != nullptr ? m_Instance->m_MouseDelta : Vector2::Zero();
-}
+    const Vector2 &GetMouseDelta()
+    {
+        return mouseDelta;
+    }
+} // namespace Input

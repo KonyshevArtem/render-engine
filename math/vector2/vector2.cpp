@@ -1,6 +1,10 @@
 #include "vector2.h"
 
-const Vector2 Vector2::m_Zero = Vector2();
+const Vector2 &Vector2::Zero()
+{
+    static const Vector2 zero = Vector2();
+    return zero;
+}
 
 Vector2::Vector2() :
     Vector2(0, 0)

@@ -26,15 +26,9 @@ public:
     float m32;
     float m33;
 
-    static inline const Matrix4x4 &Zero()
-    {
-        return m_Zero;
-    }
+    static const Matrix4x4 &Zero();
 
-    static inline const Matrix4x4 &Identity()
-    {
-        return m_Identity;
-    }
+    static const Matrix4x4 &Identity();
 
     static Matrix4x4 Translation(const Vector3 &_translation);
 
@@ -59,10 +53,6 @@ public:
     Vector3 GetPosition() const;
 
     [[nodiscard]] std::string ToString() const;
-
-private:
-    static const Matrix4x4 m_Zero;
-    static const Matrix4x4 m_Identity;
 };
 
 #endif //OPENGL_STUDY_MATRIX4X4_H

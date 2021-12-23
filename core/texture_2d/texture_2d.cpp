@@ -10,10 +10,6 @@
 
 using namespace std;
 
-shared_ptr<Texture2D> Texture2D::m_Null   = nullptr;
-shared_ptr<Texture2D> Texture2D::m_White  = nullptr;
-shared_ptr<Texture2D> Texture2D::m_Normal = nullptr;
-
 shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb, bool _hasAlpha)
 {
     auto t = shared_ptr<Texture2D>(new Texture2D());
@@ -43,38 +39,48 @@ shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb,
 
 const shared_ptr<Texture2D> &Texture2D::White()
 {
-    if (m_White != nullptr)
-        return m_White;
+    static shared_ptr<Texture2D> white;
 
-    m_White           = shared_ptr<Texture2D>(new Texture2D());
-    m_White->m_Width  = 1;
-    m_White->m_Height = 1;
+    if (white != nullptr)
+        return white;
 
-    m_White->m_Data.push_back(255);
-    m_White->m_Data.push_back(255);
-    m_White->m_Data.push_back(255);
+    white           = shared_ptr<Texture2D>(new Texture2D());
+    white->m_Width  = 1;
+    white->m_Height = 1;
 
-    m_White->Init(GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
+    white->m_Data.push_back(255);
+    white->m_Data.push_back(255);
+    white->m_Data.push_back(255);
 
-    return m_White;
+    white->Init(GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
+
+    return white;
 }
 
 const shared_ptr<Texture2D> &Texture2D::Normal()
 {
-    if (m_Normal != nullptr)
-        return m_Normal;
+    static shared_ptr<Texture2D> normal;
 
-    m_Normal           = shared_ptr<Texture2D>(new Texture2D());
-    m_Normal->m_Width  = 1;
-    m_Normal->m_Height = 1;
+    if (normal != nullptr)
+        return normal;
 
-    m_Normal->m_Data.push_back(125);
-    m_Normal->m_Data.push_back(125);
-    m_Normal->m_Data.push_back(255);
+    normal           = shared_ptr<Texture2D>(new Texture2D());
+    normal->m_Width  = 1;
+    normal->m_Height = 1;
 
-    m_Normal->Init(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
+    normal->m_Data.push_back(125);
+    normal->m_Data.push_back(125);
+    normal->m_Data.push_back(255);
 
-    return m_Normal;
+    normal->Init(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
+
+    return normal;
+}
+
+const shared_ptr<Texture2D> &Texture2D::Null()
+{
+    static shared_ptr<Texture2D> null;
+    return null;
 }
 
 void Texture2D::Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode)

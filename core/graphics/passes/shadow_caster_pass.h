@@ -9,7 +9,7 @@ class UniformBlock;
 class Context;
 class Shader;
 class Texture2DArray;
-class GameObject;
+class Renderer;
 
 using namespace std;
 
@@ -19,7 +19,7 @@ public:
     ShadowCasterPass(int _spotLightsCount, shared_ptr<UniformBlock> _shadowsUniformBlock);
     ~ShadowCasterPass();
 
-    void Execute(const shared_ptr<Context> &_ctx);
+    void Execute(const Context &_ctx);
 
 private:
     ShadowCasterPass(const ShadowCasterPass &) = delete;
@@ -31,7 +31,7 @@ private:
     GLuint                     m_Framebuffer = 0;
     shared_ptr<Texture2DArray> m_SpotLightShadowMapArray;
 
-    void Render(const vector<shared_ptr<GameObject>> &_gameObjects);
+    void Render(const vector<Renderer *> &_gameObjects);
 };
 
 #endif //OPENGL_STUDY_SHADOW_CASTER_PASS_H

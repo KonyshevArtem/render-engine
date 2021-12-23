@@ -19,23 +19,23 @@ SkyboxPass::SkyboxPass() :
 {
 }
 
-void SkyboxPass::Execute(const shared_ptr<Context> &_ctx)
+void SkyboxPass::Execute(const Context &_ctx)
 {
-    if (m_Mesh == nullptr || m_Shader == nullptr || _ctx->Skybox == nullptr)
+    if (m_Mesh == nullptr || m_Shader == nullptr || _ctx.Skybox == nullptr)
         return;
 
     glCullFace(GL_FRONT);
     glViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 
-    Graphics::SetCameraData(_ctx->ViewMatrix, _ctx->ProjectionMatrix);
+    Graphics::SetCameraData(_ctx.ViewMatrix, _ctx.ProjectionMatrix);
 
     m_Shader->Use();
 
-    Matrix4x4 modelMatrix = Matrix4x4::Translation(_ctx->ViewMatrix.Invert().GetPosition());
+    Matrix4x4 modelMatrix = Matrix4x4::Translation(_ctx.ViewMatrix.Invert().GetPosition());
     m_Shader->SetUniform("_ModelMatrix", &modelMatrix);
 
     int unit = 0;
-    _ctx->Skybox->Bind(unit);
+    _ctx.Skybox->Bind(unit);
     m_Shader->SetUniform("_Skybox", &unit);
 
     m_Mesh->Draw();

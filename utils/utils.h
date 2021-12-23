@@ -11,19 +11,12 @@
 
 using namespace std;
 
-class Utils
+namespace Utils
 {
-public:
-    static string                  ReadFile(const filesystem::path &_relativePath);
-    static string                  ReadFileWithIncludes(const filesystem::path &_relativePath);
-    static void                    WriteFile(const filesystem::path &_relativePath, const string &_content);
-    static const filesystem::path &GetExecutableDirectory();
-
-private:
-    Utils()              = delete;
-    Utils(const Utils &) = delete;
-
-    static inline filesystem::path m_ExecutableDir;
-};
+    string                  ReadFile(const filesystem::path &_relativePath);
+    string                  ReadFileWithIncludes(const filesystem::path &_relativePath);
+    void                    WriteFile(const filesystem::path &_relativePath, const string &_content);
+    const filesystem::path &GetExecutableDirectory();
+}; // namespace Utils
 
 #endif //OPENGL_STUDY_UTILS_H

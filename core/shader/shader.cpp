@@ -3,15 +3,13 @@
 #include "../../utils/utils.h"
 #include "../cubemap/cubemap.h"
 #include "../texture_2d/texture_2d.h"
-#include "shader_loader/shader_loader.h"
 #include "uniform/base_uniform.h"
 #include <OpenGL/gl3.h>
 
 using namespace std;
 
-unordered_map<string, shared_ptr<Texture>>                             Shader::m_GlobalTextures  = {};
-unordered_map<string, unordered_map<UniformType, shared_ptr<Texture>>> Shader::m_DefaultTextures = {};
-const Shader *                                                         Shader::m_CurrentShader   = nullptr;
+unordered_map<string, shared_ptr<Texture>> Shader::m_GlobalTextures = {};
+const Shader *                             Shader::m_CurrentShader  = nullptr;
 
 #pragma region construction
 
@@ -91,7 +89,10 @@ void Shader::Use() const
 
     SetDefaultValues();
     for (const auto &pair: m_GlobalTextures)
-        SetTextureUniform(pair.first, pair.second);
+    {
+        if (pair.second != nullptr)
+            SetTextureUniform(pair.first, *pair.second);
+    }
 }
 
 void Shader::SetUniform(const string &_name, const void *_data) const
@@ -100,13 +101,13 @@ void Shader::SetUniform(const string &_name, const void *_data) const
         m_Uniforms.at(_name)->Set(_data);
 }
 
-void Shader::SetTextureUniform(const string &_name, const shared_ptr<Texture> &_texture) const
+void Shader::SetTextureUniform(const string &_name, const Texture &_texture) const
 {
-    if (this != m_CurrentShader || _texture == nullptr || !m_TextureUnits.contains(_name))
+    if (this != m_CurrentShader || !m_TextureUnits.contains(_name))
         return;
 
     auto unit = m_TextureUnits.at(_name);
-    _texture->Bind(unit);
+    _texture.Bind(unit);
     SetUniform(_name, &unit);
 }
 
@@ -130,29 +131,31 @@ void Shader::DetachCurrentShader()
 
 void Shader::SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture)
 {
+    if (_texture == nullptr)
+        return;
+
     m_GlobalTextures[_name] = std::move(_texture);
 
     if (m_CurrentShader != nullptr)
-        m_CurrentShader->SetTextureUniform(_name, m_GlobalTextures[_name]);
+        m_CurrentShader->SetTextureUniform(_name, *m_GlobalTextures[_name]);
 }
 
 #pragma endregion
 
 #pragma region service methods
 
-void Shader::InitDefaultTextures()
+void InitDefaultTextures(unordered_map<string, unordered_map<UniformType, shared_ptr<Texture>>> &_defaultTextures)
 {
-    if (!m_DefaultTextures.empty())
-        return;
-
-    m_DefaultTextures["white"][UniformType::SAMPLER_2D]   = Texture2D::White();
-    m_DefaultTextures["white"][UniformType::SAMPLER_CUBE] = Cubemap::White();
-    m_DefaultTextures["normal"][UniformType::SAMPLER_2D]  = Texture2D::Normal();
+    _defaultTextures["white"][UniformType::SAMPLER_2D]   = Texture2D::White();
+    _defaultTextures["white"][UniformType::SAMPLER_CUBE] = Cubemap::White();
+    _defaultTextures["normal"][UniformType::SAMPLER_2D]  = Texture2D::Normal();
 }
 
 void Shader::SetDefaultValues() const
 {
-    InitDefaultTextures();
+    static unordered_map<string, unordered_map<UniformType, shared_ptr<Texture>>> defaultTextures;
+    if (defaultTextures.empty())
+        InitDefaultTextures(defaultTextures);
 
     for (const auto &pair: m_Uniforms)
     {
@@ -165,10 +168,10 @@ void Shader::SetDefaultValues() const
 
         if (UniformTypeUtils::IsTexture(type))
         {
-            if (!m_DefaultTextures.contains(defaultValueLiteral) || !m_DefaultTextures.at(defaultValueLiteral).contains(type))
+            if (!defaultTextures.contains(defaultValueLiteral) || !defaultTextures.at(defaultValueLiteral).contains(type))
                 return;
 
-            SetTextureUniform(uniformName, m_DefaultTextures.at(defaultValueLiteral).at(type));
+            SetTextureUniform(uniformName, *defaultTextures.at(defaultValueLiteral).at(type));
 
             Vector4 st = Vector4(0, 0, 1, 1);
             SetUniform(uniformName + "ST", &st);

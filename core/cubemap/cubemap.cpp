@@ -8,8 +8,6 @@
 #include "../../utils/utils.h"
 #include <OpenGL/gl3.h>
 
-shared_ptr<Cubemap> Cubemap::m_White = nullptr;
-
 shared_ptr<Cubemap> Cubemap::Load(const filesystem::path &_xPositivePath,
                                   const filesystem::path &_xNegativePath,
                                   const filesystem::path &_yPositivePath,
@@ -60,21 +58,23 @@ void Cubemap::Bind(int _unit) const
 
 shared_ptr<Cubemap> &Cubemap::White()
 {
-    if (m_White != nullptr)
-        return m_White;
+    static shared_ptr<Cubemap> white;
 
-    m_White           = shared_ptr<Cubemap>(new Cubemap());
-    m_White->m_Width  = 1;
-    m_White->m_Height = 1;
+    if (white != nullptr)
+        return white;
 
-    m_White->m_Data.resize(SIDES_COUNT);
+    white           = shared_ptr<Cubemap>(new Cubemap());
+    white->m_Width  = 1;
+    white->m_Height = 1;
+
+    white->m_Data.resize(SIDES_COUNT);
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        m_White->m_Data[i].push_back(255);
-        m_White->m_Data[i].push_back(255);
-        m_White->m_Data[i].push_back(255);
+        white->m_Data[i].push_back(255);
+        white->m_Data[i].push_back(255);
+        white->m_Data[i].push_back(255);
     }
 
-    m_White->Init();
-    return m_White;
+    white->Init();
+    return white;
 }

@@ -12,11 +12,12 @@ class Shader;
 class BillboardRenderer: public Renderer
 {
 public:
-    BillboardRenderer(shared_ptr<GameObject> _gameObject, shared_ptr<Texture2D> _texture);
+    BillboardRenderer(const shared_ptr<GameObject> &_gameObject, shared_ptr<Texture2D> _texture);
+    BillboardRenderer(const BillboardRenderer &) = delete;
     virtual ~BillboardRenderer();
 
-    void Render() override;
-    void Render(const shared_ptr<Shader> &_shader) override;
+    void Render() const override;
+    void Render(const Shader &_shader) const override;
 
     inline void SetSize(float _size)
     {
@@ -24,11 +25,10 @@ public:
     };
 
 private:
-    static shared_ptr<Shader> m_Shader;
-    shared_ptr<Texture2D>     m_Texture;
-    float                     m_Size;
-    GLuint                    m_VertexArrayObject = 0;
-    GLuint                    m_PointsBuffer      = 0;
+    shared_ptr<Texture2D> m_Texture;
+    float                 m_Size;
+    GLuint                m_VertexArrayObject = 0;
+    GLuint                m_PointsBuffer      = 0;
 };
 
 #endif //OPENGL_STUDY_BILLBOARD_RENDERER_H

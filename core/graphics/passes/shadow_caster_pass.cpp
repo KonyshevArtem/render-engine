@@ -5,7 +5,6 @@
 
 #include "shadow_caster_pass.h"
 
-#include "../../gameObject/gameObject.h"
 #include "../../light/light.h"
 #include "../../renderer/renderer.h"
 #include "../../shader/shader.h"
@@ -30,7 +29,7 @@ ShadowCasterPass::~ShadowCasterPass()
     glDeleteFramebuffers(1, &m_Framebuffer);
 }
 
-void ShadowCasterPass::Execute(const shared_ptr<Context> &_ctx)
+void ShadowCasterPass::Execute(const Context &_ctx)
 {
     if (m_ShadowCasterShader == nullptr)
         return;
@@ -39,8 +38,11 @@ void ShadowCasterPass::Execute(const shared_ptr<Context> &_ctx)
     glViewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
 
     int spotLightsCount = 0;
-    for (const auto &light: _ctx->Lights)
+    for (const auto *light: _ctx.Lights)
     {
+        if (light == nullptr)
+            continue;
+
         if (light->Type == LightType::SPOT)
         {
             m_SpotLightShadowMapArray->Attach(GL_DEPTH_ATTACHMENT, spotLightsCount);
@@ -59,23 +61,23 @@ void ShadowCasterPass::Execute(const shared_ptr<Context> &_ctx)
         else
             continue;
 
-        Render(_ctx->GameObjects);
+        Render(_ctx.Renderers);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 
-void ShadowCasterPass::Render(const vector<shared_ptr<GameObject>> &_gameObjects)
+void ShadowCasterPass::Render(const vector<Renderer *> &_renderers)
 {
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for (const auto &go: _gameObjects)
+    for (const auto *r: _renderers)
     {
-        if (go->Renderer != nullptr)
-            go->Renderer->Render(m_ShadowCasterShader);
+        if (r != nullptr)
+            r->Render(*m_ShadowCasterShader);
     }
 }

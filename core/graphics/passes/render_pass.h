@@ -13,7 +13,7 @@ class RenderPass
 public:
     RenderPass();
 
-    void Execute(const shared_ptr<Context> &_ctx);
+    void Execute(const Context &_ctx);
 
 private:
     RenderPass(const RenderPass &) = delete;

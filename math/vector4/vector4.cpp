@@ -1,7 +1,11 @@
 #include "vector4.h"
 #include <cmath>
 
-const Vector4 Vector4::m_Zero = Vector4();
+const Vector4 &Vector4::Zero()
+{
+    static const Vector4 zero = Vector4();
+    return zero;
+}
 
 Vector4::Vector4() :
     Vector4(0, 0, 0, 0)

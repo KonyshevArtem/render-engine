@@ -9,17 +9,11 @@
 #include "../gameObject/gameObject.h"
 #include "../shader/shader.h"
 #include "../texture_2d/texture_2d.h"
-
 #include <vector>
 
-shared_ptr<Shader> BillboardRenderer::m_Shader = nullptr;
-
-BillboardRenderer::BillboardRenderer(shared_ptr<GameObject> _gameObject, shared_ptr<Texture2D> _texture) :
-    Renderer(std::move(_gameObject)), m_Texture(std::move(_texture))
+BillboardRenderer::BillboardRenderer(const shared_ptr<GameObject> &_gameObject, shared_ptr<Texture2D> _texture) :
+    Renderer(_gameObject), m_Texture(std::move(_texture))
 {
-    if (m_Shader == nullptr)
-        m_Shader = Shader::Load("resources/shaders/billboard/billboard.shader", vector<string>());
-
     glGenVertexArrays(1, &m_VertexArrayObject);
     glGenBuffers(1, &m_PointsBuffer);
 
@@ -40,9 +34,14 @@ BillboardRenderer::~BillboardRenderer()
     glDeleteBuffers(1, &m_PointsBuffer);
 }
 
-void BillboardRenderer::Render()
+void BillboardRenderer::Render() const
 {
-    if (m_Shader == nullptr || m_Texture == nullptr || m_GameObject == nullptr)
+    static shared_ptr<Shader> shader;
+
+    if (shader == nullptr)
+        shader = Shader::Load("resources/shaders/billboard/billboard.shader", vector<string>());
+
+    if (shader == nullptr || m_Texture == nullptr || m_GameObject.expired())
         return;
 
     int width  = m_Texture->GetWidth();
@@ -50,23 +49,23 @@ void BillboardRenderer::Render()
     if (width == 0 || height == 0)
         return;
 
-    m_Shader->Use();
-    m_Shader->SetTextureUniform("_Texture", m_Texture);
+    shader->Use();
+    shader->SetTextureUniform("_Texture", *m_Texture);
 
     auto    aspect = static_cast<float>(width) / height;
     Vector2 size {m_Size, m_Size / aspect};
-    m_Shader->SetUniform("_Size", &size);
+    shader->SetUniform("_Size", &size);
 
     glBindVertexArray(m_VertexArrayObject);
     glBindBuffer(GL_ARRAY_BUFFER, m_PointsBuffer);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vector3), &m_GameObject->LocalPosition);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vector3), &m_GameObject.lock()->LocalPosition);
     glDrawArrays(GL_POINTS, 0, 1);
 
     glBindVertexArray(0);
     Shader::DetachCurrentShader();
 }
 
-void BillboardRenderer::Render(const shared_ptr<Shader> &_shader)
+void BillboardRenderer::Render(const Shader &_shader) const
 {
     Render();
 }

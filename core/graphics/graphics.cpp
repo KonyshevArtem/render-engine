@@ -16,166 +16,188 @@
 #include <OpenGL/gl3.h>
 #include <memory>
 
-unique_ptr<UniformBlock>     Graphics::LightingDataBlock;
-unique_ptr<UniformBlock>     Graphics::CameraDataBlock;
-shared_ptr<UniformBlock>     Graphics::ShadowsDataBlock;
-unique_ptr<ShadowCasterPass> Graphics::m_ShadowCasterPass;
-unique_ptr<RenderPass>       Graphics::m_RenderPass;
-unique_ptr<SkyboxPass>       Graphics::m_SkyboxPass;
-
-string Graphics::m_GlobalShaderDirectives;
-
-int Graphics::m_ScreenWidth  = 0;
-int Graphics::m_ScreenHeight = 0;
-
-void Graphics::Init(int _argc, char **_argv)
+namespace Graphics
 {
-    glutInit(&_argc, _argv);
-    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_3_2_CORE_PROFILE | GLUT_DEPTH);
-    glutInitWindowSize(1024, 720);
-    glutCreateWindow("OpenGL");
+    constexpr int MAX_POINT_LIGHT_SOURCES = 3;
+    constexpr int MAX_SPOT_LIGHT_SOURCES  = 3;
 
-    InitCulling();
-    InitDepth();
-    InitFramebuffer();
-    InitUniformBlocks();
-    InitPasses();
-}
+    unique_ptr<UniformBlock> lightingDataBlock;
+    unique_ptr<UniformBlock> cameraDataBlock;
+    shared_ptr<UniformBlock> shadowsDataBlock;
 
-void Graphics::InitCulling()
-{
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CCW);
-}
+    unique_ptr<ShadowCasterPass> shadowCasterPass;
+    unique_ptr<RenderPass>       renderPass;
+    unique_ptr<SkyboxPass>       skyboxPass;
 
-void Graphics::InitDepth()
-{
-    glEnable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
-    glDepthFunc(GL_LEQUAL);
-    glDepthRange(0, 1);
-}
+    int screenWidth  = 0;
+    int screenHeight = 0;
 
-void Graphics::InitFramebuffer()
-{
-    glEnable(GL_FRAMEBUFFER_SRGB);
-}
-
-void Graphics::InitUniformBlocks()
-{
-    auto fullShader   = Shader::Load("resources/shaders/standard/standard.shader", vector<string> {"_RECEIVE_SHADOWS"});
-    CameraDataBlock   = make_unique<UniformBlock>(fullShader, "CameraData", 0);
-    LightingDataBlock = make_unique<UniformBlock>(fullShader, "Lighting", 1);
-    ShadowsDataBlock  = make_shared<UniformBlock>(fullShader, "Shadows", 2);
-}
-
-void Graphics::InitPasses()
-{
-    m_RenderPass       = make_unique<RenderPass>();
-    m_ShadowCasterPass = make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, ShadowsDataBlock);
-    m_SkyboxPass       = make_unique<SkyboxPass>();
-}
-
-void Graphics::Render()
-{
-    glClearColor(0, 0, 0, 0);
-    glClearDepth(1);
-
-    auto ctx = make_shared<Context>();
-
-    SetLightingData(ctx->AmbientLight, ctx->Lights);
-
-    if (m_ShadowCasterPass != nullptr)
-        m_ShadowCasterPass->Execute(ctx);
-    if (m_RenderPass != nullptr)
-        m_RenderPass->Execute(ctx);
-    if (m_SkyboxPass != nullptr)
-        m_SkyboxPass->Execute(ctx);
-
-    glutSwapBuffers();
-    glutPostRedisplay();
-
-    GLenum error = glGetError();
-    if (error != 0)
-        printf("%s\n", gluErrorString(error));
-}
-
-void Graphics::Reshape(int _width, int _height)
-{
-    m_ScreenWidth  = _width;
-    m_ScreenHeight = _height;
-    glViewport(0, 0, _width, _height);
-}
-
-void Graphics::SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix)
-{
-    auto matrixSize    = sizeof(Matrix4x4);
-    auto cameraPosWS   = _viewMatrix.Invert().GetPosition();
-    auto nearClipPlane = Camera::Current->GetNearClipPlane();
-    auto farClipPlane  = Camera::Current->GetFarClipPlane();
-
-    CameraDataBlock->SetUniform("_ProjMatrix", &_projectionMatrix, matrixSize);
-    CameraDataBlock->SetUniform("_ViewMatrix", &_viewMatrix, matrixSize);
-    CameraDataBlock->SetUniform("_CameraPosWS", &cameraPosWS, sizeof(Vector4));
-    CameraDataBlock->SetUniform("_NearClipPlane", &nearClipPlane, sizeof(float));
-    CameraDataBlock->SetUniform("_FarClipPlane", &farClipPlane, sizeof(float));
-}
-
-void Graphics::SetLightingData(const Vector4 &_ambient, const vector<shared_ptr<Light>> &_lights)
-{
-    LightingDataBlock->SetUniform("_AmbientLight", &_ambient, sizeof(Vector4));
-
-    int  pointLightsCount    = 0;
-    int  spotLightsCount     = 0;
-    bool hasDirectionalLight = false;
-
-    for (const auto &light: _lights)
+    void InitCulling()
     {
-        if (light->Type == LightType::DIRECTIONAL && !hasDirectionalLight)
-        {
-            hasDirectionalLight = true;
-            auto dir            = light->Rotation * Vector3(0, 0, -1);
-            LightingDataBlock->SetUniform("_DirectionalLight.DirectionWS", &dir, sizeof(Vector3));
-            LightingDataBlock->SetUniform("_DirectionalLight.Intensity", &light->Intensity, sizeof(Vector4));
-        }
-        else if (light->Type == LightType::POINT && pointLightsCount < MAX_POINT_LIGHT_SOURCES)
-        {
-            auto prefix = "_PointLights[" + to_string(pointLightsCount) + "].";
-            LightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
-            LightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector4));
-            LightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
-            ++pointLightsCount;
-        }
-        else if (light->Type == LightType::SPOT && spotLightsCount < MAX_POINT_LIGHT_SOURCES)
-        {
-            auto dir       = light->Rotation * Vector3(0, 0, -1);
-            auto cutOffCos = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
-            auto prefix    = "_SpotLights[" + to_string(spotLightsCount) + "].";
-            LightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
-            LightingDataBlock->SetUniform(prefix + "DirectionWS", &dir, sizeof(Vector3));
-            LightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector4));
-            LightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
-            LightingDataBlock->SetUniform(prefix + "CutOffCos", &cutOffCos, sizeof(float));
-            ++spotLightsCount;
-        }
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
     }
 
-    LightingDataBlock->SetUniform("_PointLightsCount", &pointLightsCount, sizeof(int));
-    LightingDataBlock->SetUniform("_SpotLightsCount", &spotLightsCount, sizeof(int));
-    LightingDataBlock->SetUniform("_HasDirectionalLight", &hasDirectionalLight, sizeof(bool));
-}
-
-const string &Graphics::GetGlobalShaderDirectives()
-{
-    if (m_GlobalShaderDirectives.empty())
+    void InitDepth()
     {
-        // clang-format off
-        m_GlobalShaderDirectives = "#version " + to_string(GLSL_VERSION) + "\n"
-                                  "#define MAX_POINT_LIGHT_SOURCES " + to_string(MAX_POINT_LIGHT_SOURCES) + "\n"
-                                  "#define MAX_SPOT_LIGHT_SOURCES " + to_string(MAX_SPOT_LIGHT_SOURCES) + "\n";
-        // clang-format on
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LEQUAL);
+        glDepthRange(0, 1);
     }
 
-    return m_GlobalShaderDirectives;
-}
+    void InitFramebuffer()
+    {
+        glEnable(GL_FRAMEBUFFER_SRGB);
+    }
+
+    void InitUniformBlocks()
+    {
+        auto fullShader   = Shader::Load("resources/shaders/standard/standard.shader", vector<string> {"_RECEIVE_SHADOWS"});
+        cameraDataBlock   = make_unique<UniformBlock>(*fullShader, "CameraData", 0);
+        lightingDataBlock = make_unique<UniformBlock>(*fullShader, "Lighting", 1);
+        shadowsDataBlock  = make_shared<UniformBlock>(*fullShader, "Shadows", 2);
+    }
+
+    void InitPasses()
+    {
+        renderPass       = make_unique<RenderPass>();
+        shadowCasterPass = make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
+        skyboxPass       = make_unique<SkyboxPass>();
+    }
+
+    void Init(int _argc, char **_argv)
+    {
+        glutInit(&_argc, _argv);
+        glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_3_2_CORE_PROFILE | GLUT_DEPTH);
+        glutInitWindowSize(1024, 720);
+        glutCreateWindow("OpenGL");
+
+        InitCulling();
+        InitDepth();
+        InitFramebuffer();
+        InitUniformBlocks();
+        InitPasses();
+    }
+
+    void SetLightingData(const Vector4 &_ambient, const vector<Light *> &_lights)
+    {
+        lightingDataBlock->SetUniform("_AmbientLight", &_ambient, sizeof(Vector4));
+
+        int  pointLightsCount    = 0;
+        int  spotLightsCount     = 0;
+        bool hasDirectionalLight = false;
+
+        for (const auto &light: _lights)
+        {
+            if (light == nullptr)
+                continue;
+
+            if (light->Type == LightType::DIRECTIONAL && !hasDirectionalLight)
+            {
+                hasDirectionalLight = true;
+                auto dir            = light->Rotation * Vector3(0, 0, -1);
+                lightingDataBlock->SetUniform("_DirectionalLight.DirectionWS", &dir, sizeof(Vector3));
+                lightingDataBlock->SetUniform("_DirectionalLight.Intensity", &light->Intensity, sizeof(Vector4));
+            }
+            else if (light->Type == LightType::POINT && pointLightsCount < MAX_POINT_LIGHT_SOURCES)
+            {
+                auto prefix = "_PointLights[" + to_string(pointLightsCount) + "].";
+                lightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
+                lightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector4));
+                lightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
+                ++pointLightsCount;
+            }
+            else if (light->Type == LightType::SPOT && spotLightsCount < MAX_POINT_LIGHT_SOURCES)
+            {
+                auto dir       = light->Rotation * Vector3(0, 0, -1);
+                auto cutOffCos = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
+                auto prefix    = "_SpotLights[" + to_string(spotLightsCount) + "].";
+                lightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
+                lightingDataBlock->SetUniform(prefix + "DirectionWS", &dir, sizeof(Vector3));
+                lightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector4));
+                lightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
+                lightingDataBlock->SetUniform(prefix + "CutOffCos", &cutOffCos, sizeof(float));
+                ++spotLightsCount;
+            }
+        }
+
+        lightingDataBlock->SetUniform("_PointLightsCount", &pointLightsCount, sizeof(int));
+        lightingDataBlock->SetUniform("_SpotLightsCount", &spotLightsCount, sizeof(int));
+        lightingDataBlock->SetUniform("_HasDirectionalLight", &hasDirectionalLight, sizeof(bool));
+    }
+
+    void Render()
+    {
+        glClearColor(0, 0, 0, 0);
+        glClearDepth(1);
+
+        Context ctx;
+
+        SetLightingData(ctx.AmbientLight, ctx.Lights);
+
+        if (shadowCasterPass != nullptr)
+            shadowCasterPass->Execute(ctx);
+        if (renderPass != nullptr)
+            renderPass->Execute(ctx);
+        if (skyboxPass != nullptr)
+            skyboxPass->Execute(ctx);
+
+        glutSwapBuffers();
+        glutPostRedisplay();
+
+        GLenum error = glGetError();
+        if (error != 0)
+            printf("%s\n", gluErrorString(error));
+    }
+
+    void Reshape(int _width, int _height)
+    {
+        screenWidth  = _width;
+        screenHeight = _height;
+        glViewport(0, 0, _width, _height);
+    }
+
+    int GetScreenWidth()
+    {
+        return screenWidth;
+    }
+
+    int GetScreenHeight()
+    {
+        return screenHeight;
+    }
+
+    void SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix)
+    {
+        auto matrixSize    = sizeof(Matrix4x4);
+        auto cameraPosWS   = _viewMatrix.Invert().GetPosition();
+        auto nearClipPlane = Camera::Current->GetNearClipPlane();
+        auto farClipPlane  = Camera::Current->GetFarClipPlane();
+
+        cameraDataBlock->SetUniform("_ProjMatrix", &_projectionMatrix, matrixSize);
+        cameraDataBlock->SetUniform("_ViewMatrix", &_viewMatrix, matrixSize);
+        cameraDataBlock->SetUniform("_CameraPosWS", &cameraPosWS, sizeof(Vector4));
+        cameraDataBlock->SetUniform("_NearClipPlane", &nearClipPlane, sizeof(float));
+        cameraDataBlock->SetUniform("_FarClipPlane", &farClipPlane, sizeof(float));
+    }
+
+    const string &GetGlobalShaderDirectives()
+    {
+        static constexpr int GLSL_VERSION = 410;
+
+        static string globalShaderDirectives;
+
+        if (globalShaderDirectives.empty())
+        {
+            // clang-format off
+            globalShaderDirectives = "#version " + to_string(GLSL_VERSION) + "\n"
+                                    "#define MAX_POINT_LIGHT_SOURCES " + to_string(MAX_POINT_LIGHT_SOURCES) + "\n"
+                                    "#define MAX_SPOT_LIGHT_SOURCES " + to_string(MAX_SPOT_LIGHT_SOURCES) + "\n";
+            // clang-format on
+        }
+
+        return globalShaderDirectives;
+    }
+} // namespace Graphics

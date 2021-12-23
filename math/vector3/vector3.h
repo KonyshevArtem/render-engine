@@ -12,10 +12,7 @@ public:
 
     Vector3(float _x, float _y, float _z);
 
-    static inline const Vector3 &One()
-    {
-        return m_One;
-    }
+    static const Vector3 &One();
 
     [[nodiscard]] float Length() const;
 
@@ -32,9 +29,6 @@ public:
     static float Dot(const Vector3 &_a, const Vector3 &_b);
 
     static Vector3 Cross(const Vector3 &_a, const Vector3 &_b);
-
-private:
-    static const Vector3 m_One;
 };
 
 #endif //OPENGL_STUDY_VECTOR3_H

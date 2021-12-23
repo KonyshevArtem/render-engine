@@ -6,6 +6,7 @@
 #define GL_SILENCE_DEPRECATION
 #pragma clang diagnostic pop
 
+#include "shader_loader/shader_loader.h"
 #include "uniform_type/uniform_type.h"
 #include <OpenGL/gl3.h>
 #include <filesystem>
@@ -36,13 +37,12 @@ private:
 #pragma region fields
 
 private:
-    GLuint                                                                        m_Program;
-    unordered_map<string, shared_ptr<BaseUniform>>                                m_Uniforms;
-    unordered_map<string, int>                                                    m_TextureUnits;
-    unordered_map<string, string>                                                 m_DefaultValues;
-    static unordered_map<string, shared_ptr<Texture>>                             m_GlobalTextures;
-    static unordered_map<string, unordered_map<UniformType, shared_ptr<Texture>>> m_DefaultTextures;
-    static const Shader *                                                         m_CurrentShader;
+    GLuint                                            m_Program;
+    unordered_map<string, shared_ptr<BaseUniform>>    m_Uniforms;
+    unordered_map<string, int>                        m_TextureUnits;
+    unordered_map<string, string>                     m_DefaultValues;
+    static unordered_map<string, shared_ptr<Texture>> m_GlobalTextures;
+    static const Shader *                             m_CurrentShader;
 
 #pragma endregion
 
@@ -51,7 +51,7 @@ private:
 public:
     void Use() const;
     void SetUniform(const string &_name, const void *_data) const;
-    void SetTextureUniform(const string &_name, const shared_ptr<Texture> &_texture) const;
+    void SetTextureUniform(const string &_name, const Texture &_texture) const;
 
     static void DetachCurrentShader();
     static void SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture);
@@ -61,12 +61,11 @@ public:
 #pragma region service methods
 
 private:
-    static void InitDefaultTextures();
-    void        SetDefaultValues() const;
+    void SetDefaultValues() const;
 
 #pragma endregion
 
-    friend class ShaderLoader;
+    friend shared_ptr<Shader> ShaderLoader::Load(const filesystem::path &_path, const vector<string> &_keywords);
     friend class UniformBlock;
 };
 

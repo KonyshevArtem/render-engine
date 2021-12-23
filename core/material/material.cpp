@@ -48,7 +48,10 @@ const shared_ptr<Shader> &Material::GetShader() const
 void Material::TransferUniforms() const
 {
     for (const auto &pair: m_Textures2D)
-        m_Shader->SetTextureUniform(pair.first, pair.second);
+    {
+        if (pair.second != nullptr)
+            m_Shader->SetTextureUniform(pair.first, *pair.second);
+    }
     for (const auto &pair: m_Vectors4)
         m_Shader->SetUniform(pair.first, &pair.second);
     for (const auto &pair: m_Floats)

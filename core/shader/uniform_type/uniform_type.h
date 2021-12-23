@@ -22,11 +22,10 @@ enum class UniformType
     SAMPLER_CUBE,
 };
 
-class UniformTypeUtils
+namespace UniformTypeUtils
 {
-public:
-    static bool        IsTexture(UniformType _uniformType);
-    static UniformType ConvertUniformType(GLenum _type);
-};
+    bool        IsTexture(UniformType _uniformType);
+    UniformType ConvertUniformType(GLenum _type);
+}; // namespace UniformTypeUtils
 
 #endif //OPENGL_STUDY_UNIFORM_TYPE_H

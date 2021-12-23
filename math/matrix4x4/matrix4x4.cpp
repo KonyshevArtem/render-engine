@@ -2,8 +2,17 @@
 #include "../quaternion/quaternion.h"
 #include "../vector3/vector3.h"
 
-const Matrix4x4 Matrix4x4::m_Zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-const Matrix4x4 Matrix4x4::m_Identity {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+const Matrix4x4 &Matrix4x4::Zero()
+{
+    static const Matrix4x4 zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    return zero;
+}
+
+const Matrix4x4 &Matrix4x4::Identity()
+{
+    static const Matrix4x4 identity {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+    return identity;
+}
 
 Matrix4x4 Matrix4x4::Translation(const Vector3 &_translation)
 {

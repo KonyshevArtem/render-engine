@@ -1,7 +1,11 @@
 #include "vector3.h"
 #include <cmath>
 
-const Vector3 Vector3::m_One {1, 1, 1};
+const Vector3 &Vector3::One()
+{
+    static const Vector3 one {1, 1, 1};
+    return one;
+}
 
 Vector3::Vector3() :
     Vector3(0, 0, 0)

@@ -28,7 +28,6 @@ private:
     void Init();
 
     vector<vector<unsigned char>> m_Data;
-    static shared_ptr<Cubemap>    m_White;
 
     static constexpr unsigned int SIDES_COUNT = 6;
 };

@@ -8,24 +8,24 @@
 #include <unordered_map>
 #include <vector>
 
-class GameObject;
+class Renderer;
 class Light;
 class Texture;
 class Cubemap;
 
 using namespace std;
 
-class Context
+struct Context
 {
 public:
     Context();
 
-    Vector4                        AmbientLight;
-    vector<shared_ptr<Light>>      Lights;
-    vector<shared_ptr<GameObject>> GameObjects;
-    Matrix4x4                      ViewMatrix       = Matrix4x4();
-    Matrix4x4                      ProjectionMatrix = Matrix4x4();
-    shared_ptr<Cubemap>            Skybox;
+    Vector4            AmbientLight;
+    vector<Light *>    Lights;
+    vector<Renderer *> Renderers;
+    Matrix4x4          ViewMatrix       = Matrix4x4();
+    Matrix4x4          ProjectionMatrix = Matrix4x4();
+    Cubemap *          Skybox;
 };
 
 #endif //OPENGL_STUDY_CONTEXT_H

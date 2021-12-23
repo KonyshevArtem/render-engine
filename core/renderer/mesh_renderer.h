@@ -14,12 +14,13 @@ using namespace std;
 class MeshRenderer: public Renderer
 {
 public:
-    MeshRenderer(shared_ptr<GameObject> _gameObject,
-                 shared_ptr<Mesh>       _mesh,
-                 shared_ptr<Material>   _material);
+    MeshRenderer(const shared_ptr<GameObject> &_gameObject,
+                 shared_ptr<Mesh>              _mesh,
+                 shared_ptr<Material>          _material);
+    MeshRenderer(const MeshRenderer &) = delete;
 
-    void Render() override;
-    void Render(const shared_ptr<Shader> &_shader) override;
+    void Render() const override;
+    void Render(const Shader &_shader) const override;
 
 private:
     shared_ptr<Mesh>     m_Mesh;

@@ -7,9 +7,12 @@
 #include "../../../utils/utils.h"
 #include "../../graphics/graphics.h"
 #include "../shader.h"
+#include <OpenGL/gl3.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <regex>
+#include <span>
+#include <unordered_map>
 
 // TODO use syntax analysis instead of regex
 
@@ -26,6 +29,14 @@ namespace ShaderLoader
             "vertex",
             "geometry",
             "fragment"};
+
+    struct ShaderInfo
+    {
+        unordered_map<string, string> DefaultValues;
+        string                        ShaderPartPaths[SHADER_PART_COUNT];
+        bool                          ZWrite = true;
+        Shader::BlendInfo             BlendInfo;
+    };
 
     bool TryCompileShaderPart(GLuint        _shaderPartType,
                               const string &_path,
@@ -102,10 +113,21 @@ namespace ShaderLoader
         return true;
     }
 
-    void ParsePragmas(const string &                 _shaderSource,
-                      unordered_map<string, string> &_defaultValues,
-                      unordered_map<string, string> &_additionalParameters)
+    GLenum ParseBlendFunc(const string &_literal)
     {
+        if (_literal == "SrcAlpha")
+            return GL_SRC_ALPHA;
+
+        if (_literal == "OneMinusSrcAlpha")
+            return GL_ONE_MINUS_SRC_ALPHA;
+
+        fprintf(stderr, "Unsupported blend func : %s\n", _literal.c_str());
+        return GL_ONE;
+    }
+
+    ShaderInfo ParseShaderInfo(const string &_shaderSource)
+    {
+        ShaderInfo             shaderInfo;
         smatch                 match;
         regex                  expression(R"(\s*#pragma\s+(.+)\n)");
         string::const_iterator searchStart(_shaderSource.cbegin());
@@ -117,6 +139,7 @@ namespace ShaderLoader
             boost::split(strings, info, boost::is_any_of(" "));
             unsigned long length = strings.size();
 
+            // parse default values
             if (strings[0] == "default")
             {
                 if (length < 3)
@@ -125,17 +148,54 @@ namespace ShaderLoader
                     continue;
                 }
 
-                _defaultValues[strings[1]] = strings[2];
+                shaderInfo.DefaultValues[strings[1]] = strings[2];
             }
 
-            for (const auto &name: SHADER_PART_NAMES)
+            // parse writing to depth
+            if (strings[0] == "zWrite")
             {
-                if (length >= 2 && strings[0] == name)
-                    _additionalParameters[name] = strings[1];
+                if (length < 2)
+                {
+                    fprintf(stderr, "ZWrite has incorrect format: %s\n", info.c_str());
+                    continue;
+                }
+
+                if (strings[1] == "off")
+                    shaderInfo.ZWrite = GL_FALSE;
+                else if (strings[1] == "on")
+                    shaderInfo.ZWrite = GL_TRUE;
+                else
+                    fprintf(stderr, "ZWrite has incorrect format: %s\n", info.c_str());
+            }
+
+            // parse blend mode
+            if (strings[0] == "blend")
+            {
+                if (length < 3)
+                {
+                    fprintf(stderr, "Blend info has incorrect format: %s\n", info.c_str());
+                    continue;
+                }
+
+                shaderInfo.BlendInfo.Enabled   = true;
+                shaderInfo.BlendInfo.SrcFactor = ParseBlendFunc(strings[1]);
+                shaderInfo.BlendInfo.DstFactor = ParseBlendFunc(strings[2]);
+            }
+
+            // parse paths to shader parts
+            if (length < 2)
+                continue;
+
+            for (int i = 0; i < SHADER_PART_COUNT; ++i)
+            {
+                if (strings[0] == SHADER_PART_NAMES[i])
+                    shaderInfo.ShaderPartPaths[i] = strings[1];
             }
 
             searchStart = match.suffix().first;
         }
+
+        return shaderInfo;
     }
 
     shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords)
@@ -145,9 +205,7 @@ namespace ShaderLoader
         for (const auto &keyword: _keywords)
             keywordsDirectives += "#define " + keyword + "\n";
 
-        unordered_map<string, string> defaultValues {};
-        unordered_map<string, string> additionalParameters {};
-        ParsePragmas(shaderSource, defaultValues, additionalParameters);
+        ShaderInfo shaderInfo = ParseShaderInfo(shaderSource);
 
         bool   success = true;
         GLuint shaderParts[SHADER_PART_COUNT];
@@ -155,15 +213,15 @@ namespace ShaderLoader
 
         for (int i = 0; i < SHADER_PART_COUNT; ++i)
         {
-            auto        part     = SHADER_PARTS[i];
-            const auto &partName = SHADER_PART_NAMES[i];
-            if (!additionalParameters.contains(partName))
+            auto        part         = SHADER_PARTS[i];
+            const auto &partName     = SHADER_PART_NAMES[i];
+            auto &      relativePath = shaderInfo.ShaderPartPaths[i];
+            if (relativePath.length() == 0)
                 continue;
 
-            GLuint shaderPart   = 0;
-            auto & relativePath = additionalParameters[partName];
-            auto   partPath     = _path.parent_path() / relativePath;
-            auto   partSource   = Utils::ReadFileWithIncludes(partPath);
+            GLuint shaderPart = 0;
+            auto   partPath   = _path.parent_path() / relativePath;
+            auto   partSource = Utils::ReadFileWithIncludes(partPath);
             success &= TryCompileShaderPart(part, partPath, partSource, keywordsDirectives, shaderPart);
 
             shaderParts[shaderPartCount++] = shaderPart;
@@ -172,7 +230,12 @@ namespace ShaderLoader
         GLuint program;
         success &= TryLinkProgram(span<GLuint> {shaderParts, shaderPartCount}, program, _path);
 
-        return success ? shared_ptr<Shader>(new Shader(program, defaultValues)) : nullptr;
+        return success ? shared_ptr<Shader>(
+                                 new Shader(program,
+                                            shaderInfo.DefaultValues,
+                                            shaderInfo.ZWrite,
+                                            shaderInfo.BlendInfo))
+                       : nullptr;
     }
 
 #pragma endregion

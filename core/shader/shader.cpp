@@ -11,6 +11,21 @@ using namespace std;
 unordered_map<string, shared_ptr<Texture>> Shader::m_GlobalTextures = {};
 const Shader *                             Shader::m_CurrentShader  = nullptr;
 
+#pragma region inner types
+
+void Shader::BlendInfo::Apply() const
+{
+    if (Enabled)
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(SrcFactor, DstFactor);
+    }
+    else
+        glDisable(GL_BLEND);
+}
+
+#pragma endregion
+
 #pragma region construction
 
 shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<string> &_keywords)
@@ -30,8 +45,14 @@ shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<stri
     return shader;
 }
 
-Shader::Shader(GLuint _program, unordered_map<string, string> _defaultValues) :
-    m_Program(_program), m_DefaultValues(std::move(_defaultValues))
+Shader::Shader(GLuint                        _program,
+               unordered_map<string, string> _defaultValues,
+               bool                          _zWrite,
+               BlendInfo                     _blendInfo) :
+    m_Program(_program),
+    m_DefaultValues(std::move(_defaultValues)),
+    m_ZWrite(_zWrite),
+    m_BlendInfo(_blendInfo)
 {
     auto lightingUniformIndex   = glGetUniformBlockIndex(m_Program, "Lighting");
     auto cameraDataUniformIndex = glGetUniformBlockIndex(m_Program, "CameraData");
@@ -79,6 +100,8 @@ Shader::~Shader()
     glDeleteProgram(m_Program);
 }
 
+#pragma endregion
+
 #pragma region public methods
 
 void Shader::Use() const
@@ -86,6 +109,9 @@ void Shader::Use() const
     m_CurrentShader = this;
 
     glUseProgram(m_Program);
+    glDepthMask(m_ZWrite ? GL_TRUE : GL_FALSE);
+
+    m_BlendInfo.Apply();
 
     SetDefaultValues();
     for (const auto &pair: m_GlobalTextures)
@@ -127,6 +153,7 @@ void Shader::DetachCurrentShader()
 
     m_CurrentShader = nullptr;
     glUseProgram(0);
+    glDepthMask(GL_TRUE); // enable depth mask, otherwise depth won't be cleared
 }
 
 void Shader::SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture)

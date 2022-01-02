@@ -45,3 +45,8 @@ void MeshRenderer::Render(const Shader &_shader) const
 
     Shader::DetachCurrentShader();
 }
+
+int MeshRenderer::GetRenderQueue() const
+{
+    return m_Material ? m_Material->GetRenderQueue() : 2000;
+}

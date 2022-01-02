@@ -25,6 +25,8 @@ public:
 private:
     shared_ptr<Mesh>     m_Mesh;
     shared_ptr<Material> m_Material;
+
+    int GetRenderQueue() const override;
 };
 
 #endif //OPENGL_STUDY_MESH_RENDERER_H

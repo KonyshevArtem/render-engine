@@ -13,6 +13,7 @@
 #include "../core/texture_2d/texture_2d.h"
 #include "../core/time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "../math/math_utils.h"
+#include "../math/vector4/vector4.h"
 #include "../scripts/camera_fly_controller/camera_fly_controller.h"
 #include <cmath>
 #include <memory>
@@ -34,6 +35,7 @@ void TestScene::Init()
     auto waterTexture  = Texture2D::Load("resources/textures/water.png");
     auto waterNormal   = Texture2D::Load("resources/textures/water_normal.png", false);
     auto billboardTree = Texture2D::Load("resources/textures/billboard_tree.png", true, true);
+    auto windowTexture = Texture2D::Load("resources/textures/window_cube.png", true, true);
 
     // init skybox cubemap
     Skybox = Cubemap::Load("resources/textures/skybox/x_positive.png",
@@ -46,6 +48,7 @@ void TestScene::Init()
     // init shaders
     auto vertexLitShader   = Shader::Load("resources/shaders/standard/standard.shader", vector<string> {"_VERTEX_LIGHT"});
     auto fragmentLitShader = Shader::Load("resources/shaders/standard/standard.shader", vector<string> {"_SMOOTHNESS", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
+    auto transparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", vector<string> {"_SMOOTHNESS", "_RECEIVE_SHADOWS"});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");
@@ -74,6 +77,10 @@ void TestScene::Init()
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
     m_WaterMaterial->SetTexture("_NormalMap", waterNormal);
     m_WaterMaterial->SetFloat("_Smoothness", 20);
+
+    auto transparentMaterial = make_shared<Material>(transparentShader);
+    transparentMaterial->SetTexture("_Albedo", windowTexture);
+    transparentMaterial->SetRenderQueue(3000);
 
     // init gameObjects
     auto rotatingCube      = make_shared<GameObject>();
@@ -123,21 +130,29 @@ void TestScene::Init()
         GameObjects.push_back(billboard);
     }
 
+    for (int i = 0; i < 3; ++i)
+    {
+        auto transparentCube           = make_shared<GameObject>();
+        transparentCube->Renderer      = make_shared<MeshRenderer>(transparentCube, cubeMesh, transparentMaterial);
+        transparentCube->LocalPosition = Vector3(-10.0f + 5 * i, -5, -12);
+        GameObjects.push_back(transparentCube);
+    }
+
     // init lights
     auto dirLight       = make_shared<Light>();
     dirLight->Position  = Vector3(0, -0.3f, 1);
     dirLight->Rotation  = Quaternion::AngleAxis(180, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(-1, 0, 0));
-    dirLight->Intensity = Vector4(0.1f, 0.1f, 0.1f, 1);
+    dirLight->Intensity = Vector3(0.2f, 0.2f, 0.2f);
     dirLight->Type      = LightType::DIRECTIONAL;
 
     auto pointLight         = make_shared<Light>();
     pointLight->Position    = Vector3(-3, -3, -4);
-    pointLight->Intensity   = Vector4(1, 0, 0, 1);
+    pointLight->Intensity   = Vector3(1, 0, 0);
     pointLight->Attenuation = 0.3f;
     pointLight->Type        = LightType::POINT;
 
     m_SpotLight              = make_shared<Light>();
-    m_SpotLight->Intensity   = Vector4(1, 1, 1, 1);
+    m_SpotLight->Intensity   = Vector3(1, 1, 1);
     m_SpotLight->Attenuation = 0.05f;
     m_SpotLight->CutOffAngle = 15;
     m_SpotLight->Type        = LightType::SPOT;
@@ -145,12 +160,12 @@ void TestScene::Init()
     auto spotLight2         = make_shared<Light>();
     spotLight2->Position    = Vector3(-9, 5, -5.5f);
     spotLight2->Rotation    = Quaternion::AngleAxis(90, Vector3(-1, 0, 0));
-    spotLight2->Intensity   = Vector4(1, 1, 1, 1);
+    spotLight2->Intensity   = Vector3(1, 1, 1);
     spotLight2->Attenuation = 0.01f;
     spotLight2->CutOffAngle = 15;
     spotLight2->Type        = LightType::SPOT;
 
-    AmbientLight = Vector4(0.05f, 0.05f, 0.05f, 1);
+    AmbientLight = Vector3(0.05f, 0.05f, 0.05f);
 
     Lights.push_back(dirLight);
     Lights.push_back(pointLight);

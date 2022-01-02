@@ -3,7 +3,6 @@
 
 #include "../../math/quaternion/quaternion.h"
 #include "../../math/vector3/vector3.h"
-#include "../../math/vector4/vector4.h"
 
 enum class LightType
 {
@@ -18,7 +17,7 @@ public:
     Vector3    Position;
     Quaternion Rotation;
     LightType  Type;
-    Vector4    Intensity;
+    Vector3    Intensity;
     float      Attenuation;
     float      CutOffAngle;
 };

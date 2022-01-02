@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_SCENE_H
 #define OPENGL_STUDY_SCENE_H
 
-#include "../../math/vector4/vector4.h"
+#include "../../math/vector3/vector3.h"
 #include <memory>
 #include <vector>
 
@@ -17,7 +17,7 @@ public:
     inline static shared_ptr<Scene> Current = nullptr;
     vector<shared_ptr<GameObject>>  GameObjects;
     vector<shared_ptr<Light>>       Lights;
-    Vector4                         AmbientLight;
+    Vector3                         AmbientLight;
     shared_ptr<Cubemap>             Skybox;
 
     static void Update();

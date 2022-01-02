@@ -6,13 +6,13 @@
 layout(std140) struct DirectionalLight
 {
     vec3 DirectionWS;
-    vec4 Intensity;
+    vec3 Intensity;
 };
 
 layout(std140) struct PointLight
 {
     vec3 PositionWS;
-    vec4 Intensity;
+    vec3 Intensity;
     float Attenuation;
 };
 
@@ -20,14 +20,14 @@ layout(std140) struct SpotLight
 {
     vec3 PositionWS;
     vec3 DirectionWS;
-    vec4 Intensity;
+    vec3 Intensity;
     float Attenuation;
     float CutOffCos;
 };
 
 layout(std140) uniform Lighting
 {
-    vec4 _AmbientLight;
+    vec3 _AmbientLight;
 
     DirectionalLight _DirectionalLight;
     bool _HasDirectionalLight;
@@ -46,7 +46,7 @@ float getSpecularTerm(vec3 lightDirWS, float lightAngleCos, vec3 posWS, vec3 nor
     float blinnTerm = clamp(dot(normalWS, halfAngle), 0, 1);
     blinnTerm = lightAngleCos != 0 ? blinnTerm : 0;
     blinnTerm = pow(blinnTerm, _Smoothness);
-    return blinnTerm;
+    return max(blinnTerm, 0);
     #else
     return 0;
     #endif
@@ -68,8 +68,8 @@ vec3 getNormalWS(vec3 normalWS, vec3 tangentWS, vec2 uv)
     return normalWS;
 }
 
-vec4 getLight(vec3 posWS, vec3 normalWS, float farClipPlane, float nearClipPlane){
-    vec4 light = vec4(0, 0, 0, 0);
+vec3 getLight(vec3 posWS, vec3 normalWS, float farClipPlane, float nearClipPlane){
+    vec3 light = vec3(0);
 
     if (_HasDirectionalLight){
         vec3 lightDirWS = normalize(-_DirectionalLight.DirectionWS);
@@ -103,7 +103,7 @@ vec4 getLight(vec3 posWS, vec3 normalWS, float farClipPlane, float nearClipPlane
         }
     }
 
-    return vec4((light + _AmbientLight).xyz, 1);
+    return light + _AmbientLight;
 }
 
 #endif //LIGHTING

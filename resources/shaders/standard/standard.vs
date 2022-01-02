@@ -36,7 +36,7 @@ void main(){
     vars.UV = texCoord;
 
     #ifdef _VERTEX_LIGHT
-    vars.Color = getLight(vars.PositionWS.xyz, vars.NormalWS, _NearClipPlane, _FarClipPlane);
+    vars.Color = vec4(getLight(vars.PositionWS.xyz, vars.NormalWS, _NearClipPlane, _FarClipPlane), 1);
     #else
     vars.Color = vec4(1);
     #endif

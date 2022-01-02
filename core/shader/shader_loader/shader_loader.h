@@ -1,12 +1,9 @@
 #ifndef OPENGL_STUDY_SHADER_LOADER_H
 #define OPENGL_STUDY_SHADER_LOADER_H
 
-#include <OpenGL/gl3.h>
 #include <filesystem>
 #include <memory>
-#include <span>
 #include <string>
-#include <unordered_map>
 
 class Shader;
 

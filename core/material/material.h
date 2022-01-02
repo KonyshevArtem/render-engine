@@ -27,6 +27,16 @@ public:
     const shared_ptr<Shader> &GetShader() const;
     void                      TransferUniforms() const;
 
+    inline int GetRenderQueue() const
+    {
+        return m_RenderQueue;
+    }
+
+    inline void SetRenderQueue(int _renderQueue)
+    {
+        m_RenderQueue = _renderQueue;
+    }
+
 private:
     Material(const Material &) = delete;
 
@@ -34,6 +44,7 @@ private:
     unordered_map<string, shared_ptr<Texture2D>> m_Textures2D;
     unordered_map<string, Vector4>               m_Vectors4;
     unordered_map<string, float>                 m_Floats;
+    int                                          m_RenderQueue = 2000;
 };
 
 #endif //OPENGL_STUDY_MATERIAL_H

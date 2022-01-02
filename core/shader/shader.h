@@ -21,6 +21,20 @@ class BaseUniform;
 
 class Shader
 {
+#pragma region inner types
+
+public:
+    struct BlendInfo
+    {
+        bool   Enabled = false;
+        GLenum SrcFactor;
+        GLenum DstFactor;
+
+        void Apply() const;
+    };
+
+#pragma endregion
+
 #pragma region construction
 
 public:
@@ -29,7 +43,10 @@ public:
     virtual ~Shader();
 
 private:
-    Shader(GLuint _program, unordered_map<string, string> _defaultValues);
+    Shader(GLuint                        _program,
+           unordered_map<string, string> _defaultValues,
+           bool                          _zWrite,
+           BlendInfo                     _blendInfo);
     Shader(const Shader &) = delete;
 
 #pragma endregion
@@ -38,6 +55,8 @@ private:
 
 private:
     GLuint                                            m_Program;
+    bool                                              m_ZWrite;
+    BlendInfo                                         m_BlendInfo;
     unordered_map<string, shared_ptr<BaseUniform>>    m_Uniforms;
     unordered_map<string, int>                        m_TextureUnits;
     unordered_map<string, string>                     m_DefaultValues;

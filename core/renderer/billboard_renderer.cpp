@@ -69,3 +69,8 @@ void BillboardRenderer::Render(const Shader &_shader) const
 {
     Render();
 }
+
+int BillboardRenderer::GetRenderQueue() const
+{
+    return m_RenderQueue;
+}

@@ -4,6 +4,7 @@
 #pragma clang diagnostic pop
 
 #include "graphics.h"
+#include "../../math/vector4/vector4.h"
 #include "../camera/camera.h"
 #include "../light/light.h"
 #include "../shader/shader.h"
@@ -26,7 +27,8 @@ namespace Graphics
     shared_ptr<UniformBlock> shadowsDataBlock;
 
     unique_ptr<ShadowCasterPass> shadowCasterPass;
-    unique_ptr<RenderPass>       renderPass;
+    unique_ptr<RenderPass>       opaqueRenderPass;
+    unique_ptr<RenderPass>       tranparentRenderPass;
     unique_ptr<SkyboxPass>       skyboxPass;
 
     int screenWidth  = 0;
@@ -62,9 +64,10 @@ namespace Graphics
 
     void InitPasses()
     {
-        renderPass       = make_unique<RenderPass>();
-        shadowCasterPass = make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
-        skyboxPass       = make_unique<SkyboxPass>();
+        opaqueRenderPass     = make_unique<RenderPass>(Renderer::Sorting::FRONT_TO_BACK, Renderer::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        tranparentRenderPass = make_unique<RenderPass>(Renderer::Sorting::BACK_TO_FRONT, Renderer::Filter::Transparent(), 0);
+        shadowCasterPass     = make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
+        skyboxPass           = make_unique<SkyboxPass>();
     }
 
     void Init(int _argc, char **_argv)
@@ -81,9 +84,9 @@ namespace Graphics
         InitPasses();
     }
 
-    void SetLightingData(const Vector4 &_ambient, const vector<Light *> &_lights)
+    void SetLightingData(const Vector3 &_ambient, const vector<Light *> &_lights)
     {
-        lightingDataBlock->SetUniform("_AmbientLight", &_ambient, sizeof(Vector4));
+        lightingDataBlock->SetUniform("_AmbientLight", &_ambient, sizeof(Vector3));
 
         int  pointLightsCount    = 0;
         int  spotLightsCount     = 0;
@@ -99,13 +102,13 @@ namespace Graphics
                 hasDirectionalLight = true;
                 auto dir            = light->Rotation * Vector3(0, 0, -1);
                 lightingDataBlock->SetUniform("_DirectionalLight.DirectionWS", &dir, sizeof(Vector3));
-                lightingDataBlock->SetUniform("_DirectionalLight.Intensity", &light->Intensity, sizeof(Vector4));
+                lightingDataBlock->SetUniform("_DirectionalLight.Intensity", &light->Intensity, sizeof(Vector3));
             }
             else if (light->Type == LightType::POINT && pointLightsCount < MAX_POINT_LIGHT_SOURCES)
             {
                 auto prefix = "_PointLights[" + to_string(pointLightsCount) + "].";
                 lightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
-                lightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector4));
+                lightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector3));
                 lightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
                 ++pointLightsCount;
             }
@@ -116,7 +119,7 @@ namespace Graphics
                 auto prefix    = "_SpotLights[" + to_string(spotLightsCount) + "].";
                 lightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
                 lightingDataBlock->SetUniform(prefix + "DirectionWS", &dir, sizeof(Vector3));
-                lightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector4));
+                lightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector3));
                 lightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
                 lightingDataBlock->SetUniform(prefix + "CutOffCos", &cutOffCos, sizeof(float));
                 ++spotLightsCount;
@@ -139,10 +142,12 @@ namespace Graphics
 
         if (shadowCasterPass != nullptr)
             shadowCasterPass->Execute(ctx);
-        if (renderPass != nullptr)
-            renderPass->Execute(ctx);
+        if (opaqueRenderPass != nullptr)
+            opaqueRenderPass->Execute(ctx);
         if (skyboxPass != nullptr)
             skyboxPass->Execute(ctx);
+        if (tranparentRenderPass != nullptr)
+            tranparentRenderPass->Execute(ctx);
 
         glutSwapBuffers();
         glutPostRedisplay();

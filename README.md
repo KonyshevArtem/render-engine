@@ -17,6 +17,9 @@ to generalize work with uniforms
 * Shader preprocessor that implements `#include` feature
 * Skybox with cubemap
 * Normal mapping
+* Billboard renderer with alpha discard support
+* Opaque and transparent passes with different sorting and clear flags
+* Alpha blending in transparent pass
 
 ### Requirements
 

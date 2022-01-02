@@ -2,7 +2,7 @@
 #define OPENGL_STUDY_CONTEXT_H
 
 #include "../../math/matrix4x4/matrix4x4.h"
-#include "../../math/vector4/vector4.h"
+#include "../../math/vector3/vector3.h"
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -20,7 +20,7 @@ struct Context
 public:
     Context();
 
-    Vector4            AmbientLight;
+    Vector3            AmbientLight;
     vector<Light *>    Lights;
     vector<Renderer *> Renderers;
     Matrix4x4          ViewMatrix       = Matrix4x4();

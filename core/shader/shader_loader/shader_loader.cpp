@@ -33,6 +33,7 @@ namespace ShaderLoader
     struct ShaderInfo
     {
         unordered_map<string, string> DefaultValues;
+        unordered_map<string, string> Tags;
         string                        ShaderPartPaths[SHADER_PART_COUNT];
         bool                          ZWrite = true;
         Shader::BlendInfo             BlendInfo;
@@ -151,6 +152,18 @@ namespace ShaderLoader
                 shaderInfo.DefaultValues[strings[1]] = strings[2];
             }
 
+            // parse tags
+            if (strings[0] == "tag")
+            {
+                if (length < 3)
+                {
+                    fprintf(stderr, "Tag has incorrect format: %s\n", info.c_str());
+                    continue;
+                }
+
+                shaderInfo.Tags[strings[1]] = strings[2];
+            }
+
             // parse writing to depth
             if (strings[0] == "zWrite")
             {
@@ -233,6 +246,7 @@ namespace ShaderLoader
         return success ? shared_ptr<Shader>(
                                  new Shader(program,
                                             shaderInfo.DefaultValues,
+                                            shaderInfo.Tags,
                                             shaderInfo.ZWrite,
                                             shaderInfo.BlendInfo))
                        : nullptr;

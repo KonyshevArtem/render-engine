@@ -13,15 +13,20 @@
 #include "../context.h"
 #include "../graphics.h"
 
-SkyboxPass::SkyboxPass() :
-    m_Shader(Shader::Load("resources/shaders/skybox/skybox.shader", vector<string>())),
-    m_Mesh(FBXAsset::Load("resources/models/cube.fbx")->GetMesh(0))
-{
-}
-
 void SkyboxPass::Execute(const Context &_ctx)
 {
-    if (m_Mesh == nullptr || m_Shader == nullptr || _ctx.Skybox == nullptr)
+    static shared_ptr<Mesh>   mesh   = nullptr;
+    static shared_ptr<Shader> shader = nullptr;
+
+    if (mesh == nullptr)
+        mesh = FBXAsset::Load("resources/models/cube.fbx")->GetMesh(0);
+    if (shader == nullptr)
+        shader = Shader::Load("resources/shaders/skybox/skybox.shader", vector<string>());
+
+    if (mesh == nullptr || shader == nullptr || _ctx.Skybox == nullptr)
+        return;
+
+    if (!shader->Use())
         return;
 
     glCullFace(GL_FRONT);
@@ -29,16 +34,11 @@ void SkyboxPass::Execute(const Context &_ctx)
 
     Graphics::SetCameraData(_ctx.ViewMatrix, _ctx.ProjectionMatrix);
 
-    m_Shader->Use();
-
     Matrix4x4 modelMatrix = Matrix4x4::Translation(_ctx.ViewMatrix.Invert().GetPosition());
-    m_Shader->SetUniform("_ModelMatrix", &modelMatrix);
+    Shader::SetUniform("_ModelMatrix", &modelMatrix);
+    Shader::SetTextureUniform("_Skybox", *_ctx.Skybox);
 
-    int unit = 0;
-    _ctx.Skybox->Bind(unit);
-    m_Shader->SetUniform("_Skybox", &unit);
-
-    m_Mesh->Draw();
+    mesh->Draw();
 
     Shader::DetachCurrentShader();
     glCullFace(GL_BACK);

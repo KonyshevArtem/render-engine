@@ -13,8 +13,7 @@ using namespace std;
 class Renderer
 {
 public:
-    virtual void Render() const                      = 0;
-    virtual void Render(const Shader &_shader) const = 0;
+    virtual void Render() const = 0;
 
     enum class Sorting
     {

@@ -20,7 +20,6 @@ public:
     MeshRenderer(const MeshRenderer &) = delete;
 
     void Render() const override;
-    void Render(const Shader &_shader) const override;
 
 private:
     shared_ptr<Mesh>     m_Mesh;

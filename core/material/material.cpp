@@ -50,10 +50,10 @@ void Material::TransferUniforms() const
     for (const auto &pair: m_Textures2D)
     {
         if (pair.second != nullptr)
-            m_Shader->SetTextureUniform(pair.first, *pair.second);
+            Shader::SetTextureUniform(pair.first, *pair.second);
     }
     for (const auto &pair: m_Vectors4)
-        m_Shader->SetUniform(pair.first, &pair.second);
+        Shader::SetUniform(pair.first, &pair.second);
     for (const auto &pair: m_Floats)
-        m_Shader->SetUniform(pair.first, &pair.second);
+        Shader::SetUniform(pair.first, &pair.second);
 }

@@ -45,6 +45,7 @@ public:
 private:
     Shader(GLuint                        _program,
            unordered_map<string, string> _defaultValues,
+           unordered_map<string, string> _tags,
            bool                          _zWrite,
            BlendInfo                     _blendInfo);
     Shader(const Shader &) = delete;
@@ -54,24 +55,30 @@ private:
 #pragma region fields
 
 private:
-    GLuint                                            m_Program;
-    bool                                              m_ZWrite;
-    BlendInfo                                         m_BlendInfo;
-    unordered_map<string, shared_ptr<BaseUniform>>    m_Uniforms;
-    unordered_map<string, int>                        m_TextureUnits;
-    unordered_map<string, string>                     m_DefaultValues;
+    GLuint                                         m_Program;
+    bool                                           m_ZWrite;
+    BlendInfo                                      m_BlendInfo;
+    unordered_map<string, shared_ptr<BaseUniform>> m_Uniforms;
+    unordered_map<string, int>                     m_TextureUnits;
+    unordered_map<string, string>                  m_DefaultValues;
+    unordered_map<string, string>                  m_Tags;
+
     static unordered_map<string, shared_ptr<Texture>> m_GlobalTextures;
+    static string                                     m_ReplacementTag;
     static const Shader *                             m_CurrentShader;
+    static const Shader *                             m_ReplacementShader;
 
 #pragma endregion
 
 #pragma region public methods
 
 public:
-    void Use() const;
-    void SetUniform(const string &_name, const void *_data) const;
-    void SetTextureUniform(const string &_name, const Texture &_texture) const;
+    bool Use() const;
 
+    static void SetUniform(const string &_name, const void *_data);
+    static void SetTextureUniform(const string &_name, const Texture &_texture);
+    static void SetReplacementShader(const Shader *_shader, const string &_tag);
+    static void DetachReplacementShader();
     static void DetachCurrentShader();
     static void SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture);
 

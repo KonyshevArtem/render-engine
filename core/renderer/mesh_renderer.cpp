@@ -21,24 +21,19 @@ MeshRenderer::MeshRenderer(const shared_ptr<GameObject> &_gameObject,
 
 void MeshRenderer::Render() const
 {
-    const auto& shaderPtr = m_Material->GetShader();
-    if (shaderPtr != nullptr)
-        Render(*shaderPtr);
-}
-
-void MeshRenderer::Render(const Shader &_shader) const
-{
-    if (m_GameObject.expired())
+    const auto &shader = m_Material->GetShader();
+    if (shader == nullptr || m_GameObject.expired())
         return;
 
-    _shader.Use();
+    if (!shader->Use())
+        return;
 
     auto      go                = m_GameObject.lock();
     Matrix4x4 modelMatrix       = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
     Matrix4x4 modelNormalMatrix = modelMatrix.Invert().Transpose();
 
-    _shader.SetUniform("_ModelMatrix", &modelMatrix);
-    _shader.SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
+    Shader::SetUniform("_ModelMatrix", &modelMatrix);
+    Shader::SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
 
     m_Material->TransferUniforms();
     m_Mesh->Draw();

@@ -49,12 +49,14 @@ void BillboardRenderer::Render() const
     if (width == 0 || height == 0)
         return;
 
-    shader->Use();
-    shader->SetTextureUniform("_Texture", *m_Texture);
+    if (!shader->Use())
+        return;
+
+    Shader::SetTextureUniform("_Texture", *m_Texture);
 
     auto    aspect = static_cast<float>(width) / height;
     Vector2 size {m_Size, m_Size / aspect};
-    shader->SetUniform("_Size", &size);
+    Shader::SetUniform("_Size", &size);
 
     glBindVertexArray(m_VertexArrayObject);
     glBindBuffer(GL_ARRAY_BUFFER, m_PointsBuffer);
@@ -63,11 +65,6 @@ void BillboardRenderer::Render() const
 
     glBindVertexArray(0);
     Shader::DetachCurrentShader();
-}
-
-void BillboardRenderer::Render(const Shader &_shader) const
-{
-    Render();
 }
 
 int BillboardRenderer::GetRenderQueue() const

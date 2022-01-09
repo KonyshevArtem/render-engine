@@ -37,6 +37,8 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer);
     glViewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
 
+    Shader::SetReplacementShader(m_ShadowCasterShader.get(), "Shadows");
+
     int spotLightsCount = 0;
     for (const auto *light: _ctx.Lights)
     {
@@ -66,6 +68,8 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+    Shader::DetachReplacementShader();
 }
 
 void ShadowCasterPass::Render(const vector<Renderer *> &_renderers)
@@ -78,6 +82,6 @@ void ShadowCasterPass::Render(const vector<Renderer *> &_renderers)
     for (const auto *r: _renderers)
     {
         if (r != nullptr)
-            r->Render(*m_ShadowCasterShader);
+            r->Render();
     }
 }

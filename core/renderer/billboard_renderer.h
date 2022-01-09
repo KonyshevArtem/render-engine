@@ -17,7 +17,6 @@ public:
     virtual ~BillboardRenderer();
 
     void Render() const override;
-    void Render(const Shader &_shader) const override;
 
     inline void SetRenderQueue(int _renderQueue)
     {

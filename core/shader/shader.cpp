@@ -8,8 +8,10 @@
 
 using namespace std;
 
-unordered_map<string, shared_ptr<Texture>> Shader::m_GlobalTextures = {};
-const Shader *                             Shader::m_CurrentShader  = nullptr;
+unordered_map<string, shared_ptr<Texture>> Shader::m_GlobalTextures    = {};
+string                                     Shader::m_ReplacementTag    = "";
+const Shader *                             Shader::m_CurrentShader     = nullptr;
+const Shader *                             Shader::m_ReplacementShader = nullptr;
 
 #pragma region inner types
 
@@ -47,10 +49,12 @@ shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<stri
 
 Shader::Shader(GLuint                        _program,
                unordered_map<string, string> _defaultValues,
+               unordered_map<string, string> _tags,
                bool                          _zWrite,
                BlendInfo                     _blendInfo) :
     m_Program(_program),
     m_DefaultValues(std::move(_defaultValues)),
+    m_Tags(std::move(_tags)),
     m_ZWrite(_zWrite),
     m_BlendInfo(_blendInfo)
 {
@@ -104,37 +108,59 @@ Shader::~Shader()
 
 #pragma region public methods
 
-void Shader::Use() const
+bool Shader::Use() const
 {
-    m_CurrentShader = this;
+    if (m_ReplacementShader == nullptr)
+        m_CurrentShader = this;
+    else if (m_ReplacementShader->m_Tags.contains(m_ReplacementTag) && m_Tags.contains(m_ReplacementTag) &&
+             m_ReplacementShader->m_Tags.at(m_ReplacementTag) == m_Tags.at(m_ReplacementTag))
+        m_CurrentShader = m_ReplacementShader;
 
-    glUseProgram(m_Program);
-    glDepthMask(m_ZWrite ? GL_TRUE : GL_FALSE);
+    if (m_CurrentShader == nullptr)
+        return false;
 
-    m_BlendInfo.Apply();
+    glUseProgram(m_CurrentShader->m_Program);
+    glDepthMask(m_CurrentShader->m_ZWrite ? GL_TRUE : GL_FALSE);
 
-    SetDefaultValues();
-    for (const auto &pair: m_GlobalTextures)
+    m_CurrentShader->m_BlendInfo.Apply();
+
+    m_CurrentShader->SetDefaultValues();
+    for (const auto &pair: m_CurrentShader->m_GlobalTextures)
     {
         if (pair.second != nullptr)
-            SetTextureUniform(pair.first, *pair.second);
+            m_CurrentShader->SetTextureUniform(pair.first, *pair.second);
     }
+
+    return true;
 }
 
-void Shader::SetUniform(const string &_name, const void *_data) const
+void Shader::SetUniform(const string &_name, const void *_data)
 {
-    if (this == m_CurrentShader && m_Uniforms.contains(_name) && m_Uniforms.at(_name) != nullptr)
-        m_Uniforms.at(_name)->Set(_data);
+    if (m_CurrentShader != nullptr && m_CurrentShader->m_Uniforms.contains(_name) && m_CurrentShader->m_Uniforms.at(_name) != nullptr)
+        m_CurrentShader->m_Uniforms.at(_name)->Set(_data);
 }
 
-void Shader::SetTextureUniform(const string &_name, const Texture &_texture) const
+void Shader::SetTextureUniform(const string &_name, const Texture &_texture)
 {
-    if (this != m_CurrentShader || !m_TextureUnits.contains(_name))
+    if (m_CurrentShader == nullptr || !m_CurrentShader->m_TextureUnits.contains(_name))
         return;
 
-    auto unit = m_TextureUnits.at(_name);
+    auto unit = m_CurrentShader->m_TextureUnits.at(_name);
     _texture.Bind(unit);
     SetUniform(_name, &unit);
+}
+
+void Shader::SetReplacementShader(const Shader *_shader, const string &_tag)
+{
+    m_ReplacementShader = _shader;
+    m_ReplacementTag    = _tag;
+}
+
+void Shader::DetachReplacementShader()
+{
+    if (m_CurrentShader == m_ReplacementShader)
+        m_CurrentShader = nullptr;
+    m_ReplacementShader = nullptr;
 }
 
 void Shader::DetachCurrentShader()

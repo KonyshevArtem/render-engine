@@ -21,9 +21,15 @@ public:
     void                        Bind(int _unit) const override;
     static shared_ptr<Cubemap> &White();
 
+    ~Cubemap() = default;
+
 private:
     Cubemap()                = default;
     Cubemap(const Cubemap &) = delete;
+    Cubemap(Cubemap &&)      = delete;
+
+    Cubemap &operator()(const Cubemap &) = delete;
+    Cubemap &operator()(Cubemap &&)      = delete;
 
     void Init();
 

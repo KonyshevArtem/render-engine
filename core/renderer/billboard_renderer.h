@@ -13,7 +13,6 @@ class BillboardRenderer: public Renderer
 {
 public:
     BillboardRenderer(const shared_ptr<GameObject> &_gameObject, shared_ptr<Texture2D> _texture);
-    BillboardRenderer(const BillboardRenderer &) = delete;
     virtual ~BillboardRenderer();
 
     void Render() const override;
@@ -29,6 +28,12 @@ public:
     };
 
 private:
+    BillboardRenderer(const BillboardRenderer &) = delete;
+    BillboardRenderer(BillboardRenderer &&)      = delete;
+
+    BillboardRenderer &operator()(const BillboardRenderer &) = delete;
+    BillboardRenderer &operator()(BillboardRenderer &&)      = delete;
+
     shared_ptr<Texture2D> m_Texture;
     float                 m_Size;
     int                   m_RenderQueue       = 2000;

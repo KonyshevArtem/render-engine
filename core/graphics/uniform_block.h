@@ -20,6 +20,10 @@ public:
 
 private:
     UniformBlock(const UniformBlock &) = delete;
+    UniformBlock(UniformBlock &&)      = delete;
+
+    UniformBlock &operator()(const UniformBlock &) = delete;
+    UniformBlock &operator()(UniformBlock &&)      = delete;
 
     string                       m_Name;
     GLuint                       m_Buffer = 0;

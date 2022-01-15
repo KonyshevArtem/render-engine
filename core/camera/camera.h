@@ -40,9 +40,15 @@ public:
         return m_FarClipPlane;
     }
 
+    ~Camera() = default;
+
 private:
     Camera(float _fov, float _nearClipPlane, float _farClipPlane);
     Camera(const Camera &) = delete;
+    Camera(Camera &&)      = delete;
+
+    Camera &operator()(const Camera &) = delete;
+    Camera &operator()(Camera &&)      = delete;
 
     float      m_Fov           = 0;
     float      m_NearClipPlane = 0;

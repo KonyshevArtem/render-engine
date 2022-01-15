@@ -15,13 +15,17 @@ class FBXAsset
 public:
     static shared_ptr<FBXAsset> Load(const filesystem::path &_path);
 
-    virtual ~FBXAsset();
+    ~FBXAsset();
 
     shared_ptr<Mesh> GetMesh(unsigned int _index) const;
 
 private:
     explicit FBXAsset(ofbx::IScene *_scene);
     FBXAsset(const FBXAsset &) = delete;
+    FBXAsset(FBXAsset &&)      = delete;
+
+    FBXAsset &operator()(const FBXAsset &) = delete;
+    FBXAsset &operator()(FBXAsset &&)      = delete;
 
     ofbx::IScene *           m_Scene;
     vector<shared_ptr<Mesh>> m_Meshes;

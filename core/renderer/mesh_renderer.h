@@ -17,11 +17,18 @@ public:
     MeshRenderer(const shared_ptr<GameObject> &_gameObject,
                  shared_ptr<Mesh>              _mesh,
                  shared_ptr<Material>          _material);
-    MeshRenderer(const MeshRenderer &) = delete;
+    virtual ~MeshRenderer() = default;
 
     void Render() const override;
 
 private:
+    MeshRenderer(const MeshRenderer &) = delete;
+    MeshRenderer(MeshRenderer &&)      = delete;
+
+    MeshRenderer &operator()(const MeshRenderer &) = delete;
+    MeshRenderer &operator()(MeshRenderer &&)      = delete;
+
+
     shared_ptr<Mesh>     m_Mesh;
     shared_ptr<Material> m_Material;
 

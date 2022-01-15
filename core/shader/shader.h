@@ -40,7 +40,7 @@ public:
 public:
     static shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords);
 
-    virtual ~Shader();
+    ~Shader();
 
 private:
     Shader(GLuint                        _program,
@@ -49,6 +49,10 @@ private:
            bool                          _zWrite,
            BlendInfo                     _blendInfo);
     Shader(const Shader &) = delete;
+    Shader(Shader &&)      = delete;
+
+    Shader &operator()(const Shader &) = delete;
+    Shader &operator()(Shader &&)      = delete;
 
 #pragma endregion
 

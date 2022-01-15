@@ -23,6 +23,10 @@ public:
 
 private:
     ShadowCasterPass(const ShadowCasterPass &) = delete;
+    ShadowCasterPass(ShadowCasterPass &&)      = delete;
+
+    ShadowCasterPass &operator()(const ShadowCasterPass &) = delete;
+    ShadowCasterPass &operator()(ShadowCasterPass &&)      = delete;
 
     static constexpr int SHADOW_MAP_SIZE = 1024;
 

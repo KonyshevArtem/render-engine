@@ -27,9 +27,14 @@ private:
 
 public:
     BaseUniform(GLint _location, GLenum _type, int _index);
+    ~BaseUniform() = default;
 
 private:
     BaseUniform(const BaseUniform &) = delete;
+    BaseUniform(BaseUniform &&)      = delete;
+
+    BaseUniform &operator()(const BaseUniform &) = delete;
+    BaseUniform &operator()(BaseUniform &&)      = delete;
 
 #pragma endregion
 

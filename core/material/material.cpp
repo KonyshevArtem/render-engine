@@ -1,7 +1,7 @@
 #include "material.h"
 #include "../../math/vector4/vector4.h"
 #include "../shader/shader.h"
-#include "../texture_2d/texture_2d.h"
+#include "../texture/texture.h"
 #include <utility>
 
 Material::Material(shared_ptr<Shader> _shader) :
@@ -9,15 +9,15 @@ Material::Material(shared_ptr<Shader> _shader) :
 {
 }
 
-void Material::SetTexture(const string &_name, shared_ptr<Texture2D> _value)
+void Material::SetTexture(const string &_name, shared_ptr<Texture> _value)
 {
-    m_Textures2D[_name]      = std::move(_value);
+    m_Textures[_name]        = std::move(_value);
     m_Vectors4[_name + "ST"] = Vector4(0, 0, 1, 1);
 }
 
-const shared_ptr<Texture2D> &Material::GetTexture(const string &_name) const
+const shared_ptr<Texture> Material::GetTexture(const string &_name) const
 {
-    return m_Textures2D.contains(_name) ? m_Textures2D.at(_name) : Texture2D::Null();
+    return m_Textures.contains(_name) ? m_Textures.at(_name) : nullptr;
 }
 
 void Material::SetVector4(const string &_name, const Vector4 &_value)
@@ -25,7 +25,7 @@ void Material::SetVector4(const string &_name, const Vector4 &_value)
     m_Vectors4[_name] = _value;
 }
 
-const Vector4 &Material::GetVector4(const string &_name) const
+const Vector4 Material::GetVector4(const string &_name) const
 {
     return m_Vectors4.contains(_name) ? m_Vectors4.at(_name) : Vector4::Zero();
 }
@@ -47,7 +47,7 @@ const shared_ptr<Shader> &Material::GetShader() const
 
 void Material::TransferUniforms() const
 {
-    for (const auto &pair: m_Textures2D)
+    for (const auto &pair: m_Textures)
     {
         if (pair.second != nullptr)
             Shader::SetTextureUniform(pair.first, *pair.second);

@@ -25,8 +25,8 @@ private:
     MeshRenderer(const MeshRenderer &) = delete;
     MeshRenderer(MeshRenderer &&)      = delete;
 
-    MeshRenderer &operator()(const MeshRenderer &) = delete;
-    MeshRenderer &operator()(MeshRenderer &&)      = delete;
+    MeshRenderer &operator=(const MeshRenderer &) = delete;
+    MeshRenderer &operator=(MeshRenderer &&)      = delete;
 
 
     shared_ptr<Mesh>     m_Mesh;

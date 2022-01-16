@@ -7,7 +7,6 @@
 #pragma clang diagnostic pop
 
 #include "shader_loader/shader_loader.h"
-#include "uniform_type/uniform_type.h"
 #include <OpenGL/gl3.h>
 #include <filesystem>
 #include <string>
@@ -17,7 +16,7 @@
 using namespace std;
 
 class Texture;
-class BaseUniform;
+struct UniformInfo;
 
 class Shader
 {
@@ -51,21 +50,21 @@ private:
     Shader(const Shader &) = delete;
     Shader(Shader &&)      = delete;
 
-    Shader &operator()(const Shader &) = delete;
-    Shader &operator()(Shader &&)      = delete;
+    Shader &operator=(const Shader &) = delete;
+    Shader &operator=(Shader &&)      = delete;
 
 #pragma endregion
 
 #pragma region fields
 
 private:
-    GLuint                                         m_Program;
-    bool                                           m_ZWrite;
-    BlendInfo                                      m_BlendInfo;
-    unordered_map<string, shared_ptr<BaseUniform>> m_Uniforms;
-    unordered_map<string, int>                     m_TextureUnits;
-    unordered_map<string, string>                  m_DefaultValues;
-    unordered_map<string, string>                  m_Tags;
+    GLuint                             m_Program;
+    bool                               m_ZWrite;
+    BlendInfo                          m_BlendInfo;
+    unordered_map<string, UniformInfo> m_Uniforms;
+    unordered_map<string, int>         m_TextureUnits;
+    unordered_map<string, string>      m_DefaultValues;
+    unordered_map<string, string>      m_Tags;
 
     static unordered_map<string, shared_ptr<Texture>> m_GlobalTextures;
     static string                                     m_ReplacementTag;

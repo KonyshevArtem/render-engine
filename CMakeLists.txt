@@ -79,14 +79,12 @@ add_executable(
         core/graphics/passes/skybox_pass.h
         core/fbx_asset/fbx_asset.cpp
         core/fbx_asset/fbx_asset.h
-        core/shader/uniform_type/uniform_type.cpp
-        core/shader/uniform_type/uniform_type.h
         core/texture/texture.cpp
         core/texture/texture.h
         core/shader/shader_loader/shader_loader.cpp
         core/shader/shader_loader/shader_loader.h
-        core/shader/uniform/base_uniform.cpp
-        core/shader/uniform/base_uniform.h
+        core/shader/uniform_info/uniform_info.cpp
+        core/shader/uniform_info/uniform_info.h
         core/renderer/renderer.cpp
         core/renderer/renderer.h
         core/renderer/mesh_renderer.cpp

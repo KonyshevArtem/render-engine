@@ -7,6 +7,7 @@
 
 class GameObject;
 class Shader;
+struct Matrix4x4;
 
 using namespace std;
 
@@ -42,12 +43,13 @@ public:
 protected:
     explicit Renderer(const shared_ptr<GameObject> &_gameObject);
 
+    Matrix4x4   GetModelMatrix() const;
     virtual int GetRenderQueue() const = 0;
-
-    weak_ptr<GameObject> m_GameObject;
 
 private:
     static constexpr int TRANSPARENT_RENDER_QUEUE = 3000;
+
+    weak_ptr<GameObject> m_GameObject;
 };
 
 #endif //OPENGL_STUDY_RENDERER_H

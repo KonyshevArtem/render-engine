@@ -5,7 +5,6 @@
 
 #include "mesh_renderer.h"
 #include "../../math/matrix4x4/matrix4x4.h"
-#include "../gameObject/gameObject.h"
 #include "../material/material.h"
 #include "../mesh/mesh.h"
 #include "../shader/shader.h"
@@ -22,14 +21,10 @@ MeshRenderer::MeshRenderer(const shared_ptr<GameObject> &_gameObject,
 void MeshRenderer::Render() const
 {
     const auto &shader = m_Material->GetShader();
-    if (shader == nullptr || m_GameObject.expired())
+    if (shader == nullptr || !shader->Use())
         return;
 
-    if (!shader->Use())
-        return;
-
-    auto      go                = m_GameObject.lock();
-    Matrix4x4 modelMatrix       = Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
+    Matrix4x4 modelMatrix       = GetModelMatrix();
     Matrix4x4 modelNormalMatrix = modelMatrix.Invert().Transpose();
 
     Shader::SetUniform("_ModelMatrix", &modelMatrix);

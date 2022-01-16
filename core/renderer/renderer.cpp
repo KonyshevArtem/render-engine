@@ -1,9 +1,19 @@
 #include "renderer.h"
+#include "../../math/matrix4x4/matrix4x4.h"
 #include "../gameObject/gameObject.h"
 
 Renderer::Renderer(const shared_ptr<GameObject> &_gameObject) :
     m_GameObject(_gameObject)
 {
+}
+
+Matrix4x4 Renderer::GetModelMatrix() const
+{
+    if (m_GameObject.expired())
+        return Matrix4x4::Identity();
+
+    auto go = m_GameObject.lock();
+    return Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
 }
 
 bool Renderer::Comparer::operator()(Renderer *_r1, Renderer *_r2)

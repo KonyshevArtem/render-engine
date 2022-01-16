@@ -27,8 +27,8 @@ private:
     Mesh(const Mesh &) = delete;
     Mesh(Mesh &&)      = delete;
 
-    Mesh &operator()(const Mesh &) = delete;
-    Mesh &operator()(Mesh &&)      = delete;
+    Mesh &operator=(const Mesh &) = delete;
+    Mesh &operator=(Mesh &&)      = delete;
 
     GLuint m_VertexArrayObject = 0;
     GLuint m_VertexBuffer      = 0;

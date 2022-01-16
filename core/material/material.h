@@ -42,8 +42,8 @@ private:
     Material(const Material &) = delete;
     Material(Material &&)      = delete;
 
-    Material &operator()(const Material &) = delete;
-    Material &operator()(Material &&)      = delete;
+    Material &operator=(const Material &) = delete;
+    Material &operator=(Material &&)      = delete;
 
     shared_ptr<Shader>                         m_Shader;
     unordered_map<string, shared_ptr<Texture>> m_Textures;

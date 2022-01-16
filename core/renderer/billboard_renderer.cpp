@@ -4,9 +4,9 @@
 #pragma clang diagnostic pop
 
 #include "billboard_renderer.h"
+#include "../../math/matrix4x4/matrix4x4.h"
 #include "../../math/vector2/vector2.h"
 #include "../../math/vector3/vector3.h"
-#include "../gameObject/gameObject.h"
 #include "../shader/shader.h"
 #include "../texture_2d/texture_2d.h"
 #include <vector>
@@ -41,7 +41,7 @@ void BillboardRenderer::Render() const
     if (shader == nullptr)
         shader = Shader::Load("resources/shaders/billboard/billboard.shader", vector<string>());
 
-    if (shader == nullptr || m_Texture == nullptr || m_GameObject.expired())
+    if (shader == nullptr || m_Texture == nullptr)
         return;
 
     int width  = m_Texture->GetWidth();
@@ -58,9 +58,11 @@ void BillboardRenderer::Render() const
     Vector2 size {m_Size, m_Size / aspect};
     Shader::SetUniform("_Size", &size);
 
+    auto position = GetModelMatrix().GetPosition();
+
     glBindVertexArray(m_VertexArrayObject);
     glBindBuffer(GL_ARRAY_BUFFER, m_PointsBuffer);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vector3), &m_GameObject.lock()->LocalPosition);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vector3), &position);
     glDrawArrays(GL_POINTS, 0, 1);
 
     glBindVertexArray(0);

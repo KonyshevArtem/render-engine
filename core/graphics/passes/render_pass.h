@@ -18,8 +18,8 @@ private:
     RenderPass(const RenderPass &) = delete;
     RenderPass(RenderPass &&)      = delete;
 
-    RenderPass &operator()(const RenderPass &) = delete;
-    RenderPass &operator()(RenderPass &&)      = delete;
+    RenderPass &operator=(const RenderPass &) = delete;
+    RenderPass &operator=(RenderPass &&)      = delete;
 
     Renderer::Sorting m_Sorting;
     Renderer::Filter  m_Filter;

@@ -31,8 +31,8 @@ private:
     BillboardRenderer(const BillboardRenderer &) = delete;
     BillboardRenderer(BillboardRenderer &&)      = delete;
 
-    BillboardRenderer &operator()(const BillboardRenderer &) = delete;
-    BillboardRenderer &operator()(BillboardRenderer &&)      = delete;
+    BillboardRenderer &operator=(const BillboardRenderer &) = delete;
+    BillboardRenderer &operator=(BillboardRenderer &&)      = delete;
 
     shared_ptr<Texture2D> m_Texture;
     float                 m_Size;

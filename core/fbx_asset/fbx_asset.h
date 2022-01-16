@@ -24,8 +24,8 @@ private:
     FBXAsset(const FBXAsset &) = delete;
     FBXAsset(FBXAsset &&)      = delete;
 
-    FBXAsset &operator()(const FBXAsset &) = delete;
-    FBXAsset &operator()(FBXAsset &&)      = delete;
+    FBXAsset &operator=(const FBXAsset &) = delete;
+    FBXAsset &operator=(FBXAsset &&)      = delete;
 
     ofbx::IScene *           m_Scene;
     vector<shared_ptr<Mesh>> m_Meshes;

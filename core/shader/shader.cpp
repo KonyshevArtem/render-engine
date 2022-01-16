@@ -3,7 +3,7 @@
 #include "../../utils/utils.h"
 #include "../cubemap/cubemap.h"
 #include "../texture_2d/texture_2d.h"
-#include "uniform/base_uniform.h"
+#include "uniform_info/uniform_info.h"
 #include <OpenGL/gl3.h>
 
 using namespace std;
@@ -85,17 +85,17 @@ Shader::Shader(GLuint                        _program,
         glGetActiveUniform(m_Program, i, buffSize, &length, nullptr, &type, &name[0]);
         string nameStr(&name[0], length);
 
-        auto location = glGetUniformLocation(m_Program, &nameStr[0]);
-        auto uniform  = make_shared<BaseUniform>(location, type, i);
+        auto location      = glGetUniformLocation(m_Program, &nameStr[0]);
+        auto convertedType = UniformUtils::ConvertUniformType(type);
 
         // TODO: correctly parse arrays
 
-        if (uniform->GetType() == UniformType::UNKNOWN)
+        if (convertedType == UniformType::UNKNOWN)
             fprintf(stderr, "Shader init error: Unknown OpenGL type for uniform %s: %d\n", &nameStr[0], type);
-        else if (UniformTypeUtils::IsTexture(uniform->GetType()))
+        else if (UniformUtils::IsTexture(convertedType))
             m_TextureUnits[nameStr] = textureUnit++;
 
-        m_Uniforms[nameStr] = std::move(uniform);
+        m_Uniforms[nameStr] = UniformInfo {convertedType, location, i};
     }
 }
 
@@ -136,8 +136,8 @@ bool Shader::Use() const
 
 void Shader::SetUniform(const string &_name, const void *_data)
 {
-    if (m_CurrentShader != nullptr && m_CurrentShader->m_Uniforms.contains(_name) && m_CurrentShader->m_Uniforms.at(_name) != nullptr)
-        m_CurrentShader->m_Uniforms.at(_name)->Set(_data);
+    if (m_CurrentShader != nullptr && m_CurrentShader->m_Uniforms.contains(_name))
+        UniformUtils::SetUniform(m_CurrentShader->m_Uniforms.at(_name), _data);
 }
 
 void Shader::SetTextureUniform(const string &_name, const Texture &_texture)
@@ -213,13 +213,13 @@ void Shader::SetDefaultValues() const
     for (const auto &pair: m_Uniforms)
     {
         auto uniformName = pair.first;
-        if (!m_DefaultValues.contains(uniformName) || pair.second == nullptr)
+        if (!m_DefaultValues.contains(uniformName))
             continue;
 
         auto defaultValueLiteral = m_DefaultValues.at(uniformName);
-        auto type                = pair.second->GetType();
+        auto type                = pair.second.Type;
 
-        if (UniformTypeUtils::IsTexture(type))
+        if (UniformUtils::IsTexture(type))
         {
             if (!defaultTextures.contains(defaultValueLiteral) || !defaultTextures.at(defaultValueLiteral).contains(type))
                 return;

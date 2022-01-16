@@ -27,8 +27,8 @@ private:
     Texture2DArray(const Texture2DArray &) = delete;
     Texture2DArray(Texture2DArray &&)      = delete;
 
-    Texture2DArray &operator()(const Texture2DArray &) = delete;
-    Texture2DArray &operator()(Texture2DArray &&)      = delete;
+    Texture2DArray &operator=(const Texture2DArray &) = delete;
+    Texture2DArray &operator=(Texture2DArray &&)      = delete;
 
     void Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode);
 

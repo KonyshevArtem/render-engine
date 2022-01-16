@@ -28,8 +28,8 @@ private:
     Cubemap(const Cubemap &) = delete;
     Cubemap(Cubemap &&)      = delete;
 
-    Cubemap &operator()(const Cubemap &) = delete;
-    Cubemap &operator()(Cubemap &&)      = delete;
+    Cubemap &operator=(const Cubemap &) = delete;
+    Cubemap &operator=(Cubemap &&)      = delete;
 
     void Init();
 

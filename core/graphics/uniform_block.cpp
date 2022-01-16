@@ -5,7 +5,7 @@
 
 #include "uniform_block.h"
 #include "../shader/shader.h"
-#include "../shader/uniform/base_uniform.h"
+#include "../shader/uniform_info/uniform_info.h"
 #include <OpenGL/gl3.h>
 #include <unordered_map>
 
@@ -31,8 +31,8 @@ UniformBlock::UniformBlock(const Shader &_shader, string _blockName, unsigned in
 
     for (const auto &pair: _shader.m_Uniforms)
     {
-        if (pair.second != nullptr && indexToOffset.contains(pair.second->GetIndex()))
-            m_UniformOffsets[pair.first] = indexToOffset[pair.second->GetIndex()];
+        if (indexToOffset.contains(pair.second.Index))
+            m_UniformOffsets[pair.first] = indexToOffset[pair.second.Index];
     }
 
     GLint blockSize;

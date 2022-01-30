@@ -7,7 +7,7 @@
 
 shared_ptr<FBXAsset> FBXAsset::Load(const filesystem::path &_path)
 {
-    auto *fp = fopen((Utils::GetExecutableDirectory() / _path).c_str(), "rb");
+    auto *fp = fopen((Utils::GetExecutableDirectory() / _path).string().c_str(), "rb");
     if (!fp)
         return nullptr;
 
@@ -17,8 +17,8 @@ shared_ptr<FBXAsset> FBXAsset::Load(const filesystem::path &_path)
     fseek(fp, 0, SEEK_SET);
 
     // prepare buffer and read
-    ofbx::u8 content[file_size];
-    fread(content, 1, file_size, fp);
+    vector<ofbx::u8> content(file_size);
+    fread(&content[0], 1, file_size, fp);
 
     auto *scene = ofbx::load(&content[0], file_size, (ofbx::u64) ofbx::LoadFlags::TRIANGULATE); // NOLINT(cppcoreguidelines-narrowing-conversions)
 

@@ -47,5 +47,5 @@ Renderer::Filter Renderer::Filter::Transparent()
 
 bool Renderer::Filter::operator()(Renderer *_renderer)
 {
-    return Filter != nullptr ? Filter(_renderer) : false;
+    return Delegate != nullptr ? Delegate(_renderer) : false;
 }

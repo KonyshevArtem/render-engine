@@ -3,114 +3,61 @@ project(OpenGL_Study)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_library(
-        LibPNG
-        external/lodepng/lodepng.cpp
-        external/lodepng/lodepng.h
+set(
+    OPENGL_STUDY_SOURCES
+    main.cpp
+    scenes/test_scene.cpp
+    scenes/test_scene.h
+    scripts/camera_fly_controller/camera_fly_controller.cpp
+	scripts/camera_fly_controller/camera_fly_controller.h
 )
 
-add_library(
-        OpenFBX
-        external/OpenFBX/ofbx.cpp
-        external/OpenFBX/ofbx.h
-        external/OpenFBX/miniz.c
-        external/OpenFBX/miniz.h
-)
+# windows
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
-add_library(
-        Math
-        math/matrix4x4/matrix4x4.cpp
-        math/matrix4x4/matrix4x4.h
-        math/vector4/vector4.cpp
-        math/vector4/vector4.h
-        math/vector3/vector3.cpp
-        math/vector3/vector3.h
-        math/vector2/vector2.cpp
-        math/vector2/vector2.h
-        math/quaternion/quaternion.cpp
-        math/quaternion/quaternion.h
-        math/math_utils.cpp
-        math/math_utils.h
-)
+    add_executable(OpenGL_Study WIN32 ${OPENGL_STUDY_SOURCES})
+    add_compile_definitions(OPENGL_STUDY_WINDOWS _USE_MATH_DEFINES WIN32_LEAN_AND_MEAN)
 
-add_executable(
-        OpenGL_Study
-        main.cpp
-        utils/utils.cpp
-        utils/utils.h
-        core/gameObject/gameObject.h
-        core/gameObject/gameObject.cpp
-        core/mesh/mesh.cpp
-        core/mesh/mesh.h
-        core/light/light.h
-        core/shader/shader.h
-        core/shader/shader.cpp
-        core/texture_2d/texture_2d.cpp
-        core/texture_2d/texture_2d.h
-        core/material/material.cpp
-        core/material/material.h
-        core/scene/scene.h
-        scenes/test_scene.cpp
-        scenes/test_scene.h
-        core/scene/scene.cpp
-        core/input/input.cpp
-        core/input/input.h
-        core/graphics/graphics.cpp
-        core/graphics/graphics.h
-        core/camera/camera.cpp
-        core/camera/camera.h
-        core/time/time.cpp
-        core/time/time.h
-        scripts/camera_fly_controller/camera_fly_controller.cpp
-        scripts/camera_fly_controller/camera_fly_controller.h
-        core/graphics/uniform_block.cpp
-        core/graphics/uniform_block.h
-        core/graphics/context.cpp
-        core/graphics/context.h
-        core/graphics/passes/shadow_caster_pass.cpp
-        core/graphics/passes/shadow_caster_pass.h
-        core/graphics/passes/render_pass.cpp
-        core/graphics/passes/render_pass.h
-        core/texture_2d_array/texture_2d_array.cpp
-        core/texture_2d_array/texture_2d_array.h
-        core/cubemap/cubemap.cpp
-        core/cubemap/cubemap.h
-        core/graphics/passes/skybox_pass.cpp
-        core/graphics/passes/skybox_pass.h
-        core/fbx_asset/fbx_asset.cpp
-        core/fbx_asset/fbx_asset.h
-        core/texture/texture.cpp
-        core/texture/texture.h
-        core/shader/shader_loader/shader_loader.cpp
-        core/shader/shader_loader/shader_loader.h
-        core/shader/uniform_info/uniform_info.cpp
-        core/shader/uniform_info/uniform_info.h
-        core/renderer/renderer.cpp
-        core/renderer/renderer.h
-        core/renderer/mesh_renderer.cpp
-        core/renderer/mesh_renderer.h
-        core/renderer/billboard_renderer.cpp
-        core/renderer/billboard_renderer.h)
+    # glew for windows
+    find_package(GLEW REQUIRED)
+    include_directories(${GLEW_INCLUDE_DIRS})
+    target_link_libraries(OpenGL_Study ${GLEW_LIBRARIES})
 
-find_package(OpenGL REQUIRED)
+# macos
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+    add_executable(OpenGL_Study ${OPENGL_STUDY_SOURCES})
+    add_compile_definitions(OPENGL_STUDY_MACOS GL_SILENCE_DEPRECATION)
+
+    # opengl for macos
+    find_package(OpenGL REQUIRED)
+    include_directories(${OPENGL_INCLUDE_DIRS})
+    target_link_libraries(OpenGL_Study ${OPENGL_LIBRARIES})
+
+endif()
+
+# glut
 find_package(GLUT REQUIRED)
+include_directories(${GLUT_INCLUDE_DIR})
+target_link_libraries(OpenGL_Study ${GLUT_LIBRARIES})
+
+# boost
 find_package(Boost REQUIRED)
-include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+include_directories(${Boost_INCLUDE_DIRS})
+target_link_libraries(OpenGL_Study ${Boost_LIBRARIES})
 
-target_link_libraries(
-        OpenGL_Study
-        ${OPENGL_LIBRARIES}
-        ${GLUT_LIBRARY}
-        ${Boost_LIBRARIES}
-        Math
-        LibPNG
-        OpenFBX
-)
+# source code
+add_subdirectory(external/lodepng)
+add_subdirectory(external/OpenFBX)
+add_subdirectory(core)
+add_subdirectory(math)
+add_subdirectory(utils)
+target_link_libraries(OpenGL_Study Core Utils Math LodePNG OpenFBX)
 
+# copy resources to build directory
 add_custom_target(PreBuild ALL
         COMMAND ${CMAKE_COMMAND} -E rm -rf $<TARGET_FILE_DIR:OpenGL_Study>/resources
         COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:OpenGL_Study>/resources
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:OpenGL_Study>/resources
         COMMAND ${CMAKE_COMMAND} -E echo \"[Pre Build] Resources copied\")
-
 add_dependencies(OpenGL_Study PreBuild)

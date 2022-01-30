@@ -1,12 +1,11 @@
 #ifndef OPENGL_STUDY_UNIFORM_INFO_H
 #define OPENGL_STUDY_UNIFORM_INFO_H
 
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
+#endif
 #include <memory>
 
 using namespace std;

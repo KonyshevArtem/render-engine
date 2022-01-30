@@ -1,7 +1,11 @@
 #ifndef OPENGL_STUDY_TEXTURE_H
 #define OPENGL_STUDY_TEXTURE_H
 
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
+#endif
 
 class Texture
 {

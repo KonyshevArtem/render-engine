@@ -1,10 +1,9 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "input.h"
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/freeglut.h>
+#elif OPENGL_STUDY_MACOS
 #include <GLUT/glut.h>
+#endif
 
 namespace Input
 {

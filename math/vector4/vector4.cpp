@@ -1,5 +1,6 @@
 #include "vector4.h"
 #include <cmath>
+#include <limits>
 
 const Vector4 &Vector4::Zero()
 {

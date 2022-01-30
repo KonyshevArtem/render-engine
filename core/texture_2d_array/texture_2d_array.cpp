@@ -1,10 +1,9 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "texture_2d_array.h"
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
+#endif
 
 shared_ptr<Texture2DArray> Texture2DArray::ShadowMapArray(unsigned int _size, unsigned int _count)
 {
@@ -28,7 +27,7 @@ void Texture2DArray::Init(GLint _internalFormat, GLenum _format, GLenum _type, G
     glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_R, _wrapMode);
     glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, _internalFormat, m_Width, m_Height, m_Count, 0, _format, _type, &m_Data[0]); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, _internalFormat, m_Width, m_Height, m_Count, 0, _format, _type, m_Data.data()); // NOLINT(cppcoreguidelines-narrowing-conversions)
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 

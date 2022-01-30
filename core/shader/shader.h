@@ -1,13 +1,12 @@
 #ifndef OPENGL_STUDY_SHADER_H
 #define OPENGL_STUDY_SHADER_H
 
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "shader_loader/shader_loader.h"
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
+#endif
 #include <filesystem>
 #include <string>
 #include <unordered_map>

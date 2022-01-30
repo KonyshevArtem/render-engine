@@ -4,7 +4,6 @@
 #include "../cubemap/cubemap.h"
 #include "../texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
-#include <OpenGL/gl3.h>
 
 using namespace std;
 
@@ -76,14 +75,16 @@ Shader::Shader(GLuint                        _program,
     glGetProgramiv(m_Program, GL_ACTIVE_UNIFORMS, &count);
     glGetProgramiv(m_Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffSize);
 
-    GLsizei length;
-    GLenum  type;
-    GLchar  name[buffSize];
-    int     textureUnit = 0;
+    GLsizei        length;
+    GLenum         type;
+    GLint          size;
+    vector<GLchar> name(buffSize);
+    int            textureUnit = 0;
+
     for (int i = 0; i < count; ++i)
     {
-        glGetActiveUniform(m_Program, i, buffSize, &length, nullptr, &type, &name[0]);
-        string nameStr(&name[0], length);
+        glGetActiveUniform(m_Program, i, buffSize, &length, &size, &type, &name[0]);
+        string nameStr(name.begin(), name.begin() + length);
 
         auto location      = glGetUniformLocation(m_Program, &nameStr[0]);
         auto convertedType = UniformUtils::ConvertUniformType(type);

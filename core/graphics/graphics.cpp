@@ -1,8 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "graphics.h"
 #include "../../math/vector4/vector4.h"
 #include "../camera/camera.h"
@@ -13,8 +8,13 @@
 #include "passes/shadow_caster_pass.h"
 #include "passes/skybox_pass.h"
 #include "uniform_block.h"
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/freeglut.h>
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
 #include <GLUT/glut.h>
 #include <OpenGL/gl3.h>
+#endif
 #include <memory>
 
 namespace Graphics
@@ -72,10 +72,21 @@ namespace Graphics
 
     void Init(int _argc, char **_argv)
     {
-        glutInit(&_argc, _argv);
-        glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_3_2_CORE_PROFILE | GLUT_DEPTH);
-        glutInitWindowSize(1024, 720);
+        unsigned int displayModeFlags = GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH;
+#ifdef OPENGL_STUDY_MACOS
+        displayModeFlags |= GLUT_3_2_CORE_PROFILE;
+#endif
+
+		glutInit(&_argc, _argv);
+		glutInitDisplayMode(displayModeFlags);
+		glutInitWindowSize(1024, 720);
         glutCreateWindow("OpenGL");
+
+#ifdef OPENGL_STUDY_WINDOWS
+        auto result = glewInit();
+        if (result != GLEW_OK)
+            throw;
+#endif
 
         InitCulling();
         InitDepth();

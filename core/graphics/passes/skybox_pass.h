@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_SKYBOX_PASS_H
 #define OPENGL_STUDY_SKYBOX_PASS_H
 
-class Context;
+struct Context;
 
 class SkyboxPass
 {

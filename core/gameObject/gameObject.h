@@ -4,6 +4,7 @@
 #include "../../math/quaternion/quaternion.h"
 #include "../../math/vector3/vector3.h"
 #include <vector>
+#include <memory>
 
 class Renderer;
 

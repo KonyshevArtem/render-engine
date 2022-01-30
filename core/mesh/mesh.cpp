@@ -1,8 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "mesh.h"
 #include "../../math/vector2/vector2.h"
 #include "../../math/vector3/vector3.h"
@@ -30,11 +25,11 @@ void Mesh::Init()
     glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
 
-    long vertexSize   = sizeof(Vector3) * m_Vertices.size();
-    long normalsSize  = sizeof(Vector3) * m_Normals.size();
-    long indexSize    = sizeof(int) * m_Indexes.size();
-    long uvSize       = sizeof(Vector2) * m_UVs.size();
-    long tangentsSize = sizeof(Vector3) * m_Tangents.size();
+    long long vertexSize   = sizeof(Vector3) * m_Vertices.size();
+    long long normalsSize  = sizeof(Vector3) * m_Normals.size();
+    long long indexSize    = sizeof(int) * m_Indexes.size();
+    long long uvSize       = sizeof(Vector2) * m_UVs.size();
+    long long tangentsSize = sizeof(Vector3) * m_Tangents.size();
 
     bool hasNormals  = normalsSize > 0;
     bool hasUV       = uvSize > 0;

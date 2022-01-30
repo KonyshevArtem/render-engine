@@ -1,8 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "billboard_renderer.h"
 #include "../../math/matrix4x4/matrix4x4.h"
 #include "../../math/vector2/vector2.h"

@@ -1,18 +1,18 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "shader_loader.h"
 #include "../../../utils/utils.h"
 #include "../../graphics/graphics.h"
 #include "../shader.h"
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
+#endif
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <regex>
 #include <span>
 #include <unordered_map>
+#include <iostream>
 
 // TODO use syntax analysis instead of regex
 
@@ -65,10 +65,11 @@ namespace ShaderLoader
             GLint infoLogLength;
             glGetShaderiv(_outShaderPart, GL_INFO_LOG_LENGTH, &infoLogLength);
 
-            GLchar logMsg[infoLogLength + 1];
-            glGetShaderInfoLog(_outShaderPart, infoLogLength, nullptr, logMsg);
+            vector<GLchar> logMsg(static_cast<size_t>(infoLogLength) + 1);
+            glGetShaderInfoLog(_outShaderPart, infoLogLength, nullptr, &logMsg[0]);
 
-            fprintf(stderr, "Shader compilation failed: %s\n%s\n", _path.c_str(), logMsg);
+            string str(logMsg.begin(), logMsg.end());
+            std::cout << "Shader compilation failed: " << _path << endl << str << endl;
 
             return false;
         }
@@ -104,9 +105,11 @@ namespace ShaderLoader
             GLint infoLogLength;
             glGetProgramiv(_outProgram, GL_INFO_LOG_LENGTH, &infoLogLength);
 
-            GLchar logMsg[infoLogLength + 1];
-            glGetProgramInfoLog(_outProgram, infoLogLength, nullptr, logMsg);
-            fprintf(stderr, "Program link failed: %s\n%s", _path.c_str(), logMsg);
+            vector<GLchar> logMsg(static_cast<size_t>(infoLogLength) + 1);
+            glGetProgramInfoLog(_outProgram, infoLogLength, nullptr, &logMsg[0]);
+
+            string str(logMsg.begin(), logMsg.end());
+            cout << "Program link failed : " << _path << endl << str << endl;
 
             return false;
         }
@@ -211,7 +214,7 @@ namespace ShaderLoader
         return shaderInfo;
     }
 
-    shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords)
+    std::shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords)
     {
         auto   shaderSource = Utils::ReadFileWithIncludes(_path);
         string keywordsDirectives;
@@ -235,15 +238,15 @@ namespace ShaderLoader
             GLuint shaderPart = 0;
             auto   partPath   = _path.parent_path() / relativePath;
             auto   partSource = Utils::ReadFileWithIncludes(partPath);
-            success &= TryCompileShaderPart(part, partPath, partSource, keywordsDirectives, shaderPart);
+            success &= TryCompileShaderPart(part, partPath.string(), partSource, keywordsDirectives, shaderPart);
 
             shaderParts[shaderPartCount++] = shaderPart;
         }
 
         GLuint program;
-        success &= TryLinkProgram(span<GLuint> {shaderParts, shaderPartCount}, program, _path);
+        success &= TryLinkProgram(span<GLuint> {shaderParts, shaderPartCount}, program, _path.string());
 
-        return success ? shared_ptr<Shader>(
+        return success ? std::shared_ptr<Shader>(
                                  new Shader(program,
                                             shaderInfo.DefaultValues,
                                             shaderInfo.Tags,

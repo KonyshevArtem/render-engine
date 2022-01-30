@@ -1,8 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "render_pass.h"
 #include "../../../math/matrix4x4/matrix4x4.h"
 #include "../../../math/vector3/vector3.h"
@@ -10,6 +5,7 @@
 #include "../graphics.h"
 #include <algorithm>
 #include <vector>
+#include <iterator>
 
 RenderPass::RenderPass(Renderer::Sorting _rendererSorting, Renderer::Filter _filter, GLbitfield _clearFlags) :
     m_Sorting(_rendererSorting), m_Filter(_filter), m_ClearFlags(_clearFlags)

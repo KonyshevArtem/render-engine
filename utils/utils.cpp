@@ -2,7 +2,12 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#ifdef OPENGL_STUDY_WINDOWS
+#include <windows.h>
+#include <libloaderapi.h>
+#elif OPENGL_STUDY_MACOS
 #include <mach-o/dyld.h>
+#endif
 #include <regex>
 #include <string>
 
@@ -10,7 +15,7 @@ namespace Utils
 {
     string ReadFile(const filesystem::path &_relativePath)
     {
-        auto *file = fopen((GetExecutableDirectory() / _relativePath).c_str(), "r");
+        auto *file = fopen((GetExecutableDirectory() / _relativePath).string().c_str(), "r");
         if (file == nullptr)
             return "";
 
@@ -47,6 +52,7 @@ namespace Utils
         while (regex_search(file.cbegin(), file.cend(), match, expression))
         {
             auto includedFile = ReadFileWithIncludes(_relativePath.parent_path() / match[1].str());
+            includedFile = "\n" + includedFile + "\n";
             auto matchStart   = match.position();
             matchStart        = matchStart == 0 ? 0 : matchStart + 1;
             file              = file.replace(matchStart, match.length() - 2, includedFile);
@@ -70,6 +76,12 @@ namespace Utils
         if (!executableDir.empty())
             return executableDir;
 
+#ifdef OPENGL_STUDY_WINDOWS
+		char path[MAX_PATH];
+
+		GetModuleFileNameA(NULL, path, MAX_PATH);
+		executableDir = filesystem::path(path).parent_path();
+#elif OPENGL_STUDY_MACOS
         char     path[100];
         uint32_t size = 100;
 
@@ -81,6 +93,7 @@ namespace Utils
         }
         else
             executableDir = filesystem::path(path).parent_path();
+#endif
 
         return executableDir;
     }

@@ -30,12 +30,24 @@ Only forward rendering path is implemented for now
 
 ## Requirements
 
+### Mac
 * OpenGL
 * GLUT
 * Boost
 
 OpenGL and GLUT should be installed by default on OSX. Boost can
 be installed with `brew install boost`
+
+### Windows
+
+* GLEW
+* FreeGLUT
+* Boost
+
+All requirements must be installed separately. Include and library folders must be
+specified in `CMAKE_PREFIX_PATH` environment library e.g.
+
+`set CMAKE_PREFIX_PATH=F:/glew-2.1.0/include;F:/glew-2.1.0/lib/Release/x64;F:/boost_1_78_0;F:/freeglut/include;F:/freeglut/lib/x64`
 
 ## External Tools
 

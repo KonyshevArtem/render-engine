@@ -2,9 +2,13 @@
 #define OPENGL_STUDY_RENDER_PASS_H
 
 #include "../../renderer/renderer.h"
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
+#endif
 
-class Context;
+struct Context;
 
 class RenderPass
 {

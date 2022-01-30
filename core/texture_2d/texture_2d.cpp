@@ -1,12 +1,11 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "texture_2d.h"
 #include "../../external/lodepng/lodepng.h"
 #include "../../utils/utils.h"
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
+#endif
 
 using namespace std;
 
@@ -15,7 +14,7 @@ shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb,
     auto t = shared_ptr<Texture2D>(new Texture2D());
 
     auto colorType = _hasAlpha ? LCT_RGBA : LCT_RGB;
-    auto error     = lodepng::decode(t->m_Data, t->m_Width, t->m_Height, Utils::GetExecutableDirectory() / _path, colorType);
+    auto error     = lodepng::decode(t->m_Data, t->m_Width, t->m_Height, (Utils::GetExecutableDirectory() / _path).string(), colorType);
     if (error != 0)
     {
         printf("Error loading texture: %u: %s\n", error, lodepng_error_text(error));

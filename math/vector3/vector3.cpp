@@ -1,5 +1,6 @@
 #include "vector3.h"
 #include <cmath>
+#include <limits>
 
 const Vector3 &Vector3::One()
 {

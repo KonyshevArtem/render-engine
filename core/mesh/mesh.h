@@ -1,11 +1,15 @@
 #ifndef OPENGL_STUDY_MESH_H
 #define OPENGL_STUDY_MESH_H
 
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
+#endif
 #include <vector>
 
-class Vector2;
-class Vector3;
+struct Vector2;
+struct Vector3;
 
 using namespace std;
 

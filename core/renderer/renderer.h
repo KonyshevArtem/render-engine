@@ -32,7 +32,7 @@ public:
 
     struct Filter
     {
-        function<bool(Renderer *)> Filter;
+        function<bool(Renderer *)> Delegate;
 
         static Renderer::Filter Opaque();
         static Renderer::Filter Transparent();

@@ -2,7 +2,11 @@
 #define OPENGL_STUDY_BILLBOARD_RENDERER_H
 
 #include "renderer.h"
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
+#endif
 #include <memory>
 
 class GameObject;

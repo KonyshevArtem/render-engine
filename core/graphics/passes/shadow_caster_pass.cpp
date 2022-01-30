@@ -1,10 +1,4 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "shadow_caster_pass.h"
-
 #include "../../light/light.h"
 #include "../../renderer/renderer.h"
 #include "../../shader/shader.h"

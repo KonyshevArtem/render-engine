@@ -1,12 +1,11 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "cubemap.h"
 #include "../../external/lodepng/lodepng.h"
 #include "../../utils/utils.h"
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
+#endif
 
 shared_ptr<Cubemap> Cubemap::Load(const filesystem::path &_xPositivePath,
                                   const filesystem::path &_xNegativePath,
@@ -22,7 +21,7 @@ shared_ptr<Cubemap> Cubemap::Load(const filesystem::path &_xPositivePath,
 
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        auto error = lodepng::decode(cubemap->m_Data[i], cubemap->m_Width, cubemap->m_Height, Utils::GetExecutableDirectory() / paths[i], LCT_RGB);
+        auto error = lodepng::decode(cubemap->m_Data[i], cubemap->m_Width, cubemap->m_Height, (Utils::GetExecutableDirectory() / paths[i]).string(), LCT_RGB);
         if (error != 0)
         {
             printf("Error loading texture: %u: %s\n", error, lodepng_error_text(error));

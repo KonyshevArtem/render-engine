@@ -1,12 +1,6 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "OCUnusedMacroInspection"
-#define GL_SILENCE_DEPRECATION
-#pragma clang diagnostic pop
-
 #include "uniform_block.h"
 #include "../shader/shader.h"
 #include "../shader/uniform_info/uniform_info.h"
-#include <OpenGL/gl3.h>
 #include <unordered_map>
 
 using namespace std;
@@ -19,10 +13,10 @@ UniformBlock::UniformBlock(const Shader &_shader, string _blockName, unsigned in
     GLint uniformCount;
     glGetActiveUniformBlockiv(_shader.m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformCount);
 
-    GLint uniformIndexes[uniformCount];
+    vector<GLint> uniformIndexes(uniformCount);
     glGetActiveUniformBlockiv(_shader.m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &uniformIndexes[0]);
 
-    GLint uniformOffsets[uniformCount];
+    vector<GLint> uniformOffsets(uniformCount);
     glGetActiveUniformsiv(_shader.m_Program, uniformCount, reinterpret_cast<const GLuint *>(&uniformIndexes[0]), GL_UNIFORM_OFFSET, &uniformOffsets[0]);
 
     unordered_map<GLint, GLint> indexToOffset;

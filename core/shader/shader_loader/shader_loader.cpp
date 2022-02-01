@@ -1,5 +1,6 @@
 #include "shader_loader.h"
 #include "../../../utils/utils.h"
+#include "../../core_debug/debug.h"
 #include "../../graphics/graphics.h"
 #include "../shader.h"
 #ifdef OPENGL_STUDY_WINDOWS
@@ -8,7 +9,6 @@
 #include <OpenGL/gl3.h>
 #endif
 #include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
 #include <regex>
 #include <span>
 #include <unordered_map>
@@ -125,7 +125,7 @@ namespace ShaderLoader
         if (_literal == "OneMinusSrcAlpha")
             return GL_ONE_MINUS_SRC_ALPHA;
 
-        fprintf(stderr, "Unsupported blend func : %s\n", _literal.c_str());
+        Debug::LogErrorFormat("[ShaderLoader] Unsupported blend func: %1%", std::initializer_list {_literal});
         return GL_ONE;
     }
 
@@ -148,7 +148,7 @@ namespace ShaderLoader
             {
                 if (length < 3)
                 {
-                    fprintf(stderr, "Default value info has incorrect format: %s\n", info.c_str());
+                    Debug::LogErrorFormat("[ShaderLoader] Default value info has incorrect format: %1%", std::initializer_list {info});
                     continue;
                 }
 
@@ -160,7 +160,7 @@ namespace ShaderLoader
             {
                 if (length < 3)
                 {
-                    fprintf(stderr, "Tag has incorrect format: %s\n", info.c_str());
+                    Debug::LogErrorFormat("[ShaderLoader] Tag has incorrect format: %1%", std::initializer_list {info});
                     continue;
                 }
 
@@ -172,7 +172,7 @@ namespace ShaderLoader
             {
                 if (length < 2)
                 {
-                    fprintf(stderr, "ZWrite has incorrect format: %s\n", info.c_str());
+                    Debug::LogErrorFormat("[ShaderLoader] ZWrite has incorrect format: %1%", std::initializer_list {info});
                     continue;
                 }
 
@@ -181,7 +181,7 @@ namespace ShaderLoader
                 else if (strings[1] == "on")
                     shaderInfo.ZWrite = GL_TRUE;
                 else
-                    fprintf(stderr, "ZWrite has incorrect format: %s\n", info.c_str());
+                    Debug::LogErrorFormat("[ShaderLoader] ZWrite has incorrect format: %1%", std::initializer_list {info});
             }
 
             // parse blend mode
@@ -189,7 +189,7 @@ namespace ShaderLoader
             {
                 if (length < 3)
                 {
-                    fprintf(stderr, "Blend info has incorrect format: %s\n", info.c_str());
+                    Debug::LogErrorFormat("[ShaderLoader] Blend info has incorrect format: %1%", std::initializer_list {info});
                     continue;
                 }
 

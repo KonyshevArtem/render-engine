@@ -1,4 +1,5 @@
 #include "cubemap.h"
+#include "../core_debug/debug.h"
 #include "../../external/lodepng/lodepng.h"
 #include "../../utils/utils.h"
 #ifdef OPENGL_STUDY_WINDOWS
@@ -21,10 +22,11 @@ shared_ptr<Cubemap> Cubemap::Load(const filesystem::path &_xPositivePath,
 
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        auto error = lodepng::decode(cubemap->m_Data[i], cubemap->m_Width, cubemap->m_Height, (Utils::GetExecutableDirectory() / paths[i]).string(), LCT_RGB);
+        auto path  = (Utils::GetExecutableDirectory() / paths[i]).string();
+        auto error = lodepng::decode(cubemap->m_Data[i], cubemap->m_Width, cubemap->m_Height, path, LCT_RGB);
         if (error != 0)
         {
-            printf("Error loading texture: %u: %s\n", error, lodepng_error_text(error));
+            Debug::LogErrorFormat("[Cubemap] Error loading texture: %1%\n%2%", std::initializer_list {std::string {lodepng_error_text(error)}, path});
             return nullptr;
         }
     }

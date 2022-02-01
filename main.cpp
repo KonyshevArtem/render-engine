@@ -5,6 +5,7 @@
 #endif
 #include "utils/utils.h"
 
+#include "core/core_debug/debug.h"
 #include "core/camera/camera.h"
 #include "core/graphics/graphics.h"
 #include "core/input/input.h"
@@ -35,6 +36,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 int main(int __argc, char** __argv)
 #endif
 {
+    Debug::Init();
     Graphics::Init(__argc, __argv);
     Input::Init();
     Camera::Init(120, 0.5f, 100);

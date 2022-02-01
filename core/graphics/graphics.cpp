@@ -1,6 +1,7 @@
 #include "graphics.h"
 #include "../../math/vector4/vector4.h"
 #include "../camera/camera.h"
+#include "../core_debug/debug.h"
 #include "../light/light.h"
 #include "../shader/shader.h"
 #include "context.h"
@@ -15,7 +16,6 @@
 #include <GLUT/glut.h>
 #include <OpenGL/gl3.h>
 #endif
-#include <memory>
 
 namespace Graphics
 {
@@ -163,9 +163,7 @@ namespace Graphics
         glutSwapBuffers();
         glutPostRedisplay();
 
-        GLenum error = glGetError();
-        if (error != 0)
-            printf("%s\n", gluErrorString(error));
+        Debug::CheckOpenGLError();
     }
 
     void Reshape(int _width, int _height)

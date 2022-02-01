@@ -1,4 +1,5 @@
 #include "uniform_block.h"
+#include "../core_debug/debug.h"
 #include "../shader/shader.h"
 #include "../shader/uniform_info/uniform_info.h"
 #include <unordered_map>
@@ -49,7 +50,7 @@ void UniformBlock::SetUniform(const string &_name, const void *_data, unsigned l
 {
     if (!m_UniformOffsets.contains(_name))
     {
-        fprintf(stderr, "Uniform block %s does not have %s uniform\n", m_Name.c_str(), _name.c_str());
+        Debug::LogErrorFormat("[UniformBlock] %1% does not have %2% uniform", std::initializer_list {m_Name, _name});
         return;
     }
 

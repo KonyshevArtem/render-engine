@@ -49,4 +49,5 @@ add_library(
 	renderer/mesh_renderer.h
 	renderer/billboard_renderer.cpp
 	renderer/billboard_renderer.h
-)
+	core_debug/debug.cpp
+	core_debug/debug.h)

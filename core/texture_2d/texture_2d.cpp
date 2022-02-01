@@ -1,5 +1,6 @@
 #include "texture_2d.h"
 #include "../../external/lodepng/lodepng.h"
+#include "../core_debug/debug.h"
 #include "../../utils/utils.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
@@ -17,7 +18,7 @@ shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb,
     auto error     = lodepng::decode(t->m_Data, t->m_Width, t->m_Height, (Utils::GetExecutableDirectory() / _path).string(), colorType);
     if (error != 0)
     {
-        printf("Error loading texture: %u: %s\n", error, lodepng_error_text(error));
+        Debug::LogErrorFormat("[Texture2D] Error loading texture: %1%", std::initializer_list {std::string{lodepng_error_text(error)}});
         return nullptr;
     }
 

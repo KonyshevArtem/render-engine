@@ -1,6 +1,7 @@
 #include "shader.h"
 #include "../../math/vector4/vector4.h"
 #include "../../utils/utils.h"
+#include "../core_debug/debug.h"
 #include "../cubemap/cubemap.h"
 #include "../texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
@@ -92,7 +93,7 @@ Shader::Shader(GLuint                        _program,
         // TODO: correctly parse arrays
 
         if (convertedType == UniformType::UNKNOWN)
-            fprintf(stderr, "Shader init error: Unknown OpenGL type for uniform %s: %d\n", &nameStr[0], type);
+            Debug::LogErrorFormat("[Shader] Init error: Unknown OpenGL type for uniform %1%", std::initializer_list {nameStr});
         else if (UniformUtils::IsTexture(convertedType))
             m_TextureUnits[nameStr] = textureUnit++;
 

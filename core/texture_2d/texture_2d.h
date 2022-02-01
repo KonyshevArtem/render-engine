@@ -6,15 +6,13 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
 class Texture2D: public Texture
 {
 public:
-    static shared_ptr<Texture2D>        Load(const filesystem::path &_path, bool _srgb = true, bool _hasAlpha = false);
-    static const shared_ptr<Texture2D> &White();
-    static const shared_ptr<Texture2D> &Normal();
-    static const shared_ptr<Texture2D> &Null();
+    static std::shared_ptr<Texture2D>        Load(const std::filesystem::path &_path, bool _srgb = true, bool _hasAlpha = false);
+    static const std::shared_ptr<Texture2D> &White();
+    static const std::shared_ptr<Texture2D> &Normal();
+    static const std::shared_ptr<Texture2D> &Null();
 
     void Bind(int _unit) const override;
 
@@ -30,7 +28,7 @@ private:
 
     void Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode);
 
-    vector<unsigned char> m_Data;
+    std::vector<unsigned char> m_Data;
 };
 
 #endif //OPENGL_STUDY_TEXTURE_2D_H

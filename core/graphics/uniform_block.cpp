@@ -4,9 +4,7 @@
 #include "../shader/uniform_info/uniform_info.h"
 #include <unordered_map>
 
-using namespace std;
-
-UniformBlock::UniformBlock(const Shader &_shader, string _blockName, unsigned int _index) :
+UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName, unsigned int _index) :
     m_Name(std::move(_blockName))
 {
     auto blockIndex = glGetUniformBlockIndex(_shader.m_Program, m_Name.c_str());
@@ -14,13 +12,13 @@ UniformBlock::UniformBlock(const Shader &_shader, string _blockName, unsigned in
     GLint uniformCount;
     glGetActiveUniformBlockiv(_shader.m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformCount);
 
-    vector<GLint> uniformIndexes(uniformCount);
+    std::vector<GLint> uniformIndexes(uniformCount);
     glGetActiveUniformBlockiv(_shader.m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &uniformIndexes[0]);
 
-    vector<GLint> uniformOffsets(uniformCount);
+    std::vector<GLint> uniformOffsets(uniformCount);
     glGetActiveUniformsiv(_shader.m_Program, uniformCount, reinterpret_cast<const GLuint *>(&uniformIndexes[0]), GL_UNIFORM_OFFSET, &uniformOffsets[0]);
 
-    unordered_map<GLint, GLint> indexToOffset;
+    std::unordered_map<GLint, GLint> indexToOffset;
     for (int i = 0; i < uniformCount; ++i)
         indexToOffset[uniformIndexes[i]] = uniformOffsets[i];
 
@@ -46,11 +44,11 @@ UniformBlock::~UniformBlock()
     glDeleteBuffers(1, &m_Buffer);
 }
 
-void UniformBlock::SetUniform(const string &_name, const void *_data, unsigned long _size)
+void UniformBlock::SetUniform(const std::string &_name, const void *_data, unsigned long _size)
 {
     if (!m_UniformOffsets.contains(_name))
     {
-        Debug::LogErrorFormat("[UniformBlock] %1% does not have %2% uniform", std::initializer_list {m_Name, _name});
+        Debug::LogErrorFormat("[UniformBlock] %1% does not have %2% uniform", {m_Name, _name});
         return;
     }
 

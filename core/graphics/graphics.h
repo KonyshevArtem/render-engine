@@ -11,17 +11,15 @@ class SkyboxPass;
 class UniformBlock;
 class Light;
 
-using namespace std;
-
 namespace Graphics
 {
-    void          Init(int _argc, char **_argv);
-    void          Render();
-    void          Reshape(int _width, int _height);
-    const string &GetGlobalShaderDirectives();
-    void          SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix);
-    int           GetScreenWidth();
-    int           GetScreenHeight();
+    void               Init(int _argc, char **_argv);
+    void               Render();
+    void               Reshape(int _width, int _height);
+    const std::string &GetGlobalShaderDirectives();
+    void               SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix);
+    int                GetScreenWidth();
+    int                GetScreenHeight();
 }; // namespace Graphics
 
 #endif //OPENGL_STUDY_GRAPHICS_H

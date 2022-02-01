@@ -6,20 +6,18 @@
 #include <memory>
 #include <vector>
 
-using namespace std;
-
 class Cubemap: public Texture
 {
 public:
-    static shared_ptr<Cubemap> Load(const filesystem::path &_xPositivePath,
-                                    const filesystem::path &_xNegativePath,
-                                    const filesystem::path &_yPositivePath,
-                                    const filesystem::path &_yNegativePath,
-                                    const filesystem::path &_zPositivePath,
-                                    const filesystem::path &_zNegativePath);
+    static std::shared_ptr<Cubemap> Load(const std::filesystem::path &_xPositivePath,
+                                         const std::filesystem::path &_xNegativePath,
+                                         const std::filesystem::path &_yPositivePath,
+                                         const std::filesystem::path &_yNegativePath,
+                                         const std::filesystem::path &_zPositivePath,
+                                         const std::filesystem::path &_zNegativePath);
 
     void                        Bind(int _unit) const override;
-    static shared_ptr<Cubemap> &White();
+    static std::shared_ptr<Cubemap> &White();
 
     ~Cubemap() = default;
 
@@ -33,7 +31,7 @@ private:
 
     void Init();
 
-    vector<vector<unsigned char>> m_Data;
+    std::vector<std::vector<unsigned char>> m_Data;
 
     static constexpr unsigned int SIDES_COUNT = 6;
 };

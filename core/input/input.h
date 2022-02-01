@@ -2,9 +2,6 @@
 #define OPENGL_STUDY_INPUT_H
 
 #include "../../math/vector2/vector2.h"
-#include <unordered_set>
-
-using namespace std;
 
 namespace Input
 {

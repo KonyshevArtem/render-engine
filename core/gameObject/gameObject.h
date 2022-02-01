@@ -8,17 +8,15 @@
 
 class Renderer;
 
-using namespace std;
-
 class GameObject
 {
 public:
-    weak_ptr<GameObject>           Parent;
-    vector<shared_ptr<GameObject>> Children;
-    Vector3                        LocalPosition;
-    Quaternion                     LocalRotation;
-    Vector3                        LocalScale;
-    shared_ptr<Renderer>           Renderer;
+    std::weak_ptr<GameObject>                Parent;
+    std::vector<std::shared_ptr<GameObject>> Children;
+    Vector3                                  LocalPosition;
+    Quaternion                               LocalRotation;
+    Vector3                                  LocalScale;
+    std::shared_ptr<Renderer>                Renderer;
 
     GameObject();
 };

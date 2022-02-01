@@ -25,25 +25,25 @@ namespace ShaderLoader
             GL_GEOMETRY_SHADER,
             GL_FRAGMENT_SHADER};
 
-    const string SHADER_PART_NAMES[SHADER_PART_COUNT] {
+    const std::string SHADER_PART_NAMES[SHADER_PART_COUNT] {
             "vertex",
             "geometry",
             "fragment"};
 
     struct ShaderInfo
     {
-        unordered_map<string, string> DefaultValues;
-        unordered_map<string, string> Tags;
-        string                        ShaderPartPaths[SHADER_PART_COUNT];
-        bool                          ZWrite = true;
-        Shader::BlendInfo             BlendInfo;
+        std::unordered_map<std::string, std::string> DefaultValues;
+        std::unordered_map<std::string, std::string> Tags;
+        std::string                                  ShaderPartPaths[SHADER_PART_COUNT];
+        bool                                         ZWrite = true;
+        Shader::BlendInfo                            BlendInfo;
     };
 
-    bool TryCompileShaderPart(GLuint        _shaderPartType,
-                              const string &_path,
-                              const string &_source,
-                              const string &_keywordDirectives,
-                              GLuint &      _outShaderPart)
+    bool TryCompileShaderPart(GLuint             _shaderPartType,
+                              const std::string &_path,
+                              const std::string &_source,
+                              const std::string &_keywordDirectives,
+                              GLuint &           _outShaderPart)
     {
         const auto &  globalDirectives = Graphics::GetGlobalShaderDirectives();
         constexpr int sourcesCount     = 3;
@@ -65,11 +65,10 @@ namespace ShaderLoader
             GLint infoLogLength;
             glGetShaderiv(_outShaderPart, GL_INFO_LOG_LENGTH, &infoLogLength);
 
-            vector<GLchar> logMsg(static_cast<size_t>(infoLogLength) + 1);
+            std::string logMsg(infoLogLength + 1, ' ');
             glGetShaderInfoLog(_outShaderPart, infoLogLength, nullptr, &logMsg[0]);
 
-            string str(logMsg.begin(), logMsg.end());
-            std::cout << "Shader compilation failed: " << _path << endl << str << endl;
+            Debug::LogErrorFormat("[ShaderLoader] Compilation failed: %1%\n%2%", {_path, logMsg});
 
             return false;
         }
@@ -77,7 +76,7 @@ namespace ShaderLoader
         return true;
     }
 
-    bool TryLinkProgram(const span<GLuint> &_shaderParts, GLuint &_outProgram, const string &_path)
+    bool TryLinkProgram(const std::span<GLuint> &_shaderParts, GLuint &_outProgram, const std::string &_path)
     {
         _outProgram = glCreateProgram();
 
@@ -105,11 +104,10 @@ namespace ShaderLoader
             GLint infoLogLength;
             glGetProgramiv(_outProgram, GL_INFO_LOG_LENGTH, &infoLogLength);
 
-            vector<GLchar> logMsg(static_cast<size_t>(infoLogLength) + 1);
+            std::string logMsg(infoLogLength + 1, ' ');
             glGetProgramInfoLog(_outProgram, infoLogLength, nullptr, &logMsg[0]);
 
-            string str(logMsg.begin(), logMsg.end());
-            cout << "Program link failed : " << _path << endl << str << endl;
+            Debug::LogErrorFormat("[ShaderLoader] Link failed: %1%\n%2%", {_path, logMsg});
 
             return false;
         }
@@ -117,7 +115,7 @@ namespace ShaderLoader
         return true;
     }
 
-    GLenum ParseBlendFunc(const string &_literal)
+    GLenum ParseBlendFunc(const std::string &_literal)
     {
         if (_literal == "SrcAlpha")
             return GL_SRC_ALPHA;
@@ -125,21 +123,21 @@ namespace ShaderLoader
         if (_literal == "OneMinusSrcAlpha")
             return GL_ONE_MINUS_SRC_ALPHA;
 
-        Debug::LogErrorFormat("[ShaderLoader] Unsupported blend func: %1%", std::initializer_list {_literal});
+        Debug::LogErrorFormat("[ShaderLoader] Unsupported blend func: %1%", {_literal});
         return GL_ONE;
     }
 
-    ShaderInfo ParseShaderInfo(const string &_shaderSource)
+    ShaderInfo ParseShaderInfo(const std::string &_shaderSource)
     {
-        ShaderInfo             shaderInfo;
-        smatch                 match;
-        regex                  expression(R"(\s*#pragma\s+(.+)\n)");
-        string::const_iterator searchStart(_shaderSource.cbegin());
+        ShaderInfo                  shaderInfo;
+        std::smatch                 match;
+        std::regex                  expression(R"(\s*#pragma\s+(.+)\n)");
+        std::string::const_iterator searchStart(_shaderSource.cbegin());
 
         while (regex_search(searchStart, _shaderSource.cend(), match, expression))
         {
-            auto           info = match[1].str();
-            vector<string> strings;
+            auto                     info = match[1].str();
+            std::vector<std::string> strings;
             boost::split(strings, info, boost::is_any_of(" "));
             unsigned long length = strings.size();
 
@@ -148,7 +146,7 @@ namespace ShaderLoader
             {
                 if (length < 3)
                 {
-                    Debug::LogErrorFormat("[ShaderLoader] Default value info has incorrect format: %1%", std::initializer_list {info});
+                    Debug::LogErrorFormat("[ShaderLoader] Default value info has incorrect format: %1%", {info});
                     continue;
                 }
 
@@ -160,7 +158,7 @@ namespace ShaderLoader
             {
                 if (length < 3)
                 {
-                    Debug::LogErrorFormat("[ShaderLoader] Tag has incorrect format: %1%", std::initializer_list {info});
+                    Debug::LogErrorFormat("[ShaderLoader] Tag has incorrect format: %1%", {info});
                     continue;
                 }
 
@@ -172,7 +170,7 @@ namespace ShaderLoader
             {
                 if (length < 2)
                 {
-                    Debug::LogErrorFormat("[ShaderLoader] ZWrite has incorrect format: %1%", std::initializer_list {info});
+                    Debug::LogErrorFormat("[ShaderLoader] ZWrite has incorrect format: %1%", {info});
                     continue;
                 }
 
@@ -181,7 +179,7 @@ namespace ShaderLoader
                 else if (strings[1] == "on")
                     shaderInfo.ZWrite = GL_TRUE;
                 else
-                    Debug::LogErrorFormat("[ShaderLoader] ZWrite has incorrect format: %1%", std::initializer_list {info});
+                    Debug::LogErrorFormat("[ShaderLoader] ZWrite has incorrect format: %1%", {info});
             }
 
             // parse blend mode
@@ -189,7 +187,7 @@ namespace ShaderLoader
             {
                 if (length < 3)
                 {
-                    Debug::LogErrorFormat("[ShaderLoader] Blend info has incorrect format: %1%", std::initializer_list {info});
+                    Debug::LogErrorFormat("[ShaderLoader] Blend info has incorrect format: %1%", {info});
                     continue;
                 }
 
@@ -214,10 +212,10 @@ namespace ShaderLoader
         return shaderInfo;
     }
 
-    std::shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords)
+    std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords)
     {
-        auto   shaderSource = Utils::ReadFileWithIncludes(_path);
-        string keywordsDirectives;
+        auto        shaderSource = Utils::ReadFileWithIncludes(_path);
+        std::string keywordsDirectives;
         for (const auto &keyword: _keywords)
             keywordsDirectives += "#define " + keyword + "\n";
 
@@ -244,7 +242,7 @@ namespace ShaderLoader
         }
 
         GLuint program;
-        success &= TryLinkProgram(span<GLuint> {shaderParts, shaderPartCount}, program, _path.string());
+        success &= TryLinkProgram(std::span<GLuint> {shaderParts, shaderPartCount}, program, _path.string());
 
         return success ? std::shared_ptr<Shader>(
                                  new Shader(program,

@@ -13,7 +13,7 @@
 
 namespace Utils
 {
-    string ReadFile(const filesystem::path &_relativePath)
+    std::string ReadFile(const std::filesystem::path &_relativePath)
     {
         auto *file = fopen((GetExecutableDirectory() / _relativePath).string().c_str(), "r");
         if (file == nullptr)
@@ -29,9 +29,9 @@ namespace Utils
         if (fseek(file, 0, SEEK_SET) != 0)
             return "";
 
-        string content(fileSize, ' ');
-        int    c;
-        long   i = -1;
+        std::string content(fileSize, ' ');
+        int         c;
+        long        i = -1;
 
         while ((c = fgetc(file)) != EOF)
             content[++i] = static_cast<char>(c);
@@ -43,13 +43,13 @@ namespace Utils
         return content;
     }
 
-    string ReadFileWithIncludes(const filesystem::path &_relativePath) // NOLINT(misc-no-recursion)
+    std::string ReadFileWithIncludes(const std::filesystem::path &_relativePath) // NOLINT(misc-no-recursion)
     {
         auto file = ReadFile(_relativePath);
 
-        regex  expression(R"(\s*#include\s+\"(.*)\"\s*\n)");
-        smatch match;
-        while (regex_search(file.cbegin(), file.cend(), match, expression))
+        std::regex  expression(R"(\s*#include\s+\"(.*)\"\s*\n)");
+        std::smatch match;
+        while (std::regex_search(file.cbegin(), file.cend(), match, expression))
         {
             auto includedFile = ReadFileWithIncludes(_relativePath.parent_path() / match[1].str());
             includedFile = "\n" + includedFile + "\n";
@@ -61,7 +61,7 @@ namespace Utils
         return file;
     }
 
-    void WriteFile(const filesystem::path &_relativePath, const string &_content)
+    void WriteFile(const std::filesystem::path &_relativePath, const std::string &_content)
     {
         std::ofstream o;
         o.open(GetExecutableDirectory() / _relativePath, std::ios::trunc);
@@ -69,9 +69,9 @@ namespace Utils
         o.close();
     }
 
-    const filesystem::path &GetExecutableDirectory()
+    const std::filesystem::path &GetExecutableDirectory()
     {
-        static filesystem::path executableDir;
+        static std::filesystem::path executableDir;
 
         if (!executableDir.empty())
             return executableDir;
@@ -80,7 +80,7 @@ namespace Utils
 		char path[MAX_PATH];
 
 		GetModuleFileNameA(NULL, path, MAX_PATH);
-		executableDir = filesystem::path(path).parent_path();
+		executableDir = std::filesystem::path(path).parent_path();
 #elif OPENGL_STUDY_MACOS
         char     path[100];
         uint32_t size = 100;

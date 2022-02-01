@@ -1,4 +1,5 @@
 #include "input.h"
+#include <unordered_set>
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/freeglut.h>
 #elif OPENGL_STUDY_MACOS
@@ -7,12 +8,12 @@
 
 namespace Input
 {
-    unordered_set<unsigned char> inputs;
-    unordered_set<unsigned char> inputsDown;
-    unordered_set<unsigned char> inputsUp;
-    Vector2                      oldMousePosition = Vector2();
-    Vector2                      mousePosition    = Vector2();
-    Vector2                      mouseDelta       = Vector2();
+    std::unordered_set<unsigned char> inputs;
+    std::unordered_set<unsigned char> inputsDown;
+    std::unordered_set<unsigned char> inputsUp;
+    Vector2                           oldMousePosition = Vector2();
+    Vector2                           mousePosition    = Vector2();
+    Vector2                           mouseDelta       = Vector2();
 
     void MouseMove(int _x, int _y)
     {

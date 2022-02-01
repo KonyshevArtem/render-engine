@@ -12,8 +12,6 @@
 #include "core/time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "scenes/test_scene.h"
 
-using namespace std;
-
 void display()
 {
     Time::Update();

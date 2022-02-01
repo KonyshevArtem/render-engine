@@ -11,16 +11,14 @@
 struct Vector2;
 struct Vector3;
 
-using namespace std;
-
 class Mesh
 {
 public:
-    Mesh(vector<Vector3> &_vertices,
-         vector<Vector3> &_normals,
-         vector<int> &    _indexes,
-         vector<Vector2> &_uvs,
-         vector<Vector3> &_tangents);
+    Mesh(std::vector<Vector3> &_vertices,
+         std::vector<Vector3> &_normals,
+         std::vector<int> &    _indexes,
+         std::vector<Vector2> &_uvs,
+         std::vector<Vector3> &_tangents);
 
     void Init();
     void Draw() const;
@@ -38,11 +36,11 @@ private:
     GLuint m_VertexBuffer      = 0;
     GLuint m_IndexBuffer       = 0;
 
-    vector<Vector3> m_Vertices;
-    vector<Vector3> m_Normals;
-    vector<Vector3> m_Tangents;
-    vector<int>     m_Indexes;
-    vector<Vector2> m_UVs;
+    std::vector<Vector3> m_Vertices;
+    std::vector<Vector3> m_Normals;
+    std::vector<Vector3> m_Tangents;
+    std::vector<int>     m_Indexes;
+    std::vector<Vector2> m_UVs;
 };
 
 

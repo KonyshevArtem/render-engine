@@ -6,7 +6,7 @@
 #include "../texture_2d/texture_2d.h"
 #include <vector>
 
-BillboardRenderer::BillboardRenderer(const shared_ptr<GameObject> &_gameObject, shared_ptr<Texture2D> _texture) :
+BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, std::shared_ptr<Texture2D> _texture) :
     Renderer(_gameObject), m_Texture(std::move(_texture))
 {
     glGenVertexArrays(1, &m_VertexArrayObject);
@@ -31,10 +31,10 @@ BillboardRenderer::~BillboardRenderer()
 
 void BillboardRenderer::Render() const
 {
-    static shared_ptr<Shader> shader;
+    static std::shared_ptr<Shader> shader;
 
     if (shader == nullptr)
-        shader = Shader::Load("resources/shaders/billboard/billboard.shader", vector<string>());
+        shader = Shader::Load("resources/shaders/billboard/billboard.shader", {});
 
     if (shader == nullptr || m_Texture == nullptr)
         return;

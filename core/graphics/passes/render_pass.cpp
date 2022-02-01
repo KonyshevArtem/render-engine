@@ -19,11 +19,11 @@ void RenderPass::Execute(const Context &_ctx)
 
     Graphics::SetCameraData(_ctx.ViewMatrix, _ctx.ProjectionMatrix);
 
-    vector<Renderer *> filteredRenderers;
-    copy_if(_ctx.Renderers.begin(), _ctx.Renderers.end(), back_inserter(filteredRenderers), m_Filter);
+    std::vector<Renderer *> filteredRenderers;
+    copy_if(_ctx.Renderers.begin(), _ctx.Renderers.end(), std::back_inserter(filteredRenderers), m_Filter);
 
     Vector3 cameraPosWS = _ctx.ViewMatrix.Invert().GetPosition();
-    sort(filteredRenderers.begin(), filteredRenderers.end(), Renderer::Comparer {m_Sorting, cameraPosWS});
+    std::sort(filteredRenderers.begin(), filteredRenderers.end(), Renderer::Comparer {m_Sorting, cameraPosWS});
 
     for (const auto *r: filteredRenderers)
     {

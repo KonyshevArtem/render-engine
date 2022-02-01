@@ -2,7 +2,7 @@
 #include "../../math/matrix4x4/matrix4x4.h"
 #include "../gameObject/gameObject.h"
 
-Renderer::Renderer(const shared_ptr<GameObject> &_gameObject) :
+Renderer::Renderer(const std::shared_ptr<GameObject> &_gameObject) :
     m_GameObject(_gameObject)
 {
 }

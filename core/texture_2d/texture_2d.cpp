@@ -8,17 +8,15 @@
 #include <OpenGL/gl3.h>
 #endif
 
-using namespace std;
-
-shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb, bool _hasAlpha)
+std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path, bool _srgb, bool _hasAlpha)
 {
-    auto t = shared_ptr<Texture2D>(new Texture2D());
+    auto t = std::shared_ptr<Texture2D>(new Texture2D());
 
     auto colorType = _hasAlpha ? LCT_RGBA : LCT_RGB;
     auto error     = lodepng::decode(t->m_Data, t->m_Width, t->m_Height, (Utils::GetExecutableDirectory() / _path).string(), colorType);
     if (error != 0)
     {
-        Debug::LogErrorFormat("[Texture2D] Error loading texture: %1%", std::initializer_list {std::string{lodepng_error_text(error)}});
+        Debug::LogErrorFormat("[Texture2D] Error loading texture: %1%", {lodepng_error_text(error)});
         return nullptr;
     }
 
@@ -37,14 +35,14 @@ shared_ptr<Texture2D> Texture2D::Load(const filesystem::path &_path, bool _srgb,
     return t;
 }
 
-const shared_ptr<Texture2D> &Texture2D::White()
+const std::shared_ptr<Texture2D> &Texture2D::White()
 {
-    static shared_ptr<Texture2D> white;
+    static std::shared_ptr<Texture2D> white;
 
     if (white != nullptr)
         return white;
 
-    white           = shared_ptr<Texture2D>(new Texture2D());
+    white           = std::shared_ptr<Texture2D>(new Texture2D());
     white->m_Width  = 1;
     white->m_Height = 1;
 
@@ -57,14 +55,14 @@ const shared_ptr<Texture2D> &Texture2D::White()
     return white;
 }
 
-const shared_ptr<Texture2D> &Texture2D::Normal()
+const std::shared_ptr<Texture2D> &Texture2D::Normal()
 {
-    static shared_ptr<Texture2D> normal;
+    static std::shared_ptr<Texture2D> normal;
 
     if (normal != nullptr)
         return normal;
 
-    normal           = shared_ptr<Texture2D>(new Texture2D());
+    normal           = std::shared_ptr<Texture2D>(new Texture2D());
     normal->m_Width  = 1;
     normal->m_Height = 1;
 
@@ -77,9 +75,9 @@ const shared_ptr<Texture2D> &Texture2D::Normal()
     return normal;
 }
 
-const shared_ptr<Texture2D> &Texture2D::Null()
+const std::shared_ptr<Texture2D> &Texture2D::Null()
 {
-    static shared_ptr<Texture2D> null;
+    static std::shared_ptr<Texture2D> null;
     return null;
 }
 

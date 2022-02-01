@@ -6,12 +6,10 @@
 #include "../texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
 
-using namespace std;
-
-unordered_map<string, shared_ptr<Texture>> Shader::m_GlobalTextures    = {};
-string                                     Shader::m_ReplacementTag    = "";
-const Shader *                             Shader::m_CurrentShader     = nullptr;
-const Shader *                             Shader::m_ReplacementShader = nullptr;
+std::unordered_map<std::string, std::shared_ptr<Texture>> Shader::m_GlobalTextures    = {};
+std::string                                               Shader::m_ReplacementTag    = "";
+const Shader *                                            Shader::m_CurrentShader     = nullptr;
+const Shader *                                            Shader::m_ReplacementShader = nullptr;
 
 #pragma region inner types
 
@@ -30,7 +28,7 @@ void Shader::BlendInfo::Apply() const
 
 #pragma region construction
 
-shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<string> &_keywords)
+std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords)
 {
     auto shader = ShaderLoader::Load(_path, _keywords);
 
@@ -47,11 +45,11 @@ shared_ptr<Shader> Shader::Load(const filesystem::path &_path, const vector<stri
     return shader;
 }
 
-Shader::Shader(GLuint                        _program,
-               unordered_map<string, string> _defaultValues,
-               unordered_map<string, string> _tags,
-               bool                          _zWrite,
-               BlendInfo                     _blendInfo) :
+Shader::Shader(GLuint                                       _program,
+               std::unordered_map<std::string, std::string> _defaultValues,
+               std::unordered_map<std::string, std::string> _tags,
+               bool                                         _zWrite,
+               BlendInfo                                    _blendInfo) :
     m_Program(_program),
     m_DefaultValues(std::move(_defaultValues)),
     m_Tags(std::move(_tags)),
@@ -76,16 +74,16 @@ Shader::Shader(GLuint                        _program,
     glGetProgramiv(m_Program, GL_ACTIVE_UNIFORMS, &count);
     glGetProgramiv(m_Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffSize);
 
-    GLsizei        length;
-    GLenum         type;
-    GLint          size;
-    vector<GLchar> name(buffSize);
-    int            textureUnit = 0;
+    GLsizei             length;
+    GLenum              type;
+    GLint               size;
+    std::vector<GLchar> name(buffSize);
+    int                 textureUnit = 0;
 
     for (int i = 0; i < count; ++i)
     {
         glGetActiveUniform(m_Program, i, buffSize, &length, &size, &type, &name[0]);
-        string nameStr(name.begin(), name.begin() + length);
+        std::string nameStr(name.begin(), name.begin() + length);
 
         auto location      = glGetUniformLocation(m_Program, &nameStr[0]);
         auto convertedType = UniformUtils::ConvertUniformType(type);
@@ -93,7 +91,7 @@ Shader::Shader(GLuint                        _program,
         // TODO: correctly parse arrays
 
         if (convertedType == UniformType::UNKNOWN)
-            Debug::LogErrorFormat("[Shader] Init error: Unknown OpenGL type for uniform %1%", std::initializer_list {nameStr});
+            Debug::LogErrorFormat("[Shader] Init error: Unknown OpenGL type for uniform %1%", {nameStr});
         else if (UniformUtils::IsTexture(convertedType))
             m_TextureUnits[nameStr] = textureUnit++;
 
@@ -136,13 +134,13 @@ bool Shader::Use() const
     return true;
 }
 
-void Shader::SetUniform(const string &_name, const void *_data)
+void Shader::SetUniform(const std::string &_name, const void *_data)
 {
     if (m_CurrentShader != nullptr && m_CurrentShader->m_Uniforms.contains(_name))
         UniformUtils::SetUniform(m_CurrentShader->m_Uniforms.at(_name), _data);
 }
 
-void Shader::SetTextureUniform(const string &_name, const Texture &_texture)
+void Shader::SetTextureUniform(const std::string &_name, const Texture &_texture)
 {
     if (m_CurrentShader == nullptr || !m_CurrentShader->m_TextureUnits.contains(_name))
         return;
@@ -152,7 +150,7 @@ void Shader::SetTextureUniform(const string &_name, const Texture &_texture)
     SetUniform(_name, &unit);
 }
 
-void Shader::SetReplacementShader(const Shader *_shader, const string &_tag)
+void Shader::SetReplacementShader(const Shader *_shader, const std::string &_tag)
 {
     m_ReplacementShader = _shader;
     m_ReplacementTag    = _tag;
@@ -184,7 +182,7 @@ void Shader::DetachCurrentShader()
     glDepthMask(GL_TRUE); // enable depth mask, otherwise depth won't be cleared
 }
 
-void Shader::SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture)
+void Shader::SetGlobalTexture(const std::string &_name, std::shared_ptr<Texture> _texture)
 {
     if (_texture == nullptr)
         return;
@@ -199,7 +197,7 @@ void Shader::SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture)
 
 #pragma region service methods
 
-void InitDefaultTextures(unordered_map<string, unordered_map<UniformType, shared_ptr<Texture>>> &_defaultTextures)
+void InitDefaultTextures(std::unordered_map<std::string, std::unordered_map<UniformType, std::shared_ptr<Texture>>> &_defaultTextures)
 {
     _defaultTextures["white"][UniformType::SAMPLER_2D]   = Texture2D::White();
     _defaultTextures["white"][UniformType::SAMPLER_CUBE] = Cubemap::White();
@@ -208,7 +206,7 @@ void InitDefaultTextures(unordered_map<string, unordered_map<UniformType, shared
 
 void Shader::SetDefaultValues() const
 {
-    static unordered_map<string, unordered_map<UniformType, shared_ptr<Texture>>> defaultTextures;
+    static std::unordered_map<std::string, std::unordered_map<UniformType, std::shared_ptr<Texture>>> defaultTextures;
     if (defaultTextures.empty())
         InitDefaultTextures(defaultTextures);
 

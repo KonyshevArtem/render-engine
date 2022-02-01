@@ -6,9 +6,6 @@
 #elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
 #endif
-#include <memory>
-
-using namespace std;
 
 enum class UniformType
 {

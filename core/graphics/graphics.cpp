@@ -22,14 +22,14 @@ namespace Graphics
     constexpr int MAX_POINT_LIGHT_SOURCES = 3;
     constexpr int MAX_SPOT_LIGHT_SOURCES  = 3;
 
-    unique_ptr<UniformBlock> lightingDataBlock;
-    unique_ptr<UniformBlock> cameraDataBlock;
-    shared_ptr<UniformBlock> shadowsDataBlock;
+    std::unique_ptr<UniformBlock> lightingDataBlock;
+    std::unique_ptr<UniformBlock> cameraDataBlock;
+    std::shared_ptr<UniformBlock> shadowsDataBlock;
 
-    unique_ptr<ShadowCasterPass> shadowCasterPass;
-    unique_ptr<RenderPass>       opaqueRenderPass;
-    unique_ptr<RenderPass>       tranparentRenderPass;
-    unique_ptr<SkyboxPass>       skyboxPass;
+    std::unique_ptr<ShadowCasterPass> shadowCasterPass;
+    std::unique_ptr<RenderPass>       opaqueRenderPass;
+    std::unique_ptr<RenderPass>       tranparentRenderPass;
+    std::unique_ptr<SkyboxPass>       skyboxPass;
 
     int screenWidth  = 0;
     int screenHeight = 0;
@@ -56,18 +56,18 @@ namespace Graphics
 
     void InitUniformBlocks()
     {
-        auto fullShader   = Shader::Load("resources/shaders/standard/standard.shader", vector<string> {"_RECEIVE_SHADOWS"});
-        cameraDataBlock   = make_unique<UniformBlock>(*fullShader, "CameraData", 0);
-        lightingDataBlock = make_unique<UniformBlock>(*fullShader, "Lighting", 1);
-        shadowsDataBlock  = make_shared<UniformBlock>(*fullShader, "Shadows", 2);
+        auto fullShader   = Shader::Load("resources/shaders/standard/standard.shader", {"_RECEIVE_SHADOWS"});
+        cameraDataBlock   = std::make_unique<UniformBlock>(*fullShader, "CameraData", 0);
+        lightingDataBlock = std::make_unique<UniformBlock>(*fullShader, "Lighting", 1);
+        shadowsDataBlock  = std::make_shared<UniformBlock>(*fullShader, "Shadows", 2);
     }
 
     void InitPasses()
     {
-        opaqueRenderPass     = make_unique<RenderPass>(Renderer::Sorting::FRONT_TO_BACK, Renderer::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        tranparentRenderPass = make_unique<RenderPass>(Renderer::Sorting::BACK_TO_FRONT, Renderer::Filter::Transparent(), 0);
-        shadowCasterPass     = make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
-        skyboxPass           = make_unique<SkyboxPass>();
+        opaqueRenderPass     = std::make_unique<RenderPass>(Renderer::Sorting::FRONT_TO_BACK, Renderer::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        tranparentRenderPass = std::make_unique<RenderPass>(Renderer::Sorting::BACK_TO_FRONT, Renderer::Filter::Transparent(), 0);
+        shadowCasterPass     = std::make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
+        skyboxPass           = std::make_unique<SkyboxPass>();
     }
 
     void Init(int _argc, char **_argv)
@@ -95,7 +95,7 @@ namespace Graphics
         InitPasses();
     }
 
-    void SetLightingData(const Vector3 &_ambient, const vector<Light *> &_lights)
+    void SetLightingData(const Vector3 &_ambient, const std::vector<Light *> &_lights)
     {
         lightingDataBlock->SetUniform("_AmbientLight", &_ambient, sizeof(Vector3));
 
@@ -117,7 +117,7 @@ namespace Graphics
             }
             else if (light->Type == LightType::POINT && pointLightsCount < MAX_POINT_LIGHT_SOURCES)
             {
-                auto prefix = "_PointLights[" + to_string(pointLightsCount) + "].";
+                auto prefix = "_PointLights[" + std::to_string(pointLightsCount) + "].";
                 lightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
                 lightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector3));
                 lightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
@@ -127,7 +127,7 @@ namespace Graphics
             {
                 auto dir       = light->Rotation * Vector3(0, 0, -1);
                 auto cutOffCos = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
-                auto prefix    = "_SpotLights[" + to_string(spotLightsCount) + "].";
+                auto prefix    = "_SpotLights[" + std::to_string(spotLightsCount) + "].";
                 lightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
                 lightingDataBlock->SetUniform(prefix + "DirectionWS", &dir, sizeof(Vector3));
                 lightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector3));
@@ -197,18 +197,18 @@ namespace Graphics
         cameraDataBlock->SetUniform("_FarClipPlane", &farClipPlane, sizeof(float));
     }
 
-    const string &GetGlobalShaderDirectives()
+    const std::string &GetGlobalShaderDirectives()
     {
         static constexpr int GLSL_VERSION = 410;
 
-        static string globalShaderDirectives;
+        static std::string globalShaderDirectives;
 
         if (globalShaderDirectives.empty())
         {
             // clang-format off
-            globalShaderDirectives = "#version " + to_string(GLSL_VERSION) + "\n"
-                                    "#define MAX_POINT_LIGHT_SOURCES " + to_string(MAX_POINT_LIGHT_SOURCES) + "\n"
-                                    "#define MAX_SPOT_LIGHT_SOURCES " + to_string(MAX_SPOT_LIGHT_SOURCES) + "\n";
+            globalShaderDirectives = "#version " + std::to_string(GLSL_VERSION) + "\n"
+                                    "#define MAX_POINT_LIGHT_SOURCES " + std::to_string(MAX_POINT_LIGHT_SOURCES) + "\n"
+                                    "#define MAX_SPOT_LIGHT_SOURCES " + std::to_string(MAX_SPOT_LIGHT_SOURCES) + "\n";
             // clang-format on
         }
 

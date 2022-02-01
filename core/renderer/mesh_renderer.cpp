@@ -4,9 +4,9 @@
 #include "../mesh/mesh.h"
 #include "../shader/shader.h"
 
-MeshRenderer::MeshRenderer(const shared_ptr<GameObject> &_gameObject,
-                           shared_ptr<Mesh>              _mesh,
-                           shared_ptr<Material>          _material) :
+MeshRenderer::MeshRenderer(const std::shared_ptr<GameObject> &_gameObject,
+                           std::shared_ptr<Mesh>              _mesh,
+                           std::shared_ptr<Material>          _material) :
     Renderer(_gameObject),
     m_Mesh(std::move(_mesh)),
     m_Material(std::move(_material))

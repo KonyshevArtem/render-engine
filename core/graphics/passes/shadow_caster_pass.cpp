@@ -8,9 +8,9 @@
 #include "../uniform_block.h"
 #include <utility>
 
-ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, shared_ptr<UniformBlock> _shadowsUniformBlock) :
+ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, std::shared_ptr<UniformBlock> _shadowsUniformBlock) :
     m_ShadowsUniformBlock(std::move(_shadowsUniformBlock)),
-    m_ShadowCasterShader(Shader::Load("resources/shaders/shadowCaster/shadowCaster.shader", vector<string>())),
+    m_ShadowCasterShader(Shader::Load("resources/shaders/shadowCaster/shadowCaster.shader", {})),
     m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SHADOW_MAP_SIZE, _spotLightsCount))
 {
     Shader::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
@@ -49,7 +49,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
             Graphics::SetCameraData(view, proj);
 
-            auto index = to_string(spotLightsCount);
+            auto index = std::to_string(spotLightsCount);
             m_ShadowsUniformBlock->SetUniform("_SpotLightShadows[" + index + "].LightViewProjMatrix", &lightVP, sizeof(Matrix4x4));
 
             ++spotLightsCount;
@@ -66,7 +66,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     Shader::DetachReplacementShader();
 }
 
-void ShadowCasterPass::Render(const vector<Renderer *> &_renderers)
+void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
 {
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);

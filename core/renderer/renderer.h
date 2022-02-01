@@ -9,8 +9,6 @@ class GameObject;
 class Shader;
 struct Matrix4x4;
 
-using namespace std;
-
 class Renderer
 {
 public:
@@ -32,7 +30,7 @@ public:
 
     struct Filter
     {
-        function<bool(Renderer *)> Delegate;
+        std::function<bool(Renderer *)> Delegate;
 
         static Renderer::Filter Opaque();
         static Renderer::Filter Transparent();
@@ -41,7 +39,7 @@ public:
     };
 
 protected:
-    explicit Renderer(const shared_ptr<GameObject> &_gameObject);
+    explicit Renderer(const std::shared_ptr<GameObject> &_gameObject);
 
     Matrix4x4   GetModelMatrix() const;
     virtual int GetRenderQueue() const = 0;
@@ -49,7 +47,7 @@ protected:
 private:
     static constexpr int TRANSPARENT_RENDER_QUEUE = 3000;
 
-    weak_ptr<GameObject> m_GameObject;
+    std::weak_ptr<GameObject> m_GameObject;
 };
 
 #endif //OPENGL_STUDY_RENDERER_H

@@ -4,14 +4,12 @@
 #include <filesystem>
 #include <string>
 
-using namespace std;
-
 namespace Utils
 {
-    string                  ReadFile(const filesystem::path &_relativePath);
-    string                  ReadFileWithIncludes(const filesystem::path &_relativePath);
-    void                    WriteFile(const filesystem::path &_relativePath, const string &_content);
-    const filesystem::path &GetExecutableDirectory();
+    std::string                  ReadFile(const std::filesystem::path &_relativePath);
+    std::string                  ReadFileWithIncludes(const std::filesystem::path &_relativePath);
+    void                         WriteFile(const std::filesystem::path &_relativePath, const std::string &_content);
+    const std::filesystem::path &GetExecutableDirectory();
 }; // namespace Utils
 
 #endif //OPENGL_STUDY_UTILS_H

@@ -16,7 +16,7 @@ class Shader;
 class BillboardRenderer: public Renderer
 {
 public:
-    BillboardRenderer(const shared_ptr<GameObject> &_gameObject, shared_ptr<Texture2D> _texture);
+    BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, std::shared_ptr<Texture2D> _texture);
     virtual ~BillboardRenderer();
 
     void Render() const override;
@@ -38,11 +38,11 @@ private:
     BillboardRenderer &operator=(const BillboardRenderer &) = delete;
     BillboardRenderer &operator=(BillboardRenderer &&)      = delete;
 
-    shared_ptr<Texture2D> m_Texture;
-    float                 m_Size;
-    int                   m_RenderQueue       = 2000;
-    GLuint                m_VertexArrayObject = 0;
-    GLuint                m_PointsBuffer      = 0;
+    std::shared_ptr<Texture2D> m_Texture;
+    float                      m_Size;
+    int                        m_RenderQueue       = 2000;
+    GLuint                     m_VertexArrayObject = 0;
+    GLuint                     m_PointsBuffer      = 0;
 
     int GetRenderQueue() const override;
 };

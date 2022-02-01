@@ -8,17 +8,17 @@
 #include <OpenGL/gl3.h>
 #endif
 
-shared_ptr<Cubemap> Cubemap::Load(const filesystem::path &_xPositivePath,
-                                  const filesystem::path &_xNegativePath,
-                                  const filesystem::path &_yPositivePath,
-                                  const filesystem::path &_yNegativePath,
-                                  const filesystem::path &_zPositivePath,
-                                  const filesystem::path &_zNegativePath)
+std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &_xPositivePath,
+                                       const std::filesystem::path &_xNegativePath,
+                                       const std::filesystem::path &_yPositivePath,
+                                       const std::filesystem::path &_yNegativePath,
+                                       const std::filesystem::path &_zPositivePath,
+                                       const std::filesystem::path &_zNegativePath)
 {
-    auto cubemap = shared_ptr<Cubemap>(new Cubemap());
+    auto cubemap = std::shared_ptr<Cubemap>(new Cubemap());
 
     cubemap->m_Data.resize(SIDES_COUNT);
-    filesystem::path paths[SIDES_COUNT] {_xPositivePath, _xNegativePath, _yPositivePath, _yNegativePath, _zPositivePath, _zNegativePath};
+    std::filesystem::path paths[SIDES_COUNT] {_xPositivePath, _xNegativePath, _yPositivePath, _yNegativePath, _zPositivePath, _zNegativePath};
 
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
@@ -26,7 +26,7 @@ shared_ptr<Cubemap> Cubemap::Load(const filesystem::path &_xPositivePath,
         auto error = lodepng::decode(cubemap->m_Data[i], cubemap->m_Width, cubemap->m_Height, path, LCT_RGB);
         if (error != 0)
         {
-            Debug::LogErrorFormat("[Cubemap] Error loading texture: %1%\n%2%", std::initializer_list {std::string {lodepng_error_text(error)}, path});
+            Debug::LogErrorFormat("[Cubemap] Error loading texture: %1%\n%2%", {lodepng_error_text(error), path});
             return nullptr;
         }
     }
@@ -57,14 +57,14 @@ void Cubemap::Bind(int _unit) const
     glBindSampler(_unit, m_Sampler);
 }
 
-shared_ptr<Cubemap> &Cubemap::White()
+std::shared_ptr<Cubemap> &Cubemap::White()
 {
-    static shared_ptr<Cubemap> white;
+    static std::shared_ptr<Cubemap> white;
 
     if (white != nullptr)
         return white;
 
-    white           = shared_ptr<Cubemap>(new Cubemap());
+    white           = std::shared_ptr<Cubemap>(new Cubemap());
     white->m_Width  = 1;
     white->m_Height = 1;
 

@@ -5,7 +5,7 @@
 #include "../mesh/mesh.h"
 #include <cstdio>
 
-shared_ptr<FBXAsset> FBXAsset::Load(const filesystem::path &_path)
+std::shared_ptr<FBXAsset> FBXAsset::Load(const std::filesystem::path &_path)
 {
     auto *fp = fopen((Utils::GetExecutableDirectory() / _path).string().c_str(), "rb");
     if (!fp)
@@ -17,7 +17,7 @@ shared_ptr<FBXAsset> FBXAsset::Load(const filesystem::path &_path)
     fseek(fp, 0, SEEK_SET);
 
     // prepare buffer and read
-    vector<ofbx::u8> content(file_size);
+    std::vector<ofbx::u8> content(file_size);
     fread(&content[0], 1, file_size, fp);
 
     auto *scene = ofbx::load(&content[0], file_size, (ofbx::u64) ofbx::LoadFlags::TRIANGULATE); // NOLINT(cppcoreguidelines-narrowing-conversions)
@@ -28,13 +28,13 @@ shared_ptr<FBXAsset> FBXAsset::Load(const filesystem::path &_path)
     if (!scene)
         return nullptr;
 
-    return shared_ptr<FBXAsset>(new FBXAsset(scene));
+    return std::shared_ptr<FBXAsset>(new FBXAsset(scene));
 }
 
-shared_ptr<Mesh> FBXAsset::GetMesh(unsigned int _index) const
+std::shared_ptr<Mesh> FBXAsset::GetMesh(unsigned int _index) const
 {
     if (_index >= m_Meshes.size())
-        throw out_of_range("Index " + to_string(_index) + " out of range of m_Meshes.size()");
+        throw std::out_of_range("Index " + std::to_string(_index) + " out of range of m_Meshes.size()");
 
     return m_Meshes.at(_index);
 }
@@ -52,11 +52,11 @@ FBXAsset::FBXAsset(ofbx::IScene *_scene) :
         if (geom == nullptr)
             continue;
 
-        auto vertices = vector<Vector3>();
-        auto normals  = vector<Vector3>();
-        auto tangents = vector<Vector3>();
-        auto uvs      = vector<Vector2>();
-        auto indexes  = vector<int>();
+        auto vertices = std::vector<Vector3>();
+        auto normals  = std::vector<Vector3>();
+        auto tangents = std::vector<Vector3>();
+        auto uvs      = std::vector<Vector2>();
+        auto indexes  = std::vector<int>();
 
         bool hasNormals  = geom->getNormals() != nullptr;
         bool hasUVs      = geom->getUVs() != nullptr;
@@ -91,7 +91,7 @@ FBXAsset::FBXAsset(ofbx::IScene *_scene) :
             indexes.push_back(index < 0 ? -index - 1 : index);
         }
 
-        auto mesh = make_shared<Mesh>(vertices, normals, indexes, uvs, tangents);
+        auto mesh = std::make_shared<Mesh>(vertices, normals, indexes, uvs, tangents);
         mesh->Init();
 
         m_Meshes.push_back(mesh);

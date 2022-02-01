@@ -6,14 +6,12 @@
 #include "../../math/vector3/vector3.h"
 #include <memory>
 
-using namespace std;
-
 class Camera
 {
 public:
     static void Init(float _fov, float _nearClipPlane, float _farClipPlane);
 
-    static unique_ptr<Camera> Current;
+    static std::unique_ptr<Camera> Current;
 
     const Matrix4x4 &GetViewMatrix();
     const Matrix4x4 &GetProjectionMatrix();

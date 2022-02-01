@@ -9,16 +9,14 @@ class Light;
 class GameObject;
 class Cubemap;
 
-using namespace std;
-
 class Scene
 {
 public:
-    inline static shared_ptr<Scene> Current = nullptr;
-    vector<shared_ptr<GameObject>>  GameObjects;
-    vector<shared_ptr<Light>>       Lights;
-    Vector3                         AmbientLight;
-    shared_ptr<Cubemap>             Skybox;
+    inline static std::shared_ptr<Scene>     Current = nullptr;
+    std::vector<std::shared_ptr<GameObject>> GameObjects;
+    std::vector<std::shared_ptr<Light>>      Lights;
+    Vector3                                  AmbientLight;
+    std::shared_ptr<Cubemap>                 Skybox;
 
     static void Update();
 

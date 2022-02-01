@@ -13,19 +13,17 @@ class Light;
 class Texture;
 class Cubemap;
 
-using namespace std;
-
 struct Context
 {
 public:
     Context();
 
-    Vector3            AmbientLight;
-    vector<Light *>    Lights;
-    vector<Renderer *> Renderers;
-    Matrix4x4          ViewMatrix       = Matrix4x4();
-    Matrix4x4          ProjectionMatrix = Matrix4x4();
-    Cubemap *          Skybox;
+    Vector3                 AmbientLight;
+    std::vector<Light *>    Lights;
+    std::vector<Renderer *> Renderers;
+    Matrix4x4               ViewMatrix       = Matrix4x4();
+    Matrix4x4               ProjectionMatrix = Matrix4x4();
+    Cubemap *               Skybox;
 };
 
 #endif //OPENGL_STUDY_CONTEXT_H

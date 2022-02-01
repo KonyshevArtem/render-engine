@@ -10,9 +10,6 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
-#include <vector>
-
-using namespace std;
 
 class Texture;
 struct UniformInfo;
@@ -36,16 +33,16 @@ public:
 #pragma region construction
 
 public:
-    static shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords);
+    static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords);
 
     ~Shader();
 
 private:
-    Shader(GLuint                        _program,
-           unordered_map<string, string> _defaultValues,
-           unordered_map<string, string> _tags,
-           bool                          _zWrite,
-           BlendInfo                     _blendInfo);
+    Shader(GLuint                                       _program,
+           std::unordered_map<std::string, std::string> _defaultValues,
+           std::unordered_map<std::string, std::string> _tags,
+           bool                                         _zWrite,
+           BlendInfo                                    _blendInfo);
     Shader(const Shader &) = delete;
     Shader(Shader &&)      = delete;
 
@@ -57,18 +54,18 @@ private:
 #pragma region fields
 
 private:
-    GLuint                             m_Program;
-    bool                               m_ZWrite;
-    BlendInfo                          m_BlendInfo;
-    unordered_map<string, UniformInfo> m_Uniforms;
-    unordered_map<string, int>         m_TextureUnits;
-    unordered_map<string, string>      m_DefaultValues;
-    unordered_map<string, string>      m_Tags;
+    GLuint                                       m_Program;
+    bool                                         m_ZWrite;
+    BlendInfo                                    m_BlendInfo;
+    std::unordered_map<std::string, UniformInfo> m_Uniforms;
+    std::unordered_map<std::string, int>         m_TextureUnits;
+    std::unordered_map<std::string, std::string> m_DefaultValues;
+    std::unordered_map<std::string, std::string> m_Tags;
 
-    static unordered_map<string, shared_ptr<Texture>> m_GlobalTextures;
-    static string                                     m_ReplacementTag;
-    static const Shader *                             m_CurrentShader;
-    static const Shader *                             m_ReplacementShader;
+    static std::unordered_map<std::string, std::shared_ptr<Texture>> m_GlobalTextures;
+    static std::string                                               m_ReplacementTag;
+    static const Shader *                                            m_CurrentShader;
+    static const Shader *                                            m_ReplacementShader;
 
 #pragma endregion
 
@@ -77,12 +74,12 @@ private:
 public:
     bool Use() const;
 
-    static void SetUniform(const string &_name, const void *_data);
-    static void SetTextureUniform(const string &_name, const Texture &_texture);
-    static void SetReplacementShader(const Shader *_shader, const string &_tag);
+    static void SetUniform(const std::string &_name, const void *_data);
+    static void SetTextureUniform(const std::string &_name, const Texture &_texture);
+    static void SetReplacementShader(const Shader *_shader, const std::string &_tag);
     static void DetachReplacementShader();
     static void DetachCurrentShader();
-    static void SetGlobalTexture(const string &_name, shared_ptr<Texture> _texture);
+    static void SetGlobalTexture(const std::string &_name, std::shared_ptr<Texture> _texture);
 
 #pragma endregion
 
@@ -93,7 +90,7 @@ private:
 
 #pragma endregion
 
-    friend shared_ptr<Shader> ShaderLoader::Load(const filesystem::path &_path, const vector<string> &_keywords);
+    friend std::shared_ptr<Shader> ShaderLoader::Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords);
     friend class UniformBlock;
 };
 

@@ -1,7 +1,7 @@
 #include "camera.h"
 #include "../graphics/graphics.h"
 
-unique_ptr<Camera> Camera::Current = nullptr;
+std::unique_ptr<Camera> Camera::Current = nullptr;
 
 Camera::Camera(float _fov, float _nearClipPlane, float _farClipPlane) :
     m_Fov(_fov),
@@ -19,7 +19,7 @@ Camera::Camera(float _fov, float _nearClipPlane, float _farClipPlane) :
 
 void Camera::Init(float _fov, float _nearClipPlane, float _farClipPlane)
 {
-    Current = unique_ptr<Camera>(new Camera(_fov, _nearClipPlane, _farClipPlane));
+    Current = std::unique_ptr<Camera>(new Camera(_fov, _nearClipPlane, _farClipPlane));
 }
 
 const Matrix4x4 &Camera::GetViewMatrix()

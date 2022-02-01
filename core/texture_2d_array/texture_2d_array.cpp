@@ -5,9 +5,9 @@
 #include <OpenGL/gl3.h>
 #endif
 
-shared_ptr<Texture2DArray> Texture2DArray::ShadowMapArray(unsigned int _size, unsigned int _count)
+std::shared_ptr<Texture2DArray> Texture2DArray::ShadowMapArray(unsigned int _size, unsigned int _count)
 {
-    auto texture      = shared_ptr<Texture2DArray>(new Texture2DArray());
+    auto texture      = std::shared_ptr<Texture2DArray>(new Texture2DArray());
     texture->m_Width  = _size;
     texture->m_Height = _size;
     texture->m_Count  = _count;

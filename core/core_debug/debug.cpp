@@ -43,6 +43,6 @@ void Debug::CheckOpenGLError()
     if (error != 0)
     {
         auto *errorString = reinterpret_cast<const char *>(gluErrorString(error));
-        LogErrorFormat("[OpenGL] %1%", std::initializer_list {std::string {errorString}});
+        LogErrorFormat("[OpenGL] %1%", {errorString});
     }
 }

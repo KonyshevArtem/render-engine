@@ -7,11 +7,9 @@
 
 class Shader;
 
-using namespace std;
-
 namespace ShaderLoader
 {
-    shared_ptr<Shader> Load(const filesystem::path &_path, const vector<string> &_keywords);
+    std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords);
 }; // namespace ShaderLoader
 
 #endif //OPENGL_STUDY_SHADER_LOADER_H

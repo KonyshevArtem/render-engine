@@ -8,16 +8,14 @@
 
 class Mesh;
 
-using namespace std;
-
 class FBXAsset
 {
 public:
-    static shared_ptr<FBXAsset> Load(const filesystem::path &_path);
+    static std::shared_ptr<FBXAsset> Load(const std::filesystem::path &_path);
 
     ~FBXAsset();
 
-    shared_ptr<Mesh> GetMesh(unsigned int _index) const;
+    std::shared_ptr<Mesh> GetMesh(unsigned int _index) const;
 
 private:
     explicit FBXAsset(ofbx::IScene *_scene);
@@ -27,8 +25,8 @@ private:
     FBXAsset &operator=(const FBXAsset &) = delete;
     FBXAsset &operator=(FBXAsset &&)      = delete;
 
-    ofbx::IScene *           m_Scene;
-    vector<shared_ptr<Mesh>> m_Meshes;
+    ofbx::IScene *                     m_Scene;
+    std::vector<std::shared_ptr<Mesh>> m_Meshes;
 };
 
 #endif //OPENGL_STUDY_FBX_ASSET_H

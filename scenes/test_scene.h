@@ -21,10 +21,10 @@ private:
     static Quaternion CalcRotation(float _phase, int _i);
     static Vector3    CalcScale(float _phase);
 
-    const float                     LOOP_DURATION = 3000;
-    shared_ptr<Material>            m_WaterMaterial;
-    shared_ptr<Light>               m_SpotLight;
-    unique_ptr<CameraFlyController> m_CameraFlyControl;
+    static constexpr float               LOOP_DURATION = 3000;
+    std::shared_ptr<Material>            m_WaterMaterial;
+    std::shared_ptr<Light>               m_SpotLight;
+    std::unique_ptr<CameraFlyController> m_CameraFlyControl;
 };
 
 #endif //OPENGL_STUDY_TEST_SCENE_H

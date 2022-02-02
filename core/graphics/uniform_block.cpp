@@ -3,6 +3,7 @@
 #include "../shader/shader.h"
 #include "../shader/uniform_info/uniform_info.h"
 #include <unordered_map>
+#include <vector>
 
 UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName, unsigned int _index) :
     m_Name(std::move(_blockName))

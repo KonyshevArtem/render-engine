@@ -89,10 +89,10 @@ namespace Utils
         {
             char longPath[size];
             _NSGetExecutablePath(&longPath[0], &size);
-            executableDir = filesystem::path(longPath).parent_path();
+            executableDir = std::filesystem::path(longPath).parent_path();
         }
         else
-            executableDir = filesystem::path(path).parent_path();
+            executableDir = std::filesystem::path(path).parent_path();
 #endif
 
         return executableDir;

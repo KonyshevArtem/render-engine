@@ -5,7 +5,7 @@
 #include <GL/freeGlut.h>
 #include <windows.h>
 #elif OPENGL_STUDY_MACOS
-#include <GL/glut.h>
+#include <GLUT/glut.h>
 #endif
 
 

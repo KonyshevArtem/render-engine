@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_RENDER_PASS_H
 
 #include "../../renderer/renderer.h"
+#include <string>
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS

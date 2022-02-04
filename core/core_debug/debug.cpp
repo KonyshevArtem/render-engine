@@ -6,7 +6,6 @@
 #include <GL/freeGlut.h>
 #include <windows.h>
 #elif OPENGL_STUDY_MACOS
-#include <GL/gl3.h>
 #include <GLUT/glut.h>
 #endif
 
@@ -54,14 +53,18 @@ void Debug::CheckOpenGLError()
 
 void Debug::PushDebugGroup(const std::string &_name)
 {
+    #ifdef OPENGL_STUDY_WINDOWS
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, debugGroupID++, -1, _name.c_str());
+    #endif
 }
 
 void Debug::PopDebugGroup()
 {
+    #ifdef OPENGL_STUDY_WINDOWS
     glPopDebugGroup();
     --debugGroupID;
 
     if (debugGroupID < 0)
         LogError("Popping more debug groups than pushing");
+    #endif
 }

@@ -1,19 +1,22 @@
 #include "render_pass.h"
 #include "../../../math/matrix4x4/matrix4x4.h"
 #include "../../../math/vector3/vector3.h"
+#include "../../core_debug/debug.h"
 #include "../context.h"
 #include "../graphics.h"
 #include <algorithm>
 #include <vector>
 #include <iterator>
 
-RenderPass::RenderPass(Renderer::Sorting _rendererSorting, Renderer::Filter _filter, GLbitfield _clearFlags) :
-    m_Sorting(_rendererSorting), m_Filter(_filter), m_ClearFlags(_clearFlags)
+RenderPass::RenderPass(const std::string &_name, Renderer::Sorting _rendererSorting, Renderer::Filter _filter, GLbitfield _clearFlags) :
+    m_Name(_name), m_Sorting(_rendererSorting), m_Filter(_filter), m_ClearFlags(_clearFlags)
 {
 }
 
 void RenderPass::Execute(const Context &_ctx)
 {
+    Debug::PushDebugGroup("Render pass " + m_Name);
+
     glViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
     glClear(m_ClearFlags);
 
@@ -30,4 +33,6 @@ void RenderPass::Execute(const Context &_ctx)
         if (r != nullptr)
             r->Render();
     }
+
+    Debug::PopDebugGroup();
 }

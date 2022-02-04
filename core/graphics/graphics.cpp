@@ -64,8 +64,8 @@ namespace Graphics
 
     void InitPasses()
     {
-        opaqueRenderPass     = std::make_unique<RenderPass>(Renderer::Sorting::FRONT_TO_BACK, Renderer::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        tranparentRenderPass = std::make_unique<RenderPass>(Renderer::Sorting::BACK_TO_FRONT, Renderer::Filter::Transparent(), 0);
+        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", Renderer::Sorting::FRONT_TO_BACK, Renderer::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        tranparentRenderPass = std::make_unique<RenderPass>("Transparent", Renderer::Sorting::BACK_TO_FRONT, Renderer::Filter::Transparent(), 0);
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
     }
@@ -75,6 +75,8 @@ namespace Graphics
         unsigned int displayModeFlags = GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH;
 #ifdef OPENGL_STUDY_MACOS
         displayModeFlags |= GLUT_3_2_CORE_PROFILE;
+#elif OPENGL_STUDY_WINDOWS
+        glutInitContextVersion(4, 6);
 #endif
 
 		glutInit(&_argc, _argv);
@@ -144,6 +146,8 @@ namespace Graphics
 
     void Render()
     {
+        Debug::PushDebugGroup("Render Frame");
+
         glClearColor(0, 0, 0, 0);
         glClearDepth(1);
 
@@ -164,6 +168,7 @@ namespace Graphics
         glutPostRedisplay();
 
         Debug::CheckOpenGLError();
+        Debug::PopDebugGroup();
     }
 
     void Reshape(int _width, int _height)

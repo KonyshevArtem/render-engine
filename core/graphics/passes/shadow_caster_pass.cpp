@@ -3,6 +3,7 @@
 #include "../../renderer/renderer.h"
 #include "../../shader/shader.h"
 #include "../../texture_2d_array/texture_2d_array.h"
+#include "../../core_debug/debug.h"
 #include "../context.h"
 #include "../graphics.h"
 #include "../uniform_block.h"
@@ -28,9 +29,12 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     if (m_ShadowCasterShader == nullptr)
         return;
 
+    Debug::PushDebugGroup("Shadow pass");
+
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer);
     glViewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
 
+    // TODO use shader passes instead of replacement shaders
     Shader::SetReplacementShader(m_ShadowCasterShader.get(), "Shadows");
 
     int spotLightsCount = 0;
@@ -64,12 +68,13 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 
     Shader::DetachReplacementShader();
+
+    Debug::PopDebugGroup();
 }
 
 void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
 {
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
+    Debug::PushDebugGroup("Render shadow map");
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -78,4 +83,6 @@ void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
         if (r != nullptr)
             r->Render();
     }
+
+    Debug::PopDebugGroup();
 }

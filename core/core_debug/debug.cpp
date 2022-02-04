@@ -2,16 +2,18 @@
 #include <boost/format.hpp>
 #include <iostream>
 #ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
 #include <GL/freeGlut.h>
 #include <windows.h>
 #elif OPENGL_STUDY_MACOS
+#include <GL/gl3.h>
 #include <GLUT/glut.h>
 #endif
 
+int debugGroupID = 0;
 
 constexpr int TRACE_MAX_STACK_FRAMES         = 512;
 constexpr int TRACE_MAX_FUNCTION_NAME_LENGTH = 50;
-
 
 void Debug::Init()
 {
@@ -43,6 +45,23 @@ void Debug::CheckOpenGLError()
     if (error != 0)
     {
         auto *errorString = reinterpret_cast<const char *>(gluErrorString(error));
-        LogErrorFormat("[OpenGL] %1%", {errorString});
+        if (errorString == nullptr)
+            LogErrorFormat("[OpenGL] Unknown error %1%", {std::to_string(error)});
+        else
+            LogErrorFormat("[OpenGL] %1%", {errorString});
     }
+}
+
+void Debug::PushDebugGroup(const std::string &_name)
+{
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, debugGroupID++, -1, _name.c_str());
+}
+
+void Debug::PopDebugGroup()
+{
+    glPopDebugGroup();
+    --debugGroupID;
+
+    if (debugGroupID < 0)
+        LogError("Popping more debug groups than pushing");
 }

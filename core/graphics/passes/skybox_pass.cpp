@@ -5,6 +5,7 @@
 #include "../../fbx_asset/fbx_asset.h"
 #include "../../mesh/mesh.h"
 #include "../../shader/shader.h"
+#include "../../core_debug/debug.h"
 #include "../context.h"
 #include "../graphics.h"
 
@@ -24,6 +25,8 @@ void SkyboxPass::Execute(const Context &_ctx)
     if (!shader->Use())
         return;
 
+    Debug::PushDebugGroup("Skybox pass");
+
     glCullFace(GL_FRONT);
     glViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 
@@ -37,4 +40,6 @@ void SkyboxPass::Execute(const Context &_ctx)
 
     Shader::DetachCurrentShader();
     glCullFace(GL_BACK);
+
+    Debug::PopDebugGroup();
 }

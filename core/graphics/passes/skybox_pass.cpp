@@ -7,7 +7,6 @@
 #include "../../shader/shader.h"
 #include "../../core_debug/debug.h"
 #include "../context.h"
-#include "../graphics.h"
 
 void SkyboxPass::Execute(const Context &_ctx)
 {
@@ -28,9 +27,6 @@ void SkyboxPass::Execute(const Context &_ctx)
     Debug::PushDebugGroup("Skybox pass");
 
     glCullFace(GL_FRONT);
-    glViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
-
-    Graphics::SetCameraData(_ctx.ViewMatrix, _ctx.ProjectionMatrix);
 
     Matrix4x4 modelMatrix = Matrix4x4::Translation(_ctx.ViewMatrix.Invert().GetPosition());
     Shader::SetUniform("_ModelMatrix", &modelMatrix);

@@ -50,4 +50,10 @@ add_library(
 	renderer/billboard_renderer.cpp
 	renderer/billboard_renderer.h
 	core_debug/debug.cpp
-	core_debug/debug.h)
+	core_debug/debug.h 
+	bounds/bounds.h
+	bounds/bounds.cpp
+	gizmos/gizmos_pass.h
+	gizmos/gizmos_pass.cpp 
+	gizmos/gizmos.h 
+	gizmos/gizmos.cpp)

@@ -8,6 +8,7 @@ class GameObject;
 class Mesh;
 class Material;
 class Shader;
+struct Bounds;
 
 class MeshRenderer: public Renderer
 {
@@ -17,7 +18,8 @@ public:
                  std::shared_ptr<Material>          _material);
     virtual ~MeshRenderer() = default;
 
-    void Render() const override;
+    void   Render() const override;
+    Bounds GetAABB() const override;
 
 private:
     MeshRenderer(const MeshRenderer &) = delete;

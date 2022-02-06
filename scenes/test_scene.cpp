@@ -12,6 +12,8 @@
 #include "../core/shader/shader.h"
 #include "../core/texture_2d/texture_2d.h"
 #include "../core/time/time.h" // NOLINT(modernize-deprecated-headers)
+#include "../core/gizmos/gizmos.h"
+#include "../core/bounds/bounds.h"
 #include "../math/math_utils.h"
 #include "../math/vector4/vector4.h"
 #include "../scripts/camera_fly_controller/camera_fly_controller.h"
@@ -222,4 +224,20 @@ void TestScene::UpdateInternal()
 
     m_SpotLight->Position = Camera::Current->GetPosition() + Camera::Current->GetRotation() * Vector3(-3, 0, 0);
     m_SpotLight->Rotation = Camera::Current->GetRotation();
+
+    // gizmos
+    if (Input::GetKeyDown('g'))
+        m_DrawGizmos = !m_DrawGizmos;
+
+    if (m_DrawGizmos)
+    {
+        for (const auto &go: GameObjects)
+        {
+            if (!go->Renderer)
+                continue;
+
+            auto bounds = go->Renderer->GetAABB();
+            Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize()));
+        }
+    }
 }

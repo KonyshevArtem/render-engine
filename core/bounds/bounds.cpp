@@ -1,0 +1,65 @@
+#include "bounds.h"
+#include "../../math/matrix4x4/matrix4x4.h"
+#include "../../math/vector4/vector4.h"
+
+Vector3 Bounds::GetCenter() const
+{
+    return (Min + Max) * 0.5f;
+}
+
+Vector3 Bounds::GetSize() const
+{
+    return (Max - Min) * 0.5f;
+}
+
+std::vector<Vector3> Bounds::GetCornerPoints() const
+{
+    return std::vector<Vector3> {
+            Min,
+            {Min.x, Min.y, Max.z},
+            {Min.x, Max.y, Min.z},
+            {Min.x, Max.y, Max.z},
+            {Max.x, Min.y, Min.z},
+            {Max.x, Min.y, Max.z},
+            {Max.x, Max.y, Min.z},
+            Max,
+    };
+}
+
+Bounds Bounds::FromPoints(std::vector<Vector3> _points)
+{
+    if (_points.size() == 0)
+        return Bounds();
+
+    Bounds bounds;
+    bounds.Min = _points[0];
+    bounds.Max = _points[0];
+
+    for (const auto &point: _points)
+    {
+        if (point.x > bounds.Max.x)
+            bounds.Max.x = point.x;
+        if (point.x < bounds.Min.x)
+            bounds.Min.x = point.x;
+
+        if (point.y > bounds.Max.y)
+            bounds.Max.y = point.y;
+        if (point.y < bounds.Min.y)
+            bounds.Min.y = point.y;
+
+        if (point.z > bounds.Max.z)
+            bounds.Max.z = point.z;
+        if (point.z < bounds.Min.z)
+            bounds.Min.z = point.z;
+    }
+    return bounds;
+}
+
+Bounds operator*(const Matrix4x4 &_matrix, const Bounds &_bounds)
+{
+    auto corners = _bounds.GetCornerPoints();
+    for (auto &point: corners)
+        point = _matrix * point.ToVector4(1);
+
+    return Bounds::FromPoints(corners);
+}

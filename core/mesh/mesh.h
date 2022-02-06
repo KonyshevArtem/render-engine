@@ -1,6 +1,7 @@
 #ifndef OPENGL_STUDY_MESH_H
 #define OPENGL_STUDY_MESH_H
 
+#include "../bounds/bounds.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
@@ -20,8 +21,8 @@ public:
          std::vector<Vector2> &_uvs,
          std::vector<Vector3> &_tangents);
 
-    void Init();
-    void Draw() const;
+    void   Draw() const;
+    Bounds GetBounds() const;
 
     ~Mesh();
 
@@ -30,7 +31,7 @@ private:
     Mesh(Mesh &&)      = delete;
 
     Mesh &operator=(const Mesh &) = delete;
-    Mesh &operator=(Mesh &&)      = delete;
+    Mesh &operator=(Mesh &&) = delete;
 
     GLuint m_VertexArrayObject = 0;
     GLuint m_VertexBuffer      = 0;
@@ -41,6 +42,8 @@ private:
     std::vector<Vector3> m_Tangents;
     std::vector<int>     m_Indexes;
     std::vector<Vector2> m_UVs;
+
+    Bounds m_Bounds;
 };
 
 

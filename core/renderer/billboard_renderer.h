@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_BILLBOARD_RENDERER_H
 
 #include "renderer.h"
+#include "../bounds/bounds.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
@@ -19,17 +20,15 @@ public:
     BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, std::shared_ptr<Texture2D> _texture);
     virtual ~BillboardRenderer();
 
-    void Render() const override;
+    void   Render() const override;
+    Bounds GetAABB() const override;
 
     inline void SetRenderQueue(int _renderQueue)
     {
         m_RenderQueue = _renderQueue;
     }
 
-    inline void SetSize(float _size)
-    {
-        m_Size = _size;
-    };
+    void SetSize(float _size);
 
 private:
     BillboardRenderer(const BillboardRenderer &) = delete;
@@ -40,6 +39,7 @@ private:
 
     std::shared_ptr<Texture2D> m_Texture;
     float                      m_Size;
+    Bounds                     m_Bounds;
     int                        m_RenderQueue       = 2000;
     GLuint                     m_VertexArrayObject = 0;
     GLuint                     m_PointsBuffer      = 0;

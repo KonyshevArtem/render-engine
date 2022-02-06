@@ -25,6 +25,8 @@ private:
     std::shared_ptr<Material>            m_WaterMaterial;
     std::shared_ptr<Light>               m_SpotLight;
     std::unique_ptr<CameraFlyController> m_CameraFlyControl;
+
+    bool m_DrawGizmos = false;
 };
 
 #endif //OPENGL_STUDY_TEST_SCENE_H

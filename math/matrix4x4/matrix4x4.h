@@ -5,6 +5,7 @@
 
 struct Quaternion;
 struct Vector3;
+struct Vector4;
 
 struct [[nodiscard]] Matrix4x4
 {
@@ -45,6 +46,8 @@ public:
     void SetElement(int _column, int _row, float _value);
 
     Matrix4x4 operator*(const Matrix4x4 &_matrix) const;
+
+    Vector4 operator*(const Vector4 &_matrix) const;
 
     Matrix4x4 Invert() const;
 

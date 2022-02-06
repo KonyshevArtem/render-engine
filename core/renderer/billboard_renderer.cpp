@@ -7,7 +7,7 @@
 #include <vector>
 
 BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, std::shared_ptr<Texture2D> _texture) :
-    Renderer(_gameObject), m_Texture(std::move(_texture))
+    Renderer(_gameObject), m_Texture(std::move(_texture)), m_Size(0)
 {
     glGenVertexArrays(1, &m_VertexArrayObject);
     glGenBuffers(1, &m_PointsBuffer);
@@ -62,6 +62,20 @@ void BillboardRenderer::Render() const
 
     glBindVertexArray(0);
     Shader::DetachCurrentShader();
+}
+
+Bounds BillboardRenderer::GetAABB() const
+{
+    return GetModelMatrix() * m_Bounds;
+}
+
+void BillboardRenderer::SetSize(float _size)
+{
+    m_Size = _size;
+
+    auto position = GetModelMatrix().GetPosition();
+    m_Bounds.Min  = position - Vector3 {m_Size, 0, m_Size};
+    m_Bounds.Max  = position + Vector3 {m_Size, 2 * m_Size, m_Size};
 }
 
 int BillboardRenderer::GetRenderQueue() const

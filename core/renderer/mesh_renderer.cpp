@@ -31,6 +31,11 @@ void MeshRenderer::Render() const
     Shader::DetachCurrentShader();
 }
 
+Bounds MeshRenderer::GetAABB() const
+{
+    return m_Mesh ? GetModelMatrix() * m_Mesh->GetBounds() : Bounds();
+}
+
 int MeshRenderer::GetRenderQueue() const
 {
     return m_Material ? m_Material->GetRenderQueue() : 2000;

@@ -1,4 +1,5 @@
 #include "vector3.h"
+#include "../vector4/vector4.h"
 #include <cmath>
 #include <limits>
 
@@ -15,6 +16,11 @@ Vector3::Vector3() :
 
 Vector3::Vector3(float _x, float _y, float _z) :
     x(_x), y(_y), z(_z)
+{
+}
+
+Vector3::Vector3(Vector4 _vector4) :
+    x(_vector4.x), y(_vector4.y), z(_vector4.z)
 {
 }
 
@@ -56,6 +62,11 @@ Vector3 Vector3::operator-(const Vector3 &_vector) const
 Vector3 Vector3::operator*(float _value) const
 {
     return {_value * x, _value * y, _value * z};
+}
+
+Vector4 Vector3::ToVector4(float _w) const
+{
+    return {x, y, z, _w};
 }
 
 float Vector3::Dot(const Vector3 &_a, const Vector3 &_b)

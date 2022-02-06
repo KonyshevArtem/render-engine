@@ -11,11 +11,8 @@ Mesh::Mesh(std::vector<Vector3> &_vertices,
     m_Normals(std::move(_normals)),
     m_Indexes(std::move(_indexes)),
     m_UVs(std::move(_uvs)),
-    m_Tangents(std::move(_tangents))
-{
-}
-
-void Mesh::Init()
+    m_Tangents(std::move(_tangents)),
+    m_Bounds(Bounds::FromPoints(m_Vertices))
 {
     glGenVertexArrays(1, &m_VertexArrayObject);
     glGenBuffers(1, &m_VertexBuffer);
@@ -70,6 +67,11 @@ void Mesh::Draw() const
     glBindVertexArray(m_VertexArrayObject);
     glDrawElements(GL_TRIANGLES, m_Indexes.size(), GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
+}
+
+Bounds Mesh::GetBounds() const
+{
+    return m_Bounds;
 }
 
 Mesh::~Mesh()

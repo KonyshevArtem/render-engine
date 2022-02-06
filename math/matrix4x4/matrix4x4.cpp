@@ -1,6 +1,7 @@
 #include "matrix4x4.h"
 #include "../quaternion/quaternion.h"
 #include "../vector3/vector3.h"
+#include "../vector4/vector4.h"
 
 const Matrix4x4 &Matrix4x4::Zero()
 {
@@ -86,6 +87,16 @@ Matrix4x4 Matrix4x4::operator*(const Matrix4x4 &_matrix) const
         }
     }
     return result;
+}
+
+Vector4 Matrix4x4::operator*(const Vector4 &_vector) const
+{
+    return {
+            m00 * _vector.x + m10 * _vector.y + m20 * _vector.z + m30 * _vector.w,
+            m01 * _vector.x + m11 * _vector.y + m21 * _vector.z + m31 * _vector.w,
+            m02 * _vector.x + m12 * _vector.y + m22 * _vector.z + m32 * _vector.w,
+            m03 * _vector.x + m13 * _vector.y + m23 * _vector.z + m33 * _vector.w,
+    };
 }
 
 std::string Matrix4x4::ToString() const

@@ -8,11 +8,13 @@
 class GameObject;
 class Shader;
 struct Matrix4x4;
+struct Bounds;
 
 class Renderer
 {
 public:
-    virtual void Render() const = 0;
+    virtual void   Render() const  = 0;
+    virtual Bounds GetAABB() const = 0;
 
     enum class Sorting
     {

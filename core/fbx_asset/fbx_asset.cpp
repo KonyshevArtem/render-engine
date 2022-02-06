@@ -92,7 +92,6 @@ FBXAsset::FBXAsset(ofbx::IScene *_scene) :
         }
 
         auto mesh = std::make_shared<Mesh>(vertices, normals, indexes, uvs, tangents);
-        mesh->Init();
 
         m_Meshes.push_back(mesh);
     }

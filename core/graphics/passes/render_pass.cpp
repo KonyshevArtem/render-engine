@@ -3,7 +3,6 @@
 #include "../../../math/vector3/vector3.h"
 #include "../../core_debug/debug.h"
 #include "../context.h"
-#include "../graphics.h"
 #include <algorithm>
 #include <vector>
 #include <iterator>
@@ -17,10 +16,7 @@ void RenderPass::Execute(const Context &_ctx)
 {
     Debug::PushDebugGroup("Render pass " + m_Name);
 
-    glViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
     glClear(m_ClearFlags);
-
-    Graphics::SetCameraData(_ctx.ViewMatrix, _ctx.ProjectionMatrix);
 
     std::vector<Renderer *> filteredRenderers;
     copy_if(_ctx.Renderers.begin(), _ctx.Renderers.end(), std::back_inserter(filteredRenderers), m_Filter);

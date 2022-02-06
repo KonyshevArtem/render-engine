@@ -4,6 +4,7 @@
 #include "../core_debug/debug.h"
 #include "../light/light.h"
 #include "../shader/shader.h"
+#include "../gizmos/gizmos_pass.h"
 #include "context.h"
 #include "passes/render_pass.h"
 #include "passes/shadow_caster_pass.h"
@@ -30,6 +31,7 @@ namespace Graphics
     std::unique_ptr<RenderPass>       opaqueRenderPass;
     std::unique_ptr<RenderPass>       tranparentRenderPass;
     std::unique_ptr<SkyboxPass>       skyboxPass;
+    std::unique_ptr<GizmosPass>       gizmosPass;
 
     int screenWidth  = 0;
     int screenHeight = 0;
@@ -68,6 +70,7 @@ namespace Graphics
         tranparentRenderPass = std::make_unique<RenderPass>("Transparent", Renderer::Sorting::BACK_TO_FRONT, Renderer::Filter::Transparent(), 0);
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
+        gizmosPass           = std::make_unique<GizmosPass>();
     }
 
     void Init(int _argc, char **_argv)
@@ -155,14 +158,20 @@ namespace Graphics
 
         SetLightingData(ctx.AmbientLight, ctx.Lights);
 
-        if (shadowCasterPass != nullptr)
+        if (shadowCasterPass)
             shadowCasterPass->Execute(ctx);
-        if (opaqueRenderPass != nullptr)
+
+        glViewport(0, 0, screenWidth, screenHeight);
+        SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix);
+
+        if (opaqueRenderPass)
             opaqueRenderPass->Execute(ctx);
-        if (skyboxPass != nullptr)
+        if (skyboxPass)
             skyboxPass->Execute(ctx);
-        if (tranparentRenderPass != nullptr)
+        if (tranparentRenderPass)
             tranparentRenderPass->Execute(ctx);
+        if (gizmosPass)
+            gizmosPass->Execute(ctx);
 
         glutSwapBuffers();
         glutPostRedisplay();

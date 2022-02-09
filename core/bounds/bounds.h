@@ -11,10 +11,12 @@ struct Bounds
     Vector3 Min;
     Vector3 Max;
 
+    Bounds               Combine(const Bounds &bounds) const;
     Vector3              GetCenter() const;
     Vector3              GetSize() const;
+    Vector3              GetExtents() const;
     std::vector<Vector3> GetCornerPoints() const;
-    static Bounds        FromPoints(std::vector<Vector3> _points);
+    static Bounds        FromPoints(const std::vector<Vector3> &_points);
 
     friend Bounds operator*(const Matrix4x4 &_matrix, const Bounds &_bounds);
 };

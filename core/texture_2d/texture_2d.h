@@ -9,12 +9,14 @@
 class Texture2D: public Texture
 {
 public:
+    static std::shared_ptr<Texture2D>        CreateShadowMap(int _width, int _height);
     static std::shared_ptr<Texture2D>        Load(const std::filesystem::path &_path, bool _srgb = true, bool _hasAlpha = false);
     static const std::shared_ptr<Texture2D> &White();
     static const std::shared_ptr<Texture2D> &Normal();
     static const std::shared_ptr<Texture2D> &Null();
 
     void Bind(int _unit) const override;
+    void Attach(GLenum _attachment);
 
     virtual ~Texture2D() = default;
 

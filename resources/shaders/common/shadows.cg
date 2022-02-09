@@ -9,27 +9,43 @@ layout(std140) struct ShadowData
 
 layout(std140) uniform Shadows
 {
+    ShadowData _DirLightShadow;
     ShadowData _SpotLightShadows[MAX_SPOT_LIGHT_SOURCES];
 };
 
+uniform sampler2D _DirLightShadowMap;
 uniform sampler2DArray _SpotLightShadowMapArray;
-#endif
 
-float linearizeDepth(float depth, float nearClipPlane, float farClipPlane){
-    float z = depth * 2 - 1;
-    z = 2 * nearClipPlane * farClipPlane / (farClipPlane + nearClipPlane - z * (farClipPlane - nearClipPlane));
-    return z / farClipPlane;
+bool isFragVisible(float fragZ)
+{
+    return fragZ >= 0 && fragZ <= 1;
 }
 
-float getSpotLightShadowTerm(int index, vec3 posWS, float lightAngleCos, float nearClipPlane, float farClipPlane)
+bool isShadowed(float fragZ, float shadowMapDepth, float lightAngleCos)
+{
+    float bias = max(0.005 * (1 - lightAngleCos), 0.0005);
+    return shadowMapDepth < fragZ - bias;
+}
+#endif
+
+float getDirLightShadowTerm(vec3 posWS, float lightAngleCos)
+{
+    #ifdef _RECEIVE_SHADOWS
+    vec4 shadowCoord = _DirLightShadow.LightViewProjMatrix * vec4(posWS, 1);
+    float depth = texture(_DirLightShadowMap, shadowCoord.xy).x;
+    if (isFragVisible(shadowCoord.z) && isShadowed(shadowCoord.z, depth, lightAngleCos))
+        return 0;
+    #endif
+    return 1;
+}
+
+float getSpotLightShadowTerm(int index, vec3 posWS, float lightAngleCos)
 {
     #ifdef _RECEIVE_SHADOWS
     vec4 shadowCoord = _SpotLightShadows[index].LightViewProjMatrix * vec4(posWS, 1);
     shadowCoord = shadowCoord / shadowCoord.w;
-    shadowCoord = shadowCoord * 0.5 + 0.5;
     float depth = texture(_SpotLightShadowMapArray, vec3(shadowCoord.xy, index)).x;
-    float bias = max(0.05 * (1 - lightAngleCos), 0.005);
-    if (linearizeDepth(depth, nearClipPlane, farClipPlane) < linearizeDepth(shadowCoord.z, nearClipPlane, farClipPlane) - bias)
+    if (isFragVisible(shadowCoord.z) && isShadowed(shadowCoord.z, depth, lightAngleCos))
         return 0;
     #endif
     return 1;

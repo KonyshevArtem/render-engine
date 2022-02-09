@@ -30,7 +30,7 @@ void main(){
     vec4 light = vars.Color;
     #else
     vec3 normalWS = getNormalWS(vars.NormalWS, vars.TangentWS, vars.UV);
-    vec4 light = vec4(getLight(vars.PositionWS.xyz, normalWS, _NearClipPlane, _FarClipPlane), 1);
+    vec4 light = vec4(getLight(vars.PositionWS.xyz, normalWS), 1);
     #endif
 
     outColor = texture(_Albedo, vars.UV * _AlbedoST.zw + _AlbedoST.xy) * light;

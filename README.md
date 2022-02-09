@@ -13,7 +13,7 @@ Only forward rendering path is implemented for now
 * Blinn-Phong lighting model for fragment lit objects
 
 ### Light sources
-* Support for single directional light
+* Support for single directional light with shadows
 * Support for several point lights
 * Support for several spot lights with shadows
 

@@ -2,6 +2,14 @@
 #include "../../math/matrix4x4/matrix4x4.h"
 #include "../../math/vector4/vector4.h"
 
+Bounds Bounds::Combine(const Bounds &bounds) const
+{
+    return {
+            {std::min(Min.x, bounds.Min.x), std::min(Min.y, bounds.Min.y), std::min(Min.z, bounds.Min.z)},
+            {std::max(Max.x, bounds.Max.x), std::max(Max.y, bounds.Max.y), std::max(Max.z, bounds.Max.z)},
+    };
+}
+
 Vector3 Bounds::GetCenter() const
 {
     return (Min + Max) * 0.5f;
@@ -9,7 +17,12 @@ Vector3 Bounds::GetCenter() const
 
 Vector3 Bounds::GetSize() const
 {
-    return (Max - Min) * 0.5f;
+    return Max - Min;
+}
+
+Vector3 Bounds::GetExtents() const
+{
+    return GetSize() * 0.5f;
 }
 
 std::vector<Vector3> Bounds::GetCornerPoints() const
@@ -26,7 +39,7 @@ std::vector<Vector3> Bounds::GetCornerPoints() const
     };
 }
 
-Bounds Bounds::FromPoints(std::vector<Vector3> _points)
+Bounds Bounds::FromPoints(const std::vector<Vector3> &_points)
 {
     if (_points.size() == 0)
         return Bounds();

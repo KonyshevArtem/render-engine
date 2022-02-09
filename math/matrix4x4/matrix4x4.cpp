@@ -210,6 +210,19 @@ Matrix4x4 Matrix4x4::Perspective(float _fov, float _aspect, float _nearZ, float 
     return matrix;
 }
 
+Matrix4x4 Matrix4x4::Orthogonal(float _left, float _right, float _bottom, float _top, float _near, float _far)
+{
+    auto matrix = Matrix4x4::Zero();
+    matrix.m00  = 2.0f / (_right - _left);
+    matrix.m11  = 2.0f / (_top - _bottom);
+    matrix.m22  = -2.0f / (_far - _near);
+    matrix.m30  = -(_right + _left) / (_right - _left);
+    matrix.m31  = -(_top + _bottom) / (_top - _bottom);
+    matrix.m32  = -(_far + _near) / (_far - _near);
+    matrix.m33  = 1;
+    return matrix;
+}
+
 Vector3 Matrix4x4::GetPosition() const
 {
     return {m30, m31, m32};

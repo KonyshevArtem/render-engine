@@ -60,11 +60,6 @@ void TestScene::Init()
     auto planeMesh    = planeAsset->GetMesh(0);
 
     // init materials
-    auto vertexLitMaterial = std::make_shared<Material>(vertexLitShader);
-
-    auto vertexLitBrickMaterial = std::make_shared<Material>(vertexLitShader);
-    vertexLitBrickMaterial->SetTexture("_Albedo", brickTexture);
-
     auto fragmentLitMaterial = std::make_shared<Material>(fragmentLitShader);
     fragmentLitMaterial->SetFloat("_Smoothness", 50);
 
@@ -84,10 +79,10 @@ void TestScene::Init()
 
     // init gameObjects
     auto rotatingCube      = std::make_shared<GameObject>();
-    rotatingCube->Renderer = std::make_shared<MeshRenderer>(rotatingCube, cubeMesh, vertexLitBrickMaterial);
+    rotatingCube->Renderer = std::make_shared<MeshRenderer>(rotatingCube, cubeMesh, fragmentLitBrickMaterial);
 
     auto rotatingCylinder           = std::make_shared<GameObject>();
-    rotatingCylinder->Renderer      = std::make_shared<MeshRenderer>(rotatingCylinder, cylinderMesh, vertexLitMaterial);
+    rotatingCylinder->Renderer      = std::make_shared<MeshRenderer>(rotatingCylinder, cylinderMesh, fragmentLitMaterial);
     rotatingCylinder->LocalPosition = Vector3(0, -3, -4);
     rotatingCylinder->LocalScale    = Vector3(2, 1, 0.5f);
 
@@ -97,7 +92,7 @@ void TestScene::Init()
     cylinderFragmentLit->LocalScale    = Vector3(2, 1, 0.5f);
 
     auto floorVertexLit           = std::make_shared<GameObject>();
-    floorVertexLit->Renderer      = std::make_shared<MeshRenderer>(floorVertexLit, cubeMesh, vertexLitMaterial);
+    floorVertexLit->Renderer      = std::make_shared<MeshRenderer>(floorVertexLit, cubeMesh, fragmentLitMaterial);
     floorVertexLit->LocalPosition = Vector3(3, -5, -5.5f);
     floorVertexLit->LocalRotation = Quaternion::AngleAxis(10, Vector3(0, 1, 0));
     floorVertexLit->LocalScale    = Vector3(5, 1, 2);
@@ -141,7 +136,7 @@ void TestScene::Init()
     // init lights
     auto dirLight       = std::make_shared<Light>();
     dirLight->Position  = Vector3(0, -0.3f, 1);
-    dirLight->Rotation  = Quaternion::AngleAxis(180, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(-1, 0, 0));
+    dirLight->Rotation  = Quaternion::AngleAxis(150, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(-1, 0, 0));
     dirLight->Intensity = Vector3(0.2f, 0.2f, 0.2f);
     dirLight->Type      = LightType::DIRECTIONAL;
 
@@ -237,7 +232,7 @@ void TestScene::UpdateInternal()
                 continue;
 
             auto bounds = go->Renderer->GetAABB();
-            Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize()));
+            Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
         }
     }
 }

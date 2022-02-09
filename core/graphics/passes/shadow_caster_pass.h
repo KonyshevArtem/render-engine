@@ -13,6 +13,7 @@ class UniformBlock;
 struct Context;
 class Shader;
 class Texture2DArray;
+class Texture2D;
 class Renderer;
 
 class ShadowCasterPass
@@ -36,6 +37,7 @@ private:
     std::shared_ptr<Shader>         m_ShadowCasterShader;
     GLuint                          m_Framebuffer = 0;
     std::shared_ptr<Texture2DArray> m_SpotLightShadowMapArray;
+    std::shared_ptr<Texture2D>      m_DirectionLightShadowMap;
 
     void Render(const std::vector<Renderer *> &_gameObjects);
 };

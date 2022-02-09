@@ -8,6 +8,18 @@
 #include <OpenGL/gl3.h>
 #endif
 
+std::shared_ptr<Texture2D> Texture2D::CreateShadowMap(int _width, int _height)
+{
+    auto t      = std::shared_ptr<Texture2D>(new Texture2D());
+    t->m_Width  = _width;
+    t->m_Height = _height;
+    t->m_Data.resize(_width * _height * 3);
+
+    t->Init(GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, GL_REPEAT);
+
+    return t;
+}
+
 std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path, bool _srgb, bool _hasAlpha)
 {
     auto t = std::shared_ptr<Texture2D>(new Texture2D());
@@ -90,7 +102,7 @@ void Texture2D::Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint 
     glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, _wrapMode);
     glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, m_Width, m_Height, 0, _format, _type, &m_Data[0]); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, m_Width, m_Height, 0, _format, _type, m_Data.data()); // NOLINT(cppcoreguidelines-narrowing-conversions)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -99,4 +111,9 @@ void Texture2D::Bind(int _unit) const
     glActiveTexture(GL_TEXTURE0 + _unit);
     glBindTexture(GL_TEXTURE_2D, m_Texture);
     glBindSampler(_unit, m_Sampler);
+}
+
+void Texture2D::Attach(GLenum _attachment)
+{
+    glFramebufferTexture(GL_FRAMEBUFFER, _attachment, m_Texture, 0);
 }

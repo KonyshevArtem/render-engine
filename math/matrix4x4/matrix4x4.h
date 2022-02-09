@@ -41,6 +41,8 @@ public:
 
     static Matrix4x4 Perspective(float _fov, float _aspect, float _nearZ, float _farZ);
 
+    static Matrix4x4 Orthogonal(float _left, float _right, float _bottom, float _top, float _near, float _far);
+
     [[nodiscard]] float GetElement(int _column, int _row) const;
 
     void SetElement(int _column, int _row, float _value);

@@ -24,6 +24,7 @@ private:
     static constexpr float               LOOP_DURATION = 3000;
     std::shared_ptr<Material>            m_WaterMaterial;
     std::shared_ptr<Light>               m_SpotLight;
+    std::shared_ptr<Light>               m_DirectionalLight;
     std::unique_ptr<CameraFlyController> m_CameraFlyControl;
 
     bool m_DrawGizmos = false;

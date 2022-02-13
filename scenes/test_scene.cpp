@@ -36,6 +36,8 @@ void TestScene::Init()
     auto waterNormal   = Texture2D::Load("resources/textures/water_normal.png", false);
     auto billboardTree = Texture2D::Load("resources/textures/billboard_tree.png", true, true);
     auto windowTexture = Texture2D::Load("resources/textures/window_cube.png", true, true);
+    auto carAlbedo     = Texture2D::Load("resources/textures/car/car_albedo.png");
+    auto carNormal     = Texture2D::Load("resources/textures/car/car_normal.png", false);
 
     // init skybox cubemap
     Skybox = Cubemap::Load("resources/textures/skybox/x_positive.png",
@@ -54,10 +56,12 @@ void TestScene::Init()
     auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");
     auto cylinderAsset = FBXAsset::Load("resources/models/cylinder.fbx");
     auto planeAsset    = FBXAsset::Load("resources/models/plane.fbx");
+    auto carAsset      = FBXAsset::Load("resources/models/car.fbx");
 
     auto cubeMesh     = cubeAsset->GetMesh(0);
     auto cylinderMesh = cylinderAsset->GetMesh(0);
     auto planeMesh    = planeAsset->GetMesh(0);
+    auto carMesh      = carAsset->GetMesh(0);
 
     // init materials
     auto fragmentLitMaterial = std::make_shared<Material>(fragmentLitShader);
@@ -76,6 +80,10 @@ void TestScene::Init()
     auto transparentMaterial = std::make_shared<Material>(transparentShader);
     transparentMaterial->SetTexture("_Albedo", windowTexture);
     transparentMaterial->SetRenderQueue(3000);
+
+    auto carMaterial = std::make_shared<Material>(fragmentLitShader);
+    carMaterial->SetTexture("_Albedo", carAlbedo);
+    carMaterial->SetTexture("_NormalMap", carNormal);
 
     // init gameObjects
     auto rotatingCube      = std::make_shared<GameObject>();
@@ -108,12 +116,19 @@ void TestScene::Init()
     water->LocalPosition = Vector3(0, -10, -10);
     water->LocalScale    = Vector3(20, 1, 20);
 
+    auto car = std::make_shared<GameObject>();
+    car->Renderer      = std::make_shared<MeshRenderer>(car, carMesh, carMaterial);
+    car->LocalPosition = Vector3 {11, -8.5f, 2};
+    car->LocalRotation = Quaternion::AngleAxis(45, Vector3 {0, -1, 0});
+    car->LocalScale    = Vector3 {0.02f, 0.02f, 0.02f};
+
     GameObjects.push_back(rotatingCube);
     GameObjects.push_back(rotatingCylinder);
     GameObjects.push_back(cylinderFragmentLit);
     GameObjects.push_back(floorVertexLit);
     GameObjects.push_back(floorFragmentLit);
     GameObjects.push_back(water);
+    GameObjects.push_back(car);
 
     for (int i = 0; i < 4; ++i)
     {

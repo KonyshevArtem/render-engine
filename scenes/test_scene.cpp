@@ -84,6 +84,7 @@ void TestScene::Init()
     auto carMaterial = std::make_shared<Material>(fragmentLitShader);
     carMaterial->SetTexture("_Albedo", carAlbedo);
     carMaterial->SetTexture("_NormalMap", carNormal);
+    carMaterial->SetFloat("_Smoothness", 20);
 
     // init gameObjects
     auto rotatingCube      = std::make_shared<GameObject>();

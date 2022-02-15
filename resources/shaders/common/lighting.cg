@@ -44,7 +44,7 @@ float getSpecularTerm(vec3 lightDirWS, float lightAngleCos, vec3 posWS, vec3 nor
     vec3 viewDirWS = normalize(_CameraPosWS - posWS);
     vec3 halfAngle = normalize(lightDirWS + viewDirWS);
     float blinnTerm = clamp(dot(normalWS, halfAngle), 0, 1);
-    blinnTerm = lightAngleCos != 0 ? blinnTerm : 0;
+    blinnTerm *= step(0, lightAngleCos);
     blinnTerm = pow(blinnTerm, _Smoothness);
     return max(blinnTerm, 0);
     #else
@@ -92,16 +92,14 @@ vec3 getLight(vec3 posWS, vec3 normalWS){
     for (int i = 0; i < _SpotLightsCount; ++i){
         vec3 lightDirWS = normalize(_SpotLights[i].PositionWS - posWS);
         float cutOffCos = clamp(dot(_SpotLights[i].DirectionWS, -lightDirWS), 0, 1);
-        if (cutOffCos > _SpotLights[i].CutOffCos)
-        {
-            float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
-            float distance = distance(_SpotLights[i].PositionWS, posWS);
-            float attenuationTerm = 1 / (1 + _SpotLights[i].Attenuation * distance * distance);
-            attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0, 1);
-            float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
-            float shadowTerm = getSpotLightShadowTerm(i, posWS, lightAngleCos);
-            light += (_SpotLights[i].Intensity * lightAngleCos * attenuationTerm + specularTerm * attenuationTerm) * shadowTerm;
-        }
+        float cutOffTerm = step(_SpotLights[i].CutOffCos, cutOffCos);
+        float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
+        float distance = distance(_SpotLights[i].PositionWS, posWS);
+        float attenuationTerm = 1 / (1 + _SpotLights[i].Attenuation * distance * distance);
+        attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0, 1);
+        float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
+        float shadowTerm = getSpotLightShadowTerm(i, posWS, lightAngleCos);
+        light += (_SpotLights[i].Intensity * lightAngleCos * attenuationTerm + specularTerm * attenuationTerm) * shadowTerm * cutOffTerm;
     }
 
     return light + _AmbientLight;

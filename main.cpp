@@ -41,7 +41,7 @@ int main(int __argc, char** __argv)
     Graphics::Init(__argc, __argv);
     Gizmos::Init();
     Input::Init();
-    Camera::Init(120, 0.5f, 100);
+    Camera::Init(120, 0.5f, 100, 100);
 
     TestScene::Load();
 

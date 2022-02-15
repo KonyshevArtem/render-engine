@@ -24,6 +24,7 @@ public:
     Matrix4x4               ViewMatrix       = Matrix4x4();
     Matrix4x4               ProjectionMatrix = Matrix4x4();
     Cubemap *               Skybox;
+    float                   ShadowDistance;
 };
 
 #endif //OPENGL_STUDY_CONTEXT_H

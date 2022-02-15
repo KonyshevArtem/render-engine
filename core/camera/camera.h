@@ -9,7 +9,7 @@
 class Camera
 {
 public:
-    static void Init(float _fov, float _nearClipPlane, float _farClipPlane);
+    static void Init(float _fov, float _nearClipPlane, float _farClipPlane, float _shadowDistance);
 
     static std::unique_ptr<Camera> Current;
 
@@ -38,19 +38,25 @@ public:
         return m_FarClipPlane;
     }
 
+    inline float GetShadowDistance() const
+    {
+        return m_ShadowDistance;
+    }
+
     ~Camera() = default;
 
 private:
-    Camera(float _fov, float _nearClipPlane, float _farClipPlane);
+    Camera(float _fov, float _nearClipPlane, float _farClipPlane, float _shadowDistance);
     Camera(const Camera &) = delete;
     Camera(Camera &&)      = delete;
 
     Camera &operator=(const Camera &) = delete;
     Camera &operator=(Camera &&)      = delete;
 
-    float      m_Fov           = 0;
-    float      m_NearClipPlane = 0;
-    float      m_FarClipPlane  = 0;
+    float      m_Fov            = 0;
+    float      m_NearClipPlane  = 0;
+    float      m_FarClipPlane   = 0;
+    float      m_ShadowDistance = 0;
     Vector3    m_Position;
     Quaternion m_Rotation;
     Matrix4x4  m_ViewMatrix;

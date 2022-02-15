@@ -40,7 +40,7 @@ namespace Graphics
     {
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
-        glFrontFace(GL_CCW);
+        glFrontFace(GL_CW);
     }
 
     void InitDepth()
@@ -116,7 +116,7 @@ namespace Graphics
             if (light->Type == LightType::DIRECTIONAL && !hasDirectionalLight)
             {
                 hasDirectionalLight = true;
-                auto dir            = light->Rotation * Vector3(0, 0, -1);
+                auto dir            = light->Rotation * Vector3(0, 0, 1);
                 lightingDataBlock->SetUniform("_DirectionalLight.DirectionWS", &dir, sizeof(Vector3));
                 lightingDataBlock->SetUniform("_DirectionalLight.Intensity", &light->Intensity, sizeof(Vector3));
             }
@@ -130,7 +130,7 @@ namespace Graphics
             }
             else if (light->Type == LightType::SPOT && spotLightsCount < MAX_POINT_LIGHT_SOURCES)
             {
-                auto dir       = light->Rotation * Vector3(0, 0, -1);
+                auto dir       = light->Rotation * Vector3(0, 0, 1);
                 auto cutOffCos = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
                 auto prefix    = "_SpotLights[" + std::to_string(spotLightsCount) + "].";
                 lightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));

@@ -10,7 +10,7 @@ out vec2 uv;
 void main(){
     mat4 mvp = _ProjMatrix * _ViewMatrix;
 
-    vec3 camForward = (inverse(_ViewMatrix) * vec4(0, 0, -1, 0)).xyz;
+    vec3 camForward = (inverse(_ViewMatrix) * vec4(0, 0, 1, 0)).xyz;
     camForward.y = 0;
     camForward = normalize(camForward);
 
@@ -21,18 +21,18 @@ void main(){
     right *= _Size.x;
 
     gl_Position = mvp * (gl_in[0].gl_Position + vec4(-right + up * 2, 0));
-    uv = vec2(0, 0);
-    EmitVertex();
-
-    gl_Position = mvp * (gl_in[0].gl_Position + vec4(-right, 0));
-    uv = vec2(0, 1);
-    EmitVertex();
-
-    gl_Position = mvp * (gl_in[0].gl_Position + vec4(right + up * 2, 0));
     uv = vec2(1, 0);
     EmitVertex();
 
-    gl_Position = mvp * (gl_in[0].gl_Position + vec4(right, 0));
+    gl_Position = mvp * (gl_in[0].gl_Position + vec4(-right, 0));
     uv = vec2(1, 1);
+    EmitVertex();
+
+    gl_Position = mvp * (gl_in[0].gl_Position + vec4(right + up * 2, 0));
+    uv = vec2(0, 0);
+    EmitVertex();
+
+    gl_Position = mvp * (gl_in[0].gl_Position + vec4(right, 0));
+    uv = vec2(0, 1);
     EmitVertex();
 }

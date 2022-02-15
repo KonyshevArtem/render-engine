@@ -204,18 +204,18 @@ Matrix4x4 Matrix4x4::Perspective(float _fov, float _aspect, float _nearZ, float 
     matrix.m11  = 2 * _nearZ / (top - bottom);
     matrix.m20  = (right + left) / (right - left);
     matrix.m21  = (top + bottom) / (top - bottom);
-    matrix.m22  = -(_farZ + _nearZ) / (_farZ - _nearZ);
-    matrix.m23  = -1;
+    matrix.m22  = (_farZ + _nearZ) / (_farZ - _nearZ);
+    matrix.m23  = 1;
     matrix.m32  = -2 * _farZ * _nearZ / (_farZ - _nearZ);
     return matrix;
 }
 
-Matrix4x4 Matrix4x4::Orthogonal(float _left, float _right, float _bottom, float _top, float _near, float _far)
+Matrix4x4 Matrix4x4::Orthographic(float _left, float _right, float _bottom, float _top, float _near, float _far)
 {
     auto matrix = Matrix4x4::Zero();
     matrix.m00  = 2.0f / (_right - _left);
     matrix.m11  = 2.0f / (_top - _bottom);
-    matrix.m22  = -2.0f / (_far - _near);
+    matrix.m22  = 2.0f / (_far - _near);
     matrix.m30  = -(_right + _left) / (_right - _left);
     matrix.m31  = -(_top + _bottom) / (_top - _bottom);
     matrix.m32  = -(_far + _near) / (_far - _near);

@@ -54,7 +54,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             m_SpotLightShadowMapArray->Attach(GL_DEPTH_ATTACHMENT, spotLightsCount);
 
             auto view    = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
-            auto proj    = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, 100);
+            auto proj    = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, _ctx.ShadowDistance);
             auto lightVP = biasMatrix * proj * view;
 
             Graphics::SetCameraData(view, proj);
@@ -72,16 +72,16 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             for (const auto &renderer: _ctx.Renderers)
                 bounds = bounds.Combine(renderer->GetAABB());
 
-            auto size       = bounds.GetSize();
-            auto maxSize    = std::max({size.x, size.y, size.z});
-            auto lightDir   = light->Rotation * Vector3 {0, 0, -1};
-            auto viewPos    = bounds.GetCenter() - lightDir * maxSize;
-            auto viewMatrix = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-viewPos);
+            auto extentsWorldSpace   = bounds.GetExtents();
+            auto maxExtentWorldSpace = std::max({extentsWorldSpace.x, extentsWorldSpace.y, extentsWorldSpace.z});
+            auto lightDir            = light->Rotation * Vector3 {0, 0, 1};
+            auto viewPos             = bounds.GetCenter() - lightDir * maxExtentWorldSpace;
+            auto viewMatrix          = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-viewPos);
 
-            auto boundsViewSpace = viewMatrix * bounds;
-            auto extents         = boundsViewSpace.GetExtents();
-            auto maxExtent       = std::max(extents.x, extents.y);
-            auto projMatrix      = Matrix4x4::Orthogonal(-maxExtent, maxExtent, -maxExtent, maxExtent, 0, maxSize + maxExtent);
+            auto boundsViewSpace    = viewMatrix * bounds;
+            auto extentsViewSpace   = boundsViewSpace.GetExtents();
+            auto maxExtentViewSpace = std::max(extentsViewSpace.x, extentsViewSpace.y);
+            auto projMatrix         = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0, _ctx.ShadowDistance);
 
             Graphics::SetCameraData(viewMatrix, projMatrix);
 

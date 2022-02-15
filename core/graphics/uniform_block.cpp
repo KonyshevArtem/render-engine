@@ -9,6 +9,8 @@ UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName, unsign
     m_Name(std::move(_blockName))
 {
     auto blockIndex = glGetUniformBlockIndex(_shader.m_Program, m_Name.c_str());
+    if (blockIndex == GL_INVALID_INDEX)
+        return;
 
     GLint uniformCount;
     glGetActiveUniformBlockiv(_shader.m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformCount);

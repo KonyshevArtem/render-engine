@@ -14,6 +14,7 @@ Context::Context()
     Skybox           = scene->Skybox.get();
     ViewMatrix       = Camera::Current->GetViewMatrix();
     ProjectionMatrix = Camera::Current->GetProjectionMatrix();
+    ShadowDistance   = Camera::Current->GetShadowDistance();
 
     for (const auto &go: scene->GameObjects)
     {

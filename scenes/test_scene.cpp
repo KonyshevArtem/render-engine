@@ -92,35 +92,35 @@ void TestScene::Init()
 
     auto rotatingCylinder           = std::make_shared<GameObject>();
     rotatingCylinder->Renderer      = std::make_shared<MeshRenderer>(rotatingCylinder, cylinderMesh, fragmentLitMaterial);
-    rotatingCylinder->LocalPosition = Vector3(0, -3, -4);
+    rotatingCylinder->LocalPosition = Vector3(0, -3, 4);
     rotatingCylinder->LocalScale    = Vector3(2, 1, 0.5f);
 
     auto cylinderFragmentLit           = std::make_shared<GameObject>();
     cylinderFragmentLit->Renderer      = std::make_shared<MeshRenderer>(cylinderFragmentLit, cylinderMesh, fragmentLitMaterial);
-    cylinderFragmentLit->LocalPosition = Vector3(-3, -3, -6);
+    cylinderFragmentLit->LocalPosition = Vector3(-3, -3, 6);
     cylinderFragmentLit->LocalScale    = Vector3(2, 1, 0.5f);
 
     auto floorVertexLit           = std::make_shared<GameObject>();
     floorVertexLit->Renderer      = std::make_shared<MeshRenderer>(floorVertexLit, cubeMesh, fragmentLitMaterial);
-    floorVertexLit->LocalPosition = Vector3(3, -5, -5.5f);
-    floorVertexLit->LocalRotation = Quaternion::AngleAxis(10, Vector3(0, 1, 0));
+    floorVertexLit->LocalPosition = Vector3(3, -5, 5.5f);
+    floorVertexLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
     floorVertexLit->LocalScale    = Vector3(5, 1, 2);
 
     auto floorFragmentLit           = std::make_shared<GameObject>();
     floorFragmentLit->Renderer      = std::make_shared<MeshRenderer>(floorFragmentLit, cubeMesh, fragmentLitBrickMaterial);
-    floorFragmentLit->LocalPosition = Vector3(-9, -5, -5.5f);
-    floorFragmentLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
+    floorFragmentLit->LocalPosition = Vector3(-9, -5, 5.5f);
+    floorFragmentLit->LocalRotation = Quaternion::AngleAxis(10, Vector3(0, 1, 0));
     floorFragmentLit->LocalScale    = Vector3(5, 1, 2);
 
     auto water           = std::make_shared<GameObject>();
     water->Renderer      = std::make_shared<MeshRenderer>(water, planeMesh, m_WaterMaterial);
-    water->LocalPosition = Vector3(0, -10, -10);
+    water->LocalPosition = Vector3(0, -10, 10);
     water->LocalScale    = Vector3(20, 1, 20);
 
     auto car = std::make_shared<GameObject>();
     car->Renderer      = std::make_shared<MeshRenderer>(car, carMesh, carMaterial);
-    car->LocalPosition = Vector3 {11, -8.5f, 2};
-    car->LocalRotation = Quaternion::AngleAxis(45, Vector3 {0, -1, 0});
+    car->LocalPosition = Vector3 {11, -8.5f, -2};
+    car->LocalRotation = Quaternion::AngleAxis(135, Vector3 {0, -1, 0});
     car->LocalScale    = Vector3 {0.02f, 0.02f, 0.02f};
 
     GameObjects.push_back(rotatingCube);
@@ -136,7 +136,7 @@ void TestScene::Init()
         auto billboard         = std::make_shared<GameObject>();
         auto billboardRenderer = std::make_shared<BillboardRenderer>(billboard, billboardTree);
         billboardRenderer->SetSize(5);
-        billboard->LocalPosition = Vector3 {-20.0f + 10 * i, -10, -20};
+        billboard->LocalPosition = Vector3 {-20.0f + 10 * i, -10, 20};
         billboard->Renderer      = std::move(billboardRenderer);
         GameObjects.push_back(billboard);
     }
@@ -145,19 +145,19 @@ void TestScene::Init()
     {
         auto transparentCube           = std::make_shared<GameObject>();
         transparentCube->Renderer      = std::make_shared<MeshRenderer>(transparentCube, cubeMesh, transparentMaterial);
-        transparentCube->LocalPosition = Vector3(-10.0f + 5 * i, -5, -12);
+        transparentCube->LocalPosition = Vector3(-10.0f + 5 * i, -5, 12);
         GameObjects.push_back(transparentCube);
     }
 
     // init lights
     m_DirectionalLight            = std::make_shared<Light>();
-    m_DirectionalLight->Position  = Vector3(0, -0.3f, 1);
-    m_DirectionalLight->Rotation  = Quaternion::AngleAxis(150, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(-1, 0, 0));
+    m_DirectionalLight->Position  = Vector3(0, -0.3f, -1);
+    m_DirectionalLight->Rotation  = Quaternion::AngleAxis(-150, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(1, 0, 0));
     m_DirectionalLight->Intensity = Vector3(0.2f, 0.2f, 0.2f);
     m_DirectionalLight->Type      = LightType::DIRECTIONAL;
 
     auto pointLight         = std::make_shared<Light>();
-    pointLight->Position    = Vector3(-3, -3, -4);
+    pointLight->Position    = Vector3(-3, -3, 4);
     pointLight->Intensity   = Vector3(1, 0, 0);
     pointLight->Attenuation = 0.3f;
     pointLight->Type        = LightType::POINT;
@@ -169,8 +169,8 @@ void TestScene::Init()
     m_SpotLight->Type        = LightType::SPOT;
 
     auto spotLight2         = std::make_shared<Light>();
-    spotLight2->Position    = Vector3(-9, 5, -5.5f);
-    spotLight2->Rotation    = Quaternion::AngleAxis(90, Vector3(-1, 0, 0));
+    spotLight2->Position    = Vector3(-9, 5, 5.5f);
+    spotLight2->Rotation    = Quaternion::AngleAxis(90, Vector3(1, 0, 0));
     spotLight2->Intensity   = Vector3(1, 1, 1);
     spotLight2->Attenuation = 0.01f;
     spotLight2->CutOffAngle = 15;
@@ -184,7 +184,7 @@ void TestScene::Init()
     Lights.push_back(spotLight2);
 
     // init camera
-    Camera::Current->SetPosition(Vector3(-10, 0.5f, 5));
+    Camera::Current->SetPosition(Vector3(-10, 0.5f, -5));
     m_CameraFlyControl = std::make_unique<CameraFlyController>();
 }
 
@@ -195,7 +195,7 @@ Vector3 TestScene::CalcTranslation(float _phase)
     float xOffset = sinf(_phase * 2 * static_cast<float>(M_PI)) * radius;
     float yOffset = cosf(_phase * 2 * static_cast<float>(M_PI)) * radius;
 
-    return {xOffset, yOffset, -5};
+    return {xOffset, yOffset, 5};
 }
 
 Quaternion TestScene::CalcRotation(float _phase, int _i)

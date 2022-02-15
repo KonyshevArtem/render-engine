@@ -3,10 +3,11 @@
 
 std::unique_ptr<Camera> Camera::Current = nullptr;
 
-Camera::Camera(float _fov, float _nearClipPlane, float _farClipPlane) :
+Camera::Camera(float _fov, float _nearClipPlane, float _farClipPlane, float _shadowDistance) :
     m_Fov(_fov),
     m_NearClipPlane(_nearClipPlane),
     m_FarClipPlane(_farClipPlane),
+    m_ShadowDistance(_shadowDistance),
     m_Position(Vector3()),
     m_Rotation(Quaternion()),
     m_ViewMatrix(Matrix4x4::Identity()),
@@ -17,9 +18,9 @@ Camera::Camera(float _fov, float _nearClipPlane, float _farClipPlane) :
 {
 }
 
-void Camera::Init(float _fov, float _nearClipPlane, float _farClipPlane)
+void Camera::Init(float _fov, float _nearClipPlane, float _farClipPlane, float _shadowDistance)
 {
-    Current = std::unique_ptr<Camera>(new Camera(_fov, _nearClipPlane, _farClipPlane));
+    Current = std::unique_ptr<Camera>(new Camera(_fov, _nearClipPlane, _farClipPlane, _shadowDistance));
 }
 
 const Matrix4x4 &Camera::GetViewMatrix()

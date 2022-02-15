@@ -21,10 +21,10 @@ bool isFragVisible(float fragZ)
     return fragZ >= 0 && fragZ <= 1;
 }
 
-bool isShadowed(float fragZ, float shadowMapDepth, float lightAngleCos)
+float getShadowTerm(float fragZ, float shadowMapDepth, float lightAngleCos)
 {
     float bias = max(0.005 * (1 - lightAngleCos), 0.0005);
-    return shadowMapDepth < fragZ - bias;
+    return step(fragZ - bias, shadowMapDepth);
 }
 #endif
 
@@ -33,10 +33,10 @@ float getDirLightShadowTerm(vec3 posWS, float lightAngleCos)
     #ifdef _RECEIVE_SHADOWS
     vec4 shadowCoord = _DirLightShadow.LightViewProjMatrix * vec4(posWS, 1);
     float depth = texture(_DirLightShadowMap, shadowCoord.xy).x;
-    if (isFragVisible(shadowCoord.z) && isShadowed(shadowCoord.z, depth, lightAngleCos))
-        return 0;
-    #endif
+    return isFragVisible(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos) : 1;
+    #else
     return 1;
+    #endif
 }
 
 float getSpotLightShadowTerm(int index, vec3 posWS, float lightAngleCos)
@@ -45,10 +45,10 @@ float getSpotLightShadowTerm(int index, vec3 posWS, float lightAngleCos)
     vec4 shadowCoord = _SpotLightShadows[index].LightViewProjMatrix * vec4(posWS, 1);
     shadowCoord = shadowCoord / shadowCoord.w;
     float depth = texture(_SpotLightShadowMapArray, vec3(shadowCoord.xy, index)).x;
-    if (isFragVisible(shadowCoord.z) && isShadowed(shadowCoord.z, depth, lightAngleCos))
-        return 0;
-    #endif
+    return isFragVisible(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos) : 1;
+    #else
     return 1;
+    #endif
 }
 
 #endif

@@ -13,3 +13,5 @@ add_library(
 	math_utils.cpp
 	math_utils.h
 )
+
+target_include_directories(Math PUBLIC .)

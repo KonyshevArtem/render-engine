@@ -1,5 +1,5 @@
 #include "vector3.h"
-#include "../vector4/vector4.h"
+#include "vector4/vector4.h"
 #include <cmath>
 #include <limits>
 

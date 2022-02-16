@@ -1,7 +1,7 @@
 #include "matrix4x4.h"
-#include "../quaternion/quaternion.h"
-#include "../vector3/vector3.h"
-#include "../vector4/vector4.h"
+#include "quaternion/quaternion.h"
+#include "vector3/vector3.h"
+#include "vector4/vector4.h"
 
 const Matrix4x4 &Matrix4x4::Zero()
 {

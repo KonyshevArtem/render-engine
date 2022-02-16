@@ -1,5 +1,5 @@
 #include "quaternion.h"
-#include "../vector3/vector3.h"
+#include "vector3/vector3.h"
 #include <cmath>
 
 Quaternion::Quaternion() :

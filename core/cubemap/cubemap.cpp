@@ -1,7 +1,7 @@
 #include "cubemap.h"
-#include "../core_debug/debug.h"
-#include "../../external/lodepng/lodepng.h"
-#include "../../utils/utils.h"
+#include "core_debug/debug.h"
+#include "lodepng.h"
+#include "utils.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS

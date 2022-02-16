@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_MESH_H
 #define OPENGL_STUDY_MESH_H
 
-#include "../bounds/bounds.h"
+#include "bounds/bounds.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS

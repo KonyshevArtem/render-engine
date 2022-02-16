@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_SCENE_H
 #define OPENGL_STUDY_SCENE_H
 
-#include "../../math/vector3/vector3.h"
+#include "vector3/vector3.h"
 #include <memory>
 #include <vector>
 

@@ -52,7 +52,7 @@ add_subdirectory(external/OpenFBX)
 add_subdirectory(core)
 add_subdirectory(math)
 add_subdirectory(utils)
-target_link_libraries(OpenGL_Study Core Utils Math LodePNG OpenFBX)
+target_link_libraries(OpenGL_Study Core)
 
 # copy resources to build directory
 add_custom_target(PreBuild ALL

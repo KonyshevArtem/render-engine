@@ -1,7 +1,7 @@
 #include "texture_2d.h"
-#include "../../external/lodepng/lodepng.h"
-#include "../core_debug/debug.h"
-#include "../../utils/utils.h"
+#include "lodepng.h"
+#include "core_debug/debug.h"
+#include "utils.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS

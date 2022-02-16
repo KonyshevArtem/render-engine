@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_FBX_ASSET_H
 #define OPENGL_STUDY_FBX_ASSET_H
 
-#include "../../external/OpenFBX/ofbx.h"
+#include "ofbx.h"
 #include <filesystem>
 #include <memory>
 #include <vector>

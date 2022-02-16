@@ -1,9 +1,9 @@
 #include "billboard_renderer.h"
-#include "../../math/matrix4x4/matrix4x4.h"
-#include "../../math/vector2/vector2.h"
-#include "../../math/vector3/vector3.h"
-#include "../shader/shader.h"
-#include "../texture_2d/texture_2d.h"
+#include "matrix4x4/matrix4x4.h"
+#include "vector2/vector2.h"
+#include "vector3/vector3.h"
+#include "shader/shader.h"
+#include "texture_2d/texture_2d.h"
 #include <vector>
 
 BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, std::shared_ptr<Texture2D> _texture) :

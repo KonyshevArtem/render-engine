@@ -1,9 +1,9 @@
 #include "shader.h"
-#include "../../math/vector4/vector4.h"
-#include "../../utils/utils.h"
-#include "../core_debug/debug.h"
-#include "../cubemap/cubemap.h"
-#include "../texture_2d/texture_2d.h"
+#include "vector4/vector4.h"
+#include "utils.h"
+#include "core_debug/debug.h"
+#include "cubemap/cubemap.h"
+#include "texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
 
 std::unordered_map<std::string, std::shared_ptr<Texture>> Shader::m_GlobalTextures    = {};

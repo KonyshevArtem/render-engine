@@ -1,6 +1,7 @@
 #ifndef OPENGL_STUDY_SHADER_LOADER_H
 #define OPENGL_STUDY_SHADER_LOADER_H
 
+#include "matrix4x4/matrix4x4.h"
 #include <filesystem>
 #include <memory>
 #include <string>

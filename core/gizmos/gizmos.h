@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_GIZMOS_H
 #define OPENGL_STUDY_GIZMOS_H
 
-#include "../../math/matrix4x4/matrix4x4.h"
+#include "matrix4x4/matrix4x4.h"
 #include <memory>
 #include <vector>
 #ifdef OPENGL_STUDY_WINDOWS

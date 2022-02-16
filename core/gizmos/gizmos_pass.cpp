@@ -1,7 +1,7 @@
 #include "gizmos_pass.h"
-#include "../core_debug/debug.h"
-#include "../graphics/context.h"
-#include "../shader/shader.h"
+#include "core_debug/debug.h"
+#include "graphics/context.h"
+#include "shader/shader.h"
 #include "gizmos.h"
 
 void GizmosPass::Execute(Context &_context)

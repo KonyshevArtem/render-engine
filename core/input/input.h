@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_INPUT_H
 #define OPENGL_STUDY_INPUT_H
 
-#include "../../math/vector2/vector2.h"
+struct Vector2;
 
 namespace Input
 {

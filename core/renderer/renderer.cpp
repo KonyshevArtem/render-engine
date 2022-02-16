@@ -1,6 +1,6 @@
 #include "renderer.h"
-#include "../../math/matrix4x4/matrix4x4.h"
-#include "../gameObject/gameObject.h"
+#include "matrix4x4/matrix4x4.h"
+#include "gameObject/gameObject.h"
 
 Renderer::Renderer(const std::shared_ptr<GameObject> &_gameObject) :
     m_GameObject(_gameObject)

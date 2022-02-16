@@ -1,11 +1,11 @@
 #include "skybox_pass.h"
-#include "../../../math/matrix4x4/matrix4x4.h"
-#include "../../../math/vector3/vector3.h"
-#include "../../cubemap/cubemap.h"
-#include "../../fbx_asset/fbx_asset.h"
-#include "../../mesh/mesh.h"
-#include "../../shader/shader.h"
-#include "../../core_debug/debug.h"
+#include "matrix4x4/matrix4x4.h"
+#include "vector3/vector3.h"
+#include "cubemap/cubemap.h"
+#include "fbx_asset/fbx_asset.h"
+#include "mesh/mesh.h"
+#include "shader/shader.h"
+#include "core_debug/debug.h"
 #include "../context.h"
 
 void SkyboxPass::Execute(const Context &_ctx)

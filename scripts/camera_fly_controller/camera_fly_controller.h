@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_CAMERA_FLY_CONTROLLER_H
 #define OPENGL_STUDY_CAMERA_FLY_CONTROLLER_H
 
-#include "../../math/vector2/vector2.h"
+#include "vector2/vector2.h"
 
 class CameraFlyController
 {

@@ -1,7 +1,7 @@
 #include "camera_fly_controller.h"
-#include "../../core/camera/camera.h"
-#include "../../core/input/input.h"
-#include "../../core/time/time.h" // NOLINT(modernize-deprecated-headers)
+#include "camera/camera.h"
+#include "input/input.h"
+#include "time/time.h" // NOLINT(modernize-deprecated-headers)
 
 void CameraFlyController::Update()
 {

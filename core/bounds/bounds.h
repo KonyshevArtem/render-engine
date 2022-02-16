@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_BOUNDS
 #define OPENGL_STUDY_BOUNDS
 
-#include "../../math/vector3/vector3.h"
+#include "vector3/vector3.h"
 #include <vector>
 
 struct Matrix4x4;

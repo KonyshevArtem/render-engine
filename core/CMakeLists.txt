@@ -57,3 +57,6 @@ add_library(
 	gizmos/gizmos_pass.cpp 
 	gizmos/gizmos.h 
 	gizmos/gizmos.cpp)
+
+target_include_directories(Core PUBLIC .)
+target_link_libraries(Core Math Utils LodePNG OpenFBX)

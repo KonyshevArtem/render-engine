@@ -1,7 +1,7 @@
 #include "shader_loader.h"
-#include "../../../utils/utils.h"
-#include "../../core_debug/debug.h"
-#include "../../graphics/graphics.h"
+#include "utils.h"
+#include "core_debug/debug.h"
+#include "graphics/graphics.h"
 #include "../shader.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>

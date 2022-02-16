@@ -1,7 +1,7 @@
 #include "context.h"
-#include "../camera/camera.h"
-#include "../gameObject/gameObject.h"
-#include "../scene/scene.h"
+#include "camera/camera.h"
+#include "gameObject/gameObject.h"
+#include "scene/scene.h"
 
 Context::Context()
 {

@@ -1,7 +1,7 @@
 #include "material.h"
-#include "../../math/vector4/vector4.h"
-#include "../shader/shader.h"
-#include "../texture/texture.h"
+#include "vector4/vector4.h"
+#include "shader/shader.h"
+#include "texture/texture.h"
 #include <utility>
 
 Material::Material(std::shared_ptr<Shader> _shader) :

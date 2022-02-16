@@ -1,5 +1,5 @@
 #include "camera.h"
-#include "../graphics/graphics.h"
+#include "graphics/graphics.h"
 
 std::unique_ptr<Camera> Camera::Current = nullptr;
 

@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_TEXTURE_2D_ARRAY_H
 #define OPENGL_STUDY_TEXTURE_2D_ARRAY_H
 
-#include "../texture/texture.h"
+#include "texture/texture.h"
 #include <memory>
 #include <vector>
 

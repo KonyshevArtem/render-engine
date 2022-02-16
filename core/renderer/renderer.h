@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_RENDERER_H
 #define OPENGL_STUDY_RENDERER_H
 
-#include "../../math/vector3/vector3.h"
+#include "vector3/vector3.h"
 #include <functional>
 #include <memory>
 

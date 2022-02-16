@@ -1,4 +1,5 @@
 #include "input.h"
+#include "vector2/vector2.h"
 #include <unordered_set>
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/freeglut.h>

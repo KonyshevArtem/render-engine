@@ -6,12 +6,12 @@
 #endif
 #include "utils/utils.h"
 
-#include "core/core_debug/debug.h"
-#include "core/camera/camera.h"
-#include "core/graphics/graphics.h"
-#include "core/gizmos/gizmos.h"
-#include "core/input/input.h"
-#include "core/time/time.h" // NOLINT(modernize-deprecated-headers)
+#include "core_debug/debug.h"
+#include "camera/camera.h"
+#include "graphics/graphics.h"
+#include "gizmos/gizmos.h"
+#include "input/input.h"
+#include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "scenes/test_scene.h"
 
 void display()

@@ -1,6 +1,6 @@
 #include "mesh.h"
-#include "../../math/vector2/vector2.h"
-#include "../../math/vector3/vector3.h"
+#include "vector2/vector2.h"
+#include "vector3/vector3.h"
 
 Mesh::Mesh(std::vector<Vector3> &_vertices,
            std::vector<Vector3> &_normals,

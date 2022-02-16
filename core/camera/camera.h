@@ -1,9 +1,9 @@
 #ifndef OPENGL_STUDY_CAMERA_H
 #define OPENGL_STUDY_CAMERA_H
 
-#include "../../math/matrix4x4/matrix4x4.h"
-#include "../../math/quaternion/quaternion.h"
-#include "../../math/vector3/vector3.h"
+#include "matrix4x4/matrix4x4.h"
+#include "quaternion/quaternion.h"
+#include "vector3/vector3.h"
 #include <memory>
 
 class Camera

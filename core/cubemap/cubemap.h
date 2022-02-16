@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_CUBEMAP_H
 #define OPENGL_STUDY_CUBEMAP_H
 
-#include "../texture/texture.h"
+#include "texture/texture.h"
 #include <filesystem>
 #include <memory>
 #include <vector>

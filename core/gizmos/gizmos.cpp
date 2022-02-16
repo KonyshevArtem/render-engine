@@ -1,5 +1,5 @@
 #include "gizmos.h"
-#include "../../math/vector3/vector3.h"
+#include "vector3/vector3.h"
 
 std::shared_ptr<Gizmos::GizmosPrimitive> m_WireCubePrimitive;
 std::vector<Gizmos::GizmosDrawInfo>      m_DrawInfos;

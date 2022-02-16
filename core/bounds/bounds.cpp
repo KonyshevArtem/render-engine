@@ -1,6 +1,6 @@
 #include "bounds.h"
-#include "../../math/matrix4x4/matrix4x4.h"
-#include "../../math/vector4/vector4.h"
+#include "matrix4x4/matrix4x4.h"
+#include "vector4/vector4.h"
 
 Bounds Bounds::Combine(const Bounds &bounds) const
 {

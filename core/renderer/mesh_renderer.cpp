@@ -1,8 +1,8 @@
 #include "mesh_renderer.h"
-#include "../../math/matrix4x4/matrix4x4.h"
-#include "../material/material.h"
-#include "../mesh/mesh.h"
-#include "../shader/shader.h"
+#include "matrix4x4/matrix4x4.h"
+#include "material/material.h"
+#include "mesh/mesh.h"
+#include "shader/shader.h"
 
 MeshRenderer::MeshRenderer(const std::shared_ptr<GameObject> &_gameObject,
                            std::shared_ptr<Mesh>              _mesh,

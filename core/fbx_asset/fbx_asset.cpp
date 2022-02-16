@@ -1,8 +1,8 @@
 #include "fbx_asset.h"
-#include "../../math/vector2/vector2.h"
-#include "../../math/vector3/vector3.h"
-#include "../../utils/utils.h"
-#include "../mesh/mesh.h"
+#include "vector2/vector2.h"
+#include "vector3/vector3.h"
+#include "utils.h"
+#include "mesh/mesh.h"
 #include <cstdio>
 
 std::shared_ptr<FBXAsset> FBXAsset::Load(const std::filesystem::path &_path)

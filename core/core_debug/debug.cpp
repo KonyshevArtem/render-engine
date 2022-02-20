@@ -9,10 +9,25 @@
 #include <OpenGL/glu.h>
 #endif
 
-int debugGroupID = 0;
+static int debugGroupID = 0;
 
-constexpr int TRACE_MAX_STACK_FRAMES         = 512;
-constexpr int TRACE_MAX_FUNCTION_NAME_LENGTH = 50;
+Debug::DebugGroup::DebugGroup(const std::string &_name)
+{
+#ifdef OPENGL_STUDY_WINDOWS
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, debugGroupID++, -1, _name.c_str());
+#endif
+}
+
+Debug::DebugGroup::~DebugGroup()
+{
+#ifdef OPENGL_STUDY_WINDOWS
+    glPopDebugGroup();
+    --debugGroupID;
+
+    if (debugGroupID < 0)
+        LogError("Popping more debug groups than pushing");
+#endif
+}
 
 void Debug::Init()
 {
@@ -49,22 +64,4 @@ void Debug::CheckOpenGLError()
         else
             LogErrorFormat("[OpenGL] %1%", {errorString});
     }
-}
-
-void Debug::PushDebugGroup(const std::string &_name)
-{
-    #ifdef OPENGL_STUDY_WINDOWS
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, debugGroupID++, -1, _name.c_str());
-    #endif
-}
-
-void Debug::PopDebugGroup()
-{
-    #ifdef OPENGL_STUDY_WINDOWS
-    glPopDebugGroup();
-    --debugGroupID;
-
-    if (debugGroupID < 0)
-        LogError("Popping more debug groups than pushing");
-    #endif
 }

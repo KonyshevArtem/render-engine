@@ -8,7 +8,7 @@ void GizmosPass::Execute(Context &_context)
 {
     static std::shared_ptr<Shader> gizmosShader = Shader::Load("resources/shaders/gizmos/gizmos.shader", {});
 
-    Debug::PushDebugGroup("Gizmos pass");
+    auto debugGroup = Debug::DebugGroup("Gizmos pass");
 
     gizmosShader->Use();
 
@@ -19,6 +19,4 @@ void GizmosPass::Execute(Context &_context)
     }
 
     Shader::DetachCurrentShader();
-
-    Debug::PopDebugGroup();
 }

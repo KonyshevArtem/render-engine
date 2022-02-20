@@ -19,7 +19,7 @@ void SkyboxPass::Execute(const Context &_ctx)
     if (!shader->Use())
         return;
 
-    Debug::PushDebugGroup("Skybox pass");
+    auto debogGroup = Debug::DebugGroup("Skybox pass");
 
     glCullFace(GL_FRONT);
 
@@ -31,6 +31,4 @@ void SkyboxPass::Execute(const Context &_ctx)
 
     Shader::DetachCurrentShader();
     glCullFace(GL_BACK);
-
-    Debug::PopDebugGroup();
 }

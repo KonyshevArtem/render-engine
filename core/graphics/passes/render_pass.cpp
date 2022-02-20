@@ -14,7 +14,7 @@ RenderPass::RenderPass(const std::string &_name, Renderer::Sorting _rendererSort
 
 void RenderPass::Execute(const Context &_ctx)
 {
-    Debug::PushDebugGroup("Render pass " + m_Name);
+    auto debugGroup = Debug::DebugGroup("Render pass " + m_Name);
 
     glClear(m_ClearFlags);
 
@@ -29,6 +29,4 @@ void RenderPass::Execute(const Context &_ctx)
         if (r != nullptr)
             r->Render();
     }
-
-    Debug::PopDebugGroup();
 }

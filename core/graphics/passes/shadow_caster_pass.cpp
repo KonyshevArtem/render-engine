@@ -35,7 +35,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     if (shadowCasterShader == nullptr || _ctx.Renderers.size() == 0)
         return;
 
-    Debug::PushDebugGroup("Shadow pass");
+    auto debugGroup = Debug::DebugGroup("Shadow pass");
 
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer);
     glViewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
@@ -98,13 +98,11 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 
     Shader::DetachReplacementShader();
-
-    Debug::PopDebugGroup();
 }
 
 void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
 {
-    Debug::PushDebugGroup("Render shadow map");
+    auto debugGroup = Debug::DebugGroup("Render shadow map");
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -113,6 +111,4 @@ void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
         if (r != nullptr)
             r->Render();
     }
-
-    Debug::PopDebugGroup();
 }

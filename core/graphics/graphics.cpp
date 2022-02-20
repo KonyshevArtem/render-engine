@@ -138,7 +138,7 @@ namespace Graphics
 
     void Render()
     {
-        Debug::PushDebugGroup("Render Frame");
+        auto debugGroup = Debug::DebugGroup("Render Frame");
 
         glClearColor(0, 0, 0, 0);
         glClearDepth(1);
@@ -163,7 +163,6 @@ namespace Graphics
             gizmosPass->Execute(ctx);
 
         Debug::CheckOpenGLError();
-        Debug::PopDebugGroup();
 
         Gizmos::ClearDrawInfos();
     }
@@ -200,7 +199,7 @@ namespace Graphics
 
     const std::string &GetGlobalShaderDirectives()
     {
-        static constexpr int GLSL_VERSION = 410;
+        static constexpr int GLSL_VERSION = OPENGL_MAJOR_VERSION * 100 + OPENGL_MINOR_VERSION * 10;
 
         // clang-format off
         static std::string globalShaderDirectives = "#version " + std::to_string(GLSL_VERSION) + "\n"

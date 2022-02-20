@@ -4,16 +4,18 @@
 #include <string>
 
 struct Matrix4x4;
-struct Vector4;
-class RenderPass;
-class ShadowCasterPass;
-class SkyboxPass;
-class UniformBlock;
-class Light;
 
 namespace Graphics
 {
-    void               Init(int _argc, char **_argv);
+    constexpr int OPENGL_MAJOR_VERSION = 4;
+    constexpr int OPENGL_MINOR_VERSION =
+#ifdef OPENGL_STUDY_WINDOWS
+            6;
+#elif OPENGL_STUDY_MACOS
+            1;
+#endif
+
+    void               Init();
     void               Render();
     void               Reshape(int _width, int _height);
     const std::string &GetGlobalShaderDirectives();

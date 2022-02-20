@@ -1,29 +1,32 @@
+#include <chrono>
 #include <time.h> // NOLINT(modernize-deprecated-headers)
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/freeglut.h>
-#elif OPENGL_STUDY_MACOS
-#include <GLUT/glut.h>
-#endif
 
 namespace Time
 {
-    float elapsedTime = 0;
-    float deltaTime   = 0;
-    float prevTime    = 0;
+    std::chrono::steady_clock::time_point startupTime;
+    double                                elapsedTime = 0;
+    double                                deltaTime   = 0;
+    double                                prevTime    = 0;
+
+    void Init()
+    {
+        startupTime = std::chrono::steady_clock::now();
+    }
 
     void Update()
     {
-        elapsedTime = static_cast<float>(glutGet(GLUT_ELAPSED_TIME));
+        auto now    = std::chrono::steady_clock::now();
+        elapsedTime = std::chrono::duration<double>(now - startupTime).count();
         deltaTime   = elapsedTime - prevTime;
         prevTime    = elapsedTime;
     }
 
-    float GetElapsedTime()
+    double GetElapsedTime()
     {
         return elapsedTime;
     }
 
-    float GetDeltaTime()
+    double GetDeltaTime()
     {
         return deltaTime;
     }

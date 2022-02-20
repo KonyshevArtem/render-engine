@@ -3,9 +3,10 @@
 
 namespace Time
 {
-    void  Update();
-    float GetElapsedTime();
-    float GetDeltaTime();
+    void   Init();
+    void   Update();
+    double GetElapsedTime();
+    double GetDeltaTime();
 }; // namespace Time
 
 #endif //OPENGL_STUDY_TIME_H

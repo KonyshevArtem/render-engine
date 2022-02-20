@@ -1,11 +1,6 @@
 #include "input.h"
 #include "vector2/vector2.h"
 #include <unordered_set>
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/freeglut.h>
-#elif OPENGL_STUDY_MACOS
-#include <GLUT/glut.h>
-#endif
 
 namespace Input
 {
@@ -15,36 +10,6 @@ namespace Input
     Vector2                           oldMousePosition = Vector2();
     Vector2                           mousePosition    = Vector2();
     Vector2                           mouseDelta       = Vector2();
-
-    void MouseMove(int _x, int _y)
-    {
-        mousePosition = Vector2(static_cast<float>(_x), static_cast<float>(_y));
-    }
-
-    void KeyboardDown(unsigned char _key, int, int)
-    {
-        if (!inputs.contains(_key))
-        {
-            inputs.insert(_key);
-            inputsDown.insert(_key);
-        }
-    }
-
-    void KeyboardUp(unsigned char _key, int, int)
-    {
-        if (inputs.contains(_key))
-        {
-            inputs.erase(_key);
-            inputsUp.insert(_key);
-        }
-    }
-
-    void Init()
-    {
-        glutPassiveMotionFunc(MouseMove);
-        glutKeyboardFunc(KeyboardDown);
-        glutKeyboardUpFunc(KeyboardUp);
-    }
 
     void Update()
     {
@@ -56,6 +21,31 @@ namespace Input
     {
         inputsUp.clear();
         inputsDown.clear();
+    }
+
+    void HandleKeyboardInput(unsigned char _key, bool _isPressed)
+    {
+        if (_isPressed)
+        {
+            if (!inputs.contains(_key))
+            {
+                inputs.insert(_key);
+                inputsDown.insert(_key);
+            }
+        }
+        else
+        {
+            if (inputs.contains(_key))
+            {
+                inputs.erase(_key);
+                inputsUp.insert(_key);
+            }
+        }
+    }
+
+    void HandleMouseMove(double _x, double _y)
+    {
+        mousePosition = Vector2(static_cast<float>(_x), static_cast<float>(_y));
     }
 
     bool GetKeyDown(unsigned char _key)

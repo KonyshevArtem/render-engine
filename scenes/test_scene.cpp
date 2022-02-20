@@ -29,6 +29,9 @@ void TestScene::Load()
 
 void TestScene::Init()
 {
+    // init camera
+    Camera::Init(120, 0.5f, 100, 100);
+
     // init textures
     auto brickTexture  = Texture2D::Load("resources/textures/brick.png");
     auto brickNormal   = Texture2D::Load("resources/textures/brick_normal.png", false);
@@ -212,7 +215,7 @@ Vector3 TestScene::CalcScale(float _phase)
 
 void TestScene::UpdateInternal()
 {
-    if (Input::GetKeyDown('q'))
+    if (Input::GetKeyDown('Q'))
         exit(0);
 
     m_CameraFlyControl->Update();
@@ -234,12 +237,12 @@ void TestScene::UpdateInternal()
     m_WaterMaterial->SetVector4("_NormalMapST", st);
 
     // animate light
-    m_DirectionalLight->Rotation = Quaternion::AngleAxis(0.05f * Time::GetDeltaTime(), Vector3 {0, 1, 0}) * m_DirectionalLight->Rotation;
+    m_DirectionalLight->Rotation = Quaternion::AngleAxis(50.0f * Time::GetDeltaTime(), Vector3 {0, 1, 0}) * m_DirectionalLight->Rotation;
     m_SpotLight->Position = Camera::Current->GetPosition() + Camera::Current->GetRotation() * Vector3(-3, 0, 0);
     m_SpotLight->Rotation = Camera::Current->GetRotation();
 
     // gizmos
-    if (Input::GetKeyDown('g'))
+    if (Input::GetKeyDown('G'))
         m_DrawGizmos = !m_DrawGizmos;
 
     if (m_DrawGizmos)

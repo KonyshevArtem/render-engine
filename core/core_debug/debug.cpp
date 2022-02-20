@@ -3,10 +3,9 @@
 #include <iostream>
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
-#include <GL/freeGlut.h>
 #include <windows.h>
 #elif OPENGL_STUDY_MACOS
-#include <GLUT/glut.h>
+#include <OpenGL/gl3.h>
 #endif
 
 int debugGroupID = 0;

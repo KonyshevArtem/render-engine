@@ -1,18 +1,15 @@
 #ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#include <GL/freeglut.h>
-#elif OPENGL_STUDY_MACOS
-#include "GLUT/glut.h"
+#include <GL/glew.h> // include glew before qt includes gl.h
 #endif
-#include "utils/utils.h"
 
 #include "core_debug/debug.h"
-#include "camera/camera.h"
+#include "game_window.h"
 #include "graphics/graphics.h"
-#include "gizmos/gizmos.h"
 #include "input/input.h"
-#include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "scenes/test_scene.h"
+#include "time/time.h" // NOLINT(modernize-deprecated-headers)
+
+#include <QApplication>
 
 void display()
 {
@@ -23,32 +20,27 @@ void display()
     Graphics::Render();
 
     Input::CleanUp();
-    Gizmos::ClearDrawInfos();
 }
 
-void reshape(int _width, int _height)
+int main(int argc, char **argv)
 {
-    Graphics::Reshape(_width, _height);
-}
+    QApplication application(argc, argv);
 
-#ifdef OPENGL_STUDY_WINDOWS
-INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow)
-#elif OPENGL_STUDY_MACOS
-int main(int __argc, char** __argv)
-#endif
-{
+    GameWindow window(Graphics::OPENGL_MAJOR_VERSION,
+                      Graphics::OPENGL_MINOR_VERSION,
+                      Graphics::Init,
+                      Graphics::Reshape,
+                      display,
+                      Input::HandleKeyboardInput,
+                      Input::HandleMouseMove);
+
+    window.resize(1024, 720);
+    window.show();
+
+    Time::Init();
     Debug::Init();
-    Graphics::Init(__argc, __argv);
-    Gizmos::Init();
-    Input::Init();
-    Camera::Init(120, 0.5f, 100, 100);
 
     TestScene::Load();
 
-    glutDisplayFunc(display);
-    glutReshapeFunc(reshape);
-
-    glutMainLoop();
-
-    return 0;
+    return application.exec();
 }

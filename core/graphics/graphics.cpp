@@ -1,20 +1,19 @@
 #include "graphics.h"
-#include "vector4/vector4.h"
 #include "camera/camera.h"
-#include "core_debug/debug.h"
-#include "light/light.h"
-#include "shader/shader.h"
-#include "gizmos/gizmos_pass.h"
 #include "context.h"
+#include "core_debug/debug.h"
+#include "gizmos/gizmos.h"
+#include "gizmos/gizmos_pass.h"
+#include "light/light.h"
 #include "passes/render_pass.h"
 #include "passes/shadow_caster_pass.h"
 #include "passes/skybox_pass.h"
+#include "shader/shader.h"
 #include "uniform_block.h"
+#include "vector4/vector4.h"
 #ifdef OPENGL_STUDY_WINDOWS
-#include <GL/freeglut.h>
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
-#include <GLUT/glut.h>
 #include <OpenGL/gl3.h>
 #endif
 
@@ -73,25 +72,15 @@ namespace Graphics
         gizmosPass           = std::make_unique<GizmosPass>();
     }
 
-    void Init(int _argc, char **_argv)
+    void Init()
     {
-        unsigned int displayModeFlags = GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH;
-#ifdef OPENGL_STUDY_MACOS
-        displayModeFlags |= GLUT_3_2_CORE_PROFILE;
-#elif OPENGL_STUDY_WINDOWS
-        glutInitContextVersion(4, 6);
-#endif
-
-		glutInit(&_argc, _argv);
-		glutInitDisplayMode(displayModeFlags);
-		glutInitWindowSize(1024, 720);
-        glutCreateWindow("OpenGL");
-
 #ifdef OPENGL_STUDY_WINDOWS
         auto result = glewInit();
         if (result != GLEW_OK)
             throw;
 #endif
+
+        Gizmos::Init();
 
         InitCulling();
         InitDepth();
@@ -173,11 +162,10 @@ namespace Graphics
         if (gizmosPass)
             gizmosPass->Execute(ctx);
 
-        glutSwapBuffers();
-        glutPostRedisplay();
-
         Debug::CheckOpenGLError();
         Debug::PopDebugGroup();
+
+        Gizmos::ClearDrawInfos();
     }
 
     void Reshape(int _width, int _height)

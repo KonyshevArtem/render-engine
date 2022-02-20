@@ -6,9 +6,7 @@
 #include <vector>
 #ifdef OPENGL_STUDY_WINDOWS
 #include "GL/glew.h"
-#include "GL/freeglut.h"
 #elif OPENGL_STUDY_MACOS
-#include "GLUT/glut.h"
 #include "OpenGL/gl3.h"
 #endif
 

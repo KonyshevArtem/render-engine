@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(
     OPENGL_STUDY_SOURCES
     main.cpp
+    game_window.cpp
+    game_window.h
     scenes/test_scene.cpp
     scenes/test_scene.h
     scripts/camera_fly_controller/camera_fly_controller.cpp
@@ -21,7 +23,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # glew for windows
     find_package(GLEW REQUIRED)
     include_directories(${GLEW_INCLUDE_DIRS})
-    target_link_libraries(OpenGL_Study ${GLEW_LIBRARIES})
+    target_link_libraries(OpenGL_Study ${GLEW_LIBRARIES} glu32.lib opengl32.lib)
 
 # macos
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -36,15 +38,17 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 endif()
 
-# glut
-find_package(GLUT REQUIRED)
-include_directories(${GLUT_INCLUDE_DIR})
-target_link_libraries(OpenGL_Study ${GLUT_LIBRARIES})
-
 # boost
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 target_link_libraries(OpenGL_Study ${Boost_LIBRARIES})
+
+# qt
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGL)
+target_link_libraries(OpenGL_Study Qt6::Widgets Qt6::OpenGL)
 
 # source code
 add_subdirectory(external/lodepng)

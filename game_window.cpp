@@ -32,7 +32,8 @@ void GameWindow::initializeGL()
 
 void GameWindow::resizeGL(int _width, int _height)
 {
-    m_Resize(_width, _height);
+    static auto pixelRatio = devicePixelRatio();
+    m_Resize(_width * pixelRatio, _height * pixelRatio);
 }
 
 void GameWindow::paintGL()

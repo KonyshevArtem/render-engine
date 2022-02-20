@@ -172,7 +172,6 @@ namespace Graphics
     {
         screenWidth  = _width;
         screenHeight = _height;
-        glViewport(0, 0, _width, _height);
     }
 
     int GetScreenWidth()

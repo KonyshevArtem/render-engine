@@ -6,6 +6,7 @@
 #include <windows.h>
 #elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
+#include <OpenGL/glu.h>
 #endif
 
 int debugGroupID = 0;

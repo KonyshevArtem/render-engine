@@ -202,16 +202,11 @@ namespace Graphics
     {
         static constexpr int GLSL_VERSION = 410;
 
-        static std::string globalShaderDirectives;
-
-        if (globalShaderDirectives.empty())
-        {
-            // clang-format off
-            globalShaderDirectives = "#version " + std::to_string(GLSL_VERSION) + "\n"
-                                    "#define MAX_POINT_LIGHT_SOURCES " + std::to_string(MAX_POINT_LIGHT_SOURCES) + "\n"
-                                    "#define MAX_SPOT_LIGHT_SOURCES " + std::to_string(MAX_SPOT_LIGHT_SOURCES) + "\n";
-            // clang-format on
-        }
+        // clang-format off
+        static std::string globalShaderDirectives = "#version " + std::to_string(GLSL_VERSION) + "\n"
+                                                    "#define MAX_POINT_LIGHT_SOURCES " + std::to_string(MAX_POINT_LIGHT_SOURCES) + "\n"
+                                                    "#define MAX_SPOT_LIGHT_SOURCES " + std::to_string(MAX_SPOT_LIGHT_SOURCES) + "\n";
+        // clang-format on
 
         return globalShaderDirectives;
     }

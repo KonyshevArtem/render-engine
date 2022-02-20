@@ -6,6 +6,8 @@
 #include "texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
 
+typedef std::unordered_map<std::string, std::unordered_map<UniformType, std::shared_ptr<Texture>>> DefaultTexturesMap;
+
 std::unordered_map<std::string, std::shared_ptr<Texture>> Shader::m_GlobalTextures    = {};
 std::string                                               Shader::m_ReplacementTag    = "";
 const Shader *                                            Shader::m_CurrentShader     = nullptr;
@@ -197,18 +199,18 @@ void Shader::SetGlobalTexture(const std::string &_name, std::shared_ptr<Texture>
 
 #pragma region service methods
 
-void InitDefaultTextures(std::unordered_map<std::string, std::unordered_map<UniformType, std::shared_ptr<Texture>>> &_defaultTextures)
+DefaultTexturesMap GetDefaultTexturesMap()
 {
-    _defaultTextures["white"][UniformType::SAMPLER_2D]   = Texture2D::White();
-    _defaultTextures["white"][UniformType::SAMPLER_CUBE] = Cubemap::White();
-    _defaultTextures["normal"][UniformType::SAMPLER_2D]  = Texture2D::Normal();
+    DefaultTexturesMap map;
+    map["white"][UniformType::SAMPLER_2D]   = Texture2D::White();
+    map["white"][UniformType::SAMPLER_CUBE] = Cubemap::White();
+    map["normal"][UniformType::SAMPLER_2D]  = Texture2D::Normal();
+    return map;
 }
 
 void Shader::SetDefaultValues() const
 {
-    static std::unordered_map<std::string, std::unordered_map<UniformType, std::shared_ptr<Texture>>> defaultTextures;
-    if (defaultTextures.empty())
-        InitDefaultTextures(defaultTextures);
+    static DefaultTexturesMap defaultTextures = GetDefaultTexturesMap();
 
     for (const auto &pair: m_Uniforms)
     {

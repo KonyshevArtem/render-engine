@@ -31,10 +31,7 @@ BillboardRenderer::~BillboardRenderer()
 
 void BillboardRenderer::Render() const
 {
-    static std::shared_ptr<Shader> shader;
-
-    if (shader == nullptr)
-        shader = Shader::Load("resources/shaders/billboard/billboard.shader", {});
+    static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard/billboard.shader", {});
 
     if (shader == nullptr || m_Texture == nullptr)
         return;

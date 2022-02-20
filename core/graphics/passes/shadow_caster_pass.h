@@ -11,7 +11,6 @@
 
 class UniformBlock;
 struct Context;
-class Shader;
 class Texture2DArray;
 class Texture2D;
 class Renderer;
@@ -34,7 +33,6 @@ private:
     static constexpr int SHADOW_MAP_SIZE = 1024;
 
     std::shared_ptr<UniformBlock>   m_ShadowsUniformBlock;
-    std::shared_ptr<Shader>         m_ShadowCasterShader;
     GLuint                          m_Framebuffer = 0;
     std::shared_ptr<Texture2DArray> m_SpotLightShadowMapArray;
     std::shared_ptr<Texture2D>      m_DirectionLightShadowMap;

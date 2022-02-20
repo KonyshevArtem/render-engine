@@ -6,17 +6,15 @@
 
 void GizmosPass::Execute(Context &_context)
 {
-    static std::shared_ptr<Shader> m_GizmosShader = nullptr;
-    if (!m_GizmosShader)
-        m_GizmosShader = Shader::Load("resources/shaders/gizmos/gizmos.shader", {});
+    static std::shared_ptr<Shader> gizmosShader = Shader::Load("resources/shaders/gizmos/gizmos.shader", {});
 
     Debug::PushDebugGroup("Gizmos pass");
 
-    m_GizmosShader->Use();
+    gizmosShader->Use();
 
     for (const auto &drawInfo: Gizmos::GetDrawInfos())
     {
-        m_GizmosShader->SetUniform("_ModelMatrix", &drawInfo.Matrix);
+        gizmosShader->SetUniform("_ModelMatrix", &drawInfo.Matrix);
         drawInfo.Primitive->Draw();
     }
 

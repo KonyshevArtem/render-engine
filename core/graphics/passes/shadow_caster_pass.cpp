@@ -13,7 +13,6 @@
 
 ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, std::shared_ptr<UniformBlock> _shadowsUniformBlock) :
     m_ShadowsUniformBlock(std::move(_shadowsUniformBlock)),
-    m_ShadowCasterShader(Shader::Load("resources/shaders/shadowCaster/shadowCaster.shader", {})),
     m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SHADOW_MAP_SIZE, _spotLightsCount)),
     m_DirectionLightShadowMap(Texture2D::CreateShadowMap(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE))
 {
@@ -30,9 +29,10 @@ ShadowCasterPass::~ShadowCasterPass()
 
 void ShadowCasterPass::Execute(const Context &_ctx)
 {
-    static const Matrix4x4 biasMatrix = Matrix4x4::TRS(Vector3 {0.5f, 0.5f, 0.5f}, Quaternion(), Vector3 {0.5f, 0.5f, 0.5f});
+    static std::shared_ptr<Shader> shadowCasterShader = Shader::Load("resources/shaders/shadowCaster/shadowCaster.shader", {});
+    static const Matrix4x4         biasMatrix         = Matrix4x4::TRS(Vector3 {0.5f, 0.5f, 0.5f}, Quaternion(), Vector3 {0.5f, 0.5f, 0.5f});
 
-    if (m_ShadowCasterShader == nullptr || _ctx.Renderers.size() == 0)
+    if (shadowCasterShader == nullptr || _ctx.Renderers.size() == 0)
         return;
 
     Debug::PushDebugGroup("Shadow pass");
@@ -41,7 +41,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     glViewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
 
     // TODO use shader passes instead of replacement shaders
-    Shader::SetReplacementShader(m_ShadowCasterShader.get(), "Shadows");
+    Shader::SetReplacementShader(shadowCasterShader.get(), "Shadows");
 
     int spotLightsCount = 0;
     for (const auto *light: _ctx.Lights)

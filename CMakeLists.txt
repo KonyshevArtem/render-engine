@@ -53,6 +53,7 @@ target_link_libraries(OpenGL_Study Qt6::Widgets Qt6::OpenGL)
 # source code
 add_subdirectory(external/lodepng)
 add_subdirectory(external/OpenFBX)
+add_subdirectory(library)
 add_subdirectory(core)
 add_subdirectory(math)
 add_subdirectory(utils)

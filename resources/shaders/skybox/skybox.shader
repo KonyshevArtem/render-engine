@@ -1,2 +1,4 @@
-#pragma vertex skybox.vs
-#pragma fragment skybox.fs
+{
+  "vertex": "skybox.vs", 
+  "fragment": "skybox.fs"
+}

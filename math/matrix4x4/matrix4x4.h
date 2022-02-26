@@ -56,8 +56,6 @@ public:
     Matrix4x4 Transpose() const;
 
     Vector3 GetPosition() const;
-
-    [[nodiscard]] std::string ToString() const;
 };
 
 #endif //OPENGL_STUDY_MATRIX4X4_H

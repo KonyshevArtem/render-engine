@@ -1,3 +1,5 @@
-#pragma vertex billboard.vs
-#pragma geometry billboard.gs
-#pragma fragment billboard.fs
+{
+  "vertex": "billboard.vs",
+  "geometry": "billboard.gs",
+  "fragment": "billboard.fs"
+}

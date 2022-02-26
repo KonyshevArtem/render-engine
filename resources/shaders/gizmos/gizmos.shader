@@ -1,2 +1,4 @@
-#pragma vertex gizmos.vs
-#pragma fragment gizmos.fs
+{
+  "vertex": "gizmos.vs",
+  "fragment": "gizmos.fs"
+}

@@ -1,8 +1,13 @@
-#pragma default _Albedo white
-#pragma default _NormalMap normal
-
-#pragma zWrite off
-#pragma blend SrcAlpha OneMinusSrcAlpha
-
-#pragma fragment standard.fs
-#pragma vertex standard.vs
+{
+  "default": {
+    "_Albedo": "white",
+    "_NormalMap": "normal"
+  },
+  "zWrite": false,
+  "blend": {
+    "SrcFactor": "SrcAlpha",
+    "DstFactor": "OneMinusSrcAlpha"
+  },
+  "vertex": "standard.vs",
+  "fragment": "standard.fs"
+}

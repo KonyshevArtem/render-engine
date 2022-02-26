@@ -1,4 +1,8 @@
-#pragma tag Shadows Opaque
-
-#pragma vertex shadowCaster.vs
-#pragma fragment shadowCaster.fs
+{
+  "tags": 
+  {
+    "Shadows": "Opaque"
+  },
+  "vertex": "shadowCaster.vs",
+  "fragment": "shadowCaster.fs"
+}

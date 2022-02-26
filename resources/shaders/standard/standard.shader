@@ -1,7 +1,11 @@
-#pragma default _Albedo white
-#pragma default _NormalMap normal
-
-#pragma tag Shadows Opaque
-
-#pragma fragment standard.fs
-#pragma vertex standard.vs
+{
+  "default": {
+    "_Albedo": "white",
+    "_NormalMap": "normal"
+  },
+  "tags": {
+    "Shadows": "Opaque"
+  },
+  "vertex": "standard.vs",
+  "fragment": "standard.fs"
+}

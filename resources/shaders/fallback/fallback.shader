@@ -1,2 +1,4 @@
-#pragma vertex fallback.vs
-#pragma fragment fallback.fs
+{
+  "vertex": "fallback.vs",
+  "fragment": "fallback.fs"
+}

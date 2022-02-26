@@ -99,23 +99,6 @@ Vector4 Matrix4x4::operator*(const Vector4 &_vector) const
     };
 }
 
-std::string Matrix4x4::ToString() const
-{
-    std::string str;
-    for (int i = 0; i < 4; ++i)
-    {
-        str.append(std::to_string(GetElement(0, i)));
-        str.append(", ");
-        str.append(std::to_string(GetElement(1, i)));
-        str.append(", ");
-        str.append(std::to_string(GetElement(2, i)));
-        str.append(", ");
-        str.append(std::to_string(GetElement(3, i)));
-        str.append("\n");
-    }
-    return str;
-}
-
 Matrix4x4 Matrix4x4::Invert() const
 {
     auto A2323 = m22 * m33 - m23 * m32;

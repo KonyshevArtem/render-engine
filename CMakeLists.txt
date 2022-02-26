@@ -39,9 +39,10 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 # boost
-find_package(Boost REQUIRED)
+set(Boost_USE_STATIC_LIBS ON)
+find_package(Boost REQUIRED COMPONENTS json)
 include_directories(${Boost_INCLUDE_DIRS})
-target_link_libraries(OpenGL_Study ${Boost_LIBRARIES})
+target_link_libraries(OpenGL_Study Boost::json)
 
 # qt
 set(CMAKE_AUTOUIC ON)

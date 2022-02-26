@@ -48,7 +48,7 @@ Only forward rendering path is implemented for now
 * Windows
   * Download sources from https://www.boost.org/users/download/
   * Build binaries from sources using https://www.boost.org/doc/libs/1_49_0/more/getting_started/windows.html#or-build-binaries-from-source (Section 5.2 Simplified build from source)
-  * Add path to boost directory to `CMAKE_PREFIX_PATH`
+  * Add path to boost include and lib directories to `CMAKE_PREFIX_PATH`
 
 ### Qt
 * Download installer from https://www.qt.io/download and install
@@ -59,7 +59,7 @@ Only forward rendering path is implemented for now
 
 ```
 set PATH=%PATH%;D:\Qt\6.2.3\msvc2019_64\bin;
-set CMAKE_PREFIX_PATH=F:/glew-2.1.0/include;F:/glew-2.1.0/lib/Release/x64;F:/boost_1_78_0;D:/Qt/6.2.3/msvc2019_64;
+set CMAKE_PREFIX_PATH=F:/glew-2.1.0/include;F:/glew-2.1.0/lib/Release/x64;F:/boost_1_78_0;F:/boost_1_78_0/stage/lib;D:/Qt/6.2.3/msvc2019_64;
 ```
 
 ## External Tools

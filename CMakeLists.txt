@@ -51,13 +51,17 @@ set(CMAKE_AUTORCC ON)
 find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGL)
 target_link_libraries(OpenGL_Study Qt6::Widgets Qt6::OpenGL)
 
+# TODO add non-editor compile target
+add_compile_definitions(OPENGL_STUDY_EDITOR)
+
 # source code
 add_subdirectory(external/lodepng)
 add_subdirectory(external/OpenFBX)
 add_subdirectory(core)
+add_subdirectory(editor_gui)
 add_subdirectory(math)
 add_subdirectory(utils)
-target_link_libraries(OpenGL_Study Core)
+target_link_libraries(OpenGL_Study Core Editor)
 
 # copy resources to build directory
 add_custom_target(PreBuild ALL

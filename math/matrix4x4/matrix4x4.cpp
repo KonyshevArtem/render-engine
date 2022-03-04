@@ -1,7 +1,9 @@
 #include "matrix4x4.h"
+#include "math_utils.h"
 #include "quaternion/quaternion.h"
 #include "vector3/vector3.h"
 #include "vector4/vector4.h"
+#include <cmath>
 
 const Matrix4x4 &Matrix4x4::Zero()
 {
@@ -209,4 +211,22 @@ Matrix4x4 Matrix4x4::Orthographic(float _left, float _right, float _bottom, floa
 Vector3 Matrix4x4::GetPosition() const
 {
     return {m30, m31, m32};
+}
+
+Quaternion Matrix4x4::GetRotation() const
+{
+    Quaternion q;
+    q.w = std::sqrt(std::max(0.0f, 1 + m00 + m11 + m22)) / 2;
+    q.x = std::sqrt(std::max(0.0f, 1 + m00 - m11 - m22)) / 2;
+    q.y = std::sqrt(std::max(0.0f, 1 - m00 + m11 - m22)) / 2;
+    q.z = std::sqrt(std::max(0.0f, 1 - m00 - m11 + m22)) / 2;
+    q.x *= Math::Sign(q.x * (m12 - m21));
+    q.y *= Math::Sign(q.y * (m20 - m02));
+    q.z *= Math::Sign(q.z * (m01 - m10));
+    return q;
+}
+
+Vector3 Matrix4x4::GetScale() const
+{
+    return {m00, m11, m22};
 }

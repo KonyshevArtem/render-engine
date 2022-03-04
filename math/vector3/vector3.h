@@ -30,6 +30,8 @@ public:
 
     Vector3 operator*(float _value) const;
 
+    Vector3 operator*(const Vector3 &_vector) const;
+
     Vector4 ToVector4(float _w) const;
 
     static float Dot(const Vector3 &_a, const Vector3 &_b);

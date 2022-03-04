@@ -7,6 +7,7 @@
 #include "graphics/graphics.h"
 #include "input/input.h"
 #include "scenes/test_scene.h"
+#include "editor_gui/editor_window.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 
 #include <QApplication>
@@ -25,6 +26,12 @@ void display()
 int main(int argc, char **argv)
 {
     QApplication application(argc, argv);
+
+    #if OPENGL_STUDY_EDITOR
+    EditorWindow editor;
+    editor.resize(1024, 720);
+    editor.show();
+    #endif
 
     GameWindow window(Graphics::OPENGL_MAJOR_VERSION,
                       Graphics::OPENGL_MINOR_VERSION,

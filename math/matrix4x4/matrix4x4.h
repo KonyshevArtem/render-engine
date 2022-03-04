@@ -56,6 +56,10 @@ public:
     Matrix4x4 Transpose() const;
 
     Vector3 GetPosition() const;
+
+    Quaternion GetRotation() const;
+
+    Vector3 GetScale() const;
 };
 
 #endif //OPENGL_STUDY_MATRIX4X4_H

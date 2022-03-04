@@ -13,7 +13,7 @@ Matrix4x4 Renderer::GetModelMatrix() const
         return Matrix4x4::Identity();
 
     auto go = m_GameObject.lock();
-    return Matrix4x4::TRS(go->LocalPosition, go->LocalRotation, go->LocalScale);
+    return go->GetLocalToWorldMatrix();
 }
 
 bool Renderer::Comparer::operator()(Renderer *_r1, Renderer *_r2)
@@ -28,8 +28,8 @@ bool Renderer::Comparer::operator()(Renderer *_r1, Renderer *_r2)
     if (renderQueue1 != renderQueue2)
         return renderQueue1 < renderQueue2;
 
-    float distance1 = (_r1->m_GameObject.lock()->LocalPosition - CameraPosition).Length();
-    float distance2 = (_r2->m_GameObject.lock()->LocalPosition - CameraPosition).Length();
+    float distance1 = (_r1->m_GameObject.lock()->GetLocalPosition() - CameraPosition).Length();
+    float distance2 = (_r2->m_GameObject.lock()->GetLocalPosition() - CameraPosition).Length();
     return Sorting == Sorting::FRONT_TO_BACK ? distance1 < distance2 : distance1 > distance2;
 }
 

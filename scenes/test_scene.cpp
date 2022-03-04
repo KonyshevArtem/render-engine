@@ -1,22 +1,22 @@
 #include "test_scene.h"
+#include "../scripts/camera_fly_controller/camera_fly_controller.h"
+#include "bounds/bounds.h"
 #include "camera/camera.h"
 #include "cubemap/cubemap.h"
 #include "fbx_asset/fbx_asset.h"
 #include "gameObject/gameObject.h"
+#include "gizmos/gizmos.h"
 #include "input/input.h"
 #include "light/light.h"
 #include "material/material.h"
+#include "math_utils.h"
 #include "mesh/mesh.h"
 #include "renderer/billboard_renderer.h"
 #include "renderer/mesh_renderer.h"
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
-#include "gizmos/gizmos.h"
-#include "bounds/bounds.h"
-#include "math_utils.h"
 #include "vector4/vector4.h"
-#include "../scripts/camera_fly_controller/camera_fly_controller.h"
 #include <cmath>
 #include <memory>
 
@@ -51,7 +51,6 @@ void TestScene::Init()
                            "resources/textures/skybox/z_negative.png");
 
     // init shaders
-    auto vertexLitShader   = Shader::Load("resources/shaders/standard/standard.shader", {"_VERTEX_LIGHT"});
     auto fragmentLitShader = Shader::Load("resources/shaders/standard/standard.shader", {"_SMOOTHNESS", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
     auto transparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", {"_SMOOTHNESS", "_RECEIVE_SHADOWS"});
 
@@ -75,7 +74,7 @@ void TestScene::Init()
     fragmentLitBrickMaterial->SetTexture("_NormalMap", brickNormal);
     fragmentLitBrickMaterial->SetFloat("_Smoothness", 10);
 
-    m_WaterMaterial =std:: make_shared<Material>(fragmentLitShader);
+    m_WaterMaterial = std::make_shared<Material>(fragmentLitShader);
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
     m_WaterMaterial->SetTexture("_NormalMap", waterNormal);
     m_WaterMaterial->SetFloat("_Smoothness", 20);
@@ -90,41 +89,41 @@ void TestScene::Init()
     carMaterial->SetFloat("_Smoothness", 20);
 
     // init gameObjects
-    auto rotatingCube      = std::make_shared<GameObject>();
+    auto rotatingCube      = GameObject::Create("Rotating Cube");
     rotatingCube->Renderer = std::make_shared<MeshRenderer>(rotatingCube, cubeMesh, fragmentLitBrickMaterial);
 
-    auto rotatingCylinder           = std::make_shared<GameObject>();
-    rotatingCylinder->Renderer      = std::make_shared<MeshRenderer>(rotatingCylinder, cylinderMesh, fragmentLitMaterial);
-    rotatingCylinder->LocalPosition = Vector3(0, -3, 4);
-    rotatingCylinder->LocalScale    = Vector3(2, 1, 0.5f);
+    auto rotatingCylinder      = GameObject::Create("Rotating Cylinder");
+    rotatingCylinder->Renderer = std::make_shared<MeshRenderer>(rotatingCylinder, cylinderMesh, fragmentLitMaterial);
+    rotatingCylinder->SetLocalPosition(Vector3(0, -3, 4));
+    rotatingCylinder->SetLocalScale(Vector3(2, 1, 0.5f));
 
-    auto cylinderFragmentLit           = std::make_shared<GameObject>();
-    cylinderFragmentLit->Renderer      = std::make_shared<MeshRenderer>(cylinderFragmentLit, cylinderMesh, fragmentLitMaterial);
-    cylinderFragmentLit->LocalPosition = Vector3(-3, -3, 6);
-    cylinderFragmentLit->LocalScale    = Vector3(2, 1, 0.5f);
+    auto cylinderFragmentLit      = GameObject::Create("Cylinder");
+    cylinderFragmentLit->Renderer = std::make_shared<MeshRenderer>(cylinderFragmentLit, cylinderMesh, fragmentLitMaterial);
+    cylinderFragmentLit->SetLocalPosition(Vector3(-3, -3, 6));
+    cylinderFragmentLit->SetLocalScale(Vector3(2, 1, 0.5f));
 
-    auto floorVertexLit           = std::make_shared<GameObject>();
-    floorVertexLit->Renderer      = std::make_shared<MeshRenderer>(floorVertexLit, cubeMesh, fragmentLitMaterial);
-    floorVertexLit->LocalPosition = Vector3(3, -5, 5.5f);
-    floorVertexLit->LocalRotation = Quaternion::AngleAxis(-10, Vector3(0, 1, 0));
-    floorVertexLit->LocalScale    = Vector3(5, 1, 2);
+    auto floorVertexLit      = GameObject::Create("Floor");
+    floorVertexLit->Renderer = std::make_shared<MeshRenderer>(floorVertexLit, cubeMesh, fragmentLitMaterial);
+    floorVertexLit->SetLocalPosition(Vector3(3, -5, 5.5f));
+    floorVertexLit->SetLocalRotation(Quaternion::AngleAxis(-10, Vector3(0, 1, 0)));
+    floorVertexLit->SetLocalScale(Vector3(5, 1, 2));
 
-    auto floorFragmentLit           = std::make_shared<GameObject>();
-    floorFragmentLit->Renderer      = std::make_shared<MeshRenderer>(floorFragmentLit, cubeMesh, fragmentLitBrickMaterial);
-    floorFragmentLit->LocalPosition = Vector3(-9, -5, 5.5f);
-    floorFragmentLit->LocalRotation = Quaternion::AngleAxis(10, Vector3(0, 1, 0));
-    floorFragmentLit->LocalScale    = Vector3(5, 1, 2);
+    auto floorFragmentLit      = GameObject::Create("Bricks");
+    floorFragmentLit->Renderer = std::make_shared<MeshRenderer>(floorFragmentLit, cubeMesh, fragmentLitBrickMaterial);
+    floorFragmentLit->SetLocalPosition(Vector3(-9, -5, 5.5f));
+    floorFragmentLit->SetLocalRotation(Quaternion::AngleAxis(10, Vector3(0, 1, 0)));
+    floorFragmentLit->SetLocalScale(Vector3(5, 1, 2));
 
-    auto water           = std::make_shared<GameObject>();
-    water->Renderer      = std::make_shared<MeshRenderer>(water, planeMesh, m_WaterMaterial);
-    water->LocalPosition = Vector3(0, -10, 10);
-    water->LocalScale    = Vector3(20, 1, 20);
+    auto water      = GameObject::Create("Water");
+    water->Renderer = std::make_shared<MeshRenderer>(water, planeMesh, m_WaterMaterial);
+    water->SetLocalPosition(Vector3(0, -10, 10));
+    water->SetLocalScale(Vector3(20, 1, 20));
 
-    auto car = std::make_shared<GameObject>();
-    car->Renderer      = std::make_shared<MeshRenderer>(car, carMesh, carMaterial);
-    car->LocalPosition = Vector3 {11, -8.5f, -2};
-    car->LocalRotation = Quaternion::AngleAxis(135, Vector3 {0, -1, 0});
-    car->LocalScale    = Vector3 {0.02f, 0.02f, 0.02f};
+    auto car      = GameObject::Create("Car");
+    car->Renderer = std::make_shared<MeshRenderer>(car, carMesh, carMaterial);
+    car->SetLocalPosition(Vector3 {11, -8.5f, -2});
+    car->SetLocalRotation(Quaternion::AngleAxis(135, Vector3 {0, -1, 0}));
+    car->SetLocalScale(Vector3 {0.02f, 0.02f, 0.02f});
 
     GameObjects.push_back(rotatingCube);
     GameObjects.push_back(rotatingCylinder);
@@ -136,19 +135,19 @@ void TestScene::Init()
 
     for (int i = 0; i < 4; ++i)
     {
-        auto billboard         = std::make_shared<GameObject>();
+        auto billboard         = GameObject::Create("Billboard " + std::to_string(i));
         auto billboardRenderer = std::make_shared<BillboardRenderer>(billboard, billboardTree);
         billboardRenderer->SetSize(5);
-        billboard->LocalPosition = Vector3 {-20.0f + 10 * i, -10, 20};
-        billboard->Renderer      = std::move(billboardRenderer);
+        billboard->SetLocalPosition(Vector3 {-20.0f + 10 * i, -10, 20});
+        billboard->Renderer = std::move(billboardRenderer);
         GameObjects.push_back(billboard);
     }
 
     for (int i = 0; i < 3; ++i)
     {
-        auto transparentCube           = std::make_shared<GameObject>();
-        transparentCube->Renderer      = std::make_shared<MeshRenderer>(transparentCube, cubeMesh, transparentMaterial);
-        transparentCube->LocalPosition = Vector3(-10.0f + 5 * i, -5, 12);
+        auto transparentCube      = GameObject::Create("Transparent Cube " + std::to_string(i));
+        transparentCube->Renderer = std::make_shared<MeshRenderer>(transparentCube, cubeMesh, transparentMaterial);
+        transparentCube->SetLocalPosition(Vector3(-10.0f + 5 * i, -5, 12));
         GameObjects.push_back(transparentCube);
     }
 
@@ -222,13 +221,13 @@ void TestScene::UpdateInternal()
 
     float phase = fmodf(fmodf(Time::GetElapsedTime(), LOOP_DURATION) / LOOP_DURATION, 1.0f);
 
-    GameObjects[0]->LocalPosition = CalcTranslation(phase);
-    GameObjects[0]->LocalRotation = CalcRotation(phase, 0);
-    GameObjects[0]->LocalScale    = CalcScale(phase);
+    GameObjects[0]->SetLocalPosition(CalcTranslation(phase));
+    GameObjects[0]->SetLocalRotation(CalcRotation(phase, 0));
+    GameObjects[0]->SetLocalScale(CalcScale(phase));
 
-    GameObjects[1]->LocalRotation = CalcRotation(phase, 1);
+    GameObjects[1]->SetLocalRotation(CalcRotation(phase, 1));
 
-    GameObjects[2]->LocalRotation = CalcRotation(phase, 1);
+    GameObjects[2]->SetLocalRotation(CalcRotation(phase, 1));
 
     // animateWater
     float   offset = Math::Lerp(0, 1, phase);
@@ -238,8 +237,8 @@ void TestScene::UpdateInternal()
 
     // animate light
     m_DirectionalLight->Rotation = Quaternion::AngleAxis(50.0f * Time::GetDeltaTime(), Vector3 {0, 1, 0}) * m_DirectionalLight->Rotation;
-    m_SpotLight->Position = Camera::Current->GetPosition() + Camera::Current->GetRotation() * Vector3(-3, 0, 0);
-    m_SpotLight->Rotation = Camera::Current->GetRotation();
+    m_SpotLight->Position        = Camera::Current->GetPosition() + Camera::Current->GetRotation() * Vector3(-3, 0, 0);
+    m_SpotLight->Rotation        = Camera::Current->GetRotation();
 
     // gizmos
     if (Input::GetKeyDown('G'))

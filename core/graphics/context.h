@@ -12,6 +12,7 @@ class Renderer;
 class Light;
 class Texture;
 class Cubemap;
+class GameObject;
 
 struct Context
 {
@@ -23,8 +24,11 @@ public:
     std::vector<Renderer *> Renderers;
     Matrix4x4               ViewMatrix       = Matrix4x4();
     Matrix4x4               ProjectionMatrix = Matrix4x4();
-    Cubemap *               Skybox;
+    Cubemap                *Skybox;
     float                   ShadowDistance;
+
+private:
+    void CollectRenderers(const std::shared_ptr<GameObject> &_gameObject);
 };
 
 #endif //OPENGL_STUDY_CONTEXT_H

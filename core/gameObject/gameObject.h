@@ -14,7 +14,7 @@ class GameObject: public std::enable_shared_from_this<GameObject>
 {
 public:
     static std::shared_ptr<GameObject> Create(const std::string &_name);
-    ~GameObject();
+    void                               Destroy();
 
     std::string                              Name;
     std::weak_ptr<GameObject>                Parent;
@@ -57,6 +57,11 @@ public:
 
 private:
     GameObject(const std::string &_name);
+    GameObject(const GameObject &) = delete;
+    GameObject(GameObject &&)      = delete;
+
+    GameObject &operator=(const GameObject &) = delete;
+    GameObject &operator=(GameObject &&) = delete;
 
     Vector3    m_LocalPosition;
     Quaternion m_LocalRotation      = Quaternion();

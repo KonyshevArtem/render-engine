@@ -26,8 +26,25 @@ void HierarchyGUI::Update()
 
     clear();
 
-    for (const auto &go: Scene::Current->GameObjects)
+    for (auto it = Scene::Current->cbegin(); it != Scene::Current->cend(); it++)
     {
-        addTopLevelItem(new QTreeWidgetItem(QStringList {go->Name.c_str()}));
+        auto widget = CollectHierarchy(*it);
+        if (widget)
+            addTopLevelItem(widget);
     }
+}
+
+QTreeWidgetItem *HierarchyGUI::CollectHierarchy(const std::shared_ptr<GameObject> &_gameObject)
+{
+    if (!_gameObject)
+        return nullptr;
+
+    auto widget = new QTreeWidgetItem({_gameObject->Name.c_str()});
+    for (auto it = _gameObject->Children.cbegin(); it != _gameObject->Children.cend(); it++)
+    {
+        auto childWidget = CollectHierarchy(*it);
+        widget->addChild(childWidget);
+    }
+
+    return widget;
 }

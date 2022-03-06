@@ -27,6 +27,10 @@ private:
     std::shared_ptr<Light>               m_DirectionalLight;
     std::unique_ptr<CameraFlyController> m_CameraFlyControl;
 
+    std::weak_ptr<GameObject> m_RotatingCube;
+    std::weak_ptr<GameObject> m_RotatingCylinder1;
+    std::weak_ptr<GameObject> m_RotatingCylinder2;
+
     bool m_DrawGizmos = false;
 };
 

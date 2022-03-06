@@ -4,7 +4,6 @@
 #include "camera/camera.h"
 #include "cubemap/cubemap.h"
 #include "fbx_asset/fbx_asset.h"
-#include "gameObject/gameObject.h"
 #include "gizmos/gizmos.h"
 #include "input/input.h"
 #include "light/light.h"
@@ -22,9 +21,9 @@
 
 void TestScene::Load()
 {
-    auto scene = std::make_shared<TestScene>();
-    scene->Init();
+    auto scene     = std::make_shared<TestScene>();
     Scene::Current = scene;
+    scene->Init();
 }
 
 void TestScene::Init()
@@ -91,16 +90,19 @@ void TestScene::Init()
     // init gameObjects
     auto rotatingCube      = GameObject::Create("Rotating Cube");
     rotatingCube->Renderer = std::make_shared<MeshRenderer>(rotatingCube, cubeMesh, fragmentLitBrickMaterial);
+    m_RotatingCube = rotatingCube;
 
     auto rotatingCylinder      = GameObject::Create("Rotating Cylinder");
     rotatingCylinder->Renderer = std::make_shared<MeshRenderer>(rotatingCylinder, cylinderMesh, fragmentLitMaterial);
     rotatingCylinder->SetLocalPosition(Vector3(0, -3, 4));
     rotatingCylinder->SetLocalScale(Vector3(2, 1, 0.5f));
+    m_RotatingCylinder1 = rotatingCylinder;
 
     auto cylinderFragmentLit      = GameObject::Create("Cylinder");
     cylinderFragmentLit->Renderer = std::make_shared<MeshRenderer>(cylinderFragmentLit, cylinderMesh, fragmentLitMaterial);
     cylinderFragmentLit->SetLocalPosition(Vector3(-3, -3, 6));
     cylinderFragmentLit->SetLocalScale(Vector3(2, 1, 0.5f));
+    m_RotatingCylinder2 = cylinderFragmentLit;
 
     auto floorVertexLit      = GameObject::Create("Floor");
     floorVertexLit->Renderer = std::make_shared<MeshRenderer>(floorVertexLit, cubeMesh, fragmentLitMaterial);
@@ -125,14 +127,6 @@ void TestScene::Init()
     car->SetLocalRotation(Quaternion::AngleAxis(135, Vector3 {0, -1, 0}));
     car->SetLocalScale(Vector3 {0.02f, 0.02f, 0.02f});
 
-    GameObjects.push_back(rotatingCube);
-    GameObjects.push_back(rotatingCylinder);
-    GameObjects.push_back(cylinderFragmentLit);
-    GameObjects.push_back(floorVertexLit);
-    GameObjects.push_back(floorFragmentLit);
-    GameObjects.push_back(water);
-    GameObjects.push_back(car);
-
     for (int i = 0; i < 4; ++i)
     {
         auto billboard         = GameObject::Create("Billboard " + std::to_string(i));
@@ -140,7 +134,6 @@ void TestScene::Init()
         billboardRenderer->SetSize(5);
         billboard->SetLocalPosition(Vector3 {-20.0f + 10 * i, -10, 20});
         billboard->Renderer = std::move(billboardRenderer);
-        GameObjects.push_back(billboard);
     }
 
     for (int i = 0; i < 3; ++i)
@@ -148,7 +141,6 @@ void TestScene::Init()
         auto transparentCube      = GameObject::Create("Transparent Cube " + std::to_string(i));
         transparentCube->Renderer = std::make_shared<MeshRenderer>(transparentCube, cubeMesh, transparentMaterial);
         transparentCube->SetLocalPosition(Vector3(-10.0f + 5 * i, -5, 12));
-        GameObjects.push_back(transparentCube);
     }
 
     // init lights
@@ -221,13 +213,19 @@ void TestScene::UpdateInternal()
 
     float phase = fmodf(fmodf(Time::GetElapsedTime(), LOOP_DURATION) / LOOP_DURATION, 1.0f);
 
-    GameObjects[0]->SetLocalPosition(CalcTranslation(phase));
-    GameObjects[0]->SetLocalRotation(CalcRotation(phase, 0));
-    GameObjects[0]->SetLocalScale(CalcScale(phase));
+    if (!m_RotatingCube.expired())
+    {
+        auto cube = m_RotatingCube.lock();
+        cube->SetPosition(CalcTranslation(phase));
+        cube->SetLocalRotation(CalcRotation(phase, 0));
+        cube->SetLocalScale(CalcScale(phase));
+    }
 
-    GameObjects[1]->SetLocalRotation(CalcRotation(phase, 1));
+    if (!m_RotatingCylinder1.expired())
+        m_RotatingCylinder1.lock()->SetLocalRotation(CalcRotation(phase, 1));
 
-    GameObjects[2]->SetLocalRotation(CalcRotation(phase, 1));
+    if (!m_RotatingCylinder2.expired())
+        m_RotatingCylinder2.lock()->SetLocalRotation(CalcRotation(phase, 1));
 
     // animateWater
     float   offset = Math::Lerp(0, 1, phase);
@@ -240,15 +238,21 @@ void TestScene::UpdateInternal()
     m_SpotLight->Position        = Camera::Current->GetPosition() + Camera::Current->GetRotation() * Vector3(-3, 0, 0);
     m_SpotLight->Rotation        = Camera::Current->GetRotation();
 
+    if (Input::GetKeyDown('R'))
+    m_RotatingCube.lock()->SetParent(m_RotatingCylinder1.lock());
+    if (Input::GetKeyDown('T'))
+    m_RotatingCube.lock()->SetParent(nullptr);
+
     // gizmos
     if (Input::GetKeyDown('G'))
         m_DrawGizmos = !m_DrawGizmos;
 
     if (m_DrawGizmos)
     {
-        for (const auto &go: GameObjects)
+        for (auto it = cbegin(); it != cend(); it++)
         {
-            if (!go->Renderer)
+            auto go = *it;
+            if (!go || !go->Renderer)
                 continue;
 
             auto bounds = go->Renderer->GetAABB();

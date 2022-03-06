@@ -1,10 +1,39 @@
 #include "gameObject.h"
 #include "core_debug/debug.h"
+#include "scene/scene.h"
 #include "vector4/vector4.h"
 
 std::shared_ptr<GameObject> GameObject::Create(const std::string &_name)
 {
-    return std::shared_ptr<GameObject>(new GameObject(_name));
+    if (!Scene::Current)
+        return nullptr;
+
+    auto ptr = std::shared_ptr<GameObject>(new GameObject(_name));
+    Scene::Current->m_GameObjects.push_back(ptr);
+    return ptr;
+}
+
+void RemoveGameObjectFromCollection(GameObject *_go, std::vector<std::shared_ptr<GameObject>> &_collection)
+{
+    for (auto it = _collection.cbegin(); it != _collection.cend(); it++)
+    {
+        if (it->get() == _go)
+        {
+            _collection.erase(it);
+            return;
+        }
+    }
+}
+
+void GameObject::Destroy()
+{
+    bool hasParent = !Parent.expired();
+    if (!hasParent && !Scene::Current)
+        return;
+
+    auto  parent     = hasParent ? Parent.lock() : nullptr;
+    auto &collection = hasParent ? parent->Children : Scene::Current->m_GameObjects;
+    RemoveGameObjectFromCollection(this, collection);
 }
 
 GameObject::GameObject(const std::string &_name) :
@@ -12,27 +41,22 @@ GameObject::GameObject(const std::string &_name) :
 {
 }
 
-GameObject::~GameObject()
-{
-    Debug::LogError(Name);
-    if (Parent.expired())
-        return;
-
-    // TODO
-}
-
 void GameObject::SetParent(const std::shared_ptr<GameObject> &_gameObject)
 {
-    if (Parent.expired())
-    {
-        Parent = _gameObject;
-        if (_gameObject)
-            _gameObject->Children.push_back(shared_from_this());
-    }
+    bool hadParent = !Parent.expired();
+    auto oldParent = hadParent ? Parent.lock() : nullptr;
+    if (oldParent == _gameObject)
+        return;
 
     Parent = _gameObject;
 
-    // TODO
+    auto &newCollection = _gameObject ? _gameObject->Children : Scene::Current->m_GameObjects;
+    newCollection.push_back(shared_from_this());
+
+    auto &oldCollection = hadParent ? oldParent->Children : Scene::Current->m_GameObjects;
+    RemoveGameObjectFromCollection(this, oldCollection);
+
+    InvalidateTransform();
 }
 
 // global

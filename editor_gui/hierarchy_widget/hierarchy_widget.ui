@@ -55,36 +55,18 @@
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QLabel" name="header">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
          <string>Hierarchy</string>
         </property>
         <property name="indent">
          <number>0</number>
         </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QTreeWidget" name="tree">
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="indentation">
-         <number>10</number>
-        </property>
-        <property name="uniformRowHeights">
-         <bool>false</bool>
-        </property>
-        <property name="itemsExpandable">
-         <bool>true</bool>
-        </property>
-        <attribute name="headerVisible">
-         <bool>false</bool>
-        </attribute>
-        <column>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </column>
        </widget>
       </item>
      </layout>

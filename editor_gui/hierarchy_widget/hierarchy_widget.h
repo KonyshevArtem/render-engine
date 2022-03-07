@@ -4,11 +4,7 @@
 #include <QWidget>
 #include <memory>
 
-class QLayout;
-class QFocusEvent;
-class QTreeWidget;
-class QTreeWidgetItem;
-class GameObject;
+class HierarchyTreeWidget;
 
 namespace Ui
 {
@@ -23,15 +19,9 @@ public:
     HierarchyWidget();
     ~HierarchyWidget();
 
-protected:
-    bool eventFilter(QObject *object, QEvent *event);
-
 private:
     Ui::HierarchyWidget *m_UI;
-    QTreeWidget         *m_Tree;
-
-    void             Update();
-    QTreeWidgetItem *CollectHierarchy(const std::shared_ptr<GameObject> &_gameObject);
+    HierarchyTreeWidget *m_Tree;
 };
 
 #endif // HIERARCHYWIDGET_H

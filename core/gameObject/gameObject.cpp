@@ -43,6 +43,9 @@ GameObject::GameObject(const std::string &_name) :
 
 void GameObject::SetParent(const std::shared_ptr<GameObject> &_gameObject)
 {
+    if (_gameObject.get() == this)
+        return;
+
     bool hadParent = !Parent.expired();
     auto oldParent = hadParent ? Parent.lock() : nullptr;
     if (oldParent == _gameObject)

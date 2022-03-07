@@ -1,20 +1,20 @@
 #include "editor_window.h"
-#include "hierarchy_gui/hierarchy_gui.h"
+#include "hierarchy_widget/hierarchy_widget.h"
 #include "ui_editor_window.h"
 #include <QWidget>
 
 EditorWindow::EditorWindow() :
     QMainWindow(nullptr),
-    ui(new Ui::EditorWindow),
-    m_Hierarchy(new HierarchyGUI())
+    m_UI(new Ui::EditorWindow),
+    m_Hierarchy(new HierarchyWidget())
 {
-    ui->setupUi(this);
-    ui->root->addWidget(m_Hierarchy, 0, 0, -1, 1);
+    m_UI->setupUi(this);
+    m_UI->root->addWidget(m_Hierarchy, 0, 0, -1, 1);
 
     setWindowTitle("Editor");
 }
 
 EditorWindow::~EditorWindow()
 {
-    delete ui;
+    delete m_UI;
 }

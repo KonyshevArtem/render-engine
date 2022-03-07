@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 
-class HierarchyGUI;
+class HierarchyWidget;
 
 namespace Ui
 {
@@ -19,9 +19,9 @@ public:
     ~EditorWindow();
 
 private:
-    Ui::EditorWindow *ui;
+    Ui::EditorWindow *m_UI;
 
-    HierarchyGUI *m_Hierarchy;
+    HierarchyWidget *m_Hierarchy;
 };
 
 #endif // EDITOR_WINDOW_H

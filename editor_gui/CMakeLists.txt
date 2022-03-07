@@ -2,8 +2,8 @@ add_library(
 	Editor
 	editor_window.h
 	editor_window.cpp
-    hierarchy_gui/hierarchy_gui.h
-    hierarchy_gui/hierarchy_gui.cpp
+    hierarchy_widget/hierarchy_widget.h
+    hierarchy_widget/hierarchy_widget.cpp
 )
 
 target_include_directories(Editor PUBLIC .)

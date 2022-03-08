@@ -7,7 +7,7 @@ HierarchyTreeWidgetItem::HierarchyTreeWidgetItem(const std::shared_ptr<GameObjec
 {
 }
 
-std::shared_ptr<GameObject> HierarchyTreeWidgetItem::GetGameObject()
+std::shared_ptr<GameObject> HierarchyTreeWidgetItem::GetGameObject() const
 {
     return !m_GameObject.expired() ? m_GameObject.lock() : nullptr;
 }

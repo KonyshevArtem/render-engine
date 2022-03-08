@@ -1,5 +1,4 @@
 #include "gameObject.h"
-#include "core_debug/debug.h"
 #include "scene/scene.h"
 #include "vector4/vector4.h"
 
@@ -27,12 +26,11 @@ void RemoveGameObjectFromCollection(GameObject *_go, std::vector<std::shared_ptr
 
 void GameObject::Destroy()
 {
-    bool hasParent = !Parent.expired();
-    if (!hasParent && !Scene::Current)
+    auto parent = GetParent();
+    if (!parent && !Scene::Current)
         return;
 
-    auto  parent     = hasParent ? Parent.lock() : nullptr;
-    auto &collection = hasParent ? parent->Children : Scene::Current->m_GameObjects;
+    auto &collection = parent ? parent->Children : Scene::Current->m_GameObjects;
     RemoveGameObjectFromCollection(this, collection);
 }
 
@@ -41,42 +39,57 @@ GameObject::GameObject(const std::string &_name) :
 {
 }
 
-void GameObject::SetParent(const std::shared_ptr<GameObject> &_gameObject)
+std::shared_ptr<GameObject> GameObject::GetParent() const
+{
+    return !m_Parent.expired() ? m_Parent.lock() : nullptr;
+}
+
+void GameObject::SetParent(const std::shared_ptr<GameObject> &_gameObject, int _index)
 {
     if (_gameObject.get() == this)
         return;
 
-    bool hadParent = !Parent.expired();
-    auto oldParent = hadParent ? Parent.lock() : nullptr;
-    if (oldParent == _gameObject)
+    auto oldParent = GetParent();
+    if (oldParent == _gameObject && _index < 0)
         return;
 
-    Parent = _gameObject;
+    auto thisPtr = shared_from_this(); // make pointer copy before removing gameObject from children
 
-    auto &newCollection = _gameObject ? _gameObject->Children : Scene::Current->m_GameObjects;
-    newCollection.push_back(shared_from_this());
-
-    auto &oldCollection = hadParent ? oldParent->Children : Scene::Current->m_GameObjects;
+    auto &oldCollection = oldParent ? oldParent->Children : Scene::Current->m_GameObjects;
     RemoveGameObjectFromCollection(this, oldCollection);
 
+    m_Parent = _gameObject;
+
+    auto &newCollection = _gameObject ? _gameObject->Children : Scene::Current->m_GameObjects;
+    if (_index < 0 || _index >= newCollection.size())
+        newCollection.push_back(thisPtr);
+    else
+    {
+        auto it = newCollection.begin() + _index;
+        newCollection.insert(it, thisPtr);
+    }
+
+    // TODO save world position
     InvalidateTransform();
 }
 
 // global
 void GameObject::SetPosition(const Vector3 &_position)
 {
-    if (Parent.expired())
+    auto parent = GetParent();
+    if (!parent)
         SetLocalPosition(_position);
     else
-        SetLocalPosition(Parent.lock()->GetWorldToLocalMatrix() * _position.ToVector4(1));
+        SetLocalPosition(parent->GetWorldToLocalMatrix() * _position.ToVector4(1));
 }
 
 void GameObject::SetRotation(const Quaternion &_rotation)
 {
-    if (Parent.expired())
+    auto parent = GetParent();
+    if (!parent)
         SetLocalRotation(_rotation);
     else
-        SetLocalRotation(Parent.lock()->GetWorldToLocalMatrix().GetRotation() * _rotation);
+        SetLocalRotation(parent->GetWorldToLocalMatrix().GetRotation() * _rotation);
 }
 
 Vector3 GameObject::GetPosition()
@@ -146,8 +159,10 @@ void GameObject::ValidateTransform()
 
     m_DirtyTransform     = false;
     m_LocalToWorldMatrix = Matrix4x4::TRS(m_LocalPosition, m_LocalRotation, m_LocalScale);
-    if (!Parent.expired())
-        m_LocalToWorldMatrix = Parent.lock()->GetLocalToWorldMatrix() * m_LocalToWorldMatrix;
+
+    auto parent = GetParent();
+    if (parent)
+        m_LocalToWorldMatrix = parent->GetLocalToWorldMatrix() * m_LocalToWorldMatrix;
 
     m_WorldToLocalMatrix = m_LocalToWorldMatrix.Invert();
 }

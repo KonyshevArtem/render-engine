@@ -28,8 +28,8 @@ private:
 
     virtual void UpdateInternal() = 0;
 
-    friend void                        GameObject::SetParent(const std::shared_ptr<GameObject> &_gameObject);
-    friend std::shared_ptr<GameObject> GameObject::Create(const std::string &_name);
+    friend void                        GameObject::SetParent(const std::shared_ptr<GameObject> &, int);
+    friend std::shared_ptr<GameObject> GameObject::Create(const std::string &);
     friend void                        GameObject::Destroy();
 };
 

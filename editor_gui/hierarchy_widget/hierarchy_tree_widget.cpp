@@ -22,23 +22,31 @@ void HierarchyTreeWidget::focusInEvent(QFocusEvent *_event)
 
 void HierarchyTreeWidget::dropEvent(QDropEvent *_event)
 {
-    auto droppedWidget = currentItem();
-    auto dropped       = reinterpret_cast<HierarchyTreeWidgetItem *>(droppedWidget);
-    if (!dropped || dropped->m_GameObject.expired())
+    auto dropped   = reinterpret_cast<HierarchyTreeWidgetItem *>(currentItem());
+    auto droppedGO = dropped ? dropped->GetGameObject() : nullptr;
+    if (!droppedGO)
         return;
 
-    auto dropIndicator = dropIndicatorPosition();
-    if (dropIndicator == DropIndicatorPosition::OnItem)
+    auto index    = indexAt(_event->position().toPoint());
+    auto target   = reinterpret_cast<HierarchyTreeWidgetItem *>(itemFromIndex(index));
+    auto targetGO = target ? target->GetGameObject() : nullptr;
+
+    if (targetGO)
     {
-        auto targetWidget = itemFromIndex(indexAt(_event->position().toPoint()));
-        auto target       = reinterpret_cast<HierarchyTreeWidgetItem *>(targetWidget);
-        auto newParent    = target && !target->m_GameObject.expired() ? target->m_GameObject.lock() : nullptr;
-        dropped->m_GameObject.lock()->SetParent(newParent);
+        auto indicator = dropIndicatorPosition();
+        if (indicator == DropIndicatorPosition::OnItem)
+            droppedGO->SetParent(targetGO);
+        else
+        {
+            int row = index.row() + (indicator == DropIndicatorPosition::BelowItem ? 1 : 0);
+            droppedGO->SetParent(targetGO->GetParent(), row);
+        }
     }
     else
-        dropped->m_GameObject.lock()->SetParent(nullptr);
+        droppedGO->SetParent(nullptr);
 
-    Update();
+    _event->setDropAction(Qt::DropAction::MoveAction);
+    QTreeWidget::dropEvent(_event);
 }
 
 void HierarchyTreeWidget::Update()

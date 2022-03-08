@@ -17,11 +17,11 @@ public:
     void                               Destroy();
 
     std::string                              Name;
-    std::weak_ptr<GameObject>                Parent;
     std::vector<std::shared_ptr<GameObject>> Children;
     std::shared_ptr<Renderer>                Renderer;
 
-    void SetParent(const std::shared_ptr<GameObject> &_gameObject);
+    std::shared_ptr<GameObject> GetParent() const;
+    void                        SetParent(const std::shared_ptr<GameObject> &_gameObject, int _index = -1);
 
     // global
     void SetPosition(const Vector3 &_position);
@@ -63,12 +63,13 @@ private:
     GameObject &operator=(const GameObject &) = delete;
     GameObject &operator=(GameObject &&) = delete;
 
-    Vector3    m_LocalPosition;
-    Quaternion m_LocalRotation      = Quaternion();
-    Vector3    m_LocalScale         = Vector3::One();
-    Matrix4x4  m_LocalToWorldMatrix = Matrix4x4::Identity();
-    Matrix4x4  m_WorldToLocalMatrix = Matrix4x4::Identity();
-    bool       m_DirtyTransform     = true;
+    std::weak_ptr<GameObject> m_Parent;
+    Vector3                   m_LocalPosition;
+    Quaternion                m_LocalRotation      = Quaternion();
+    Vector3                   m_LocalScale         = Vector3::One();
+    Matrix4x4                 m_LocalToWorldMatrix = Matrix4x4::Identity();
+    Matrix4x4                 m_WorldToLocalMatrix = Matrix4x4::Identity();
+    bool                      m_DirtyTransform     = true;
 
     void InvalidateTransform();
     void ValidateTransform();

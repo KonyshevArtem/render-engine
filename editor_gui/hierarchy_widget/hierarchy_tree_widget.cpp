@@ -12,6 +12,7 @@ HierarchyTreeWidget::HierarchyTreeWidget() :
     setIndentation(10);
     setDragEnabled(true);
     setDragDropMode(DragDropMode::DragDrop);
+    setSelectionMode(SelectionMode::ContiguousSelection);
 }
 
 void HierarchyTreeWidget::focusInEvent(QFocusEvent *_event)
@@ -22,28 +23,39 @@ void HierarchyTreeWidget::focusInEvent(QFocusEvent *_event)
 
 void HierarchyTreeWidget::dropEvent(QDropEvent *_event)
 {
-    auto dropped   = reinterpret_cast<HierarchyTreeWidgetItem *>(currentItem());
-    auto droppedGO = dropped ? dropped->GetGameObject() : nullptr;
-    if (!droppedGO)
+    auto                                     droppedItems = selectedItems();
+    std::vector<std::shared_ptr<GameObject>> droppedGOs;
+    for (auto it = droppedItems.cbegin(); it != droppedItems.cend(); it++)
+    {
+        auto widget     = reinterpret_cast<HierarchyTreeWidgetItem *>(*it);
+        auto gameObject = widget ? widget->GetGameObject() : nullptr;
+        if (gameObject)
+            droppedGOs.push_back(gameObject);
+    }
+
+    if (droppedGOs.size() == 0)
         return;
 
     auto index    = indexAt(_event->position().toPoint());
     auto target   = reinterpret_cast<HierarchyTreeWidgetItem *>(itemFromIndex(index));
     auto targetGO = target ? target->GetGameObject() : nullptr;
 
-    if (targetGO)
+    for (const auto &gameObject: droppedGOs)
     {
-        auto indicator = dropIndicatorPosition();
-        if (indicator == DropIndicatorPosition::OnItem)
-            droppedGO->SetParent(targetGO);
-        else
+        if (targetGO)
         {
-            int row = index.row() + (indicator == DropIndicatorPosition::BelowItem ? 1 : 0);
-            droppedGO->SetParent(targetGO->GetParent(), row);
+            auto indicator = dropIndicatorPosition();
+            if (indicator == DropIndicatorPosition::OnItem)
+                gameObject->SetParent(targetGO);
+            else
+            {
+                int row = index.row() + (indicator == DropIndicatorPosition::BelowItem ? 1 : 0);
+                gameObject->SetParent(targetGO->GetParent(), row);
+            }
         }
+        else
+            gameObject->SetParent(nullptr);
     }
-    else
-        droppedGO->SetParent(nullptr);
 
     _event->setDropAction(Qt::DropAction::MoveAction);
     QTreeWidget::dropEvent(_event);

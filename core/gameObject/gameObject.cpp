@@ -46,7 +46,7 @@ std::shared_ptr<GameObject> GameObject::GetParent() const
 
 void GameObject::SetParent(const std::shared_ptr<GameObject> &_gameObject, int _index)
 {
-    if (_gameObject.get() == this)
+    if (_gameObject.get() == this || IsParent(_gameObject))
         return;
 
     auto oldParent = GetParent();
@@ -165,4 +165,20 @@ void GameObject::ValidateTransform()
         m_LocalToWorldMatrix = parent->GetLocalToWorldMatrix() * m_LocalToWorldMatrix;
 
     m_WorldToLocalMatrix = m_LocalToWorldMatrix.Invert();
+}
+
+// helpers
+bool GameObject::IsParent(const std::shared_ptr<GameObject> &_child) const
+{
+    if (!_child)
+        return false;
+
+    auto parent = _child->GetParent();
+    if (!parent)
+        return false;
+
+    if (parent.get() == this)
+        return true;
+
+    return IsParent(parent);
 }

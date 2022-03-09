@@ -55,6 +55,9 @@ public:
         return m_LocalScale;
     };
 
+    // helpers
+    bool IsParent(const std::shared_ptr<GameObject> &_child) const;
+
 private:
     GameObject(const std::string &_name);
     GameObject(const GameObject &) = delete;

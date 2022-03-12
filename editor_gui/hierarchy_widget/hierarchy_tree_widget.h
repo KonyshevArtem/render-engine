@@ -21,8 +21,21 @@ protected:
     void dropEvent(QDropEvent *_event);
 
 private:
-    void                     Update();
-    HierarchyTreeWidgetItem *CollectHierarchy(const std::shared_ptr<GameObject> &_gameObject);
+    void Update();
+
+    void TraverseHierarchy(
+            HierarchyTreeWidgetItem                              *_widget,
+            const std::function<void(HierarchyTreeWidgetItem *)> &_callback);
+
+    void CollectExpandedStatus(
+            std::unordered_map<GameObject *, bool> &_outExpandedStatus,
+            HierarchyTreeWidgetItem                *_widget) const;
+
+    void RestoreExpandedStatus(
+            const std::unordered_map<GameObject *, bool> &_expandedStatus,
+            HierarchyTreeWidgetItem                      *_widget);
+
+    void CreateHierarchy(HierarchyTreeWidgetItem *_widget);
 };
 
 #endif

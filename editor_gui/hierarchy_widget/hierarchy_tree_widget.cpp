@@ -66,28 +66,74 @@ void HierarchyTreeWidget::Update()
     if (!Scene::Current)
         return;
 
-    clear();
+    std::unordered_map<GameObject *, bool> expanded;
+    TraverseHierarchy(nullptr, [this, &expanded](HierarchyTreeWidgetItem *_widget)
+                      { CollectExpandedStatus(expanded, _widget); });
 
-    for (auto it = Scene::Current->cbegin(); it != Scene::Current->cend(); it++)
+    clear();
+    CreateHierarchy(nullptr);
+
+    TraverseHierarchy(nullptr, [this, &expanded](HierarchyTreeWidgetItem *_widget)
+                      { RestoreExpandedStatus(expanded, _widget); });
+}
+
+void HierarchyTreeWidget::TraverseHierarchy(
+        HierarchyTreeWidgetItem                              *_widget,
+        const std::function<void(HierarchyTreeWidgetItem *)> &_callback)
+{
+    bool haveWidget = _widget != nullptr;
+    auto itemsCount = haveWidget ? _widget->childCount() : topLevelItemCount();
+
+    for (int i = 0; i < itemsCount; ++i)
     {
-        auto widget = CollectHierarchy(*it);
-        if (widget)
-            addTopLevelItem(widget);
+        auto child = reinterpret_cast<HierarchyTreeWidgetItem *>(haveWidget ? _widget->child(i) : topLevelItem(i));
+        if (!child)
+            continue;
+
+        _callback(child);
+
+        TraverseHierarchy(child, _callback);
     }
 }
 
-HierarchyTreeWidgetItem *HierarchyTreeWidget::CollectHierarchy(const std::shared_ptr<GameObject> &_gameObject)
+void HierarchyTreeWidget::CollectExpandedStatus(
+        std::unordered_map<GameObject *, bool> &_outExpandedStatus,
+        HierarchyTreeWidgetItem                *_widget) const
 {
-    if (!_gameObject)
-        return nullptr;
+    auto go = _widget ? _widget->GetGameObject() : nullptr;
+    if (go)
+        _outExpandedStatus[go.get()] = _widget->isExpanded();
+}
 
-    auto widget = new HierarchyTreeWidgetItem(_gameObject);
-    for (auto it = _gameObject->Children.cbegin(); it != _gameObject->Children.cend(); it++)
+void HierarchyTreeWidget::RestoreExpandedStatus(
+        const std::unordered_map<GameObject *, bool> &_expandedStatus,
+        HierarchyTreeWidgetItem                      *_widget)
+{
+    auto go = _widget ? _widget->GetGameObject() : nullptr;
+    if (!go)
+        return;
+
+    auto goPtr = go.get();
+    if (_expandedStatus.contains(goPtr))
+        _widget->setExpanded(_expandedStatus.at(goPtr));
+}
+
+void HierarchyTreeWidget::CreateHierarchy(HierarchyTreeWidgetItem *_widget)
+{
+    auto haveWidget = _widget != nullptr;
+    auto parent     = haveWidget ? _widget->GetGameObject() : nullptr;
+    auto begin      = parent ? parent->Children.cbegin() : Scene::Current->cbegin();
+    auto end        = parent ? parent->Children.cend() : Scene::Current->cend();
+
+    for (auto &it = begin; it != end; it++)
     {
-        auto childWidget = CollectHierarchy(*it);
-        if (childWidget)
-            widget->addChild(childWidget);
-    }
+        auto widget = new HierarchyTreeWidgetItem(*it);
 
-    return widget;
+        if (haveWidget)
+            _widget->addChild(widget);
+        else
+            addTopLevelItem(widget);
+
+        CreateHierarchy(widget);
+    }
 }

@@ -238,11 +238,6 @@ void TestScene::UpdateInternal()
     m_SpotLight->Position        = Camera::Current->GetPosition() + Camera::Current->GetRotation() * Vector3(-3, 0, 0);
     m_SpotLight->Rotation        = Camera::Current->GetRotation();
 
-    if (Input::GetKeyDown('R'))
-    m_RotatingCube.lock()->SetParent(m_RotatingCylinder1.lock());
-    if (Input::GetKeyDown('T'))
-    m_RotatingCube.lock()->SetParent(nullptr);
-
     // gizmos
     if (Input::GetKeyDown('G'))
         m_DrawGizmos = !m_DrawGizmos;

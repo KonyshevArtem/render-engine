@@ -61,19 +61,41 @@ void HierarchyTreeWidget::dropEvent(QDropEvent *_event)
     QTreeWidget::dropEvent(_event);
 }
 
+static void CollectExpandedStatus(
+        std::unordered_map<GameObject *, bool> &_outExpandedStatus,
+        HierarchyTreeWidgetItem                *_widget)
+{
+    auto go = _widget ? _widget->GetGameObject() : nullptr;
+    if (go)
+        _outExpandedStatus[go.get()] = _widget->isExpanded();
+}
+
+static void RestoreExpandedStatus(
+        const std::unordered_map<GameObject *, bool> &_expandedStatus,
+        HierarchyTreeWidgetItem                      *_widget)
+{
+    auto go = _widget ? _widget->GetGameObject() : nullptr;
+    if (!go)
+        return;
+
+    auto goPtr = go.get();
+    if (_expandedStatus.contains(goPtr))
+        _widget->setExpanded(_expandedStatus.at(goPtr));
+}
+
 void HierarchyTreeWidget::Update()
 {
     if (!Scene::Current)
         return;
 
     std::unordered_map<GameObject *, bool> expanded;
-    TraverseHierarchy(nullptr, [this, &expanded](HierarchyTreeWidgetItem *_widget)
+    TraverseHierarchy(nullptr, [&expanded](HierarchyTreeWidgetItem *_widget)
                       { CollectExpandedStatus(expanded, _widget); });
 
     clear();
     CreateHierarchy(nullptr);
 
-    TraverseHierarchy(nullptr, [this, &expanded](HierarchyTreeWidgetItem *_widget)
+    TraverseHierarchy(nullptr, [&expanded](HierarchyTreeWidgetItem *_widget)
                       { RestoreExpandedStatus(expanded, _widget); });
 }
 
@@ -94,28 +116,6 @@ void HierarchyTreeWidget::TraverseHierarchy(
 
         TraverseHierarchy(child, _callback);
     }
-}
-
-void HierarchyTreeWidget::CollectExpandedStatus(
-        std::unordered_map<GameObject *, bool> &_outExpandedStatus,
-        HierarchyTreeWidgetItem                *_widget) const
-{
-    auto go = _widget ? _widget->GetGameObject() : nullptr;
-    if (go)
-        _outExpandedStatus[go.get()] = _widget->isExpanded();
-}
-
-void HierarchyTreeWidget::RestoreExpandedStatus(
-        const std::unordered_map<GameObject *, bool> &_expandedStatus,
-        HierarchyTreeWidgetItem                      *_widget)
-{
-    auto go = _widget ? _widget->GetGameObject() : nullptr;
-    if (!go)
-        return;
-
-    auto goPtr = go.get();
-    if (_expandedStatus.contains(goPtr))
-        _widget->setExpanded(_expandedStatus.at(goPtr));
 }
 
 void HierarchyTreeWidget::CreateHierarchy(HierarchyTreeWidgetItem *_widget)

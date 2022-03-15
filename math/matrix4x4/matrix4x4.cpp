@@ -228,5 +228,8 @@ Quaternion Matrix4x4::GetRotation() const
 
 Vector3 Matrix4x4::GetScale() const
 {
-    return {m00, m11, m22};
+    float x = Vector3 {m00, m01, m02}.Length();
+    float y = Vector3 {m10, m11, m12}.Length();
+    float z = Vector3 {m20, m21, m22}.Length();
+    return {x, y, z};
 }

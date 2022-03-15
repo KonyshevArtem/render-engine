@@ -54,6 +54,8 @@ void GameObject::SetParent(const std::shared_ptr<GameObject> &_gameObject, int _
         return;
 
     auto thisPtr = shared_from_this(); // make pointer copy before removing gameObject from children
+    auto pos     = GetPosition();
+    auto rot     = GetRotation();
 
     auto &oldCollection = oldParent ? oldParent->Children : Scene::Current->m_GameObjects;
     RemoveGameObjectFromCollection(this, oldCollection);
@@ -69,8 +71,8 @@ void GameObject::SetParent(const std::shared_ptr<GameObject> &_gameObject, int _
         newCollection.insert(it, thisPtr);
     }
 
-    // TODO save world position
-    InvalidateTransform();
+    SetPosition(pos);
+    SetRotation(rot);
 }
 
 // global
@@ -89,7 +91,7 @@ void GameObject::SetRotation(const Quaternion &_rotation)
     if (!parent)
         SetLocalRotation(_rotation);
     else
-        SetLocalRotation(parent->GetWorldToLocalMatrix().GetRotation() * _rotation);
+        SetLocalRotation(parent->GetRotation().Inverse() * _rotation);
 }
 
 Vector3 GameObject::GetPosition()
@@ -97,16 +99,16 @@ Vector3 GameObject::GetPosition()
     return GetLocalToWorldMatrix().GetPosition();
 }
 
-
 Quaternion GameObject::GetRotation()
 {
-    return GetLocalToWorldMatrix().GetRotation();
+    ValidateTransform();
+    return m_Rotation;
 }
-
 
 Vector3 GameObject::GetLossyScale()
 {
-    return GetLocalToWorldMatrix().GetScale();
+    auto parent = GetParent();
+    return parent ? parent->GetLossyScale() * m_LocalScale : m_LocalScale;
 }
 
 // local
@@ -165,6 +167,8 @@ void GameObject::ValidateTransform()
         m_LocalToWorldMatrix = parent->GetLocalToWorldMatrix() * m_LocalToWorldMatrix;
 
     m_WorldToLocalMatrix = m_LocalToWorldMatrix.Invert();
+
+    m_Rotation = parent ? parent->GetRotation() * m_LocalRotation : m_LocalRotation;
 }
 
 // helpers

@@ -69,6 +69,11 @@ Vector3 Vector3::operator*(const Vector3 &_vector) const
     return {x * _vector.x, y * _vector.y, z * _vector.z};
 }
 
+Vector3 Vector3::operator/(const Vector3 &_vector) const
+{
+    return {x / _vector.x, y / _vector.y, z / _vector.z};
+}
+
 Vector4 Vector3::ToVector4(float _w) const
 {
     return {x, y, z, _w};

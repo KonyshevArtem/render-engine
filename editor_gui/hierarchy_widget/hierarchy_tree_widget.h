@@ -27,14 +27,6 @@ private:
             HierarchyTreeWidgetItem                              *_widget,
             const std::function<void(HierarchyTreeWidgetItem *)> &_callback);
 
-    void CollectExpandedStatus(
-            std::unordered_map<GameObject *, bool> &_outExpandedStatus,
-            HierarchyTreeWidgetItem                *_widget) const;
-
-    void RestoreExpandedStatus(
-            const std::unordered_map<GameObject *, bool> &_expandedStatus,
-            HierarchyTreeWidgetItem                      *_widget);
-
     void CreateHierarchy(HierarchyTreeWidgetItem *_widget);
 };
 

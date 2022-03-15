@@ -141,6 +141,7 @@ void TestScene::Init()
         auto transparentCube      = GameObject::Create("Transparent Cube " + std::to_string(i));
         transparentCube->Renderer = std::make_shared<MeshRenderer>(transparentCube, cubeMesh, transparentMaterial);
         transparentCube->SetLocalPosition(Vector3(-10.0f + 5 * i, -5, 12));
+        transparentCube->SetLocalRotation(Quaternion::AngleAxis(30, {0, 1, 0}));
     }
 
     // init lights

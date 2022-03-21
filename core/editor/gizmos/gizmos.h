@@ -1,3 +1,5 @@
+#if OPENGL_STUDY_EDITOR
+
 #ifndef OPENGL_STUDY_GIZMOS_H
 #define OPENGL_STUDY_GIZMOS_H
 
@@ -41,5 +43,7 @@ namespace Gizmos
     std::vector<Gizmos::GizmosDrawInfo> GetDrawInfos();
     void                                ClearDrawInfos();
 } // namespace Gizmos
+
+#endif
 
 #endif

@@ -1,12 +1,24 @@
 #include "texture_2d.h"
-#include "lodepng.h"
 #include "core_debug/debug.h"
+#include "lodepng.h"
 #include "utils.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
 #endif
+
+std::shared_ptr<Texture2D> Texture2D::Create(int _width, int _height)
+{
+    auto t      = std::shared_ptr<Texture2D>(new Texture2D());
+    t->m_Width  = _width;
+    t->m_Height = _height;
+    t->m_Data.resize(_width * _height * 4);
+
+    t->Init(GL_SRGB_ALPHA, GL_RGBA, GL_UNSIGNED_BYTE, GL_REPEAT);
+
+    return t;
+}
 
 std::shared_ptr<Texture2D> Texture2D::CreateShadowMap(int _width, int _height)
 {

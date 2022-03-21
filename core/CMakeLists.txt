@@ -53,10 +53,12 @@ add_library(
 	core_debug/debug.h 
 	bounds/bounds.h
 	bounds/bounds.cpp
-	gizmos/gizmos_pass.h
-	gizmos/gizmos_pass.cpp 
-	gizmos/gizmos.h 
-	gizmos/gizmos.cpp)
+	editor/gizmos/gizmos_pass.h
+	editor/gizmos/gizmos_pass.cpp 
+	editor/gizmos/gizmos.h 
+	editor/gizmos/gizmos.cpp
+	editor/hierarchy.h
+	editor/hierarchy.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils LodePNG OpenFBX)

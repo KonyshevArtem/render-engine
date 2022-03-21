@@ -9,6 +9,7 @@
 class Texture2D: public Texture
 {
 public:
+    static std::shared_ptr<Texture2D>        Create(int _width, int _height);
     static std::shared_ptr<Texture2D>        CreateShadowMap(int _width, int _height);
     static std::shared_ptr<Texture2D>        Load(const std::filesystem::path &_path, bool _srgb = true, bool _hasAlpha = false);
     static const std::shared_ptr<Texture2D> &White();

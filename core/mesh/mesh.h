@@ -7,6 +7,7 @@
 #elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
 #endif
+#include <memory>
 #include <vector>
 
 struct Vector2;
@@ -17,14 +18,15 @@ class Mesh
 public:
     Mesh(std::vector<Vector3> &_vertices,
          std::vector<Vector3> &_normals,
-         std::vector<int> &    _indexes,
+         std::vector<int>     &_indexes,
          std::vector<Vector2> &_uvs,
          std::vector<Vector3> &_tangents);
+    ~Mesh();
 
     void   Draw() const;
     Bounds GetBounds() const;
 
-    ~Mesh();
+    static const std::shared_ptr<Mesh> &GetFullscreenMesh();
 
 private:
     Mesh(const Mesh &) = delete;

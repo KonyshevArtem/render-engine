@@ -4,7 +4,7 @@
 #include "camera/camera.h"
 #include "cubemap/cubemap.h"
 #include "fbx_asset/fbx_asset.h"
-#include "gizmos/gizmos.h"
+#include "editor/gizmos/gizmos.h"
 #include "input/input.h"
 #include "light/light.h"
 #include "material/material.h"
@@ -240,6 +240,7 @@ void TestScene::UpdateInternal()
     m_SpotLight->Rotation        = Camera::Current->GetRotation();
 
     // gizmos
+    #if OPENGL_STUDY_EDITOR
     if (Input::GetKeyDown('G'))
         m_DrawGizmos = !m_DrawGizmos;
 
@@ -255,4 +256,5 @@ void TestScene::UpdateInternal()
             Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
         }
     }
+    #endif
 }

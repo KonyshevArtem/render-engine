@@ -2,8 +2,8 @@
 #include "camera/camera.h"
 #include "context.h"
 #include "core_debug/debug.h"
-#include "gizmos/gizmos.h"
-#include "gizmos/gizmos_pass.h"
+#include "editor/gizmos/gizmos.h"
+#include "editor/gizmos/gizmos_pass.h"
 #include "light/light.h"
 #include "passes/render_pass.h"
 #include "passes/shadow_caster_pass.h"
@@ -30,7 +30,10 @@ namespace Graphics
     std::unique_ptr<RenderPass>       opaqueRenderPass;
     std::unique_ptr<RenderPass>       tranparentRenderPass;
     std::unique_ptr<SkyboxPass>       skyboxPass;
-    std::unique_ptr<GizmosPass>       gizmosPass;
+
+#if OPENGL_STUDY_EDITOR
+    std::unique_ptr<GizmosPass> gizmosPass;
+#endif
 
     int screenWidth  = 0;
     int screenHeight = 0;
@@ -69,7 +72,10 @@ namespace Graphics
         tranparentRenderPass = std::make_unique<RenderPass>("Transparent", Renderer::Sorting::BACK_TO_FRONT, Renderer::Filter::Transparent(), 0);
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
-        gizmosPass           = std::make_unique<GizmosPass>();
+
+#if OPENGL_STUDY_EDITOR
+        gizmosPass = std::make_unique<GizmosPass>();
+#endif
     }
 
     void Init()
@@ -80,7 +86,9 @@ namespace Graphics
             throw;
 #endif
 
+#if OPENGL_STUDY_EDITOR
         Gizmos::Init();
+#endif
 
         InitCulling();
         InitDepth();
@@ -159,12 +167,15 @@ namespace Graphics
             skyboxPass->Execute(ctx);
         if (tranparentRenderPass)
             tranparentRenderPass->Execute(ctx);
+
+#if OPENGL_STUDY_EDITOR
         if (gizmosPass)
             gizmosPass->Execute(ctx);
 
-        Debug::CheckOpenGLError();
-
         Gizmos::ClearDrawInfos();
+#endif
+
+        Debug::CheckOpenGLError();
     }
 
     void Reshape(int _width, int _height)

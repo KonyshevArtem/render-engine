@@ -4,7 +4,7 @@
 
 Mesh::Mesh(std::vector<Vector3> &_vertices,
            std::vector<Vector3> &_normals,
-           std::vector<int> &    _indexes,
+           std::vector<int>     &_indexes,
            std::vector<Vector2> &_uvs,
            std::vector<Vector3> &_tangents) :
     m_Vertices(std::move(_vertices)),
@@ -62,6 +62,13 @@ Mesh::Mesh(std::vector<Vector3> &_vertices,
     glBindVertexArray(0);
 }
 
+Mesh::~Mesh()
+{
+    glDeleteVertexArrays(1, &m_VertexArrayObject);
+    glDeleteBuffers(1, &m_VertexBuffer);
+    glDeleteBuffers(1, &m_IndexBuffer);
+}
+
 void Mesh::Draw() const
 {
     glBindVertexArray(m_VertexArrayObject);
@@ -74,9 +81,19 @@ Bounds Mesh::GetBounds() const
     return m_Bounds;
 }
 
-Mesh::~Mesh()
+const std::shared_ptr<Mesh> &Mesh::GetFullscreenMesh()
 {
-    glDeleteVertexArrays(1, &m_VertexArrayObject);
-    glDeleteBuffers(1, &m_VertexBuffer);
-    glDeleteBuffers(1, &m_IndexBuffer);
+    static std::shared_ptr<Mesh> fullscreenMesh = nullptr;
+    if (!fullscreenMesh)
+    {
+        auto vertices  = std::vector<Vector3> {{-1, -1, 0.5f}, {1, -1, 0.5f}, {1, 1, 0.5f}, {-1, 1, 0.5f}};
+        auto normals   = std::vector<Vector3> {};
+        auto indexes   = std::vector<int> {0, 2, 1, 0, 3, 2};
+        auto uvs       = std::vector<Vector2> {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+        auto tangents  = std::vector<Vector3> {};
+        fullscreenMesh = std::make_shared<Mesh>(vertices, normals, indexes, uvs, tangents);
+    }
+
+
+    return fullscreenMesh;
 }

@@ -6,6 +6,7 @@
 
 class QFocusEvent;
 class QDropEvent;
+class QPaintEvent;
 class GameObject;
 class HierarchyTreeWidgetItem;
 
@@ -19,6 +20,7 @@ public:
 protected:
     void focusInEvent(QFocusEvent *_event);
     void dropEvent(QDropEvent *_event);
+    void paintEvent(QPaintEvent *_event);
 
 private:
     void Update();
@@ -28,6 +30,8 @@ private:
             const std::function<void(HierarchyTreeWidgetItem *)> &_callback);
 
     void CreateHierarchy(HierarchyTreeWidgetItem *_widget);
+
+    std::vector<std::shared_ptr<GameObject>> GetSelectedGameObjects();
 };
 
 #endif

@@ -1,3 +1,5 @@
+#if OPENGL_STUDY_EDITOR
+
 #include "gizmos.h"
 #include "vector3/vector3.h"
 
@@ -79,3 +81,5 @@ void Gizmos::ClearDrawInfos()
 {
     m_DrawInfos.clear();
 }
+
+#endif

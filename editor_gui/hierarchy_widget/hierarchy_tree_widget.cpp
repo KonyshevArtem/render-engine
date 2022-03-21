@@ -1,9 +1,11 @@
 #include "hierarchy_tree_widget.h"
+#include "editor/hierarchy.h"
 #include "gameObject/gameObject.h"
 #include "hierarchy_tree_widget_item.h"
 #include "scene/scene.h"
 #include <QDropEvent>
 #include <QFocusEvent>
+#include <QPaintEvent>
 
 HierarchyTreeWidget::HierarchyTreeWidget() :
     QTreeWidget(nullptr)
@@ -23,16 +25,7 @@ void HierarchyTreeWidget::focusInEvent(QFocusEvent *_event)
 
 void HierarchyTreeWidget::dropEvent(QDropEvent *_event)
 {
-    auto                                     droppedItems = selectedItems();
-    std::vector<std::shared_ptr<GameObject>> droppedGOs;
-    for (auto it = droppedItems.cbegin(); it != droppedItems.cend(); it++)
-    {
-        auto widget     = reinterpret_cast<HierarchyTreeWidgetItem *>(*it);
-        auto gameObject = widget ? widget->GetGameObject() : nullptr;
-        if (gameObject)
-            droppedGOs.push_back(gameObject);
-    }
-
+    auto droppedGOs = GetSelectedGameObjects();
     if (droppedGOs.size() == 0)
         return;
 
@@ -59,6 +52,13 @@ void HierarchyTreeWidget::dropEvent(QDropEvent *_event)
 
     _event->setDropAction(Qt::DropAction::MoveAction);
     QTreeWidget::dropEvent(_event);
+}
+
+void HierarchyTreeWidget::paintEvent(QPaintEvent *_event)
+{
+    QTreeWidget::paintEvent(_event);
+
+    Hierarchy::SetSelectedGameObjects(GetSelectedGameObjects());
 }
 
 static void CollectExpandedStatus(
@@ -136,4 +136,18 @@ void HierarchyTreeWidget::CreateHierarchy(HierarchyTreeWidgetItem *_widget)
 
         CreateHierarchy(widget);
     }
+}
+
+std::vector<std::shared_ptr<GameObject>> HierarchyTreeWidget::GetSelectedGameObjects()
+{
+    auto                                     items = selectedItems();
+    std::vector<std::shared_ptr<GameObject>> selectedGameObjects;
+    for (auto it = items.cbegin(); it != items.cend(); it++)
+    {
+        auto widget     = reinterpret_cast<HierarchyTreeWidgetItem *>(*it);
+        auto gameObject = widget ? widget->GetGameObject() : nullptr;
+        if (gameObject)
+            selectedGameObjects.push_back(gameObject);
+    }
+    return selectedGameObjects;
 }

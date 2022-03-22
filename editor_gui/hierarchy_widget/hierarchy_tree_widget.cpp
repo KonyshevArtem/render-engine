@@ -14,7 +14,7 @@ HierarchyTreeWidget::HierarchyTreeWidget() :
     setIndentation(10);
     setDragEnabled(true);
     setDragDropMode(DragDropMode::DragDrop);
-    setSelectionMode(SelectionMode::ContiguousSelection);
+    setSelectionMode(SelectionMode::ExtendedSelection);
 }
 
 void HierarchyTreeWidget::focusInEvent(QFocusEvent *_event)

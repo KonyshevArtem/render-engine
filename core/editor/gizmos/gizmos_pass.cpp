@@ -30,50 +30,35 @@ void GizmosPass::Execute(Context &_context)
 
 void GizmosPass::Outline() const
 {
-    static std::shared_ptr<Shader>    outlineCreateShader = Shader::Load("resources/shaders/outline/outlineCreate.shader", {});
-    static std::shared_ptr<Shader>    outlineBlitShader   = Shader::Load("resources/shaders/outline/outlineBlit.shader", {});
-    static std::shared_ptr<Texture2D> selectedGOTexture   = nullptr;
-    static std::shared_ptr<Texture2D> outlineTexture      = nullptr;
-    static Vector4                    outlineColor {1, 0, 0, 1};
+    static std::shared_ptr<Shader>    outlineBlitShader = Shader::Load("resources/shaders/outline/outlineBlit.shader", {});
+    static std::shared_ptr<Texture2D> outlineTexture    = nullptr;
+    static Vector4                    outlineColor {1, 0.73f, 0, 1};
 
     auto debugGroup = Debug::DebugGroup("Selected outline pass");
 
-    CheckTexture(selectedGOTexture);
     CheckTexture(outlineTexture);
 
     // render selected gameObjects
     {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer);
-        selectedGOTexture->Attach(GL_COLOR_ATTACHMENT0);
+        outlineTexture->Attach(GL_COLOR_ATTACHMENT0);
 
         glClear(GL_COLOR_BUFFER_BIT);
         for (const auto &renderer: Hierarchy::GetSelectedRenderers())
             renderer->Render();
-    }
-
-    // create outline
-    {
-        outlineTexture->Attach(GL_COLOR_ATTACHMENT0);
-
-        int  width     = selectedGOTexture->GetWidth();
-        int  height    = selectedGOTexture->GetHeight();
-        auto texelSize = Vector4 {static_cast<float>(width), static_cast<float>(height), 1.0f / width, 1.0f / height}; // TODO: do automatic texelsize
-
-        outlineCreateShader->Use();
-        outlineCreateShader->SetTextureUniform("_Tex", *selectedGOTexture);
-        outlineCreateShader->SetUniform("_Tex_TexelSize", &texelSize);
-
-        glClear(GL_COLOR_BUFFER_BIT);
-        Mesh::GetFullscreenMesh()->Draw();
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     }
 
     // blit to screen
     {
+        int  width     = outlineTexture->GetWidth();
+        int  height    = outlineTexture->GetHeight();
+        auto texelSize = Vector4 {static_cast<float>(width), static_cast<float>(height), 1.0f / width, 1.0f / height}; // TODO: do automatic texelsize
+
         outlineBlitShader->Use();
         outlineBlitShader->SetTextureUniform("_Tex", *outlineTexture);
-        outlineBlitShader->SetTextureUniform("_OrigTex", *selectedGOTexture);
+        outlineBlitShader->SetUniform("_Tex_TexelSize", &texelSize);
         outlineBlitShader->SetUniform("_Color", &outlineColor);
         Mesh::GetFullscreenMesh()->Draw();
     }

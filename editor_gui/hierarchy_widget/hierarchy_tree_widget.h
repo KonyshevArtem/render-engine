@@ -7,6 +7,8 @@
 class QFocusEvent;
 class QDropEvent;
 class QPaintEvent;
+class QKeyEvent;
+class QPoint;
 class GameObject;
 class HierarchyTreeWidgetItem;
 
@@ -21,6 +23,7 @@ protected:
     void focusInEvent(QFocusEvent *_event);
     void dropEvent(QDropEvent *_event);
     void paintEvent(QPaintEvent *_event);
+    void keyPressEvent(QKeyEvent *_event);
 
 private:
     void Update();
@@ -32,6 +35,10 @@ private:
     void CreateHierarchy(HierarchyTreeWidgetItem *_widget);
 
     std::vector<std::shared_ptr<GameObject>> GetSelectedGameObjects();
+
+public slots:
+    void PrepareMenu(const QPoint &_pos);
+    void DestroyGameObjects(const std::vector<std::shared_ptr<GameObject>> &_gameObjects);
 };
 
 #endif

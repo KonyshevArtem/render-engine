@@ -5,7 +5,12 @@
 #include "scene/scene.h"
 #include <QDropEvent>
 #include <QFocusEvent>
+#include <QKeyEvent>
+#include <QMenu>
 #include <QPaintEvent>
+#include <QPoint>
+#include <QSignalMapper>
+
 
 HierarchyTreeWidget::HierarchyTreeWidget() :
     QTreeWidget(nullptr)
@@ -15,6 +20,9 @@ HierarchyTreeWidget::HierarchyTreeWidget() :
     setDragEnabled(true);
     setDragDropMode(DragDropMode::DragDrop);
     setSelectionMode(SelectionMode::ExtendedSelection);
+    setContextMenuPolicy(Qt::CustomContextMenu);
+
+    connect(this, &QTreeWidget::customContextMenuRequested, this, &HierarchyTreeWidget::PrepareMenu);
 }
 
 void HierarchyTreeWidget::focusInEvent(QFocusEvent *_event)
@@ -59,6 +67,17 @@ void HierarchyTreeWidget::paintEvent(QPaintEvent *_event)
     QTreeWidget::paintEvent(_event);
 
     Hierarchy::SetSelectedGameObjects(GetSelectedGameObjects());
+}
+
+void HierarchyTreeWidget::keyPressEvent(QKeyEvent *_event)
+{
+    QTreeWidget::keyPressEvent(_event);
+
+    if (_event->key() == Qt::Key_Delete)
+    {
+        auto selectedGameObjects = GetSelectedGameObjects();
+        DestroyGameObjects(selectedGameObjects);
+    }
 }
 
 static void CollectExpandedStatus(
@@ -136,6 +155,30 @@ void HierarchyTreeWidget::CreateHierarchy(HierarchyTreeWidgetItem *_widget)
 
         CreateHierarchy(widget);
     }
+}
+
+void HierarchyTreeWidget::PrepareMenu(const QPoint &_pos)
+{
+    auto selectedGameObjects = GetSelectedGameObjects();
+
+    auto deleteAction = new QAction("Delete", this);
+    connect(deleteAction, &QAction::triggered, this, [this, selectedGameObjects]
+            { DestroyGameObjects(selectedGameObjects); });
+
+    QMenu menu(this);
+    menu.addAction(deleteAction);
+    menu.exec(mapToGlobal(_pos));
+}
+
+void HierarchyTreeWidget::DestroyGameObjects(const std::vector<std::shared_ptr<GameObject>> &_gameObjects)
+{
+    if (_gameObjects.empty())
+        return;
+
+    for (const auto &go: _gameObjects)
+        go->Destroy();
+
+    Update();
 }
 
 std::vector<std::shared_ptr<GameObject>> HierarchyTreeWidget::GetSelectedGameObjects()

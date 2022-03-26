@@ -13,9 +13,8 @@ std::shared_ptr<Texture2D> Texture2D::Create(int _width, int _height)
     auto t      = std::shared_ptr<Texture2D>(new Texture2D());
     t->m_Width  = _width;
     t->m_Height = _height;
-    t->m_Data.resize(_width * _height * 4);
 
-    t->Init(GL_SRGB_ALPHA, GL_RGBA, GL_UNSIGNED_BYTE, GL_REPEAT);
+    t->Init(GL_SRGB_ALPHA, GL_RGBA, GL_UNSIGNED_BYTE, false);
 
     return t;
 }
@@ -25,9 +24,8 @@ std::shared_ptr<Texture2D> Texture2D::CreateShadowMap(int _width, int _height)
     auto t      = std::shared_ptr<Texture2D>(new Texture2D());
     t->m_Width  = _width;
     t->m_Height = _height;
-    t->m_Data.resize(_width * _height * 3);
 
-    t->Init(GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, GL_REPEAT);
+    t->Init(GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, false);
 
     return t;
 }
@@ -54,7 +52,7 @@ std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path, b
 
     auto format = _hasAlpha ? GL_RGBA : GL_RGB;
 
-    t->Init(internalFormat, format, GL_UNSIGNED_BYTE, GL_REPEAT);
+    t->Init(internalFormat, format, GL_UNSIGNED_BYTE, true);
 
     return t;
 }
@@ -74,7 +72,7 @@ const std::shared_ptr<Texture2D> &Texture2D::White()
     white->m_Data.push_back(255);
     white->m_Data.push_back(255);
 
-    white->Init(GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
+    white->Init(GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, true);
 
     return white;
 }
@@ -94,7 +92,7 @@ const std::shared_ptr<Texture2D> &Texture2D::Normal()
     normal->m_Data.push_back(125);
     normal->m_Data.push_back(255);
 
-    normal->Init(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT);
+    normal->Init(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, true);
 
     return normal;
 }
@@ -105,16 +103,16 @@ const std::shared_ptr<Texture2D> &Texture2D::Null()
     return null;
 }
 
-void Texture2D::Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode)
+void Texture2D::Init(GLint _internalFormat, GLenum _format, GLenum _type, bool _loadData)
 {
     glGenTextures(1, &m_Texture);
     glGenSamplers(1, &m_Sampler);
     glBindTexture(GL_TEXTURE_2D, m_Texture);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, _wrapMode);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, _wrapMode);
+    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, m_Width, m_Height, 0, _format, _type, m_Data.data()); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, m_Width, m_Height, 0, _format, _type, _loadData ? m_Data.data() : nullptr); // NOLINT(cppcoreguidelines-narrowing-conversions)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -128,4 +126,12 @@ void Texture2D::Bind(int _unit) const
 void Texture2D::Attach(GLenum _attachment)
 {
     glFramebufferTexture(GL_FRAMEBUFFER, _attachment, m_Texture, 0);
+}
+
+void Texture2D::SetWrapMode(GLenum _wrapMode) const
+{
+    glBindTexture(GL_TEXTURE_2D, m_Texture);
+    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, _wrapMode);
+    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, _wrapMode);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }

@@ -34,6 +34,7 @@ namespace ShaderLoader
         std::unordered_map<std::string, std::string> Tags;
         std::string                                  ShaderPartPaths[SHADER_PART_COUNT];
         bool                                         ZWrite = true;
+        GLenum                                       ZTest  = GL_LEQUAL;
         Shader::BlendInfo                            BlendInfo;
     };
 
@@ -49,7 +50,16 @@ namespace ShaderLoader
         return GL_ONE;
     }
 
-    Shader::BlendInfo ParseBlendInfo(const boost::json::object& _obj)
+    GLenum ParseDepthFunc(const std::string &_literal)
+    {
+        if (_literal == "Always")
+            return GL_ALWAYS;
+
+        Debug::LogErrorFormat("[Shader Loader] Unsupported depth func: %1%", {_literal});
+        return GL_LEQUAL;
+    }
+
+    Shader::BlendInfo ParseBlendInfo(const boost::json::object &_obj)
     {
         using namespace boost::json;
 
@@ -66,7 +76,7 @@ namespace ShaderLoader
         return info;
     }
 
-    ShaderInfo tag_invoke(const boost::json::value_to_tag<ShaderInfo>&, boost::json::value const &_value)
+    ShaderInfo tag_invoke(const boost::json::value_to_tag<ShaderInfo> &, boost::json::value const &_value)
     {
         using namespace boost::json;
 
@@ -84,6 +94,10 @@ namespace ShaderLoader
 
         // parse zWrite
         info.ZWrite = !obj.contains("zWrite") || obj.at("zWrite").as_bool();
+
+        // parse z func
+        if (obj.contains("zTest"))
+            info.ZTest = ParseDepthFunc(value_to<std::string>(obj.at("zTest")));
 
         // parse blend
         info.BlendInfo = ParseBlendInfo(obj);
@@ -202,6 +216,7 @@ namespace ShaderLoader
                                                       shaderInfo.DefaultValues,
                                                       shaderInfo.Tags,
                                                       shaderInfo.ZWrite,
+                                                      shaderInfo.ZTest,
                                                       shaderInfo.BlendInfo));
         }
         catch (std::exception _exception)

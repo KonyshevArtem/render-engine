@@ -30,8 +30,7 @@ private:
 
     void Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode);
 
-    unsigned int               m_Count;
-    std::vector<unsigned char> m_Data;
+    unsigned int m_Count;
 };
 
 #endif //OPENGL_STUDY_TEXTURE_2D_ARRAY_H

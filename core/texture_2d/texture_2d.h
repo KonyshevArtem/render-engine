@@ -19,6 +19,8 @@ public:
     void Bind(int _unit) const override;
     void Attach(GLenum _attachment);
 
+    void SetWrapMode(GLenum _wrapMode) const;
+
     virtual ~Texture2D() = default;
 
 private:
@@ -29,7 +31,7 @@ private:
     Texture2D &operator=(const Texture2D &) = delete;
     Texture2D &operator=(Texture2D &&)      = delete;
 
-    void Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode);
+    void Init(GLint _internalFormat, GLenum _format, GLenum _type, bool _loadData);
 
     std::vector<unsigned char> m_Data;
 };

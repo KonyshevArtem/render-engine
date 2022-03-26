@@ -27,7 +27,7 @@ void Texture2DArray::Init(GLint _internalFormat, GLenum _format, GLenum _type, G
     glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_R, _wrapMode);
     glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, _internalFormat, m_Width, m_Height, m_Count, 0, _format, _type, m_Data.data()); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, _internalFormat, m_Width, m_Height, m_Count, 0, _format, _type, nullptr); // NOLINT(cppcoreguidelines-narrowing-conversions)
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 

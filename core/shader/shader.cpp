@@ -1,17 +1,17 @@
 #include "shader.h"
-#include "vector4/vector4.h"
-#include "utils.h"
 #include "core_debug/debug.h"
 #include "cubemap/cubemap.h"
 #include "texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
+#include "utils.h"
+#include "vector4/vector4.h"
 
 typedef std::unordered_map<std::string, std::unordered_map<UniformType, std::shared_ptr<Texture>>> DefaultTexturesMap;
 
 std::unordered_map<std::string, std::shared_ptr<Texture>> Shader::m_GlobalTextures    = {};
 std::string                                               Shader::m_ReplacementTag    = "";
-const Shader *                                            Shader::m_CurrentShader     = nullptr;
-const Shader *                                            Shader::m_ReplacementShader = nullptr;
+const Shader                                             *Shader::m_CurrentShader     = nullptr;
+const Shader                                             *Shader::m_ReplacementShader = nullptr;
 
 #pragma region inner types
 
@@ -51,11 +51,13 @@ Shader::Shader(GLuint                                       _program,
                std::unordered_map<std::string, std::string> _defaultValues,
                std::unordered_map<std::string, std::string> _tags,
                bool                                         _zWrite,
+               GLenum                                       _zTest,
                BlendInfo                                    _blendInfo) :
     m_Program(_program),
     m_DefaultValues(std::move(_defaultValues)),
     m_Tags(std::move(_tags)),
     m_ZWrite(_zWrite),
+    m_ZTest(_zTest),
     m_BlendInfo(_blendInfo)
 {
     auto lightingUniformIndex   = glGetUniformBlockIndex(m_Program, "Lighting");
@@ -123,6 +125,7 @@ bool Shader::Use() const
 
     glUseProgram(m_CurrentShader->m_Program);
     glDepthMask(m_CurrentShader->m_ZWrite ? GL_TRUE : GL_FALSE);
+    glDepthFunc(m_CurrentShader->m_ZTest);
 
     m_CurrentShader->m_BlendInfo.Apply();
 

@@ -42,12 +42,13 @@ private:
            std::unordered_map<std::string, std::string> _defaultValues,
            std::unordered_map<std::string, std::string> _tags,
            bool                                         _zWrite,
+           GLenum                                       _zTest,
            BlendInfo                                    _blendInfo);
     Shader(const Shader &) = delete;
     Shader(Shader &&)      = delete;
 
     Shader &operator=(const Shader &) = delete;
-    Shader &operator=(Shader &&)      = delete;
+    Shader &operator=(Shader &&) = delete;
 
 #pragma endregion
 
@@ -57,6 +58,7 @@ private:
     GLuint                                       m_Program;
     bool                                         m_ZWrite;
     BlendInfo                                    m_BlendInfo;
+    GLenum                                       m_ZTest;
     std::unordered_map<std::string, UniformInfo> m_Uniforms;
     std::unordered_map<std::string, int>         m_TextureUnits;
     std::unordered_map<std::string, std::string> m_DefaultValues;
@@ -64,8 +66,8 @@ private:
 
     static std::unordered_map<std::string, std::shared_ptr<Texture>> m_GlobalTextures;
     static std::string                                               m_ReplacementTag;
-    static const Shader *                                            m_CurrentShader;
-    static const Shader *                                            m_ReplacementShader;
+    static const Shader                                             *m_CurrentShader;
+    static const Shader                                             *m_ReplacementShader;
 
 #pragma endregion
 

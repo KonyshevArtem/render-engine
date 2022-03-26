@@ -43,7 +43,7 @@ void GizmosPass::Outline() const
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer);
         outlineTexture->Attach(GL_COLOR_ATTACHMENT0);
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (const auto &renderer: Hierarchy::GetSelectedRenderers())
             renderer->Render();
 
@@ -86,7 +86,10 @@ void GizmosPass::CheckTexture(std::shared_ptr<Texture2D> &_texture) const
     int width  = Graphics::GetScreenWidth();
     int height = Graphics::GetScreenHeight();
     if (!_texture || _texture->GetWidth() != width || _texture->GetHeight() != height)
+    {
         _texture = Texture2D::Create(width, height);
+        _texture->SetWrapMode(GL_CLAMP);
+    }
 }
 
 #endif

@@ -49,7 +49,6 @@ namespace Graphics
     {
         glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_TRUE);
-        glDepthFunc(GL_LEQUAL);
         glDepthRange(0, 1);
     }
 

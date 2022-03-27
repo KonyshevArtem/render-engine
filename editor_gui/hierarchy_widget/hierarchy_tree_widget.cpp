@@ -110,26 +110,33 @@ void HierarchyTreeWidget::keyPressEvent(QKeyEvent *_event)
     }
 }
 
-static void CollectExpandedStatus(
-        std::unordered_map<GameObject *, bool> &_outExpandedStatus,
-        HierarchyTreeWidgetItem                *_widget)
+void HierarchyTreeWidget::CollectStatusInfo(
+        std::unordered_map<GameObject *, ItemStatus> &_status,
+        HierarchyTreeWidgetItem                      *_widget)
 {
     auto go = _widget ? _widget->GetGameObject() : nullptr;
     if (go)
-        _outExpandedStatus[go.get()] = _widget->isExpanded();
+        _status[go.get()] = {_widget->isExpanded(), _widget->isSelected(), _widget == currentItem()};
 }
 
-static void RestoreExpandedStatus(
-        const std::unordered_map<GameObject *, bool> &_expandedStatus,
-        HierarchyTreeWidgetItem                      *_widget)
+void HierarchyTreeWidget::RestoreStatus(
+        const std::unordered_map<GameObject *, ItemStatus> &_status,
+        HierarchyTreeWidgetItem                            *_widget)
 {
     auto go = _widget ? _widget->GetGameObject() : nullptr;
     if (!go)
         return;
 
     auto goPtr = go.get();
-    if (_expandedStatus.contains(goPtr))
-        _widget->setExpanded(_expandedStatus.at(goPtr));
+    if (_status.contains(goPtr))
+    {
+        auto &status = _status.at(goPtr);
+        _widget->setExpanded(status.Expanded);
+        _widget->setSelected(status.Selected);
+
+        if (status.Current)
+            setCurrentItem(_widget);
+    }
 }
 
 void HierarchyTreeWidget::Update()
@@ -139,15 +146,15 @@ void HierarchyTreeWidget::Update()
 
     m_GameObjectToItem.clear();
 
-    std::unordered_map<GameObject *, bool> expanded;
-    TraverseHierarchy(nullptr, [&expanded](HierarchyTreeWidgetItem *_widget)
-                      { CollectExpandedStatus(expanded, _widget); });
+    std::unordered_map<GameObject *, ItemStatus> status;
+    TraverseHierarchy(nullptr, [this, &status](HierarchyTreeWidgetItem *_widget)
+                      { CollectStatusInfo(status, _widget); });
 
     clear();
     CreateHierarchy(nullptr);
 
-    TraverseHierarchy(nullptr, [&expanded](HierarchyTreeWidgetItem *_widget)
-                      { RestoreExpandedStatus(expanded, _widget); });
+    TraverseHierarchy(nullptr, [this, &status](HierarchyTreeWidgetItem *_widget)
+                      { RestoreStatus(status, _widget); });
 }
 
 void HierarchyTreeWidget::TraverseHierarchy(

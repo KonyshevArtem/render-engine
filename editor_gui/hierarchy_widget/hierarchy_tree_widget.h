@@ -28,11 +28,26 @@ protected:
     void keyPressEvent(QKeyEvent *_event);
 
 private:
+    struct ItemStatus
+    {
+        bool Expanded;
+        bool Selected;
+        bool Current;
+    };
+
     void Update();
 
     void TraverseHierarchy(
             HierarchyTreeWidgetItem                              *_widget,
             const std::function<void(HierarchyTreeWidgetItem *)> &_callback);
+
+    void CollectStatusInfo(
+            std::unordered_map<GameObject *, ItemStatus> &_status,
+            HierarchyTreeWidgetItem                      *_widget);
+
+    void RestoreStatus(
+            const std::unordered_map<GameObject *, ItemStatus> &_status,
+            HierarchyTreeWidgetItem                            *_widget);
 
     void CreateHierarchy(HierarchyTreeWidgetItem *_widget);
     void DestroyGameObjects(const std::vector<std::shared_ptr<GameObject>> &_gameObjects);

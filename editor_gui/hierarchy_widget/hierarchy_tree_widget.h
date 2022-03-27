@@ -3,12 +3,14 @@
 
 #include <QTreeWidget>
 #include <memory>
+#include <unordered_map>
 
 class QFocusEvent;
 class QDropEvent;
 class QPaintEvent;
 class QKeyEvent;
 class QPoint;
+class QLineEdit;
 class GameObject;
 class HierarchyTreeWidgetItem;
 
@@ -33,12 +35,21 @@ private:
             const std::function<void(HierarchyTreeWidgetItem *)> &_callback);
 
     void CreateHierarchy(HierarchyTreeWidgetItem *_widget);
+    void DestroyGameObjects(const std::vector<std::shared_ptr<GameObject>> &_gameObjects);
+
+    bool IsRenaming() const;
+    void StartRenaming(std::shared_ptr<GameObject> _gameObject);
+    void StopRenaming(bool _success);
 
     std::vector<std::shared_ptr<GameObject>> GetSelectedGameObjects();
 
+    QLineEdit                                                  *m_LineEdit;
+    std::shared_ptr<GameObject>                                 m_RenamingGameObject;
+    std::unordered_map<GameObject *, HierarchyTreeWidgetItem *> m_GameObjectToItem;
+
 public slots:
     void PrepareMenu(const QPoint &_pos);
-    void DestroyGameObjects(const std::vector<std::shared_ptr<GameObject>> &_gameObjects);
+    void RenamingFinished();
 };
 
 #endif

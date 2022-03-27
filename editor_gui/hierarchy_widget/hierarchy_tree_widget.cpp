@@ -6,14 +6,24 @@
 #include <QDropEvent>
 #include <QFocusEvent>
 #include <QKeyEvent>
+#include <QLineEdit>
 #include <QMenu>
 #include <QPaintEvent>
 #include <QPoint>
 #include <QSignalMapper>
 
 
+#ifdef OPENGL_STUDY_WINDOWS
+#define OPENGL_STUDY_RENAME_KEY Qt::Key_F2
+#elif OPENGL_STUDY_MACOS
+#define OPENGL_STUDY_RENAME_KEY Qt::Key_Enter
+#endif
+
+
 HierarchyTreeWidget::HierarchyTreeWidget() :
-    QTreeWidget(nullptr)
+    QTreeWidget(nullptr),
+    m_LineEdit(new QLineEdit(this)),
+    m_RenamingGameObject(nullptr)
 {
     setHeaderHidden(true);
     setIndentation(10);
@@ -23,6 +33,9 @@ HierarchyTreeWidget::HierarchyTreeWidget() :
     setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(this, &QTreeWidget::customContextMenuRequested, this, &HierarchyTreeWidget::PrepareMenu);
+
+    m_LineEdit->setVisible(false);
+    connect(m_LineEdit, &QLineEdit::editingFinished, this, &HierarchyTreeWidget::RenamingFinished);
 }
 
 void HierarchyTreeWidget::focusInEvent(QFocusEvent *_event)
@@ -73,10 +86,25 @@ void HierarchyTreeWidget::keyPressEvent(QKeyEvent *_event)
 {
     QTreeWidget::keyPressEvent(_event);
 
-    if (_event->key() == Qt::Key_Delete)
+    auto key = _event->key();
+    if (IsRenaming())
     {
-        auto selectedGameObjects = GetSelectedGameObjects();
-        DestroyGameObjects(selectedGameObjects);
+        if (key == Qt::Key_Escape)
+            StopRenaming(false);
+    }
+    else
+    {
+        if (key == Qt::Key_Delete)
+        {
+            auto selectedGameObjects = GetSelectedGameObjects();
+            DestroyGameObjects(selectedGameObjects);
+        }
+        else if (key == OPENGL_STUDY_RENAME_KEY)
+        {
+            auto selectedGameObjects = GetSelectedGameObjects();
+            if (!selectedGameObjects.empty())
+                StartRenaming(selectedGameObjects[0]);
+        }
     }
 }
 
@@ -106,6 +134,8 @@ void HierarchyTreeWidget::Update()
 {
     if (!Scene::Current)
         return;
+
+    m_GameObjectToItem.clear();
 
     std::unordered_map<GameObject *, bool> expanded;
     TraverseHierarchy(nullptr, [&expanded](HierarchyTreeWidgetItem *_widget)
@@ -146,7 +176,8 @@ void HierarchyTreeWidget::CreateHierarchy(HierarchyTreeWidgetItem *_widget)
 
     for (auto &it = begin; it != end; it++)
     {
-        auto widget = new HierarchyTreeWidgetItem(*it);
+        auto widget                   = new HierarchyTreeWidgetItem(*it);
+        m_GameObjectToItem[it->get()] = widget;
 
         if (haveWidget)
             _widget->addChild(widget);
@@ -160,12 +191,19 @@ void HierarchyTreeWidget::CreateHierarchy(HierarchyTreeWidgetItem *_widget)
 void HierarchyTreeWidget::PrepareMenu(const QPoint &_pos)
 {
     auto selectedGameObjects = GetSelectedGameObjects();
+    if (selectedGameObjects.empty())
+        return;
+
+    auto renameAction = new QAction("Rename", this);
+    connect(renameAction, &QAction::triggered, this, [this, &selectedGameObjects]
+            { StartRenaming(selectedGameObjects[0]); });
 
     auto deleteAction = new QAction("Delete", this);
-    connect(deleteAction, &QAction::triggered, this, [this, selectedGameObjects]
+    connect(deleteAction, &QAction::triggered, this, [this, &selectedGameObjects]
             { DestroyGameObjects(selectedGameObjects); });
 
     QMenu menu(this);
+    menu.addAction(renameAction);
     menu.addAction(deleteAction);
     menu.exec(mapToGlobal(_pos));
 }
@@ -193,4 +231,52 @@ std::vector<std::shared_ptr<GameObject>> HierarchyTreeWidget::GetSelectedGameObj
             selectedGameObjects.push_back(gameObject);
     }
     return selectedGameObjects;
+}
+
+bool HierarchyTreeWidget::IsRenaming() const
+{
+    return m_LineEdit->isVisible() && m_RenamingGameObject;
+}
+
+void HierarchyTreeWidget::StartRenaming(std::shared_ptr<GameObject> _gameObject)
+{
+    if (!_gameObject || !m_GameObjectToItem.contains(_gameObject.get()))
+        return;
+
+    auto item = m_GameObjectToItem.at(_gameObject.get());
+    if (!item)
+        return;
+
+    auto rect = visualItemRect(item);
+    m_LineEdit->move(rect.topLeft());
+    m_LineEdit->resize(rect.size());
+
+    m_LineEdit->setText(_gameObject->Name.c_str());
+    m_LineEdit->selectAll();
+
+    m_LineEdit->setVisible(true);
+    m_LineEdit->setFocus();
+
+    m_RenamingGameObject = _gameObject;
+}
+
+void HierarchyTreeWidget::StopRenaming(bool _success)
+{
+    if (_success && m_RenamingGameObject)
+    {
+        auto newName               = m_LineEdit->text();
+        m_RenamingGameObject->Name = newName.toStdString();
+
+        if (m_GameObjectToItem.contains(m_RenamingGameObject.get()))
+            m_GameObjectToItem.at(m_RenamingGameObject.get())->setText(0, newName);
+    }
+
+    // important to set gameobject to nullptr before disabling line edit
+    m_RenamingGameObject = nullptr;
+    m_LineEdit->setVisible(false);
+}
+
+void HierarchyTreeWidget::RenamingFinished()
+{
+    StopRenaming(true);
 }

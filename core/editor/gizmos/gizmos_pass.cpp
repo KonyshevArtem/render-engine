@@ -88,7 +88,7 @@ void GizmosPass::CheckTexture(std::shared_ptr<Texture2D> &_texture) const
     if (!_texture || _texture->GetWidth() != width || _texture->GetHeight() != height)
     {
         _texture = Texture2D::Create(width, height);
-        _texture->SetWrapMode(GL_CLAMP);
+        _texture->SetWrapMode(GL_CLAMP_TO_EDGE);
     }
 }
 

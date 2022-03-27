@@ -14,9 +14,11 @@
 
 
 #ifdef OPENGL_STUDY_WINDOWS
+#define OPENGL_STUDY_DELETE_KEY Qt::Key_Delete
 #define OPENGL_STUDY_RENAME_KEY Qt::Key_F2
 #elif OPENGL_STUDY_MACOS
-#define OPENGL_STUDY_RENAME_KEY Qt::Key_Enter
+#define OPENGL_STUDY_DELETE_KEY Qt::Key_Backspace
+#define OPENGL_STUDY_RENAME_KEY Qt::Key_Return
 #endif
 
 
@@ -94,7 +96,7 @@ void HierarchyTreeWidget::keyPressEvent(QKeyEvent *_event)
     }
     else
     {
-        if (key == Qt::Key_Delete)
+        if (key == OPENGL_STUDY_DELETE_KEY)
         {
             auto selectedGameObjects = GetSelectedGameObjects();
             DestroyGameObjects(selectedGameObjects);

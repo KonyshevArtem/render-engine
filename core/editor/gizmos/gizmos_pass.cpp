@@ -6,6 +6,7 @@
 #include "gizmos.h"
 #include "graphics/context.h"
 #include "graphics/graphics.h"
+#include "material/material.h"
 #include "mesh/mesh.h"
 #include "renderer/renderer.h"
 #include "shader/shader.h"
@@ -30,8 +31,8 @@ void GizmosPass::Execute(Context &_context)
 
 void GizmosPass::Outline() const
 {
-    static std::shared_ptr<Shader>    outlineBlitShader = Shader::Load("resources/shaders/outline/outlineBlit.shader", {});
-    static std::shared_ptr<Texture2D> outlineTexture    = nullptr;
+    static std::shared_ptr<Material>  outlineMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/outline/outlineBlit.shader", {}));
+    static std::shared_ptr<Texture2D> outlineTexture  = nullptr;
     static Vector4                    outlineColor {1, 0.73f, 0, 1};
 
     auto debugGroup = Debug::DebugGroup("Selected outline pass");
@@ -52,15 +53,9 @@ void GizmosPass::Outline() const
 
     // blit to screen
     {
-        int  width     = outlineTexture->GetWidth();
-        int  height    = outlineTexture->GetHeight();
-        auto texelSize = Vector4 {static_cast<float>(width), static_cast<float>(height), 1.0f / width, 1.0f / height}; // TODO: do automatic texelsize
-
-        outlineBlitShader->Use();
-        outlineBlitShader->SetTextureUniform("_Tex", *outlineTexture);
-        outlineBlitShader->SetUniform("_Tex_TexelSize", &texelSize);
-        outlineBlitShader->SetUniform("_Color", &outlineColor);
-        Mesh::GetFullscreenMesh()->Draw();
+        outlineMaterial->SetTexture("_Tex", outlineTexture);
+        outlineMaterial->SetVector("_Color", outlineColor);
+        Mesh::GetFullscreenMesh()->Draw(*outlineMaterial);
     }
 }
 
@@ -70,15 +65,12 @@ void GizmosPass::Gizmos() const
 
     auto debugGroup = Debug::DebugGroup("Gizmos pass");
 
-    gizmosShader->Use();
-
     for (const auto &drawInfo: Gizmos::GetDrawInfos())
     {
-        gizmosShader->SetUniform("_ModelMatrix", &drawInfo.Matrix);
+        Shader::SetGlobalMatrix("_ModelMatrix", drawInfo.Matrix);
+        gizmosShader->Use();
         drawInfo.Primitive->Draw();
     }
-
-    Shader::DetachCurrentShader();
 }
 
 void GizmosPass::CheckTexture(std::shared_ptr<Texture2D> &_texture) const

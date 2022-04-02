@@ -9,7 +9,7 @@ in Varyings
 } vars;
 
 uniform sampler2D _Albedo;
-uniform vec4 _AlbedoST;
+uniform vec4 _Albedo_ST;
 
 #ifdef _SMOOTHNESS
 uniform float _Smoothness;
@@ -17,7 +17,7 @@ uniform float _Smoothness;
 
 #ifdef _NORMAL_MAP
 uniform sampler2D _NormalMap;
-uniform vec4 _NormalMapST;
+uniform vec4 _NormalMap_ST;
 #endif
 
 #include "../common/camera_data.cg"
@@ -33,5 +33,5 @@ void main(){
     vec4 light = vec4(getLight(vars.PositionWS.xyz, normalWS), 1);
     #endif
 
-    outColor = texture(_Albedo, vars.UV * _AlbedoST.zw + _AlbedoST.xy) * light;
+    outColor = texture(_Albedo, vars.UV * _Albedo_ST.zw + _Albedo_ST.xy) * light;
 }

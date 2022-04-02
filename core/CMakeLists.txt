@@ -58,7 +58,9 @@ add_library(
 	editor/gizmos/gizmos.h 
 	editor/gizmos/gizmos.cpp
 	editor/hierarchy.h
-	editor/hierarchy.cpp)
+	editor/hierarchy.cpp
+	property_block/property_block.h
+	property_block/property_block.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils LodePNG OpenFBX)

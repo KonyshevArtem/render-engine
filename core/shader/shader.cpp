@@ -1,17 +1,17 @@
 #include "shader.h"
 #include "core_debug/debug.h"
 #include "cubemap/cubemap.h"
+#include "property_block/property_block.h"
 #include "texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
 #include "utils.h"
-#include "vector4/vector4.h"
 
 typedef std::unordered_map<std::string, std::unordered_map<UniformType, std::shared_ptr<Texture>>> DefaultTexturesMap;
 
-std::unordered_map<std::string, std::shared_ptr<Texture>> Shader::m_GlobalTextures    = {};
-std::string                                               Shader::m_ReplacementTag    = "";
-const Shader                                             *Shader::m_CurrentShader     = nullptr;
-const Shader                                             *Shader::m_ReplacementShader = nullptr;
+PropertyBlock Shader::m_PropertyBlock;
+std::string   Shader::m_ReplacementTag    = "";
+const Shader *Shader::m_CurrentShader     = nullptr;
+const Shader *Shader::m_ReplacementShader = nullptr;
 
 #pragma region inner types
 
@@ -130,11 +130,8 @@ bool Shader::Use() const
     m_CurrentShader->m_BlendInfo.Apply();
 
     m_CurrentShader->SetDefaultValues();
-    for (const auto &pair: m_CurrentShader->m_GlobalTextures)
-    {
-        if (pair.second != nullptr)
-            m_CurrentShader->SetTextureUniform(pair.first, *pair.second);
-    }
+
+    SetPropertyBlock(m_PropertyBlock);
 
     return true;
 }
@@ -153,6 +150,14 @@ void Shader::SetTextureUniform(const std::string &_name, const Texture &_texture
     auto unit = m_CurrentShader->m_TextureUnits.at(_name);
     _texture.Bind(unit);
     SetUniform(_name, &unit);
+
+    Vector4 st = Vector4(0, 0, 1, 1);
+    SetUniform(_name + "_ST", &st);
+
+    int  width     = _texture.GetWidth();
+    int  height    = _texture.GetHeight();
+    auto texelSize = Vector4 {static_cast<float>(width), static_cast<float>(height), 1.0f / width, 1.0f / height};
+    SetUniform(_name + "_TexelSize", &texelSize);
 }
 
 void Shader::SetReplacementShader(const Shader *_shader, const std::string &_tag)
@@ -168,34 +173,64 @@ void Shader::DetachReplacementShader()
     m_ReplacementShader = nullptr;
 }
 
-void Shader::DetachCurrentShader()
+
+void Shader::SetPropertyBlock(const PropertyBlock &_propertyBlock)
 {
-    if (m_CurrentShader == nullptr)
-        return;
-
-    for (const auto &pair: m_CurrentShader->m_TextureUnits)
+    for (const auto &pair: _propertyBlock.m_Textures)
     {
-        glActiveTexture(GL_TEXTURE0 + pair.second);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-        glBindSampler(pair.second, 0);
+        if (pair.second != nullptr)
+            SetTextureUniform(pair.first, *pair.second);
     }
-
-    m_CurrentShader = nullptr;
-    glUseProgram(0);
-    glDepthMask(GL_TRUE); // enable depth mask, otherwise depth won't be cleared
+    for (const auto &pair: _propertyBlock.m_Vectors)
+        SetUniform(pair.first, &pair.second);
+    for (const auto &pair: _propertyBlock.m_Floats)
+        SetUniform(pair.first, &pair.second);
+    for (const auto &pair: _propertyBlock.m_Matrices)
+        SetUniform(pair.first, &pair.second);
 }
 
-void Shader::SetGlobalTexture(const std::string &_name, std::shared_ptr<Texture> _texture)
+
+void Shader::SetGlobalTexture(const std::string &_name, std::shared_ptr<Texture> _value)
 {
-    if (_texture == nullptr)
-        return;
+    m_PropertyBlock.SetTexture(_name, _value);
+}
 
-    m_GlobalTextures[_name] = std::move(_texture);
+const std::shared_ptr<Texture> Shader::GetGlobalTexture(const std::string &_name)
+{
+    return m_PropertyBlock.GetTexture(_name);
+}
 
-    if (m_CurrentShader != nullptr)
-        m_CurrentShader->SetTextureUniform(_name, *m_GlobalTextures[_name]);
+
+void Shader::SetGlobalVector(const std::string &_name, const Vector4 &_value)
+{
+    m_PropertyBlock.SetVector(_name, _value);
+}
+
+Vector4 Shader::GetGlobalVector(const std::string &_name)
+{
+    return m_PropertyBlock.GetVector(_name);
+}
+
+
+void Shader::SetGlobalFloat(const std::string &_name, float _value)
+{
+    m_PropertyBlock.SetFloat(_name, _value);
+}
+
+float Shader::GetGlobalFloat(const std::string &_name)
+{
+    return m_PropertyBlock.GetFloat(_name);
+}
+
+
+void Shader::SetGlobalMatrix(const std::string &_name, const Matrix4x4 &_value)
+{
+    m_PropertyBlock.SetMatrix(_name, _value);
+}
+
+Matrix4x4 Shader::GetGlobalMatrix(const std::string &_name)
+{
+    return m_PropertyBlock.GetMatrix(_name);
 }
 
 #pragma endregion
@@ -226,13 +261,8 @@ void Shader::SetDefaultValues() const
 
         if (UniformUtils::IsTexture(type))
         {
-            if (!defaultTextures.contains(defaultValueLiteral) || !defaultTextures.at(defaultValueLiteral).contains(type))
-                return;
-
-            SetTextureUniform(uniformName, *defaultTextures.at(defaultValueLiteral).at(type));
-
-            Vector4 st = Vector4(0, 0, 1, 1);
-            SetUniform(uniformName + "ST", &st);
+            if (defaultTextures.contains(defaultValueLiteral) && defaultTextures.at(defaultValueLiteral).contains(type))
+                SetTextureUniform(uniformName, *defaultTextures.at(defaultValueLiteral).at(type));
         }
         else
         {

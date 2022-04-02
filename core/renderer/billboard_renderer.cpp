@@ -1,9 +1,9 @@
 #include "billboard_renderer.h"
 #include "matrix4x4/matrix4x4.h"
-#include "vector2/vector2.h"
-#include "vector3/vector3.h"
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
+#include "vector3/vector3.h"
+#include "vector4/vector4.h"
 #include <vector>
 
 BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, std::shared_ptr<Texture2D> _texture) :
@@ -44,11 +44,11 @@ void BillboardRenderer::Render() const
     if (!shader->Use())
         return;
 
-    Shader::SetTextureUniform("_Texture", *m_Texture);
+    Shader::SetGlobalTexture("_Texture", m_Texture);
 
     auto    aspect = static_cast<float>(width) / height;
-    Vector2 size {m_Size, m_Size / aspect};
-    Shader::SetUniform("_Size", &size);
+    Vector4 size {m_Size, m_Size / aspect, 0, 0};
+    Shader::SetGlobalVector("_Size", size);
 
     auto position = GetModelMatrix().GetPosition();
 
@@ -58,7 +58,6 @@ void BillboardRenderer::Render() const
     glDrawArrays(GL_POINTS, 0, 1);
 
     glBindVertexArray(0);
-    Shader::DetachCurrentShader();
 }
 
 Bounds BillboardRenderer::GetAABB() const

@@ -104,6 +104,7 @@ void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
 {
     auto debugGroup = Debug::DebugGroup("Render shadow map");
 
+    glDepthMask(GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (const auto *r: _renderers)

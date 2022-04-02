@@ -231,8 +231,8 @@ void TestScene::UpdateInternal()
     // animateWater
     float   offset = Math::Lerp(0, 1, phase);
     Vector4 st     = Vector4(offset, offset, 3, 3);
-    m_WaterMaterial->SetVector4("_AlbedoST", st);
-    m_WaterMaterial->SetVector4("_NormalMapST", st);
+    m_WaterMaterial->SetVector("_Albedo_ST", Vector4(offset, offset, 3, 3));
+    m_WaterMaterial->SetVector("_NormalMap_ST", Vector4(offset, offset, 3, 3));
 
     // animate light
     m_DirectionalLight->Rotation = Quaternion::AngleAxis(50.0f * Time::GetDeltaTime(), Vector3 {0, 1, 0}) * m_DirectionalLight->Rotation;

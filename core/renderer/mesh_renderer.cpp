@@ -1,6 +1,6 @@
 #include "mesh_renderer.h"
-#include "matrix4x4/matrix4x4.h"
 #include "material/material.h"
+#include "matrix4x4/matrix4x4.h"
 #include "mesh/mesh.h"
 #include "shader/shader.h"
 
@@ -15,20 +15,12 @@ MeshRenderer::MeshRenderer(const std::shared_ptr<GameObject> &_gameObject,
 
 void MeshRenderer::Render() const
 {
-    const auto &shader = m_Material->GetShader();
-    if (shader == nullptr || !shader->Use())
-        return;
+    Matrix4x4 modelMatrix = GetModelMatrix();
 
-    Matrix4x4 modelMatrix       = GetModelMatrix();
-    Matrix4x4 modelNormalMatrix = modelMatrix.Invert().Transpose();
+    Shader::SetGlobalMatrix("_ModelMatrix", modelMatrix);
+    Shader::SetGlobalMatrix("_ModelNormalMatrix", modelMatrix.Invert().Transpose());
 
-    Shader::SetUniform("_ModelMatrix", &modelMatrix);
-    Shader::SetUniform("_ModelNormalMatrix", &modelNormalMatrix);
-
-    m_Material->TransferUniforms();
-    m_Mesh->Draw();
-
-    Shader::DetachCurrentShader();
+    m_Mesh->Draw(*m_Material);
 }
 
 Bounds MeshRenderer::GetAABB() const

@@ -19,13 +19,13 @@ struct Context
 public:
     Context();
 
-    Vector3                 AmbientLight;
-    std::vector<Light *>    Lights;
-    std::vector<Renderer *> Renderers;
-    Matrix4x4               ViewMatrix       = Matrix4x4();
-    Matrix4x4               ProjectionMatrix = Matrix4x4();
-    Cubemap                *Skybox;
-    float                   ShadowDistance;
+    Vector3                  AmbientLight;
+    std::vector<Light *>     Lights;
+    std::vector<Renderer *>  Renderers;
+    Matrix4x4                ViewMatrix       = Matrix4x4();
+    Matrix4x4                ProjectionMatrix = Matrix4x4();
+    std::shared_ptr<Cubemap> Skybox;
+    float                    ShadowDistance;
 
 private:
     void CollectRenderers(const std::shared_ptr<GameObject> &_gameObject);

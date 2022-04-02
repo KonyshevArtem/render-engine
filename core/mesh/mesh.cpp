@@ -1,4 +1,6 @@
 #include "mesh.h"
+#include "material/material.h"
+#include "shader/shader.h"
 #include "vector2/vector2.h"
 #include "vector3/vector3.h"
 
@@ -69,8 +71,13 @@ Mesh::~Mesh()
     glDeleteBuffers(1, &m_IndexBuffer);
 }
 
-void Mesh::Draw() const
+void Mesh::Draw(const Material &_material) const
 {
+    if (!_material.GetShader()->Use())
+        return;
+
+    Shader::SetPropertyBlock(_material.GetPropertyBlock());
+
     glBindVertexArray(m_VertexArrayObject);
     glDrawElements(GL_TRIANGLES, m_Indexes.size(), GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);

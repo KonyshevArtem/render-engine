@@ -12,6 +12,7 @@
 
 struct Vector2;
 struct Vector3;
+class Material;
 
 class Mesh
 {
@@ -23,7 +24,7 @@ public:
          std::vector<Vector3> &_tangents);
     ~Mesh();
 
-    void   Draw() const;
+    void   Draw(const Material &_material) const;
     Bounds GetBounds() const;
 
     static const std::shared_ptr<Mesh> &GetFullscreenMesh();

@@ -11,7 +11,7 @@ Context::Context()
     const auto &scene = Scene::Current;
 
     AmbientLight     = scene->AmbientLight;
-    Skybox           = scene->Skybox.get();
+    Skybox           = scene->Skybox;
     ViewMatrix       = Camera::Current->GetViewMatrix();
     ProjectionMatrix = Camera::Current->GetProjectionMatrix();
     ShadowDistance   = Camera::Current->GetShadowDistance();

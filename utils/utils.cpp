@@ -15,19 +15,20 @@ namespace Utils
 {
     std::string ReadFile(const std::filesystem::path &_relativePath)
     {
-        auto *file = fopen((GetExecutableDirectory() / _relativePath).string().c_str(), "r");
+        auto  path = (GetExecutableDirectory() / _relativePath).string();
+        auto *file = fopen(path.c_str(), "r");
         if (file == nullptr)
-            return "";
+            throw std::runtime_error("[Utils] Can't open file: " + path);
 
         if (fseek(file, 0, SEEK_END) != 0)
-            return "";
+            throw std::runtime_error("[Utils] Error reading file: " + path);
 
         auto fileSize = ftell(file);
         if (fileSize == -1L)
-            return "";
+            throw std::runtime_error("[Utils] Error reading file: " + path);
 
         if (fseek(file, 0, SEEK_SET) != 0)
-            return "";
+            throw std::runtime_error("[Utils] Error reading file: " + path);
 
         std::string content(fileSize, ' ');
         int         c;

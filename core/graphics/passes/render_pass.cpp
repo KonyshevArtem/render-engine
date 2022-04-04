@@ -1,14 +1,19 @@
 #include "render_pass.h"
+#include "../context.h"
+#include "core_debug/debug.h"
+#include "graphics/render_settings.h"
 #include "matrix4x4/matrix4x4.h"
 #include "vector3/vector3.h"
-#include "core_debug/debug.h"
-#include "../context.h"
 #include <algorithm>
-#include <vector>
 #include <iterator>
+#include <vector>
 
-RenderPass::RenderPass(const std::string &_name, Renderer::Sorting _rendererSorting, Renderer::Filter _filter, GLbitfield _clearFlags) :
-    m_Name(_name), m_Sorting(_rendererSorting), m_Filter(_filter), m_ClearFlags(_clearFlags)
+RenderPass::RenderPass(const std::string &_name, Renderer::Sorting _rendererSorting, Renderer::Filter _filter, GLbitfield _clearFlags, RenderSettings _renderSettings) :
+    m_Name(_name),
+    m_Sorting(std::move(_rendererSorting)),
+    m_Filter(std::move(_filter)),
+    m_ClearFlags(_clearFlags),
+    m_RenderSettings(std::move(_renderSettings))
 {
 }
 
@@ -16,6 +21,7 @@ void RenderPass::Execute(const Context &_ctx)
 {
     auto debugGroup = Debug::DebugGroup("Render pass " + m_Name);
 
+    glDepthMask(GL_TRUE);
     glClear(m_ClearFlags);
 
     std::vector<Renderer *> filteredRenderers;
@@ -27,6 +33,6 @@ void RenderPass::Execute(const Context &_ctx)
     for (const auto *r: filteredRenderers)
     {
         if (r != nullptr)
-            r->Render();
+            r->Render(m_RenderSettings);
     }
 }

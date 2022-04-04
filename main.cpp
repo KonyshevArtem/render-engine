@@ -23,9 +23,16 @@ void display()
     Input::CleanUp();
 }
 
-int main(int argc, char **argv)
+#ifdef OPENGL_STUDY_WINDOWS
+INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow)
+#elif OPENGL_STUDY_MACOS
+int main(int __argc, char **__argv)
+#endif
 {
-    QApplication application(argc, argv);
+    // init debug first so that errors from initialization of other components will be intersepted
+    Debug::Init();
+
+    QApplication application(__argc, __argv);
 
     #if OPENGL_STUDY_EDITOR
     EditorWindow editor;
@@ -45,7 +52,6 @@ int main(int argc, char **argv)
     window.show();
 
     Time::Init();
-    Debug::Init();
 
     TestScene::Load();
 

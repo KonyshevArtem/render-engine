@@ -8,25 +8,9 @@
 
 typedef std::unordered_map<std::string, std::unordered_map<UniformType, std::shared_ptr<Texture>>> DefaultTexturesMap;
 
-PropertyBlock Shader::m_PropertyBlock;
-std::string   Shader::m_ReplacementTag    = "";
-const Shader *Shader::m_CurrentShader     = nullptr;
-const Shader *Shader::m_ReplacementShader = nullptr;
+PropertyBlock           Shader::m_PropertyBlock;
+const Shader::PassInfo *Shader::m_CurrentPass = nullptr;
 
-#pragma region inner types
-
-void Shader::BlendInfo::Apply() const
-{
-    if (Enabled)
-    {
-        glEnable(GL_BLEND);
-        glBlendFunc(SrcFactor, DstFactor);
-    }
-    else
-        glDisable(GL_BLEND);
-}
-
-#pragma endregion
 
 #pragma region construction
 
@@ -47,130 +31,89 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const s
     return shader;
 }
 
-Shader::Shader(GLuint                                       _program,
-               std::unordered_map<std::string, std::string> _defaultValues,
-               std::unordered_map<std::string, std::string> _tags,
-               bool                                         _zWrite,
-               GLenum                                       _zTest,
-               BlendInfo                                    _blendInfo) :
-    m_Program(_program),
-    m_DefaultValues(std::move(_defaultValues)),
-    m_Tags(std::move(_tags)),
-    m_ZWrite(_zWrite),
-    m_ZTest(_zTest),
-    m_BlendInfo(_blendInfo)
+Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues) :
+    m_Passes(std::move(_passes)),
+    m_DefaultValues(std::move(_defaultValues))
 {
-    auto lightingUniformIndex   = glGetUniformBlockIndex(m_Program, "Lighting");
-    auto cameraDataUniformIndex = glGetUniformBlockIndex(m_Program, "CameraData");
-    auto shadowDataUniformIndex = glGetUniformBlockIndex(m_Program, "Shadows");
-
-    if (cameraDataUniformIndex != GL_INVALID_INDEX)
-        glUniformBlockBinding(m_Program, cameraDataUniformIndex, 0);
-
-    if (lightingUniformIndex != GL_INVALID_INDEX)
-        glUniformBlockBinding(m_Program, lightingUniformIndex, 1);
-
-    if (shadowDataUniformIndex != GL_INVALID_INDEX)
-        glUniformBlockBinding(m_Program, shadowDataUniformIndex, 2);
-
-    GLint count;
-    GLint buffSize;
-    glGetProgramiv(m_Program, GL_ACTIVE_UNIFORMS, &count);
-    glGetProgramiv(m_Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffSize);
-
-    GLsizei             length;
-    GLenum              type;
-    GLint               size;
-    std::vector<GLchar> name(buffSize);
-    int                 textureUnit = 0;
-
-    for (int i = 0; i < count; ++i)
+    for (auto &passInfo: m_Passes)
     {
-        glGetActiveUniform(m_Program, i, buffSize, &length, &size, &type, &name[0]);
-        std::string nameStr(name.begin(), name.begin() + length);
+        auto lightingUniformIndex   = glGetUniformBlockIndex(passInfo.Program, "Lighting");
+        auto cameraDataUniformIndex = glGetUniformBlockIndex(passInfo.Program, "CameraData");
+        auto shadowDataUniformIndex = glGetUniformBlockIndex(passInfo.Program, "Shadows");
 
-        auto location      = glGetUniformLocation(m_Program, &nameStr[0]);
-        auto convertedType = UniformUtils::ConvertUniformType(type);
+        if (cameraDataUniformIndex != GL_INVALID_INDEX)
+            glUniformBlockBinding(passInfo.Program, cameraDataUniformIndex, 0);
 
-        // TODO: correctly parse arrays
+        if (lightingUniformIndex != GL_INVALID_INDEX)
+            glUniformBlockBinding(passInfo.Program, lightingUniformIndex, 1);
 
-        if (convertedType == UniformType::UNKNOWN)
-            Debug::LogErrorFormat("[Shader] Init error: Unknown OpenGL type for uniform %1%", {nameStr});
-        else if (UniformUtils::IsTexture(convertedType))
-            m_TextureUnits[nameStr] = textureUnit++;
+        if (shadowDataUniformIndex != GL_INVALID_INDEX)
+            glUniformBlockBinding(passInfo.Program, shadowDataUniformIndex, 2);
 
-        m_Uniforms[nameStr] = UniformInfo {convertedType, location, i};
+        GLint count;
+        GLint buffSize;
+        glGetProgramiv(passInfo.Program, GL_ACTIVE_UNIFORMS, &count);
+        glGetProgramiv(passInfo.Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffSize);
+
+        GLsizei             length;
+        GLenum              type;
+        GLint               size;
+        std::vector<GLchar> name(buffSize);
+        int                 textureUnit = 0;
+
+        for (int i = 0; i < count; ++i)
+        {
+            glGetActiveUniform(passInfo.Program, i, buffSize, &length, &size, &type, &name[0]);
+            std::string nameStr(name.begin(), name.begin() + length);
+
+            auto location      = glGetUniformLocation(passInfo.Program, &nameStr[0]);
+            auto convertedType = UniformUtils::ConvertUniformType(type);
+
+            // TODO: correctly parse arrays
+
+            if (convertedType == UniformType::UNKNOWN)
+                Debug::LogErrorFormat("[Shader] Init error: Unknown OpenGL type for uniform %1%", {nameStr});
+            else if (UniformUtils::IsTexture(convertedType))
+                passInfo.TextureUnits[nameStr] = textureUnit++;
+
+            passInfo.Uniforms[nameStr] = UniformInfo {convertedType, location, i};
+        }
     }
 }
 
 Shader::~Shader()
 {
-    glDeleteProgram(m_Program);
+    for (const auto &passInfo: m_Passes)
+        glDeleteProgram(passInfo.Program);
 }
 
 #pragma endregion
 
 #pragma region public methods
 
-bool Shader::Use() const
+void Shader::Use(int _passIndex) const
 {
-    if (m_ReplacementShader == nullptr)
-        m_CurrentShader = this;
-    else if (m_ReplacementShader->m_Tags.contains(m_ReplacementTag) && m_Tags.contains(m_ReplacementTag) &&
-             m_ReplacementShader->m_Tags.at(m_ReplacementTag) == m_Tags.at(m_ReplacementTag))
-        m_CurrentShader = m_ReplacementShader;
+    if (_passIndex < 0 || _passIndex >= m_Passes.size())
+        throw std::out_of_range("[Shader] Pass Index out of range");
 
-    if (m_CurrentShader == nullptr)
-        return false;
+    m_CurrentPass = &m_Passes.at(_passIndex);
 
-    glUseProgram(m_CurrentShader->m_Program);
-    glDepthMask(m_CurrentShader->m_ZWrite ? GL_TRUE : GL_FALSE);
-    glDepthFunc(m_CurrentShader->m_ZTest);
+    glUseProgram(m_CurrentPass->Program);
+    glDepthMask(m_CurrentPass->ZWrite ? GL_TRUE : GL_FALSE);
+    glDepthFunc(m_CurrentPass->ZTest);
 
-    m_CurrentShader->m_BlendInfo.Apply();
-
-    m_CurrentShader->SetDefaultValues();
-
+    SetBlendInfo(m_CurrentPass->BlendInfo);
+    SetDefaultValues(m_CurrentPass->Uniforms);
     SetPropertyBlock(m_PropertyBlock);
-
-    return true;
 }
 
-void Shader::SetUniform(const std::string &_name, const void *_data)
+std::string Shader::GetPassTagValue(int _passIndex, const std::string &_tag) const
 {
-    if (m_CurrentShader != nullptr && m_CurrentShader->m_Uniforms.contains(_name))
-        UniformUtils::SetUniform(m_CurrentShader->m_Uniforms.at(_name), _data);
-}
+    if (_passIndex < 0 || _passIndex >= m_Passes.size())
+        throw std::out_of_range("[Shader] Pass Index out of range");
 
-void Shader::SetTextureUniform(const std::string &_name, const Texture &_texture)
-{
-    if (m_CurrentShader == nullptr || !m_CurrentShader->m_TextureUnits.contains(_name))
-        return;
-
-    auto unit = m_CurrentShader->m_TextureUnits.at(_name);
-    _texture.Bind(unit);
-    SetUniform(_name, &unit);
-
-    Vector4 st = Vector4(0, 0, 1, 1);
-    SetUniform(_name + "_ST", &st);
-
-    int  width     = _texture.GetWidth();
-    int  height    = _texture.GetHeight();
-    auto texelSize = Vector4 {static_cast<float>(width), static_cast<float>(height), 1.0f / width, 1.0f / height};
-    SetUniform(_name + "_TexelSize", &texelSize);
-}
-
-void Shader::SetReplacementShader(const Shader *_shader, const std::string &_tag)
-{
-    m_ReplacementShader = _shader;
-    m_ReplacementTag    = _tag;
-}
-
-void Shader::DetachReplacementShader()
-{
-    if (m_CurrentShader == m_ReplacementShader)
-        m_CurrentShader = nullptr;
-    m_ReplacementShader = nullptr;
+    const auto &pass = m_Passes.at(_passIndex);
+    return pass.Tags.contains(_tag) ? pass.Tags.at(_tag) : "";
 }
 
 
@@ -237,6 +180,17 @@ Matrix4x4 Shader::GetGlobalMatrix(const std::string &_name)
 
 #pragma region service methods
 
+void Shader::SetBlendInfo(const Shader::BlendInfo &_blendInfo) const
+{
+    if (_blendInfo.Enabled)
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(_blendInfo.SrcFactor, _blendInfo.DstFactor);
+    }
+    else
+        glDisable(GL_BLEND);
+}
+
 DefaultTexturesMap GetDefaultTexturesMap()
 {
     DefaultTexturesMap map;
@@ -246,18 +200,18 @@ DefaultTexturesMap GetDefaultTexturesMap()
     return map;
 }
 
-void Shader::SetDefaultValues() const
+void Shader::SetDefaultValues(const std::unordered_map<std::string, UniformInfo> &_uniforms) const
 {
     static DefaultTexturesMap defaultTextures = GetDefaultTexturesMap();
 
-    for (const auto &pair: m_Uniforms)
+    for (const auto &pair: _uniforms)
     {
-        auto uniformName = pair.first;
+        auto &uniformName = pair.first;
         if (!m_DefaultValues.contains(uniformName))
             continue;
 
-        auto defaultValueLiteral = m_DefaultValues.at(uniformName);
-        auto type                = pair.second.Type;
+        auto &defaultValueLiteral = m_DefaultValues.at(uniformName);
+        auto  type                = pair.second.Type;
 
         if (UniformUtils::IsTexture(type))
         {
@@ -269,6 +223,30 @@ void Shader::SetDefaultValues() const
             // TODO: add support for default values for other types
         }
     }
+}
+
+void Shader::SetUniform(const std::string &_name, const void *_data)
+{
+    if (m_CurrentPass != nullptr && m_CurrentPass->Uniforms.contains(_name))
+        UniformUtils::SetUniform(m_CurrentPass->Uniforms.at(_name), _data);
+}
+
+void Shader::SetTextureUniform(const std::string &_name, const Texture &_texture)
+{
+    if (m_CurrentPass == nullptr || !m_CurrentPass->TextureUnits.contains(_name))
+        return;
+
+    auto unit = m_CurrentPass->TextureUnits.at(_name);
+    _texture.Bind(unit);
+    SetUniform(_name, &unit);
+
+    Vector4 st = Vector4(0, 0, 1, 1);
+    SetUniform(_name + "_ST", &st);
+
+    int  width     = _texture.GetWidth();
+    int  height    = _texture.GetHeight();
+    auto texelSize = Vector4 {static_cast<float>(width), static_cast<float>(height), 1.0f / width, 1.0f / height};
+    SetUniform(_name + "_TexelSize", &texelSize);
 }
 
 #pragma endregion

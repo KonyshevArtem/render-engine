@@ -45,6 +45,12 @@ Renderer::Filter Renderer::Filter::Transparent()
                              { return _r != nullptr && _r->GetRenderQueue() >= TRANSPARENT_RENDER_QUEUE; }};
 }
 
+Renderer::Filter Renderer::Filter::All()
+{
+    return Renderer::Filter {[](Renderer *_r)
+                             { return true; }};
+}
+
 bool Renderer::Filter::operator()(Renderer *_renderer)
 {
     return Delegate != nullptr ? Delegate(_renderer) : false;

@@ -18,7 +18,7 @@ public:
                  std::shared_ptr<Material>          _material);
     virtual ~MeshRenderer() = default;
 
-    void   Render() const override;
+    void   Render(const RenderSettings &_settings) const override;
     Bounds GetAABB() const override;
 
 private:

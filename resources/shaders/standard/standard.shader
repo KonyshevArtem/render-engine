@@ -3,9 +3,20 @@
     "_Albedo": "white",
     "_NormalMap": "normal"
   },
-  "tags": {
-    "Shadows": "Opaque"
-  },
-  "vertex": "standard.vs",
-  "fragment": "standard.fs"
+  "passes": [
+    {
+      "tags": {
+        "LightMode": "Forward"
+      },
+      "vertex": "standard.vs",
+      "fragment": "standard.fs"
+    },
+    {
+      "tags": {
+        "LightMode": "ShadowCaster"
+      },
+      "vertex": "../shadowCaster/shadowCaster.vs",
+      "fragment": "../shadowCaster/shadowCaster.fs"
+    }
+  ]
 }

@@ -31,6 +31,7 @@ void GizmosPass::Execute(Context &_context)
 
 void GizmosPass::Outline() const
 {
+    static RenderSettings             renderSettings;
     static std::shared_ptr<Material>  outlineMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/outline/outlineBlit.shader", {}));
     static std::shared_ptr<Texture2D> outlineTexture  = nullptr;
     static Vector4                    outlineColor {1, 0.73f, 0, 1};
@@ -46,7 +47,7 @@ void GizmosPass::Outline() const
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (const auto &renderer: Hierarchy::GetSelectedRenderers())
-            renderer->Render();
+            renderer->Render(renderSettings); // TODO: optimize drawing renderers
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     }
@@ -55,7 +56,7 @@ void GizmosPass::Outline() const
     {
         outlineMaterial->SetTexture("_Tex", outlineTexture);
         outlineMaterial->SetVector("_Color", outlineColor);
-        Mesh::GetFullscreenMesh()->Draw(*outlineMaterial);
+        Mesh::GetFullscreenMesh()->Draw(*outlineMaterial, renderSettings);
     }
 }
 
@@ -68,7 +69,7 @@ void GizmosPass::Gizmos() const
     for (const auto &drawInfo: Gizmos::GetDrawInfos())
     {
         Shader::SetGlobalMatrix("_ModelMatrix", drawInfo.Matrix);
-        gizmosShader->Use();
+        gizmosShader->Use(0);
         drawInfo.Primitive->Draw();
     }
 }

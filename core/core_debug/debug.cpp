@@ -25,7 +25,10 @@ Debug::DebugGroup::~DebugGroup()
     --debugGroupID;
 
     if (debugGroupID < 0)
+    {
         LogError("Popping more debug groups than pushing");
+        debugGroupID = 0;
+    }
 #endif
 }
 

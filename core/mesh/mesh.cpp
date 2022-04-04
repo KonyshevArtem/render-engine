@@ -71,16 +71,22 @@ Mesh::~Mesh()
     glDeleteBuffers(1, &m_IndexBuffer);
 }
 
-void Mesh::Draw(const Material &_material) const
+void Mesh::Draw(const Material &_material, const RenderSettings &_settings) const
 {
-    if (!_material.GetShader()->Use())
-        return;
+    const auto &shader = _material.GetShader();
+    for (int i = 0; i < shader->PassesCount(); ++i)
+    {
+        if (!_settings.TagsMatch(*shader, i))
+            continue;
 
-    Shader::SetPropertyBlock(_material.GetPropertyBlock());
+        shader->Use(i);
 
-    glBindVertexArray(m_VertexArrayObject);
-    glDrawElements(GL_TRIANGLES, m_Indexes.size(), GL_UNSIGNED_INT, nullptr);
-    glBindVertexArray(0);
+        Shader::SetPropertyBlock(_material.GetPropertyBlock());
+
+        glBindVertexArray(m_VertexArrayObject);
+        glDrawElements(GL_TRIANGLES, m_Indexes.size(), GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(0);
+    }
 }
 
 Bounds Mesh::GetBounds() const

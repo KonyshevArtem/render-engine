@@ -3,6 +3,7 @@
 #include "core_debug/debug.h"
 #include "cubemap/cubemap.h"
 #include "fbx_asset/fbx_asset.h"
+#include "graphics/render_settings.h"
 #include "material/material.h"
 #include "matrix4x4/matrix4x4.h"
 #include "mesh/mesh.h"
@@ -11,6 +12,7 @@
 
 void SkyboxPass::Execute(const Context &_ctx)
 {
+    static RenderSettings            renderSettings;
     static std::shared_ptr<Mesh>     mesh     = FBXAsset::Load("resources/models/cube.fbx")->GetMesh(0);
     static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("resources/shaders/skybox/skybox.shader", {}));
 
@@ -25,7 +27,7 @@ void SkyboxPass::Execute(const Context &_ctx)
 
     Shader::SetGlobalMatrix("_ModelMatrix", modelMatrix);
     material->SetTexture("_Skybox", _ctx.Skybox);
-    mesh->Draw(*material);
+    mesh->Draw(*material, renderSettings);
 
     glCullFace(GL_BACK);
 }

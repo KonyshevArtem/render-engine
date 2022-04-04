@@ -29,7 +29,7 @@ BillboardRenderer::~BillboardRenderer()
     glDeleteBuffers(1, &m_PointsBuffer);
 }
 
-void BillboardRenderer::Render() const
+void BillboardRenderer::Render(const RenderSettings &_settings) const
 {
     static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard/billboard.shader", {});
 
@@ -41,23 +41,28 @@ void BillboardRenderer::Render() const
     if (width == 0 || height == 0)
         return;
 
-    if (!shader->Use())
-        return;
+    for (int i = 0; i < shader->PassesCount(); ++i)
+    {
+        if (!_settings.TagsMatch(*shader, i))
+            continue;
 
-    Shader::SetGlobalTexture("_Texture", m_Texture);
+        shader->Use(i);
 
-    auto    aspect = static_cast<float>(width) / height;
-    Vector4 size {m_Size, m_Size / aspect, 0, 0};
-    Shader::SetGlobalVector("_Size", size);
+        Shader::SetGlobalTexture("_Texture", m_Texture);
 
-    auto position = GetModelMatrix().GetPosition();
+        auto    aspect = static_cast<float>(width) / height;
+        Vector4 size {m_Size, m_Size / aspect, 0, 0};
+        Shader::SetGlobalVector("_Size", size);
 
-    glBindVertexArray(m_VertexArrayObject);
-    glBindBuffer(GL_ARRAY_BUFFER, m_PointsBuffer);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vector3), &position);
-    glDrawArrays(GL_POINTS, 0, 1);
+        auto position = GetModelMatrix().GetPosition();
 
-    glBindVertexArray(0);
+        glBindVertexArray(m_VertexArrayObject);
+        glBindBuffer(GL_ARRAY_BUFFER, m_PointsBuffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vector3), &position);
+        glDrawArrays(GL_POINTS, 0, 1);
+
+        glBindVertexArray(0);
+    }
 }
 
 Bounds BillboardRenderer::GetAABB() const

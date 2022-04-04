@@ -1,4 +1,8 @@
 {
-  "vertex": "gizmos.vs",
-  "fragment": "gizmos.fs"
+  "passes": [
+    {
+      "vertex": "gizmos.vs",
+      "fragment": "gizmos.fs"
+    }
+  ]
 }

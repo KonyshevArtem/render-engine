@@ -1,14 +1,15 @@
 #include "shadow_caster_pass.h"
+#include "../context.h"
+#include "../graphics.h"
+#include "../uniform_block.h"
 #include "bounds/bounds.h"
 #include "core_debug/debug.h"
+#include "graphics/render_settings.h"
 #include "light/light.h"
 #include "renderer/renderer.h"
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
 #include "texture_2d_array/texture_2d_array.h"
-#include "../context.h"
-#include "../graphics.h"
-#include "../uniform_block.h"
 #include <utility>
 
 ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, std::shared_ptr<UniformBlock> _shadowsUniformBlock) :
@@ -29,19 +30,15 @@ ShadowCasterPass::~ShadowCasterPass()
 
 void ShadowCasterPass::Execute(const Context &_ctx)
 {
-    static std::shared_ptr<Shader> shadowCasterShader = Shader::Load("resources/shaders/shadowCaster/shadowCaster.shader", {});
-    static const Matrix4x4         biasMatrix         = Matrix4x4::TRS(Vector3 {0.5f, 0.5f, 0.5f}, Quaternion(), Vector3 {0.5f, 0.5f, 0.5f});
+    static const Matrix4x4 biasMatrix = Matrix4x4::TRS(Vector3 {0.5f, 0.5f, 0.5f}, Quaternion(), Vector3 {0.5f, 0.5f, 0.5f});
 
-    if (shadowCasterShader == nullptr || _ctx.Renderers.size() == 0)
+    if (_ctx.Renderers.size() == 0)
         return;
 
     auto debugGroup = Debug::DebugGroup("Shadow pass");
 
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer);
     glViewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
-
-    // TODO use shader passes instead of replacement shaders
-    Shader::SetReplacementShader(shadowCasterShader.get(), "Shadows");
 
     int spotLightsCount = 0;
     for (const auto *light: _ctx.Lights)
@@ -96,12 +93,12 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-
-    Shader::DetachReplacementShader();
 }
 
 void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
 {
+    static RenderSettings renderSettings {{{"LightMode", "ShadowCaster"}}};
+
     auto debugGroup = Debug::DebugGroup("Render shadow map");
 
     glDepthMask(GL_TRUE);
@@ -110,6 +107,6 @@ void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
     for (const auto *r: _renderers)
     {
         if (r != nullptr)
-            r->Render();
+            r->Render(renderSettings);
     }
 }

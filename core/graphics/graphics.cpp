@@ -8,6 +8,7 @@
 #include "passes/render_pass.h"
 #include "passes/shadow_caster_pass.h"
 #include "passes/skybox_pass.h"
+#include "render_settings.h"
 #include "shader/shader.h"
 #include "uniform_block.h"
 #include "vector4/vector4.h"
@@ -32,6 +33,7 @@ namespace Graphics
     std::unique_ptr<SkyboxPass>       skyboxPass;
 
 #if OPENGL_STUDY_EDITOR
+    std::unique_ptr<RenderPass> fallbackRenderPass;
     std::unique_ptr<GizmosPass> gizmosPass;
 #endif
 
@@ -67,13 +69,15 @@ namespace Graphics
 
     void InitPasses()
     {
-        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", Renderer::Sorting::FRONT_TO_BACK, Renderer::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        tranparentRenderPass = std::make_unique<RenderPass>("Transparent", Renderer::Sorting::BACK_TO_FRONT, Renderer::Filter::Transparent(), 0);
+        RenderSettings renderSettings {{{"LightMode", "Forward"}}};
+        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", Renderer::Sorting::FRONT_TO_BACK, Renderer::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, renderSettings);
+        tranparentRenderPass = std::make_unique<RenderPass>("Transparent", Renderer::Sorting::BACK_TO_FRONT, Renderer::Filter::Transparent(), 0, renderSettings);
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
 
 #if OPENGL_STUDY_EDITOR
-        gizmosPass = std::make_unique<GizmosPass>();
+        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", Renderer::Sorting::FRONT_TO_BACK, Renderer::Filter::All(), 0, RenderSettings {{{"LightMode", "Fallback"}}});
+        gizmosPass         = std::make_unique<GizmosPass>();
 #endif
     }
 
@@ -168,6 +172,8 @@ namespace Graphics
             tranparentRenderPass->Execute(ctx);
 
 #if OPENGL_STUDY_EDITOR
+        if (fallbackRenderPass)
+            fallbackRenderPass->Execute(ctx);
         if (gizmosPass)
             gizmosPass->Execute(ctx);
 

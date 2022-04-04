@@ -1,6 +1,7 @@
 #ifndef OPENGL_STUDY_RENDERER_H
 #define OPENGL_STUDY_RENDERER_H
 
+#include "graphics/render_settings.h"
 #include "vector3/vector3.h"
 #include <functional>
 #include <memory>
@@ -13,7 +14,7 @@ struct Bounds;
 class Renderer
 {
 public:
-    virtual void   Render() const  = 0;
+    virtual void   Render(const RenderSettings &_settings) const  = 0;
     virtual Bounds GetAABB() const = 0;
 
     enum class Sorting
@@ -36,6 +37,7 @@ public:
 
         static Renderer::Filter Opaque();
         static Renderer::Filter Transparent();
+        static Renderer::Filter All();
 
         bool operator()(Renderer *_renderer);
     };

@@ -4,6 +4,7 @@
 #include "matrix4x4/matrix4x4.h"
 #include "property_block/property_block.h"
 #include "shader_loader/shader_loader.h"
+#include "uniform_info/uniform_info.h"
 #include "vector4/vector4.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
@@ -16,7 +17,6 @@
 
 
 class Texture;
-struct UniformInfo;
 
 class Shader
 {
@@ -28,8 +28,17 @@ public:
         bool   Enabled = false;
         GLenum SrcFactor;
         GLenum DstFactor;
+    };
 
-        void Apply() const;
+    struct PassInfo
+    {
+        GLuint                                       Program;
+        bool                                         ZWrite = true;
+        BlendInfo                                    BlendInfo;
+        GLenum                                       ZTest = GL_LEQUAL;
+        std::unordered_map<std::string, std::string> Tags;
+        std::unordered_map<std::string, UniformInfo> Uniforms;
+        std::unordered_map<std::string, int>         TextureUnits;
     };
 
 #pragma endregion
@@ -42,12 +51,7 @@ public:
     ~Shader();
 
 private:
-    Shader(GLuint                                       _program,
-           std::unordered_map<std::string, std::string> _defaultValues,
-           std::unordered_map<std::string, std::string> _tags,
-           bool                                         _zWrite,
-           GLenum                                       _zTest,
-           BlendInfo                                    _blendInfo);
+    Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues);
     Shader(const Shader &) = delete;
     Shader(Shader &&)      = delete;
 
@@ -59,29 +63,24 @@ private:
 #pragma region fields
 
 private:
-    GLuint                                       m_Program;
-    bool                                         m_ZWrite;
-    BlendInfo                                    m_BlendInfo;
-    GLenum                                       m_ZTest;
-    std::unordered_map<std::string, UniformInfo> m_Uniforms;
-    std::unordered_map<std::string, int>         m_TextureUnits;
+    std::vector<PassInfo>                        m_Passes;
     std::unordered_map<std::string, std::string> m_DefaultValues;
-    std::unordered_map<std::string, std::string> m_Tags;
 
-    static PropertyBlock m_PropertyBlock;
-    static std::string   m_ReplacementTag;
-    static const Shader *m_CurrentShader;
-    static const Shader *m_ReplacementShader;
+    static PropertyBlock   m_PropertyBlock;
+    static const PassInfo *m_CurrentPass;
 
 #pragma endregion
 
 #pragma region public methods
 
 public:
-    bool Use() const;
+    void        Use(int _passIndex) const;
+    std::string GetPassTagValue(int _passIndex, const std::string &_tag) const;
 
-    static void SetReplacementShader(const Shader *_shader, const std::string &_tag);
-    static void DetachReplacementShader();
+    inline int PassesCount() const
+    {
+        return m_Passes.size();
+    }
 
     static void SetPropertyBlock(const PropertyBlock &_propertyBlock);
 
@@ -100,7 +99,8 @@ public:
 #pragma region service methods
 
 private:
-    void        SetDefaultValues() const;
+    void        SetBlendInfo(const BlendInfo &_blendInfo) const;
+    void        SetDefaultValues(const std::unordered_map<std::string, UniformInfo> &_uniforms) const;
     static void SetUniform(const std::string &_name, const void *_data);
     static void SetTextureUniform(const std::string &_name, const Texture &_texture);
 

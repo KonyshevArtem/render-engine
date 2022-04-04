@@ -3,11 +3,18 @@
     "_Albedo": "white",
     "_NormalMap": "normal"
   },
-  "zWrite": false,
-  "blend": {
-    "SrcFactor": "SrcAlpha",
-    "DstFactor": "OneMinusSrcAlpha"
-  },
-  "vertex": "standard.vs",
-  "fragment": "standard.fs"
+  "passes": [
+    {
+      "tags": {
+        "LightMode": "Forward"
+      },
+      "zWrite": false,
+      "blend": {
+        "SrcFactor": "SrcAlpha",
+        "DstFactor": "OneMinusSrcAlpha"
+      },
+      "vertex": "standard.vs",
+      "fragment": "standard.fs"
+    }
+  ]
 }

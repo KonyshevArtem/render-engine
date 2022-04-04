@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_MESH_H
 
 #include "bounds/bounds.h"
+#include "graphics/render_settings.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
@@ -24,7 +25,7 @@ public:
          std::vector<Vector3> &_tangents);
     ~Mesh();
 
-    void   Draw(const Material &_material) const;
+    void   Draw(const Material &_material, const RenderSettings &_settings) const;
     Bounds GetBounds() const;
 
     static const std::shared_ptr<Mesh> &GetFullscreenMesh();

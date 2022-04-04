@@ -20,7 +20,7 @@ public:
     BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, std::shared_ptr<Texture2D> _texture);
     virtual ~BillboardRenderer();
 
-    void   Render() const override;
+    void   Render(const RenderSettings &_settings) const override;
     Bounds GetAABB() const override;
 
     inline void SetRenderQueue(int _renderQueue)

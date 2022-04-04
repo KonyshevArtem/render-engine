@@ -8,31 +8,33 @@
 UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName, unsigned int _index) :
     m_Name(std::move(_blockName))
 {
-    auto blockIndex = glGetUniformBlockIndex(_shader.m_Program, m_Name.c_str());
+    auto &pass = _shader.m_Passes.at(0);
+
+    auto blockIndex = glGetUniformBlockIndex(pass.Program, m_Name.c_str());
     if (blockIndex == GL_INVALID_INDEX)
         return;
 
     GLint uniformCount;
-    glGetActiveUniformBlockiv(_shader.m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformCount);
+    glGetActiveUniformBlockiv(pass.Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformCount);
 
     std::vector<GLint> uniformIndexes(uniformCount);
-    glGetActiveUniformBlockiv(_shader.m_Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &uniformIndexes[0]);
+    glGetActiveUniformBlockiv(pass.Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &uniformIndexes[0]);
 
     std::vector<GLint> uniformOffsets(uniformCount);
-    glGetActiveUniformsiv(_shader.m_Program, uniformCount, reinterpret_cast<const GLuint *>(&uniformIndexes[0]), GL_UNIFORM_OFFSET, &uniformOffsets[0]);
+    glGetActiveUniformsiv(pass.Program, uniformCount, reinterpret_cast<const GLuint *>(&uniformIndexes[0]), GL_UNIFORM_OFFSET, &uniformOffsets[0]);
 
     std::unordered_map<GLint, GLint> indexToOffset;
     for (int i = 0; i < uniformCount; ++i)
         indexToOffset[uniformIndexes[i]] = uniformOffsets[i];
 
-    for (const auto &pair: _shader.m_Uniforms)
+    for (const auto &pair: pass.Uniforms)
     {
         if (indexToOffset.contains(pair.second.Index))
             m_UniformOffsets[pair.first] = indexToOffset[pair.second.Index];
     }
 
     GLint blockSize;
-    glGetActiveUniformBlockiv(_shader.m_Program, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
+    glGetActiveUniformBlockiv(pass.Program, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
 
     glGenBuffers(1, &m_Buffer);
     glBindBuffer(GL_UNIFORM_BUFFER, m_Buffer);

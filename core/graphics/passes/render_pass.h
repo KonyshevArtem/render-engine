@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_RENDER_PASS_H
 
 #include "renderer/renderer.h"
+#include "graphics/render_settings.h"
 #include <string>
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
@@ -14,7 +15,7 @@ struct Context;
 class RenderPass
 {
 public:
-    RenderPass(const std::string& _name, Renderer::Sorting _rendererSorting, Renderer::Filter _filter, GLbitfield _clearFlags);
+    RenderPass(const std::string& _name, Renderer::Sorting _rendererSorting, Renderer::Filter _filter, GLbitfield _clearFlags, RenderSettings _renderSettings);
     ~RenderPass() = default;
 
     void Execute(const Context &_ctx);
@@ -30,6 +31,7 @@ private:
     Renderer::Sorting m_Sorting;
     Renderer::Filter  m_Filter;
     GLbitfield        m_ClearFlags;
+    RenderSettings    m_RenderSettings;
 };
 
 #endif //OPENGL_STUDY_RENDER_PASS_H

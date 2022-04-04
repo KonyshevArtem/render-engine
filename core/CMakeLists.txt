@@ -60,7 +60,9 @@ add_library(
 	editor/hierarchy.h
 	editor/hierarchy.cpp
 	property_block/property_block.h
-	property_block/property_block.cpp)
+	property_block/property_block.cpp
+	graphics/render_settings.h
+	graphics/render_settings.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils LodePNG OpenFBX)

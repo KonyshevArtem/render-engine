@@ -99,11 +99,12 @@ void Shader::Use(int _passIndex) const
     m_CurrentPass = &m_Passes.at(_passIndex);
 
     glUseProgram(m_CurrentPass->Program);
-    glDepthMask(m_CurrentPass->ZWrite ? GL_TRUE : GL_FALSE);
-    glDepthFunc(m_CurrentPass->ZTest);
 
     SetBlendInfo(m_CurrentPass->BlendInfo);
+    SetCullInfo(m_CurrentPass->CullInfo);
+    SetDepthInfo(m_CurrentPass->DepthInfo);
     SetDefaultValues(m_CurrentPass->Uniforms);
+
     SetPropertyBlock(m_PropertyBlock);
 }
 
@@ -189,6 +190,25 @@ void Shader::SetBlendInfo(const Shader::BlendInfo &_blendInfo) const
     }
     else
         glDisable(GL_BLEND);
+}
+
+void Shader::SetCullInfo(const Shader::CullInfo &_cullInfo) const
+{
+    if (_cullInfo.Enabled)
+    {
+        glEnable(GL_CULL_FACE);
+        glCullFace(_cullInfo.Face);
+    }
+    else
+    {
+        glDisable(GL_CULL_FACE);
+    }
+}
+
+void Shader::SetDepthInfo(const Shader::DepthInfo &_depthInfo) const
+{
+    glDepthMask(_depthInfo.ZWrite ? GL_TRUE : GL_FALSE);
+    glDepthFunc(_depthInfo.ZTest);
 }
 
 DefaultTexturesMap GetDefaultTexturesMap()

@@ -21,13 +21,9 @@ void SkyboxPass::Execute(const Context &_ctx)
 
     auto debugGroup = Debug::DebugGroup("Skybox pass");
 
-    glCullFace(GL_FRONT);
-
     Matrix4x4 modelMatrix = Matrix4x4::Translation(_ctx.ViewMatrix.Invert().GetPosition());
 
     Shader::SetGlobalMatrix("_ModelMatrix", modelMatrix);
     material->SetTexture("_Skybox", _ctx.Skybox);
     mesh->Draw(*material, renderSettings);
-
-    glCullFace(GL_BACK);
 }

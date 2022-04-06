@@ -78,6 +78,42 @@ namespace ShaderLoader
         return info;
     }
 
+    Shader::CullInfo ParseCullInfo(const boost::json::object &_obj)
+    {
+        using namespace boost::json;
+
+        Shader::CullInfo info {true, GL_BACK};
+        if (_obj.contains("cull"))
+        {
+            auto cull = value_to<std::string>(_obj.at("cull"));
+
+            if (cull == "Front")
+                info.Face = GL_FRONT;
+            else if (cull == "Back")
+                info.Face = GL_BACK;
+            else if (cull == "None")
+                info.Enabled = false;
+        }
+
+        return info;
+    }
+
+    Shader::DepthInfo ParseDepthInfo(const boost::json::object &_obj)
+    {
+        using namespace boost::json;
+
+        Shader::DepthInfo info;
+
+        // parse zWrite
+        info.ZWrite = !_obj.contains("zWrite") || _obj.at("zWrite").as_bool();
+
+        // parse z func
+        if (_obj.contains("zTest"))
+            info.ZTest = ParseDepthFunc(value_to<std::string>(_obj.at("zTest")));
+
+        return info;
+    }
+
     Shader::PassInfo ParsePassInfo(const boost::json::object &_obj)
     {
         using namespace boost::json;
@@ -88,15 +124,14 @@ namespace ShaderLoader
         if (_obj.contains("tags"))
             info.Tags = value_to<std::unordered_map<std::string, std::string>>(_obj.at("tags"));
 
-        // parse zWrite
-        info.ZWrite = !_obj.contains("zWrite") || _obj.at("zWrite").as_bool();
-
-        // parse z func
-        if (_obj.contains("zTest"))
-            info.ZTest = ParseDepthFunc(value_to<std::string>(_obj.at("zTest")));
+        // parse depth info
+        info.DepthInfo = ParseDepthInfo(_obj);
 
         // parse blend
         info.BlendInfo = ParseBlendInfo(_obj);
+
+        // parse culling mode
+        info.CullInfo = ParseCullInfo(_obj);
 
         return info;
     }

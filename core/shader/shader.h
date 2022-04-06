@@ -30,12 +30,24 @@ public:
         GLenum DstFactor;
     };
 
+    struct CullInfo
+    {
+        bool   Enabled = true;
+        GLenum Face    = GL_BACK;
+    };
+
+    struct DepthInfo
+    {
+        bool   ZWrite = true;
+        GLenum ZTest  = GL_LEQUAL;
+    };
+
     struct PassInfo
     {
         GLuint                                       Program;
-        bool                                         ZWrite = true;
         BlendInfo                                    BlendInfo;
-        GLenum                                       ZTest = GL_LEQUAL;
+        CullInfo                                     CullInfo;
+        DepthInfo                                    DepthInfo;
         std::unordered_map<std::string, std::string> Tags;
         std::unordered_map<std::string, UniformInfo> Uniforms;
         std::unordered_map<std::string, int>         TextureUnits;
@@ -100,6 +112,8 @@ public:
 
 private:
     void        SetBlendInfo(const BlendInfo &_blendInfo) const;
+    void        SetCullInfo(const CullInfo &_cullInfo) const;
+    void        SetDepthInfo(const DepthInfo &_depthInfo) const;
     void        SetDefaultValues(const std::unordered_map<std::string, UniformInfo> &_uniforms) const;
     static void SetUniform(const std::string &_name, const void *_data);
     static void SetTextureUniform(const std::string &_name, const Texture &_texture);

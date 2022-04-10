@@ -23,7 +23,7 @@ bool isFragVisible(float fragZ)
 
 float getShadowTerm(float fragZ, float shadowMapDepth, float lightAngleCos)
 {
-    float bias = max(0.005 * (1 - lightAngleCos), 0.0005);
+    float bias = max(0.002 * (1 - lightAngleCos), 0.0002);
     return step(fragZ - bias, shadowMapDepth);
 }
 #endif

@@ -1,7 +1,8 @@
 {
   "default": {
     "_Albedo": "white",
-    "_NormalMap": "normal"
+    "_NormalMap": "normal",
+    "_SpecularMask": "white"
   },
   "passes": [
     {

@@ -40,6 +40,7 @@ void TestScene::Init()
     auto windowTexture = Texture2D::Load("resources/textures/window_cube.png", true, true);
     auto carAlbedo     = Texture2D::Load("resources/textures/car/car_albedo.png");
     auto carNormal     = Texture2D::Load("resources/textures/car/car_normal.png", false);
+    auto carSpecular   = Texture2D::Load("resources/textures/car/car_specular.png", false, true);
 
     // init skybox cubemap
     Skybox = Cubemap::Load("resources/textures/skybox/x_positive.png",
@@ -50,8 +51,8 @@ void TestScene::Init()
                            "resources/textures/skybox/z_negative.png");
 
     // init shaders
-    auto fragmentLitShader = Shader::Load("resources/shaders/standard/standard.shader", {"_SMOOTHNESS", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
-    auto transparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", {"_SMOOTHNESS", "_RECEIVE_SHADOWS"});
+    auto fragmentLitShader = Shader::Load("resources/shaders/standard/standard.shader", {"_SPECULAR", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
+    auto transparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", {"_SPECULAR", "_RECEIVE_SHADOWS"});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");
@@ -85,6 +86,7 @@ void TestScene::Init()
     auto carMaterial = std::make_shared<Material>(fragmentLitShader);
     carMaterial->SetTexture("_Albedo", carAlbedo);
     carMaterial->SetTexture("_NormalMap", carNormal);
+    carMaterial->SetTexture("_SpecularMask", carSpecular);
     carMaterial->SetFloat("_Smoothness", 20);
 
     // init gameObjects

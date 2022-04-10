@@ -28,6 +28,11 @@ namespace ShaderLoader
             "geometry",
             "fragment"};
 
+    const std::string SHADER_PART_DIRECTIVES[SHADER_PART_COUNT] {
+            "#define VERTEX_PROGRAM\n",
+            "#define GEOMETRY_PROGRAM\n",
+            "#define FRAGMENT_PROGRAM\n"};
+
     struct ShaderPassInfo
     {
         Shader::PassInfo Pass;
@@ -169,13 +174,14 @@ namespace ShaderLoader
         return info;
     }
 
-    GLuint CompileShaderPart(GLuint _shaderPartType, const std::string &_source, const std::string &_keywordDirectives)
+    GLuint CompileShaderPart(GLuint _shaderPartType, const std::string &_source, const std::string &_keywordDirectives, const std::string &_shaderPartDirective)
     {
         const auto   &globalDirectives = Graphics::GetGlobalShaderDirectives();
-        constexpr int sourcesCount     = 3;
+        constexpr int sourcesCount     = 4;
         const char   *sources[sourcesCount] {
                 globalDirectives.c_str(),
                 _keywordDirectives.c_str(),
+                _shaderPartDirective.c_str(),
                 _source.c_str()};
 
         auto shaderPart = glCreateShader(_shaderPartType);
@@ -268,7 +274,7 @@ namespace ShaderLoader
 
                     auto partPath                  = _path.parent_path() / relativePath;
                     auto partSource                = Utils::ReadFileWithIncludes(partPath);
-                    shaderParts[shaderPartCount++] = CompileShaderPart(part, partSource, keywordsDirectives);
+                    shaderParts[shaderPartCount++] = CompileShaderPart(part, partSource, keywordsDirectives, SHADER_PART_DIRECTIVES[i]);
                 }
 
                 passInfo.Pass.Program = LinkProgram(std::span<GLuint> {shaderParts, shaderPartCount});

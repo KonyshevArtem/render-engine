@@ -28,9 +28,10 @@ private:
     ShadowCasterPass(ShadowCasterPass &&)      = delete;
 
     ShadowCasterPass &operator=(const ShadowCasterPass &) = delete;
-    ShadowCasterPass &operator=(ShadowCasterPass &&)      = delete;
+    ShadowCasterPass &operator=(ShadowCasterPass &&) = delete;
 
-    static constexpr int SHADOW_MAP_SIZE = 1024;
+    static constexpr int SPOT_LIGHT_SHADOW_MAP_SIZE = 1024;
+    static constexpr int DIR_LIGHT_SHADOW_MAP_SIZE  = 2048;
 
     std::shared_ptr<UniformBlock>   m_ShadowsUniformBlock;
     GLuint                          m_Framebuffer = 0;

@@ -14,8 +14,8 @@
 
 ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, std::shared_ptr<UniformBlock> _shadowsUniformBlock) :
     m_ShadowsUniformBlock(std::move(_shadowsUniformBlock)),
-    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SHADOW_MAP_SIZE, _spotLightsCount)),
-    m_DirectionLightShadowMap(Texture2D::CreateShadowMap(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE))
+    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SPOT_LIGHT_SHADOW_MAP_SIZE, _spotLightsCount)),
+    m_DirectionLightShadowMap(Texture2D::CreateShadowMap(DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE))
 {
     Shader::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
     Shader::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
@@ -38,7 +38,6 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     auto debugGroup = Debug::DebugGroup("Shadow pass");
 
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer);
-    glViewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
 
     int spotLightsCount = 0;
     for (const auto *light: _ctx.Lights)
@@ -48,6 +47,8 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
         if (light->Type == LightType::SPOT)
         {
+            glViewport(0, 0, SPOT_LIGHT_SHADOW_MAP_SIZE, SPOT_LIGHT_SHADOW_MAP_SIZE);
+
             m_SpotLightShadowMapArray->Attach(GL_DEPTH_ATTACHMENT, spotLightsCount);
 
             auto view    = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
@@ -63,6 +64,8 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         }
         else if (light->Type == LightType::DIRECTIONAL)
         {
+            glViewport(0, 0, DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE);
+
             m_DirectionLightShadowMap->Attach(GL_DEPTH_ATTACHMENT);
 
             auto bounds = _ctx.Renderers[0]->GetAABB();

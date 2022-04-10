@@ -39,23 +39,30 @@ layout(std140) uniform Lighting
     int _SpotLightsCount;
 };
 
-float getSpecularTerm(vec3 lightDirWS, float lightAngleCos, vec3 posWS, vec3 normalWS){
-    #ifdef _SMOOTHNESS
-    vec3 viewDirWS = normalize(_CameraPosWS - posWS);
+vec4 sampleSpecular(vec2 uv)
+{
+    #if defined(_SPECULAR) && defined(FRAGMENT_PROGRAM)
+    return texture(_SpecularMask, uv);
+    #else
+    return vec4(0);
+    #endif
+}
+
+vec3 getSpecularTerm(vec4 specular, vec3 lightDirWS, vec3 viewDirWS, vec3 normalWS){
+    #if defined(_SPECULAR) && defined(FRAGMENT_PROGRAM)
     vec3 halfAngle = normalize(lightDirWS + viewDirWS);
     float blinnTerm = clamp(dot(normalWS, halfAngle), 0, 1);
-    blinnTerm *= step(0, lightAngleCos);
-    blinnTerm = pow(blinnTerm, _Smoothness);
-    return max(blinnTerm, 0);
+    blinnTerm = pow(blinnTerm, _Smoothness) * specular.a;
+    return specular.rgb * max(blinnTerm, 0);
     #else
-    return 0;
+    return vec3(0);
     #endif
 }
 
 vec3 getNormalWS(vec3 normalWS, vec3 tangentWS, vec2 uv)
 {
     normalWS = normalize(normalWS);
-    #ifdef _NORMAL_MAP
+    #if defined(_NORMAL_MAP) && defined(FRAGMENT_PROGRAM)
     tangentWS = normalize(tangentWS);
     // Gramm-Schmidt process to ensure that tangent and normal are still orthogonal after interpolation
     tangentWS = normalize(tangentWS - dot(tangentWS, normalWS) * normalWS);
@@ -68,13 +75,16 @@ vec3 getNormalWS(vec3 normalWS, vec3 tangentWS, vec2 uv)
     return normalWS;
 }
 
-vec3 getLight(vec3 posWS, vec3 normalWS){
+vec3 getLight(vec3 posWS, vec3 normalWS, vec4 specular){
     vec3 light = vec3(0);
+
+    vec3 viewDirWS = normalize(_CameraPosWS - posWS);
 
     if (_HasDirectionalLight){
         vec3 lightDirWS = normalize(-_DirectionalLight.DirectionWS);
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
-        float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
+
+        vec3 specularTerm = getSpecularTerm(specular, lightDirWS, viewDirWS, normalWS);
         float shadowTerm = getDirLightShadowTerm(posWS, lightAngleCos);
         light += (_DirectionalLight.Intensity * lightAngleCos + specularTerm) * shadowTerm;
     }
@@ -84,8 +94,9 @@ vec3 getLight(vec3 posWS, vec3 normalWS){
         vec3 lightDirWS = normalize(_PointLights[i].PositionWS - posWS);
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
         float distance = distance(_PointLights[i].PositionWS, posWS);
+
         float attenuationTerm = 1 / (1 + _PointLights[i].Attenuation * distance * distance);
-        float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
+        vec3 specularTerm = getSpecularTerm(specular, lightDirWS, viewDirWS, normalWS);
         light += _PointLights[i].Intensity * lightAngleCos * attenuationTerm + specularTerm * attenuationTerm;
     }
 
@@ -95,9 +106,10 @@ vec3 getLight(vec3 posWS, vec3 normalWS){
         float cutOffTerm = step(_SpotLights[i].CutOffCos, cutOffCos);
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
         float distance = distance(_SpotLights[i].PositionWS, posWS);
+
         float attenuationTerm = 1 / (1 + _SpotLights[i].Attenuation * distance * distance);
         attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0, 1);
-        float specularTerm = getSpecularTerm(lightDirWS, lightAngleCos, posWS, normalWS);
+        vec3 specularTerm = getSpecularTerm(specular, lightDirWS, viewDirWS, normalWS);
         float shadowTerm = getSpotLightShadowTerm(i, posWS, lightAngleCos);
         light += (_SpotLights[i].Intensity * lightAngleCos * attenuationTerm + specularTerm * attenuationTerm) * shadowTerm * cutOffTerm;
     }

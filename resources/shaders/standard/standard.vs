@@ -16,15 +16,6 @@ out Varyings
     vec4 Color;
 } vars;
 
-#ifdef _SMOOTHNESS
-uniform float _Smoothness;
-#endif
-
-#ifdef _NORMAL_MAP
-uniform sampler2D _NormalMap;
-uniform vec4 _NormalMap_ST;
-#endif
-
 #include "../common/camera_data.cg"
 #include "../common/lighting.cg"
 
@@ -36,7 +27,7 @@ void main(){
     vars.UV = texCoord;
 
     #ifdef _VERTEX_LIGHT
-    vars.Color = vec4(getLight(vars.PositionWS.xyz, vars.NormalWS), 1);
+    vars.Color = vec4(getLight(vars.PositionWS.xyz, vars.NormalWS, vec4(0)), 1);
     #else
     vars.Color = vec4(1);
     #endif

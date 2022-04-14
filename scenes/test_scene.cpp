@@ -3,8 +3,8 @@
 #include "bounds/bounds.h"
 #include "camera/camera.h"
 #include "cubemap/cubemap.h"
-#include "fbx_asset/fbx_asset.h"
 #include "editor/gizmos/gizmos.h"
+#include "fbx_asset/fbx_asset.h"
 #include "input/input.h"
 #include "light/light.h"
 #include "material/material.h"
@@ -41,6 +41,7 @@ void TestScene::Init()
     auto carAlbedo     = Texture2D::Load("resources/textures/car/car_albedo.png");
     auto carNormal     = Texture2D::Load("resources/textures/car/car_normal.png", false);
     auto carSpecular   = Texture2D::Load("resources/textures/car/car_specular.png", false, true);
+    auto carReflection = Texture2D::Load("resources/textures/car/car_reflection.png", false, true);
 
     // init skybox cubemap
     Skybox = Cubemap::Load("resources/textures/skybox/x_positive.png",
@@ -51,7 +52,7 @@ void TestScene::Init()
                            "resources/textures/skybox/z_negative.png");
 
     // init shaders
-    auto fragmentLitShader = Shader::Load("resources/shaders/standard/standard.shader", {"_SPECULAR", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
+    auto fragmentLitShader = Shader::Load("resources/shaders/standard/standard.shader", {"_SPECULAR", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
     auto transparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", {"_SPECULAR", "_RECEIVE_SHADOWS"});
 
     // init meshes
@@ -68,31 +69,42 @@ void TestScene::Init()
     // init materials
     auto fragmentLitMaterial = std::make_shared<Material>(fragmentLitShader);
     fragmentLitMaterial->SetFloat("_Smoothness", 50);
+    fragmentLitMaterial->SetFloat("_SpecularStrength", 0.2f);
 
     auto fragmentLitBrickMaterial = std::make_shared<Material>(fragmentLitShader);
     fragmentLitBrickMaterial->SetTexture("_Albedo", brickTexture);
     fragmentLitBrickMaterial->SetTexture("_NormalMap", brickNormal);
-    fragmentLitBrickMaterial->SetFloat("_Smoothness", 10);
+    fragmentLitBrickMaterial->SetFloat("_Smoothness", 50);
+    fragmentLitBrickMaterial->SetFloat("_SpecularStrength", 0.2f);
 
     m_WaterMaterial = std::make_shared<Material>(fragmentLitShader);
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
     m_WaterMaterial->SetTexture("_NormalMap", waterNormal);
-    m_WaterMaterial->SetFloat("_Smoothness", 20);
+    m_WaterMaterial->SetTexture("_ReflectionCube", Skybox);
+    m_WaterMaterial->SetFloat("_ReflectionStrength", 0.3f);
+    m_WaterMaterial->SetFloat("_Smoothness", 50);
+    m_WaterMaterial->SetFloat("_SpecularStrength", 0.8f);
 
     auto transparentMaterial = std::make_shared<Material>(transparentShader);
     transparentMaterial->SetTexture("_Albedo", windowTexture);
+    transparentMaterial->SetFloat("_Smoothness", 100);
+    transparentMaterial->SetFloat("_SpecularStrength", 1);
     transparentMaterial->SetRenderQueue(3000);
 
     auto carMaterial = std::make_shared<Material>(fragmentLitShader);
     carMaterial->SetTexture("_Albedo", carAlbedo);
     carMaterial->SetTexture("_NormalMap", carNormal);
     carMaterial->SetTexture("_SpecularMask", carSpecular);
-    carMaterial->SetFloat("_Smoothness", 20);
+    carMaterial->SetTexture("_ReflectionMask", carReflection);
+    carMaterial->SetTexture("_ReflectionCube", Skybox);
+    carMaterial->SetFloat("_ReflectionStrength", 0.5f);
+    carMaterial->SetFloat("_Smoothness", 50);
+    carMaterial->SetFloat("_SpecularStrength", 1);
 
     // init gameObjects
     auto rotatingCube      = GameObject::Create("Rotating Cube");
     rotatingCube->Renderer = std::make_shared<MeshRenderer>(rotatingCube, cubeMesh, fragmentLitBrickMaterial);
-    m_RotatingCube = rotatingCube;
+    m_RotatingCube         = rotatingCube;
 
     auto rotatingCylinder      = GameObject::Create("Rotating Cylinder");
     rotatingCylinder->Renderer = std::make_shared<MeshRenderer>(rotatingCylinder, cylinderMesh, fragmentLitMaterial);
@@ -150,7 +162,7 @@ void TestScene::Init()
     m_DirectionalLight            = std::make_shared<Light>();
     m_DirectionalLight->Position  = Vector3(0, -0.3f, -1);
     m_DirectionalLight->Rotation  = Quaternion::AngleAxis(-150, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(1, 0, 0));
-    m_DirectionalLight->Intensity = Vector3(0.2f, 0.2f, 0.2f);
+    m_DirectionalLight->Intensity = Vector3(0.5f, 0.5f, 0.5f);
     m_DirectionalLight->Type      = LightType::DIRECTIONAL;
 
     auto pointLight         = std::make_shared<Light>();
@@ -241,8 +253,8 @@ void TestScene::UpdateInternal()
     m_SpotLight->Position        = Camera::Current->GetPosition() + Camera::Current->GetRotation() * Vector3(-3, 0, 0);
     m_SpotLight->Rotation        = Camera::Current->GetRotation();
 
-    // gizmos
-    #if OPENGL_STUDY_EDITOR
+// gizmos
+#if OPENGL_STUDY_EDITOR
     if (Input::GetKeyDown('G'))
         m_DrawGizmos = !m_DrawGizmos;
 
@@ -258,5 +270,5 @@ void TestScene::UpdateInternal()
             Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
         }
     }
-    #endif
+#endif
 }

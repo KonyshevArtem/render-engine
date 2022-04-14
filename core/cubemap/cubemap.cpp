@@ -79,3 +79,26 @@ std::shared_ptr<Cubemap> &Cubemap::White()
     white->Init();
     return white;
 }
+
+std::shared_ptr<Cubemap> &Cubemap::Black()
+{
+    static std::shared_ptr<Cubemap> black;
+
+    if (black != nullptr)
+        return black;
+
+    black           = std::shared_ptr<Cubemap>(new Cubemap());
+    black->m_Width  = 1;
+    black->m_Height = 1;
+
+    black->m_Data.resize(SIDES_COUNT);
+    for (int i = 0; i < SIDES_COUNT; ++i)
+    {
+        black->m_Data[i].push_back(0);
+        black->m_Data[i].push_back(0);
+        black->m_Data[i].push_back(0);
+    }
+
+    black->Init();
+    return black;
+}

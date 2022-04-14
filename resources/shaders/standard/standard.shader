@@ -2,7 +2,9 @@
   "default": {
     "_Albedo": "white",
     "_NormalMap": "normal",
-    "_SpecularMask": "white"
+    "_SpecularMask": "white",
+    "_ReflectionCube": "black",
+    "_ReflectionMask": "white"
   },
   "passes": [
     {

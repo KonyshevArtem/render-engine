@@ -216,6 +216,7 @@ DefaultTexturesMap GetDefaultTexturesMap()
     DefaultTexturesMap map;
     map["white"][UniformType::SAMPLER_2D]   = Texture2D::White();
     map["white"][UniformType::SAMPLER_CUBE] = Cubemap::White();
+    map["black"][UniformType::SAMPLER_CUBE] = Cubemap::Black();
     map["normal"][UniformType::SAMPLER_2D]  = Texture2D::Normal();
     return map;
 }

@@ -4,7 +4,9 @@
     "_NormalMap": "normal",
     "_SpecularMask": "white",
     "_ReflectionCube": "black",
-    "_ReflectionMask": "white"
+    "_ReflectionMask": "white",
+    "_SmoothnessMask": "white",
+    "_MetallnessMask": "white"
   },
   "passes": [
     {

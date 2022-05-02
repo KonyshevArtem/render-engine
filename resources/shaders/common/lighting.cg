@@ -3,6 +3,11 @@
 
 #include "shadows.cg"
 
+const float PI = 3.14159265359;
+
+
+/// Data ///
+
 layout(std140) struct DirectionalLight
 {
     vec3 DirectionWS;
@@ -41,9 +46,14 @@ layout(std140) uniform Lighting
 
 struct LightData
 {
-    vec3 Light;
+    vec3 Diffuse;
     vec3 Specular;
 };
+
+
+
+/// Helpers ///
+
 
 vec4 sampleSpecular(vec2 uv)
 {
@@ -67,18 +77,7 @@ vec3 sampleReflection(vec3 normalWS, vec3 posWS, vec2 uv)
     #endif
 }
 
-vec3 getSpecularTerm(vec4 specular, vec3 lightDirWS, vec3 viewDirWS, vec3 normalWS){
-    #if defined(_SPECULAR) && defined(FRAGMENT_PROGRAM)
-    vec3 halfAngle = normalize(lightDirWS + viewDirWS);
-    float blinnTerm = clamp(dot(normalWS, halfAngle), 0, 1);
-    blinnTerm = pow(blinnTerm, _Smoothness) * specular.a * _SpecularStrength;
-    return specular.rgb * max(blinnTerm, 0);
-    #else
-    return vec3(0);
-    #endif
-}
-
-vec3 getNormalWS(vec3 normalWS, vec3 tangentWS, vec2 uv)
+vec3 sampleNormalWS(vec3 normalWS, vec3 tangentWS, vec2 uv)
 {
     normalWS = normalize(normalWS);
     #if defined(_NORMAL_MAP) && defined(FRAGMENT_PROGRAM)
@@ -94,10 +93,47 @@ vec3 getNormalWS(vec3 normalWS, vec3 tangentWS, vec2 uv)
     return normalWS;
 }
 
+float sampleSmoothness(vec2 uv)
+{
+    #if defined(_SPECULAR) && defined(FRAGMENT_PROGRAM)
+    float smoothness = texture(_SmoothnessMask, uv).r;
+    smoothness *= _Smoothness;
+    return smoothness;
+    #else
+    return 1;
+    #endif
+}
+
+float sampleMetallness(vec2 uv)
+{
+    #if defined(_SPECULAR) && defined(FRAGMENT_PROGRAM)
+    float metallness = texture(_MetallnessMask, uv).r;
+    metallness *= _Metallness;
+    return metallness;
+    #else
+    return 1;
+    #endif
+}
+
+
+/// Blinn-Phong ///
+
+
+vec3 getSpecularTermBlinnPhong(vec4 specular, vec3 lightDirWS, vec3 viewDirWS, vec3 normalWS){
+    #if defined(_SPECULAR) && defined(FRAGMENT_PROGRAM)
+    vec3 halfAngle = normalize(lightDirWS + viewDirWS);
+    float blinnTerm = clamp(dot(normalWS, halfAngle), 0, 1);
+    blinnTerm = pow(blinnTerm, _Smoothness) * specular.a;
+    return specular.rgb * max(blinnTerm, 0);
+    #else
+    return vec3(0);
+    #endif
+}
+
 LightData getLight(vec3 posWS, vec3 normalWS, vec4 specular)
 {
     LightData data;
-    data.Light = _AmbientLight;
+    data.Diffuse = _AmbientLight;
     data.Specular = vec3(0);
 
     vec3 viewDirWS = normalize(_CameraPosWS - posWS);
@@ -107,8 +143,8 @@ LightData getLight(vec3 posWS, vec3 normalWS, vec4 specular)
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0, 1);
         float shadowTerm = getDirLightShadowTerm(posWS, lightAngleCos);
 
-        data.Light += _DirectionalLight.Intensity * lightAngleCos * shadowTerm;
-        data.Specular += getSpecularTerm(specular, lightDirWS, viewDirWS, normalWS);
+        data.Diffuse += _DirectionalLight.Intensity * lightAngleCos * shadowTerm;
+        data.Specular += getSpecularTermBlinnPhong(specular, lightDirWS, viewDirWS, normalWS);
     }
 
     for (int i = 0; i < _PointLightsCount; ++i)
@@ -118,8 +154,8 @@ LightData getLight(vec3 posWS, vec3 normalWS, vec4 specular)
         float distance = distance(_PointLights[i].PositionWS, posWS);
         float attenuationTerm = 1 / (1 + _PointLights[i].Attenuation * distance * distance);
 
-        data.Light += _PointLights[i].Intensity * lightAngleCos * attenuationTerm;
-        data.Specular += getSpecularTerm(specular, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
+        data.Diffuse += _PointLights[i].Intensity * lightAngleCos * attenuationTerm;
+        data.Specular += getSpecularTermBlinnPhong(specular, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
     }
 
     for (int i = 0; i < _SpotLightsCount; ++i){
@@ -134,8 +170,131 @@ LightData getLight(vec3 posWS, vec3 normalWS, vec4 specular)
 
         float shadowTerm = getSpotLightShadowTerm(i, posWS, lightAngleCos);
 
-        data.Light += _SpotLights[i].Intensity * lightAngleCos * attenuationTerm * shadowTerm;
-        data.Specular += getSpecularTerm(specular, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
+        data.Diffuse += _SpotLights[i].Intensity * lightAngleCos * attenuationTerm * shadowTerm;
+        data.Specular += getSpecularTermBlinnPhong(specular, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
+    }
+
+    return data;
+}
+
+
+
+/// PBR ///
+
+
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+    float a2 = roughness*roughness;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH*NdotH;
+	
+    float nom = a2;
+    float denom  = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+	
+    return nom / denom;
+}
+
+float GeometrySchlickGGX(float NdotV, float k)
+{
+    float nom   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+	
+    return nom / denom;
+}
+  
+float GeometrySmith(float NdotV, float NdotL, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
+    float ggx1 = GeometrySchlickGGX(NdotV, k);
+    float ggx2 = GeometrySchlickGGX(NdotL, k);
+	
+    return ggx1 * ggx2;
+}
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+LightData getLightSourcePBR(vec3 normalWS, vec3 viewDirWS, vec3 lightDirWS, float roughness, vec3 F0, float metallness)
+{
+    vec3 halfVector = normalize(lightDirWS + viewDirWS);
+
+    float NdotV = max(dot(normalWS, viewDirWS), 0.0);
+    float NdotL = max(dot(normalWS, lightDirWS), 0.0);
+    
+    float NDF = DistributionGGX(normalWS, halfVector, roughness);
+    float G = GeometrySmith(NdotV, NdotL, roughness);
+    vec3 F = fresnelSchlick(max(dot(halfVector, viewDirWS), 0), F0);
+    
+    vec3 numerator = NDF * G * F;
+    float denominator = 4.0 * NdotV * NdotL;
+    vec3 specular = numerator / max(denominator, 0.001);
+    
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallness;
+    
+    LightData data;
+    data.Diffuse = kD / PI;
+    data.Specular = specular;
+    return data;
+}
+
+LightData getLightPBR(vec3 posWS, vec3 normalWS, vec3 albedo, float smoothness, float metallness)
+{
+    LightData data;
+    data.Diffuse = _AmbientLight;
+    data.Specular = vec3(0);
+
+    vec3 viewDirWS = normalize(_CameraPosWS - posWS);
+    vec3 F0 = mix(vec3(0.04), albedo, metallness);
+    float roughness =  clamp(1 - smoothness, 0.01, 1);
+
+    if (_HasDirectionalLight){
+        vec3 lightDirWS = normalize(-_DirectionalLight.DirectionWS);
+        
+        float NdotL = max(dot(normalWS, lightDirWS), 0.0);
+        float shadowTerm = getDirLightShadowTerm(posWS, NdotL);
+        vec3 radiance = _DirectionalLight.Intensity * NdotL * shadowTerm;
+
+        LightData sourceData = getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness);
+        data.Diffuse += sourceData.Diffuse * radiance;
+        data.Specular += sourceData.Specular * radiance;
+    }
+
+    for (int i = 0; i < _PointLightsCount; ++i)
+    {
+        vec3 lightDirWS = normalize(_PointLights[i].PositionWS - posWS);
+        float NdotL = clamp(dot(normalWS, lightDirWS), 0, 1);
+        float dist = distance(_PointLights[i].PositionWS, posWS);
+        float attenuationTerm = 1 / (1 + _PointLights[i].Attenuation * dist * dist);
+        vec3 radiance = _PointLights[i].Intensity * NdotL * attenuationTerm;
+    
+        LightData sourceData = getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness);
+        data.Diffuse += sourceData.Diffuse * radiance;
+        data.Specular += sourceData.Specular * radiance;
+    }
+    
+    for (int i = 0; i < _SpotLightsCount; ++i){
+        vec3 lightDirWS = normalize(_SpotLights[i].PositionWS - posWS);
+        float cutOffCos = clamp(dot(_SpotLights[i].DirectionWS, -lightDirWS), 0, 1);
+        float NdotL = clamp(dot(normalWS, lightDirWS), 0, 1);
+        float dist = distance(_SpotLights[i].PositionWS, posWS);
+    
+        float attenuationTerm = 1 / (1 + _SpotLights[i].Attenuation * dist * dist);
+        attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0, 1);
+        attenuationTerm *= step(_SpotLights[i].CutOffCos, cutOffCos);
+    
+        float shadowTerm = getSpotLightShadowTerm(i, posWS, NdotL);
+        vec3 radiance = _SpotLights[i].Intensity * NdotL * attenuationTerm * shadowTerm;
+    
+        LightData sourceData = getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness);
+        data.Diffuse += sourceData.Diffuse * radiance;
+        data.Specular += sourceData.Specular * radiance;
     }
 
     return data;

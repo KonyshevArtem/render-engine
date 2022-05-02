@@ -40,8 +40,8 @@ void TestScene::Init()
     auto windowTexture = Texture2D::Load("resources/textures/window_cube.png", true, true);
     auto carAlbedo     = Texture2D::Load("resources/textures/car/car_albedo.png");
     auto carNormal     = Texture2D::Load("resources/textures/car/car_normal.png", false);
-    auto carSpecular   = Texture2D::Load("resources/textures/car/car_specular.png", false, true);
-    auto carReflection = Texture2D::Load("resources/textures/car/car_reflection.png", false, true);
+    auto carSmoothness = Texture2D::Load("resources/textures/car/car_smoothness.png", false, false);
+    auto carMetallic   = Texture2D::Load("resources/textures/car/car_metallic.png", false, false);
 
     // init skybox cubemap
     Skybox = Cubemap::Load("resources/textures/skybox/x_positive.png",
@@ -68,38 +68,40 @@ void TestScene::Init()
 
     // init materials
     auto fragmentLitMaterial = std::make_shared<Material>(fragmentLitShader);
-    fragmentLitMaterial->SetFloat("_Smoothness", 50);
-    fragmentLitMaterial->SetFloat("_SpecularStrength", 0.2f);
+    fragmentLitMaterial->SetFloat("_Smoothness", 0.5f);
+    fragmentLitMaterial->SetFloat("_Metallness", 1);
 
     auto fragmentLitBrickMaterial = std::make_shared<Material>(fragmentLitShader);
     fragmentLitBrickMaterial->SetTexture("_Albedo", brickTexture);
     fragmentLitBrickMaterial->SetTexture("_NormalMap", brickNormal);
-    fragmentLitBrickMaterial->SetFloat("_Smoothness", 50);
-    fragmentLitBrickMaterial->SetFloat("_SpecularStrength", 0.2f);
+    fragmentLitBrickMaterial->SetFloat("_Smoothness", 0.5f);
+    fragmentLitBrickMaterial->SetFloat("_Metallness", 0);
 
     m_WaterMaterial = std::make_shared<Material>(fragmentLitShader);
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
     m_WaterMaterial->SetTexture("_NormalMap", waterNormal);
     m_WaterMaterial->SetTexture("_ReflectionCube", Skybox);
     m_WaterMaterial->SetFloat("_ReflectionStrength", 0.3f);
-    m_WaterMaterial->SetFloat("_Smoothness", 50);
-    m_WaterMaterial->SetFloat("_SpecularStrength", 0.8f);
+    m_WaterMaterial->SetFloat("_Smoothness", 0.9f);
+    m_WaterMaterial->SetFloat("_Metallness", 0.2f);
 
     auto transparentMaterial = std::make_shared<Material>(transparentShader);
     transparentMaterial->SetTexture("_Albedo", windowTexture);
-    transparentMaterial->SetFloat("_Smoothness", 100);
-    transparentMaterial->SetFloat("_SpecularStrength", 1);
+    transparentMaterial->SetFloat("_Smoothness", 0.2f);
+    transparentMaterial->SetFloat("_Metallness", 0);
     transparentMaterial->SetRenderQueue(3000);
 
     auto carMaterial = std::make_shared<Material>(fragmentLitShader);
     carMaterial->SetTexture("_Albedo", carAlbedo);
     carMaterial->SetTexture("_NormalMap", carNormal);
-    carMaterial->SetTexture("_SpecularMask", carSpecular);
-    carMaterial->SetTexture("_ReflectionMask", carReflection);
-    carMaterial->SetTexture("_ReflectionCube", Skybox);
-    carMaterial->SetFloat("_ReflectionStrength", 0.5f);
-    carMaterial->SetFloat("_Smoothness", 50);
-    carMaterial->SetFloat("_SpecularStrength", 1);
+    carMaterial->SetTexture("_MetallnessMask", carMetallic);
+    carMaterial->SetTexture("_SmoothnessMask", carSmoothness);
+    //carMaterial->SetTexture("_SpecularMask", carSpecular);
+    //carMaterial->SetTexture("_ReflectionMask", carMetallic);
+    //carMaterial->SetTexture("_ReflectionCube", Skybox);
+    //carMaterial->SetFloat("_ReflectionStrength", 0.5f);
+    carMaterial->SetFloat("_Smoothness", 1);
+    carMaterial->SetFloat("_Metallness", 1);
 
     // init gameObjects
     auto rotatingCube      = GameObject::Create("Rotating Cube");
@@ -173,7 +175,7 @@ void TestScene::Init()
 
     m_SpotLight              = std::make_shared<Light>();
     m_SpotLight->Intensity   = Vector3(1, 1, 1);
-    m_SpotLight->Attenuation = 0.05f;
+    m_SpotLight->Attenuation = 0.005f;
     m_SpotLight->CutOffAngle = 15;
     m_SpotLight->Type        = LightType::SPOT;
 
@@ -185,7 +187,7 @@ void TestScene::Init()
     spotLight2->CutOffAngle = 15;
     spotLight2->Type        = LightType::SPOT;
 
-    AmbientLight = Vector3(0.05f, 0.05f, 0.05f);
+    AmbientLight = Vector3(0.1f, 0.1f, 0.1f);
 
     Lights.push_back(m_DirectionalLight);
     Lights.push_back(pointLight);

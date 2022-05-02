@@ -10,6 +10,8 @@ set(
     game_window.h
     scenes/test_scene.cpp
     scenes/test_scene.h
+    scenes/pbr_demo.cpp
+    scenes/pbr_demo.h
     scripts/camera_fly_controller/camera_fly_controller.cpp
 	scripts/camera_fly_controller/camera_fly_controller.h
 )

@@ -13,8 +13,10 @@ uniform vec4 _Albedo_ST;
 
 #ifdef _SPECULAR
 uniform sampler2D _SpecularMask;
-uniform float _SpecularStrength;
+uniform sampler2D _SmoothnessMask;
+uniform sampler2D _MetallnessMask;
 uniform float _Smoothness;
+uniform float _Metallness;
 #endif
 
 #ifdef _NORMAL_MAP
@@ -34,17 +36,18 @@ uniform float _ReflectionStrength;
 out vec4 outColor;
 
 void main(){
-    vec3 normalWS = getNormalWS(vars.NormalWS, vars.TangentWS, vars.UV);
+    vec3 normalWS = sampleNormalWS(vars.NormalWS, vars.TangentWS, vars.UV);
+    float smoothness = sampleSmoothness(vars.UV);
+    float metallness = sampleMetallness(vars.UV);
+    //vec3 reflection = sampleReflection(normalWS, vars.PositionWS.xyz, vars.UV);
+
+    vec4 albedo = texture(_Albedo, vars.UV * _Albedo_ST.zw + _Albedo_ST.xy);
 
     #ifdef _VERTEX_LIGHT
     vec4 light = vars.Color;
     #else
-    vec4 specular = sampleSpecular(vars.UV);
-    LightData lightData = getLight(vars.PositionWS.xyz, normalWS, specular);
+    LightData lightData = getLightPBR(vars.PositionWS.xyz, normalWS, albedo.rgb, smoothness, metallness);
     #endif
 
-    vec4 diffuse = texture(_Albedo, vars.UV * _Albedo_ST.zw + _Albedo_ST.xy);
-    vec3 reflection = sampleReflection(normalWS, vars.PositionWS.xyz, vars.UV);
-
-    outColor = vec4(diffuse.rgb * lightData.Light + lightData.Specular + reflection, diffuse.a);
+    outColor = vec4(albedo.rgb * lightData.Diffuse + lightData.Specular, albedo.a);
 }

@@ -74,6 +74,8 @@ Mesh::~Mesh()
 void Mesh::Draw(const Material &_material, const RenderSettings &_settings) const
 {
     const auto &shader = _material.GetShader();
+
+    glBindVertexArray(m_VertexArrayObject);
     for (int i = 0; i < shader->PassesCount(); ++i)
     {
         if (!_settings.TagsMatch(*shader, i))
@@ -83,10 +85,9 @@ void Mesh::Draw(const Material &_material, const RenderSettings &_settings) cons
 
         Shader::SetPropertyBlock(_material.GetPropertyBlock());
 
-        glBindVertexArray(m_VertexArrayObject);
         glDrawElements(GL_TRIANGLES, m_Indexes.size(), GL_UNSIGNED_INT, nullptr);
-        glBindVertexArray(0);
     }
+    glBindVertexArray(0);
 }
 
 Bounds Mesh::GetBounds() const

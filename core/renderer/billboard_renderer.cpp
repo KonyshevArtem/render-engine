@@ -1,5 +1,7 @@
 #include "billboard_renderer.h"
+#include "material/material.h"
 #include "matrix4x4/matrix4x4.h"
+#include "point/point.h"
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
 #include "vector3/vector3.h"
@@ -7,62 +9,23 @@
 #include <vector>
 
 BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, std::shared_ptr<Texture2D> _texture) :
-    Renderer(_gameObject), m_Texture(std::move(_texture)), m_Size(0)
+    Renderer(_gameObject), m_Point(std::make_shared<Point>())
 {
-    glGenVertexArrays(1, &m_VertexArrayObject);
-    glGenBuffers(1, &m_PointsBuffer);
+    static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard/billboard.shader", {});
 
-    glBindVertexArray(m_VertexArrayObject);
-    glBindBuffer(GL_ARRAY_BUFFER, m_PointsBuffer);
+    m_Material = std::make_shared<Material>(shader);
+    m_Material->SetTexture("_Texture", _texture);
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3), nullptr, GL_DYNAMIC_DRAW);
-
-    glBindVertexArray(0);
-}
-
-BillboardRenderer::~BillboardRenderer()
-{
-    glDeleteVertexArrays(1, &m_VertexArrayObject);
-    glDeleteBuffers(1, &m_PointsBuffer);
+    m_Aspect = static_cast<float>(_texture->GetWidth()) / _texture->GetHeight();
 }
 
 void BillboardRenderer::Render(const RenderSettings &_settings) const
 {
-    static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard/billboard.shader", {});
-
-    if (shader == nullptr || m_Texture == nullptr)
+    if (m_Point == nullptr)
         return;
 
-    int width  = m_Texture->GetWidth();
-    int height = m_Texture->GetHeight();
-    if (width == 0 || height == 0)
-        return;
-
-    for (int i = 0; i < shader->PassesCount(); ++i)
-    {
-        if (!_settings.TagsMatch(*shader, i))
-            continue;
-
-        shader->Use(i);
-
-        Shader::SetGlobalTexture("_Texture", m_Texture);
-
-        auto    aspect = static_cast<float>(width) / height;
-        Vector4 size {m_Size, m_Size / aspect, 0, 0};
-        Shader::SetGlobalVector("_Size", size);
-
-        auto position = GetModelMatrix().GetPosition();
-
-        glBindVertexArray(m_VertexArrayObject);
-        glBindBuffer(GL_ARRAY_BUFFER, m_PointsBuffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vector3), &position);
-        glDrawArrays(GL_POINTS, 0, 1);
-
-        glBindVertexArray(0);
-    }
+    m_Point->SetPosition(GetModelMatrix().GetPosition());
+    m_Point->Draw(*m_Material, _settings);
 }
 
 Bounds BillboardRenderer::GetAABB() const
@@ -72,11 +35,12 @@ Bounds BillboardRenderer::GetAABB() const
 
 void BillboardRenderer::SetSize(float _size)
 {
-    m_Size = _size;
-
     auto position = GetModelMatrix().GetPosition();
-    m_Bounds.Min  = position - Vector3 {m_Size, 0, m_Size};
-    m_Bounds.Max  = position + Vector3 {m_Size, 2 * m_Size, m_Size};
+    m_Bounds.Min  = position - Vector3 {_size, 0, _size};
+    m_Bounds.Max  = position + Vector3 {_size, 2 * _size, _size};
+
+    Vector4 size {_size, _size / m_Aspect, 0, 0};
+    m_Material->SetVector("_Size", size);
 }
 
 int BillboardRenderer::GetRenderQueue() const

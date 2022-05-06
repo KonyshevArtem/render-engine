@@ -16,7 +16,8 @@
 
 namespace ShaderLoader
 {
-    constexpr int SHADER_PART_COUNT = 3;
+    constexpr int     SHADER_PART_COUNT  = 3;
+    const std::string INSTANCING_KEYWORD = "_INSTANCING";
 
     const GLuint SHADER_PARTS[SHADER_PART_COUNT] {
             GL_VERTEX_SHADER,
@@ -250,10 +251,14 @@ namespace ShaderLoader
 
     std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords)
     {
-        auto        shaderSource = Utils::ReadFileWithIncludes(_path);
+        auto        shaderSource      = Utils::ReadFileWithIncludes(_path);
+        bool        supportInstancing = false;
         std::string keywordsDirectives;
         for (const auto &keyword: _keywords)
+        {
             keywordsDirectives += "#define " + keyword + "\n";
+            supportInstancing |= keyword == INSTANCING_KEYWORD;
+        }
 
         try
         {
@@ -282,7 +287,7 @@ namespace ShaderLoader
                 passes.push_back(passInfo.Pass);
             }
 
-            return std::shared_ptr<Shader>(new Shader(passes, shaderInfo.DefaultValues));
+            return std::shared_ptr<Shader>(new Shader(passes, shaderInfo.DefaultValues, supportInstancing));
         }
         catch (std::exception _exception)
         {

@@ -1,6 +1,7 @@
 #ifndef OPENGL_STUDY_POINT
 #define OPENGL_STUDY_POINT
 
+#include "drawable_geometry/drawable_geometry.h"
 #include "graphics/render_settings.h"
 #include "material/material.h"
 #include "vector3/vector3.h"
@@ -10,14 +11,19 @@
 #include <OpenGL/gl3.h>
 #endif
 
-class Point
+class Point: public DrawableGeometry
 {
 public:
     Point();
-    ~Point();
+    virtual ~Point() = default;
 
     void Draw(const Material &_material, const RenderSettings &_settings) const;
     void SetPosition(const Vector3 &_position);
+
+    inline GLenum GetGeometryType() const override
+    {
+        return GL_POINTS;
+    }
 
 private:
     Point(const Point &) = delete;
@@ -25,9 +31,6 @@ private:
 
     Point &operator=(const Point &) = delete;
     Point &operator=(Point &&) = delete;
-
-    GLuint m_VertexArrayObject = 0;
-    GLuint m_PointBuffer       = 0;
 };
 
 #endif

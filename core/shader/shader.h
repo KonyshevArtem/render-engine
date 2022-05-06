@@ -64,7 +64,7 @@ public:
     ~Shader();
 
 private:
-    Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues);
+    Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues, bool _supportInstancing);
     Shader(const Shader &) = delete;
     Shader(Shader &&)      = delete;
 
@@ -78,6 +78,7 @@ private:
 private:
     std::vector<PassInfo>                        m_Passes;
     std::unordered_map<std::string, std::string> m_DefaultValues;
+    bool                                         m_SupportInstancing;
 
     static PropertyBlock   m_PropertyBlock;
     static const PassInfo *m_CurrentPass;
@@ -93,6 +94,11 @@ public:
     inline int PassesCount() const
     {
         return m_Passes.size();
+    }
+
+    inline bool SupportInstancing() const
+    {
+        return m_SupportInstancing;
     }
 
     static void SetPropertyBlock(const PropertyBlock &_propertyBlock);

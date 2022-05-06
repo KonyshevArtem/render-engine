@@ -65,7 +65,9 @@ add_library(
 	graphics/render_settings.cpp
 	graphics/draw_call_info.h
 	point/point.h
-	point/point.cpp)
+	point/point.cpp 
+	drawable_geometry/drawable_geometry.h
+	drawable_geometry/drawable_geometry.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils LodePNG OpenFBX)

@@ -18,19 +18,18 @@ public:
                  std::shared_ptr<Material>          _material);
     virtual ~MeshRenderer() = default;
 
-    void   Render(const RenderSettings &_settings) const override;
-    Bounds GetAABB() const override;
+    void                              Render(const RenderSettings &_settings) const override;
+    Bounds                            GetAABB() const override;
+    std::shared_ptr<DrawableGeometry> GetGeometry() const override;
 
 private:
     MeshRenderer(const MeshRenderer &) = delete;
     MeshRenderer(MeshRenderer &&)      = delete;
 
     MeshRenderer &operator=(const MeshRenderer &) = delete;
-    MeshRenderer &operator=(MeshRenderer &&)      = delete;
+    MeshRenderer &operator=(MeshRenderer &&) = delete;
 
-
-    std::shared_ptr<Mesh>     m_Mesh;
-    std::shared_ptr<Material> m_Material;
+    std::shared_ptr<Mesh> m_Mesh;
 
     int GetRenderQueue() const override;
 };

@@ -1,13 +1,8 @@
 #include "point.h"
 
-Point::Point()
+Point::Point() :
+    DrawableGeometry()
 {
-    glGenVertexArrays(1, &m_VertexArrayObject);
-    glGenBuffers(1, &m_PointBuffer);
-
-    glBindVertexArray(m_VertexArrayObject);
-    glBindBuffer(GL_ARRAY_BUFFER, m_PointBuffer);
-
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
@@ -17,17 +12,11 @@ Point::Point()
     glBindVertexArray(0);
 }
 
-Point::~Point()
-{
-    glDeleteVertexArrays(1, &m_VertexArrayObject);
-    glDeleteBuffers(1, &m_PointBuffer);
-}
-
 void Point::Draw(const Material &_material, const RenderSettings &_settings) const
 {
     const auto &shader = _material.GetShader();
 
-    glBindVertexArray(m_VertexArrayObject);
+    glBindVertexArray(GetVertexArrayObject());
     for (int i = 0; i < shader->PassesCount(); ++i)
     {
         if (!_settings.TagsMatch(*shader, i))
@@ -45,8 +34,8 @@ void Point::Draw(const Material &_material, const RenderSettings &_settings) con
 
 void Point::SetPosition(const Vector3 &_position)
 {
-    glBindVertexArray(m_VertexArrayObject);
-    glBindBuffer(GL_ARRAY_BUFFER, m_PointBuffer);
+    glBindVertexArray(GetVertexArrayObject());
+    glBindBuffer(GL_ARRAY_BUFFER, GetVertexBuffer());
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vector3), &_position);
     glBindVertexArray(0);
 }

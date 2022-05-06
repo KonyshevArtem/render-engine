@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_BILLBOARD_RENDERER_H
 
 #include "bounds/bounds.h"
+#include "point/point.h"
 #include "renderer.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
@@ -14,7 +15,6 @@ class GameObject;
 class Texture2D;
 class Shader;
 class Material;
-class Point;
 
 class BillboardRenderer: public Renderer
 {
@@ -22,15 +22,11 @@ public:
     BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, std::shared_ptr<Texture2D> _texture);
     virtual ~BillboardRenderer() = default;
 
-    void   Render(const RenderSettings &_settings) const override;
-    Bounds GetAABB() const override;
-
-    inline void SetRenderQueue(int _renderQueue)
-    {
-        m_RenderQueue = _renderQueue;
-    }
-
-    void SetSize(float _size);
+    void                              Render(const RenderSettings &_settings) const override;
+    Bounds                            GetAABB() const override;
+    std::shared_ptr<DrawableGeometry> GetGeometry() const override;
+    void                              SetRenderQueue(int _renderQueue);
+    void                              SetSize(float _size);
 
 private:
     BillboardRenderer(const BillboardRenderer &) = delete;
@@ -39,11 +35,9 @@ private:
     BillboardRenderer &operator=(const BillboardRenderer &) = delete;
     BillboardRenderer &operator=(BillboardRenderer &&) = delete;
 
-    std::shared_ptr<Point>    m_Point;
-    std::shared_ptr<Material> m_Material;
-    float                     m_Aspect;
-    Bounds                    m_Bounds;
-    int                       m_RenderQueue = 2000;
+    std::shared_ptr<Point> m_Point;
+    float                  m_Aspect;
+    Bounds                 m_Bounds;
 
     int GetRenderQueue() const override;
 };

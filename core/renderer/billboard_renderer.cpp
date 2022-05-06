@@ -9,7 +9,7 @@
 #include <vector>
 
 BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, std::shared_ptr<Texture2D> _texture) :
-    Renderer(_gameObject), m_Point(std::make_shared<Point>())
+    Renderer(_gameObject, nullptr), m_Point(std::make_shared<Point>())
 {
     static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard/billboard.shader", {});
 
@@ -33,6 +33,11 @@ Bounds BillboardRenderer::GetAABB() const
     return GetModelMatrix() * m_Bounds;
 }
 
+std::shared_ptr<DrawableGeometry> BillboardRenderer::GetGeometry() const
+{
+    return m_Point;
+}
+
 void BillboardRenderer::SetSize(float _size)
 {
     auto position = GetModelMatrix().GetPosition();
@@ -43,7 +48,13 @@ void BillboardRenderer::SetSize(float _size)
     m_Material->SetVector("_Size", size);
 }
 
+void BillboardRenderer::SetRenderQueue(int _renderQueue)
+{
+    if (m_Material)
+        m_Material->SetRenderQueue(_renderQueue);
+}
+
 int BillboardRenderer::GetRenderQueue() const
 {
-    return m_RenderQueue;
+    return m_Material ? m_Material->GetRenderQueue() : 2000;
 }

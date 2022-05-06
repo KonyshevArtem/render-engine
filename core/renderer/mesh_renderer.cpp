@@ -7,9 +7,8 @@
 MeshRenderer::MeshRenderer(const std::shared_ptr<GameObject> &_gameObject,
                            std::shared_ptr<Mesh>              _mesh,
                            std::shared_ptr<Material>          _material) :
-    Renderer(_gameObject),
-    m_Mesh(std::move(_mesh)),
-    m_Material(std::move(_material))
+    Renderer(_gameObject, _material),
+    m_Mesh(std::move(_mesh))
 {
 }
 
@@ -26,6 +25,11 @@ void MeshRenderer::Render(const RenderSettings &_settings) const
 Bounds MeshRenderer::GetAABB() const
 {
     return m_Mesh ? GetModelMatrix() * m_Mesh->GetBounds() : Bounds();
+}
+
+std::shared_ptr<DrawableGeometry> MeshRenderer::GetGeometry() const
+{
+    return m_Mesh;
 }
 
 int MeshRenderer::GetRenderQueue() const

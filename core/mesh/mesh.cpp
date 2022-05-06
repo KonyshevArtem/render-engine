@@ -9,6 +9,7 @@ Mesh::Mesh(std::vector<Vector3> &_vertices,
            std::vector<int>     &_indexes,
            std::vector<Vector2> &_uvs,
            std::vector<Vector3> &_tangents) :
+    DrawableGeometry(),
     m_Vertices(std::move(_vertices)),
     m_Normals(std::move(_normals)),
     m_Indexes(std::move(_indexes)),
@@ -16,12 +17,7 @@ Mesh::Mesh(std::vector<Vector3> &_vertices,
     m_Tangents(std::move(_tangents)),
     m_Bounds(Bounds::FromPoints(m_Vertices))
 {
-    glGenVertexArrays(1, &m_VertexArrayObject);
-    glGenBuffers(1, &m_VertexBuffer);
     glGenBuffers(1, &m_IndexBuffer);
-
-    glBindVertexArray(m_VertexArrayObject);
-    glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
 
     long long vertexSize   = sizeof(Vector3) * m_Vertices.size();
@@ -66,8 +62,6 @@ Mesh::Mesh(std::vector<Vector3> &_vertices,
 
 Mesh::~Mesh()
 {
-    glDeleteVertexArrays(1, &m_VertexArrayObject);
-    glDeleteBuffers(1, &m_VertexBuffer);
     glDeleteBuffers(1, &m_IndexBuffer);
 }
 
@@ -75,7 +69,7 @@ void Mesh::Draw(const Material &_material, const RenderSettings &_settings) cons
 {
     const auto &shader = _material.GetShader();
 
-    glBindVertexArray(m_VertexArrayObject);
+    glBindVertexArray(GetVertexArrayObject());
     for (int i = 0; i < shader->PassesCount(); ++i)
     {
         if (!_settings.TagsMatch(*shader, i))

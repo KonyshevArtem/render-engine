@@ -2,6 +2,7 @@
 #include "camera/camera.h"
 #include "context.h"
 #include "core_debug/debug.h"
+#include "draw_call_info.h"
 #include "editor/gizmos/gizmos.h"
 #include "editor/gizmos/gizmos_pass.h"
 #include "light/light.h"
@@ -145,6 +146,19 @@ namespace Graphics
         lightingDataBlock->SetUniform("_HasDirectionalLight", &hasDirectionalLight, sizeof(bool));
     }
 
+    std::vector<DrawCallInfo> DoCulling(const std::vector<Renderer *> &_renderers)
+    {
+        // TODO: implement culling
+        std::vector<DrawCallInfo> info(_renderers.size());
+        for (int i = 0; i < _renderers.size(); ++i)
+        {
+            info[i] = {_renderers[i]->GetGeometry(),
+                       _renderers[i]->GetMaterial(),
+                       _renderers[i]->GetModelMatrix()};
+        }
+        return info;
+    }
+
     void Render()
     {
         auto debugGroup = Debug::DebugGroup("Render Frame");
@@ -153,6 +167,7 @@ namespace Graphics
         glClearDepth(1);
 
         Context ctx;
+        ctx.DrawCallInfos = DoCulling(ctx.Renderers);
 
         SetLightingData(ctx.AmbientLight, ctx.Lights);
 

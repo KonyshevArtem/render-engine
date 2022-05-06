@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_MESH_H
 
 #include "bounds/bounds.h"
+#include "drawable_geometry/drawable_geometry.h"
 #include "graphics/render_settings.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
@@ -15,7 +16,7 @@ struct Vector2;
 struct Vector3;
 class Material;
 
-class Mesh
+class Mesh: public DrawableGeometry
 {
 public:
     Mesh(std::vector<Vector3> &_vertices,
@@ -23,10 +24,15 @@ public:
          std::vector<int>     &_indexes,
          std::vector<Vector2> &_uvs,
          std::vector<Vector3> &_tangents);
-    ~Mesh();
+    virtual ~Mesh();
 
     void   Draw(const Material &_material, const RenderSettings &_settings) const;
     Bounds GetBounds() const;
+
+    inline GLenum GetGeometryType() const override
+    {
+        return GL_TRIANGLES;
+    }
 
     static const std::shared_ptr<Mesh> &GetFullscreenMesh();
 
@@ -37,9 +43,7 @@ private:
     Mesh &operator=(const Mesh &) = delete;
     Mesh &operator=(Mesh &&) = delete;
 
-    GLuint m_VertexArrayObject = 0;
-    GLuint m_VertexBuffer      = 0;
-    GLuint m_IndexBuffer       = 0;
+    GLuint m_IndexBuffer = 0;
 
     std::vector<Vector3> m_Vertices;
     std::vector<Vector3> m_Normals;

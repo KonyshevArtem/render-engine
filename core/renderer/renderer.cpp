@@ -1,9 +1,10 @@
 #include "renderer.h"
-#include "matrix4x4/matrix4x4.h"
 #include "gameObject/gameObject.h"
+#include "material/material.h"
+#include "matrix4x4/matrix4x4.h"
 
-Renderer::Renderer(const std::shared_ptr<GameObject> &_gameObject) :
-    m_GameObject(_gameObject)
+Renderer::Renderer(const std::shared_ptr<GameObject> &_gameObject, const std::shared_ptr<Material> &_material) :
+    m_GameObject(_gameObject), m_Material(_material)
 {
 }
 
@@ -14,6 +15,11 @@ Matrix4x4 Renderer::GetModelMatrix() const
 
     auto go = m_GameObject.lock();
     return go->GetLocalToWorldMatrix();
+}
+
+std::shared_ptr<Material> Renderer::GetMaterial() const
+{
+    return m_Material;
 }
 
 bool Renderer::Comparer::operator()(Renderer *_r1, Renderer *_r2)

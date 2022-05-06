@@ -54,17 +54,20 @@ void TestScene::Init()
     // init shaders
     auto fragmentLitShader = Shader::Load("resources/shaders/standard/standard.shader", {"_SPECULAR", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
     auto transparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", {"_SPECULAR", "_RECEIVE_SHADOWS"});
+    auto instancingShader  = Shader::Load("resources/shaders/standard/standard.shader", {"_SPECULAR", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_INSTANCING"});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");
     auto cylinderAsset = FBXAsset::Load("resources/models/cylinder.fbx");
     auto planeAsset    = FBXAsset::Load("resources/models/plane.fbx");
     auto carAsset      = FBXAsset::Load("resources/models/car.fbx");
+    auto sphereAsset   = FBXAsset::Load("resources/models/sphere.fbx");
 
     auto cubeMesh     = cubeAsset->GetMesh(0);
     auto cylinderMesh = cylinderAsset->GetMesh(0);
     auto planeMesh    = planeAsset->GetMesh(0);
     auto carMesh      = carAsset->GetMesh(0);
+    auto sphereMesh   = sphereAsset->GetMesh(0);
 
     // init materials
     auto fragmentLitMaterial = std::make_shared<Material>(fragmentLitShader);
@@ -102,6 +105,8 @@ void TestScene::Init()
     //carMaterial->SetFloat("_ReflectionStrength", 0.5f);
     carMaterial->SetFloat("_Smoothness", 1);
     carMaterial->SetFloat("_Metallness", 1);
+
+    auto sphereMaterial = std::make_shared<Material>(instancingShader);
 
     // init gameObjects
     auto rotatingCube      = GameObject::Create("Rotating Cube");
@@ -158,6 +163,14 @@ void TestScene::Init()
         transparentCube->Renderer = std::make_shared<MeshRenderer>(transparentCube, cubeMesh, transparentMaterial);
         transparentCube->SetLocalPosition(Vector3(-10.0f + 5 * i, -5, 12));
         transparentCube->SetLocalRotation(Quaternion::AngleAxis(30, {0, 1, 0}));
+    }
+
+    for (float i = 0; i < 100; ++i)
+    {
+        auto sphere = GameObject::Create("Sphere " + std::to_string(i));
+        float phase      = i / 100 * 2 * M_PI;
+        sphere->Renderer = std::make_shared<MeshRenderer>(sphere, sphereMesh, sphereMaterial);
+        sphere->SetLocalPosition({std::cos(phase) * 80, 0, std::sin(phase) * 80});
     }
 
     // init lights

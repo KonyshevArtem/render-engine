@@ -31,9 +31,10 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const s
     return shader;
 }
 
-Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues) :
+Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues, bool _supportInstancing) :
     m_Passes(std::move(_passes)),
-    m_DefaultValues(std::move(_defaultValues))
+    m_DefaultValues(std::move(_defaultValues)),
+    m_SupportInstancing(_supportInstancing)
 {
     for (auto &passInfo: m_Passes)
     {

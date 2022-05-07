@@ -14,8 +14,10 @@ struct Bounds;
 class Renderer
 {
 public:
-    virtual void   Render(const RenderSettings &_settings) const  = 0;
-    virtual Bounds GetAABB() const = 0;
+    virtual ~Renderer() = default;
+
+    virtual void   Render(const RenderSettings &_settings) const = 0;
+    virtual Bounds GetAABB() const                               = 0;
 
     enum class Sorting
     {

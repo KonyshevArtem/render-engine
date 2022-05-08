@@ -1,6 +1,4 @@
 #include "mesh.h"
-#include "material/material.h"
-#include "shader/shader.h"
 #include "vector2/vector2.h"
 #include "vector3/vector3.h"
 
@@ -63,25 +61,6 @@ Mesh::Mesh(std::vector<Vector3> &_vertices,
 Mesh::~Mesh()
 {
     glDeleteBuffers(1, &m_IndexBuffer);
-}
-
-void Mesh::Draw(const Material &_material, const RenderSettings &_settings) const
-{
-    const auto &shader = _material.GetShader();
-
-    glBindVertexArray(GetVertexArrayObject());
-    for (int i = 0; i < shader->PassesCount(); ++i)
-    {
-        if (!_settings.TagsMatch(*shader, i))
-            continue;
-
-        shader->Use(i);
-
-        Shader::SetPropertyBlock(_material.GetPropertyBlock());
-
-        glDrawElements(GL_TRIANGLES, m_Indexes.size(), GL_UNSIGNED_INT, nullptr);
-    }
-    glBindVertexArray(0);
 }
 
 Bounds Mesh::GetBounds() const

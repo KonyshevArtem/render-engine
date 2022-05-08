@@ -10,6 +10,7 @@
 #include "passes/shadow_caster_pass.h"
 #include "passes/skybox_pass.h"
 #include "render_settings.h"
+#include "renderer/renderer.h"
 #include "shader/shader.h"
 #include "uniform_block.h"
 #include "vector4/vector4.h"
@@ -69,13 +70,13 @@ namespace Graphics
     void InitPasses()
     {
         RenderSettings renderSettings {{{"LightMode", "Forward"}}};
-        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", Renderer::Sorting::FRONT_TO_BACK, Renderer::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, renderSettings);
-        tranparentRenderPass = std::make_unique<RenderPass>("Transparent", Renderer::Sorting::BACK_TO_FRONT, Renderer::Filter::Transparent(), 0, renderSettings);
+        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, renderSettings);
+        tranparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallInfo::Sorting::BACK_TO_FRONT, DrawCallInfo::Filter::Transparent(), 0, renderSettings);
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
 
 #if OPENGL_STUDY_EDITOR
-        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", Renderer::Sorting::FRONT_TO_BACK, Renderer::Filter::All(), 0, RenderSettings {{{"LightMode", "Fallback"}}});
+        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::All(), 0, RenderSettings {{{"LightMode", "Fallback"}}});
         gizmosPass         = std::make_unique<GizmosPass>();
 #endif
     }
@@ -154,7 +155,8 @@ namespace Graphics
         {
             info[i] = {_renderers[i]->GetGeometry(),
                        _renderers[i]->GetMaterial(),
-                       _renderers[i]->GetModelMatrix()};
+                       _renderers[i]->GetModelMatrix(),
+                       _renderers[i]->GetAABB()};
         }
         return info;
     }
@@ -194,6 +196,39 @@ namespace Graphics
 #endif
 
         Debug::CheckOpenGLError();
+    }
+
+    void Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings)
+    {
+        for (const auto &info: _drawCallInfos)
+        {
+            const auto &shader = info.Material->GetShader();
+
+            Shader::SetGlobalMatrix("_ModelMatrix", info.ModelMatrix);
+            Shader::SetGlobalMatrix("_ModelNormalMatrix", info.ModelMatrix.Invert().Transpose());
+
+            glBindVertexArray(info.Geometry->GetVertexArrayObject());
+
+            for (int i = 0; i < shader->PassesCount(); ++i)
+            {
+                if (!_settings.TagsMatch(*shader, i))
+                    continue;
+
+                shader->Use(i);
+
+                Shader::SetPropertyBlock(info.Material->GetPropertyBlock());
+
+                auto type  = info.Geometry->GetGeometryType();
+                auto count = info.Geometry->GetElementsCount();
+
+                if (info.Geometry->HasIndexes())
+                    glDrawElements(type, count, GL_UNSIGNED_INT, nullptr);
+                else
+                    glDrawArrays(type, 0, count);
+            }
+
+            glBindVertexArray(0);
+        }
     }
 
     void Reshape(int _width, int _height)

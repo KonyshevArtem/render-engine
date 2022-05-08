@@ -12,16 +12,6 @@ MeshRenderer::MeshRenderer(const std::shared_ptr<GameObject> &_gameObject,
 {
 }
 
-void MeshRenderer::Render(const RenderSettings &_settings) const
-{
-    Matrix4x4 modelMatrix = GetModelMatrix();
-
-    Shader::SetGlobalMatrix("_ModelMatrix", modelMatrix);
-    Shader::SetGlobalMatrix("_ModelNormalMatrix", modelMatrix.Invert().Transpose());
-
-    m_Mesh->Draw(*m_Material, _settings);
-}
-
 Bounds MeshRenderer::GetAABB() const
 {
     return m_Mesh ? GetModelMatrix() * m_Mesh->GetBounds() : Bounds();
@@ -30,9 +20,4 @@ Bounds MeshRenderer::GetAABB() const
 std::shared_ptr<DrawableGeometry> MeshRenderer::GetGeometry() const
 {
     return m_Mesh;
-}
-
-int MeshRenderer::GetRenderQueue() const
-{
-    return m_Material ? m_Material->GetRenderQueue() : 2000;
 }

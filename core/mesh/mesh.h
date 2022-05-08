@@ -3,7 +3,6 @@
 
 #include "bounds/bounds.h"
 #include "drawable_geometry/drawable_geometry.h"
-#include "graphics/render_settings.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
@@ -26,12 +25,21 @@ public:
          std::vector<Vector3> &_tangents);
     virtual ~Mesh();
 
-    void   Draw(const Material &_material, const RenderSettings &_settings) const;
     Bounds GetBounds() const;
 
     inline GLenum GetGeometryType() const override
     {
         return GL_TRIANGLES;
+    }
+
+    inline bool HasIndexes() const override
+    {
+        return true;
+    }
+
+    inline GLsizei GetElementsCount() const override
+    {
+        return m_Indexes.size();
     }
 
     static const std::shared_ptr<Mesh> &GetFullscreenMesh();

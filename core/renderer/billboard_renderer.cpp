@@ -1,6 +1,5 @@
 #include "billboard_renderer.h"
 #include "material/material.h"
-#include "matrix4x4/matrix4x4.h"
 #include "point/point.h"
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
@@ -17,15 +16,6 @@ BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObj
     m_Material->SetTexture("_Texture", _texture);
 
     m_Aspect = static_cast<float>(_texture->GetWidth()) / _texture->GetHeight();
-}
-
-void BillboardRenderer::Render(const RenderSettings &_settings) const
-{
-    if (m_Point == nullptr)
-        return;
-
-    m_Point->SetPosition(GetModelMatrix().GetPosition());
-    m_Point->Draw(*m_Material, _settings);
 }
 
 Bounds BillboardRenderer::GetAABB() const
@@ -52,9 +42,4 @@ void BillboardRenderer::SetRenderQueue(int _renderQueue)
 {
     if (m_Material)
         m_Material->SetRenderQueue(_renderQueue);
-}
-
-int BillboardRenderer::GetRenderQueue() const
-{
-    return m_Material ? m_Material->GetRenderQueue() : 2000;
 }

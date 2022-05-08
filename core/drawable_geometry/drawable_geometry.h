@@ -12,7 +12,9 @@ class DrawableGeometry
 public:
     virtual ~DrawableGeometry();
 
-    virtual GLenum GetGeometryType() const = 0;
+    virtual GLenum  GetGeometryType() const  = 0;
+    virtual bool    HasIndexes() const       = 0;
+    virtual GLsizei GetElementsCount() const = 0;
 
     inline GLuint GetVertexArrayObject() const
     {

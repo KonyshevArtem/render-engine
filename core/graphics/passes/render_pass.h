@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_RENDER_PASS_H
 #define OPENGL_STUDY_RENDER_PASS_H
 
-#include "renderer/renderer.h"
+#include "graphics/draw_call_info.h"
 #include "graphics/render_settings.h"
 #include <string>
 #ifdef OPENGL_STUDY_WINDOWS
@@ -15,7 +15,7 @@ struct Context;
 class RenderPass
 {
 public:
-    RenderPass(const std::string& _name, Renderer::Sorting _rendererSorting, Renderer::Filter _filter, GLbitfield _clearFlags, RenderSettings _renderSettings);
+    RenderPass(const std::string &_name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, GLbitfield _clearFlags, RenderSettings _renderSettings);
     ~RenderPass() = default;
 
     void Execute(const Context &_ctx);
@@ -25,13 +25,13 @@ private:
     RenderPass(RenderPass &&)      = delete;
 
     RenderPass &operator=(const RenderPass &) = delete;
-    RenderPass &operator=(RenderPass &&)      = delete;
+    RenderPass &operator=(RenderPass &&) = delete;
 
-    std::string       m_Name;
-    Renderer::Sorting m_Sorting;
-    Renderer::Filter  m_Filter;
-    GLbitfield        m_ClearFlags;
-    RenderSettings    m_RenderSettings;
+    std::string           m_Name;
+    DrawCallInfo::Sorting m_Sorting;
+    DrawCallInfo::Filter  m_Filter;
+    GLbitfield            m_ClearFlags;
+    RenderSettings        m_RenderSettings;
 };
 
 #endif //OPENGL_STUDY_RENDER_PASS_H

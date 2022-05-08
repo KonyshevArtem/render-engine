@@ -64,6 +64,7 @@ add_library(
 	graphics/render_settings.h
 	graphics/render_settings.cpp
 	graphics/draw_call_info.h
+	graphics/draw_call_info.cpp
 	point/point.h
 	point/point.cpp 
 	drawable_geometry/drawable_geometry.h

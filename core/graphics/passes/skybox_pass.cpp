@@ -3,12 +3,14 @@
 #include "core_debug/debug.h"
 #include "cubemap/cubemap.h"
 #include "fbx_asset/fbx_asset.h"
+#include "graphics/draw_call_info.h"
+#include "graphics/graphics.h"
 #include "graphics/render_settings.h"
 #include "material/material.h"
 #include "matrix4x4/matrix4x4.h"
 #include "mesh/mesh.h"
 #include "shader/shader.h"
-#include "vector3/vector3.h"
+#include <vector>
 
 void SkyboxPass::Execute(const Context &_ctx)
 {
@@ -22,8 +24,8 @@ void SkyboxPass::Execute(const Context &_ctx)
     auto debugGroup = Debug::DebugGroup("Skybox pass");
 
     Matrix4x4 modelMatrix = Matrix4x4::Translation(_ctx.ViewMatrix.Invert().GetPosition());
-
-    Shader::SetGlobalMatrix("_ModelMatrix", modelMatrix);
     material->SetTexture("_Skybox", _ctx.Skybox);
-    mesh->Draw(*material, renderSettings);
+
+    DrawCallInfo info {mesh, material, modelMatrix};
+    Graphics::Draw(std::vector<DrawCallInfo> {info}, renderSettings);
 }

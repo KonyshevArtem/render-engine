@@ -4,6 +4,8 @@
 #include <string>
 
 struct Matrix4x4;
+struct DrawCallInfo;
+struct RenderSettings;
 
 namespace Graphics
 {
@@ -17,6 +19,7 @@ namespace Graphics
 
     void               Init();
     void               Render();
+    void               Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings);
     void               Reshape(int _width, int _height);
     const std::string &GetGlobalShaderDirectives();
     void               SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix);

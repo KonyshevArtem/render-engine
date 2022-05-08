@@ -4,6 +4,7 @@
 #include "../uniform_block.h"
 #include "bounds/bounds.h"
 #include "core_debug/debug.h"
+#include "graphics/draw_call_info.h"
 #include "graphics/render_settings.h"
 #include "light/light.h"
 #include "renderer/renderer.h"
@@ -91,14 +92,14 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         else
             continue;
 
-        Render(_ctx.Renderers);
+        Render(_ctx.DrawCallInfos);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 
-void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
+void ShadowCasterPass::Render(const std::vector<DrawCallInfo> &_drawCallInfos)
 {
     static RenderSettings renderSettings {{{"LightMode", "ShadowCaster"}}};
 
@@ -107,9 +108,5 @@ void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
     glDepthMask(GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for (const auto *r: _renderers)
-    {
-        if (r != nullptr)
-            r->Render(renderSettings);
-    }
+    Graphics::Draw(_drawCallInfos, renderSettings);
 }

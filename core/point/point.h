@@ -2,9 +2,6 @@
 #define OPENGL_STUDY_POINT
 
 #include "drawable_geometry/drawable_geometry.h"
-#include "graphics/render_settings.h"
-#include "material/material.h"
-#include "vector3/vector3.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
@@ -17,12 +14,19 @@ public:
     Point();
     virtual ~Point() = default;
 
-    void Draw(const Material &_material, const RenderSettings &_settings) const;
-    void SetPosition(const Vector3 &_position);
-
     inline GLenum GetGeometryType() const override
     {
         return GL_POINTS;
+    }
+
+    inline bool HasIndexes() const override
+    {
+        return false;
+    }
+
+    inline GLsizei GetElementsCount() const override
+    {
+        return 1;
     }
 
 private:

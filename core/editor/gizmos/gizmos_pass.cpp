@@ -5,7 +5,9 @@
 #include "editor/hierarchy.h"
 #include "gizmos.h"
 #include "graphics/context.h"
+#include "graphics/draw_call_info.h"
 #include "graphics/graphics.h"
+#include "graphics/render_settings.h"
 #include "material/material.h"
 #include "mesh/mesh.h"
 #include "renderer/renderer.h"
@@ -46,8 +48,16 @@ void GizmosPass::Outline() const
         outlineTexture->Attach(GL_COLOR_ATTACHMENT0);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        std::vector<DrawCallInfo> infos;
         for (const auto &renderer: Hierarchy::GetSelectedRenderers())
-            renderer->Render(renderSettings); // TODO: optimize drawing renderers
+        {
+            infos.push_back(DrawCallInfo {renderer->GetGeometry(),
+                                          renderer->GetMaterial(),
+                                          renderer->GetModelMatrix(),
+                                          renderer->GetAABB()});
+        }
+        Graphics::Draw(infos, renderSettings);
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     }
@@ -56,7 +66,9 @@ void GizmosPass::Outline() const
     {
         outlineMaterial->SetTexture("_Tex", outlineTexture);
         outlineMaterial->SetVector("_Color", outlineColor);
-        Mesh::GetFullscreenMesh()->Draw(*outlineMaterial, renderSettings);
+
+        auto info = DrawCallInfo {Mesh::GetFullscreenMesh(), outlineMaterial};
+        Graphics::Draw(std::vector<DrawCallInfo> {info}, renderSettings);
     }
 }
 

@@ -14,6 +14,7 @@
 #include "shader/shader.h"
 #include "uniform_block.h"
 #include "vector4/vector4.h"
+#include <boost/functional/hash/hash.hpp>
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
@@ -22,8 +23,21 @@
 
 namespace Graphics
 {
-    constexpr int MAX_POINT_LIGHT_SOURCES = 3;
-    constexpr int MAX_SPOT_LIGHT_SOURCES  = 3;
+    struct DrawCallInfoHash
+    {
+        std::size_t operator()(const std::pair<Material *, DrawableGeometry *> &_pair) const
+        {
+            std::size_t seed = 0;
+            boost::hash_combine(seed, _pair.first);
+            boost::hash_combine(seed, _pair.second);
+            return seed;
+        }
+    };
+
+    constexpr int MAX_POINT_LIGHT_SOURCES       = 3;
+    constexpr int MAX_SPOT_LIGHT_SOURCES        = 3;
+    constexpr int MAX_INSTANCING_COUNT          = 256;
+    constexpr int INSTANCING_BASE_VERTEX_ATTRIB = 4;
 
     std::unique_ptr<UniformBlock> lightingDataBlock;
     std::unique_ptr<UniformBlock> cameraDataBlock;
@@ -41,6 +55,10 @@ namespace Graphics
 
     int screenWidth  = 0;
     int screenHeight = 0;
+
+    Vector3 lastCameraPosition;
+
+    GLuint instancingMatricesBuffer;
 
     void InitCulling()
     {
@@ -69,16 +87,23 @@ namespace Graphics
 
     void InitPasses()
     {
-        RenderSettings renderSettings {{{"LightMode", "Forward"}}};
-        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, renderSettings);
-        tranparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallInfo::Sorting::BACK_TO_FRONT, DrawCallInfo::Filter::Transparent(), 0, renderSettings);
+        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        tranparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallInfo::Sorting::BACK_TO_FRONT, DrawCallInfo::Filter::Transparent(), 0);
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
 
 #if OPENGL_STUDY_EDITOR
-        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::All(), 0, RenderSettings {{{"LightMode", "Fallback"}}});
+        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::All(), 0);
         gizmosPass         = std::make_unique<GizmosPass>();
 #endif
+    }
+
+    void InitInstancing()
+    {
+        CHECK_GL(glGenBuffers(1, &instancingMatricesBuffer));
+        CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer));
+        CHECK_GL(glBufferData(GL_ARRAY_BUFFER, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, nullptr, GL_STATIC_DRAW));
+        CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
     }
 
     void Init()
@@ -98,6 +123,7 @@ namespace Graphics
         InitFramebuffer();
         InitUniformBlocks();
         InitPasses();
+        InitInstancing();
     }
 
     void SetLightingData(const Vector3 &_ambient, const std::vector<Light *> &_lights)
@@ -155,7 +181,7 @@ namespace Graphics
         {
             info[i] = {_renderers[i]->GetGeometry(),
                        _renderers[i]->GetMaterial(),
-                       _renderers[i]->GetModelMatrix(),
+                       {_renderers[i]->GetModelMatrix()},
                        _renderers[i]->GetAABB()};
         }
         return info;
@@ -200,13 +226,94 @@ namespace Graphics
 
     void Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings)
     {
-        for (const auto &info: _drawCallInfos)
+        // filter draw calls
+        std::vector<DrawCallInfo> filteredInfos;
+        copy_if(_drawCallInfos.begin(), _drawCallInfos.end(), std::back_inserter(filteredInfos), _settings.Filter);
+
+        // collect instancing draw calls
+        std::vector<DrawCallInfo> drawCalls;
         {
-            const auto &shader = info.Material->GetShader();
+            std::vector<DrawCallInfo> instancedInfos;
+            for (const auto &info: filteredInfos)
+            {
+                if (info.Material->GetShader()->SupportInstancing())
+                    instancedInfos.push_back(info);
+                else
+                    drawCalls.push_back(info);
+            }
+
+            std::unordered_map<std::pair<Material *, DrawableGeometry *>, DrawCallInfo, DrawCallInfoHash> instancingMap;
+            for (const auto &info: instancedInfos)
+            {
+                auto pair = std::make_pair<Material *, DrawableGeometry *>(info.Material.get(), info.Geometry.get());
+                if (!instancingMap.contains(pair))
+                {
+                    instancingMap[pair] = info;
+                    continue;
+                }
+
+                auto &drawCall = instancingMap[pair];
+                if (drawCall.ModelMatrices.size() >= MAX_INSTANCING_COUNT)
+                {
+                    drawCall.Instanced = true;
+                    drawCalls.push_back(drawCall);
+                    instancingMap.erase(pair);
+                    continue;
+                }
+
+                drawCall.AABB = drawCall.AABB.Combine(info.AABB);
+                drawCall.ModelMatrices.push_back(info.GetModelMatrix());
+            }
+
+            for (auto &pair: instancingMap)
+            {
+                pair.second.Instanced = true;
+                drawCalls.push_back(pair.second);
+            };
+        }
+
+        // sort draw calls
+        std::sort(drawCalls.begin(), drawCalls.end(), DrawCallInfo::Comparer {_settings.Sorting, lastCameraPosition});
+
+        for (const auto &info: drawCalls)
+        {
+            const auto &shader        = info.Material->GetShader();
+            auto        instanceCount = info.ModelMatrices.size();
 
             CHECK_GL(glBindVertexArray(info.Geometry->GetVertexArrayObject()));
 
-            glBindVertexArray(info.Geometry->GetVertexArrayObject());
+            if (info.Instanced)
+            {
+                std::vector<Matrix4x4> modelNormalMatrices(info.ModelMatrices.size());
+                for (int i = 0; i < info.ModelMatrices.size(); ++i)
+                    modelNormalMatrices[i] = info.ModelMatrices[i].Invert().Transpose();
+
+                auto matricesSize = sizeof(Matrix4x4) * instanceCount;
+                CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer));
+                CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, matricesSize, info.ModelMatrices.data()));
+                CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, matricesSize, matricesSize, modelNormalMatrices.data()));
+
+                // matrix4x4 requires 4 vertex attributes
+                auto vec4Size = sizeof(Vector4);
+                for (int i = 0; i < 8; ++i)
+                {
+                    CHECK_GL(glEnableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i));
+                    CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + i, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(i / 4 * matricesSize + i * vec4Size)));
+                    CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 1));
+                }
+
+                CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+            }
+            else
+            {
+                auto matrix = info.GetModelMatrix();
+                Shader::SetGlobalMatrix("_ModelMatrix", matrix);
+                Shader::SetGlobalMatrix("_ModelNormalMatrix", matrix.Invert().Transpose());
+            }
+
+            auto type       = info.Geometry->GetGeometryType();
+            auto count      = info.Geometry->GetElementsCount();
+            auto hasIndexes = info.Geometry->HasIndexes();
 
             for (int i = 0; i < shader->PassesCount(); ++i)
             {
@@ -217,16 +324,36 @@ namespace Graphics
 
                 Shader::SetPropertyBlock(info.Material->GetPropertyBlock());
 
-                auto type  = info.Geometry->GetGeometryType();
-                auto count = info.Geometry->GetElementsCount();
-
-                if (info.Geometry->HasIndexes())
+                if (info.Instanced)
                 {
-                    CHECK_GL(glDrawElements(type, count, GL_UNSIGNED_INT, nullptr));
+                    if (hasIndexes)
+                    {
+                        CHECK_GL(glDrawElementsInstanced(type, count, GL_UNSIGNED_INT, nullptr, instanceCount));
+                    }
+                    else
+                    {
+                        CHECK_GL(glDrawArraysInstanced(type, 0, count, instanceCount));
+                    }
                 }
                 else
                 {
-                    CHECK_GL(glDrawArrays(type, 0, count));
+                    if (hasIndexes)
+                    {
+                        CHECK_GL(glDrawElements(type, count, GL_UNSIGNED_INT, nullptr));
+                    }
+                    else
+                    {
+                        CHECK_GL(glDrawArrays(type, 0, count));
+                    }
+                }
+            }
+
+            if (info.Instanced)
+            {
+                for (int i = 0; i < 8; ++i)
+                {
+                    CHECK_GL(glDisableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i));
+                    CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 0));
                 }
             }
 
@@ -262,6 +389,8 @@ namespace Graphics
         cameraDataBlock->SetUniform("_CameraPosWS", &cameraPosWS, sizeof(Vector4));
         cameraDataBlock->SetUniform("_NearClipPlane", &nearClipPlane, sizeof(float));
         cameraDataBlock->SetUniform("_FarClipPlane", &farClipPlane, sizeof(float));
+
+        lastCameraPosition = cameraPosWS;
     }
 
     const std::string &GetGlobalShaderDirectives()
@@ -271,7 +400,8 @@ namespace Graphics
         // clang-format off
         static std::string globalShaderDirectives = "#version " + std::to_string(GLSL_VERSION) + "\n"
                                                     "#define MAX_POINT_LIGHT_SOURCES " + std::to_string(MAX_POINT_LIGHT_SOURCES) + "\n"
-                                                    "#define MAX_SPOT_LIGHT_SOURCES " + std::to_string(MAX_SPOT_LIGHT_SOURCES) + "\n";
+                                                    "#define MAX_SPOT_LIGHT_SOURCES " + std::to_string(MAX_SPOT_LIGHT_SOURCES) + "\n"
+                                                    "#define MAX_INSTANCING_COUNT " + std::to_string(MAX_INSTANCING_COUNT) + "\n";
         // clang-format on
 
         return globalShaderDirectives;

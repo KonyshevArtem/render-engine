@@ -6,12 +6,10 @@
 #include <iterator>
 #include <vector>
 
-RenderPass::RenderPass(const std::string &_name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, GLbitfield _clearFlags, RenderSettings _renderSettings) :
+RenderPass::RenderPass(const std::string &_name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, GLbitfield _clearFlags) :
     m_Name(_name),
-    m_Sorting(std::move(_sorting)),
-    m_Filter(std::move(_filter)),
     m_ClearFlags(_clearFlags),
-    m_RenderSettings(std::move(_renderSettings))
+    m_RenderSettings(RenderSettings {{{"LightMode", "Forward"}}, _sorting, _filter})
 {
 }
 
@@ -21,12 +19,6 @@ void RenderPass::Execute(const Context &_ctx)
 
     CHECK_GL(glDepthMask(GL_TRUE));
     CHECK_GL(glClear(m_ClearFlags));
-
-    std::vector<DrawCallInfo> filteredInfos;
-    copy_if(_ctx.DrawCallInfos.begin(), _ctx.DrawCallInfos.end(), std::back_inserter(filteredInfos), m_Filter);
-
-    Vector3 cameraPosWS = _ctx.ViewMatrix.Invert().GetPosition();
-    std::sort(filteredInfos.begin(), filteredInfos.end(), DrawCallInfo::Comparer {m_Sorting, cameraPosWS});
 
     Graphics::Draw(_ctx.DrawCallInfos, m_RenderSettings);
 }

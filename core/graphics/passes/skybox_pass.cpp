@@ -26,6 +26,6 @@ void SkyboxPass::Execute(const Context &_ctx)
     Matrix4x4 modelMatrix = Matrix4x4::Translation(_ctx.ViewMatrix.Invert().GetPosition());
     material->SetTexture("_Skybox", _ctx.Skybox);
 
-    DrawCallInfo info {mesh, material, modelMatrix};
+    DrawCallInfo info {mesh, material, {modelMatrix}};
     Graphics::Draw(std::vector<DrawCallInfo> {info}, renderSettings);
 }

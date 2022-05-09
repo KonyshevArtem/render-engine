@@ -12,13 +12,20 @@ struct DrawCallInfo
 {
     std::shared_ptr<DrawableGeometry> Geometry;
     std::shared_ptr<Material>         Material;
-    Matrix4x4                         ModelMatrix = Matrix4x4::Identity();
+    std::vector<Matrix4x4>            ModelMatrices;
     Bounds                            AABB;
+    bool                              Instanced = false;
+
+    inline Matrix4x4 GetModelMatrix() const
+    {
+        return ModelMatrices.size() > 0 ? ModelMatrices[0] : Matrix4x4::Identity();
+    }
 
     enum class Sorting
     {
         FRONT_TO_BACK,
-        BACK_TO_FRONT
+        BACK_TO_FRONT,
+        NO_SORTING
     };
 
     struct Comparer

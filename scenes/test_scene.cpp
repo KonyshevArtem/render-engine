@@ -165,12 +165,16 @@ void TestScene::Init()
         transparentCube->SetLocalRotation(Quaternion::AngleAxis(30, {0, 1, 0}));
     }
 
-    for (float i = 0; i < 100; ++i)
+    constexpr int spheresCount = 500;
+    constexpr int gridSize     = 20;
+    for (int i = 0; i < spheresCount; ++i)
     {
-        auto sphere = GameObject::Create("Sphere " + std::to_string(i));
-        float phase      = i / 100 * 2 * M_PI;
+        auto  sphere     = GameObject::Create("Sphere " + std::to_string(i));
+        float x          = (i % (gridSize * gridSize)) % gridSize;
+        int   y          = i / (gridSize * gridSize);
+        float z          = (i % (gridSize * gridSize)) / gridSize;
         sphere->Renderer = std::make_shared<MeshRenderer>(sphere, sphereMesh, sphereMaterial);
-        sphere->SetLocalPosition({std::cos(phase) * 80, 0, std::sin(phase) * 80});
+        sphere->SetLocalPosition({-40.0f + 80.0f * x / gridSize, -15.0f - 2.5f * y, -40.0f + 80.0f * z / gridSize});
     }
 
     // init lights

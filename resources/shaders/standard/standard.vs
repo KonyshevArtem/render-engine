@@ -2,9 +2,15 @@ layout(location = 0) in vec3 vertPositionOS;
 layout(location = 1) in vec3 vertNormalOS;
 layout(location = 2) in vec2 texCoord;
 layout(location = 3) in vec3 vertTangentOS;
+#ifdef _INSTANCING
+layout(location = 4) in mat4 _ModelMatrix;
+layout(location = 8) in mat4 _ModelNormalMatrix;
+#endif
 
+#ifndef _INSTANCING
 uniform mat4 _ModelMatrix;
 uniform mat4 _ModelNormalMatrix;
+#endif
 
 out Varyings
 {

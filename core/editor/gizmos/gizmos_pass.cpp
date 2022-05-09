@@ -54,7 +54,7 @@ void GizmosPass::Outline() const
         {
             infos.push_back(DrawCallInfo {renderer->GetGeometry(),
                                           renderer->GetMaterial(),
-                                          renderer->GetModelMatrix(),
+                                          {renderer->GetModelMatrix()},
                                           renderer->GetAABB()});
         }
         Graphics::Draw(infos, renderSettings);

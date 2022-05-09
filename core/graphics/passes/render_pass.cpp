@@ -19,8 +19,8 @@ void RenderPass::Execute(const Context &_ctx)
 {
     auto debugGroup = Debug::DebugGroup("Render pass " + m_Name);
 
-    glDepthMask(GL_TRUE);
-    glClear(m_ClearFlags);
+    CHECK_GL(glDepthMask(GL_TRUE));
+    CHECK_GL(glClear(m_ClearFlags));
 
     std::vector<DrawCallInfo> filteredInfos;
     copy_if(_ctx.DrawCallInfos.begin(), _ctx.DrawCallInfos.end(), std::back_inserter(filteredInfos), m_Filter);

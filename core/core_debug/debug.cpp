@@ -14,14 +14,14 @@ static int debugGroupID = 0;
 Debug::DebugGroup::DebugGroup(const std::string &_name)
 {
 #ifdef OPENGL_STUDY_WINDOWS
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, debugGroupID++, -1, _name.c_str());
+    CHECK_GL(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, debugGroupID++, -1, _name.c_str()));
 #endif
 }
 
 Debug::DebugGroup::~DebugGroup()
 {
 #ifdef OPENGL_STUDY_WINDOWS
-    glPopDebugGroup();
+    GHECK_GL(glPopDebugGroup());
     --debugGroupID;
 
     if (debugGroupID < 0)
@@ -56,15 +56,15 @@ void Debug::LogErrorFormat(const std::string &_format, std::initializer_list<std
     LogError(format.str());
 }
 
-void Debug::CheckOpenGLError()
+void Debug::CheckOpenGLError(const std::string &_file, int _line)
 {
     GLenum error = glGetError();
     if (error != 0)
     {
         auto *errorString = reinterpret_cast<const char *>(gluErrorString(error));
         if (errorString == nullptr)
-            LogErrorFormat("[OpenGL] Unknown error %1%", {std::to_string(error)});
+            LogErrorFormat("[OpenGL] Unknown error %1%\n%2%:%3%", {std::to_string(error), _file, std::to_string(_line)});
         else
-            LogErrorFormat("[OpenGL] %1%", {errorString});
+            LogErrorFormat("[OpenGL] %1%\n%2%:%3%", {errorString, _file, std::to_string(_line)});
     }
 }

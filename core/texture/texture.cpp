@@ -1,7 +1,8 @@
 #include "texture.h"
+#include "core_debug/debug.h"
 
 Texture::~Texture()
 {
-    glDeleteTextures(1, &m_Texture);
-    glDeleteSamplers(1, &m_Sampler);
+    CHECK_GL(glDeleteTextures(1, &m_Texture));
+    CHECK_GL(glDeleteSamplers(1, &m_Sampler));
 }

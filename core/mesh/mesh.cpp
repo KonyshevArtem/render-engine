@@ -1,4 +1,5 @@
 #include "mesh.h"
+#include "core_debug/debug.h"
 #include "vector2/vector2.h"
 #include "vector3/vector3.h"
 
@@ -15,8 +16,8 @@ Mesh::Mesh(std::vector<Vector3> &_vertices,
     m_Tangents(std::move(_tangents)),
     m_Bounds(Bounds::FromPoints(m_Vertices))
 {
-    glGenBuffers(1, &m_IndexBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
+    CHECK_GL(glGenBuffers(1, &m_IndexBuffer));
+    CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer));
 
     long long vertexSize   = sizeof(Vector3) * m_Vertices.size();
     long long normalsSize  = sizeof(Vector3) * m_Normals.size();
@@ -28,39 +29,39 @@ Mesh::Mesh(std::vector<Vector3> &_vertices,
     bool hasUV       = uvSize > 0;
     bool hasTangents = tangentsSize > 0;
 
-    glEnableVertexAttribArray(0);
+    CHECK_GL(glEnableVertexAttribArray(0));
     if (hasNormals)
-        glEnableVertexAttribArray(1);
+        CHECK_GL(glEnableVertexAttribArray(1));
     if (hasUV)
-        glEnableVertexAttribArray(2);
+        CHECK_GL(glEnableVertexAttribArray(2));
     if (hasTangents)
-        glEnableVertexAttribArray(3);
+        CHECK_GL(glEnableVertexAttribArray(3));
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    CHECK_GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr));
     if (hasNormals)
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void *>(vertexSize));
+        CHECK_GL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void *>(vertexSize)));
     if (hasUV)
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void *>((vertexSize + normalsSize)));
+        CHECK_GL(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void *>((vertexSize + normalsSize))));
     if (hasTangents)
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void *>((vertexSize + normalsSize + uvSize)));
+        CHECK_GL(glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void *>((vertexSize + normalsSize + uvSize))));
 
-    glBufferData(GL_ARRAY_BUFFER, vertexSize + normalsSize + uvSize + tangentsSize, nullptr, GL_STATIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexSize, m_Indexes.data(), GL_STATIC_DRAW);
+    CHECK_GL(glBufferData(GL_ARRAY_BUFFER, vertexSize + normalsSize + uvSize + tangentsSize, nullptr, GL_STATIC_DRAW));
+    CHECK_GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexSize, m_Indexes.data(), GL_STATIC_DRAW));
 
-    glBufferSubData(GL_ARRAY_BUFFER, 0, vertexSize, m_Vertices.data());
+    CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, vertexSize, m_Vertices.data()));
     if (hasNormals)
-        glBufferSubData(GL_ARRAY_BUFFER, vertexSize, normalsSize, m_Normals.data());
+        CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, vertexSize, normalsSize, m_Normals.data()));
     if (hasUV)
-        glBufferSubData(GL_ARRAY_BUFFER, vertexSize + normalsSize, uvSize, m_UVs.data());
+        CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, vertexSize + normalsSize, uvSize, m_UVs.data()));
     if (hasTangents)
-        glBufferSubData(GL_ARRAY_BUFFER, vertexSize + normalsSize + uvSize, tangentsSize, m_Tangents.data());
+        CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, vertexSize + normalsSize + uvSize, tangentsSize, m_Tangents.data()));
 
-    glBindVertexArray(0);
+    CHECK_GL(glBindVertexArray(0));
 }
 
 Mesh::~Mesh()
 {
-    glDeleteBuffers(1, &m_IndexBuffer);
+    CHECK_GL(glDeleteBuffers(1, &m_IndexBuffer));
 }
 
 Bounds Mesh::GetBounds() const

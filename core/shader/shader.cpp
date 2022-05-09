@@ -38,23 +38,23 @@ Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, st
 {
     for (auto &passInfo: m_Passes)
     {
-        auto lightingUniformIndex   = glGetUniformBlockIndex(passInfo.Program, "Lighting");
-        auto cameraDataUniformIndex = glGetUniformBlockIndex(passInfo.Program, "CameraData");
-        auto shadowDataUniformIndex = glGetUniformBlockIndex(passInfo.Program, "Shadows");
+        auto lightingUniformIndex   = CHECK_GL(glGetUniformBlockIndex(passInfo.Program, "Lighting"));
+        auto cameraDataUniformIndex = CHECK_GL(glGetUniformBlockIndex(passInfo.Program, "CameraData"));
+        auto shadowDataUniformIndex = CHECK_GL(glGetUniformBlockIndex(passInfo.Program, "Shadows"));
 
         if (cameraDataUniformIndex != GL_INVALID_INDEX)
-            glUniformBlockBinding(passInfo.Program, cameraDataUniformIndex, 0);
+            CHECK_GL(glUniformBlockBinding(passInfo.Program, cameraDataUniformIndex, 0));
 
         if (lightingUniformIndex != GL_INVALID_INDEX)
-            glUniformBlockBinding(passInfo.Program, lightingUniformIndex, 1);
+            CHECK_GL(glUniformBlockBinding(passInfo.Program, lightingUniformIndex, 1));
 
         if (shadowDataUniformIndex != GL_INVALID_INDEX)
-            glUniformBlockBinding(passInfo.Program, shadowDataUniformIndex, 2);
+            CHECK_GL(glUniformBlockBinding(passInfo.Program, shadowDataUniformIndex, 2));
 
         GLint count;
         GLint buffSize;
-        glGetProgramiv(passInfo.Program, GL_ACTIVE_UNIFORMS, &count);
-        glGetProgramiv(passInfo.Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffSize);
+        CHECK_GL(glGetProgramiv(passInfo.Program, GL_ACTIVE_UNIFORMS, &count));
+        CHECK_GL(glGetProgramiv(passInfo.Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffSize));
 
         GLsizei             length;
         GLenum              type;
@@ -64,10 +64,10 @@ Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, st
 
         for (int i = 0; i < count; ++i)
         {
-            glGetActiveUniform(passInfo.Program, i, buffSize, &length, &size, &type, &name[0]);
+            CHECK_GL(glGetActiveUniform(passInfo.Program, i, buffSize, &length, &size, &type, &name[0]));
             std::string nameStr(name.begin(), name.begin() + length);
 
-            auto location      = glGetUniformLocation(passInfo.Program, &nameStr[0]);
+            auto location      = CHECK_GL(glGetUniformLocation(passInfo.Program, &nameStr[0]));
             auto convertedType = UniformUtils::ConvertUniformType(type);
 
             // TODO: correctly parse arrays
@@ -85,7 +85,7 @@ Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, st
 Shader::~Shader()
 {
     for (const auto &passInfo: m_Passes)
-        glDeleteProgram(passInfo.Program);
+        CHECK_GL(glDeleteProgram(passInfo.Program));
 }
 
 #pragma endregion
@@ -99,7 +99,7 @@ void Shader::Use(int _passIndex) const
 
     m_CurrentPass = &m_Passes.at(_passIndex);
 
-    glUseProgram(m_CurrentPass->Program);
+    CHECK_GL(glUseProgram(m_CurrentPass->Program));
 
     SetBlendInfo(m_CurrentPass->BlendInfo);
     SetCullInfo(m_CurrentPass->CullInfo);
@@ -186,30 +186,30 @@ void Shader::SetBlendInfo(const Shader::BlendInfo &_blendInfo) const
 {
     if (_blendInfo.Enabled)
     {
-        glEnable(GL_BLEND);
-        glBlendFunc(_blendInfo.SrcFactor, _blendInfo.DstFactor);
+        CHECK_GL(glEnable(GL_BLEND));
+        CHECK_GL(glBlendFunc(_blendInfo.SrcFactor, _blendInfo.DstFactor));
     }
     else
-        glDisable(GL_BLEND);
+        CHECK_GL(glDisable(GL_BLEND));
 }
 
 void Shader::SetCullInfo(const Shader::CullInfo &_cullInfo) const
 {
     if (_cullInfo.Enabled)
     {
-        glEnable(GL_CULL_FACE);
-        glCullFace(_cullInfo.Face);
+        CHECK_GL(glEnable(GL_CULL_FACE));
+        CHECK_GL(glCullFace(_cullInfo.Face));
     }
     else
     {
-        glDisable(GL_CULL_FACE);
+        CHECK_GL(glDisable(GL_CULL_FACE));
     }
 }
 
 void Shader::SetDepthInfo(const Shader::DepthInfo &_depthInfo) const
 {
-    glDepthMask(_depthInfo.ZWrite ? GL_TRUE : GL_FALSE);
-    glDepthFunc(_depthInfo.ZTest);
+    CHECK_GL(glDepthMask(_depthInfo.ZWrite ? GL_TRUE : GL_FALSE));
+    CHECK_GL(glDepthFunc(_depthInfo.ZTest));
 }
 
 DefaultTexturesMap GetDefaultTexturesMap()

@@ -1,4 +1,5 @@
 #include "texture_2d_array.h"
+#include "core_debug/debug.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
@@ -19,26 +20,26 @@ std::shared_ptr<Texture2DArray> Texture2DArray::ShadowMapArray(unsigned int _siz
 
 void Texture2DArray::Init(GLint _internalFormat, GLenum _format, GLenum _type, GLint _wrapMode)
 {
-    glGenTextures(1, &m_Texture);
-    glGenSamplers(1, &m_Sampler);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, m_Texture);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, _wrapMode);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, _wrapMode);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_R, _wrapMode);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, _internalFormat, m_Width, m_Height, m_Count, 0, _format, _type, nullptr); // NOLINT(cppcoreguidelines-narrowing-conversions)
-    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    CHECK_GL(glGenTextures(1, &m_Texture));
+    CHECK_GL(glGenSamplers(1, &m_Sampler));
+    CHECK_GL(glBindTexture(GL_TEXTURE_2D_ARRAY, m_Texture));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, _wrapMode));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, _wrapMode));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_R, _wrapMode));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    CHECK_GL(glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, _internalFormat, m_Width, m_Height, m_Count, 0, _format, _type, nullptr)); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    CHECK_GL(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
 }
 
 void Texture2DArray::Bind(int _unit) const
 {
-    glActiveTexture(GL_TEXTURE0 + _unit);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, m_Texture);
-    glBindSampler(_unit, m_Sampler);
+    CHECK_GL(glActiveTexture(GL_TEXTURE0 + _unit));
+    CHECK_GL(glBindTexture(GL_TEXTURE_2D_ARRAY, m_Texture));
+    CHECK_GL(glBindSampler(_unit, m_Sampler));
 }
 
 void Texture2DArray::Attach(int _attachment, int _layer) const
 {
-    glFramebufferTextureLayer(GL_FRAMEBUFFER, _attachment, m_Texture, 0, _layer);
+    CHECK_GL(glFramebufferTextureLayer(GL_FRAMEBUFFER, _attachment, m_Texture, 0, _layer));
 }

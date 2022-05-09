@@ -1,4 +1,5 @@
 #include "uniform_info.h"
+#include "core_debug/debug.h"
 
 namespace UniformUtils
 {
@@ -16,22 +17,22 @@ namespace UniformUtils
             case UniformType::SAMPLER_2D:
             case UniformType::SAMPLER_2D_ARRAY:
             case UniformType::SAMPLER_CUBE:
-                glUniform1i(_uniform.Location, *(static_cast<const GLint *>(_value)));
+                CHECK_GL(glUniform1i(_uniform.Location, *(static_cast<const GLint *>(_value))));
                 break;
             case UniformType::FLOAT:
-                glUniform1f(_uniform.Location, *(static_cast<const GLfloat *>(_value)));
+                CHECK_GL(glUniform1f(_uniform.Location, *(static_cast<const GLfloat *>(_value))));
                 break;
             case UniformType::FLOAT_VEC2:
-                glUniform2fv(_uniform.Location, 1, static_cast<const GLfloat *>(_value));
+                CHECK_GL(glUniform2fv(_uniform.Location, 1, static_cast<const GLfloat *>(_value)));
                 break;
             case UniformType::FLOAT_VEC3:
-                glUniform3fv(_uniform.Location, 1, static_cast<const GLfloat *>(_value));
+                CHECK_GL(glUniform3fv(_uniform.Location, 1, static_cast<const GLfloat *>(_value)));
                 break;
             case UniformType::FLOAT_VEC4:
-                glUniform4fv(_uniform.Location, 1, static_cast<const GLfloat *>(_value));
+                CHECK_GL(glUniform4fv(_uniform.Location, 1, static_cast<const GLfloat *>(_value)));
                 break;
             case UniformType::FLOAT_MAT4:
-                glUniformMatrix4fv(_uniform.Location, 1, GL_FALSE, static_cast<const GLfloat *>(_value));
+                CHECK_GL(glUniformMatrix4fv(_uniform.Location, 1, GL_FALSE, static_cast<const GLfloat *>(_value)));
                 break;
         }
     }

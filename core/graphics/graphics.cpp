@@ -44,19 +44,19 @@ namespace Graphics
 
     void InitCulling()
     {
-        glFrontFace(GL_CW);
+        CHECK_GL(glFrontFace(GL_CW));
     }
 
     void InitDepth()
     {
-        glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
-        glDepthRange(0, 1);
+        CHECK_GL(glEnable(GL_DEPTH_TEST));
+        CHECK_GL(glDepthMask(GL_TRUE));
+        CHECK_GL(glDepthRange(0, 1));
     }
 
     void InitFramebuffer()
     {
-        glEnable(GL_FRAMEBUFFER_SRGB);
+        CHECK_GL(glEnable(GL_FRAMEBUFFER_SRGB));
     }
 
     void InitUniformBlocks()
@@ -165,8 +165,8 @@ namespace Graphics
     {
         auto debugGroup = Debug::DebugGroup("Render Frame");
 
-        glClearColor(0, 0, 0, 0);
-        glClearDepth(1);
+        CHECK_GL(glClearColor(0, 0, 0, 0));
+        CHECK_GL(glClearDepth(1));
 
         Context ctx;
         ctx.DrawCallInfos = DoCulling(ctx.Renderers);
@@ -176,7 +176,7 @@ namespace Graphics
         if (shadowCasterPass)
             shadowCasterPass->Execute(ctx);
 
-        glViewport(0, 0, screenWidth, screenHeight);
+        CHECK_GL(glViewport(0, 0, screenWidth, screenHeight));
         SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix);
 
         if (opaqueRenderPass)
@@ -195,7 +195,7 @@ namespace Graphics
         Gizmos::ClearDrawInfos();
 #endif
 
-        Debug::CheckOpenGLError();
+        Debug::CheckOpenGLError(__FILE__, __LINE__);
     }
 
     void Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings)
@@ -204,8 +204,7 @@ namespace Graphics
         {
             const auto &shader = info.Material->GetShader();
 
-            Shader::SetGlobalMatrix("_ModelMatrix", info.ModelMatrix);
-            Shader::SetGlobalMatrix("_ModelNormalMatrix", info.ModelMatrix.Invert().Transpose());
+            CHECK_GL(glBindVertexArray(info.Geometry->GetVertexArrayObject()));
 
             glBindVertexArray(info.Geometry->GetVertexArrayObject());
 
@@ -222,12 +221,16 @@ namespace Graphics
                 auto count = info.Geometry->GetElementsCount();
 
                 if (info.Geometry->HasIndexes())
-                    glDrawElements(type, count, GL_UNSIGNED_INT, nullptr);
+                {
+                    CHECK_GL(glDrawElements(type, count, GL_UNSIGNED_INT, nullptr));
+                }
                 else
-                    glDrawArrays(type, 0, count);
+                {
+                    CHECK_GL(glDrawArrays(type, 0, count));
+                }
             }
 
-            glBindVertexArray(0);
+            CHECK_GL(glBindVertexArray(0));
         }
     }
 

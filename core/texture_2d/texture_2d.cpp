@@ -105,33 +105,33 @@ const std::shared_ptr<Texture2D> &Texture2D::Null()
 
 void Texture2D::Init(GLint _internalFormat, GLenum _format, GLenum _type, bool _loadData)
 {
-    glGenTextures(1, &m_Texture);
-    glGenSamplers(1, &m_Sampler);
-    glBindTexture(GL_TEXTURE_2D, m_Texture);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, m_Width, m_Height, 0, _format, _type, _loadData ? m_Data.data() : nullptr); // NOLINT(cppcoreguidelines-narrowing-conversions)
-    glBindTexture(GL_TEXTURE_2D, 0);
+    CHECK_GL(glGenTextures(1, &m_Texture));
+    CHECK_GL(glGenSamplers(1, &m_Sampler));
+    CHECK_GL(glBindTexture(GL_TEXTURE_2D, m_Texture));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, GL_REPEAT));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, GL_REPEAT));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, m_Width, m_Height, 0, _format, _type, _loadData ? m_Data.data() : nullptr)); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
 }
 
 void Texture2D::Bind(int _unit) const
 {
-    glActiveTexture(GL_TEXTURE0 + _unit);
-    glBindTexture(GL_TEXTURE_2D, m_Texture);
-    glBindSampler(_unit, m_Sampler);
+    CHECK_GL(glActiveTexture(GL_TEXTURE0 + _unit));
+    CHECK_GL(glBindTexture(GL_TEXTURE_2D, m_Texture));
+    CHECK_GL(glBindSampler(_unit, m_Sampler));
 }
 
 void Texture2D::Attach(GLenum _attachment)
 {
-    glFramebufferTexture(GL_FRAMEBUFFER, _attachment, m_Texture, 0);
+    CHECK_GL(glFramebufferTexture(GL_FRAMEBUFFER, _attachment, m_Texture, 0));
 }
 
 void Texture2D::SetWrapMode(GLenum _wrapMode) const
 {
-    glBindTexture(GL_TEXTURE_2D, m_Texture);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, _wrapMode);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, _wrapMode);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    CHECK_GL(glBindTexture(GL_TEXTURE_2D, m_Texture));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, _wrapMode));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, _wrapMode));
+    CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
 }

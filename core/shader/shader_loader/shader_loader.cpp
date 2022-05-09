@@ -185,20 +185,20 @@ namespace ShaderLoader
                 _shaderPartDirective.c_str(),
                 _source.c_str()};
 
-        auto shaderPart = glCreateShader(_shaderPartType);
-        glShaderSource(shaderPart, sourcesCount, sources, nullptr);
+        auto shaderPart = CHECK_GL(glCreateShader(_shaderPartType));
+        CHECK_GL(glShaderSource(shaderPart, sourcesCount, sources, nullptr));
 
-        glCompileShader(shaderPart);
+        CHECK_GL(glCompileShader(shaderPart));
 
         GLint status;
-        glGetShaderiv(shaderPart, GL_COMPILE_STATUS, &status);
+        CHECK_GL(glGetShaderiv(shaderPart, GL_COMPILE_STATUS, &status));
         if (status == GL_FALSE)
         {
             GLint infoLogLength;
-            glGetShaderiv(shaderPart, GL_INFO_LOG_LENGTH, &infoLogLength);
+            CHECK_GL(glGetShaderiv(shaderPart, GL_INFO_LOG_LENGTH, &infoLogLength));
 
             std::string logMsg(infoLogLength + 1, ' ');
-            glGetShaderInfoLog(shaderPart, infoLogLength, nullptr, &logMsg[0]);
+            CHECK_GL(glGetShaderInfoLog(shaderPart, infoLogLength, nullptr, &logMsg[0]));
 
             throw std::runtime_error("Compilation failed with error: " + logMsg);
         }
@@ -208,34 +208,36 @@ namespace ShaderLoader
 
     GLuint LinkProgram(const std::span<GLuint> &_shaderParts)
     {
-        auto program = glCreateProgram();
+        auto program = CHECK_GL(glCreateProgram());
 
         for (const auto &part: _shaderParts)
         {
-            if (glIsShader(part))
-                glAttachShader(program, part);
+            bool isShader = CHECK_GL(glIsShader(part));
+            if (isShader)
+                CHECK_GL(glAttachShader(program, part));
         }
 
-        glLinkProgram(program);
+        CHECK_GL(glLinkProgram(program));
 
         for (const auto &part: _shaderParts)
         {
-            if (glIsShader(part))
+            bool isShader = CHECK_GL(glIsShader(part));
+            if (isShader)
             {
-                glDetachShader(program, part);
-                glDeleteShader(part);
+                CHECK_GL(glDetachShader(program, part));
+                CHECK_GL(glDeleteShader(part));
             }
         }
 
         GLint status;
-        glGetProgramiv(program, GL_LINK_STATUS, &status);
+        CHECK_GL(glGetProgramiv(program, GL_LINK_STATUS, &status));
         if (status == GL_FALSE)
         {
             GLint infoLogLength;
-            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
+            CHECK_GL(glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength));
 
             std::string logMsg(infoLogLength + 1, ' ');
-            glGetProgramInfoLog(program, infoLogLength, nullptr, &logMsg[0]);
+            CHECK_GL(glGetProgramInfoLog(program, infoLogLength, nullptr, &logMsg[0]));
 
             throw std::runtime_error("Link failed with error: " + logMsg);
         }
@@ -289,7 +291,7 @@ namespace ShaderLoader
 
             return std::shared_ptr<Shader>(new Shader(passes, shaderInfo.DefaultValues, supportInstancing));
         }
-        catch (std::exception _exception)
+        catch (const std::exception &_exception)
         {
             Debug::LogErrorFormat("[ShaderLoader] Can't load shader %1%\n%2%", {_path.string(), _exception.what()});
             return nullptr;

@@ -21,12 +21,12 @@ ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, std::shared_ptr<Uniform
     Shader::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
     Shader::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
 
-    glGenFramebuffers(1, &m_Framebuffer);
+    CHECK_GL(glGenFramebuffers(1, &m_Framebuffer));
 }
 
 ShadowCasterPass::~ShadowCasterPass()
 {
-    glDeleteFramebuffers(1, &m_Framebuffer);
+    CHECK_GL(glDeleteFramebuffers(1, &m_Framebuffer));
 }
 
 void ShadowCasterPass::Execute(const Context &_ctx)
@@ -38,7 +38,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
     auto debugGroup = Debug::DebugGroup("Shadow pass");
 
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer);
+    CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer));
 
     int spotLightsCount = 0;
     for (const auto *light: _ctx.Lights)
@@ -48,7 +48,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
         if (light->Type == LightType::SPOT)
         {
-            glViewport(0, 0, SPOT_LIGHT_SHADOW_MAP_SIZE, SPOT_LIGHT_SHADOW_MAP_SIZE);
+            CHECK_GL(glViewport(0, 0, SPOT_LIGHT_SHADOW_MAP_SIZE, SPOT_LIGHT_SHADOW_MAP_SIZE));
 
             m_SpotLightShadowMapArray->Attach(GL_DEPTH_ATTACHMENT, spotLightsCount);
 
@@ -65,7 +65,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         }
         else if (light->Type == LightType::DIRECTIONAL)
         {
-            glViewport(0, 0, DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE);
+            CHECK_GL(glViewport(0, 0, DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE));
 
             m_DirectionLightShadowMap->Attach(GL_DEPTH_ATTACHMENT);
 
@@ -95,8 +95,8 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         Render(_ctx.DrawCallInfos);
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    CHECK_GL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+    CHECK_GL(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
 }
 
 void ShadowCasterPass::Render(const std::vector<DrawCallInfo> &_drawCallInfos)
@@ -105,8 +105,8 @@ void ShadowCasterPass::Render(const std::vector<DrawCallInfo> &_drawCallInfos)
 
     auto debugGroup = Debug::DebugGroup("Render shadow map");
 
-    glDepthMask(GL_TRUE);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    CHECK_GL(glDepthMask(GL_TRUE));
+    CHECK_GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
     Graphics::Draw(_drawCallInfos, renderSettings);
 }

@@ -37,24 +37,26 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &_xPositivePa
 
 void Cubemap::Init()
 {
-    glGenTextures(1, &m_Texture);
-    glGenSamplers(1, &m_Sampler);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, m_Texture);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_R, GL_REPEAT);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    CHECK_GL(glGenTextures(1, &m_Texture));
+    CHECK_GL(glGenSamplers(1, &m_Sampler));
+    CHECK_GL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Texture));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, GL_REPEAT));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, GL_REPEAT));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_R, GL_REPEAT));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
     for (int i = 0; i < SIDES_COUNT; ++i)
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB, m_Width, m_Height, 0, GL_RGB, GL_UNSIGNED_BYTE, &m_Data[i][0]); // NOLINT(cppcoreguidelines-narrowing-conversions)
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    {
+        CHECK_GL(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB, m_Width, m_Height, 0, GL_RGB, GL_UNSIGNED_BYTE, &m_Data[i][0])); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    }
+    CHECK_GL(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
 }
 
 void Cubemap::Bind(int _unit) const
 {
-    glActiveTexture(GL_TEXTURE0 + _unit);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, m_Texture);
-    glBindSampler(_unit, m_Sampler);
+    CHECK_GL(glActiveTexture(GL_TEXTURE0 + _unit));
+    CHECK_GL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Texture));
+    CHECK_GL(glBindSampler(_unit, m_Sampler));
 }
 
 std::shared_ptr<Cubemap> &Cubemap::White()

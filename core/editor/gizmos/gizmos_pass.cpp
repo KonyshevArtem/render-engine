@@ -17,12 +17,12 @@
 
 GizmosPass::GizmosPass()
 {
-    glGenFramebuffers(1, &m_Framebuffer);
+    CHECK_GL(glGenFramebuffers(1, &m_Framebuffer));
 }
 
 GizmosPass::~GizmosPass()
 {
-    glDeleteFramebuffers(1, &m_Framebuffer);
+    CHECK_GL(glDeleteFramebuffers(1, &m_Framebuffer));
 }
 
 void GizmosPass::Execute(Context &_context)
@@ -44,10 +44,10 @@ void GizmosPass::Outline() const
 
     // render selected gameObjects
     {
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer);
+        CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer));
         outlineTexture->Attach(GL_COLOR_ATTACHMENT0);
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        CHECK_GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
         std::vector<DrawCallInfo> infos;
         for (const auto &renderer: Hierarchy::GetSelectedRenderers())
@@ -59,7 +59,7 @@ void GizmosPass::Outline() const
         }
         Graphics::Draw(infos, renderSettings);
 
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
     }
 
     // blit to screen

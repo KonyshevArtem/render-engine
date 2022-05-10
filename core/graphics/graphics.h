@@ -18,6 +18,7 @@ namespace Graphics
 #endif
 
     void               Init();
+    void               Shutdown();
     void               Render();
     void               Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings);
     void               Reshape(int _width, int _height);

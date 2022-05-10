@@ -126,6 +126,11 @@ namespace Graphics
         InitInstancing();
     }
 
+    void Shutdown()
+    {
+        CHECK_GL(glDeleteBuffers(1, &instancingMatricesBuffer));
+    }
+
     void SetLightingData(const Vector3 &_ambient, const std::vector<Light *> &_lights)
     {
         lightingDataBlock->SetUniform("_AmbientLight", &_ambient, sizeof(Vector3));
@@ -224,96 +229,141 @@ namespace Graphics
         Debug::CheckOpenGLError(__FILE__, __LINE__);
     }
 
+    std::vector<DrawCallInfo> BatchDrawCalls(const std::vector<DrawCallInfo> &_drawCalls)
+    {
+        std::vector<DrawCallInfo> batchedDrawCalls;
+
+        std::vector<DrawCallInfo> instancedInfos;
+        for (const auto &info: _drawCalls)
+        {
+            if (info.Material->GetShader()->SupportInstancing())
+                instancedInfos.push_back(info);
+            else
+                batchedDrawCalls.push_back(info);
+        }
+
+        std::unordered_map<std::pair<Material *, DrawableGeometry *>, DrawCallInfo, DrawCallInfoHash> instancingMap;
+        for (const auto &info: instancedInfos)
+        {
+            auto pair = std::make_pair<Material *, DrawableGeometry *>(info.Material.get(), info.Geometry.get());
+            if (!instancingMap.contains(pair))
+            {
+                instancingMap[pair] = info;
+                continue;
+            }
+
+            auto &drawCall = instancingMap[pair];
+            drawCall.AABB  = drawCall.AABB.Combine(info.AABB);
+            drawCall.ModelMatrices.push_back(info.GetModelMatrix());
+
+            if (drawCall.ModelMatrices.size() >= MAX_INSTANCING_COUNT)
+            {
+                drawCall.Instanced = true;
+                batchedDrawCalls.push_back(drawCall);
+                instancingMap.erase(pair);
+            }
+        }
+
+        for (auto &pair: instancingMap)
+        {
+            pair.second.Instanced = true;
+            batchedDrawCalls.push_back(pair.second);
+        };
+
+        return batchedDrawCalls;
+    }
+
+    void FillMatrices(const DrawCallInfo &_info)
+    {
+        if (_info.Instanced)
+        {
+            auto count = _info.ModelMatrices.size();
+
+            std::vector<Matrix4x4> modelNormalMatrices(count);
+            for (int i = 0; i < count; ++i)
+                modelNormalMatrices[i] = _info.ModelMatrices[i].Invert().Transpose();
+
+            auto matricesSize        = sizeof(Matrix4x4) * count;
+            auto normalsMatrixOffset = sizeof(Matrix4x4) * MAX_INSTANCING_COUNT;
+            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer));
+            CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, matricesSize, _info.ModelMatrices.data()));
+            CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, normalsMatrixOffset, matricesSize, modelNormalMatrices.data()));
+            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+        }
+        else
+        {
+            auto matrix = _info.GetModelMatrix();
+            Shader::SetGlobalMatrix("_ModelMatrix", matrix);
+            Shader::SetGlobalMatrix("_ModelNormalMatrix", matrix.Invert().Transpose());
+        }
+    }
+
+    void SetInstancingEnabled(bool _enabled)
+    {
+        // make sure VAO is bound before calling this function
+        if (_enabled)
+        {
+            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer));
+
+            // matrix4x4 requires 4 vertex attributes
+            for (int i = 0; i < 8; ++i)
+            {
+                CHECK_GL(glEnableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i));
+                CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 1));
+            }
+
+            auto vec4Size = sizeof(Vector4);
+
+            // model matrix
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 0, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(0)));
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 1, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(1 * vec4Size)));
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 2, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(2 * vec4Size)));
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(3 * vec4Size)));
+
+            // normal matrix
+            auto offset = sizeof(Matrix4x4) * MAX_INSTANCING_COUNT;
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset)));
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 1 * vec4Size)));
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size)));
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 7, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size)));
+
+            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+        }
+        else
+        {
+            for (int i = 0; i < 8; ++i)
+            {
+                CHECK_GL(glDisableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i));
+                CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 0));
+            }
+        }
+    }
+
     void Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings)
     {
         // filter draw calls
-        std::vector<DrawCallInfo> filteredInfos;
-        copy_if(_drawCallInfos.begin(), _drawCallInfos.end(), std::back_inserter(filteredInfos), _settings.Filter);
-
-        // collect instancing draw calls
         std::vector<DrawCallInfo> drawCalls;
-        {
-            std::vector<DrawCallInfo> instancedInfos;
-            for (const auto &info: filteredInfos)
-            {
-                if (info.Material->GetShader()->SupportInstancing())
-                    instancedInfos.push_back(info);
-                else
-                    drawCalls.push_back(info);
-            }
+        copy_if(_drawCallInfos.begin(), _drawCallInfos.end(), std::back_inserter(drawCalls), _settings.Filter);
 
-            std::unordered_map<std::pair<Material *, DrawableGeometry *>, DrawCallInfo, DrawCallInfoHash> instancingMap;
-            for (const auto &info: instancedInfos)
-            {
-                auto pair = std::make_pair<Material *, DrawableGeometry *>(info.Material.get(), info.Geometry.get());
-                if (!instancingMap.contains(pair))
-                {
-                    instancingMap[pair] = info;
-                    continue;
-                }
-
-                auto &drawCall = instancingMap[pair];
-                if (drawCall.ModelMatrices.size() >= MAX_INSTANCING_COUNT)
-                {
-                    drawCall.Instanced = true;
-                    drawCalls.push_back(drawCall);
-                    instancingMap.erase(pair);
-                    continue;
-                }
-
-                drawCall.AABB = drawCall.AABB.Combine(info.AABB);
-                drawCall.ModelMatrices.push_back(info.GetModelMatrix());
-            }
-
-            for (auto &pair: instancingMap)
-            {
-                pair.second.Instanced = true;
-                drawCalls.push_back(pair.second);
-            };
-        }
+        drawCalls = BatchDrawCalls(drawCalls);
 
         // sort draw calls
         std::sort(drawCalls.begin(), drawCalls.end(), DrawCallInfo::Comparer {_settings.Sorting, lastCameraPosition});
 
         for (const auto &info: drawCalls)
         {
-            const auto &shader        = info.Material->GetShader();
-            auto        instanceCount = info.ModelMatrices.size();
-
             CHECK_GL(glBindVertexArray(info.Geometry->GetVertexArrayObject()));
 
+            FillMatrices(info);
+
             if (info.Instanced)
-            {
-                std::vector<Matrix4x4> modelNormalMatrices(info.ModelMatrices.size());
-                for (int i = 0; i < info.ModelMatrices.size(); ++i)
-                    modelNormalMatrices[i] = info.ModelMatrices[i].Invert().Transpose();
+                SetInstancingEnabled(true);
 
-                auto matricesSize = sizeof(Matrix4x4) * instanceCount;
-                CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer));
-                CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, matricesSize, info.ModelMatrices.data()));
-                CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, matricesSize, matricesSize, modelNormalMatrices.data()));
-
-                // matrix4x4 requires 4 vertex attributes
-                auto vec4Size = sizeof(Vector4);
-                for (int i = 0; i < 8; ++i)
-                {
-                    CHECK_GL(glEnableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i));
-                    CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + i, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(i / 4 * matricesSize + i * vec4Size)));
-                    CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 1));
-                }
-
-                CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
-            }
-            else
-            {
-                auto matrix = info.GetModelMatrix();
-                Shader::SetGlobalMatrix("_ModelMatrix", matrix);
-                Shader::SetGlobalMatrix("_ModelNormalMatrix", matrix.Invert().Transpose());
-            }
-
-            auto type       = info.Geometry->GetGeometryType();
-            auto count      = info.Geometry->GetElementsCount();
-            auto hasIndexes = info.Geometry->HasIndexes();
+            auto        type          = info.Geometry->GetGeometryType();
+            auto        count         = info.Geometry->GetElementsCount();
+            auto        hasIndexes    = info.Geometry->HasIndexes();
+            auto        instanceCount = info.ModelMatrices.size();
+            const auto &shader        = info.Material->GetShader();
 
             for (int i = 0; i < shader->PassesCount(); ++i)
             {
@@ -349,13 +399,7 @@ namespace Graphics
             }
 
             if (info.Instanced)
-            {
-                for (int i = 0; i < 8; ++i)
-                {
-                    CHECK_GL(glDisableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i));
-                    CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 0));
-                }
-            }
+                SetInstancingEnabled(false);
 
             CHECK_GL(glBindVertexArray(0));
         }

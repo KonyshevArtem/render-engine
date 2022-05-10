@@ -57,5 +57,9 @@ int main(int __argc, char **__argv)
     TestScene::Load();
     //PBRDemo::Load();
 
-    return application.exec();
+    application.exec();
+
+    Graphics::Shutdown();
+
+    return 0;
 }

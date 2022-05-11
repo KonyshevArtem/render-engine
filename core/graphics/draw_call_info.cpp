@@ -9,9 +9,6 @@ bool DrawCallInfo::Comparer::operator()(const DrawCallInfo &_i1, const DrawCallI
     if (renderQueue1 != renderQueue2)
         return renderQueue1 <= renderQueue2;
 
-    if (Sorting == Sorting::NO_SORTING)
-        return true;
-
     float distance1 = (_i1.AABB.GetCenter() - CameraPosition).Length();
     float distance2 = (_i2.AABB.GetCenter() - CameraPosition).Length();
     return Sorting == Sorting::FRONT_TO_BACK ? distance1 < distance2 : distance1 > distance2;

@@ -6,10 +6,10 @@
 #include <iterator>
 #include <vector>
 
-RenderPass::RenderPass(const std::string &_name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, GLbitfield _clearFlags) :
+RenderPass::RenderPass(const std::string &_name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, GLbitfield _clearFlags, const std::string &_lightModeTag) :
     m_Name(_name),
     m_ClearFlags(_clearFlags),
-    m_RenderSettings(RenderSettings {{{"LightMode", "Forward"}}, _sorting, _filter})
+    m_RenderSettings(RenderSettings {{{"LightMode", _lightModeTag}}, _sorting, _filter})
 {
 }
 

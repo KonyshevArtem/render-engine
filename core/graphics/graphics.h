@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_GRAPHICS_H
 
 #include <string>
+#include <vector>
 
 struct Matrix4x4;
 struct DrawCallInfo;

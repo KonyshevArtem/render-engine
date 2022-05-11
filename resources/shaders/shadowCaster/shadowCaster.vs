@@ -1,7 +1,6 @@
 layout(location = 0) in vec3 vertPositionOS;
 
-uniform mat4 _ModelMatrix;
-
+#include "../common/instancing.cg"
 #include "../common/camera_data.cg"
 
 void main(){

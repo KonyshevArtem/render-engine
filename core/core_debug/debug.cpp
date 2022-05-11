@@ -21,7 +21,7 @@ Debug::DebugGroup::DebugGroup(const std::string &_name)
 Debug::DebugGroup::~DebugGroup()
 {
 #ifdef OPENGL_STUDY_WINDOWS
-    GHECK_GL(glPopDebugGroup());
+    glPopDebugGroup();
     --debugGroupID;
 
     if (debugGroupID < 0)

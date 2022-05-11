@@ -15,7 +15,7 @@ struct Context;
 class RenderPass
 {
 public:
-    RenderPass(const std::string &_name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, GLbitfield _clearFlags);
+    RenderPass(const std::string &_name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, GLbitfield _clearFlags, const std::string &_lightModeTag);
     ~RenderPass() = default;
 
     void Execute(const Context &_ctx);

@@ -6,6 +6,7 @@
 #include "material/material.h"
 #include "matrix4x4/matrix4x4.h"
 #include "vector3/vector3.h"
+#include <functional>
 #include <memory>
 
 struct DrawCallInfo

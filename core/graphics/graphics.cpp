@@ -83,6 +83,10 @@ namespace Graphics
         cameraDataBlock   = std::make_unique<UniformBlock>(*fullShader, "CameraData", 0);
         lightingDataBlock = std::make_unique<UniformBlock>(*fullShader, "Lighting", 1);
         shadowsDataBlock  = std::make_shared<UniformBlock>(*fullShader, "Shadows", 2);
+
+        cameraDataBlock->Bind();
+        lightingDataBlock->Bind();
+        shadowsDataBlock->Bind();
     }
 
     void InitPasses()
@@ -176,6 +180,8 @@ namespace Graphics
         lightingDataBlock->SetUniform("_PointLightsCount", &pointLightsCount, sizeof(int));
         lightingDataBlock->SetUniform("_SpotLightsCount", &spotLightsCount, sizeof(int));
         lightingDataBlock->SetUniform("_HasDirectionalLight", &hasDirectionalLight, sizeof(bool));
+
+        lightingDataBlock->UploadData();
     }
 
     std::vector<DrawCallInfo> DoCulling(const std::vector<Renderer *> &_renderers)
@@ -434,6 +440,7 @@ namespace Graphics
         cameraDataBlock->SetUniform("_CameraPosWS", &cameraPosWS, sizeof(Vector4));
         cameraDataBlock->SetUniform("_NearClipPlane", &nearClipPlane, sizeof(float));
         cameraDataBlock->SetUniform("_FarClipPlane", &farClipPlane, sizeof(float));
+        cameraDataBlock->UploadData();
 
         lastCameraPosition = cameraPosWS;
     }

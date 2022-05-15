@@ -14,7 +14,6 @@ struct Context;
 class Texture2DArray;
 class Texture2D;
 class Renderer;
-struct DrawCallInfo;
 
 class ShadowCasterPass
 {
@@ -39,7 +38,7 @@ private:
     std::shared_ptr<Texture2DArray> m_SpotLightShadowMapArray;
     std::shared_ptr<Texture2D>      m_DirectionLightShadowMap;
 
-    void Render(const std::vector<DrawCallInfo> &_drawCallInfos);
+    void Render(const std::vector<Renderer *> &_renderers);
 };
 
 #endif //OPENGL_STUDY_SHADOW_CASTER_PASS_H

@@ -23,6 +23,7 @@ public:
     Vector3                   AmbientLight;
     std::vector<Light *>      Lights;
     std::vector<Renderer *>   Renderers;
+    std::vector<Renderer *>   ShadowCasters;
     std::vector<DrawCallInfo> DrawCallInfos;
     Matrix4x4                 ViewMatrix       = Matrix4x4();
     Matrix4x4                 ProjectionMatrix = Matrix4x4();

@@ -21,6 +21,8 @@ public:
     Matrix4x4                 GetModelMatrix() const;
     std::shared_ptr<Material> GetMaterial() const;
 
+    bool CastShadows = true;
+
 protected:
     Renderer(const std::shared_ptr<GameObject> &_gameObject, const std::shared_ptr<Material> &_material);
 

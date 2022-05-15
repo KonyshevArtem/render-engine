@@ -6,7 +6,7 @@
 #include <vector>
 
 UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName, unsigned int _index) :
-    m_Name(std::move(_blockName))
+    m_Name(std::move(_blockName)), m_BindIndex(_index)
 {
     auto &pass = _shader.m_Passes.at(0);
 
@@ -41,12 +41,19 @@ UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName, unsign
     CHECK_GL(glBufferData(GL_UNIFORM_BUFFER, blockSize, nullptr, GL_DYNAMIC_DRAW));
     CHECK_GL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 
-    CHECK_GL(glBindBufferRange(GL_UNIFORM_BUFFER, _index, m_Buffer, 0, blockSize));
+    m_Data.resize(blockSize);
 }
 
 UniformBlock::~UniformBlock()
 {
     CHECK_GL(glDeleteBuffers(1, &m_Buffer));
+}
+
+void UniformBlock::Bind() const
+{
+    CHECK_GL(glBindBuffer(GL_UNIFORM_BUFFER, m_Buffer));
+    CHECK_GL(glBindBufferRange(GL_UNIFORM_BUFFER, m_BindIndex, m_Buffer, 0, m_Data.size()));
+    CHECK_GL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 }
 
 void UniformBlock::SetUniform(const std::string &_name, const void *_data, unsigned long _size)
@@ -57,7 +64,13 @@ void UniformBlock::SetUniform(const std::string &_name, const void *_data, unsig
         return;
     }
 
+    auto offset = m_UniformOffsets[_name];
+    memcpy(m_Data.data() + offset, _data, _size);
+}
+
+void UniformBlock::UploadData() const
+{
     CHECK_GL(glBindBuffer(GL_UNIFORM_BUFFER, m_Buffer));
-    CHECK_GL(glBufferSubData(GL_UNIFORM_BUFFER, m_UniformOffsets[_name], static_cast<GLsizei>(_size), _data));
+    CHECK_GL(glBufferSubData(GL_UNIFORM_BUFFER, 0, static_cast<GLsizei>(m_Data.size()), m_Data.data()));
     CHECK_GL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 }

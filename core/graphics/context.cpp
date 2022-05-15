@@ -1,6 +1,7 @@
 #include "context.h"
 #include "camera/camera.h"
 #include "gameObject/gameObject.h"
+#include "renderer/renderer.h"
 #include "scene/scene.h"
 
 Context::Context()
@@ -32,7 +33,12 @@ void Context::CollectRenderers(const std::shared_ptr<GameObject> &_gameObject)
         return;
 
     if (_gameObject->Renderer)
-        Renderers.push_back(_gameObject->Renderer.get());
+    {
+        auto renderer = _gameObject->Renderer.get();
+        Renderers.push_back(renderer);
+        if (renderer->CastShadows)
+            ShadowCasters.push_back(renderer);
+    }
 
     for (auto it = _gameObject->Children.cbegin(); it != _gameObject->Children.cend(); it++)
         CollectRenderers(*it);

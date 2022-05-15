@@ -33,7 +33,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 {
     static const Matrix4x4 biasMatrix = Matrix4x4::TRS(Vector3 {0.5f, 0.5f, 0.5f}, Quaternion(), Vector3 {0.5f, 0.5f, 0.5f});
 
-    if (_ctx.Renderers.size() == 0)
+    if (_ctx.ShadowCasters.size() == 0)
         return;
 
     auto debugGroup = Debug::DebugGroup("Shadow pass");
@@ -69,8 +69,8 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
             m_DirectionLightShadowMap->Attach(GL_DEPTH_ATTACHMENT);
 
-            auto bounds = _ctx.Renderers[0]->GetAABB();
-            for (const auto &renderer: _ctx.Renderers)
+            auto bounds = _ctx.ShadowCasters[0]->GetAABB();
+            for (const auto &renderer: _ctx.ShadowCasters)
                 bounds = bounds.Combine(renderer->GetAABB());
 
             auto extentsWorldSpace   = bounds.GetExtents();
@@ -92,14 +92,16 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         else
             continue;
 
-        Render(_ctx.DrawCallInfos);
+        Render(_ctx.ShadowCasters);
     }
+
+    m_ShadowsUniformBlock->UploadData();
 
     CHECK_GL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     CHECK_GL(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
 }
 
-void ShadowCasterPass::Render(const std::vector<DrawCallInfo> &_drawCallInfos)
+void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
 {
     static RenderSettings renderSettings {{{"LightMode", "ShadowCaster"}}};
 
@@ -108,5 +110,6 @@ void ShadowCasterPass::Render(const std::vector<DrawCallInfo> &_drawCallInfos)
     CHECK_GL(glDepthMask(GL_TRUE));
     CHECK_GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-    Graphics::Draw(_drawCallInfos, renderSettings);
+    auto drawCalls = Graphics::DoCulling(_renderers);
+    Graphics::Draw(drawCalls, renderSettings);
 }

@@ -7,6 +7,7 @@
 struct Matrix4x4;
 struct DrawCallInfo;
 struct RenderSettings;
+class Renderer;
 
 namespace Graphics
 {
@@ -18,15 +19,16 @@ namespace Graphics
             1;
 #endif
 
-    void               Init();
-    void               Shutdown();
-    void               Render();
-    void               Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings);
-    void               Reshape(int _width, int _height);
-    const std::string &GetGlobalShaderDirectives();
-    void               SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix);
-    int                GetScreenWidth();
-    int                GetScreenHeight();
+    void                      Init();
+    void                      Shutdown();
+    void                      Render();
+    std::vector<DrawCallInfo> DoCulling(const std::vector<Renderer *> &_renderers);
+    void                      Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings);
+    void                      Reshape(int _width, int _height);
+    const std::string        &GetGlobalShaderDirectives();
+    void                      SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix);
+    int                       GetScreenWidth();
+    int                       GetScreenHeight();
 }; // namespace Graphics
 
 #endif //OPENGL_STUDY_GRAPHICS_H

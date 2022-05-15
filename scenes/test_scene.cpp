@@ -12,6 +12,7 @@
 #include "mesh/mesh.h"
 #include "renderer/billboard_renderer.h"
 #include "renderer/mesh_renderer.h"
+#include "renderer/renderer.h"
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
@@ -175,6 +176,7 @@ void TestScene::Init()
         float z          = (i % (gridSize * gridSize)) / gridSize;
         sphere->Renderer = std::make_shared<MeshRenderer>(sphere, sphereMesh, sphereMaterial);
         sphere->SetLocalPosition({-40.0f + 80.0f * x / gridSize, -15.0f - 2.5f * y, -40.0f + 80.0f * z / gridSize});
+        sphere->Renderer->CastShadows = false;
     }
 
     // init lights

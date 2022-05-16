@@ -45,7 +45,7 @@ struct DrawCallInfo
         static DrawCallInfo::Filter Transparent();
         static DrawCallInfo::Filter All();
 
-        bool operator()(const DrawCallInfo &_info);
+        bool operator()(const DrawCallInfo &_info) const;
     };
 };
 

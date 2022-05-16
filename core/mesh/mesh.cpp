@@ -2,6 +2,7 @@
 #include "core_debug/debug.h"
 #include "vector2/vector2.h"
 #include "vector3/vector3.h"
+#include <span>
 
 Mesh::Mesh(std::vector<Vector3> &_vertices,
            std::vector<Vector3> &_normals,
@@ -14,7 +15,7 @@ Mesh::Mesh(std::vector<Vector3> &_vertices,
     m_Indexes(std::move(_indexes)),
     m_UVs(std::move(_uvs)),
     m_Tangents(std::move(_tangents)),
-    m_Bounds(Bounds::FromPoints(m_Vertices))
+    m_Bounds(Bounds::FromPoints(std::span<Vector3> {m_Vertices.data(), m_Vertices.size()}))
 {
     CHECK_GL(glGenBuffers(1, &m_IndexBuffer));
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer));

@@ -25,9 +25,9 @@ Vector3 Bounds::GetExtents() const
     return GetSize() * 0.5f;
 }
 
-std::vector<Vector3> Bounds::GetCornerPoints() const
+std::array<Vector3, 8> Bounds::GetCornerPoints() const
 {
-    return std::vector<Vector3> {
+    return std::array<Vector3, 8> {
             Min,
             {Min.x, Min.y, Max.z},
             {Min.x, Max.y, Min.z},
@@ -39,7 +39,7 @@ std::vector<Vector3> Bounds::GetCornerPoints() const
     };
 }
 
-Bounds Bounds::FromPoints(const std::vector<Vector3> &_points)
+Bounds Bounds::FromPoints(const std::span<Vector3> &_points)
 {
     if (_points.size() == 0)
         return Bounds();
@@ -74,5 +74,5 @@ Bounds operator*(const Matrix4x4 &_matrix, const Bounds &_bounds)
     for (auto &point: corners)
         point = _matrix * point.ToVector4(1);
 
-    return Bounds::FromPoints(corners);
+    return Bounds::FromPoints(std::span<Vector3>(corners.data(), corners.size()));
 }

@@ -32,7 +32,7 @@ DrawCallInfo::Filter DrawCallInfo::Filter::All()
                                  { return true; }};
 }
 
-bool DrawCallInfo::Filter::operator()(const DrawCallInfo &_info)
+bool DrawCallInfo::Filter::operator()(const DrawCallInfo &_info) const
 {
     return Delegate != nullptr ? Delegate(_info) : false;
 }

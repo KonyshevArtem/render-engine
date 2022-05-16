@@ -11,7 +11,13 @@
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
 #include "texture_2d_array/texture_2d_array.h"
+#include "vector4/vector4.h"
 #include <utility>
+#ifdef OPENGL_STUDY_WINDOWS
+#include <GL/glew.h>
+#elif OPENGL_STUDY_MACOS
+#include <OpenGL/gl3.h>
+#endif
 
 ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, std::shared_ptr<UniformBlock> _shadowsUniformBlock) :
     m_ShadowsUniformBlock(std::move(_shadowsUniformBlock)),
@@ -20,6 +26,9 @@ ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, std::shared_ptr<Uniform
 {
     Shader::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
     Shader::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
+
+    m_DirectionLightShadowMap->SetBorderColor({1, 1, 1, 1});
+    m_DirectionLightShadowMap->SetWrapMode(GL_CLAMP_TO_BORDER);
 
     CHECK_GL(glGenFramebuffers(1, &m_Framebuffer));
 }

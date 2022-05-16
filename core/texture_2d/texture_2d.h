@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_TEXTURE_2D_H
 
 #include "texture/texture.h"
+#include "vector4/vector4.h"
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -20,6 +21,7 @@ public:
     void Attach(GLenum _attachment);
 
     void SetWrapMode(GLenum _wrapMode) const;
+    void SetBorderColor(const Vector4 &_color) const;
 
     virtual ~Texture2D() = default;
 
@@ -29,7 +31,7 @@ private:
     Texture2D(Texture2D &&)      = delete;
 
     Texture2D &operator=(const Texture2D &) = delete;
-    Texture2D &operator=(Texture2D &&)      = delete;
+    Texture2D &operator=(Texture2D &&) = delete;
 
     void Init(GLint _internalFormat, GLenum _format, GLenum _type, bool _loadData);
 

@@ -135,3 +135,10 @@ void Texture2D::SetWrapMode(GLenum _wrapMode) const
     CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, _wrapMode));
     CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
 }
+
+void Texture2D::SetBorderColor(const Vector4 &_color) const
+{
+    CHECK_GL(glBindTexture(GL_TEXTURE_2D, m_Texture));
+    CHECK_GL(glSamplerParameterfv(m_Sampler, GL_TEXTURE_BORDER_COLOR, &_color.x));
+    CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
+}

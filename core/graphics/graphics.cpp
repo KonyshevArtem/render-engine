@@ -238,43 +238,35 @@ namespace Graphics
     std::vector<DrawCallInfo> BatchDrawCalls(const std::vector<DrawCallInfo> &_drawCalls)
     {
         std::vector<DrawCallInfo> batchedDrawCalls;
+        batchedDrawCalls.reserve(_drawCalls.size());
 
-        std::vector<DrawCallInfo> instancedInfos;
+        std::unordered_map<std::pair<Material *, DrawableGeometry *>, int, DrawCallInfoHash> instancingMap;
         for (const auto &info: _drawCalls)
         {
-            if (info.Material->GetShader()->SupportInstancing())
-                instancedInfos.push_back(info);
-            else
-                batchedDrawCalls.push_back(info);
-        }
-
-        std::unordered_map<std::pair<Material *, DrawableGeometry *>, DrawCallInfo, DrawCallInfoHash> instancingMap;
-        for (const auto &info: instancedInfos)
-        {
-            auto pair = std::make_pair<Material *, DrawableGeometry *>(info.Material.get(), info.Geometry.get());
-            if (!instancingMap.contains(pair))
+            if (!info.Material->GetShader()->SupportInstancing())
             {
-                instancingMap[pair] = info;
+                batchedDrawCalls.push_back(info);
                 continue;
             }
 
-            auto &drawCall = instancingMap[pair];
+            auto index = batchedDrawCalls.size();
+            auto pair  = std::make_pair<Material *, DrawableGeometry *>(info.Material.get(), info.Geometry.get());
+            if (!instancingMap.contains(pair))
+            {
+                batchedDrawCalls.push_back(info);
+                batchedDrawCalls[index].Instanced = true;
+                batchedDrawCalls[index].ModelMatrices.reserve(MAX_INSTANCING_COUNT);
+                instancingMap[pair] = index;
+                continue;
+            }
+
+            auto &drawCall = batchedDrawCalls[instancingMap[pair]];
             drawCall.AABB  = drawCall.AABB.Combine(info.AABB);
             drawCall.ModelMatrices.push_back(info.GetModelMatrix());
 
             if (drawCall.ModelMatrices.size() >= MAX_INSTANCING_COUNT)
-            {
-                drawCall.Instanced = true;
-                batchedDrawCalls.push_back(drawCall);
                 instancingMap.erase(pair);
-            }
         }
-
-        for (auto &pair: instancingMap)
-        {
-            pair.second.Instanced = true;
-            batchedDrawCalls.push_back(pair.second);
-        };
 
         return batchedDrawCalls;
     }
@@ -349,6 +341,7 @@ namespace Graphics
     {
         // filter draw calls
         std::vector<DrawCallInfo> drawCalls;
+        drawCalls.reserve(_drawCallInfos.size());
         copy_if(_drawCallInfos.begin(), _drawCallInfos.end(), std::back_inserter(drawCalls), _settings.Filter);
 
         drawCalls = BatchDrawCalls(drawCalls);

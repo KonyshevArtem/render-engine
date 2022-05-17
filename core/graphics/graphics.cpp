@@ -35,7 +35,6 @@ namespace Graphics
     };
 
     constexpr int MAX_POINT_LIGHT_SOURCES       = 3;
-    constexpr int MAX_SPOT_LIGHT_SOURCES        = 3;
     constexpr int MAX_INSTANCING_COUNT          = 256;
     constexpr int INSTANCING_BASE_VERTEX_ATTRIB = 4;
 
@@ -137,7 +136,44 @@ namespace Graphics
 
     void SetLightingData(const Vector3 &_ambient, const std::vector<Light *> &_lights)
     {
-        lightingDataBlock->SetUniform("_AmbientLight", &_ambient, sizeof(Vector3));
+        static const std::string ambientLightName      = "_AmbientLight";
+        static const std::string dirLightDirectionName = "_DirectionalLight.DirectionWS";
+        static const std::string dirLightIntensityName = "_DirectionalLight.Intensity";
+
+        static const std::string pointLightsCountName = "_PointLightsCount";
+        static const std::string spotLightsCountName  = "_SpotLightsCount";
+        static const std::string hasDirLightName      = "_HasDirectionalLight";
+
+        static bool        namesInited = false;
+        static std::string pointLightNames[MAX_POINT_LIGHT_SOURCES][3];
+        static std::string spotLightNames[MAX_SPOT_LIGHT_SOURCES][5];
+
+        if (!namesInited)
+        {
+            for (int i = 0; i < MAX_POINT_LIGHT_SOURCES; ++i)
+            {
+                auto prefix           = "_PointLights[" + std::to_string(i) + "].";
+                pointLightNames[i][0] = prefix + "PositionWS";
+                pointLightNames[i][1] = prefix + "Intensity";
+                pointLightNames[i][2] = prefix + "Attenuation";
+            }
+
+            for (int i = 0; i < MAX_SPOT_LIGHT_SOURCES; ++i)
+            {
+                auto prefix          = "_SpotLights[" + std::to_string(i) + "].";
+                spotLightNames[i][0] = prefix + "PositionWS";
+                spotLightNames[i][1] = prefix + "DirectionWS";
+                spotLightNames[i][2] = prefix + "Intensity";
+                spotLightNames[i][3] = prefix + "Attenuation";
+                spotLightNames[i][4] = prefix + "CutOffCos";
+            }
+
+            namesInited = true;
+        }
+
+        /// ------ ///
+
+        lightingDataBlock->SetUniform(ambientLightName, &_ambient, sizeof(Vector3));
 
         int  pointLightsCount    = 0;
         int  spotLightsCount     = 0;
@@ -152,34 +188,32 @@ namespace Graphics
             {
                 hasDirectionalLight = true;
                 auto dir            = light->Rotation * Vector3(0, 0, 1);
-                lightingDataBlock->SetUniform("_DirectionalLight.DirectionWS", &dir, sizeof(Vector3));
-                lightingDataBlock->SetUniform("_DirectionalLight.Intensity", &light->Intensity, sizeof(Vector3));
+                lightingDataBlock->SetUniform(dirLightDirectionName, &dir, sizeof(Vector3));
+                lightingDataBlock->SetUniform(dirLightIntensityName, &light->Intensity, sizeof(Vector3));
             }
             else if (light->Type == LightType::POINT && pointLightsCount < MAX_POINT_LIGHT_SOURCES)
             {
-                auto prefix = "_PointLights[" + std::to_string(pointLightsCount) + "].";
-                lightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
-                lightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector3));
-                lightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
+                lightingDataBlock->SetUniform(pointLightNames[pointLightsCount][0], &light->Position, sizeof(Vector3));
+                lightingDataBlock->SetUniform(pointLightNames[pointLightsCount][1], &light->Intensity, sizeof(Vector3));
+                lightingDataBlock->SetUniform(pointLightNames[pointLightsCount][2], &light->Attenuation, sizeof(float));
                 ++pointLightsCount;
             }
             else if (light->Type == LightType::SPOT && spotLightsCount < MAX_POINT_LIGHT_SOURCES)
             {
                 auto dir       = light->Rotation * Vector3(0, 0, 1);
                 auto cutOffCos = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
-                auto prefix    = "_SpotLights[" + std::to_string(spotLightsCount) + "].";
-                lightingDataBlock->SetUniform(prefix + "PositionWS", &light->Position, sizeof(Vector3));
-                lightingDataBlock->SetUniform(prefix + "DirectionWS", &dir, sizeof(Vector3));
-                lightingDataBlock->SetUniform(prefix + "Intensity", &light->Intensity, sizeof(Vector3));
-                lightingDataBlock->SetUniform(prefix + "Attenuation", &light->Attenuation, sizeof(float));
-                lightingDataBlock->SetUniform(prefix + "CutOffCos", &cutOffCos, sizeof(float));
+                lightingDataBlock->SetUniform(spotLightNames[spotLightsCount][0], &light->Position, sizeof(Vector3));
+                lightingDataBlock->SetUniform(spotLightNames[spotLightsCount][1], &dir, sizeof(Vector3));
+                lightingDataBlock->SetUniform(spotLightNames[spotLightsCount][2], &light->Intensity, sizeof(Vector3));
+                lightingDataBlock->SetUniform(spotLightNames[spotLightsCount][3], &light->Attenuation, sizeof(float));
+                lightingDataBlock->SetUniform(spotLightNames[spotLightsCount][4], &cutOffCos, sizeof(float));
                 ++spotLightsCount;
             }
         }
 
-        lightingDataBlock->SetUniform("_PointLightsCount", &pointLightsCount, sizeof(int));
-        lightingDataBlock->SetUniform("_SpotLightsCount", &spotLightsCount, sizeof(int));
-        lightingDataBlock->SetUniform("_HasDirectionalLight", &hasDirectionalLight, sizeof(bool));
+        lightingDataBlock->SetUniform(pointLightsCountName, &pointLightsCount, sizeof(int));
+        lightingDataBlock->SetUniform(spotLightsCountName, &spotLightsCount, sizeof(int));
+        lightingDataBlock->SetUniform(hasDirLightName, &hasDirectionalLight, sizeof(bool));
 
         lightingDataBlock->UploadData();
     }
@@ -232,10 +266,10 @@ namespace Graphics
         Gizmos::ClearDrawInfos();
 #endif
 
-        Debug::CheckOpenGLError(__FILE__, __LINE__);
+        Debug::CheckOpenGLError();
     }
 
-    std::vector<DrawCallInfo> BatchDrawCalls(const std::vector<DrawCallInfo> &_drawCalls)
+    std::vector<DrawCallInfo> BatchDrawCalls(const std::vector<DrawCallInfo> &_drawCalls, std::vector<std::vector<Matrix4x4>> &_instancedMatricesMap)
     {
         std::vector<DrawCallInfo> batchedDrawCalls;
         batchedDrawCalls.reserve(_drawCalls.size());
@@ -254,45 +288,50 @@ namespace Graphics
             if (!instancingMap.contains(pair))
             {
                 batchedDrawCalls.push_back(info);
-                batchedDrawCalls[index].Instanced = true;
-                batchedDrawCalls[index].ModelMatrices.reserve(MAX_INSTANCING_COUNT);
+                batchedDrawCalls[index].InstancedIndex = _instancedMatricesMap.size();
+                _instancedMatricesMap.push_back({{info.ModelMatrix}});
                 instancingMap[pair] = index;
                 continue;
             }
 
             auto &drawCall = batchedDrawCalls[instancingMap[pair]];
             drawCall.AABB  = drawCall.AABB.Combine(info.AABB);
-            drawCall.ModelMatrices.push_back(info.GetModelMatrix());
 
-            if (drawCall.ModelMatrices.size() >= MAX_INSTANCING_COUNT)
+            auto &matrices = _instancedMatricesMap[drawCall.InstancedIndex];
+            matrices.push_back(info.ModelMatrix);
+
+            if (matrices.size() >= MAX_INSTANCING_COUNT)
                 instancingMap.erase(pair);
         }
 
         return batchedDrawCalls;
     }
 
-    void FillMatrices(const DrawCallInfo &_info)
+    void FillMatrices(const DrawCallInfo &_info, const std::vector<std::vector<Matrix4x4>> &_instancedMatricesMap)
     {
-        if (_info.Instanced)
+        static const std::string modelMatrixName       = "_ModelMatrix";
+        static const std::string modelNormalMatrixName = "_ModelNormalMatrix";
+
+        if (_info.Instanced())
         {
-            auto count = _info.ModelMatrices.size();
+            auto &matrices = _instancedMatricesMap[_info.InstancedIndex];
+            auto  count    = matrices.size();
 
             std::vector<Matrix4x4> modelNormalMatrices(count);
             for (int i = 0; i < count; ++i)
-                modelNormalMatrices[i] = _info.ModelMatrices[i].Invert().Transpose();
+                modelNormalMatrices[i] = matrices[i].Invert().Transpose();
 
             auto matricesSize        = sizeof(Matrix4x4) * count;
             auto normalsMatrixOffset = sizeof(Matrix4x4) * MAX_INSTANCING_COUNT;
             CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer));
-            CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, matricesSize, _info.ModelMatrices.data()));
+            CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, matricesSize, matrices.data()));
             CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, normalsMatrixOffset, matricesSize, modelNormalMatrices.data()));
             CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
         }
         else
         {
-            auto matrix = _info.GetModelMatrix();
-            Shader::SetGlobalMatrix("_ModelMatrix", matrix);
-            Shader::SetGlobalMatrix("_ModelNormalMatrix", matrix.Invert().Transpose());
+            Shader::SetGlobalMatrix(modelMatrixName, _info.ModelMatrix);
+            Shader::SetGlobalMatrix(modelNormalMatrixName, _info.ModelMatrix.Invert().Transpose());
         }
     }
 
@@ -344,7 +383,8 @@ namespace Graphics
         drawCalls.reserve(_drawCallInfos.size());
         copy_if(_drawCallInfos.begin(), _drawCallInfos.end(), std::back_inserter(drawCalls), _settings.Filter);
 
-        drawCalls = BatchDrawCalls(drawCalls);
+        std::vector<std::vector<Matrix4x4>> instancedMatricesMap;
+        drawCalls = BatchDrawCalls(drawCalls, instancedMatricesMap);
 
         // sort draw calls
         if (_settings.Sorting != DrawCallInfo::Sorting::NO_SORTING)
@@ -354,16 +394,15 @@ namespace Graphics
         {
             CHECK_GL(glBindVertexArray(info.Geometry->GetVertexArrayObject()));
 
-            FillMatrices(info);
+            FillMatrices(info, instancedMatricesMap);
 
-            if (info.Instanced)
+            if (info.Instanced())
                 SetInstancingEnabled(true);
 
-            auto        type          = info.Geometry->GetGeometryType();
-            auto        count         = info.Geometry->GetElementsCount();
-            auto        hasIndexes    = info.Geometry->HasIndexes();
-            auto        instanceCount = info.ModelMatrices.size();
-            const auto &shader        = info.Material->GetShader();
+            auto        type       = info.Geometry->GetGeometryType();
+            auto        count      = info.Geometry->GetElementsCount();
+            auto        hasIndexes = info.Geometry->HasIndexes();
+            const auto &shader     = info.Material->GetShader();
 
             for (int i = 0; i < shader->PassesCount(); ++i)
             {
@@ -374,8 +413,9 @@ namespace Graphics
 
                 Shader::SetPropertyBlock(info.Material->GetPropertyBlock());
 
-                if (info.Instanced)
+                if (info.Instanced())
                 {
+                    auto instanceCount = instancedMatricesMap[info.InstancedIndex].size();
                     if (hasIndexes)
                     {
                         CHECK_GL(glDrawElementsInstanced(type, count, GL_UNSIGNED_INT, nullptr, instanceCount));
@@ -398,7 +438,7 @@ namespace Graphics
                 }
             }
 
-            if (info.Instanced)
+            if (info.Instanced())
                 SetInstancingEnabled(false);
 
             CHECK_GL(glBindVertexArray(0));
@@ -423,16 +463,22 @@ namespace Graphics
 
     void SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix)
     {
+        static const std::string projMatrixName = "_ProjMatrix";
+        static const std::string viewMatrixName = "_ViewMatrix";
+        static const std::string cameraPosName  = "_CameraPosWS";
+        static const std::string nearClipName   = "_NearClipPlane";
+        static const std::string farClipName    = "_FarClipPlane";
+
         auto matrixSize    = sizeof(Matrix4x4);
         auto cameraPosWS   = _viewMatrix.Invert().GetPosition();
         auto nearClipPlane = Camera::Current->GetNearClipPlane();
         auto farClipPlane  = Camera::Current->GetFarClipPlane();
 
-        cameraDataBlock->SetUniform("_ProjMatrix", &_projectionMatrix, matrixSize);
-        cameraDataBlock->SetUniform("_ViewMatrix", &_viewMatrix, matrixSize);
-        cameraDataBlock->SetUniform("_CameraPosWS", &cameraPosWS, sizeof(Vector4));
-        cameraDataBlock->SetUniform("_NearClipPlane", &nearClipPlane, sizeof(float));
-        cameraDataBlock->SetUniform("_FarClipPlane", &farClipPlane, sizeof(float));
+        cameraDataBlock->SetUniform(projMatrixName, &_projectionMatrix, matrixSize);
+        cameraDataBlock->SetUniform(viewMatrixName, &_viewMatrix, matrixSize);
+        cameraDataBlock->SetUniform(cameraPosName, &cameraPosWS, sizeof(Vector4));
+        cameraDataBlock->SetUniform(nearClipName, &nearClipPlane, sizeof(float));
+        cameraDataBlock->SetUniform(farClipName, &farClipPlane, sizeof(float));
         cameraDataBlock->UploadData();
 
         lastCameraPosition = cameraPosWS;

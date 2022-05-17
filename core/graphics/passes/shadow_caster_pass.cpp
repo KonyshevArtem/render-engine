@@ -40,7 +40,20 @@ ShadowCasterPass::~ShadowCasterPass()
 
 void ShadowCasterPass::Execute(const Context &_ctx)
 {
-    static const Matrix4x4 biasMatrix = Matrix4x4::TRS(Vector3 {0.5f, 0.5f, 0.5f}, Quaternion(), Vector3 {0.5f, 0.5f, 0.5f});
+    static const Matrix4x4   biasMatrix         = Matrix4x4::TRS(Vector3 {0.5f, 0.5f, 0.5f}, Quaternion(), Vector3 {0.5f, 0.5f, 0.5f});
+    static const std::string dirLightMatrixName = "_DirLightShadow.LightViewProjMatrix";
+
+    static bool        namesInited = false;
+    static std::string spotLightNames[Graphics::MAX_SPOT_LIGHT_SOURCES];
+
+    if (!namesInited)
+    {
+        for (int i = 0; i < Graphics::MAX_SPOT_LIGHT_SOURCES; ++i)
+            spotLightNames[i] = "_SpotLightShadows[" + std::to_string(i) + "].LightViewProjMatrix";
+        namesInited = true;
+    }
+
+    /// ----- ///
 
     if (_ctx.ShadowCasters.size() == 0)
         return;
@@ -66,9 +79,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             auto lightVP = biasMatrix * proj * view;
 
             Graphics::SetCameraData(view, proj);
-
-            auto index = std::to_string(spotLightsCount);
-            m_ShadowsUniformBlock->SetUniform("_SpotLightShadows[" + index + "].LightViewProjMatrix", &lightVP, sizeof(Matrix4x4));
+            m_ShadowsUniformBlock->SetUniform(spotLightNames[spotLightsCount], &lightVP, sizeof(Matrix4x4));
 
             ++spotLightsCount;
         }
@@ -96,7 +107,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             Graphics::SetCameraData(viewMatrix, projMatrix);
 
             auto lightVP = biasMatrix * projMatrix * viewMatrix;
-            m_ShadowsUniformBlock->SetUniform("_DirLightShadow.LightViewProjMatrix", &lightVP, sizeof(Matrix4x4));
+            m_ShadowsUniformBlock->SetUniform(dirLightMatrixName, &lightVP, sizeof(Matrix4x4));
         }
         else
             continue;

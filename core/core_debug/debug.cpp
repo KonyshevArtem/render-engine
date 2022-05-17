@@ -56,15 +56,23 @@ void Debug::LogErrorFormat(const std::string &_format, std::initializer_list<std
     LogError(format.str());
 }
 
-void Debug::CheckOpenGLError(const std::string &_file, int _line)
+void Debug::CheckOpenGLError()
 {
-    GLenum error = glGetError();
+    GLenum error = Debug::GetOpenGLError();
     if (error != 0)
-    {
-        auto *errorString = reinterpret_cast<const char *>(gluErrorString(error));
-        if (errorString == nullptr)
-            LogErrorFormat("[OpenGL] Unknown error %1%\n%2%:%3%", {std::to_string(error), _file, std::to_string(_line)});
-        else
-            LogErrorFormat("[OpenGL] %1%\n%2%:%3%", {errorString, _file, std::to_string(_line)});
-    }
+        Debug::LogOpenGLError(error, "", 0);
+}
+
+unsigned int Debug::GetOpenGLError()
+{
+    return glGetError();
+}
+
+void Debug::LogOpenGLError(unsigned int _errorCode, const std::string &_file, int _line)
+{
+    auto *errorString = reinterpret_cast<const char *>(gluErrorString(_errorCode));
+    if (errorString == nullptr)
+        Debug::LogErrorFormat("[OpenGL] Unknown error %1%\n%2%:%3%", {std::to_string(_errorCode), _file, std::to_string(_line)});
+    else
+        Debug::LogErrorFormat("[OpenGL] %1%\n%2%:%3%", {errorString, _file, std::to_string(_line)});
 }

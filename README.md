@@ -1,7 +1,9 @@
 # OpenGL study project
 
 Simple project to study how rendering works in games and how
-game engines work
+game engines work.
+
+![Screen](readme/screen.png)
 
 ## Implemented features
 
@@ -9,8 +11,8 @@ game engines work
 Only forward rendering path is implemented for now
 
 ### Lighting
-* Lambert lighting model for vertex lit objects
-* Blinn-Phong lighting model for fragment lit objects
+* PBR with Cook-Torrance BRDF
+* Blinn-Phong lighting model
 
 ### Light sources
 * Support for single directional light with shadows
@@ -20,13 +22,20 @@ Only forward rendering path is implemented for now
 ### Shader features
 * Albedo textures
 * Normal maps
-* Custom shader preprocessor
+* Multipass shaders based on tags
+* Custom shader preprocessor - allows using `#include` instructions with GLSL
+* Shader description in JSON - allows specifying passes, drawing parameters and default values for uniforms
 * Alpha blending and alpha clipping
+
+### Editor
+* Scene hierarchy panel that lists all gameObjects - supports reparenting, renaming and destroying. Also outlines selected gameObjects.
 
 ### Other
 * Skybox with cubemap
 * Billboard renderer
 * Opaque and transparent passes with different sorting and clear flags
+* Instanced drawing (currently without support for per-instance data)
+* Gizmoz rendering (pressing `G` in test scene will draw bounding boxes)
 
 ## Requirements
 

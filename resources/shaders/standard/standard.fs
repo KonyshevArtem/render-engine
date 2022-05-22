@@ -22,6 +22,7 @@ uniform float _Metallness;
 #ifdef _NORMAL_MAP
 uniform sampler2D _NormalMap;
 uniform vec4 _NormalMap_ST;
+uniform float _NormalIntensity;
 #endif
 
 #ifdef _REFLECTION

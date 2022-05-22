@@ -84,9 +84,10 @@ vec3 sampleNormalWS(vec3 normalWS, vec3 tangentWS, vec2 uv)
     tangentWS = normalize(tangentWS);
     // Gramm-Schmidt process to ensure that tangent and normal are still orthogonal after interpolation
     tangentWS = normalize(tangentWS - dot(tangentWS, normalWS) * normalWS);
-    vec3 bitangentWS = cross(normalWS, tangentWS);
-    vec3 normalTS = texture(_NormalMap, uv * _NormalMap_ST.zw + _NormalMap_ST.xy).rgb;
-    normalTS = normalize(normalTS * 2.0 - 1.0);
+    vec3 bitangentWS = cross(tangentWS, normalWS);
+    vec3 normalTS = texture(_NormalMap, uv * _NormalMap_ST.zw + _NormalMap_ST.xy).rgb * 2.0 - 1.0;
+    normalTS *= vec3(_NormalIntensity, _NormalIntensity, 1);
+    normalTS = normalize(normalTS);
     mat3 TBN = mat3(tangentWS, bitangentWS, normalWS);
     normalWS = normalize(TBN * normalTS);
     #endif

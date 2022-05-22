@@ -75,7 +75,7 @@ FBXAsset::FBXAsset(ofbx::IScene *_scene) :
             if (hasUVs)
             {
                 auto uv = geom->getUVs()[j];
-                uvs.emplace_back(uv.x, 1 - uv.y);
+                uvs.emplace_back(uv.x, uv.y);
             }
             if (hasTangents)
             {

@@ -80,6 +80,7 @@ void TestScene::Init()
     fragmentLitBrickMaterial->SetTexture("_NormalMap", brickNormal);
     fragmentLitBrickMaterial->SetFloat("_Smoothness", 0.5f);
     fragmentLitBrickMaterial->SetFloat("_Metallness", 0);
+    fragmentLitBrickMaterial->SetFloat("_NormalIntensity", 3);
 
     m_WaterMaterial = std::make_shared<Material>(fragmentLitShader);
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
@@ -88,6 +89,7 @@ void TestScene::Init()
     m_WaterMaterial->SetFloat("_ReflectionStrength", 0.3f);
     m_WaterMaterial->SetFloat("_Smoothness", 0.9f);
     m_WaterMaterial->SetFloat("_Metallness", 0.2f);
+    m_WaterMaterial->SetFloat("_NormalIntensity", 3);
 
     auto transparentMaterial = std::make_shared<Material>(transparentShader);
     transparentMaterial->SetTexture("_Albedo", windowTexture);
@@ -106,6 +108,7 @@ void TestScene::Init()
     //carMaterial->SetFloat("_ReflectionStrength", 0.5f);
     carMaterial->SetFloat("_Smoothness", 1);
     carMaterial->SetFloat("_Metallness", 1);
+    carMaterial->SetFloat("_NormalIntensity", 1);
 
     auto sphereMaterial = std::make_shared<Material>(instancingShader);
 

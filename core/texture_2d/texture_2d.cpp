@@ -123,7 +123,7 @@ void Texture2D::Bind(int _unit) const
     CHECK_GL(glBindSampler(_unit, m_Sampler));
 }
 
-void Texture2D::Attach(GLenum _attachment)
+void Texture2D::Attach(int _attachment) const
 {
     CHECK_GL(glFramebufferTexture(GL_FRAMEBUFFER, _attachment, m_Texture, 0));
 }

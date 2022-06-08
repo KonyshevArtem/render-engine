@@ -12,7 +12,8 @@ class Texture
 public:
     virtual ~Texture();
 
-    virtual void Bind(int _unit) const = 0;
+    virtual void Bind(int _unit) const         = 0;
+    virtual void Attach(int _attachment) const = 0;
 
     inline unsigned int GetWidth() const
     {

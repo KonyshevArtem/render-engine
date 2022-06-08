@@ -39,7 +39,7 @@ void Texture2DArray::Bind(int _unit) const
     CHECK_GL(glBindSampler(_unit, m_Sampler));
 }
 
-void Texture2DArray::Attach(int _attachment, int _layer) const
+void Texture2DArray::Attach(int _attachment) const
 {
-    CHECK_GL(glFramebufferTextureLayer(GL_FRAMEBUFFER, _attachment, m_Texture, 0, _layer));
+    CHECK_GL(glFramebufferTextureLayer(GL_FRAMEBUFFER, _attachment, m_Texture, 0, AttachmentLayer));
 }

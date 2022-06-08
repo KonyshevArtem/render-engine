@@ -15,16 +15,6 @@
 #include "texture_2d/texture_2d.h"
 #include "vector4/vector4.h"
 
-GizmosPass::GizmosPass()
-{
-    CHECK_GL(glGenFramebuffers(1, &m_Framebuffer));
-}
-
-GizmosPass::~GizmosPass()
-{
-    CHECK_GL(glDeleteFramebuffers(1, &m_Framebuffer));
-}
-
 void GizmosPass::Execute(Context &_context)
 {
     Outline();
@@ -33,10 +23,14 @@ void GizmosPass::Execute(Context &_context)
 
 void GizmosPass::Outline() const
 {
-    static RenderSettings             renderSettings;
+    static RenderSettings             renderSettings {{{"LightMode", "Forward"}}};
     static std::shared_ptr<Material>  outlineMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/outline/outlineBlit.shader", {}));
     static std::shared_ptr<Texture2D> outlineTexture  = nullptr;
     static Vector4                    outlineColor {1, 0.73f, 0, 1};
+
+    auto renderers = Hierarchy::GetSelectedRenderers();
+    if (renderers.size() == 0)
+        return;
 
     auto debugGroup = Debug::DebugGroup("Selected outline pass");
 
@@ -44,13 +38,12 @@ void GizmosPass::Outline() const
 
     // render selected gameObjects
     {
-        CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer));
-        outlineTexture->Attach(GL_COLOR_ATTACHMENT0);
+        Graphics::SetRenderTargets(outlineTexture, nullptr);
 
         CHECK_GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
         std::vector<DrawCallInfo> infos;
-        for (const auto &renderer: Hierarchy::GetSelectedRenderers())
+        for (const auto &renderer: renderers)
         {
             infos.push_back(DrawCallInfo {renderer->GetGeometry(),
                                           renderer->GetMaterial(),
@@ -58,8 +51,7 @@ void GizmosPass::Outline() const
                                           renderer->GetAABB()});
         }
         Graphics::Draw(infos, renderSettings);
-
-        CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+        Graphics::SetRenderTargets(nullptr, nullptr);
     }
 
     // blit to screen

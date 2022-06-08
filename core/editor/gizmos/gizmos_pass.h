@@ -17,14 +17,12 @@ class Texture2D;
 class GizmosPass
 {
 public:
-    GizmosPass();
-    ~GizmosPass();
+    GizmosPass() = default;
+    ~GizmosPass() = default;
 
     void Execute(Context &_context);
 
 private:
-    GLuint m_Framebuffer;
-
     GizmosPass(const GizmosPass &) = delete;
     GizmosPass(GizmosPass &&)      = delete;
 

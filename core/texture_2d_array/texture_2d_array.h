@@ -10,8 +10,10 @@ class Texture2DArray: public Texture
 public:
     static std::shared_ptr<Texture2DArray> ShadowMapArray(unsigned int _size, unsigned int _count);
 
+    int AttachmentLayer;
+
     void Bind(int _unit) const override;
-    void Attach(int _attachment, int _layer) const;
+    void Attach(int _attachment) const override;
 
     inline unsigned int GetCount() const
     {

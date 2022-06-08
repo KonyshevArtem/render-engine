@@ -1,6 +1,7 @@
 #ifndef OPENGL_STUDY_GRAPHICS_H
 #define OPENGL_STUDY_GRAPHICS_H
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -8,6 +9,7 @@ struct Matrix4x4;
 struct DrawCallInfo;
 struct RenderSettings;
 class Renderer;
+class Texture;
 
 namespace Graphics
 {
@@ -31,6 +33,7 @@ namespace Graphics
     void                      SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix);
     int                       GetScreenWidth();
     int                       GetScreenHeight();
+    void                      SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, const std::shared_ptr<Texture> &_depthAttachment);
 }; // namespace Graphics
 
 #endif //OPENGL_STUDY_GRAPHICS_H

@@ -12,6 +12,7 @@
 #include "render_settings.h"
 #include "renderer/renderer.h"
 #include "shader/shader.h"
+#include "texture/texture.h"
 #include "uniform_block.h"
 #include "vector4/vector4.h"
 #include <boost/functional/hash/hash.hpp>
@@ -58,6 +59,7 @@ namespace Graphics
     Vector3 lastCameraPosition;
 
     GLuint instancingMatricesBuffer;
+    GLuint           framebuffer;
 
     void InitCulling()
     {
@@ -74,6 +76,7 @@ namespace Graphics
     void InitFramebuffer()
     {
         CHECK_GL(glEnable(GL_FRAMEBUFFER_SRGB));
+        CHECK_GL(glGenFramebuffers(1, &framebuffer));
     }
 
     void InitUniformBlocks()
@@ -132,6 +135,7 @@ namespace Graphics
     void Shutdown()
     {
         CHECK_GL(glDeleteBuffers(1, &instancingMatricesBuffer));
+        CHECK_GL(glDeleteFramebuffers(1, &framebuffer));
     }
 
     void SetLightingData(const Vector3 &_ambient, const std::vector<Light *> &_lights)
@@ -496,5 +500,30 @@ namespace Graphics
         // clang-format on
 
         return globalShaderDirectives;
+    }
+
+    void SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, const std::shared_ptr<Texture> &_depthAttachment)
+    {
+        if (!_colorAttachment && !_depthAttachment)
+        {
+            CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+            return;
+        }
+
+        CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer));
+
+        if (_colorAttachment)
+            _colorAttachment->Attach(GL_COLOR_ATTACHMENT0);
+        else
+        {
+            CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 0, 0));
+        }
+
+        if (_depthAttachment)
+            _depthAttachment->Attach(GL_DEPTH_ATTACHMENT);
+        else
+        {
+            CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, 0, 0));
+        }
     }
 } // namespace Graphics

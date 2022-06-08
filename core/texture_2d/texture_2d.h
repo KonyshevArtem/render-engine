@@ -18,7 +18,7 @@ public:
     static const std::shared_ptr<Texture2D> &Null();
 
     void Bind(int _unit) const override;
-    void Attach(GLenum _attachment);
+    void Attach(int _attachment) const override;
 
     void SetWrapMode(GLenum _wrapMode) const;
     void SetBorderColor(const Vector4 &_color) const;

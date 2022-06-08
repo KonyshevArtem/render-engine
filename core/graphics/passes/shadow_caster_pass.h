@@ -19,7 +19,7 @@ class ShadowCasterPass
 {
 public:
     ShadowCasterPass(int _spotLightsCount, std::shared_ptr<UniformBlock> _shadowsUniformBlock);
-    ~ShadowCasterPass();
+    ~ShadowCasterPass() = default;
 
     void Execute(const Context &_ctx);
 
@@ -34,7 +34,6 @@ private:
     static constexpr int DIR_LIGHT_SHADOW_MAP_SIZE  = 2048;
 
     std::shared_ptr<UniformBlock>   m_ShadowsUniformBlock;
-    GLuint                          m_Framebuffer = 0;
     std::shared_ptr<Texture2DArray> m_SpotLightShadowMapArray;
     std::shared_ptr<Texture2D>      m_DirectionLightShadowMap;
 

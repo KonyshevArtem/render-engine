@@ -59,6 +59,11 @@ void Cubemap::Bind(int _unit) const
     CHECK_GL(glBindSampler(_unit, m_Sampler));
 }
 
+void Cubemap::Attach(int _attachment) const
+{
+    Debug::LogError("Attaching cubemap is not supported");
+}
+
 std::shared_ptr<Cubemap> &Cubemap::White()
 {
     static std::shared_ptr<Cubemap> white;

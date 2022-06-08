@@ -16,7 +16,9 @@ public:
                                          const std::filesystem::path &_zPositivePath,
                                          const std::filesystem::path &_zNegativePath);
 
-    void                             Bind(int _unit) const override;
+    void Bind(int _unit) const override;
+    void Attach(int _attachment) const override;
+
     static std::shared_ptr<Cubemap> &White();
     static std::shared_ptr<Cubemap> &Black();
 

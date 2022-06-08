@@ -29,13 +29,6 @@ ShadowCasterPass::ShadowCasterPass(int _spotLightsCount, std::shared_ptr<Uniform
 
     m_DirectionLightShadowMap->SetBorderColor({1, 1, 1, 1});
     m_DirectionLightShadowMap->SetWrapMode(GL_CLAMP_TO_BORDER);
-
-    CHECK_GL(glGenFramebuffers(1, &m_Framebuffer));
-}
-
-ShadowCasterPass::~ShadowCasterPass()
-{
-    CHECK_GL(glDeleteFramebuffers(1, &m_Framebuffer));
 }
 
 void ShadowCasterPass::Execute(const Context &_ctx)
@@ -60,8 +53,6 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
     auto debugGroup = Debug::DebugGroup("Shadow pass");
 
-    CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer));
-
     int spotLightsCount = 0;
     for (const auto *light: _ctx.Lights)
     {
@@ -72,7 +63,8 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         {
             CHECK_GL(glViewport(0, 0, SPOT_LIGHT_SHADOW_MAP_SIZE, SPOT_LIGHT_SHADOW_MAP_SIZE));
 
-            m_SpotLightShadowMapArray->Attach(GL_DEPTH_ATTACHMENT, spotLightsCount);
+            m_SpotLightShadowMapArray->AttachmentLayer = spotLightsCount;
+            Graphics::SetRenderTargets(nullptr, m_SpotLightShadowMapArray);
 
             auto view    = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
             auto proj    = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, _ctx.ShadowDistance);
@@ -87,7 +79,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         {
             CHECK_GL(glViewport(0, 0, DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE));
 
-            m_DirectionLightShadowMap->Attach(GL_DEPTH_ATTACHMENT);
+            Graphics::SetRenderTargets(nullptr, m_DirectionLightShadowMap);
 
             auto bounds = _ctx.ShadowCasters[0]->GetAABB();
             for (const auto &renderer: _ctx.ShadowCasters)
@@ -117,8 +109,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
     m_ShadowsUniformBlock->UploadData();
 
-    CHECK_GL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    CHECK_GL(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
+    Graphics::SetRenderTargets(nullptr, nullptr);
 }
 
 void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)

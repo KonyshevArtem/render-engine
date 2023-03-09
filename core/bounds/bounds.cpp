@@ -39,7 +39,7 @@ std::array<Vector3, 8> Bounds::GetCornerPoints() const
     };
 }
 
-Bounds Bounds::FromPoints(const std::span<Vector3> &_points)
+Bounds Bounds::FromPoints(const std::span<const Vector3> &_points)
 {
     if (_points.size() == 0)
         return Bounds();

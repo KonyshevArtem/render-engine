@@ -33,8 +33,7 @@ private:
     Cubemap &operator=(Cubemap &&) = delete;
 
     void Init();
-
-    std::vector<std::vector<unsigned char>> m_Data;
+    void UploadPixels(void* _pixels, int _side);
 
     static constexpr unsigned int SIDES_COUNT = 6;
 };

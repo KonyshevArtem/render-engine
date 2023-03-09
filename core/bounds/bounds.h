@@ -19,7 +19,7 @@ struct Bounds
     Vector3                GetExtents() const;
     std::array<Vector3, 8> GetCornerPoints() const;
 
-    static Bounds FromPoints(const std::span<Vector3> &_points);
+    static Bounds FromPoints(const std::span<const Vector3> &_points);
     friend Bounds operator*(const Matrix4x4 &_matrix, const Bounds &_bounds);
 };
 

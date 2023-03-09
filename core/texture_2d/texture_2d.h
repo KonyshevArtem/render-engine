@@ -33,9 +33,7 @@ private:
     Texture2D &operator=(const Texture2D &) = delete;
     Texture2D &operator=(Texture2D &&) = delete;
 
-    void Init(GLint _internalFormat, GLenum _format, GLenum _type, bool _loadData);
-
-    std::vector<unsigned char> m_Data;
+    void Init(GLint _internalFormat, GLenum _format, GLenum _type, void* _data);
 };
 
 #endif //OPENGL_STUDY_TEXTURE_2D_H

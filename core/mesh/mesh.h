@@ -18,11 +18,11 @@ class Material;
 class Mesh: public DrawableGeometry
 {
 public:
-    Mesh(std::vector<Vector3> &_vertices,
-         std::vector<Vector3> &_normals,
-         std::vector<int>     &_indexes,
-         std::vector<Vector2> &_uvs,
-         std::vector<Vector3> &_tangents);
+    Mesh(const std::vector<Vector3> &_vertices,
+         const std::vector<Vector3> &_normals,
+         const std::vector<int>     &_indexes,
+         const std::vector<Vector2> &_uvs,
+         const std::vector<Vector3> &_tangents);
     virtual ~Mesh();
 
     Bounds GetBounds() const;
@@ -39,7 +39,7 @@ public:
 
     inline GLsizei GetElementsCount() const override
     {
-        return m_Indexes.size();
+        return m_IndicesCount;
     }
 
     static const std::shared_ptr<Mesh> &GetFullscreenMesh();
@@ -53,13 +53,8 @@ private:
 
     GLuint m_IndexBuffer = 0;
 
-    std::vector<Vector3> m_Vertices;
-    std::vector<Vector3> m_Normals;
-    std::vector<Vector3> m_Tangents;
-    std::vector<int>     m_Indexes;
-    std::vector<Vector2> m_UVs;
-
     Bounds m_Bounds;
+    int m_IndicesCount;
 };
 
 

@@ -33,7 +33,7 @@ private:
     Cubemap &operator=(Cubemap &&) = delete;
 
     void Init();
-    void UploadPixels(void* _pixels, int _side);
+    void UploadPixels(void* _pixels, int _side, int _internalFormat, int _format, int _size, bool _compressed);
 
     static constexpr unsigned int SIDES_COUNT = 6;
 };

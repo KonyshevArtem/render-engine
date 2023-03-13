@@ -8,6 +8,7 @@ namespace Utils
 {
     std::string                  ReadFile(const std::filesystem::path &_relativePath);
     std::string                  ReadFileWithIncludes(const std::filesystem::path &_relativePath);
+    std::vector<char>            ReadFileBytes(const std::filesystem::path &_relativePath);
     void                         WriteFile(const std::filesystem::path &_relativePath, const std::string &_content);
     const std::filesystem::path &GetExecutableDirectory();
 }; // namespace Utils

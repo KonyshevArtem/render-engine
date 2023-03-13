@@ -39,6 +39,7 @@ add_library(
 	fbx_asset/fbx_asset.h
 	texture/texture.cpp
 	texture/texture.h
+	texture/texture_header.h
 	shader/shader_loader/shader_loader.cpp
 	shader/shader_loader/shader_loader.h
 	shader/uniform_info/uniform_info.cpp
@@ -71,4 +72,4 @@ add_library(
 	drawable_geometry/drawable_geometry.cpp)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math Utils LodePNG OpenFBX)
+target_link_libraries(Core Math Utils OpenFBX)

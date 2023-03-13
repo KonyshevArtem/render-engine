@@ -62,6 +62,19 @@ namespace Utils
         return file;
     }
 
+    std::vector<char> ReadFileBytes(const std::filesystem::path &_relativePath)
+    {
+        std::ifstream input(_relativePath.string(), std::ios::binary);
+
+        std::vector<char> bytes(
+                (std::istreambuf_iterator<char>(input)),
+                (std::istreambuf_iterator<char>()));
+
+        input.close();
+
+        return bytes;
+    }
+
     void WriteFile(const std::filesystem::path &_relativePath, const std::string &_content)
     {
         std::ofstream o;

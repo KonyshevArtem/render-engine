@@ -41,14 +41,7 @@ int main(int __argc, char **__argv)
     editor.show();
     #endif
 
-    GameWindow window(Graphics::OPENGL_MAJOR_VERSION,
-                      Graphics::OPENGL_MINOR_VERSION,
-                      Graphics::Init,
-                      Graphics::Reshape,
-                      display,
-                      Input::HandleKeyboardInput,
-                      Input::HandleMouseMove);
-
+    GameWindow window(Graphics::Init, Graphics::Reshape, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
     window.resize(1024, 720);
     window.show();
 

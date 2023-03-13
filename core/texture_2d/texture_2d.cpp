@@ -1,6 +1,6 @@
 #include "texture_2d.h"
 #include "core_debug/debug.h"
-#include "lodepng.h"
+#include "texture/texture_header.h"
 #include "utils.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
@@ -14,7 +14,7 @@ std::shared_ptr<Texture2D> Texture2D::Create(int _width, int _height)
     t->m_Width  = _width;
     t->m_Height = _height;
 
-    t->Init(GL_SRGB_ALPHA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    t->Init(GL_SRGB_ALPHA, GL_RGBA, GL_UNSIGNED_BYTE, nullptr, 0, false);
 
     return t;
 }
@@ -25,36 +25,24 @@ std::shared_ptr<Texture2D> Texture2D::CreateShadowMap(int _width, int _height)
     t->m_Width  = _width;
     t->m_Height = _height;
 
-    t->Init(GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, nullptr);
+    t->Init(GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, nullptr, 0, false);
 
     return t;
 }
 
-std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path, bool _srgb, bool _hasAlpha)
+std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path)
 {
+    static constexpr int headerSize = sizeof(TextureHeader);
+
     auto t = std::shared_ptr<Texture2D>(new Texture2D());
 
-    std::vector<unsigned char> pixels;
+    std::vector<char> pixels = Utils::ReadFileBytes(Utils::GetExecutableDirectory() / _path);
 
-    auto colorType = _hasAlpha ? LCT_RGBA : LCT_RGB;
-    auto error     = lodepng::decode(pixels, t->m_Width, t->m_Height, (Utils::GetExecutableDirectory() / _path).string(), colorType);
-    if (error != 0)
-    {
-        Debug::LogErrorFormat("[Texture2D] Error loading texture: %1%", {lodepng_error_text(error)});
-        return nullptr;
-    }
+    TextureHeader header = *reinterpret_cast<TextureHeader*>(pixels.data());
+    t->m_Width = header.Width;
+    t->m_Height = header.Height;
 
-    auto internalFormat = _srgb
-                                  ? _hasAlpha
-                                            ? GL_SRGB_ALPHA
-                                            : GL_SRGB
-                          : _hasAlpha
-                                  ? GL_RGBA
-                                  : GL_RGB;
-
-    auto format = _hasAlpha ? GL_RGBA : GL_RGB;
-
-    t->Init(internalFormat, format, GL_UNSIGNED_BYTE, pixels.data());
+    t->Init(header.InternalFormat, header.Format, GL_UNSIGNED_BYTE, pixels.data() + headerSize, pixels.size() * sizeof(char) - headerSize, true);
 
     return t;
 }
@@ -71,7 +59,7 @@ const std::shared_ptr<Texture2D> &Texture2D::White()
     white->m_Height = 1;
 
     unsigned char pixels[3] {255, 255, 255};
-    white->Init(GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
+    white->Init(GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0], 0, false);
 
     return white;
 }
@@ -88,7 +76,7 @@ const std::shared_ptr<Texture2D> &Texture2D::Normal()
     normal->m_Height = 1;
 
     unsigned char pixels[3] {125, 125, 255};
-    normal->Init(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
+    normal->Init(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0], 0, false);
 
     return normal;
 }
@@ -99,7 +87,7 @@ const std::shared_ptr<Texture2D> &Texture2D::Null()
     return null;
 }
 
-void Texture2D::Init(GLint _internalFormat, GLenum _format, GLenum _type, void* _pixels)
+void Texture2D::Init(GLint _internalFormat, GLenum _format, GLenum _type, void* _pixels, int imageSize, bool isCompressed)
 {
     CHECK_GL(glGenTextures(1, &m_Texture));
     CHECK_GL(glGenSamplers(1, &m_Sampler));
@@ -108,7 +96,14 @@ void Texture2D::Init(GLint _internalFormat, GLenum _format, GLenum _type, void* 
     CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, GL_REPEAT));
     CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
     CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, m_Width, m_Height, 0, _format, _type, _pixels)); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    if (isCompressed)
+    {
+        CHECK_GL(glCompressedTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, m_Width, m_Height, 0, imageSize, _pixels));
+    }
+    else
+    {
+        CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, m_Width, m_Height, 0, _format, _type, _pixels));
+    }
     CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
 }
 

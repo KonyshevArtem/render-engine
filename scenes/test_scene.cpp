@@ -33,24 +33,24 @@ void TestScene::Init()
     Camera::Init(120, 0.5f, 100, 100);
 
     // init textures
-    auto brickTexture  = Texture2D::Load("resources/textures/brick.png");
-    auto brickNormal   = Texture2D::Load("resources/textures/brick_normal.png", false);
-    auto waterTexture  = Texture2D::Load("resources/textures/water.png");
-    auto waterNormal   = Texture2D::Load("resources/textures/water_normal.png", false);
-    auto billboardTree = Texture2D::Load("resources/textures/billboard_tree.png", true, true);
-    auto windowTexture = Texture2D::Load("resources/textures/window_cube.png", true, true);
-    auto carAlbedo     = Texture2D::Load("resources/textures/car/car_albedo.png");
-    auto carNormal     = Texture2D::Load("resources/textures/car/car_normal.png", false);
-    auto carSmoothness = Texture2D::Load("resources/textures/car/car_smoothness.png", false, false);
-    auto carMetallic   = Texture2D::Load("resources/textures/car/car_metallic.png", false, false);
+    auto brickTexture  = Texture2D::Load("resources/textures/brick");
+    auto brickNormal   = Texture2D::Load("resources/textures/brick_normal");
+    auto waterTexture  = Texture2D::Load("resources/textures/water");
+    auto waterNormal   = Texture2D::Load("resources/textures/water_normal");
+    auto billboardTree = Texture2D::Load("resources/textures/billboard_tree");
+    auto windowTexture = Texture2D::Load("resources/textures/window_cube");
+    auto carAlbedo     = Texture2D::Load("resources/textures/car/car_albedo");
+    auto carNormal     = Texture2D::Load("resources/textures/car/car_normal");
+    auto carSmoothness = Texture2D::Load("resources/textures/car/car_smoothness");
+    auto carMetallic   = Texture2D::Load("resources/textures/car/car_metallic");
 
     // init skybox cubemap
-    Skybox = Cubemap::Load("resources/textures/skybox/x_positive.png",
-                           "resources/textures/skybox/x_negative.png",
-                           "resources/textures/skybox/y_positive.png",
-                           "resources/textures/skybox/y_negative.png",
-                           "resources/textures/skybox/z_positive.png",
-                           "resources/textures/skybox/z_negative.png");
+    Skybox = Cubemap::Load("resources/textures/skybox/x_positive",
+                           "resources/textures/skybox/x_negative",
+                           "resources/textures/skybox/y_positive",
+                           "resources/textures/skybox/y_negative",
+                           "resources/textures/skybox/z_positive",
+                           "resources/textures/skybox/z_negative");
 
     // init shaders
     auto fragmentLitShader = Shader::Load("resources/shaders/standard/standard.shader", {"_SPECULAR", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});

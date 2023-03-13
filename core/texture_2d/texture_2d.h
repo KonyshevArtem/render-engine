@@ -12,7 +12,7 @@ class Texture2D: public Texture
 public:
     static std::shared_ptr<Texture2D>        Create(int _width, int _height);
     static std::shared_ptr<Texture2D>        CreateShadowMap(int _width, int _height);
-    static std::shared_ptr<Texture2D>        Load(const std::filesystem::path &_path, bool _srgb = true, bool _hasAlpha = false);
+    static std::shared_ptr<Texture2D>        Load(const std::filesystem::path &_path);
     static const std::shared_ptr<Texture2D> &White();
     static const std::shared_ptr<Texture2D> &Normal();
     static const std::shared_ptr<Texture2D> &Null();
@@ -33,7 +33,7 @@ private:
     Texture2D &operator=(const Texture2D &) = delete;
     Texture2D &operator=(Texture2D &&) = delete;
 
-    void Init(GLint _internalFormat, GLenum _format, GLenum _type, void* _data);
+    void Init(GLint _internalFormat, GLenum _format, GLenum _type, void* _data, int imageSize, bool isCompressed);
 };
 
 #endif //OPENGL_STUDY_TEXTURE_2D_H

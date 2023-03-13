@@ -1,6 +1,6 @@
 #include "cubemap.h"
 #include "core_debug/debug.h"
-#include "lodepng.h"
+#include "texture/texture_header.h"
 #include "utils.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
@@ -15,6 +15,8 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &_xPositivePa
                                        const std::filesystem::path &_zPositivePath,
                                        const std::filesystem::path &_zNegativePath)
 {
+    static constexpr int headerSize = sizeof(TextureHeader);
+
     auto cubemap = std::shared_ptr<Cubemap>(new Cubemap());
     cubemap->Init();
 
@@ -23,15 +25,13 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &_xPositivePa
 
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        auto path  = (Utils::GetExecutableDirectory() / paths[i]).string();
-        auto error = lodepng::decode(pixels, cubemap->m_Width, cubemap->m_Height, path, LCT_RGB);
-        if (error != 0)
-        {
-            Debug::LogErrorFormat("[Cubemap] Error loading texture: %1%\n%2%", {lodepng_error_text(error), path});
-            return nullptr;
-        }
+        std::vector<char> pixels = Utils::ReadFileBytes(Utils::GetExecutableDirectory() / paths[i]);
 
-        cubemap->UploadPixels(pixels.data(), i);
+        TextureHeader header = *reinterpret_cast<TextureHeader*>(pixels.data());
+        cubemap->m_Width = header.Width;
+        cubemap->m_Height = header.Height;
+
+        cubemap->UploadPixels(pixels.data() + headerSize, i, header.InternalFormat, header.Format, pixels.size() * sizeof(char) - headerSize, true);
         pixels.clear();
     }
 
@@ -51,10 +51,17 @@ void Cubemap::Init()
     CHECK_GL(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
 }
 
-void Cubemap::UploadPixels(void *_pixels, int side)
+void Cubemap::UploadPixels(void *_pixels, int side, int _internalFormat, int _format, int _size, bool _compressed)
 {
     CHECK_GL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Texture));
-    CHECK_GL(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + side, 0, GL_SRGB, m_Width, m_Height, 0, GL_RGB, GL_UNSIGNED_BYTE, _pixels)); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    if (_compressed)
+    {
+        CHECK_GL(glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + side, 0, _internalFormat, m_Width, m_Height, 0, _size, _pixels)); // NOLINT(cppcoreguidelines-narrowing-conversions)
+    }
+    else
+    {
+        CHECK_GL(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + side, 0, _internalFormat, m_Width, m_Height, 0, _format, GL_UNSIGNED_BYTE, _pixels));
+    }
     CHECK_GL(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
 }
 
@@ -85,7 +92,7 @@ std::shared_ptr<Cubemap> &Cubemap::White()
     unsigned char pixels[3] = {255, 255, 255};
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        white->UploadPixels(&pixels[0], i);
+        white->UploadPixels(&pixels[0], i, GL_SRGB, GL_RGB, 0, false);
     }
 
     return white;
@@ -106,7 +113,7 @@ std::shared_ptr<Cubemap> &Cubemap::Black()
     unsigned char pixels[3] = {0, 0, 0};
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        black->UploadPixels(&pixels[0], i);
+        black->UploadPixels(&pixels[0], i, GL_SRGB, GL_RGB, 0, false);
     }
 
     return black;

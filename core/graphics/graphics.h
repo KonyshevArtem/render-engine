@@ -15,14 +15,6 @@ namespace Graphics
 {
     constexpr int MAX_SPOT_LIGHT_SOURCES = 3;
 
-    constexpr int OPENGL_MAJOR_VERSION = 4;
-    constexpr int OPENGL_MINOR_VERSION =
-#ifdef OPENGL_STUDY_WINDOWS
-            6;
-#elif OPENGL_STUDY_MACOS
-            1;
-#endif
-
     void                      Init();
     void                      Shutdown();
     void                      Render();

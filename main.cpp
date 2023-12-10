@@ -8,10 +8,10 @@
 #include "input/input.h"
 #include "scenes/test_scene.h"
 #include "scenes/pbr_demo.h"
-#include "editor_gui/editor_window.h"
+//#include "editor_gui/editor_window.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 
-#include <QApplication>
+#include <GLUT/glut.h>
 
 void display()
 {
@@ -30,27 +30,24 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 int main(int __argc, char **__argv)
 #endif
 {
-    // init debug first so that errors from initialization of other components will be intersepted
+    // init debug first so that errors from initialization of other components will be intercepted
     Debug::Init();
 
-    QApplication application(__argc, __argv);
+//    #if OPENGL_STUDY_EDITOR
+//    EditorWindow editor;
+//    editor.resize(1024, 720);
+//    editor.show();
+//    #endif
 
-    #if OPENGL_STUDY_EDITOR
-    EditorWindow editor;
-    editor.resize(1024, 720);
-    editor.show();
-    #endif
+    GameWindow window(1024, 720, Graphics::Reshape, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
 
-    GameWindow window(Graphics::Init, Graphics::Reshape, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
-    window.resize(1024, 720);
-    window.show();
-
+    Graphics::Init();
     Time::Init();
 
     TestScene::Load();
     //PBRDemo::Load();
 
-    application.exec();
+    glutMainLoop();
 
     Graphics::Shutdown();
 

@@ -245,7 +245,7 @@ Vector3 TestScene::CalcScale(float _phase)
 
 void TestScene::UpdateInternal()
 {
-    if (Input::GetKeyDown('Q'))
+    if (Input::GetKeyDown('q'))
         exit(0);
 
     m_CameraFlyControl->Update();
@@ -279,7 +279,7 @@ void TestScene::UpdateInternal()
 
 // gizmos
 #if OPENGL_STUDY_EDITOR
-    if (Input::GetKeyDown('G'))
+    if (Input::GetKeyDown('g'))
         m_DrawGizmos = !m_DrawGizmos;
 
     if (m_DrawGizmos)

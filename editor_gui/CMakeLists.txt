@@ -11,4 +11,4 @@ add_library(
 )
 
 target_include_directories(Editor PUBLIC .)
-target_link_libraries(Editor Core Qt6::Widgets)
+target_link_libraries(Editor Core)

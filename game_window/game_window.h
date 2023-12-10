@@ -1,40 +1,38 @@
 #ifndef OPENGL_STUDY_WINDOW
 #define OPENGL_STUDY_WINDOW
 
-#include <QOpenGLWindow>
 #include <functional>
 
-class QKeyEvent;
-class QMouseEvent;
-
 typedef std::function<void(unsigned char, bool)> KeyboardInputHandlerDelegate;
-typedef std::function<void(double, double)>      MouseMoveHandlerDelegate;
+typedef std::function<void(int, int)> MouseMoveHandlerDelegate;
 
-class GameWindow: public QOpenGLWindow
-{
+class GameWindow {
 public:
-    GameWindow(std::function<void()>         _init,
+    GameWindow(int width,
+               int height,
                std::function<void(int, int)> _resize,
-               std::function<void()>         _render,
-               KeyboardInputHandlerDelegate  _keyboardInputHandler,
-               MouseMoveHandlerDelegate      _mouseMoveHandler);
+               std::function<void()> _render,
+               KeyboardInputHandlerDelegate _keyboardInputHandler,
+               MouseMoveHandlerDelegate _mouseMoveHandler);
+
     virtual ~GameWindow() = default;
 
 protected:
-    void initializeGL();
-    void resizeGL(int _width, int _height);
-    void paintGL();
+    static void resizeGL(int _width, int _height);
 
-    void keyPressEvent(QKeyEvent *_event);
-    void keyReleaseEvent(QKeyEvent *_event);
-    void mouseMoveEvent(QMouseEvent *_event);
+    static void paintGL();
+
+    static void keyPressEvent(unsigned char key, int x, int y);
+
+    static void keyReleaseEvent(unsigned char key, int x, int y);
+
+    static void mouseMoveEvent(int x, int y);
 
 private:
-    std::function<void()>         m_Init;
     std::function<void(int, int)> m_Resize;
-    std::function<void()>         m_Render;
-    KeyboardInputHandlerDelegate  m_KeyboardInputHandler;
-    MouseMoveHandlerDelegate      m_MouseMoveHandler;
+    std::function<void()> m_Render;
+    KeyboardInputHandlerDelegate m_KeyboardInputHandler;
+    MouseMoveHandlerDelegate m_MouseMoveHandler;
 };
 
 #endif

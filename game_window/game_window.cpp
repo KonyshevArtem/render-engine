@@ -1,57 +1,63 @@
 #include "game_window.h"
-#include <QKeyEvent>
-#include <QMouseEvent>
 
-GameWindow::GameWindow(std::function<void()>         _init,
+#include <utility>
+#include "GLUT/glut.h"
+
+GameWindow *k_GameWindow = nullptr;
+
+GameWindow::GameWindow(int width,
+                       int height,
                        std::function<void(int, int)> _resize,
-                       std::function<void()>         _render,
-                       KeyboardInputHandlerDelegate  _keyboardInputHandler,
-                       MouseMoveHandlerDelegate      _mouseMoveHandler) :
-    QOpenGLWindow(),
-    m_Init(_init),
-    m_Resize(_resize),
-    m_Render(_render),
-    m_KeyboardInputHandler(_keyboardInputHandler),
-    m_MouseMoveHandler(_mouseMoveHandler)
+                       std::function<void()> _render,
+                       KeyboardInputHandlerDelegate _keyboardInputHandler,
+                       MouseMoveHandlerDelegate _mouseMoveHandler) :
+        m_Resize(std::move(_resize)),
+        m_Render(std::move(_render)),
+        m_KeyboardInputHandler(std::move(_keyboardInputHandler)),
+        m_MouseMoveHandler(std::move(_mouseMoveHandler))
 {
-    QSurfaceFormat format;
-    format.setDepthBufferSize(24);
-    format.setMajorVersion(OPENGL_MAJOR_VERSION);
-    format.setMinorVersion(OPENGL_MINOR_VERSION);
-    format.setProfile(QSurfaceFormat::OpenGLContextProfile::CoreProfile);
-    format.setSwapBehavior(QSurfaceFormat::SwapBehavior::DoubleBuffer);
-    setFormat(format);
-}
 
-void GameWindow::initializeGL()
-{
-    m_Init();
+    int argc = 0;
+    glutInit(&argc, nullptr);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_3_2_CORE_PROFILE);
+    glutInitWindowSize(width, height);
+    glutCreateWindow("GameWindow");
+
+    glutKeyboardFunc(keyPressEvent);
+    glutKeyboardUpFunc(keyReleaseEvent);
+    glutMotionFunc(mouseMoveEvent);
+    glutPassiveMotionFunc(mouseMoveEvent);
+
+    glutDisplayFunc(paintGL);
+    glutReshapeFunc(resizeGL);
+
+    k_GameWindow = this;
 }
 
 void GameWindow::resizeGL(int _width, int _height)
 {
-    static auto pixelRatio = devicePixelRatio();
-    m_Resize(_width * pixelRatio, _height * pixelRatio);
+    k_GameWindow->m_Resize(_width, _height);
 }
 
 void GameWindow::paintGL()
 {
-    m_Render();
-    update();
+    k_GameWindow->m_Render();
+
+    glutSwapBuffers();
+    glutPostRedisplay();
 }
 
-void GameWindow::keyPressEvent(QKeyEvent *_event)
+void GameWindow::keyPressEvent(unsigned char key, int x, int y)
 {
-    m_KeyboardInputHandler(static_cast<char>(_event->key()), true);
+    k_GameWindow->m_KeyboardInputHandler(static_cast<char>(key), true);
 }
 
-void GameWindow::keyReleaseEvent(QKeyEvent *_event)
+void GameWindow::keyReleaseEvent(unsigned char key, int x, int y)
 {
-    m_KeyboardInputHandler(static_cast<char>(_event->key()), false);
+    k_GameWindow->m_KeyboardInputHandler(static_cast<char>(key), false);
 }
 
-void GameWindow::mouseMoveEvent(QMouseEvent *_event)
+void GameWindow::mouseMoveEvent(int x, int y)
 {
-    auto pos = _event->localPos();
-    m_MouseMoveHandler(pos.x(), pos.y());
+    k_GameWindow->m_MouseMoveHandler(x, y);
 }

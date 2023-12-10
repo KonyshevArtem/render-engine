@@ -35,8 +35,9 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     # opengl for macos
     find_package(OpenGL REQUIRED)
-    include_directories(${OPENGL_INCLUDE_DIRS})
-    target_link_libraries(OpenGL_Study ${OPENGL_LIBRARIES})
+    find_package(GLUT REQUIRED)
+    include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
+    target_link_libraries(OpenGL_Study ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 
 endif()
 
@@ -45,12 +46,6 @@ set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost REQUIRED COMPONENTS json)
 include_directories(${Boost_INCLUDE_DIRS})
 target_link_libraries(OpenGL_Study Boost::json)
-
-# qt
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGL)
 
 # TODO add non-editor compile target
 add_compile_definitions(OPENGL_STUDY_EDITOR)
@@ -63,7 +58,7 @@ add_subdirectory(editor_gui)
 add_subdirectory(math)
 add_subdirectory(utils)
 add_subdirectory(game_window)
-target_link_libraries(OpenGL_Study Core Editor GameWindow)
+target_link_libraries(OpenGL_Study Core GameWindow)
 
 # copy resources to build directory
 add_custom_target(PreBuild ALL

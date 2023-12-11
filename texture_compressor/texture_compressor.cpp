@@ -1,79 +1,58 @@
 #include <string>
-#include <QApplication>
-#include <QCoreApplication>
+#include <GLUT/glut.h>
+#include <iostream>
 
-#include "../core/texture/texture_header.h"
 #include "texture_compressor_backend.h"
-#include "texture_compressor_settings.h"
 #include "game_window.h"
 #include "lodepng.h"
 
-bool interactiveMode;
 std::string texturePath;
 GLuint internalFormat;
 LodePNGColorType colorType;
 
-void Init()
-{
-    if (interactiveMode)
-    {
-        TextureCompressorBackend::InitInteractiveMode();
-    }
-}
-
-void Resize(int width, int height)
-{
-}
-
 void Render()
 {
-    if (interactiveMode)
-    {
-        TextureCompressorBackend::RenderInteractiveMode();
-    }
-    else
-    {
-        TextureCompressorBackend::CompressTexture(texturePath, colorType, internalFormat);
-        QCoreApplication::quit();
-    }
+    TextureCompressorBackend::CompressTexture(texturePath, colorType, internalFormat);
+    exit(0);
 }
 
-void OnKeyboardPressed(unsigned char key, bool down)
+void printHelp()
 {
+    auto &colorFormats = TextureCompressorBackend::GetInputFormats();
+    auto &compressedFormat = TextureCompressorBackend::GetCompressedFormats();
+
+    std::cout << "Parameters: <texture path STRING> <input color type INT> <compressed format INT>\n";
+
+    std::cout << "\nAvailable input color types:\n";
+    for (const auto &pair: colorFormats)
+    {
+        std::cout << "\t" << pair.first << " - " << pair.second << "\n";
+    }
+
+    std::cout << "\nAvailable compressed types:\n";
+    for (const auto &pair: compressedFormat)
+    {
+        std::cout << "\t" << pair.first << " - " << pair.second << "\n";
+    }
+
+    std::cout << std::endl;
 }
 
-void OnMouseMove(double x, double y)
+int main(int __argc, char **__argv)
 {
-}
-
-int main(int __argc, char** __argv)
-{
-    interactiveMode = __argc < 4;
-
-    QApplication application(__argc, __argv);
-
-    GameWindow window(Init, Resize, Render, OnKeyboardPressed, OnMouseMove);
-
-    TextureCompressorSettings* settings;
-    if (interactiveMode)
+    if (__argc < 4)
     {
-        settings = new TextureCompressorSettings(&window);
-        settings->show();
-    }
-    else
-    {
-        texturePath    = std::string(__argv[1]);
-        colorType      = static_cast<LodePNGColorType>(std::stoi(__argv[2]));
-        internalFormat = std::stoi(__argv[3]);
+        printHelp();
+        return 0;
     }
 
-    window.show();
-    application.exec();
+    GameWindow window(0, 0, nullptr, Render, nullptr, nullptr);
 
-    if (settings)
-    {
-        delete settings;
-    }
+    texturePath = std::string(__argv[1]);
+    colorType = static_cast<LodePNGColorType>(std::stoi(__argv[2]));
+    internalFormat = std::stoi(__argv[3]);
+
+    glutMainLoop();
 
     return 0;
 }

@@ -8,8 +8,6 @@ set(
     texture_compressor.cpp
     texture_compressor_backend.h
     texture_compressor_backend.cpp
-    texture_compressor_settings.h
-    texture_compressor_settings.cpp
     ../core/texture/texture_header.h
 )
 
@@ -32,8 +30,8 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     # opengl for macos
     find_package(OpenGL REQUIRED)
-    include_directories(${OPENGL_INCLUDE_DIRS})
-    target_link_libraries(TextureCompressor ${OPENGL_LIBRARIES})
+    include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
+    target_link_libraries(TextureCompressor ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 
 endif()
 

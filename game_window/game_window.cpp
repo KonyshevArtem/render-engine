@@ -36,12 +36,18 @@ GameWindow::GameWindow(int width,
 
 void GameWindow::resizeGL(int _width, int _height)
 {
-    k_GameWindow->m_Resize(_width, _height);
+    if (k_GameWindow->m_Resize)
+    {
+        k_GameWindow->m_Resize(_width, _height);
+    }
 }
 
 void GameWindow::paintGL()
 {
-    k_GameWindow->m_Render();
+    if (k_GameWindow->m_Render)
+    {
+        k_GameWindow->m_Render();
+    }
 
     glutSwapBuffers();
     glutPostRedisplay();
@@ -49,15 +55,24 @@ void GameWindow::paintGL()
 
 void GameWindow::keyPressEvent(unsigned char key, int x, int y)
 {
-    k_GameWindow->m_KeyboardInputHandler(static_cast<char>(key), true);
+    if (k_GameWindow->m_KeyboardInputHandler)
+    {
+        k_GameWindow->m_KeyboardInputHandler(static_cast<char>(key), true);
+    }
 }
 
 void GameWindow::keyReleaseEvent(unsigned char key, int x, int y)
 {
-    k_GameWindow->m_KeyboardInputHandler(static_cast<char>(key), false);
+    if (k_GameWindow->m_KeyboardInputHandler)
+    {
+        k_GameWindow->m_KeyboardInputHandler(static_cast<char>(key), false);
+    }
 }
 
 void GameWindow::mouseMoveEvent(int x, int y)
 {
-    k_GameWindow->m_MouseMoveHandler(x, y);
+    if (k_GameWindow->m_MouseMoveHandler)
+    {
+        k_GameWindow->m_MouseMoveHandler(x, y);
+    }
 }

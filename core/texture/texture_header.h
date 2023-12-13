@@ -8,6 +8,7 @@ struct TextureHeader
         unsigned int Height;
         int          InternalFormat;
         int          Format;
+        int          IsCompressed;
 };
 
 #endif

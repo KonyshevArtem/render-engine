@@ -1,5 +1,5 @@
 #include "mesh.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "vector2/vector2.h"
 #include "vector3/vector3.h"
 #include <span>

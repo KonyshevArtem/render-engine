@@ -1,6 +1,6 @@
 #include "skybox_pass.h"
 #include "../context.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "cubemap/cubemap.h"
 #include "fbx_asset/fbx_asset.h"
 #include "graphics/draw_call_info.h"

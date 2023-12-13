@@ -13,6 +13,7 @@
 
 #include "../core/texture/texture_header.h"
 #include "lodepng.h"
+#include "debug.h"
 
 namespace TextureCompressorBackend
 {
@@ -48,6 +49,21 @@ namespace TextureCompressorBackend
         {GL_COMPRESSED_RG, "Compressed RG"},
         #endif
 
+        {GL_R3_G3_B2, "R3 G3 B2"},
+        {GL_RGB4, "RGB4"},
+        {GL_RGB5, "RGB5"},
+        {GL_RGB8, "RGB8"},
+        {GL_RGB10, "RGB10"},
+        {GL_RGB12, "RGB12"},
+        {GL_RGB16, "RGB16"},
+        {GL_RGBA2, "RGBA2"},
+        {GL_RGBA4, "RGBA4"},
+        {GL_RGB5_A1, "RGB5 A1"},
+        {GL_RGBA8, "RGBA8"},
+        {GL_RGB10_A2, "RGB10 A2"},
+        {GL_RGBA12, "RGBA12"},
+        {GL_RGBA16, "RGBA16"},
+
         #if GL_EXT_texture_compression_s3tc
         {GL_COMPRESSED_RGB_S3TC_DXT1_EXT, "RGB S3TC DXT1"},
         {GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, "RGBA S3TC DXT1"},
@@ -60,6 +76,13 @@ namespace TextureCompressorBackend
         {GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT, "sRGBA S3TC DXT1"},
         {GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT, "sRGBA S3TC DXT3"},
         {GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT, "sRGBA S3TC DXT5"},
+        #endif
+
+        #if GL_ARB_texture_compression_rgtc
+        {GL_COMPRESSED_RED_RGTC1, "RED RGTC1"},
+        {GL_COMPRESSED_SIGNED_RED_RGTC1, "SIGNED RED RGTC1"},
+        {GL_COMPRESSED_RG_RGTC2, "RG RGTC2"},
+        {GL_COMPRESSED_SIGNED_RG_RGTC2, "SIGNED RG RGTC2"},
         #endif
     };
 
@@ -104,51 +127,55 @@ namespace TextureCompressorBackend
         header.Format = m_ColorTypeToFormat[colorType];
 
         GLuint texture = 0;
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, compressedFormat, header.Width, header.Height, 0, header.Format, GL_UNSIGNED_BYTE, pixels.data());
+        CHECK_GL(glGenTextures(1, &texture));
+        CHECK_GL(glBindTexture(GL_TEXTURE_2D, texture));
+        CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, compressedFormat, header.Width, header.Height, 0, header.Format, GL_UNSIGNED_BYTE, pixels.data()));
 
-        GLenum error = glGetError();
-        if (error != 0)
+        CHECK_GL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED, &header.IsCompressed));
+        CHECK_GL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &header.InternalFormat));
+
+        int totalSize;
+        unsigned char *compressedPixels;
+
+        int compressedSize;
+        if (header.IsCompressed)
         {
-            std::cout << "OpenGL error when initializing interactive mode: " << reinterpret_cast<const char *>(gluErrorString(error)) << std::endl;
-        }
-
-        int isCompressed;
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED, &isCompressed);
-
-        if (isCompressed)
-        {
-            int compressedSize;
-            glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &compressedSize);
-            glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &header.InternalFormat);
-
-            int totalSize = headerSize + compressedSize;
-            auto* compressedPixels = new unsigned char[totalSize];
-            glGetCompressedTexImage(GL_TEXTURE_2D, 0, compressedPixels + headerSize);
-
-            memcpy(compressedPixels, reinterpret_cast<void*>(&header), headerSize);
-
-            std::ofstream fout;
-            auto outputPath = std::filesystem::path(path).replace_extension("");
-            fout.open(outputPath, std::ios::binary | std::ios::out);
-            fout.write(reinterpret_cast<char*>(compressedPixels), totalSize * sizeof(char));
-            fout.close();
-
-            delete[] compressedPixels;
-
-            std::cout << "\tTexture successfully compressed"
-                      << "\n\tFormat: " << GetFormatName(header.InternalFormat) << " (" << header.InternalFormat << ")"
-                      << "\n\tOriginal Size: " << GetReadableSize(pixels.size() * sizeof(char))
-                      << "\n\tCompressed Size: " << GetReadableSize(compressedSize) << std::endl;
+            CHECK_GL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &compressedSize));
         }
         else
         {
-            std::cout << "Failed to compress texture" << std::endl;
+            compressedSize = pixels.size() * sizeof(char);
         }
 
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glDeleteTextures(1, &texture);
+        totalSize = headerSize + compressedSize;
+        compressedPixels = new unsigned char[totalSize];
+
+        if (header.IsCompressed)
+        {
+            CHECK_GL(glGetCompressedTexImage(GL_TEXTURE_2D, 0, compressedPixels + headerSize));
+        }
+        else
+        {
+            memcpy(compressedPixels + headerSize, pixels.data(), pixels.size());
+        }
+
+        memcpy(compressedPixels, reinterpret_cast<void*>(&header), headerSize);
+
+        std::ofstream fout;
+        auto outputPath = std::filesystem::path(path).replace_extension("");
+        fout.open(outputPath, std::ios::binary | std::ios::out);
+        fout.write(reinterpret_cast<char*>(compressedPixels), totalSize * sizeof(char));
+        fout.close();
+
+        delete[] compressedPixels;
+
+        std::cout << "\tTexture successfully compressed"
+                  << "\n\tFormat: " << GetFormatName(header.InternalFormat) << " (" << header.InternalFormat << ")"
+                  << "\n\tOriginal Size: " << GetReadableSize(pixels.size() * sizeof(char))
+                  << "\n\tCompressed Size: " << GetReadableSize(totalSize) << std::endl;
+
+        CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
+        CHECK_GL(glDeleteTextures(1, &texture));
     }
 
     const std::vector<std::pair<int, std::string>> &GetInputFormats()

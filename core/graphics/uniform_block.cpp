@@ -1,5 +1,5 @@
 #include "uniform_block.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "shader/shader.h"
 #include "shader/uniform_info/uniform_info.h"
 #include <unordered_map>

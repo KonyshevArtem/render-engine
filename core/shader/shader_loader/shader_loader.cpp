@@ -1,6 +1,6 @@
 #include "shader_loader.h"
 #include "../shader.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "graphics/graphics.h"
 #include "utils.h"
 #ifdef OPENGL_STUDY_WINDOWS

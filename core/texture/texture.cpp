@@ -1,5 +1,5 @@
 #include "texture.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 
 Texture::~Texture()
 {

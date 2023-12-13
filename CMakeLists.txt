@@ -57,6 +57,7 @@ add_subdirectory(core)
 add_subdirectory(editor_gui)
 add_subdirectory(math)
 add_subdirectory(utils)
+add_subdirectory(debug_util)
 add_subdirectory(game_window)
 target_link_libraries(OpenGL_Study Core GameWindow)
 

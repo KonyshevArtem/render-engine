@@ -3,7 +3,7 @@
 #include "../graphics.h"
 #include "../uniform_block.h"
 #include "bounds/bounds.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "graphics/draw_call_info.h"
 #include "graphics/render_settings.h"
 #include "light/light.h"

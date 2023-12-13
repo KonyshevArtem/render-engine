@@ -1,7 +1,7 @@
 #if OPENGL_STUDY_EDITOR
 
 #include "gizmos_pass.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "editor/hierarchy.h"
 #include "gizmos.h"
 #include "graphics/context.h"

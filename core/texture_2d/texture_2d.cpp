@@ -1,5 +1,5 @@
 #include "texture_2d.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "texture/texture_header.h"
 #include "utils.h"
 #ifdef OPENGL_STUDY_WINDOWS
@@ -42,7 +42,7 @@ std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path)
     t->m_Width = header.Width;
     t->m_Height = header.Height;
 
-    t->Init(header.InternalFormat, header.Format, GL_UNSIGNED_BYTE, pixels.data() + headerSize, pixels.size() * sizeof(char) - headerSize, true);
+    t->Init(header.InternalFormat, header.Format, GL_UNSIGNED_BYTE, pixels.data() + headerSize, pixels.size() * sizeof(char) - headerSize, header.IsCompressed);
 
     return t;
 }

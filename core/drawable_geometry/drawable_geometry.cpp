@@ -1,5 +1,5 @@
 #include "drawable_geometry.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 
 DrawableGeometry::DrawableGeometry()
 {

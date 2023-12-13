@@ -1,5 +1,5 @@
 #include "cubemap.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "texture/texture_header.h"
 #include "utils.h"
 #ifdef OPENGL_STUDY_WINDOWS

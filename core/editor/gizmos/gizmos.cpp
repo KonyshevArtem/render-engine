@@ -1,7 +1,7 @@
 #if OPENGL_STUDY_EDITOR
 
 #include "gizmos.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "vector3/vector3.h"
 
 std::shared_ptr<Gizmos::GizmosPrimitive> m_WireCubePrimitive;

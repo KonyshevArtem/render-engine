@@ -1,5 +1,5 @@
 #include "uniform_info.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 
 namespace UniformUtils
 {

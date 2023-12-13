@@ -2,7 +2,7 @@
 #include <GL/glew.h> // include glew before qt includes gl.h
 #endif
 
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "game_window.h"
 #include "graphics/graphics.h"
 #include "input/input.h"

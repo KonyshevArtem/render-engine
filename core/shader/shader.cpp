@@ -1,5 +1,5 @@
 #include "shader.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "cubemap/cubemap.h"
 #include "property_block/property_block.h"
 #include "texture_2d/texture_2d.h"

@@ -1,6 +1,6 @@
 #include "render_pass.h"
 #include "../context.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "graphics/graphics.h"
 #include <algorithm>
 #include <iterator>

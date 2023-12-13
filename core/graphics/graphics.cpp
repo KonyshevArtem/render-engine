@@ -1,7 +1,7 @@
 #include "graphics.h"
 #include "camera/camera.h"
 #include "context.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #include "draw_call_info.h"
 #include "editor/gizmos/gizmos.h"
 #include "editor/gizmos/gizmos_pass.h"

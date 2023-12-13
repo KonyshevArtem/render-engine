@@ -1,5 +1,5 @@
 #include "texture_2d_array.h"
-#include "core_debug/debug.h"
+#include "debug.h"
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS

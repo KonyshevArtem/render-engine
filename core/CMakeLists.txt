@@ -50,8 +50,6 @@ add_library(
 	renderer/mesh_renderer.h
 	renderer/billboard_renderer.cpp
 	renderer/billboard_renderer.h
-	core_debug/debug.cpp
-	core_debug/debug.h 
 	bounds/bounds.h
 	bounds/bounds.cpp
 	editor/gizmos/gizmos_pass.h
@@ -72,4 +70,4 @@ add_library(
 	drawable_geometry/drawable_geometry.cpp)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math Utils OpenFBX)
+target_link_libraries(Core Math Utils DebugUtil OpenFBX)

@@ -5,6 +5,7 @@
 #include "texture_compressor_backend.h"
 #include "game_window.h"
 #include "lodepng.h"
+#include "debug.h"
 
 std::string texturePath;
 GLuint internalFormat;
@@ -45,6 +46,8 @@ int main(int __argc, char **__argv)
         printHelp();
         return 0;
     }
+
+    Debug::Init();
 
     GameWindow window(0, 0, nullptr, Render, nullptr, nullptr);
 

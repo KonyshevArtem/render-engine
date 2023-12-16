@@ -8,6 +8,8 @@ set(
     texture_compressor.cpp
     texture_compressor_backend.h
     texture_compressor_backend.cpp
+    texture_compressor_formats.h
+    texture_compressor_formats.cpp
     ../core/texture/texture_header.h
 )
 
@@ -35,4 +37,4 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 endif()
 
-target_link_libraries(TextureCompressor LodePNG DebugUtil GameWindow)
+target_link_libraries(TextureCompressor LodePNG tga-lib DebugUtil GameWindow)

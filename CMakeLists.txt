@@ -53,6 +53,7 @@ add_compile_definitions(OPENGL_STUDY_EDITOR)
 # source code
 add_subdirectory(external/lodepng)
 add_subdirectory(external/OpenFBX)
+add_subdirectory(external/tga)
 add_subdirectory(core)
 add_subdirectory(editor_gui)
 add_subdirectory(math)

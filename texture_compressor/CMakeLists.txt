@@ -8,6 +8,8 @@ set(
     texture_compressor.cpp
     texture_compressor_backend.h
     texture_compressor_backend.cpp
+    texture_compressor_formats.h
+    texture_compressor_formats.cpp
     ../core/texture/texture_header.h
 )
 

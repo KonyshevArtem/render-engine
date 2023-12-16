@@ -3,13 +3,13 @@
 #include <iostream>
 
 #include "texture_compressor_backend.h"
+#include "texture_compressor_formats.h"
 #include "game_window.h"
-#include "lodepng.h"
 #include "debug.h"
 
 std::string texturePath;
 GLuint internalFormat;
-LodePNGColorType colorType;
+int colorType;
 
 void Render()
 {
@@ -17,21 +17,18 @@ void Render()
     exit(0);
 }
 
-void printHelp()
+void PrintHelp()
 {
-    auto &colorFormats = TextureCompressorBackend::GetInputFormats();
-    auto &compressedFormat = TextureCompressorBackend::GetCompressedFormats();
-
     std::cout << "Parameters: <texture path STRING> <input color type INT> <compressed format INT>\n";
 
     std::cout << "\nAvailable input color types:\n";
-    for (const auto &pair: colorFormats)
+    for (const auto &pair: TextureCompressorFormats::GetInputFormats())
     {
         std::cout << "\t" << pair.first << " - " << pair.second << "\n";
     }
 
     std::cout << "\nAvailable compressed types:\n";
-    for (const auto &pair: compressedFormat)
+    for (const auto &pair: TextureCompressorFormats::GetCompressedFormats())
     {
         std::cout << "\t" << pair.first << " - " << pair.second << "\n";
     }
@@ -43,7 +40,7 @@ int main(int __argc, char **__argv)
 {
     if (__argc < 4)
     {
-        printHelp();
+        PrintHelp();
         return 0;
     }
 
@@ -52,7 +49,7 @@ int main(int __argc, char **__argv)
     GameWindow window(0, 0, nullptr, Render, nullptr, nullptr);
 
     texturePath = std::string(__argv[1]);
-    colorType = static_cast<LodePNGColorType>(std::stoi(__argv[2]));
+    colorType = std::stoi(__argv[2]);
     internalFormat = std::stoi(__argv[3]);
 
     glutMainLoop();

@@ -1,12 +1,9 @@
 {
-  "default": {
+  "properties": {
     "_Albedo": "white",
     "_NormalMap": "normal",
-    "_SpecularMask": "white",
     "_ReflectionCube": "black",
-    "_ReflectionMask": "white",
-    "_SmoothnessMask": "white",
-    "_MetallnessMask": "white"
+    "_Data": "white"
   },
   "passes": [
     {

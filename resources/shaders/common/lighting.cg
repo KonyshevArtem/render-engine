@@ -54,90 +54,56 @@ struct LightData
 
 /// Helpers ///
 
-
-vec4 sampleSpecular(vec2 uv)
-{
-    #if defined(_SPECULAR) && defined(FRAGMENT_PROGRAM)
-    return texture(_SpecularMask, uv);
-    #else
-    return vec4(0);
-    #endif
-}
-
 vec3 sampleReflection(vec3 normalWS, vec3 posWS, vec2 uv)
 {
-    #if defined(_REFLECTION) && defined(FRAGMENT_PROGRAM)
+    #if defined(_REFLECTION)
     vec3 viewDirWS = normalize(posWS - _CameraPosWS);
     vec3 reflectedViewWS = reflect(viewDirWS, normalWS);
-    vec4 reflection = texture(_ReflectionMask, uv);
-    float reflStrength = _ReflectionStrength * reflection.a;
-    return texture(_ReflectionCube, reflectedViewWS).rgb * reflection.rgb * reflStrength;
+    return texture(_ReflectionCube, reflectedViewWS).rgb * _ReflectionStrength;
     #else
     return vec3(0);
     #endif
 }
 
-vec3 sampleNormalWS(vec3 normalWS, vec3 tangentWS, vec2 uv)
+vec3 unpackNormal(vec3 normalTS, vec3 normalWS, vec3 tangentWS, float normalIntensity)
 {
     normalWS = normalize(normalWS);
-    #if defined(_NORMAL_MAP) && defined(FRAGMENT_PROGRAM)
     tangentWS = normalize(tangentWS);
     // Gramm-Schmidt process to ensure that tangent and normal are still orthogonal after interpolation
     tangentWS = normalize(tangentWS - dot(tangentWS, normalWS) * normalWS);
     vec3 bitangentWS = cross(tangentWS, normalWS);
-    vec3 normalTS = texture(_NormalMap, uv * _NormalMap_ST.zw + _NormalMap_ST.xy).rgb * 2.0 - 1.0;
-    normalTS *= vec3(_NormalIntensity, _NormalIntensity, 1);
+
+    normalTS = normalTS * 2.0 - 1.0;
+    normalTS *= vec3(normalIntensity, normalIntensity, 1);
     normalTS = normalize(normalTS);
     mat3 TBN = mat3(tangentWS, bitangentWS, normalWS);
     normalWS = normalize(TBN * normalTS);
-    #endif
     return normalWS;
-}
-
-float sampleSmoothness(vec2 uv)
-{
-    #if defined(_SPECULAR) && defined(FRAGMENT_PROGRAM)
-    float smoothness = texture(_SmoothnessMask, uv).r;
-    smoothness *= _Smoothness;
-    return smoothness;
-    #else
-    return 1;
-    #endif
-}
-
-float sampleMetallness(vec2 uv)
-{
-    #if defined(_SPECULAR) && defined(FRAGMENT_PROGRAM)
-    float metallness = texture(_MetallnessMask, uv).r;
-    metallness *= _Metallness;
-    return metallness;
-    #else
-    return 1;
-    #endif
 }
 
 
 /// Blinn-Phong ///
 
 
-vec3 getSpecularTermBlinnPhong(vec4 specular, vec3 lightDirWS, vec3 viewDirWS, vec3 normalWS){
-    #if defined(_SPECULAR) && defined(FRAGMENT_PROGRAM)
+vec3 getSpecularTermBlinnPhong(vec4 specular, float smoothness, vec3 lightDirWS, vec3 viewDirWS, vec3 normalWS){
+    #if defined(_SPECULAR)
     vec3 halfAngle = normalize(lightDirWS + viewDirWS);
     float blinnTerm = clamp(dot(normalWS, halfAngle), 0, 1);
-    blinnTerm = pow(blinnTerm, _Smoothness) * specular.a;
+    blinnTerm = pow(blinnTerm, smoothness) * specular.a;
     return specular.rgb * max(blinnTerm, 0);
     #else
     return vec3(0);
     #endif
 }
 
-LightData getLight(vec3 posWS, vec3 normalWS, vec4 specular)
+LightData getLightBlinnPhong(vec3 posWS, vec3 normalWS, vec4 specular, float roughness)
 {
     LightData data;
     data.Diffuse = _AmbientLight;
     data.Specular = vec3(0);
 
     vec3 viewDirWS = normalize(_CameraPosWS - posWS);
+    float smoothness = 1 - roughness;
 
     if (_HasDirectionalLight){
         vec3 lightDirWS = normalize(-_DirectionalLight.DirectionWS);
@@ -145,7 +111,7 @@ LightData getLight(vec3 posWS, vec3 normalWS, vec4 specular)
         float shadowTerm = getDirLightShadowTerm(posWS, lightAngleCos);
 
         data.Diffuse += _DirectionalLight.Intensity * lightAngleCos * shadowTerm;
-        data.Specular += getSpecularTermBlinnPhong(specular, lightDirWS, viewDirWS, normalWS);
+        data.Specular += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS);
     }
 
     for (int i = 0; i < _PointLightsCount; ++i)
@@ -156,7 +122,7 @@ LightData getLight(vec3 posWS, vec3 normalWS, vec4 specular)
         float attenuationTerm = 1 / (1 + _PointLights[i].Attenuation * distance * distance);
 
         data.Diffuse += _PointLights[i].Intensity * lightAngleCos * attenuationTerm;
-        data.Specular += getSpecularTermBlinnPhong(specular, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
+        data.Specular += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
     }
 
     for (int i = 0; i < _SpotLightsCount; ++i){
@@ -172,7 +138,7 @@ LightData getLight(vec3 posWS, vec3 normalWS, vec4 specular)
         float shadowTerm = getSpotLightShadowTerm(i, posWS, lightAngleCos);
 
         data.Diffuse += _SpotLights[i].Intensity * lightAngleCos * attenuationTerm * shadowTerm;
-        data.Specular += getSpecularTermBlinnPhong(specular, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
+        data.Specular += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
     }
 
     return data;
@@ -245,7 +211,7 @@ LightData getLightSourcePBR(vec3 normalWS, vec3 viewDirWS, vec3 lightDirWS, floa
     return data;
 }
 
-LightData getLightPBR(vec3 posWS, vec3 normalWS, vec3 albedo, float smoothness, float metallness)
+LightData getLightPBR(vec3 posWS, vec3 normalWS, vec3 albedo, float roughness, float metallness)
 {
     LightData data;
     data.Diffuse = _AmbientLight;
@@ -253,7 +219,7 @@ LightData getLightPBR(vec3 posWS, vec3 normalWS, vec3 albedo, float smoothness, 
 
     vec3 viewDirWS = normalize(_CameraPosWS - posWS);
     vec3 F0 = mix(vec3(0.04), albedo, metallness);
-    float roughness =  clamp(1 - smoothness, 0.01, 1);
+    roughness =  clamp(roughness, 0.01, 1);
 
     if (_HasDirectionalLight){
         vec3 lightDirWS = normalize(-_DirectionalLight.DirectionWS);

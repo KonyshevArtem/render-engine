@@ -467,22 +467,23 @@ namespace Graphics
 
     void SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix)
     {
-        static const std::string projMatrixName = "_ProjMatrix";
-        static const std::string viewMatrixName = "_ViewMatrix";
+        static const std::string vpMatrixName   = "_VPMatrix";
         static const std::string cameraPosName  = "_CameraPosWS";
         static const std::string nearClipName   = "_NearClipPlane";
+        static const std::string cameraFwdName  = "_CameraFwdWS";
         static const std::string farClipName    = "_FarClipPlane";
 
-        auto matrixSize    = sizeof(Matrix4x4);
         auto cameraPosWS   = _viewMatrix.Invert().GetPosition();
         auto nearClipPlane = Camera::Current->GetNearClipPlane();
         auto farClipPlane  = Camera::Current->GetFarClipPlane();
+        auto vpMatrix = _projectionMatrix * _viewMatrix;
+        auto cameraFwdWS = Camera::Current->GetRotation() * Vector3{0, 0, 1};
 
-        cameraDataBlock->SetUniform(projMatrixName, &_projectionMatrix, matrixSize);
-        cameraDataBlock->SetUniform(viewMatrixName, &_viewMatrix, matrixSize);
-        cameraDataBlock->SetUniform(cameraPosName, &cameraPosWS, sizeof(Vector4));
+        cameraDataBlock->SetUniform(vpMatrixName, &vpMatrix, sizeof(Matrix4x4));
+        cameraDataBlock->SetUniform(cameraPosName, &cameraPosWS, sizeof(Vector3));
         cameraDataBlock->SetUniform(nearClipName, &nearClipPlane, sizeof(float));
         cameraDataBlock->SetUniform(farClipName, &farClipPlane, sizeof(float));
+        cameraDataBlock->SetUniform(cameraFwdName, &cameraFwdWS, sizeof(Vector3));
         cameraDataBlock->UploadData();
 
         lastCameraPosition = cameraPosWS;

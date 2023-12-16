@@ -35,4 +35,4 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 endif()
 
-target_link_libraries(TextureCompressor LodePNG DebugUtil GameWindow)
+target_link_libraries(TextureCompressor LodePNG tga-lib DebugUtil GameWindow)

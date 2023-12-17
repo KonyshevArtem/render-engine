@@ -3,10 +3,10 @@
 
 layout(std140) uniform CameraData
 {
-    mat4 _ProjMatrix;
-    mat4 _ViewMatrix;
+    mat4 _VPMatrix;
     vec3 _CameraPosWS;
     float _NearClipPlane;
+    vec3 _CameraFwdWS;
     float _FarClipPlane;
 };
 

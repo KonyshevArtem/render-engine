@@ -41,8 +41,7 @@ void TestScene::Init()
     auto windowTexture = Texture2D::Load("resources/textures/window_cube");
     auto carAlbedo     = Texture2D::Load("resources/textures/car/car_albedo");
     auto carNormal     = Texture2D::Load("resources/textures/car/car_normal");
-    auto carSmoothness = Texture2D::Load("resources/textures/car/car_smoothness");
-    auto carMetallic   = Texture2D::Load("resources/textures/car/car_metallic");
+    auto carData       = Texture2D::Load("resources/textures/car/car_data");
 
     // init skybox cubemap
     Skybox = Cubemap::Load("resources/textures/skybox/x_positive",
@@ -53,9 +52,10 @@ void TestScene::Init()
                            "resources/textures/skybox/z_negative");
 
     // init shaders
-    auto fragmentLitShader = Shader::Load("resources/shaders/standard/standard.shader", {"_SPECULAR", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
-    auto transparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", {"_SPECULAR", "_RECEIVE_SHADOWS"});
-    auto instancingShader  = Shader::Load("resources/shaders/standard/standard.shader", {"_SPECULAR", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_INSTANCING"});
+    auto standardOpaqueShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
+    auto standardOpaqueDataMapShader = Shader::Load("resources/shaders/standard/standard.shader", {"_DATA_MAP", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
+    auto standardTransparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", {"_RECEIVE_SHADOWS"});
+    auto standardInstancingShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_INSTANCING"});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");
@@ -71,72 +71,66 @@ void TestScene::Init()
     auto sphereMesh   = sphereAsset->GetMesh(0);
 
     // init materials
-    auto fragmentLitMaterial = std::make_shared<Material>(fragmentLitShader);
-    fragmentLitMaterial->SetFloat("_Smoothness", 0.5f);
-    fragmentLitMaterial->SetFloat("_Metallness", 1);
+    auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader);
+    standardOpaqueMaterial->SetFloat("_Roughness", 0.5f);
+    standardOpaqueMaterial->SetFloat("_Metallness", 1);
 
-    auto fragmentLitBrickMaterial = std::make_shared<Material>(fragmentLitShader);
-    fragmentLitBrickMaterial->SetTexture("_Albedo", brickTexture);
-    fragmentLitBrickMaterial->SetTexture("_NormalMap", brickNormal);
-    fragmentLitBrickMaterial->SetFloat("_Smoothness", 0.5f);
-    fragmentLitBrickMaterial->SetFloat("_Metallness", 0);
-    fragmentLitBrickMaterial->SetFloat("_NormalIntensity", 3);
+    auto brickMaterial = std::make_shared<Material>(standardOpaqueShader);
+    brickMaterial->SetTexture("_Albedo", brickTexture);
+    brickMaterial->SetTexture("_NormalMap", brickNormal);
+    brickMaterial->SetFloat("_Roughness", 0.5f);
+    brickMaterial->SetFloat("_Metallness", 0);
+    brickMaterial->SetFloat("_NormalIntensity", 3);
 
-    m_WaterMaterial = std::make_shared<Material>(fragmentLitShader);
+    m_WaterMaterial = std::make_shared<Material>(standardOpaqueShader);
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
     m_WaterMaterial->SetTexture("_NormalMap", waterNormal);
     m_WaterMaterial->SetTexture("_ReflectionCube", Skybox);
     m_WaterMaterial->SetFloat("_ReflectionStrength", 0.3f);
-    m_WaterMaterial->SetFloat("_Smoothness", 0.9f);
+    m_WaterMaterial->SetFloat("_Roughness", 0.1f);
     m_WaterMaterial->SetFloat("_Metallness", 0.2f);
     m_WaterMaterial->SetFloat("_NormalIntensity", 3);
 
-    auto transparentMaterial = std::make_shared<Material>(transparentShader);
+    auto transparentMaterial = std::make_shared<Material>(standardTransparentShader);
     transparentMaterial->SetTexture("_Albedo", windowTexture);
-    transparentMaterial->SetFloat("_Smoothness", 0.2f);
+    transparentMaterial->SetFloat("_Roughness", 0.8f);
     transparentMaterial->SetFloat("_Metallness", 0);
     transparentMaterial->SetRenderQueue(3000);
 
-    auto carMaterial = std::make_shared<Material>(fragmentLitShader);
+    auto carMaterial = std::make_shared<Material>(standardOpaqueDataMapShader);
     carMaterial->SetTexture("_Albedo", carAlbedo);
     carMaterial->SetTexture("_NormalMap", carNormal);
-    carMaterial->SetTexture("_MetallnessMask", carMetallic);
-    carMaterial->SetTexture("_SmoothnessMask", carSmoothness);
-    //carMaterial->SetTexture("_SpecularMask", carSpecular);
-    //carMaterial->SetTexture("_ReflectionMask", carMetallic);
+    carMaterial->SetTexture("_Data", carData);
     //carMaterial->SetTexture("_ReflectionCube", Skybox);
-    //carMaterial->SetFloat("_ReflectionStrength", 0.5f);
-    carMaterial->SetFloat("_Smoothness", 1);
-    carMaterial->SetFloat("_Metallness", 1);
     carMaterial->SetFloat("_NormalIntensity", 1);
 
-    auto sphereMaterial = std::make_shared<Material>(instancingShader);
+    auto sphereMaterial = std::make_shared<Material>(standardInstancingShader);
 
     // init gameObjects
     auto rotatingCube      = GameObject::Create("Rotating Cube");
-    rotatingCube->Renderer = std::make_shared<MeshRenderer>(rotatingCube, cubeMesh, fragmentLitBrickMaterial);
+    rotatingCube->Renderer = std::make_shared<MeshRenderer>(rotatingCube, cubeMesh, brickMaterial);
     m_RotatingCube         = rotatingCube;
 
     auto rotatingCylinder      = GameObject::Create("Rotating Cylinder");
-    rotatingCylinder->Renderer = std::make_shared<MeshRenderer>(rotatingCylinder, cylinderMesh, fragmentLitMaterial);
+    rotatingCylinder->Renderer = std::make_shared<MeshRenderer>(rotatingCylinder, cylinderMesh, standardOpaqueMaterial);
     rotatingCylinder->SetLocalPosition(Vector3(0, -3, 4));
     rotatingCylinder->SetLocalScale(Vector3(2, 1, 0.5f));
     m_RotatingCylinder1 = rotatingCylinder;
 
     auto cylinderFragmentLit      = GameObject::Create("Cylinder");
-    cylinderFragmentLit->Renderer = std::make_shared<MeshRenderer>(cylinderFragmentLit, cylinderMesh, fragmentLitMaterial);
+    cylinderFragmentLit->Renderer = std::make_shared<MeshRenderer>(cylinderFragmentLit, cylinderMesh, standardOpaqueMaterial);
     cylinderFragmentLit->SetLocalPosition(Vector3(-3, -3, 6));
     cylinderFragmentLit->SetLocalScale(Vector3(2, 1, 0.5f));
     m_RotatingCylinder2 = cylinderFragmentLit;
 
     auto floorVertexLit      = GameObject::Create("Floor");
-    floorVertexLit->Renderer = std::make_shared<MeshRenderer>(floorVertexLit, cubeMesh, fragmentLitMaterial);
+    floorVertexLit->Renderer = std::make_shared<MeshRenderer>(floorVertexLit, cubeMesh, standardOpaqueMaterial);
     floorVertexLit->SetLocalPosition(Vector3(3, -5, 5.5f));
     floorVertexLit->SetLocalRotation(Quaternion::AngleAxis(-10, Vector3(0, 1, 0)));
     floorVertexLit->SetLocalScale(Vector3(5, 1, 2));
 
     auto floorFragmentLit      = GameObject::Create("Bricks");
-    floorFragmentLit->Renderer = std::make_shared<MeshRenderer>(floorFragmentLit, cubeMesh, fragmentLitBrickMaterial);
+    floorFragmentLit->Renderer = std::make_shared<MeshRenderer>(floorFragmentLit, cubeMesh, brickMaterial);
     floorFragmentLit->SetLocalPosition(Vector3(-9, -5, 5.5f));
     floorFragmentLit->SetLocalRotation(Quaternion::AngleAxis(10, Vector3(0, 1, 0)));
     floorFragmentLit->SetLocalScale(Vector3(5, 1, 2));

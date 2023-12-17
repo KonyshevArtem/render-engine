@@ -7,29 +7,23 @@ layout(location = 3) in vec3 vertTangentOS;
 
 out Varyings
 {
-    vec4 PositionWS;
-    vec4 PositionCS;
+    vec3 PositionWS;
     vec3 NormalWS;
+#ifdef _NORMAL_MAP
     vec3 TangentWS;
+#endif
     vec2 UV;
-    vec4 Color;
 } vars;
 
 #include "../common/camera_data.cg"
-#include "../common/lighting.cg"
 
 void main(){
-    vars.PositionWS = _ModelMatrix * vec4(vertPositionOS, 1);
-    vars.PositionCS = _ProjMatrix * _ViewMatrix * vars.PositionWS;
+    vars.PositionWS = (_ModelMatrix * vec4(vertPositionOS, 1)).xyz;
     vars.NormalWS = normalize((_ModelNormalMatrix * vec4(vertNormalOS, 0)).xyz);
+#ifdef _NORMAL_MAP
     vars.TangentWS = normalize((_ModelNormalMatrix * vec4(vertTangentOS, 0)).xyz);
+#endif
     vars.UV = texCoord;
 
-    #ifdef _VERTEX_LIGHT
-    vars.Color = vec4(getLight(vars.PositionWS.xyz, vars.NormalWS, vec4(0)).Light, 1);
-    #else
-    vars.Color = vec4(1);
-    #endif
-
-    gl_Position = vars.PositionCS;
+    gl_Position = _VPMatrix * vec4(vars.PositionWS.xyz, 1);
 }

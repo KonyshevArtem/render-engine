@@ -169,8 +169,8 @@ namespace ShaderLoader
         ShaderInfo info {value_to<std::vector<ShaderPassInfo>>(obj.at("passes"))};
 
         // parse default values
-        if (obj.contains("default"))
-            info.DefaultValues = value_to<std::unordered_map<std::string, std::string>>(obj.at("default"));
+        if (obj.contains("properties"))
+            info.DefaultValues = value_to<std::unordered_map<std::string, std::string>>(obj.at("properties"));
 
         return info;
     }

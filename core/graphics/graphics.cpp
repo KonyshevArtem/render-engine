@@ -143,10 +143,10 @@ namespace Graphics
         static const std::string ambientLightName      = "_AmbientLight";
         static const std::string dirLightDirectionName = "_DirectionalLight.DirectionWS";
         static const std::string dirLightIntensityName = "_DirectionalLight.Intensity";
+        static const std::string hasDirLightName       = "_DirectionalLight.HasDirectionalLight";
 
         static const std::string pointLightsCountName = "_PointLightsCount";
         static const std::string spotLightsCountName  = "_SpotLightsCount";
-        static const std::string hasDirLightName      = "_HasDirectionalLight";
 
         static bool        namesInited = false;
         static std::string pointLightNames[MAX_POINT_LIGHT_SOURCES][3];
@@ -215,9 +215,10 @@ namespace Graphics
             }
         }
 
+        float hasDirLightFloat = hasDirectionalLight ? 1 : -1;
         lightingDataBlock->SetUniform(pointLightsCountName, &pointLightsCount, sizeof(int));
         lightingDataBlock->SetUniform(spotLightsCountName, &spotLightsCount, sizeof(int));
-        lightingDataBlock->SetUniform(hasDirLightName, &hasDirectionalLight, sizeof(bool));
+        lightingDataBlock->SetUniform(hasDirLightName, &hasDirLightFloat, sizeof(float));
 
         lightingDataBlock->UploadData();
     }

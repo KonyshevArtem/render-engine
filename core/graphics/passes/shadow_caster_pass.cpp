@@ -63,8 +63,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         {
             CHECK_GL(glViewport(0, 0, SPOT_LIGHT_SHADOW_MAP_SIZE, SPOT_LIGHT_SHADOW_MAP_SIZE));
 
-            m_SpotLightShadowMapArray->AttachmentLayer = spotLightsCount;
-            Graphics::SetRenderTargets(nullptr, m_SpotLightShadowMapArray);
+            Graphics::SetRenderTargets(nullptr, 0, 0, m_SpotLightShadowMapArray, 0, spotLightsCount);
 
             auto view    = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
             auto proj    = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, _ctx.ShadowDistance);
@@ -79,7 +78,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         {
             CHECK_GL(glViewport(0, 0, DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE));
 
-            Graphics::SetRenderTargets(nullptr, m_DirectionLightShadowMap);
+            Graphics::SetRenderTargets(nullptr, 0, 0, m_DirectionLightShadowMap, 0, 0);
 
             auto bounds = _ctx.ShadowCasters[0]->GetAABB();
             for (const auto &renderer: _ctx.ShadowCasters)
@@ -109,7 +108,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
     m_ShadowsUniformBlock->UploadData();
 
-    Graphics::SetRenderTargets(nullptr, nullptr);
+    Graphics::SetRenderTargets(nullptr, 0, 0, nullptr, 0, 0);
 }
 
 void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)

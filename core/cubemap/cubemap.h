@@ -3,8 +3,6 @@
 
 #include "texture/texture.h"
 #include <filesystem>
-#include <memory>
-#include <vector>
 
 class Cubemap: public Texture
 {
@@ -16,24 +14,21 @@ public:
                                          const std::filesystem::path &_zPositivePath,
                                          const std::filesystem::path &_zNegativePath);
 
-    void Bind(int _unit) const override;
-    void Attach(int _attachment) const override;
-
     static std::shared_ptr<Cubemap> &White();
     static std::shared_ptr<Cubemap> &Black();
 
-    ~Cubemap() = default;
+    ~Cubemap() override = default;
 
-private:
-    Cubemap()                = default;
     Cubemap(const Cubemap &) = delete;
     Cubemap(Cubemap &&)      = delete;
 
     Cubemap &operator=(const Cubemap &) = delete;
     Cubemap &operator=(Cubemap &&) = delete;
 
-    void Init();
-    void UploadPixels(void* _pixels, int _side, int _internalFormat, int _format, int _size, bool _compressed);
+private:
+    Cubemap(unsigned int width, unsigned int height, unsigned int mipLevels);
+
+    static std::shared_ptr<Cubemap> CreateDefaultCubemap(unsigned char *pixels);
 
     static constexpr unsigned int SIDES_COUNT = 6;
 };

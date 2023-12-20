@@ -38,7 +38,7 @@ void GizmosPass::Outline() const
 
     // render selected gameObjects
     {
-        Graphics::SetRenderTargets(outlineTexture, nullptr);
+        Graphics::SetRenderTargets(outlineTexture, 0, 0, nullptr, 0, 0);
 
         CHECK_GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
@@ -51,7 +51,7 @@ void GizmosPass::Outline() const
                                           renderer->GetAABB()});
         }
         Graphics::Draw(infos, renderSettings);
-        Graphics::SetRenderTargets(nullptr, nullptr);
+        Graphics::SetRenderTargets(nullptr, 0, 0, nullptr, 0, 0);
     }
 
     // blit to screen

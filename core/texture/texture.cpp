@@ -17,7 +17,7 @@ Texture::Texture(unsigned int target, unsigned int width, unsigned int height, u
     CHECK_GL(glGenSamplers(1, &m_Sampler));
     CHECK_GL(glBindTexture(m_Target, m_Texture));
     SetWrapMode_Internal(GL_REPEAT);
-    SetFiltering_Internal(GL_LINEAR);
+    SetFiltering_Internal(mipLevels > 1 ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
     CHECK_GL(glTexParameteri(m_Target, GL_TEXTURE_MAX_LEVEL, mipLevels - 1));
     CHECK_GL(glBindTexture(m_Target, 0));
 }
@@ -78,6 +78,15 @@ void Texture::SetBorderColor(const Vector4 &color) const
 void Texture::SetFiltering_Internal(int filtering) const
 {
     CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, filtering));
+
+    if (filtering == GL_LINEAR_MIPMAP_NEAREST || filtering == GL_LINEAR_MIPMAP_LINEAR)
+    {
+        filtering = GL_LINEAR;
+    }
+    else if (filtering == GL_NEAREST_MIPMAP_NEAREST || filtering == GL_NEAREST_MIPMAP_LINEAR)
+    {
+        filtering = GL_NEAREST;
+    }
     CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, filtering));
 }
 

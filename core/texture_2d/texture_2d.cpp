@@ -36,7 +36,7 @@ std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path)
     TextureHeader header = *reinterpret_cast<TextureHeader*>(pixels.data());
     auto *sizes = reinterpret_cast<unsigned int*>(&pixels[0] + sizeof(header));
 
-    auto t = std::shared_ptr<Texture2D>(new Texture2D(header.Width, header.Height, 1));
+    auto t = std::shared_ptr<Texture2D>(new Texture2D(header.Width, header.Height, header.MipCount));
     unsigned int offset = headerSize + header.MipCount * sizeof(int);
     for (int j = 0; j < header.MipCount; ++j)
     {

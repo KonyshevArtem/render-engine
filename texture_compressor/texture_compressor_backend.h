@@ -6,7 +6,7 @@
 
 namespace TextureCompressorBackend
 {
-    void CompressTexture(const std::string& path, int colorType, int compressedFormat);
+    void CompressTexture(const std::string& path, int colorType, int compressedFormat, bool generateMips);
 }
 
 #endif

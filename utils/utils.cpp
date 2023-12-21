@@ -62,17 +62,26 @@ namespace Utils
         return file;
     }
 
-    std::vector<char> ReadFileBytes(const std::filesystem::path &_relativePath)
+    bool ReadFileBytes(const std::filesystem::path &_relativePath, std::vector<uint8_t> &bytes)
     {
-        std::ifstream input(_relativePath.string(), std::ios::binary);
+        std::ifstream input(_relativePath.string(), std::ios::in | std::ios::binary);
+        if (!input.is_open() || input.bad())
+            return false;
 
-        std::vector<char> bytes(
-                (std::istreambuf_iterator<char>(input)),
-                (std::istreambuf_iterator<char>()));
+        input.unsetf(std::ios::skipws);
+
+        input.seekg(0, std::ios_base::end);
+        size_t fileSize = input.tellg();
+        input.seekg(0, std::ios_base::beg);
+
+        bytes.reserve(fileSize);
+        bytes.insert(bytes.begin(),
+                     (std::istreambuf_iterator<char>(input)),
+                     (std::istreambuf_iterator<char>()));
 
         input.close();
 
-        return bytes;
+        return bytes.size() == fileSize;
     }
 
     void WriteFile(const std::filesystem::path &_relativePath, const std::string &_content)

@@ -25,7 +25,8 @@ namespace Graphics
     void                      SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix);
     int                       GetScreenWidth();
     int                       GetScreenHeight();
-    void                      SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, const std::shared_ptr<Texture> &_depthAttachment);
+    void                      SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, int colorLevel, int colorLayer,
+                                               const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer);
 }; // namespace Graphics
 
 #endif //OPENGL_STUDY_GRAPHICS_H

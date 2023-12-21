@@ -504,7 +504,8 @@ namespace Graphics
         return globalShaderDirectives;
     }
 
-    void SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, const std::shared_ptr<Texture> &_depthAttachment)
+    void SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, int colorLevel, int colorLayer,
+                          const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer)
     {
         if (!_colorAttachment && !_depthAttachment)
         {
@@ -515,14 +516,14 @@ namespace Graphics
         CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer));
 
         if (_colorAttachment)
-            _colorAttachment->Attach(GL_COLOR_ATTACHMENT0);
+            _colorAttachment->Attach(GL_COLOR_ATTACHMENT0, colorLevel, colorLayer);
         else
         {
             CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 0, 0));
         }
 
         if (_depthAttachment)
-            _depthAttachment->Attach(GL_DEPTH_ATTACHMENT);
+            _depthAttachment->Attach(GL_DEPTH_ATTACHMENT, depthLevel, depthLayer);
         else
         {
             CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, 0, 0));

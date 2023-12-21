@@ -10,16 +10,17 @@
 std::string texturePath;
 GLuint internalFormat;
 int colorType;
+bool generateMips;
 
 void Render()
 {
-    TextureCompressorBackend::CompressTexture(texturePath, colorType, internalFormat);
+    TextureCompressorBackend::CompressTexture(texturePath, colorType, internalFormat, generateMips);
     exit(0);
 }
 
 void PrintHelp()
 {
-    std::cout << "Parameters: <texture path STRING> <input color type INT> <compressed format INT>\n";
+    std::cout << "Parameters: <texture path STRING> <input color type INT> <compressed format INT> <generate mipmaps BOOL>\n";
 
     std::cout << "\nAvailable input color types:\n";
     for (const auto &pair: TextureCompressorFormats::GetInputFormats())
@@ -38,7 +39,7 @@ void PrintHelp()
 
 int main(int __argc, char **__argv)
 {
-    if (__argc < 4)
+    if (__argc < 5)
     {
         PrintHelp();
         return 0;
@@ -51,6 +52,7 @@ int main(int __argc, char **__argv)
     texturePath = std::string(__argv[1]);
     colorType = std::stoi(__argv[2]);
     internalFormat = std::stoi(__argv[3]);
+    generateMips = std::stoi(__argv[4]) == 1;
 
     glutMainLoop();
 

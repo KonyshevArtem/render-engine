@@ -9,6 +9,7 @@ struct TextureHeader
         int          InternalFormat;
         int          Format;
         int          IsCompressed;
+        unsigned int MipCount;
 };
 
 #endif

@@ -18,7 +18,7 @@
 
 namespace TextureCompressorBackend
 {
-    std::string GetReadableSize(int bytes)
+    std::string GetReadableSize(unsigned int bytes)
     {
         std::stringstream stream;
 
@@ -127,65 +127,98 @@ namespace TextureCompressorBackend
         return false;
     }
 
-    void CompressTexture(const std::string& pathString, int colorType, int compressedFormat)
+    int GetMipsCount(bool generateMips, unsigned int height, unsigned int width)
     {
-        constexpr int headerSize = sizeof(TextureHeader);
+        if (!generateMips)
+        {
+            return 1;
+        }
+
+        if (width % 2 != 0 || height % 2 != 0)
+        {
+            Debug::LogError("Texture size is not power of 2");
+            return 1;
+        }
+
+        return std::max(std::log2(width), std::log2(height)) + 1;
+    }
+
+    void CompressTexture(const std::string& pathString, int colorType, int compressedFormat, bool generateMips)
+    {
+        constexpr unsigned int headerSize = sizeof(TextureHeader);
 
         TextureHeader header;
         std::vector<unsigned char> pixels;
 
         auto path = std::filesystem::path(pathString);
-        TryGetImagePixels(path, pixels, header, colorType);
+        if (!TryGetImagePixels(path, pixels, header, colorType))
+        {
+            return;
+        }
 
         header.Format = TextureCompressorFormats::GetFormatByColorType(colorType);
+        header.MipCount = GetMipsCount(generateMips, header.Height, header.Width);
 
         GLuint texture = 0;
         CHECK_GL(glGenTextures(1, &texture));
         CHECK_GL(glBindTexture(GL_TEXTURE_2D, texture));
+        CHECK_GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0));
+        CHECK_GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, header.MipCount - 1));
         CHECK_GL(glTexImage2D(GL_TEXTURE_2D, 0, compressedFormat, header.Width, header.Height, 0, header.Format, GL_UNSIGNED_BYTE, pixels.data()));
+        if (generateMips)
+        {
+            CHECK_GL(glGenerateMipmap(GL_TEXTURE_2D));
+        }
 
         CHECK_GL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED, &header.IsCompressed));
         CHECK_GL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &header.InternalFormat));
 
-        int totalSize;
-        unsigned char *compressedPixels;
-
-        int compressedSize;
-        if (header.IsCompressed)
-        {
-            CHECK_GL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &compressedSize));
-        }
-        else
-        {
-            compressedSize = pixels.size() * sizeof(char);
-        }
-
-        totalSize = headerSize + compressedSize;
-        compressedPixels = new unsigned char[totalSize];
-
-        if (header.IsCompressed)
-        {
-            CHECK_GL(glGetCompressedTexImage(GL_TEXTURE_2D, 0, compressedPixels + headerSize));
-        }
-        else
-        {
-            memcpy(compressedPixels + headerSize, pixels.data(), pixels.size());
-        }
-
-        memcpy(compressedPixels, reinterpret_cast<void*>(&header), headerSize);
-
         std::ofstream fout;
         auto outputPath = path.replace_extension("");
         fout.open(outputPath, std::ios::binary | std::ios::out);
-        fout.write(reinterpret_cast<char*>(compressedPixels), totalSize * sizeof(char));
+        fout.write(reinterpret_cast<char*>(&header), headerSize);
+
+        std::vector<unsigned int> sizes(header.MipCount);
+        for (int i = 0; i < header.MipCount; ++i)
+        {
+            int compressedSize;
+            if (header.IsCompressed)
+            {
+                CHECK_GL(glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &compressedSize));
+            }
+            else
+            {
+                compressedSize = pixels.size() / (1 << i);
+            }
+            sizes[i] = compressedSize;
+        }
+        fout.write(reinterpret_cast<char*>(&sizes[0]), sizes.size() * sizeof(unsigned int));
+
+        unsigned int totalSize = 0;
+        std::vector<unsigned char> compressedPixels(sizes[0]);
+        for (int i = 0; i < header.MipCount; ++i)
+        {
+            if (header.IsCompressed)
+            {
+                CHECK_GL(glGetCompressedTexImage(GL_TEXTURE_2D, i, &compressedPixels[0]));
+            }
+            else
+            {
+                CHECK_GL(glGetTexImage(GL_TEXTURE_2D, i, header.Format, GL_UNSIGNED_BYTE, &compressedPixels[0]));
+            }
+
+            fout.write(reinterpret_cast<char*>(&compressedPixels[0]), sizes[i]);
+            totalSize += sizes[i];
+        }
+
         fout.close();
 
-        delete[] compressedPixels;
-
-        std::cout << "\tTexture successfully compressed"
+        std::cout << "\tTexture successfully compressed: " << outputPath
                   << "\n\tFormat: " << TextureCompressorFormats::GetCompressedFormatName(header.InternalFormat) << " (" << header.InternalFormat << ")"
-                  << "\n\tOriginal Size: " << GetReadableSize(pixels.size() * sizeof(char))
-                  << "\n\tCompressed Size: " << GetReadableSize(totalSize) << std::endl;
+                  << "\n\tOriginal Size: " << GetReadableSize(pixels.size())
+                  << "\n\tCompressed Size: " << GetReadableSize(headerSize + totalSize)
+                  << "\n\tMipmaps: " << header.MipCount
+                  << "\n" << std::endl;
 
         CHECK_GL(glBindTexture(GL_TEXTURE_2D, 0));
         CHECK_GL(glDeleteTextures(1, &texture));

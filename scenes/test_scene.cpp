@@ -12,13 +12,17 @@
 #include "mesh/mesh.h"
 #include "renderer/billboard_renderer.h"
 #include "renderer/mesh_renderer.h"
-#include "renderer/renderer.h"
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
-#include "vector4/vector4.h"
 #include <cmath>
 #include <memory>
+
+#if OPENGL_STUDY_EDITOR
+bool drawGizmos = false;
+int debugBaseMipLevel = 0;
+std::vector<std::shared_ptr<Texture>> textures;
+#endif
 
 void TestScene::Load()
 {
@@ -42,6 +46,18 @@ void TestScene::Init()
     auto carAlbedo     = Texture2D::Load("resources/textures/car/car_albedo");
     auto carNormal     = Texture2D::Load("resources/textures/car/car_normal");
     auto carData       = Texture2D::Load("resources/textures/car/car_data");
+
+#ifdef OPENGL_STUDY_EDITOR
+    textures.push_back(brickTexture);
+    textures.push_back(brickNormal);
+    textures.push_back(waterTexture);
+    textures.push_back(waterNormal);
+    textures.push_back(billboardTree);
+    textures.push_back(windowTexture);
+    textures.push_back(carAlbedo);
+    textures.push_back(carNormal);
+    textures.push_back(carData);
+#endif
 
     // init skybox cubemap
     Skybox = Cubemap::Load("resources/textures/skybox/x_positive",
@@ -271,21 +287,38 @@ void TestScene::UpdateInternal()
     m_SpotLight->Position        = Camera::Current->GetPosition() + Camera::Current->GetRotation() * Vector3(-3, 0, 0);
     m_SpotLight->Rotation        = Camera::Current->GetRotation();
 
-// gizmos
+// gizmos and cheats
 #if OPENGL_STUDY_EDITOR
     if (Input::GetKeyDown('g'))
-        m_DrawGizmos = !m_DrawGizmos;
+        drawGizmos = !drawGizmos;
 
-    if (m_DrawGizmos)
+    if (drawGizmos)
     {
         for (auto it = cbegin(); it != cend(); it++)
         {
-            auto go = *it;
+            const auto &go = *it;
             if (!go || !go->Renderer)
                 continue;
 
             auto bounds = go->Renderer->GetAABB();
             Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
+        }
+    }
+
+    int baseMipLevel = debugBaseMipLevel;
+    if (Input::GetKeyDown('p'))
+        ++baseMipLevel;
+    if (Input::GetKeyDown('o'))
+        baseMipLevel = std::max(baseMipLevel - 1, 0);
+
+    if (baseMipLevel != debugBaseMipLevel)
+    {
+        debugBaseMipLevel = baseMipLevel;
+
+        Skybox->SetBaseMipLevel(debugBaseMipLevel);
+        for (const auto& t: textures)
+        {
+            t->SetBaseMipLevel(debugBaseMipLevel);
         }
     }
 #endif

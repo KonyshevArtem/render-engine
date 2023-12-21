@@ -30,10 +30,6 @@ private:
     std::weak_ptr<GameObject> m_RotatingCube;
     std::weak_ptr<GameObject> m_RotatingCylinder1;
     std::weak_ptr<GameObject> m_RotatingCylinder2;
-
-    #if OPENGL_STUDY_EDITOR
-    bool m_DrawGizmos = false;
-    #endif
 };
 
 #endif //OPENGL_STUDY_TEST_SCENE_H

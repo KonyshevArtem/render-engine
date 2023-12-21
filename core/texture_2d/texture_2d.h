@@ -2,10 +2,7 @@
 #define OPENGL_STUDY_TEXTURE_2D_H
 
 #include "texture/texture.h"
-#include "vector4/vector4.h"
 #include <filesystem>
-#include <string>
-#include <vector>
 
 class Texture2D: public Texture
 {
@@ -17,23 +14,18 @@ public:
     static const std::shared_ptr<Texture2D> &Normal();
     static const std::shared_ptr<Texture2D> &Null();
 
-    void Bind(int _unit) const override;
-    void Attach(int _attachment) const override;
+    ~Texture2D() override = default;
 
-    void SetWrapMode(GLenum _wrapMode) const;
-    void SetBorderColor(const Vector4 &_color) const;
-
-    virtual ~Texture2D() = default;
-
-private:
-    Texture2D()                  = default;
     Texture2D(const Texture2D &) = delete;
     Texture2D(Texture2D &&)      = delete;
 
     Texture2D &operator=(const Texture2D &) = delete;
     Texture2D &operator=(Texture2D &&) = delete;
 
-    void Init(GLint _internalFormat, GLenum _format, GLenum _type, void* _data, int imageSize, bool isCompressed);
+private:
+    Texture2D(unsigned int width, unsigned int height, unsigned int mipLevels);
+
+    static std::shared_ptr<Texture2D> Create_Internal(unsigned char *pixels, int width, int height, int internalFormat, int format);
 };
 
 #endif //OPENGL_STUDY_TEXTURE_2D_H

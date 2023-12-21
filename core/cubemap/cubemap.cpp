@@ -1,12 +1,18 @@
 #include "cubemap.h"
 #include "debug.h"
-#include "texture/texture_header.h"
-#include "utils.h"
+#include "texture_binary_reader.h"
+
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
 #include <OpenGL/gl3.h>
 #endif
+#include <vector>
+
+Cubemap::Cubemap(unsigned int width, unsigned int height, unsigned int mipLevels) :
+        Texture(GL_TEXTURE_CUBE_MAP, width, height, 0, mipLevels)
+{
+}
 
 std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &_xPositivePath,
                                        const std::filesystem::path &_xNegativePath,
@@ -15,84 +21,47 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &_xPositivePa
                                        const std::filesystem::path &_zPositivePath,
                                        const std::filesystem::path &_zNegativePath)
 {
-    static constexpr int headerSize = sizeof(TextureHeader);
-
-    auto cubemap = std::shared_ptr<Cubemap>(new Cubemap());
-    cubemap->Init();
+    std::shared_ptr<Cubemap> cubemap = nullptr;
 
     std::filesystem::path paths[SIDES_COUNT] {_xPositivePath, _xNegativePath, _yPositivePath, _yNegativePath, _zPositivePath, _zNegativePath};
-    std::vector<unsigned char> pixels;
 
+    TextureBinaryReader reader;
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        std::vector<char> pixels = Utils::ReadFileBytes(Utils::GetExecutableDirectory() / paths[i]);
+        if (!reader.ReadTexture(paths[i]))
+        {
+            break;
+        }
 
-        TextureHeader header = *reinterpret_cast<TextureHeader*>(pixels.data());
-        cubemap->m_Width = header.Width;
-        cubemap->m_Height = header.Height;
+        const auto &header = reader.GetHeader();
+        if (i == 0)
+        {
+            cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.Width, header.Height, header.MipCount));
+        }
+        else if (header.Width != cubemap->GetWidth() || header.Height != cubemap->GetHeight())
+        {
+            Debug::LogError("Cubemap texture sizes do not match");
+            break;
+        }
 
-        cubemap->UploadPixels(pixels.data() + headerSize, i, header.InternalFormat, header.Format, pixels.size() * sizeof(char) - headerSize, true);
-        pixels.clear();
+        for (int j = 0; j < header.MipCount; ++j)
+        {
+            auto pixels = reader.GetPixels(j);
+            cubemap->UploadPixels(pixels.data(), GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, header.InternalFormat, header.Format, GL_UNSIGNED_BYTE, pixels.size(), j, header.IsCompressed);
+        }
     }
 
     return cubemap;
-}
-
-void Cubemap::Init()
-{
-    CHECK_GL(glGenTextures(1, &m_Texture));
-    CHECK_GL(glGenSamplers(1, &m_Sampler));
-    CHECK_GL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Texture));
-    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_S, GL_REPEAT));
-    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_T, GL_REPEAT));
-    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_WRAP_R, GL_REPEAT));
-    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-    CHECK_GL(glSamplerParameteri(m_Sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-    CHECK_GL(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
-}
-
-void Cubemap::UploadPixels(void *_pixels, int side, int _internalFormat, int _format, int _size, bool _compressed)
-{
-    CHECK_GL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Texture));
-    if (_compressed)
-    {
-        CHECK_GL(glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + side, 0, _internalFormat, m_Width, m_Height, 0, _size, _pixels)); // NOLINT(cppcoreguidelines-narrowing-conversions)
-    }
-    else
-    {
-        CHECK_GL(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + side, 0, _internalFormat, m_Width, m_Height, 0, _format, GL_UNSIGNED_BYTE, _pixels));
-    }
-    CHECK_GL(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
-}
-
-void Cubemap::Bind(int _unit) const
-{
-    CHECK_GL(glActiveTexture(GL_TEXTURE0 + _unit));
-    CHECK_GL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_Texture));
-    CHECK_GL(glBindSampler(_unit, m_Sampler));
-}
-
-void Cubemap::Attach(int _attachment) const
-{
-    Debug::LogError("Attaching cubemap is not supported");
 }
 
 std::shared_ptr<Cubemap> &Cubemap::White()
 {
     static std::shared_ptr<Cubemap> white;
 
-    if (white != nullptr)
-        return white;
-
-    white           = std::shared_ptr<Cubemap>(new Cubemap());
-    white->m_Width  = 1;
-    white->m_Height = 1;
-    white->Init();
-
-    unsigned char pixels[3] = {255, 255, 255};
-    for (int i = 0; i < SIDES_COUNT; ++i)
+    if (white == nullptr)
     {
-        white->UploadPixels(&pixels[0], i, GL_SRGB, GL_RGB, 0, false);
+        unsigned char pixels[3] = {255, 255, 255};
+        white = CreateDefaultCubemap(&pixels[0]);
     }
 
     return white;
@@ -102,19 +71,21 @@ std::shared_ptr<Cubemap> &Cubemap::Black()
 {
     static std::shared_ptr<Cubemap> black;
 
-    if (black != nullptr)
-        return black;
-
-    black           = std::shared_ptr<Cubemap>(new Cubemap());
-    black->m_Width  = 1;
-    black->m_Height = 1;
-    black->Init();
-
-    unsigned char pixels[3] = {0, 0, 0};
-    for (int i = 0; i < SIDES_COUNT; ++i)
+    if (black == nullptr)
     {
-        black->UploadPixels(&pixels[0], i, GL_SRGB, GL_RGB, 0, false);
+        unsigned char pixels[3] = {0, 0, 0};
+        black = CreateDefaultCubemap(&pixels[0]);
     }
 
     return black;
+}
+
+std::shared_ptr<Cubemap> Cubemap::CreateDefaultCubemap(unsigned char *pixels)
+{
+    auto white = std::shared_ptr<Cubemap>(new Cubemap(1, 1, 1));
+    for (int i = 0; i < SIDES_COUNT; ++i)
+    {
+        white->UploadPixels(pixels, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, 0, 0, false);
+    }
+    return white;
 }

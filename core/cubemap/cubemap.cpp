@@ -1,7 +1,7 @@
 #include "cubemap.h"
 #include "debug.h"
-#include "texture/texture_header.h"
-#include "utils.h"
+#include "texture_binary_reader.h"
+
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
@@ -21,21 +21,19 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &_xPositivePa
                                        const std::filesystem::path &_zPositivePath,
                                        const std::filesystem::path &_zNegativePath)
 {
-    static constexpr unsigned int headerSize = sizeof(TextureHeader);
-
     std::shared_ptr<Cubemap> cubemap = nullptr;
 
     std::filesystem::path paths[SIDES_COUNT] {_xPositivePath, _xNegativePath, _yPositivePath, _yNegativePath, _zPositivePath, _zNegativePath};
-    std::vector<char> pixels;
 
+    TextureBinaryReader reader;
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        if (!Utils::ReadFileBytes(Utils::GetExecutableDirectory() / paths[i], pixels))
+        if (!reader.ReadTexture(paths[i]))
         {
             break;
         }
 
-        TextureHeader header = *reinterpret_cast<TextureHeader*>(pixels.data());
+        const auto &header = reader.GetHeader();
         if (i == 0)
         {
             cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.Width, header.Height, header.MipCount));
@@ -46,16 +44,11 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &_xPositivePa
             break;
         }
 
-        auto *sizes = reinterpret_cast<unsigned int*>(&pixels[0] + sizeof(header));
-
-        unsigned int offset = headerSize + header.MipCount * sizeof(int);
         for (int j = 0; j < header.MipCount; ++j)
         {
-            cubemap->UploadPixels(pixels.data() + offset, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, header.InternalFormat, header.Format, GL_UNSIGNED_BYTE, sizes[j], j, header.IsCompressed);
-            offset += sizes[j];
+            auto pixels = reader.GetPixels(j);
+            cubemap->UploadPixels(pixels.data(), GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, header.InternalFormat, header.Format, GL_UNSIGNED_BYTE, pixels.size(), j, header.IsCompressed);
         }
-
-        pixels.clear();
     }
 
     return cubemap;

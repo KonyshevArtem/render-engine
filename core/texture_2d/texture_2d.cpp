@@ -1,6 +1,6 @@
 #include "texture_2d.h"
-#include "texture/texture_header.h"
-#include "utils.h"
+#include "texture_binary_reader.h"
+
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
 #elif OPENGL_STUDY_MACOS
@@ -25,23 +25,19 @@ std::shared_ptr<Texture2D> Texture2D::CreateShadowMap(int _width, int _height)
 
 std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path)
 {
-    static constexpr int headerSize = sizeof(TextureHeader);
-
-    std::vector<char> pixels;
-    if (!Utils::ReadFileBytes(Utils::GetExecutableDirectory() / _path, pixels))
+    TextureBinaryReader reader;
+    if (!reader.ReadTexture(_path))
     {
         return nullptr;
     }
 
-    TextureHeader header = *reinterpret_cast<TextureHeader*>(pixels.data());
-    auto *sizes = reinterpret_cast<unsigned int*>(&pixels[0] + sizeof(header));
+    const auto &header = reader.GetHeader();
 
     auto t = std::shared_ptr<Texture2D>(new Texture2D(header.Width, header.Height, header.MipCount));
-    unsigned int offset = headerSize + header.MipCount * sizeof(int);
     for (int j = 0; j < header.MipCount; ++j)
     {
-        t->UploadPixels(pixels.data() + offset, GL_TEXTURE_2D, header.InternalFormat, header.Format, GL_UNSIGNED_BYTE, sizes[j], j, header.IsCompressed);
-        offset += sizes[j];
+        auto pixels = reader.GetPixels(j);
+        t->UploadPixels(pixels.data(), GL_TEXTURE_2D, header.InternalFormat, header.Format, GL_UNSIGNED_BYTE, pixels.size(), j, header.IsCompressed);
     }
 
     return t;

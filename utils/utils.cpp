@@ -62,7 +62,7 @@ namespace Utils
         return file;
     }
 
-    bool ReadFileBytes(const std::filesystem::path &_relativePath, std::vector<char> &bytes)
+    bool ReadFileBytes(const std::filesystem::path &_relativePath, std::vector<uint8_t> &bytes)
     {
         std::ifstream input(_relativePath.string(), std::ios::in | std::ios::binary);
         if (!input.is_open() || input.bad())

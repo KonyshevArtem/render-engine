@@ -102,7 +102,7 @@ void TestScene::Init()
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
     m_WaterMaterial->SetTexture("_NormalMap", waterNormal);
     m_WaterMaterial->SetTexture("_ReflectionCube", Skybox);
-    m_WaterMaterial->SetFloat("_ReflectionStrength", 0.3f);
+    m_WaterMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels()));
     m_WaterMaterial->SetFloat("_Roughness", 0.1f);
     m_WaterMaterial->SetFloat("_Metallness", 0.2f);
     m_WaterMaterial->SetFloat("_NormalIntensity", 3);
@@ -117,7 +117,8 @@ void TestScene::Init()
     carMaterial->SetTexture("_Albedo", carAlbedo);
     carMaterial->SetTexture("_NormalMap", carNormal);
     carMaterial->SetTexture("_Data", carData);
-    //carMaterial->SetTexture("_ReflectionCube", Skybox);
+    carMaterial->SetTexture("_ReflectionCube", Skybox);
+    carMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels()));
     carMaterial->SetFloat("_NormalIntensity", 1);
 
     auto sphereMaterial = std::make_shared<Material>(standardInstancingShader);

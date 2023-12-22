@@ -1,14 +1,13 @@
 #include "pbr_demo.h"
 #include "camera/camera.h"
 #include "fbx_asset/fbx_asset.h"
-#include "gameObject/gameObject.h"
 #include "input/input.h"
 #include "light/light.h"
 #include "material/material.h"
 #include "renderer/mesh_renderer.h"
 #include "shader/shader.h"
-#include "test_scene.h"
 #include "time/time.h"
+#include "cubemap/cubemap.h"
 #include <memory>
 
 void PBRDemo::Load()
@@ -32,14 +31,24 @@ void PBRDemo::Init()
     //init shader
     auto shader = Shader::Load("resources/shaders/standard/standard.shader", {"_SPECULAR", "_REFLECTION", "_NORMAL_MAP"});
 
+    //init skybox
+    Skybox = Cubemap::Load("resources/textures/skybox/x_positive",
+                           "resources/textures/skybox/x_negative",
+                           "resources/textures/skybox/y_positive",
+                           "resources/textures/skybox/y_negative",
+                           "resources/textures/skybox/z_positive",
+                           "resources/textures/skybox/z_negative");
+
     for (float i = 0; i < 6; ++i)
     {
         for (float j = 0; j < 6; ++j)
         {
             //init material
             auto material = std::make_shared<Material>(shader);
-            material->SetFloat("_Smoothness", j / 5);
+            material->SetFloat("_Roughness", 1 - j / 5);
             material->SetFloat("_Metallness", i / 5);
+            material->SetTexture("_ReflectionCube", Skybox);
+            material->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels()));
 
             //init gameObject
             auto sphere      = GameObject::Create("Sphere");

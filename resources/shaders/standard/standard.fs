@@ -26,7 +26,7 @@ uniform float _NormalIntensity;
 
 #ifdef _REFLECTION
 uniform samplerCube _ReflectionCube;
-uniform float _ReflectionStrength;
+uniform float _ReflectionCubeLevels;
 #endif
 
 #include "../common/camera_data.cg"
@@ -55,7 +55,6 @@ void main(){
 
     vec4 albedo = texture(_Albedo, vars.UV * _Albedo_ST.zw + _Albedo_ST.xy);
 
-    LightData lightData = getLightPBR(vars.PositionWS.xyz, normalWS, albedo.rgb, roughness, metallness);
-
-    outColor = vec4(albedo.rgb * lightData.Diffuse + lightData.Specular, albedo.a);
+    vec3 finalColor = getLightPBR(vars.PositionWS.xyz, normalWS, albedo.rgb, roughness, metallness);
+    outColor = vec4(finalColor, albedo.a);
 }

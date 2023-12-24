@@ -32,12 +32,7 @@ void PBRDemo::Init()
     auto shader = Shader::Load("resources/shaders/standard/standard.shader", {"_SPECULAR", "_REFLECTION", "_NORMAL_MAP"});
 
     //init skybox
-    Skybox = Cubemap::Load("resources/textures/skybox/x_positive",
-                           "resources/textures/skybox/x_negative",
-                           "resources/textures/skybox/y_positive",
-                           "resources/textures/skybox/y_negative",
-                           "resources/textures/skybox/z_positive",
-                           "resources/textures/skybox/z_negative");
+    Skybox = Cubemap::Load("resources/textures/skybox/skybox");
 
     for (float i = 0; i < 6; ++i)
     {
@@ -48,7 +43,7 @@ void PBRDemo::Init()
             material->SetFloat("_Roughness", 1 - j / 5);
             material->SetFloat("_Metallness", i / 5);
             material->SetTexture("_ReflectionCube", Skybox);
-            material->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels()));
+            material->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
 
             //init gameObject
             auto sphere      = GameObject::Create("Sphere");

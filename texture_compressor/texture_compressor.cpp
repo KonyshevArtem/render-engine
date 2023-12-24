@@ -7,20 +7,29 @@
 #include "game_window.h"
 #include "debug.h"
 
-std::string texturePath;
+int textureType;
+std::vector<std::string> texturePaths;
 GLuint internalFormat;
 int colorType;
 bool generateMips;
 
 void Render()
 {
-    TextureCompressorBackend::CompressTexture(texturePath, colorType, internalFormat, generateMips);
+    TextureCompressorBackend::CompressTexture(texturePaths, textureType, colorType,
+                                              internalFormat, generateMips);
     exit(0);
 }
 
 void PrintHelp()
 {
-    std::cout << "Parameters: <texture path STRING> <input color type INT> <compressed format INT> <generate mipmaps BOOL>\n";
+    std::cout << "Parameters: <texture type INT> <input color type INT> <compressed format INT> "
+                 "<generate mipmaps BOOL> <texture paths STRING>\n";
+
+    std::cout << "\nAvailable texture types:\n";
+    for (const auto &typeInfo: TextureCompressorFormats::GetTextureTypesInfo())
+    {
+        std::cout << "\t" << typeInfo.Name << " - " << typeInfo.TypeGL << "\n";
+    }
 
     std::cout << "\nAvailable input color types:\n";
     for (const auto &pair: TextureCompressorFormats::GetInputFormats())
@@ -39,7 +48,7 @@ void PrintHelp()
 
 int main(int __argc, char **__argv)
 {
-    if (__argc < 5)
+    if (__argc < 6)
     {
         PrintHelp();
         return 0;
@@ -49,10 +58,15 @@ int main(int __argc, char **__argv)
 
     GameWindow window(0, 0, nullptr, Render, nullptr, nullptr);
 
-    texturePath = std::string(__argv[1]);
+    textureType = std::stoi(__argv[1]);
     colorType = std::stoi(__argv[2]);
     internalFormat = std::stoi(__argv[3]);
     generateMips = std::stoi(__argv[4]) == 1;
+
+    for (int i = 5; i < __argc; ++i)
+    {
+        texturePaths.emplace_back(__argv[i]);
+    }
 
     glutMainLoop();
 

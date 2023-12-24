@@ -60,12 +60,7 @@ void TestScene::Init()
 #endif
 
     // init skybox cubemap
-    Skybox = Cubemap::Load("resources/textures/skybox/x_positive",
-                           "resources/textures/skybox/x_negative",
-                           "resources/textures/skybox/y_positive",
-                           "resources/textures/skybox/y_negative",
-                           "resources/textures/skybox/z_positive",
-                           "resources/textures/skybox/z_negative");
+    Skybox = Cubemap::Load("resources/textures/skybox/skybox");
 
     // init shaders
     auto standardOpaqueShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
@@ -102,7 +97,7 @@ void TestScene::Init()
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
     m_WaterMaterial->SetTexture("_NormalMap", waterNormal);
     m_WaterMaterial->SetTexture("_ReflectionCube", Skybox);
-    m_WaterMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels()));
+    m_WaterMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
     m_WaterMaterial->SetFloat("_Roughness", 0.1f);
     m_WaterMaterial->SetFloat("_Metallness", 0.2f);
     m_WaterMaterial->SetFloat("_NormalIntensity", 3);
@@ -118,7 +113,7 @@ void TestScene::Init()
     carMaterial->SetTexture("_NormalMap", carNormal);
     carMaterial->SetTexture("_Data", carData);
     carMaterial->SetTexture("_ReflectionCube", Skybox);
-    carMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels()));
+    carMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
     carMaterial->SetFloat("_NormalIntensity", 1);
 
     auto sphereMaterial = std::make_shared<Material>(standardInstancingShader);
@@ -278,8 +273,7 @@ void TestScene::UpdateInternal()
         m_RotatingCylinder2.lock()->SetLocalRotation(CalcRotation(phase, 1));
 
     // animateWater
-    float   offset = Math::Lerp(0, 1, phase);
-    Vector4 st     = Vector4(offset, offset, 3, 3);
+    float offset = Math::Lerp(0, 1, phase);
     m_WaterMaterial->SetVector("_Albedo_ST", Vector4(offset, offset, 3, 3));
     m_WaterMaterial->SetVector("_NormalMap_ST", Vector4(offset, offset, 3, 3));
 

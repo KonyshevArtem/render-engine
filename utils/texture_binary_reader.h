@@ -15,7 +15,7 @@ public:
     TextureBinaryReader() = default;
 
     bool ReadTexture(const std::filesystem::path &path);
-    std::span<uint8_t> GetPixels(unsigned int mipLevel) const;
+    std::span<uint8_t> GetPixels(unsigned int slice, unsigned int mipLevel) const;
 
     const TextureHeader &GetHeader() const
     {
@@ -28,7 +28,7 @@ private:
     std::span<uint8_t> m_Pixels;
     TextureHeader m_Header{};
 
-    uint32_t GetMipsSize(unsigned int mipLevels) const;
+    uint32_t GetMipsSize(unsigned int slices, unsigned int mipLevels) const;
 };
 
 

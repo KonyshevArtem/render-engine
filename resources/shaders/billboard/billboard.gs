@@ -8,8 +8,10 @@ uniform vec2 _Size;
 out vec2 uv;
 
 void main(){
+    vec3 cameraFwdProjected = normalize(vec3(_CameraFwdWS.x, 0, _CameraFwdWS.z));
+
     vec3 up = vec3(0, 1, 0);
-    vec3 right = cross(_CameraFwdWS, up);
+    vec3 right = cross(cameraFwdProjected, up);
 
     up *= _Size.y;
     right *= _Size.x;

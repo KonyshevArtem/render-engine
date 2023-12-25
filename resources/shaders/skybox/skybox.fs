@@ -4,5 +4,5 @@ in vec3 CubemapUV;
 out vec4 outColor;
 
 void main(){
-    outColor = texture(_Skybox, CubemapUV);
+    outColor = textureLod(_Skybox, CubemapUV, 0);
 }

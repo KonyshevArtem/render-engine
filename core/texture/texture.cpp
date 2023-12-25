@@ -11,7 +11,8 @@ Texture::Texture(unsigned int target, unsigned int width, unsigned int height, u
         m_Target(target),
         m_Width(width),
         m_Height(height),
-        m_Depth(depth)
+        m_Depth(depth),
+        m_MipLevels(mipLevels)
 {
     CHECK_GL(glGenTextures(1, &m_Texture));
     CHECK_GL(glGenSamplers(1, &m_Sampler));

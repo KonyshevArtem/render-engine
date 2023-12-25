@@ -24,6 +24,11 @@ public:
         return m_Height;
     }
 
+    inline unsigned int GetMipLevels() const
+    {
+        return m_MipLevels;
+    }
+
     Texture(const Texture &) = delete;
     Texture(Texture &&) = delete;
 
@@ -45,6 +50,7 @@ private:
     unsigned int m_Texture = 0;
     unsigned int m_Sampler = 0;
     unsigned int m_Target  = 0;
+    unsigned int m_MipLevels = 0;
 };
 
 #endif //OPENGL_STUDY_TEXTURE_H

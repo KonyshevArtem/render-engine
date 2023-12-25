@@ -11,10 +11,8 @@
 #include "passes/skybox_pass.h"
 #include "render_settings.h"
 #include "renderer/renderer.h"
-#include "shader/shader.h"
 #include "texture/texture.h"
 #include "uniform_block.h"
-#include "vector4/vector4.h"
 #include <boost/functional/hash/hash.hpp>
 #ifdef OPENGL_STUDY_WINDOWS
 #include <GL/glew.h>
@@ -45,7 +43,7 @@ namespace Graphics
 
     std::unique_ptr<ShadowCasterPass> shadowCasterPass;
     std::unique_ptr<RenderPass>       opaqueRenderPass;
-    std::unique_ptr<RenderPass>       tranparentRenderPass;
+    std::unique_ptr<RenderPass>       transparentRenderPass;
     std::unique_ptr<SkyboxPass>       skyboxPass;
 
 #if OPENGL_STUDY_EDITOR
@@ -63,20 +61,20 @@ namespace Graphics
 
     void InitCulling()
     {
-        CHECK_GL(glFrontFace(GL_CW));
+        CHECK_GL(glFrontFace(GL_CW))
     }
 
     void InitDepth()
     {
-        CHECK_GL(glEnable(GL_DEPTH_TEST));
-        CHECK_GL(glDepthMask(GL_TRUE));
-        CHECK_GL(glDepthRange(0, 1));
+        CHECK_GL(glEnable(GL_DEPTH_TEST))
+        CHECK_GL(glDepthMask(GL_TRUE))
+        CHECK_GL(glDepthRange(0, 1))
     }
 
     void InitFramebuffer()
     {
-        CHECK_GL(glEnable(GL_FRAMEBUFFER_SRGB));
-        CHECK_GL(glGenFramebuffers(1, &framebuffer));
+        CHECK_GL(glEnable(GL_FRAMEBUFFER_SRGB))
+        CHECK_GL(glGenFramebuffers(1, &framebuffer))
     }
 
     void InitUniformBlocks()
@@ -94,7 +92,7 @@ namespace Graphics
     void InitPasses()
     {
         opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, "Forward");
-        tranparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallInfo::Sorting::BACK_TO_FRONT, DrawCallInfo::Filter::Transparent(), 0, "Forward");
+        transparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallInfo::Sorting::BACK_TO_FRONT, DrawCallInfo::Filter::Transparent(), 0, "Forward");
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
 
@@ -106,10 +104,15 @@ namespace Graphics
 
     void InitInstancing()
     {
-        CHECK_GL(glGenBuffers(1, &instancingMatricesBuffer));
-        CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer));
-        CHECK_GL(glBufferData(GL_ARRAY_BUFFER, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, nullptr, GL_STATIC_DRAW));
-        CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+        CHECK_GL(glGenBuffers(1, &instancingMatricesBuffer))
+        CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer))
+        CHECK_GL(glBufferData(GL_ARRAY_BUFFER, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, nullptr, GL_STATIC_DRAW))
+        CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
+    }
+
+    void InitSeamlessCubemap()
+    {
+        CHECK_GL(glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS))
     }
 
     void Init()
@@ -130,12 +133,13 @@ namespace Graphics
         InitUniformBlocks();
         InitPasses();
         InitInstancing();
+        InitSeamlessCubemap();
     }
 
     void Shutdown()
     {
-        CHECK_GL(glDeleteBuffers(1, &instancingMatricesBuffer));
-        CHECK_GL(glDeleteFramebuffers(1, &framebuffer));
+        CHECK_GL(glDeleteBuffers(1, &instancingMatricesBuffer))
+        CHECK_GL(glDeleteFramebuffers(1, &framebuffer))
     }
 
     void SetLightingData(const Vector3 &_ambient, const std::vector<Light *> &_lights)
@@ -241,8 +245,8 @@ namespace Graphics
     {
         auto debugGroup = Debug::DebugGroup("Render Frame");
 
-        CHECK_GL(glClearColor(0, 0, 0, 0));
-        CHECK_GL(glClearDepth(1));
+        CHECK_GL(glClearColor(0, 0, 0, 0))
+        CHECK_GL(glClearDepth(1))
 
         Context ctx;
         ctx.DrawCallInfos = DoCulling(ctx.Renderers);
@@ -252,15 +256,15 @@ namespace Graphics
         if (shadowCasterPass)
             shadowCasterPass->Execute(ctx);
 
-        CHECK_GL(glViewport(0, 0, screenWidth, screenHeight));
+        CHECK_GL(glViewport(0, 0, screenWidth, screenHeight))
         SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix);
 
         if (opaqueRenderPass)
             opaqueRenderPass->Execute(ctx);
         if (skyboxPass)
             skyboxPass->Execute(ctx);
-        if (tranparentRenderPass)
-            tranparentRenderPass->Execute(ctx);
+        if (transparentRenderPass)
+            transparentRenderPass->Execute(ctx);
 
 #if OPENGL_STUDY_EDITOR
         if (fallbackRenderPass)
@@ -328,10 +332,10 @@ namespace Graphics
 
             auto matricesSize        = sizeof(Matrix4x4) * count;
             auto normalsMatrixOffset = sizeof(Matrix4x4) * MAX_INSTANCING_COUNT;
-            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer));
-            CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, matricesSize, matrices.data()));
-            CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, normalsMatrixOffset, matricesSize, modelNormalMatrices.data()));
-            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer))
+            CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, matricesSize, matrices.data()))
+            CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, normalsMatrixOffset, matricesSize, modelNormalMatrices.data()))
+            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
         }
         else
         {
@@ -345,38 +349,38 @@ namespace Graphics
         // make sure VAO is bound before calling this function
         if (_enabled)
         {
-            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer));
+            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer))
 
             // matrix4x4 requires 4 vertex attributes
             for (int i = 0; i < 8; ++i)
             {
-                CHECK_GL(glEnableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i));
-                CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 1));
+                CHECK_GL(glEnableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i))
+                CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 1))
             }
 
             auto vec4Size = sizeof(Vector4);
 
             // model matrix
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 0, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(0)));
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 1, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(1 * vec4Size)));
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 2, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(2 * vec4Size)));
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(3 * vec4Size)));
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 0, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(0)))
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 1, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(1 * vec4Size)))
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 2, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(2 * vec4Size)))
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(3 * vec4Size)))
 
             // normal matrix
             auto offset = sizeof(Matrix4x4) * MAX_INSTANCING_COUNT;
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset)));
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 1 * vec4Size)));
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size)));
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 7, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size)));
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset)))
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 1 * vec4Size)))
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size)))
+            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 7, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size)))
 
-            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
         }
         else
         {
             for (int i = 0; i < 8; ++i)
             {
-                CHECK_GL(glDisableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i));
-                CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 0));
+                CHECK_GL(glDisableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i))
+                CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 0))
             }
         }
     }
@@ -397,7 +401,7 @@ namespace Graphics
 
         for (const auto &info: drawCalls)
         {
-            CHECK_GL(glBindVertexArray(info.Geometry->GetVertexArrayObject()));
+            CHECK_GL(glBindVertexArray(info.Geometry->GetVertexArrayObject()))
 
             FillMatrices(info, instancedMatricesMap);
 
@@ -423,22 +427,22 @@ namespace Graphics
                     auto instanceCount = instancedMatricesMap[info.InstancedIndex].size();
                     if (hasIndexes)
                     {
-                        CHECK_GL(glDrawElementsInstanced(type, count, GL_UNSIGNED_INT, nullptr, instanceCount));
+                        CHECK_GL(glDrawElementsInstanced(type, count, GL_UNSIGNED_INT, nullptr, instanceCount))
                     }
                     else
                     {
-                        CHECK_GL(glDrawArraysInstanced(type, 0, count, instanceCount));
+                        CHECK_GL(glDrawArraysInstanced(type, 0, count, instanceCount))
                     }
                 }
                 else
                 {
                     if (hasIndexes)
                     {
-                        CHECK_GL(glDrawElements(type, count, GL_UNSIGNED_INT, nullptr));
+                        CHECK_GL(glDrawElements(type, count, GL_UNSIGNED_INT, nullptr))
                     }
                     else
                     {
-                        CHECK_GL(glDrawArrays(type, 0, count));
+                        CHECK_GL(glDrawArrays(type, 0, count))
                     }
                 }
             }
@@ -446,7 +450,7 @@ namespace Graphics
             if (info.Instanced())
                 SetInstancingEnabled(false);
 
-            CHECK_GL(glBindVertexArray(0));
+            CHECK_GL(glBindVertexArray(0))
         }
     }
 
@@ -509,24 +513,24 @@ namespace Graphics
     {
         if (!_colorAttachment && !_depthAttachment)
         {
-            CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+            CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
             return;
         }
 
-        CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer));
+        CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer))
 
         if (_colorAttachment)
             _colorAttachment->Attach(GL_COLOR_ATTACHMENT0, colorLevel, colorLayer);
         else
         {
-            CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 0, 0));
+            CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 0, 0))
         }
 
         if (_depthAttachment)
             _depthAttachment->Attach(GL_DEPTH_ATTACHMENT, depthLevel, depthLayer);
         else
         {
-            CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, 0, 0));
+            CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, 0, 0))
         }
     }
 } // namespace Graphics

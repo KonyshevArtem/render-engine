@@ -6,6 +6,7 @@ struct TextureHeader
     public:
         unsigned int Width;
         unsigned int Height;
+        unsigned int Depth;
         int          InternalFormat;
         int          Format;
         int          IsCompressed;

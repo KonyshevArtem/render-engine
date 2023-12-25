@@ -12,6 +12,12 @@
 
 namespace TextureCompressorFormats
 {
+    std::vector<TextureTypeInfo> textureTypesInfo =
+            {
+                    {"Texture 2D", GL_TEXTURE_2D, 1},
+                    {"Cubemap", GL_TEXTURE_CUBE_MAP, 6},
+            };
+
     std::vector<std::pair<int, std::string>> inputFormats =
             {
                     {LCT_RGB,        "RGB"},
@@ -97,6 +103,26 @@ namespace TextureCompressorFormats
         }
 
         return "Unknown";
+    }
+
+    const TextureTypeInfo &GetTextureTypeInfo(int textureType)
+    {
+        const static TextureTypeInfo invalid{.Count = -1};
+
+        for (const auto &typeInfo: textureTypesInfo)
+        {
+            if (typeInfo.TypeGL == textureType)
+            {
+                return typeInfo;
+            }
+        }
+
+        return invalid;
+    }
+
+    const std::vector<TextureTypeInfo> &GetTextureTypesInfo()
+    {
+        return textureTypesInfo;
     }
 
     const std::vector<std::pair<int, std::string>> &GetInputFormats()

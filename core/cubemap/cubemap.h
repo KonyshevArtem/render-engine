@@ -7,12 +7,7 @@
 class Cubemap: public Texture
 {
 public:
-    static std::shared_ptr<Cubemap> Load(const std::filesystem::path &_xPositivePath,
-                                         const std::filesystem::path &_xNegativePath,
-                                         const std::filesystem::path &_yPositivePath,
-                                         const std::filesystem::path &_yNegativePath,
-                                         const std::filesystem::path &_zPositivePath,
-                                         const std::filesystem::path &_zNegativePath);
+    static std::shared_ptr<Cubemap> Load(const std::filesystem::path &path);
 
     static std::shared_ptr<Cubemap> &White();
     static std::shared_ptr<Cubemap> &Black();

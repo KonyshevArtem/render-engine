@@ -14,39 +14,27 @@ Cubemap::Cubemap(unsigned int width, unsigned int height, unsigned int mipLevels
 {
 }
 
-std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &_xPositivePath,
-                                       const std::filesystem::path &_xNegativePath,
-                                       const std::filesystem::path &_yPositivePath,
-                                       const std::filesystem::path &_yNegativePath,
-                                       const std::filesystem::path &_zPositivePath,
-                                       const std::filesystem::path &_zNegativePath)
+std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &path)
 {
-    std::shared_ptr<Cubemap> cubemap = nullptr;
-
-    std::filesystem::path paths[SIDES_COUNT] {_xPositivePath, _xNegativePath, _yPositivePath, _yNegativePath, _zPositivePath, _zNegativePath};
-
     TextureBinaryReader reader;
+    if (!reader.ReadTexture(path))
+    {
+        return nullptr;
+    }
+
+    const auto &header = reader.GetHeader();
+    if (header.Depth != SIDES_COUNT)
+    {
+        Debug::LogErrorFormat("Number of slices in texture file is not %1%", {std::to_string(SIDES_COUNT)});
+        return nullptr;
+    }
+
+    std::shared_ptr<Cubemap> cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.Width, header.Height, header.MipCount));
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        if (!reader.ReadTexture(paths[i]))
-        {
-            break;
-        }
-
-        const auto &header = reader.GetHeader();
-        if (i == 0)
-        {
-            cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.Width, header.Height, header.MipCount));
-        }
-        else if (header.Width != cubemap->GetWidth() || header.Height != cubemap->GetHeight())
-        {
-            Debug::LogError("Cubemap texture sizes do not match");
-            break;
-        }
-
         for (int j = 0; j < header.MipCount; ++j)
         {
-            auto pixels = reader.GetPixels(j);
+            auto pixels = reader.GetPixels(i, j);
             cubemap->UploadPixels(pixels.data(), GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, header.InternalFormat, header.Format, GL_UNSIGNED_BYTE, pixels.size(), j, header.IsCompressed);
         }
     }
@@ -82,10 +70,10 @@ std::shared_ptr<Cubemap> &Cubemap::Black()
 
 std::shared_ptr<Cubemap> Cubemap::CreateDefaultCubemap(unsigned char *pixels)
 {
-    auto white = std::shared_ptr<Cubemap>(new Cubemap(1, 1, 1));
+    auto cubemap = std::shared_ptr<Cubemap>(new Cubemap(1, 1, 1));
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        white->UploadPixels(pixels, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, 0, 0, false);
+        cubemap->UploadPixels(pixels, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, 0, 0, false);
     }
-    return white;
+    return cubemap;
 }

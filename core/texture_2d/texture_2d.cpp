@@ -36,7 +36,7 @@ std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path)
     auto t = std::shared_ptr<Texture2D>(new Texture2D(header.Width, header.Height, header.MipCount));
     for (int j = 0; j < header.MipCount; ++j)
     {
-        auto pixels = reader.GetPixels(j);
+        auto pixels = reader.GetPixels(0, j);
         t->UploadPixels(pixels.data(), GL_TEXTURE_2D, header.InternalFormat, header.Format, GL_UNSIGNED_BYTE, pixels.size(), j, header.IsCompressed);
     }
 

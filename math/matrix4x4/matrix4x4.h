@@ -39,6 +39,8 @@ public:
 
     static Matrix4x4 TRS(const Vector3 &_translation, const Quaternion &_rotation, const Vector3 &_scale);
 
+    static Matrix4x4 TBN(const Vector3 &tangent, const Vector3 &bitangent, const Vector3 &normal);
+
     static Matrix4x4 Perspective(float _fov, float _aspect, float _nearZ, float _farZ);
 
     static Matrix4x4 Orthographic(float _left, float _right, float _bottom, float _top, float _near, float _far);

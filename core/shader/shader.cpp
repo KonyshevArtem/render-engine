@@ -94,17 +94,26 @@ Shader::~Shader()
 
 void Shader::Use(int _passIndex) const
 {
+    static const Shader* shaderInUse = nullptr;
+    static int passIndexInUse = -1;
+
     if (_passIndex < 0 || _passIndex >= m_Passes.size())
         throw std::out_of_range("[Shader] Pass Index out of range");
 
     m_CurrentPass = &m_Passes.at(_passIndex);
 
-    CHECK_GL(glUseProgram(m_CurrentPass->Program));
+    if (shaderInUse != this || _passIndex != passIndexInUse)
+    {
+        shaderInUse = this;
+        passIndexInUse = _passIndex;
 
-    SetBlendInfo(m_CurrentPass->BlendInfo);
-    SetCullInfo(m_CurrentPass->CullInfo);
-    SetDepthInfo(m_CurrentPass->DepthInfo);
-    SetDefaultValues(m_CurrentPass->Uniforms);
+        CHECK_GL(glUseProgram(m_CurrentPass->Program));
+
+        SetBlendInfo(m_CurrentPass->BlendInfo);
+        SetCullInfo(m_CurrentPass->CullInfo);
+        SetDepthInfo(m_CurrentPass->DepthInfo);
+        SetDefaultValues(m_CurrentPass->Uniforms);
+    }
 
     SetPropertyBlock(m_PropertyBlock);
 }

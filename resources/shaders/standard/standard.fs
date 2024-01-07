@@ -51,8 +51,6 @@ void main(){
     float roughness = _Roughness;
     #endif
 
-    //vec3 reflection = sampleReflection(normalWS, vars.PositionWS.xyz, vars.UV);
-
     vec4 albedo = texture(_Albedo, vars.UV * _Albedo_ST.zw + _Albedo_ST.xy);
 
     vec3 finalColor = getLightPBR(vars.PositionWS.xyz, normalWS, albedo.rgb, roughness, metallness);

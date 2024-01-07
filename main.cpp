@@ -8,6 +8,7 @@
 #include "input/input.h"
 #include "scenes/test_scene.h"
 #include "scenes/pbr_demo.h"
+#include "scenes/shadows_demo.h"
 //#include "editor_gui/editor_window.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 
@@ -46,6 +47,7 @@ int main(int __argc, char **__argv)
 
     TestScene::Load();
     //PBRDemo::Load();
+    //ShadowsDemo::Load();
 
     glutMainLoop();
 

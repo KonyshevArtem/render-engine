@@ -10,6 +10,8 @@ set(
     scenes/test_scene.h
     scenes/pbr_demo.cpp
     scenes/pbr_demo.h
+    scenes/shadows_demo.cpp
+    scenes/shadows_demo.h
     scripts/camera_fly_controller/camera_fly_controller.cpp
 	scripts/camera_fly_controller/camera_fly_controller.h
 )

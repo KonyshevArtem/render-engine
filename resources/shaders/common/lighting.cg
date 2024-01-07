@@ -224,7 +224,9 @@ vec3 getLightPBR(vec3 posWS, vec3 normalWS, vec3 albedo, float roughness, float 
         float NdotL = clamp(dot(normalWS, lightDirWS), 0, 1);
         float dist = distance(_PointLights[i].PositionWS, posWS);
         float attenuationTerm = 1 / (1 + _PointLights[i].Attenuation * dist * dist);
-        vec3 radiance = _PointLights[i].Intensity * NdotL * attenuationTerm;
+
+        float shadowTerm = getPointLightShadowTerm(i, posWS, NdotL);
+        vec3 radiance = _PointLights[i].Intensity * NdotL * attenuationTerm * shadowTerm;
 
         getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness, diffuse, specular);
         directLighting += (albedo * diffuse + specular) * radiance;

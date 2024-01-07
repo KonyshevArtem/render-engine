@@ -386,6 +386,8 @@ namespace Graphics
 
     void Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings)
     {
+        static GLuint currentBoundVAO = -1;
+
         // filter draw calls
         std::vector<DrawCallInfo> drawCalls;
         drawCalls.reserve(_drawCallInfos.size());
@@ -400,7 +402,12 @@ namespace Graphics
 
         for (const auto &info: drawCalls)
         {
-            CHECK_GL(glBindVertexArray(info.Geometry->GetVertexArrayObject()))
+            auto vao = info.Geometry->GetVertexArrayObject();
+            if (vao != currentBoundVAO)
+            {
+                currentBoundVAO = vao;
+                CHECK_GL(glBindVertexArray(vao))
+            }
 
             FillMatrices(info, instancedMatricesMap);
 
@@ -448,8 +455,6 @@ namespace Graphics
 
             if (info.Instanced())
                 SetInstancingEnabled(false);
-
-            CHECK_GL(glBindVertexArray(0))
         }
     }
 

@@ -63,6 +63,21 @@ Matrix4x4 Matrix4x4::TRS(const Vector3 &_translation, const Quaternion &_rotatio
     return Translation(_translation) * Rotation(_rotation) * Scale(_scale);
 }
 
+Matrix4x4 Matrix4x4::TBN(const Vector3 &tangent, const Vector3 &bitangent, const Vector3 &normal)
+{
+    Matrix4x4 m = Matrix4x4::Identity();
+    m.m00 = tangent.x;
+    m.m10 = tangent.y;
+    m.m20 = tangent.z;
+    m.m01 = bitangent.x;
+    m.m11 = bitangent.y;
+    m.m21 = bitangent.z;
+    m.m02 = normal.x;
+    m.m12 = normal.y;
+    m.m22 = normal.z;
+    return m;
+}
+
 float Matrix4x4::GetElement(int _column, int _row) const
 {
     const auto *floatPtr = reinterpret_cast<const float *>(this);
@@ -179,7 +194,7 @@ Matrix4x4 Matrix4x4::Transpose() const
 
 Matrix4x4 Matrix4x4::Perspective(float _fov, float _aspect, float _nearZ, float _farZ)
 {
-    auto top    = _nearZ * (static_cast<float>(M_PI) / 180 * _fov / 2);
+    auto top    = _nearZ * std::tan(static_cast<float>(M_PI) / 180 * _fov / 2);
     auto bottom = -top;
     auto right  = _aspect * top;
     auto left   = -right;

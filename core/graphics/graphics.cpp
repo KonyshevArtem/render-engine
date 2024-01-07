@@ -33,7 +33,6 @@ namespace Graphics
         }
     };
 
-    constexpr int MAX_POINT_LIGHT_SOURCES       = 3;
     constexpr int MAX_INSTANCING_COUNT          = 256;
     constexpr int INSTANCING_BASE_VERTEX_ATTRIB = 4;
 
@@ -93,7 +92,7 @@ namespace Graphics
     {
         opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, "Forward");
         transparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallInfo::Sorting::BACK_TO_FRONT, DrawCallInfo::Filter::Transparent(), 0, "Forward");
-        shadowCasterPass     = std::make_unique<ShadowCasterPass>(MAX_SPOT_LIGHT_SOURCES, shadowsDataBlock);
+        shadowCasterPass     = std::make_unique<ShadowCasterPass>(shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
 
 #if OPENGL_STUDY_EDITOR
@@ -256,7 +255,7 @@ namespace Graphics
         if (shadowCasterPass)
             shadowCasterPass->Execute(ctx);
 
-        CHECK_GL(glViewport(0, 0, screenWidth, screenHeight))
+        SetViewport({0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight)});
         SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix);
 
         if (opaqueRenderPass)
@@ -532,5 +531,10 @@ namespace Graphics
         {
             CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, 0, 0))
         }
+    }
+
+    void SetViewport(const Vector4 &viewport)
+    {
+        CHECK_GL(glViewport(viewport.x, viewport.y, viewport.z, viewport.w))
     }
 } // namespace Graphics

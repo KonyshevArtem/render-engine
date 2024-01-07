@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+struct Vector4;
 struct Matrix4x4;
 struct DrawCallInfo;
 struct RenderSettings;
@@ -14,6 +15,7 @@ class Texture;
 namespace Graphics
 {
     constexpr int MAX_SPOT_LIGHT_SOURCES = 3;
+    constexpr int MAX_POINT_LIGHT_SOURCES = 3;
 
     void                      Init();
     void                      Shutdown();
@@ -27,6 +29,7 @@ namespace Graphics
     int                       GetScreenHeight();
     void                      SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, int colorLevel, int colorLayer,
                                                const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer);
+    void                      SetViewport(const Vector4& viewport);
 }; // namespace Graphics
 
 #endif //OPENGL_STUDY_GRAPHICS_H

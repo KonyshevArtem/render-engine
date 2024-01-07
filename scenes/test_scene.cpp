@@ -34,7 +34,7 @@ void TestScene::Load()
 void TestScene::Init()
 {
     // init camera
-    Camera::Init(120, 0.5f, 100, 100);
+    Camera::Init(75, 0.5f, 100, 100);
 
     // init textures
     auto brickTexture  = Texture2D::Load("resources/textures/brick");

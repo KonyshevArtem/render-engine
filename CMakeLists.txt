@@ -16,30 +16,17 @@ set(
 	scripts/camera_fly_controller/camera_fly_controller.h
 )
 
-add_compile_definitions(OPENGL_MAJOR_VERSION=4)
-
 # windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     add_executable(OpenGL_Study WIN32 ${OPENGL_STUDY_SOURCES})
-    add_compile_definitions(OPENGL_STUDY_WINDOWS _USE_MATH_DEFINES WIN32_LEAN_AND_MEAN OPENGL_MINOR_VERSION=6)
-
-    # glew for windows
-    find_package(GLEW REQUIRED)
-    include_directories(${GLEW_INCLUDE_DIRS})
-    target_link_libraries(OpenGL_Study ${GLEW_LIBRARIES} glu32.lib opengl32.lib)
+    add_compile_definitions(OPENGL_STUDY_WINDOWS _USE_MATH_DEFINES WIN32_LEAN_AND_MEAN)
 
 # macos
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     add_executable(OpenGL_Study ${OPENGL_STUDY_SOURCES})
-    add_compile_definitions(OPENGL_STUDY_MACOS GL_SILENCE_DEPRECATION OPENGL_MINOR_VERSION=1)
-
-    # opengl for macos
-    find_package(OpenGL REQUIRED)
-    find_package(GLUT REQUIRED)
-    include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
-    target_link_libraries(OpenGL_Study ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
+    add_compile_definitions(OPENGL_STUDY_MACOS)
 
 endif()
 
@@ -53,6 +40,9 @@ target_link_libraries(OpenGL_Study Boost::json)
 add_compile_definitions(OPENGL_STUDY_EDITOR)
 
 # source code
+add_subdirectory(graphics_backend)
+add_compile_definitions(${GRAPHICS_BACKEND_DEFINITIONS})
+
 add_subdirectory(external/lodepng)
 add_subdirectory(external/OpenFBX)
 add_subdirectory(external/tga)

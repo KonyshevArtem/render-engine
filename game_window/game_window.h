@@ -17,6 +17,8 @@ public:
 
     virtual ~GameWindow() = default;
 
+    void BeginMainLoop();
+
 protected:
     static void resizeGL(int _width, int _height);
 

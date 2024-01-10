@@ -70,4 +70,4 @@ add_library(
 	drawable_geometry/drawable_geometry.cpp)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math Utils DebugUtil OpenFBX)
+target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend)

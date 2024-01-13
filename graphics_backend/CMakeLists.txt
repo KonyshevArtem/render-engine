@@ -1,9 +1,22 @@
-add_library(GraphicsBackend graphics_backend.cpp graphics_backend.cpp)
+add_library(GraphicsBackend
+        graphics_backend.h
+        graphics_backend_debug.cpp
+        graphics_backend_debug.h
+        graphics_backend_api.cpp
+        graphics_backend_api.h
+        enums/texture_type.h
+        enums/texture_parameter.h
+        enums/texture_target.h
+        enums/texture_level_parameter.h
+        enums/texture_internal_format.h
+        enums/texture_pixel_format.h
+        enums/texture_data_type.h)
 
 # windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     set(MINOR_VERSION 6)
+    set(PLATFORM_DEFINE "GRAPHICS_BACKEND_WINDOWS")
 
     # glew for windows
     find_package(GLEW REQUIRED)
@@ -14,6 +27,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     set(MINOR_VERSION 1)
+    set(PLATFORM_DEFINE "GRAPHICS_BACKEND_MACOS")
 
     # opengl for macos
     find_package(OpenGL REQUIRED)
@@ -22,6 +36,8 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 endif()
 
-set(GRAPHICS_BACKEND_DEFINITIONS GL_SILENCE_DEPRECATION OPENGL_MAJOR_VERSION=4 OPENGL_MINOR_VERSION=${MINOR_VERSION} PARENT_SCOPE)
+target_compile_definitions(GraphicsBackend PUBLIC GL_SILENCE_DEPRECATION ${PLATFORM_DEFINE})
+set(GRAPHICS_BACKEND_DEFINITIONS OPENGL_MAJOR_VERSION=4 OPENGL_MINOR_VERSION=${MINOR_VERSION} PARENT_SCOPE)
 
 target_include_directories(GraphicsBackend PUBLIC .)
+target_link_libraries(GraphicsBackend DebugUtil)

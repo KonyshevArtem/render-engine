@@ -9,6 +9,10 @@
 #include "enums/texture_internal_format.h"
 #include "enums/texture_pixel_format.h"
 #include "enums/texture_data_type.h"
+#include "enums/texture_unit.h"
+#include "enums/framebuffer_attachment.h"
+#include "enums/framebuffer_target.h"
+#include "enums/sampler_parameter.h"
 
 #ifdef OPENGL_STUDY_EDITOR
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \
@@ -25,14 +29,32 @@
 namespace GraphicsBackend
 {
     void GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr);
+    void GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr);
     void DeleteTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr);
+    void DeleteSamplers(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr);
+
     void BindTexture(TextureType type, GraphicsBackendTexture texture);
+    void BindSampler(TextureUnit unit, GraphicsBackendSampler sampler);
+
     void GenerateMipmaps(TextureType type);
+
     void SetTextureParameterInt(TextureType type, TextureParameter parameter, int value);
+    void SetSamplerParameterInt(GraphicsBackendSampler sampler, SamplerParameter parameter, int value);
+    void SetSamplerParameterFloatArray(GraphicsBackendSampler sampler, SamplerParameter parameter, const float* valueArray);
+
     void GetTextureLevelParameterInt(TextureTarget target, GraphicsBackendTextureLevel level, TextureLevelParameter parameter, int* outValues);
-    void TextureImage2D(TextureTarget target, GraphicsBackendTextureLevel level, TextureInternalFormat textureFormat, int width, int height, int border, TexturePixelFormat pixelFormat, TextureDataType dataType, void* pixelsData);
+
+    void TextureImage2D(TextureTarget target, GraphicsBackendTextureLevel level, TextureInternalFormat textureFormat, int width, int height, int border, TexturePixelFormat pixelFormat, TextureDataType dataType, const void* pixelsData);
+    void TextureImage3D(TextureTarget target, GraphicsBackendTextureLevel level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, TexturePixelFormat pixelFormat, TextureDataType dataType, const void* pixelsData);
+    void TextureCompressedImage2D(TextureTarget target, GraphicsBackendTextureLevel level, TextureInternalFormat textureFormat, int width, int height, int border, int imageSize, const void* pixelsData);
+    void TextureCompressedImage3D(TextureTarget target, GraphicsBackendTextureLevel level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, int imageSize, const void* pixelsData);
+
     void GetTextureImage(TextureTarget target, GraphicsBackendTextureLevel level, TexturePixelFormat pixelFormat, TextureDataType dataType, void *outPixels);
     void GetCompressedTextureImage(TextureTarget target, GraphicsBackendTextureLevel level, void* outPixels);
+
+    void SetActiveTextureUnit(TextureUnit unit);
+    void SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, GraphicsBackendTextureLevel level);
+    void SetFramebufferTextureLayer(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, GraphicsBackendTextureLevel level, GraphicsBackendTextureLayer layer);
 
     GraphicsBackendError GetError();
     const char *GetErrorString(GraphicsBackendError error);

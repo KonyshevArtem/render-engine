@@ -6,11 +6,8 @@
 #include "shader_loader/shader_loader.h"
 #include "uniform_info/uniform_info.h"
 #include "vector4/vector4.h"
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
+#include "enums/texture_unit.h"
+
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -51,7 +48,7 @@ public:
         DepthInfo                                    DepthInfo;
         std::unordered_map<std::string, std::string> Tags;
         std::unordered_map<std::string, UniformInfo> Uniforms;
-        std::unordered_map<std::string, int>         TextureUnits;
+        std::unordered_map<std::string, TextureUnit> TextureUnits;
     };
 
 #pragma endregion

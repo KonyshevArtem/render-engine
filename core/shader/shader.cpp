@@ -60,7 +60,7 @@ Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, st
         GLenum              type;
         GLint               size;
         std::vector<GLchar> name(buffSize);
-        int                 textureUnit = 0;
+        int                 textureUnit = static_cast<int>(TextureUnit::TEXTURE0);
 
         for (int i = 0; i < count; ++i)
         {
@@ -75,7 +75,7 @@ Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, st
             if (convertedType == UniformType::UNKNOWN)
                 Debug::LogErrorFormat("[Shader] Init error: Unknown OpenGL type for uniform %1%", {nameStr});
             else if (UniformUtils::IsTexture(convertedType))
-                passInfo.TextureUnits[nameStr] = textureUnit++;
+                passInfo.TextureUnits[nameStr] = static_cast<TextureUnit>(textureUnit++);
 
             passInfo.Uniforms[nameStr] = UniformInfo {convertedType, location, i};
         }
@@ -268,8 +268,9 @@ void Shader::SetTextureUniform(const std::string &_name, const Texture &_texture
         return;
 
     auto unit = m_CurrentPass->TextureUnits.at(_name);
+    auto unitIndex = TextureUnitToIndex(unit);
     _texture.Bind(unit);
-    SetUniform(_name, &unit);
+    SetUniform(_name, &unitIndex);
 
     Vector4 st = Vector4(0, 0, 1, 1);
     SetUniform(_name + "_ST", &st);

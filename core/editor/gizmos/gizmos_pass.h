@@ -1,13 +1,7 @@
 #if OPENGL_STUDY_EDITOR
 
-#ifndef OPENGL_STUDY_GIZMOZ_PASS_H
-#define OPENGL_STUDY_GIZMOZ_PASS_H
-
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
+#ifndef OPENGL_STUDY_GIZMOS_PASS_H
+#define OPENGL_STUDY_GIZMOS_PASS_H
 
 #include <memory>
 
@@ -22,18 +16,17 @@ public:
 
     void Execute(Context &_context);
 
-private:
     GizmosPass(const GizmosPass &) = delete;
     GizmosPass(GizmosPass &&)      = delete;
 
     GizmosPass &operator=(const GizmosPass &) = delete;
     GizmosPass &operator=(GizmosPass &&) = delete;
 
+private:
     void Outline() const;
     void Gizmos() const;
     void CheckTexture(std::shared_ptr<Texture2D> &_texture) const;
 };
 
 #endif
-
 #endif

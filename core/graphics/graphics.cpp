@@ -14,11 +14,6 @@
 #include "texture/texture.h"
 #include "uniform_block.h"
 #include <boost/functional/hash/hash.hpp>
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
 
 namespace Graphics
 {
@@ -524,14 +519,14 @@ namespace Graphics
         CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer))
 
         if (_colorAttachment)
-            _colorAttachment->Attach(GL_COLOR_ATTACHMENT0, colorLevel, colorLayer);
+            _colorAttachment->Attach(FramebufferAttachment::COLOR_ATTACHMENT0, colorLevel, colorLayer);
         else
         {
             CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 0, 0))
         }
 
         if (_depthAttachment)
-            _depthAttachment->Attach(GL_DEPTH_ATTACHMENT, depthLevel, depthLayer);
+            _depthAttachment->Attach(FramebufferAttachment::DEPTH_ATTACHMENT, depthLevel, depthLayer);
         else
         {
             CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, 0, 0))

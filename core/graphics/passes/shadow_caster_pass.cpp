@@ -9,11 +9,6 @@
 #include "texture_2d/texture_2d.h"
 #include "texture_2d_array/texture_2d_array.h"
 #include <utility>
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
 
 ShadowCasterPass::ShadowCasterPass(std::shared_ptr<UniformBlock> shadowsUniformBlock) :
     m_ShadowsUniformBlock(std::move(shadowsUniformBlock)),
@@ -26,13 +21,13 @@ ShadowCasterPass::ShadowCasterPass(std::shared_ptr<UniformBlock> shadowsUniformB
     Shader::SetGlobalTexture("_PointLightShadowMapArray", m_PointLightShadowMap);
 
     m_DirectionLightShadowMap->SetBorderColor({1, 1, 1, 1});
-    m_DirectionLightShadowMap->SetWrapMode(GL_CLAMP_TO_BORDER);
+    m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
 
     m_SpotLightShadowMapArray->SetBorderColor({1, 1, 1, 1});
-    m_SpotLightShadowMapArray->SetWrapMode(GL_CLAMP_TO_BORDER);
+    m_SpotLightShadowMapArray->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
 
     m_PointLightShadowMap->SetBorderColor({1, 1, 1, 1});
-    m_PointLightShadowMap->SetWrapMode(GL_CLAMP_TO_BORDER);
+    m_PointLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
 }
 
 void ShadowCasterPass::Execute(const Context &_ctx)

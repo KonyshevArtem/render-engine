@@ -7,3 +7,4 @@ add_library(
 )
 
 target_include_directories(Utils PUBLIC .)
+target_link_libraries(Utils GraphicsBackend)

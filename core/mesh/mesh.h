@@ -3,11 +3,7 @@
 
 #include "bounds/bounds.h"
 #include "drawable_geometry/drawable_geometry.h"
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
+
 #include <memory>
 #include <vector>
 
@@ -23,13 +19,13 @@ public:
          const std::vector<int>     &_indexes,
          const std::vector<Vector2> &_uvs,
          const std::vector<Vector3> &_tangents);
-    virtual ~Mesh();
+    ~Mesh() override;
 
     Bounds GetBounds() const;
 
-    inline GLenum GetGeometryType() const override
+    inline PrimitiveType GetPrimitiveType() const override
     {
-        return GL_TRIANGLES;
+        return PrimitiveType::TRIANGLES;
     }
 
     inline bool HasIndexes() const override
@@ -37,21 +33,21 @@ public:
         return true;
     }
 
-    inline GLsizei GetElementsCount() const override
+    inline int GetElementsCount() const override
     {
         return m_IndicesCount;
     }
 
     static const std::shared_ptr<Mesh> &GetFullscreenMesh();
 
-private:
     Mesh(const Mesh &) = delete;
     Mesh(Mesh &&)      = delete;
 
     Mesh &operator=(const Mesh &) = delete;
     Mesh &operator=(Mesh &&) = delete;
 
-    GLuint m_IndexBuffer = 0;
+private:
+    GraphicsBackendBuffer m_IndexBuffer = 0;
 
     Bounds m_Bounds;
     int m_IndicesCount;

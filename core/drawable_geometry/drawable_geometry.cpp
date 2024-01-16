@@ -1,17 +1,16 @@
 #include "drawable_geometry.h"
-#include "debug.h"
 
 DrawableGeometry::DrawableGeometry()
 {
-    CHECK_GL(glGenVertexArrays(1, &m_VertexArrayObject));
-    CHECK_GL(glGenBuffers(1, &m_VertexBuffer));
+    GraphicsBackend::GenerateVertexArrayObjects(1, &m_VertexArrayObject);
+    GraphicsBackend::GenerateBuffers(1, &m_VertexBuffer);
 
-    CHECK_GL(glBindVertexArray(m_VertexArrayObject));
-    CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer));
+    GraphicsBackend::BindVertexArrayObject(m_VertexArrayObject);
+    GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, m_VertexBuffer);
 }
 
 DrawableGeometry::~DrawableGeometry()
 {
-    CHECK_GL(glDeleteVertexArrays(1, &m_VertexArrayObject));
-    CHECK_GL(glDeleteBuffers(1, &m_VertexBuffer));
+    GraphicsBackend::DeleteVertexArrayObjects(1, &m_VertexArrayObject);
+    GraphicsBackend::DeleteBuffers(1, &m_VertexBuffer);
 }

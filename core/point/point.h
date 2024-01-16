@@ -2,21 +2,16 @@
 #define OPENGL_STUDY_POINT
 
 #include "drawable_geometry/drawable_geometry.h"
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
 
 class Point: public DrawableGeometry
 {
 public:
     Point();
-    virtual ~Point() = default;
+    ~Point() override = default;
 
-    inline GLenum GetGeometryType() const override
+    inline PrimitiveType GetPrimitiveType() const override
     {
-        return GL_POINTS;
+        return PrimitiveType::POINTS;
     }
 
     inline bool HasIndexes() const override
@@ -24,12 +19,11 @@ public:
         return false;
     }
 
-    inline GLsizei GetElementsCount() const override
+    inline int GetElementsCount() const override
     {
         return 1;
     }
 
-private:
     Point(const Point &) = delete;
     Point(Point &&)      = delete;
 

@@ -17,13 +17,14 @@ public:
 
     std::shared_ptr<Mesh> GetMesh(unsigned int _index) const;
 
-private:
-    explicit FBXAsset(ofbx::IScene *_scene);
     FBXAsset(const FBXAsset &) = delete;
     FBXAsset(FBXAsset &&)      = delete;
 
     FBXAsset &operator=(const FBXAsset &) = delete;
     FBXAsset &operator=(FBXAsset &&)      = delete;
+
+private:
+    explicit FBXAsset(ofbx::IScene *_scene);
 
     std::vector<std::shared_ptr<Mesh>> m_Meshes;
 };

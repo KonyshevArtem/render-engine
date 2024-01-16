@@ -409,10 +409,10 @@ namespace Graphics
             if (info.Instanced())
                 SetInstancingEnabled(true);
 
-            auto        type       = info.Geometry->GetGeometryType();
-            auto        count      = info.Geometry->GetElementsCount();
-            auto        hasIndexes = info.Geometry->HasIndexes();
-            const auto &shader     = info.Material->GetShader();
+            auto primitiveType = info.Geometry->GetPrimitiveType();
+            auto count = info.Geometry->GetElementsCount();
+            auto hasIndexes = info.Geometry->HasIndexes();
+            const auto &shader = info.Material->GetShader();
 
             for (int i = 0; i < shader->PassesCount(); ++i)
             {
@@ -428,22 +428,22 @@ namespace Graphics
                     auto instanceCount = instancedMatricesMap[info.InstancedIndex].size();
                     if (hasIndexes)
                     {
-                        CHECK_GL(glDrawElementsInstanced(type, count, GL_UNSIGNED_INT, nullptr, instanceCount))
+                        CHECK_GL(glDrawElementsInstanced(static_cast<GLenum>(primitiveType), count, GL_UNSIGNED_INT, nullptr, instanceCount))
                     }
                     else
                     {
-                        CHECK_GL(glDrawArraysInstanced(type, 0, count, instanceCount))
+                        CHECK_GL(glDrawArraysInstanced(static_cast<GLenum>(primitiveType), 0, count, instanceCount))
                     }
                 }
                 else
                 {
                     if (hasIndexes)
                     {
-                        CHECK_GL(glDrawElements(type, count, GL_UNSIGNED_INT, nullptr))
+                        CHECK_GL(glDrawElements(static_cast<GLenum>(primitiveType), count, GL_UNSIGNED_INT, nullptr))
                     }
                     else
                     {
-                        CHECK_GL(glDrawArrays(type, 0, count))
+                        CHECK_GL(glDrawArrays(static_cast<GLenum>(primitiveType), 0, count))
                     }
                 }
             }

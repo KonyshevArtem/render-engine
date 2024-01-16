@@ -13,6 +13,10 @@
 #include "enums/framebuffer_attachment.h"
 #include "enums/framebuffer_target.h"
 #include "enums/sampler_parameter.h"
+#include "enums/primitive_type.h"
+#include "enums/buffer_bind_target.h"
+#include "enums/vertex_attribute_data_type.h"
+#include "enums/buffer_usage_hint.h"
 
 #ifdef OPENGL_STUDY_EDITOR
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \
@@ -55,6 +59,20 @@ namespace GraphicsBackend
     void SetActiveTextureUnit(TextureUnit unit);
     void SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, GraphicsBackendTextureLevel level);
     void SetFramebufferTextureLayer(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, GraphicsBackendTextureLevel level, GraphicsBackendTextureLayer layer);
+
+    void GenerateBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr);
+    void DeleteBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr);
+    void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer);
+
+    void SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint);
+    void SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data);
+
+    void GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr);
+    void DeleteVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr);
+    void BindVertexArrayObject(GraphicsBackendVAO vao);
+
+    void EnableVertexAttributeArray(int index);
+    void SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer);
 
     GraphicsBackendError GetError();
     const char *GetErrorString(GraphicsBackendError error);

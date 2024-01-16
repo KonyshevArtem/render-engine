@@ -16,7 +16,11 @@ add_library(GraphicsBackend
         enums/framebuffer_attachment.h
         enums/sampler_parameter.h
         enums/texture_wrap_mode.h
-        enums/texture_filtering_mode.h)
+        enums/texture_filtering_mode.h
+        enums/primitive_type.h
+        enums/buffer_bind_target.h
+        enums/vertex_attribute_data_type.h
+        enums/buffer_usage_hint.h)
 
 # windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

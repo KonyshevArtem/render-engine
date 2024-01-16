@@ -1,0 +1,23 @@
+#ifndef OPENGL_STUDY_VERTEX_ATTRIBUTE_DATA_TYPE_H
+#define OPENGL_STUDY_VERTEX_ATTRIBUTE_DATA_TYPE_H
+
+#include "graphics_backend.h"
+
+enum class VertexAttributeDataType : GRAPHICS_BACKEND_TYPE_ENUM
+{
+    BYTE                            = GRAPHICS_BACKEND_BYTE,
+    UNSIGNED_BYTE                   = GRAPHICS_BACKEND_UNSIGNED_BYTE,
+    SHORT                           = GRAPHICS_BACKEND_SHORT,
+    UNSIGNED_SHORT                  = GRAPHICS_BACKEND_UNSIGNED_SHORT,
+    INT                             = GRAPHICS_BACKEND_INT,
+    UNSIGNED_INT                    = GRAPHICS_BACKEND_UNSIGNED_INT,
+    HALF_FLOAT                      = GRAPHICS_BACKEND_HALF_FLOAT,
+    FLOAT                           = GRAPHICS_BACKEND_FLOAT,
+    DOUBLE                          = GRAPHICS_BACKEND_DOUBLE,
+    FIXED                           = GRAPHICS_BACKEND_FIXED,
+    INT_2_10_10_10_REV              = GRAPHICS_BACKEND_INT_2_10_10_10_REV,
+    UNSIGNED_INT_2_10_10_10_REV     = GRAPHICS_BACKEND_UNSIGNED_INT_2_10_10_10_REV,
+    UNSIGNED_INT_10F_11F_11F_REV    = GRAPHICS_BACKEND_UNSIGNED_INT_10F_11F_11F_REV,
+};
+
+#endif //OPENGL_STUDY_VERTEX_ATTRIBUTE_DATA_TYPE_H

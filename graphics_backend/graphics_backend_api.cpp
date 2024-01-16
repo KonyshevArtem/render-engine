@@ -112,6 +112,56 @@ void GraphicsBackend::SetFramebufferTextureLayer(FramebufferTarget target, Frame
     CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTextureLayer(Cast(target), Cast(attachment), texture, level, layer))
 }
 
+void GraphicsBackend::GenerateBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenBuffers(buffersCount, buffersPtr))
+}
+
+void GraphicsBackend::DeleteBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteBuffers(buffersCount, buffersPtr))
+}
+
+void GraphicsBackend::BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(Cast(target), buffer))
+}
+
+void GraphicsBackend::SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(Cast(target), size, data, Cast(usageHint)))
+}
+
+void GraphicsBackend::SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glBufferSubData(Cast(target), offset, size, data))
+}
+
+void GraphicsBackend::GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenVertexArrays(vaoCount, vaoPtr))
+}
+
+void GraphicsBackend::DeleteVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteVertexArrays(vaoCount, vaoPtr))
+}
+
+void GraphicsBackend::BindVertexArrayObject(GraphicsBackendVAO vao)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(vao))
+}
+
+void GraphicsBackend::EnableVertexAttributeArray(int index)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glEnableVertexAttribArray(index))
+}
+
+void GraphicsBackend::SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glVertexAttribPointer(index, size, Cast(dataType), normalized ? GL_TRUE : GL_FALSE, stride, pointer))
+}
+
 GraphicsBackendError GraphicsBackend::GetError()
 {
     return glGetError();

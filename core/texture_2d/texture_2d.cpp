@@ -1,5 +1,5 @@
 #include "texture_2d.h"
-#include "texture_binary_reader.h"
+#include "texture/texture_binary_reader.h"
 
 #include <vector>
 

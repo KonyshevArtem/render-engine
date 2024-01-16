@@ -67,7 +67,9 @@ add_library(
 	point/point.h
 	point/point.cpp 
 	drawable_geometry/drawable_geometry.h
-	drawable_geometry/drawable_geometry.cpp)
+	drawable_geometry/drawable_geometry.cpp
+	texture/texture_binary_reader.h
+	texture/texture_binary_reader.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend)

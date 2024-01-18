@@ -1,13 +1,9 @@
 #include "shader_loader.h"
-#include "../shader.h"
+#include "shader/shader.h"
 #include "debug.h"
 #include "graphics/graphics.h"
 #include "utils.h"
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
+
 #include <boost/json.hpp>
 #include <span>
 #include <unordered_map>
@@ -16,20 +12,20 @@
 
 namespace ShaderLoader
 {
-    constexpr int     SHADER_PART_COUNT  = 3;
+    constexpr int SUPPORTED_SHADERS_COUNT = 3;
     const std::string INSTANCING_KEYWORD = "_INSTANCING";
 
-    const GLuint SHADER_PARTS[SHADER_PART_COUNT] {
-            GL_VERTEX_SHADER,
-            GL_GEOMETRY_SHADER,
-            GL_FRAGMENT_SHADER};
+    const ShaderType SHADER_TYPES[SUPPORTED_SHADERS_COUNT] {
+            ShaderType::VERTEX_SHADER,
+            ShaderType::GEOMETRY_SHADER,
+            ShaderType::FRAGMENT_SHADER};
 
-    const std::string SHADER_PART_NAMES[SHADER_PART_COUNT] {
+    const std::string SHADER_NAMES[SUPPORTED_SHADERS_COUNT] {
             "vertex",
             "geometry",
             "fragment"};
 
-    const std::string SHADER_PART_DIRECTIVES[SHADER_PART_COUNT] {
+    const std::string SHADER_DIRECTIVES[SUPPORTED_SHADERS_COUNT] {
             "#define VERTEX_PROGRAM\n",
             "#define GEOMETRY_PROGRAM\n",
             "#define FRAGMENT_PROGRAM\n"};
@@ -37,7 +33,7 @@ namespace ShaderLoader
     struct ShaderPassInfo
     {
         Shader::PassInfo Pass;
-        std::string      ShaderPartPaths[SHADER_PART_COUNT];
+        std::string ShaderPaths[SUPPORTED_SHADERS_COUNT];
     };
 
     struct ShaderInfo
@@ -46,25 +42,25 @@ namespace ShaderLoader
         std::unordered_map<std::string, std::string> DefaultValues;
     };
 
-    GLenum ParseBlendFunc(const std::string &_literal)
+    BlendFactor ParseBlendFactor(const std::string &_literal)
     {
         if (_literal == "SrcAlpha")
-            return GL_SRC_ALPHA;
+            return BlendFactor::SRC_ALPHA;
 
         if (_literal == "OneMinusSrcAlpha")
-            return GL_ONE_MINUS_SRC_ALPHA;
+            return BlendFactor::ONE_MINUS_SRC_ALPHA;
 
-        Debug::LogErrorFormat("[ShaderLoader] Unsupported blend func: %1%", {_literal});
-        return GL_ONE;
+        Debug::LogErrorFormat("[ShaderLoader] Unsupported blend factor: %1%", {_literal});
+        return BlendFactor::ONE;
     }
 
-    GLenum ParseDepthFunc(const std::string &_literal)
+    DepthFunction ParseDepthFunc(const std::string &_literal)
     {
         if (_literal == "Always")
-            return GL_ALWAYS;
+            return DepthFunction::ALWAYS;
 
         Debug::LogErrorFormat("[Shader Loader] Unsupported depth func: %1%", {_literal});
-        return GL_LEQUAL;
+        return DepthFunction::LEQUAL;
     }
 
     Shader::BlendInfo ParseBlendInfo(const boost::json::object &_obj)
@@ -76,9 +72,9 @@ namespace ShaderLoader
         Shader::BlendInfo info {hasBlendInfo};
         if (hasBlendInfo)
         {
-            auto &infoObj  = _obj.at("blend").as_object();
-            info.SrcFactor = ParseBlendFunc(value_to<std::string>(infoObj.at("SrcFactor")));
-            info.DstFactor = ParseBlendFunc(value_to<std::string>(infoObj.at("DstFactor")));
+            auto &infoObj = _obj.at("blend").as_object();
+            info.SourceFactor = ParseBlendFactor(value_to<std::string>(infoObj.at("SrcFactor")));
+            info.DestinationFactor = ParseBlendFactor(value_to<std::string>(infoObj.at("DstFactor")));
         }
 
         return info;
@@ -88,15 +84,17 @@ namespace ShaderLoader
     {
         using namespace boost::json;
 
-        Shader::CullInfo info {true, GL_BACK};
+        Shader::CullInfo info {true, CullFace::BACK};
         if (_obj.contains("cull"))
         {
             auto cull = value_to<std::string>(_obj.at("cull"));
 
             if (cull == "Front")
-                info.Face = GL_FRONT;
+                info.Face = CullFace::FRONT;
             else if (cull == "Back")
-                info.Face = GL_BACK;
+                info.Face = CullFace::BACK;
+            else if (cull == "FrontBack")
+                info.Face = CullFace::FRONT_AND_BACK;
             else if (cull == "None")
                 info.Enabled = false;
         }
@@ -110,12 +108,9 @@ namespace ShaderLoader
 
         Shader::DepthInfo info;
 
-        // parse zWrite
-        info.ZWrite = !_obj.contains("zWrite") || _obj.at("zWrite").as_bool();
-
-        // parse z func
+        info.WriteDepth = !_obj.contains("zWrite") || _obj.at("zWrite").as_bool();
         if (_obj.contains("zTest"))
-            info.ZTest = ParseDepthFunc(value_to<std::string>(_obj.at("zTest")));
+            info.DepthFunction = ParseDepthFunc(value_to<std::string>(_obj.at("zTest")));
 
         return info;
     }
@@ -126,19 +121,12 @@ namespace ShaderLoader
 
         Shader::PassInfo info;
 
-        // parse tags
         if (_obj.contains("tags"))
             info.Tags = value_to<std::unordered_map<std::string, std::string>>(_obj.at("tags"));
 
-        // parse depth info
         info.DepthInfo = ParseDepthInfo(_obj);
-
-        // parse blend
         info.BlendInfo = ParseBlendInfo(_obj);
-
-        // parse culling mode
         info.CullInfo = ParseCullInfo(_obj);
-
         return info;
     }
 
@@ -150,11 +138,10 @@ namespace ShaderLoader
 
         ShaderPassInfo info {ParsePassInfo(obj)};
 
-        // parse paths to shader code
-        for (int i = 0; i < SHADER_PART_COUNT; ++i)
+        for (int i = 0; i < SUPPORTED_SHADERS_COUNT; ++i)
         {
-            if (obj.contains(SHADER_PART_NAMES[i]))
-                info.ShaderPartPaths[i] = value_to<std::string>(obj.at(SHADER_PART_NAMES[i]));
+            if (obj.contains(SHADER_NAMES[i]))
+                info.ShaderPaths[i] = value_to<std::string>(obj.at(SHADER_NAMES[i]));
         }
 
         return info;
@@ -175,69 +162,68 @@ namespace ShaderLoader
         return info;
     }
 
-    GLuint CompileShaderPart(GLuint _shaderPartType, const std::string &_source, const std::string &_keywordDirectives, const std::string &_shaderPartDirective)
+    GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string &keywordDirectives, const std::string &shaderPartDirective)
     {
-        const auto   &globalDirectives = Graphics::GetGlobalShaderDirectives();
-        constexpr int sourcesCount     = 4;
-        const char   *sources[sourcesCount] {
+        constexpr int sourcesCount = 4;
+
+        const auto &globalDirectives = Graphics::GetGlobalShaderDirectives();
+        const char *sources[sourcesCount]{
                 globalDirectives.c_str(),
-                _keywordDirectives.c_str(),
-                _shaderPartDirective.c_str(),
-                _source.c_str()};
+                keywordDirectives.c_str(),
+                shaderPartDirective.c_str(),
+                source.c_str()};
 
-        auto shaderPart = CHECK_GL(glCreateShader(_shaderPartType));
-        CHECK_GL(glShaderSource(shaderPart, sourcesCount, sources, nullptr));
+        auto shader = GraphicsBackend::CreateShader(shaderType);
+        GraphicsBackend::SetShaderSources(shader, sourcesCount, sources, nullptr);
 
-        CHECK_GL(glCompileShader(shaderPart));
+        GraphicsBackend::CompileShader(shader);
 
-        GLint status;
-        CHECK_GL(glGetShaderiv(shaderPart, GL_COMPILE_STATUS, &status));
-        if (status == GL_FALSE)
+        int isCompiled;
+        GraphicsBackend::GetShaderParameter(shader, ShaderParameter::COMPILE_STATUS, &isCompiled);
+        if (!isCompiled)
         {
-            GLint infoLogLength;
-            CHECK_GL(glGetShaderiv(shaderPart, GL_INFO_LOG_LENGTH, &infoLogLength));
+            int infoLogLength;
+            GraphicsBackend::GetShaderParameter(shader, ShaderParameter::INFO_LOG_LENGTH, &infoLogLength);
 
             std::string logMsg(infoLogLength + 1, ' ');
-            CHECK_GL(glGetShaderInfoLog(shaderPart, infoLogLength, nullptr, &logMsg[0]));
+            GraphicsBackend::GetShaderInfoLog(shader, infoLogLength, nullptr, &logMsg[0]);
 
             throw std::runtime_error("Compilation failed with error: " + logMsg);
         }
 
-        return shaderPart;
+        return shader;
     }
 
-    GLuint LinkProgram(const std::span<GLuint> &_shaderParts)
+    GraphicsBackendProgram LinkProgram(const std::span<GraphicsBackendShaderObject> &shaders)
     {
-        auto program = CHECK_GL(glCreateProgram());
+        auto program = GraphicsBackend::CreateProgram();
 
-        for (const auto &part: _shaderParts)
+        for (const auto &shader: shaders)
         {
-            bool isShader = CHECK_GL(glIsShader(part));
-            if (isShader)
-                CHECK_GL(glAttachShader(program, part));
+            if (GraphicsBackend::IsShader(shader))
+                GraphicsBackend::AttachShader(program, shader);
         }
 
-        CHECK_GL(glLinkProgram(program));
+        GraphicsBackend::LinkProgram(program);
 
-        for (const auto &part: _shaderParts)
+        for (const auto &shader: shaders)
         {
-            bool isShader = CHECK_GL(glIsShader(part));
-            if (isShader)
+            if (GraphicsBackend::IsShader(shader))
             {
-                CHECK_GL(glDetachShader(program, part));
-                CHECK_GL(glDeleteShader(part));
+                GraphicsBackend::DetachShader(program, shader);
+                GraphicsBackend::DeleteShader(shader);
             }
         }
 
-        GLint status;
-        CHECK_GL(glGetProgramiv(program, GL_LINK_STATUS, &status));
-        if (status == GL_FALSE)
+        int isLinked;
+        GraphicsBackend::GetProgramParameter(program, ProgramParameter::LINK_STATUS, &isLinked);
+        if (!isLinked)
         {
-            GLint infoLogLength;
-            CHECK_GL(glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength));
+            int infoLogLength;
+            GraphicsBackend::GetProgramParameter(program, ProgramParameter::INFO_LOG_LENGTH, &infoLogLength);
 
             std::string logMsg(infoLogLength + 1, ' ');
-            CHECK_GL(glGetProgramInfoLog(program, infoLogLength, nullptr, &logMsg[0]));
+            GraphicsBackend::GetProgramInfoLog(program, infoLogLength, nullptr, &logMsg[0]);
 
             throw std::runtime_error("Link failed with error: " + logMsg);
         }
@@ -269,22 +255,22 @@ namespace ShaderLoader
             std::vector<Shader::PassInfo> passes;
             for (auto &passInfo: shaderInfo.Passes)
             {
-                GLuint shaderParts[SHADER_PART_COUNT];
-                size_t shaderPartCount = 0;
+                GraphicsBackendShaderObject shaders[SUPPORTED_SHADERS_COUNT];
+                size_t shadersCount = 0;
 
-                for (int i = 0; i < SHADER_PART_COUNT; ++i)
+                for (int i = 0; i < SUPPORTED_SHADERS_COUNT; ++i)
                 {
-                    auto  part         = SHADER_PARTS[i];
-                    auto &relativePath = passInfo.ShaderPartPaths[i];
+                    auto shaderType = SHADER_TYPES[i];
+                    auto &relativePath = passInfo.ShaderPaths[i];
                     if (relativePath.empty())
                         continue;
 
-                    auto partPath                  = _path.parent_path() / relativePath;
-                    auto partSource                = Utils::ReadFileWithIncludes(partPath);
-                    shaderParts[shaderPartCount++] = CompileShaderPart(part, partSource, keywordsDirectives, SHADER_PART_DIRECTIVES[i]);
+                    auto partPath = _path.parent_path() / relativePath;
+                    auto partSource = Utils::ReadFileWithIncludes(partPath);
+                    shaders[shadersCount++] = CompileShader(shaderType, partSource, keywordsDirectives, SHADER_DIRECTIVES[i]);
                 }
 
-                passInfo.Pass.Program = LinkProgram(std::span<GLuint> {shaderParts, shaderPartCount});
+                passInfo.Pass.Program = LinkProgram(std::span<GraphicsBackendShaderObject> {shaders, shadersCount});
 
                 passes.push_back(passInfo.Pass);
             }

@@ -162,6 +162,111 @@ void GraphicsBackend::SetVertexAttributePointer(int index, int size, VertexAttri
     CHECK_GRAPHICS_BACKEND_FUNC(glVertexAttribPointer(index, size, Cast(dataType), normalized ? GL_TRUE : GL_FALSE, stride, pointer))
 }
 
+void GraphicsBackend::SetCapability(GraphicsBackendCapability capability, bool enabled)
+{
+    if (enabled)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glEnable(Cast(capability)))
+    }
+    else
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glDisable(Cast(capability)))
+    }
+}
+
+void GraphicsBackend::SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glBlendFunc(Cast(sourceFactor), Cast(destinationFactor)))
+}
+
+void GraphicsBackend::SetCullFace(CullFace cullFace)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glCullFace(Cast(cullFace)))
+}
+
+void GraphicsBackend::SetDepthFunction(DepthFunction function)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDepthFunc(Cast(function)))
+}
+
+void GraphicsBackend::SetDepthWrite(bool enabled)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDepthMask(enabled ? GL_TRUE : GL_FALSE))
+}
+
+GraphicsBackendShaderObject GraphicsBackend::CreateShader(ShaderType shaderType)
+{
+    auto shader = CHECK_GRAPHICS_BACKEND_FUNC(glCreateShader(Cast(shaderType)))
+    return shader;
+}
+
+void GraphicsBackend::DeleteShader(GraphicsBackendShaderObject shader)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteShader(shader))
+}
+
+void GraphicsBackend::SetShaderSources(GraphicsBackendShaderObject shader, int sourcesCount, const char **sources, const int *sourceLengths)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glShaderSource(shader, sourcesCount, sources, sourceLengths))
+}
+
+void GraphicsBackend::CompileShader(GraphicsBackendShaderObject shader)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glCompileShader(shader))
+}
+
+void GraphicsBackend::GetShaderParameter(GraphicsBackendShaderObject shader, ShaderParameter parameter, int *value)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderiv(shader, Cast(parameter), value))
+}
+
+void GraphicsBackend::GetShaderInfoLog(GraphicsBackendShaderObject shader, int maxLength, int *length, char *infoLog)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderInfoLog(shader, maxLength, length, infoLog))
+}
+
+bool GraphicsBackend::IsShader(GraphicsBackendShaderObject shader)
+{
+    auto isShader = CHECK_GRAPHICS_BACKEND_FUNC(glIsShader(shader))
+    return isShader == GL_TRUE;
+}
+
+void GraphicsBackend::AttachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glAttachShader(program, shader))
+}
+
+void GraphicsBackend::DetachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDetachShader(program, shader))
+}
+
+GraphicsBackendProgram GraphicsBackend::CreateProgram()
+{
+    auto program = CHECK_GRAPHICS_BACKEND_FUNC(glCreateProgram())
+    return program;
+}
+
+void GraphicsBackend::DeleteProgram(GraphicsBackendProgram program)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteProgram(program))
+}
+
+void GraphicsBackend::LinkProgram(GraphicsBackendProgram program)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glLinkProgram(program))
+}
+
+void GraphicsBackend::GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int *value)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program, Cast(parameter), value))
+}
+
+void GraphicsBackend::GetProgramInfoLog(GraphicsBackendProgram program, int maxLength, int *length, char *infoLog)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInfoLog(program, maxLength, length, infoLog))
+}
+
 GraphicsBackendError GraphicsBackend::GetError()
 {
     return glGetError();

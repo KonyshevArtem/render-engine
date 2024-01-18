@@ -1,7 +1,6 @@
 #include "shader.h"
 #include "debug.h"
 #include "cubemap/cubemap.h"
-#include "property_block/property_block.h"
 #include "texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
 #include "utils.h"
@@ -85,7 +84,7 @@ Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, st
 Shader::~Shader()
 {
     for (const auto &passInfo: m_Passes)
-        CHECK_GL(glDeleteProgram(passInfo.Program));
+        GraphicsBackend::DeleteProgram(passInfo.Program);
 }
 
 #pragma endregion
@@ -195,30 +194,32 @@ void Shader::SetBlendInfo(const Shader::BlendInfo &_blendInfo) const
 {
     if (_blendInfo.Enabled)
     {
-        CHECK_GL(glEnable(GL_BLEND));
-        CHECK_GL(glBlendFunc(_blendInfo.SrcFactor, _blendInfo.DstFactor));
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::BLEND, true);
+        GraphicsBackend::SetBlendFunction(_blendInfo.SourceFactor, _blendInfo.DestinationFactor);
     }
     else
-        CHECK_GL(glDisable(GL_BLEND));
+    {
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::BLEND, false);
+    }
 }
 
 void Shader::SetCullInfo(const Shader::CullInfo &_cullInfo) const
 {
     if (_cullInfo.Enabled)
     {
-        CHECK_GL(glEnable(GL_CULL_FACE));
-        CHECK_GL(glCullFace(_cullInfo.Face));
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::CULL_FACE, true);
+        GraphicsBackend::SetCullFace(_cullInfo.Face);
     }
     else
     {
-        CHECK_GL(glDisable(GL_CULL_FACE));
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::CULL_FACE, false);
     }
 }
 
 void Shader::SetDepthInfo(const Shader::DepthInfo &_depthInfo) const
 {
-    CHECK_GL(glDepthMask(_depthInfo.ZWrite ? GL_TRUE : GL_FALSE));
-    CHECK_GL(glDepthFunc(_depthInfo.ZTest));
+    GraphicsBackend::SetDepthWrite(_depthInfo.WriteDepth);
+    GraphicsBackend::SetDepthFunction(_depthInfo.DepthFunction);
 }
 
 DefaultTexturesMap GetDefaultTexturesMap()

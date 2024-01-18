@@ -20,7 +20,14 @@ add_library(GraphicsBackend
         enums/primitive_type.h
         enums/buffer_bind_target.h
         enums/vertex_attribute_data_type.h
-        enums/buffer_usage_hint.h)
+        enums/buffer_usage_hint.h
+        enums/graphics_backend_capability.h
+        enums/blend_factor.h
+        enums/cull_face.h
+        enums/depth_function.h
+        enums/shader_type.h
+        enums/shader_parameter.h
+        enums/program_parameter.h)
 
 # windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

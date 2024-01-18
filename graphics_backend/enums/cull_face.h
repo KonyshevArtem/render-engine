@@ -1,0 +1,13 @@
+#ifndef OPENGL_STUDY_CULL_FACE_H
+#define OPENGL_STUDY_CULL_FACE_H
+
+#include "graphics_backend.h"
+
+enum class CullFace : GRAPHICS_BACKEND_TYPE_ENUM
+{
+    FRONT           = GRAPHICS_BACKEND_FRONT,
+    BACK            = GRAPHICS_BACKEND_BACK,
+    FRONT_AND_BACK  = GRAPHICS_BACKEND_FRONT_AND_BACK,
+};
+
+#endif //OPENGL_STUDY_CULL_FACE_H

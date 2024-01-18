@@ -7,6 +7,7 @@
 #include "uniform_info/uniform_info.h"
 #include "vector4/vector4.h"
 #include "enums/texture_unit.h"
+#include "graphics_backend_api.h"
 
 #include <filesystem>
 #include <string>
@@ -23,26 +24,26 @@ class Shader
 public:
     struct BlendInfo
     {
-        bool   Enabled = false;
-        GLenum SrcFactor;
-        GLenum DstFactor;
+        bool Enabled = false;
+        BlendFactor SourceFactor;
+        BlendFactor DestinationFactor;
     };
 
     struct CullInfo
     {
-        bool   Enabled = true;
-        GLenum Face    = GL_BACK;
+        bool Enabled = true;
+        CullFace Face = CullFace::BACK;
     };
 
     struct DepthInfo
     {
-        bool   ZWrite = true;
-        GLenum ZTest  = GL_LEQUAL;
+        bool WriteDepth = true;
+        DepthFunction DepthFunction = DepthFunction::LEQUAL;
     };
 
     struct PassInfo
     {
-        GLuint                                       Program;
+        GraphicsBackendProgram                       Program;
         BlendInfo                                    BlendInfo;
         CullInfo                                     CullInfo;
         DepthInfo                                    DepthInfo;
@@ -60,13 +61,14 @@ public:
 
     ~Shader();
 
-private:
-    Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues, bool _supportInstancing);
     Shader(const Shader &) = delete;
     Shader(Shader &&)      = delete;
 
     Shader &operator=(const Shader &) = delete;
     Shader &operator=(Shader &&) = delete;
+
+private:
+    Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues, bool _supportInstancing);
 
 #pragma endregion
 

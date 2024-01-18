@@ -17,6 +17,13 @@
 #include "enums/buffer_bind_target.h"
 #include "enums/vertex_attribute_data_type.h"
 #include "enums/buffer_usage_hint.h"
+#include "enums/graphics_backend_capability.h"
+#include "enums/blend_factor.h"
+#include "enums/cull_face.h"
+#include "enums/depth_function.h"
+#include "enums/shader_type.h"
+#include "enums/shader_parameter.h"
+#include "enums/program_parameter.h"
 
 #ifdef OPENGL_STUDY_EDITOR
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \
@@ -73,6 +80,29 @@ namespace GraphicsBackend
 
     void EnableVertexAttributeArray(int index);
     void SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer);
+
+    void SetCapability(GraphicsBackendCapability capability, bool enabled);
+
+    void SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor);
+    void SetCullFace(CullFace cullFace);
+    void SetDepthFunction(DepthFunction function);
+    void SetDepthWrite(bool enabled);
+
+    GraphicsBackendShaderObject CreateShader(ShaderType shaderType);
+    void DeleteShader(GraphicsBackendShaderObject shader);
+    void SetShaderSources(GraphicsBackendShaderObject shader, int sourcesCount, const char **sources, const int *sourceLengths);
+    void CompileShader(GraphicsBackendShaderObject shader);
+    void GetShaderParameter(GraphicsBackendShaderObject shader, ShaderParameter parameter, int* value);
+    void GetShaderInfoLog(GraphicsBackendShaderObject shader, int maxLength, int *length, char *infoLog);
+    bool IsShader(GraphicsBackendShaderObject shader);
+    void AttachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader);
+    void DetachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader);
+
+    GraphicsBackendProgram CreateProgram();
+    void DeleteProgram(GraphicsBackendProgram program);
+    void LinkProgram(GraphicsBackendProgram program);
+    void GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int* value);
+    void GetProgramInfoLog(GraphicsBackendProgram program, int maxLength, int *length, char *infoLog);
 
     GraphicsBackendError GetError();
     const char *GetErrorString(GraphicsBackendError error);

@@ -27,7 +27,8 @@ add_library(GraphicsBackend
         enums/depth_function.h
         enums/shader_type.h
         enums/shader_parameter.h
-        enums/program_parameter.h)
+        enums/program_parameter.h
+        enums/uniform_data_type.h)
 
 # windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

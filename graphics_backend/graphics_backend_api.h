@@ -24,6 +24,7 @@
 #include "enums/shader_type.h"
 #include "enums/shader_parameter.h"
 #include "enums/program_parameter.h"
+#include "enums/uniform_data_type.h"
 
 #ifdef OPENGL_STUDY_EDITOR
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \
@@ -101,8 +102,14 @@ namespace GraphicsBackend
     GraphicsBackendProgram CreateProgram();
     void DeleteProgram(GraphicsBackendProgram program);
     void LinkProgram(GraphicsBackendProgram program);
+    void UseProgram(GraphicsBackendProgram program);
     void GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int* value);
     void GetProgramInfoLog(GraphicsBackendProgram program, int maxLength, int *length, char *infoLog);
+    bool TryGetUniformBlockIndex(GraphicsBackendProgram program, const char *name, int *index);
+    void SetUniformBlockBinding(GraphicsBackendProgram program, int uniformBlockIndex, int uniformBlockBinding);
+    void GetActiveUniform(GraphicsBackendProgram program, int index, int nameBufferSize, int *nameLength, int *size, UniformDataType *dataType, char *name);
+    GraphicsBackendUniformLocation GetUniformLocation(GraphicsBackendProgram program, const char *uniformName);
+    void SetUniform(GraphicsBackendUniformLocation location, UniformDataType dataType, int count, const void *data, bool transpose = false);
 
     GraphicsBackendError GetError();
     const char *GetErrorString(GraphicsBackendError error);

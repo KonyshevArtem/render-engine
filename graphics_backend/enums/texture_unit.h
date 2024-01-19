@@ -39,9 +39,12 @@ enum class TextureUnit : GRAPHICS_BACKEND_TYPE_ENUM
     TEXTURE31   = GRAPHICS_BACKEND_TEXTURE31,
 };
 
-inline GraphicsBackendTextureUnitIndex TextureUnitToIndex(TextureUnit unit)
+namespace TextureUnitUtils
 {
-    return static_cast<GraphicsBackendTextureUnitIndex>(static_cast<int>(unit) - static_cast<int>(TextureUnit::TEXTURE0));
+    inline GraphicsBackendTextureUnitIndex TextureUnitToIndex(TextureUnit unit)
+    {
+        return static_cast<GraphicsBackendTextureUnitIndex>(static_cast<int>(unit) - static_cast<int>(TextureUnit::TEXTURE0));
+    }
 }
 
 #endif //OPENGL_STUDY_TEXTURE_UNIT_H

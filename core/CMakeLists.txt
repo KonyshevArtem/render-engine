@@ -42,7 +42,6 @@ add_library(
 	texture/texture_header.h
 	shader/shader_loader/shader_loader.cpp
 	shader/shader_loader/shader_loader.h
-	shader/uniform_info/uniform_info.cpp
 	shader/uniform_info/uniform_info.h
 	renderer/renderer.cpp
 	renderer/renderer.h

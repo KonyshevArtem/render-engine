@@ -1,7 +1,6 @@
 #include "renderer.h"
 #include "gameObject/gameObject.h"
 #include "material/material.h"
-#include "matrix4x4/matrix4x4.h"
 
 Renderer::Renderer(const std::shared_ptr<GameObject> &_gameObject, const std::shared_ptr<Material> &_material) :
     m_GameObject(_gameObject), m_Material(_material)

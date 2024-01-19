@@ -11,19 +11,19 @@ class MeshRenderer: public Renderer
 public:
     MeshRenderer(const std::shared_ptr<GameObject> &_gameObject,
                  std::shared_ptr<Mesh>              _mesh,
-                 std::shared_ptr<Material>          _material);
-    virtual ~MeshRenderer() = default;
+                 const std::shared_ptr<Material>    &_material);
+    ~MeshRenderer() override = default;
 
     Bounds                            GetAABB() const override;
     std::shared_ptr<DrawableGeometry> GetGeometry() const override;
 
-private:
     MeshRenderer(const MeshRenderer &) = delete;
     MeshRenderer(MeshRenderer &&)      = delete;
 
     MeshRenderer &operator=(const MeshRenderer &) = delete;
     MeshRenderer &operator=(MeshRenderer &&) = delete;
 
+private:
     std::shared_ptr<Mesh> m_Mesh;
 };
 

@@ -25,6 +25,7 @@ using GraphicsBackendProgram            = GRAPHICS_BACKEND_TYPE_UINT;
 using GraphicsBackendShaderObject       = GRAPHICS_BACKEND_TYPE_UINT;
 using GraphicsBackendUniformLocation    = GRAPHICS_BACKEND_TYPE_INT;
 using GraphicsBackendUniformBlock       = GRAPHICS_BACKEND_TYPE_UINT;
+using GraphicsBackendFramebuffer        = GRAPHICS_BACKEND_TYPE_UINT;
 
 #define GRAPHICS_BACKEND_TEXTURE_1D                     GL_TEXTURE_1D
 #define GRAPHICS_BACKEND_TEXTURE_2D                     GL_TEXTURE_2D
@@ -512,5 +513,8 @@ using GraphicsBackendUniformBlock       = GRAPHICS_BACKEND_TYPE_UINT;
 #define GRAPHICS_BACKEND_UNIFORM_ARRAY_STRIDE   GL_UNIFORM_ARRAY_STRIDE
 #define GRAPHICS_BACKEND_UNIFORM_MATRIX_STRIDE  GL_UNIFORM_MATRIX_STRIDE
 #define GRAPHICS_BACKEND_UNIFORM_IS_ROW_MAJOR   GL_UNIFORM_IS_ROW_MAJOR
+
+#define GRAPHICS_BACKEND_CW     GL_CW
+#define GRAPHICS_BACKEND_CCW    GL_CCW
 
 #endif //OPENGL_STUDY_GRAPHICS_BACKEND_H

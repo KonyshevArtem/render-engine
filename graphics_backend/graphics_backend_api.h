@@ -28,6 +28,8 @@
 #include "enums/clear_mask.h"
 #include "enums/uniform_block_parameter.h"
 #include "enums/uniform_parameter.h"
+#include "enums/cull_face_orientation.h"
+#include "enums/indices_data_type.h"
 
 #ifdef OPENGL_STUDY_EDITOR
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \
@@ -68,6 +70,9 @@ namespace GraphicsBackend
     void GetCompressedTextureImage(TextureTarget target, GraphicsBackendTextureLevel level, void* outPixels);
 
     void SetActiveTextureUnit(TextureUnit unit);
+    void GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr);
+    void DeleteFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr);
+    void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer);
     void SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, GraphicsBackendTextureLevel level);
     void SetFramebufferTextureLayer(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, GraphicsBackendTextureLevel level, GraphicsBackendTextureLayer layer);
 
@@ -84,14 +89,19 @@ namespace GraphicsBackend
     void BindVertexArrayObject(GraphicsBackendVAO vao);
 
     void EnableVertexAttributeArray(int index);
+    void DisableVertexAttributeArray(int index);
     void SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer);
+    void SetVertexAttributeDivisor(int index, int divisor);
 
     void SetCapability(GraphicsBackendCapability capability, bool enabled);
 
     void SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor);
     void SetCullFace(CullFace cullFace);
+    void SetCullFaceOrientation(CullFaceOrientation orientation);
     void SetDepthFunction(DepthFunction function);
     void SetDepthWrite(bool enabled);
+    void SetDepthRange(double near, double far);
+    void SetViewport(int x, int y, int width, int height);
 
     GraphicsBackendShaderObject CreateShader(ShaderType shaderType);
     void DeleteShader(GraphicsBackendShaderObject shader);
@@ -118,6 +128,13 @@ namespace GraphicsBackend
     void GetActiveUniformBlockParameter(GraphicsBackendProgram program, int uniformBlockIndex, UniformBlockParameter parameter, int *values);
 
     void Clear(ClearMask mask);
+    void SetClearColor(float r, float g, float b, float a);
+    void SetClearDepth(double depth);
+
+    void DrawArrays(PrimitiveType primitiveType, int firstIndex, int indicesCount);
+    void DrawArraysInstanced(PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount);
+    void DrawElements(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices);
+    void DrawElementsInstanced(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices, int instanceCount);
 
     GraphicsBackendError GetError();
     const char *GetErrorString(GraphicsBackendError error);

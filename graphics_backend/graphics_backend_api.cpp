@@ -102,6 +102,21 @@ void GraphicsBackend::SetActiveTextureUnit(TextureUnit unit)
     CHECK_GRAPHICS_BACKEND_FUNC(glActiveTexture(Cast(unit)))
 }
 
+void GraphicsBackend::GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(count, framebuffersPtr))
+}
+
+void GraphicsBackend::DeleteFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteFramebuffers(count, framebuffersPtr))
+}
+
+void GraphicsBackend::BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(Cast(target), framebuffer))
+}
+
 void GraphicsBackend::SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, GraphicsBackendTextureLevel level)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTexture(Cast(target), Cast(attachment), texture, level))
@@ -162,9 +177,19 @@ void GraphicsBackend::EnableVertexAttributeArray(int index)
     CHECK_GRAPHICS_BACKEND_FUNC(glEnableVertexAttribArray(index))
 }
 
+void GraphicsBackend::DisableVertexAttributeArray(int index)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDisableVertexAttribArray(index))
+}
+
 void GraphicsBackend::SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glVertexAttribPointer(index, size, Cast(dataType), normalized ? GL_TRUE : GL_FALSE, stride, pointer))
+}
+
+void GraphicsBackend::SetVertexAttributeDivisor(int index, int divisor)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glVertexAttribDivisor(index, divisor))
 }
 
 void GraphicsBackend::SetCapability(GraphicsBackendCapability capability, bool enabled)
@@ -189,6 +214,11 @@ void GraphicsBackend::SetCullFace(CullFace cullFace)
     CHECK_GRAPHICS_BACKEND_FUNC(glCullFace(Cast(cullFace)))
 }
 
+void GraphicsBackend::SetCullFaceOrientation(CullFaceOrientation orientation)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glFrontFace(Cast(orientation)))
+}
+
 void GraphicsBackend::SetDepthFunction(DepthFunction function)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glDepthFunc(Cast(function)))
@@ -197,6 +227,16 @@ void GraphicsBackend::SetDepthFunction(DepthFunction function)
 void GraphicsBackend::SetDepthWrite(bool enabled)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glDepthMask(enabled ? GL_TRUE : GL_FALSE))
+}
+
+void GraphicsBackend::SetDepthRange(double near, double far)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDepthRange(near, far))
+}
+
+void GraphicsBackend::SetViewport(int x, int y, int width, int height)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glViewport(x, y, width, height))
 }
 
 GraphicsBackendShaderObject GraphicsBackend::CreateShader(ShaderType shaderType)
@@ -471,6 +511,36 @@ void GraphicsBackend::GetActiveUniformBlockParameter(GraphicsBackendProgram prog
 void GraphicsBackend::Clear(ClearMask mask)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glClear(Cast(mask)))
+}
+
+void GraphicsBackend::SetClearColor(float r, float g, float b, float a)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glClearColor(r, g, b, a))
+}
+
+void GraphicsBackend::SetClearDepth(double depth)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glClearDepth(depth))
+}
+
+void GraphicsBackend::DrawArrays(PrimitiveType primitiveType, int firstIndex, int count)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArrays(Cast(primitiveType), firstIndex, count))
+}
+
+void GraphicsBackend::DrawArraysInstanced(PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArraysInstanced(Cast(primitiveType), firstIndex, indicesCount, instanceCount))
+}
+
+void GraphicsBackend::DrawElements(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElements(Cast(primitiveType), elementsCount, Cast(dataType), indices))
+}
+
+void GraphicsBackend::DrawElementsInstanced(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices, int instanceCount)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElementsInstanced(Cast(primitiveType), elementsCount, Cast(dataType), indices, instanceCount))
 }
 
 GraphicsBackendError GraphicsBackend::GetError()

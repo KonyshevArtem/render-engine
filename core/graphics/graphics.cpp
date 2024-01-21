@@ -13,6 +13,7 @@
 #include "renderer/renderer.h"
 #include "texture/texture.h"
 #include "uniform_block.h"
+
 #include <boost/functional/hash/hash.hpp>
 
 namespace Graphics
@@ -50,25 +51,25 @@ namespace Graphics
 
     Vector3 lastCameraPosition;
 
-    GLuint instancingMatricesBuffer;
-    GLuint           framebuffer;
+    GraphicsBackendBuffer instancingMatricesBuffer;
+    GraphicsBackendFramebuffer framebuffer;
 
     void InitCulling()
     {
-        CHECK_GL(glFrontFace(GL_CW))
+        GraphicsBackend::SetCullFaceOrientation(CullFaceOrientation::CLOCKWISE);
     }
 
     void InitDepth()
     {
-        CHECK_GL(glEnable(GL_DEPTH_TEST))
-        CHECK_GL(glDepthMask(GL_TRUE))
-        CHECK_GL(glDepthRange(0, 1))
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::DEPTH_TEST, true);
+        GraphicsBackend::SetDepthWrite(true);
+        GraphicsBackend::SetDepthRange(0, 1);
     }
 
     void InitFramebuffer()
     {
-        CHECK_GL(glEnable(GL_FRAMEBUFFER_SRGB))
-        CHECK_GL(glGenFramebuffers(1, &framebuffer))
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::FRAMEBUFFER_SRGB, true);
+        GraphicsBackend::GenerateFramebuffers(1, &framebuffer);
     }
 
     void InitUniformBlocks()
@@ -98,15 +99,15 @@ namespace Graphics
 
     void InitInstancing()
     {
-        CHECK_GL(glGenBuffers(1, &instancingMatricesBuffer))
-        CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer))
-        CHECK_GL(glBufferData(GL_ARRAY_BUFFER, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, nullptr, GL_STATIC_DRAW))
-        CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
+        GraphicsBackend::GenerateBuffers(1, &instancingMatricesBuffer);
+        GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, instancingMatricesBuffer);
+        GraphicsBackend::SetBufferData(BufferBindTarget::ARRAY_BUFFER, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, nullptr, BufferUsageHint::DYNAMIC_DRAW);
+        GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, 0);
     }
 
     void InitSeamlessCubemap()
     {
-        CHECK_GL(glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS))
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::TEXTURE_CUBE_MAP_SEAMLESS, true);
     }
 
     void Init()
@@ -132,8 +133,8 @@ namespace Graphics
 
     void Shutdown()
     {
-        CHECK_GL(glDeleteBuffers(1, &instancingMatricesBuffer))
-        CHECK_GL(glDeleteFramebuffers(1, &framebuffer))
+        GraphicsBackend::DeleteBuffers(1, &instancingMatricesBuffer);
+        GraphicsBackend::DeleteFramebuffers(1, &framebuffer);
     }
 
     void SetLightingData(const Vector3 &_ambient, const std::vector<Light *> &_lights)
@@ -239,8 +240,8 @@ namespace Graphics
     {
         auto debugGroup = Debug::DebugGroup("Render Frame");
 
-        CHECK_GL(glClearColor(0, 0, 0, 0))
-        CHECK_GL(glClearDepth(1))
+        GraphicsBackend::SetClearColor(0, 0, 0, 0);
+        GraphicsBackend::SetClearDepth(1);
 
         Context ctx;
         ctx.DrawCallInfos = DoCulling(ctx.Renderers);
@@ -326,10 +327,10 @@ namespace Graphics
 
             auto matricesSize        = sizeof(Matrix4x4) * count;
             auto normalsMatrixOffset = sizeof(Matrix4x4) * MAX_INSTANCING_COUNT;
-            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer))
-            CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, matricesSize, matrices.data()))
-            CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, normalsMatrixOffset, matricesSize, modelNormalMatrices.data()))
-            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
+            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, instancingMatricesBuffer);
+            GraphicsBackend::SetBufferSubData(BufferBindTarget::ARRAY_BUFFER, 0, matricesSize, matrices.data());
+            GraphicsBackend::SetBufferSubData(BufferBindTarget::ARRAY_BUFFER, normalsMatrixOffset, matricesSize, modelNormalMatrices.data());
+            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, 0);
         }
         else
         {
@@ -343,45 +344,45 @@ namespace Graphics
         // make sure VAO is bound before calling this function
         if (_enabled)
         {
-            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, instancingMatricesBuffer))
+            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, instancingMatricesBuffer);
 
             // matrix4x4 requires 4 vertex attributes
             for (int i = 0; i < 8; ++i)
             {
-                CHECK_GL(glEnableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i))
-                CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 1))
+                GraphicsBackend::EnableVertexAttributeArray(INSTANCING_BASE_VERTEX_ATTRIB + i);
+                GraphicsBackend::SetVertexAttributeDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 1);
             }
 
             auto vec4Size = sizeof(Vector4);
 
             // model matrix
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 0, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(0)))
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 1, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(1 * vec4Size)))
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 2, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(2 * vec4Size)))
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(3 * vec4Size)))
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 0, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(0));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 1, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(1 * vec4Size));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 2, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(2 * vec4Size));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 3, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(3 * vec4Size));
 
             // normal matrix
             auto offset = sizeof(Matrix4x4) * MAX_INSTANCING_COUNT;
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset)))
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 1 * vec4Size)))
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size)))
-            CHECK_GL(glVertexAttribPointer(INSTANCING_BASE_VERTEX_ATTRIB + 7, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size)))
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 4, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(offset));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 5, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(offset + 1 * vec4Size));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 6, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 7, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size));
 
-            CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
+            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, 0);
         }
         else
         {
             for (int i = 0; i < 8; ++i)
             {
-                CHECK_GL(glDisableVertexAttribArray(INSTANCING_BASE_VERTEX_ATTRIB + i))
-                CHECK_GL(glVertexAttribDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 0))
+                GraphicsBackend::DisableVertexAttributeArray(INSTANCING_BASE_VERTEX_ATTRIB + i);
+                GraphicsBackend::SetVertexAttributeDivisor(INSTANCING_BASE_VERTEX_ATTRIB + i, 0);
             }
         }
     }
 
     void Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings)
     {
-        static GLuint currentBoundVAO = -1;
+        static GraphicsBackendVAO currentBoundVAO = -1;
 
         // filter draw calls
         std::vector<DrawCallInfo> drawCalls;
@@ -401,7 +402,7 @@ namespace Graphics
             if (vao != currentBoundVAO)
             {
                 currentBoundVAO = vao;
-                CHECK_GL(glBindVertexArray(vao))
+                GraphicsBackend::BindVertexArrayObject(vao);
             }
 
             FillMatrices(info, instancedMatricesMap);
@@ -428,22 +429,22 @@ namespace Graphics
                     auto instanceCount = instancedMatricesMap[info.InstancedIndex].size();
                     if (hasIndexes)
                     {
-                        CHECK_GL(glDrawElementsInstanced(static_cast<GLenum>(primitiveType), count, GL_UNSIGNED_INT, nullptr, instanceCount))
+                        GraphicsBackend::DrawElementsInstanced(primitiveType, count, IndicesDataType::UNSIGNED_INT, nullptr, instanceCount);
                     }
                     else
                     {
-                        CHECK_GL(glDrawArraysInstanced(static_cast<GLenum>(primitiveType), 0, count, instanceCount))
+                        GraphicsBackend::DrawArraysInstanced(primitiveType, 0, count, instanceCount);
                     }
                 }
                 else
                 {
                     if (hasIndexes)
                     {
-                        CHECK_GL(glDrawElements(static_cast<GLenum>(primitiveType), count, GL_UNSIGNED_INT, nullptr))
+                        GraphicsBackend::DrawElements(primitiveType, count, IndicesDataType::UNSIGNED_INT, nullptr);
                     }
                     else
                     {
-                        CHECK_GL(glDrawArrays(static_cast<GLenum>(primitiveType), 0, count))
+                        GraphicsBackend::DrawArrays(primitiveType, 0, count);
                     }
                 }
             }
@@ -512,29 +513,29 @@ namespace Graphics
     {
         if (!_colorAttachment && !_depthAttachment)
         {
-            CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
+            GraphicsBackend::BindFramebuffer(FramebufferTarget::DRAW_FRAMEBUFFER, 0);
             return;
         }
 
-        CHECK_GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer))
+        GraphicsBackend::BindFramebuffer(FramebufferTarget::DRAW_FRAMEBUFFER, framebuffer);
 
         if (_colorAttachment)
             _colorAttachment->Attach(FramebufferAttachment::COLOR_ATTACHMENT0, colorLevel, colorLayer);
         else
         {
-            CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 0, 0))
+            GraphicsBackend::SetFramebufferTexture(FramebufferTarget::DRAW_FRAMEBUFFER, FramebufferAttachment::COLOR_ATTACHMENT0, 0, 0);
         }
 
         if (_depthAttachment)
             _depthAttachment->Attach(FramebufferAttachment::DEPTH_ATTACHMENT, depthLevel, depthLayer);
         else
         {
-            CHECK_GL(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, 0, 0))
+            GraphicsBackend::SetFramebufferTexture(FramebufferTarget::DRAW_FRAMEBUFFER, FramebufferAttachment::DEPTH_ATTACHMENT, 0, 0);
         }
     }
 
     void SetViewport(const Vector4 &viewport)
     {
-        CHECK_GL(glViewport(viewport.x, viewport.y, viewport.z, viewport.w))
+        GraphicsBackend::SetViewport(viewport.x, viewport.y, viewport.z, viewport.w);
     }
 } // namespace Graphics

@@ -1,13 +1,14 @@
 #include "shadow_caster_pass.h"
-#include "../context.h"
-#include "../graphics.h"
-#include "../uniform_block.h"
+#include "graphics/context.h"
+#include "graphics/graphics.h"
+#include "graphics/uniform_block.h"
 #include "debug.h"
 #include "graphics/render_settings.h"
 #include "light/light.h"
 #include "renderer/renderer.h"
 #include "texture_2d/texture_2d.h"
 #include "texture_2d_array/texture_2d_array.h"
+
 #include <utility>
 
 ShadowCasterPass::ShadowCasterPass(std::shared_ptr<UniformBlock> shadowsUniformBlock) :
@@ -157,8 +158,8 @@ void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
 
     auto debugGroup = Debug::DebugGroup("Render shadow map");
 
-    CHECK_GL(glDepthMask(GL_TRUE))
-    CHECK_GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
+    GraphicsBackend::SetDepthWrite(true);
+    GraphicsBackend::Clear(ClearMask::COLOR_DEPTH);
 
     auto drawCalls = Graphics::DoCulling(_renderers);
     Graphics::Draw(drawCalls, renderSettings);

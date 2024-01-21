@@ -85,13 +85,13 @@ namespace Graphics
 
     void InitPasses()
     {
-        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::Opaque(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, "Forward");
-        transparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallInfo::Sorting::BACK_TO_FRONT, DrawCallInfo::Filter::Transparent(), 0, "Forward");
+        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::Opaque(), ClearMask::COLOR_DEPTH, "Forward");
+        transparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallInfo::Sorting::BACK_TO_FRONT, DrawCallInfo::Filter::Transparent(), ClearMask::NONE, "Forward");
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
 
 #if OPENGL_STUDY_EDITOR
-        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::All(), 0, "Fallback");
+        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::All(), ClearMask::NONE, "Fallback");
         gizmosPass         = std::make_unique<GizmosPass>();
 #endif
     }

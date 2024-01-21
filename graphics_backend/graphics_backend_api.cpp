@@ -294,16 +294,6 @@ void GraphicsBackend::UseProgram(GraphicsBackendProgram program)
     CHECK_GRAPHICS_BACKEND_FUNC(glUseProgram(program))
 }
 
-GraphicsBackendError GraphicsBackend::GetError()
-{
-    return glGetError();
-}
-
-const char *GraphicsBackend::GetErrorString(GraphicsBackendError error)
-{
-    return reinterpret_cast<const char *>(gluGetString(error));
-}
-
 void GraphicsBackend::SetUniform(GraphicsBackendUniformLocation location, UniformDataType dataType, int count, const void *data, bool transpose)
 {
     GLboolean transposeFlag = transpose ? GL_TRUE : GL_FALSE;
@@ -461,4 +451,19 @@ void GraphicsBackend::SetUniform(GraphicsBackendUniformLocation location, Unifor
             CHECK_GRAPHICS_BACKEND_FUNC(glUniform1i(location, *(reinterpret_cast<const GLint *>(data))))
             break;
     }
+}
+
+void GraphicsBackend::Clear(ClearMask mask)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glClear(Cast(mask)))
+}
+
+GraphicsBackendError GraphicsBackend::GetError()
+{
+    return glGetError();
+}
+
+const char *GraphicsBackend::GetErrorString(GraphicsBackendError error)
+{
+    return reinterpret_cast<const char *>(gluGetString(error));
 }

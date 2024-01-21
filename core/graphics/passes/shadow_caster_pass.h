@@ -1,11 +1,6 @@
 #ifndef OPENGL_STUDY_SHADOW_CASTER_PASS_H
 #define OPENGL_STUDY_SHADOW_CASTER_PASS_H
 
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
 #include <memory>
 #include <vector>
 

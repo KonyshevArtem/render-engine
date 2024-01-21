@@ -29,7 +29,9 @@ add_library(GraphicsBackend
         enums/shader_parameter.h
         enums/program_parameter.h
         enums/uniform_data_type.h
-        enums/clear_mask.h)
+        enums/clear_mask.h
+        enums/uniform_block_parameter.h
+        enums/uniform_parameter.h)
 
 # windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

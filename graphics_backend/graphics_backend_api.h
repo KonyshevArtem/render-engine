@@ -26,6 +26,8 @@
 #include "enums/program_parameter.h"
 #include "enums/uniform_data_type.h"
 #include "enums/clear_mask.h"
+#include "enums/uniform_block_parameter.h"
+#include "enums/uniform_parameter.h"
 
 #ifdef OPENGL_STUDY_EDITOR
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \
@@ -72,6 +74,7 @@ namespace GraphicsBackend
     void GenerateBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr);
     void DeleteBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr);
     void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer);
+    void BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size);
 
     void SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint);
     void SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data);
@@ -109,8 +112,10 @@ namespace GraphicsBackend
     bool TryGetUniformBlockIndex(GraphicsBackendProgram program, const char *name, int *index);
     void SetUniformBlockBinding(GraphicsBackendProgram program, int uniformBlockIndex, int uniformBlockBinding);
     void GetActiveUniform(GraphicsBackendProgram program, int index, int nameBufferSize, int *nameLength, int *size, UniformDataType *dataType, char *name);
+    void GetActiveUniformsParameter(GraphicsBackendProgram program, int uniformCount, const unsigned int *uniformIndices, UniformParameter parameter, int *values);
     GraphicsBackendUniformLocation GetUniformLocation(GraphicsBackendProgram program, const char *uniformName);
     void SetUniform(GraphicsBackendUniformLocation location, UniformDataType dataType, int count, const void *data, bool transpose = false);
+    void GetActiveUniformBlockParameter(GraphicsBackendProgram program, int uniformBlockIndex, UniformBlockParameter parameter, int *values);
 
     void Clear(ClearMask mask);
 

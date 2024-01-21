@@ -1,29 +1,26 @@
 #include "uniform_block.h"
 #include "debug.h"
 #include "shader/shader.h"
-#include "shader/uniform_info/uniform_info.h"
-#include <unordered_map>
-#include <vector>
 
 UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName, unsigned int _index) :
     m_Name(std::move(_blockName)), m_BindIndex(_index)
 {
     auto &pass = _shader.m_Passes.at(0);
 
-    auto blockIndex = CHECK_GL(glGetUniformBlockIndex(pass.Program, m_Name.c_str()));
-    if (blockIndex == GL_INVALID_INDEX)
+    int blockIndex;
+    if (!GraphicsBackend::TryGetUniformBlockIndex(pass.Program, m_Name.c_str(), &blockIndex))
         return;
 
-    GLint uniformCount;
-    CHECK_GL(glGetActiveUniformBlockiv(pass.Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformCount));
+    int uniformCount;
+    GraphicsBackend::GetActiveUniformBlockParameter(pass.Program, blockIndex, UniformBlockParameter::ACTIVE_UNIFORMS, &uniformCount);
 
-    std::vector<GLint> uniformIndexes(uniformCount);
-    CHECK_GL(glGetActiveUniformBlockiv(pass.Program, blockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &uniformIndexes[0]));
+    std::vector<int> uniformIndexes(uniformCount);
+    GraphicsBackend::GetActiveUniformBlockParameter(pass.Program, blockIndex, UniformBlockParameter::ACTIVE_UNIFORM_INDICES, &uniformIndexes[0]);
 
-    std::vector<GLint> uniformOffsets(uniformCount);
-    CHECK_GL(glGetActiveUniformsiv(pass.Program, uniformCount, reinterpret_cast<const GLuint *>(&uniformIndexes[0]), GL_UNIFORM_OFFSET, &uniformOffsets[0]));
+    std::vector<int> uniformOffsets(uniformCount);
+    GraphicsBackend::GetActiveUniformsParameter(pass.Program, uniformCount, reinterpret_cast<const unsigned int *>(&uniformIndexes[0]), UniformParameter::OFFSET, &uniformOffsets[0]);
 
-    std::unordered_map<GLint, GLint> indexToOffset;
+    std::unordered_map<int, int> indexToOffset;
     for (int i = 0; i < uniformCount; ++i)
         indexToOffset[uniformIndexes[i]] = uniformOffsets[i];
 
@@ -33,27 +30,27 @@ UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName, unsign
             m_UniformOffsets[pair.first] = indexToOffset[pair.second.Index];
     }
 
-    GLint blockSize;
-    CHECK_GL(glGetActiveUniformBlockiv(pass.Program, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize));
+    int blockSize;
+    GraphicsBackend::GetActiveUniformBlockParameter(pass.Program, blockIndex, UniformBlockParameter::DATA_SIZE, &blockSize);
 
-    CHECK_GL(glGenBuffers(1, &m_Buffer));
-    CHECK_GL(glBindBuffer(GL_UNIFORM_BUFFER, m_Buffer));
-    CHECK_GL(glBufferData(GL_UNIFORM_BUFFER, blockSize, nullptr, GL_DYNAMIC_DRAW));
-    CHECK_GL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+    GraphicsBackend::GenerateBuffers(1, &m_Buffer);
+    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, m_Buffer);
+    GraphicsBackend::SetBufferData(BufferBindTarget::UNIFORM_BUFFER, blockSize, nullptr, BufferUsageHint::DYNAMIC_DRAW);
+    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, 0);
 
     m_Data.resize(blockSize);
 }
 
 UniformBlock::~UniformBlock()
 {
-    CHECK_GL(glDeleteBuffers(1, &m_Buffer));
+    GraphicsBackend::DeleteBuffers(1, &m_Buffer);
 }
 
 void UniformBlock::Bind() const
 {
-    CHECK_GL(glBindBuffer(GL_UNIFORM_BUFFER, m_Buffer));
-    CHECK_GL(glBindBufferRange(GL_UNIFORM_BUFFER, m_BindIndex, m_Buffer, 0, m_Data.size()));
-    CHECK_GL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, m_Buffer);
+    GraphicsBackend::BindBufferRange(BufferBindTarget::UNIFORM_BUFFER, m_BindIndex, m_Buffer, 0, m_Data.size());
+    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, 0);
 }
 
 void UniformBlock::SetUniform(const std::string &_name, const void *_data, unsigned long _size)
@@ -70,7 +67,7 @@ void UniformBlock::SetUniform(const std::string &_name, const void *_data, unsig
 
 void UniformBlock::UploadData() const
 {
-    CHECK_GL(glBindBuffer(GL_UNIFORM_BUFFER, m_Buffer));
-    CHECK_GL(glBufferSubData(GL_UNIFORM_BUFFER, 0, static_cast<GLsizei>(m_Data.size()), m_Data.data()));
-    CHECK_GL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, m_Buffer);
+    GraphicsBackend::SetBufferSubData(BufferBindTarget::UNIFORM_BUFFER, 0, static_cast<GLsizei>(m_Data.size()), m_Data.data());
+    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, 0);
 }

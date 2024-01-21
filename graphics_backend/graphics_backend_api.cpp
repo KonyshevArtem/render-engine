@@ -127,6 +127,11 @@ void GraphicsBackend::BindBuffer(BufferBindTarget target, GraphicsBackendBuffer 
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(Cast(target), buffer))
 }
 
+void GraphicsBackend::BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBufferRange(Cast(target), bindingPointIndex, buffer, offset, size))
+}
+
 void GraphicsBackend::SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(Cast(target), size, data, Cast(usageHint)))
@@ -281,6 +286,11 @@ void GraphicsBackend::SetUniformBlockBinding(GraphicsBackendProgram program, int
 void GraphicsBackend::GetActiveUniform(GraphicsBackendProgram program, int index, int nameBufferSize, int *nameLength, int *size, UniformDataType *dataType, char *name)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniform(program, index, nameBufferSize, nameLength, size, reinterpret_cast<GLenum*>(dataType), name))
+}
+
+void GraphicsBackend::GetActiveUniformsParameter(GraphicsBackendProgram program, int uniformCount, const unsigned int *uniformIndices, UniformParameter parameter, int *values)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformsiv(program, uniformCount, uniformIndices, Cast(parameter), values))
 }
 
 GraphicsBackendUniformLocation GraphicsBackend::GetUniformLocation(GraphicsBackendProgram program, const char *uniformName)
@@ -451,6 +461,11 @@ void GraphicsBackend::SetUniform(GraphicsBackendUniformLocation location, Unifor
             CHECK_GRAPHICS_BACKEND_FUNC(glUniform1i(location, *(reinterpret_cast<const GLint *>(data))))
             break;
     }
+}
+
+void GraphicsBackend::GetActiveUniformBlockParameter(GraphicsBackendProgram program, int uniformBlockIndex, UniformBlockParameter parameter, int *values)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockiv(program, uniformBlockIndex, Cast(parameter), values))
 }
 
 void GraphicsBackend::Clear(ClearMask mask)

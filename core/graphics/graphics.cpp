@@ -14,6 +14,14 @@
 #include "texture/texture.h"
 #include "uniform_block.h"
 #include "graphics_backend_debug.h"
+#include "enums/cull_face_orientation.h"
+#include "enums/graphics_backend_capability.h"
+#include "enums/buffer_bind_target.h"
+#include "enums/buffer_usage_hint.h"
+#include "enums/vertex_attribute_data_type.h"
+#include "enums/indices_data_type.h"
+#include "enums/framebuffer_target.h"
+#include "enums/framebuffer_attachment.h"
 
 #include <boost/functional/hash/hash.hpp>
 

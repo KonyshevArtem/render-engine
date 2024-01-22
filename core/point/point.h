@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_POINT
 
 #include "drawable_geometry/drawable_geometry.h"
+#include "enums/primitive_type.h"
 
 class Point: public DrawableGeometry
 {

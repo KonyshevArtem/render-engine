@@ -1,6 +1,11 @@
 #include "uniform_block.h"
 #include "debug.h"
 #include "shader/shader.h"
+#include "graphics_backend_api.h"
+#include "enums/uniform_block_parameter.h"
+#include "enums/uniform_parameter.h"
+#include "enums/buffer_bind_target.h"
+#include "enums/buffer_usage_hint.h"
 
 UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName, unsigned int _index) :
     m_Name(std::move(_blockName)), m_BindIndex(_index)

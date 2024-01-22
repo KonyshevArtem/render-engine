@@ -2,34 +2,35 @@
 #define OPENGL_STUDY_GRAPHICS_BACKEND_API_H
 
 #include "graphics_backend.h"
-#include "enums/texture_type.h"
-#include "enums/texture_parameter.h"
-#include "enums/texture_target.h"
-#include "enums/texture_level_parameter.h"
-#include "enums/texture_internal_format.h"
-#include "enums/texture_pixel_format.h"
-#include "enums/texture_data_type.h"
-#include "enums/texture_unit.h"
-#include "enums/framebuffer_attachment.h"
-#include "enums/framebuffer_target.h"
-#include "enums/sampler_parameter.h"
-#include "enums/primitive_type.h"
-#include "enums/buffer_bind_target.h"
-#include "enums/vertex_attribute_data_type.h"
-#include "enums/buffer_usage_hint.h"
-#include "enums/graphics_backend_capability.h"
-#include "enums/blend_factor.h"
-#include "enums/cull_face.h"
-#include "enums/depth_function.h"
-#include "enums/shader_type.h"
-#include "enums/shader_parameter.h"
-#include "enums/program_parameter.h"
-#include "enums/uniform_data_type.h"
-#include "enums/clear_mask.h"
-#include "enums/uniform_block_parameter.h"
-#include "enums/uniform_parameter.h"
-#include "enums/cull_face_orientation.h"
-#include "enums/indices_data_type.h"
+
+enum class TextureType : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class TextureParameter : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class TextureTarget : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class TextureLevelParameter : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class TextureInternalFormat : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class TexturePixelFormat : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class TextureDataType : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class TextureUnit : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class FramebufferAttachment : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class FramebufferTarget : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class SamplerParameter : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class PrimitiveType : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class BufferBindTarget : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class VertexAttributeDataType : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class BufferUsageHint : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class GraphicsBackendCapability : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class BlendFactor : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class CullFace : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class DepthFunction : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class ShaderType : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class ShaderParameter : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class ProgramParameter : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class UniformDataType : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class ClearMask : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class UniformBlockParameter : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class UniformParameter : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class CullFaceOrientation : GRAPHICS_BACKEND_TYPE_ENUM;
+enum class IndicesDataType : GRAPHICS_BACKEND_TYPE_ENUM;
 
 #ifdef OPENGL_STUDY_EDITOR
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \

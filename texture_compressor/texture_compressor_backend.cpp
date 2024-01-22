@@ -12,6 +12,10 @@
 #include "tga.h"
 #include "debug.h"
 #include "graphics_backend_api.h"
+#include "enums/texture_target.h"
+#include "enums/texture_data_type.h"
+#include "enums/texture_parameter.h"
+#include "enums/texture_level_parameter.h"
 
 namespace TextureCompressorBackend
 {

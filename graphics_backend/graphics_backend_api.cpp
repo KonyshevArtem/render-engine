@@ -1,5 +1,7 @@
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug.h"
+#include "enums/texture_unit.h"
+#include "enums/uniform_data_type.h"
 
 #include <type_traits>
 

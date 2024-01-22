@@ -10,6 +10,7 @@
 #include "renderer/renderer.h"
 #include "texture_2d/texture_2d.h"
 #include "graphics_backend_debug.h"
+#include "enums/clear_mask.h"
 
 void GizmosPass::Execute(Context &_context)
 {

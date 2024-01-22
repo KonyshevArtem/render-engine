@@ -3,6 +3,10 @@
 #include "debug.h"
 #include "graphics/graphics.h"
 #include "utils.h"
+#include "enums/shader_type.h"
+#include "enums/shader_parameter.h"
+#include "enums/program_parameter.h"
+#include "graphics_backend_api.h"
 
 #include <boost/json.hpp>
 #include <span>

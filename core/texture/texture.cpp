@@ -1,5 +1,8 @@
 #include "texture.h"
 #include "vector4/vector4.h"
+#include "enums/texture_parameter.h"
+#include "enums/framebuffer_target.h"
+#include "enums/sampler_parameter.h"
 
 Texture::Texture(TextureType textureType, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels) :
         m_TextureType(textureType),

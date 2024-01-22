@@ -1,4 +1,7 @@
 #include "point.h"
+#include "enums/vertex_attribute_data_type.h"
+#include "enums/buffer_bind_target.h"
+#include "enums/buffer_usage_hint.h"
 
 Point::Point() :
     DrawableGeometry()

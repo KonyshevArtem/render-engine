@@ -1,5 +1,8 @@
 #include "mesh.h"
 #include "vector2/vector2.h"
+#include "enums/buffer_usage_hint.h"
+#include "enums/buffer_bind_target.h"
+#include "enums/vertex_attribute_data_type.h"
 
 #include <span>
 

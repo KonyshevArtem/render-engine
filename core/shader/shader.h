@@ -7,7 +7,9 @@
 #include "uniform_info/uniform_info.h"
 #include "vector4/vector4.h"
 #include "enums/texture_unit.h"
-#include "graphics_backend_api.h"
+#include "enums/cull_face.h"
+#include "enums/blend_factor.h"
+#include "enums/depth_function.h"
 
 #include <filesystem>
 #include <string>

@@ -3,6 +3,7 @@
 
 #include "bounds/bounds.h"
 #include "drawable_geometry/drawable_geometry.h"
+#include "enums/primitive_type.h"
 
 #include <memory>
 #include <vector>

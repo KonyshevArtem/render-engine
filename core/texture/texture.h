@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_TEXTURE_H
 
 #include "graphics_backend_api.h"
+#include "enums/texture_type.h"
 #include "enums/texture_wrap_mode.h"
 #include "enums/texture_filtering_mode.h"
 

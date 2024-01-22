@@ -1,5 +1,7 @@
 #include "texture_2d.h"
 #include "texture/texture_binary_reader.h"
+#include "enums/texture_target.h"
+#include "enums/texture_data_type.h"
 
 #include <vector>
 

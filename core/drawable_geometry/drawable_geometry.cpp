@@ -1,4 +1,5 @@
 #include "drawable_geometry.h"
+#include "enums/buffer_bind_target.h"
 
 DrawableGeometry::DrawableGeometry()
 {

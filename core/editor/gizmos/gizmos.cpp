@@ -3,6 +3,11 @@
 #include "gizmos.h"
 #include "vector3/vector3.h"
 #include "graphics_backend_api.h"
+#include "enums/indices_data_type.h"
+#include "enums/primitive_type.h"
+#include "enums/buffer_bind_target.h"
+#include "enums/vertex_attribute_data_type.h"
+#include "enums/buffer_usage_hint.h"
 
 std::shared_ptr<Gizmos::GizmosPrimitive> m_WireCubePrimitive;
 std::vector<Gizmos::GizmosDrawInfo>      m_DrawInfos;

@@ -3,6 +3,8 @@
 #include "texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
 #include "utils.h"
+#include "enums/program_parameter.h"
+#include "enums/graphics_backend_capability.h"
 
 typedef std::unordered_map<std::string, std::unordered_map<UniformDataType, std::shared_ptr<Texture>>> DefaultTexturesMap;
 

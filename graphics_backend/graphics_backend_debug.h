@@ -7,6 +7,12 @@
 
 namespace GraphicsBackendDebug
 {
+    struct DebugGroup
+    {
+        DebugGroup(const std::string &_name);
+        ~DebugGroup();
+    };
+
     void CheckError();
     void LogError(GraphicsBackendError error, const std::string &file, int line);
 }

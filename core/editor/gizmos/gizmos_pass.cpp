@@ -1,7 +1,6 @@
 #if OPENGL_STUDY_EDITOR
 
 #include "gizmos_pass.h"
-#include "debug.h"
 #include "editor/hierarchy.h"
 #include "gizmos.h"
 #include "graphics/context.h"
@@ -10,6 +9,7 @@
 #include "mesh/mesh.h"
 #include "renderer/renderer.h"
 #include "texture_2d/texture_2d.h"
+#include "graphics_backend_debug.h"
 
 void GizmosPass::Execute(Context &_context)
 {
@@ -28,7 +28,7 @@ void GizmosPass::Outline() const
     if (renderers.empty())
         return;
 
-    auto debugGroup = Debug::DebugGroup("Selected outline pass");
+    auto debugGroup = GraphicsBackendDebug::DebugGroup("Selected outline pass");
 
     CheckTexture(outlineTexture);
 
@@ -36,7 +36,7 @@ void GizmosPass::Outline() const
     {
         Graphics::SetRenderTargets(outlineTexture, 0, 0, nullptr, 0, 0);
 
-        CHECK_GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
+        GraphicsBackend::Clear(ClearMask::COLOR_DEPTH);
 
         std::vector<DrawCallInfo> infos;
         infos.reserve(renderers.size());
@@ -65,7 +65,7 @@ void GizmosPass::Gizmos() const
 {
     static std::shared_ptr<Shader> gizmosShader = Shader::Load("resources/shaders/gizmos/gizmos.shader", {});
 
-    auto debugGroup = Debug::DebugGroup("Gizmos pass");
+    auto debugGroup = GraphicsBackendDebug::DebugGroup("Gizmos pass");
 
     for (const auto &drawInfo: Gizmos::GetDrawInfos())
     {

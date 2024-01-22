@@ -1,5 +1,4 @@
 #include "mesh.h"
-#include "debug.h"
 #include "vector2/vector2.h"
 
 #include <span>

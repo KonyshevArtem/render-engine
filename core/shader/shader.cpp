@@ -1,5 +1,4 @@
 #include "shader.h"
-#include "debug.h"
 #include "cubemap/cubemap.h"
 #include "texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"

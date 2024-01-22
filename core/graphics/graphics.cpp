@@ -13,6 +13,7 @@
 #include "renderer/renderer.h"
 #include "texture/texture.h"
 #include "uniform_block.h"
+#include "graphics_backend_debug.h"
 
 #include <boost/functional/hash/hash.hpp>
 
@@ -238,7 +239,7 @@ namespace Graphics
 
     void Render()
     {
-        auto debugGroup = Debug::DebugGroup("Render Frame");
+        auto debugGroup = GraphicsBackendDebug::DebugGroup("Render Frame");
 
         GraphicsBackend::SetClearColor(0, 0, 0, 0);
         GraphicsBackend::SetClearDepth(1);
@@ -270,7 +271,7 @@ namespace Graphics
         Gizmos::ClearDrawInfos();
 #endif
 
-        Debug::CheckOpenGLError();
+        GraphicsBackendDebug::CheckError();
     }
 
     std::vector<DrawCallInfo> BatchDrawCalls(const std::vector<DrawCallInfo> &_drawCalls, std::vector<std::vector<Matrix4x4>> &_instancedMatricesMap)

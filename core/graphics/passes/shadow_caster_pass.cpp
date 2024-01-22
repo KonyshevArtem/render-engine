@@ -2,12 +2,12 @@
 #include "graphics/context.h"
 #include "graphics/graphics.h"
 #include "graphics/uniform_block.h"
-#include "debug.h"
 #include "graphics/render_settings.h"
 #include "light/light.h"
 #include "renderer/renderer.h"
 #include "texture_2d/texture_2d.h"
 #include "texture_2d_array/texture_2d_array.h"
+#include "graphics_backend_debug.h"
 
 #include <utility>
 
@@ -70,7 +70,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     if (_ctx.ShadowCasters.empty())
         return;
 
-    auto debugGroup = Debug::DebugGroup("Shadow pass");
+    auto debugGroup = GraphicsBackendDebug::DebugGroup("Shadow pass");
 
     int spotLightsCount = 0;
     int pointLightsCount = 0;
@@ -156,7 +156,7 @@ void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
 {
     static RenderSettings renderSettings {{{"LightMode", "ShadowCaster"}}};
 
-    auto debugGroup = Debug::DebugGroup("Render shadow map");
+    auto debugGroup = GraphicsBackendDebug::DebugGroup("Render shadow map");
 
     GraphicsBackend::SetDepthWrite(true);
     GraphicsBackend::Clear(ClearMask::COLOR_DEPTH);

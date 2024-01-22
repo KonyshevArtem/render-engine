@@ -2,6 +2,29 @@
 #include "graphics_backend_api.h"
 #include "debug.h"
 
+static int debugGroupID = 0;
+
+GraphicsBackendDebug::DebugGroup::DebugGroup(const std::string &_name)
+{
+#ifdef GRAPHICS_BACKEND_WINDOWS
+    CHECK_GL(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, debugGroupID++, -1, _name.c_str()));
+#endif
+}
+
+GraphicsBackendDebug::DebugGroup::~DebugGroup()
+{
+#ifdef GRAPHICS_BACKEND_WINDOWS
+    glPopDebugGroup();
+    --debugGroupID;
+
+    if (debugGroupID < 0)
+    {
+        LogError("Popping more debug groups than pushing");
+        debugGroupID = 0;
+    }
+#endif
+}
+
 void GraphicsBackendDebug::CheckError()
 {
     GraphicsBackendError error = GraphicsBackend::GetError();

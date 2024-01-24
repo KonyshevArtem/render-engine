@@ -41,8 +41,6 @@ add_compile_definitions(OPENGL_STUDY_EDITOR)
 
 # source code
 add_subdirectory(graphics_backend)
-add_compile_definitions(${GRAPHICS_BACKEND_DEFINITIONS})
-
 add_subdirectory(external/lodepng)
 add_subdirectory(external/OpenFBX)
 add_subdirectory(external/tga)

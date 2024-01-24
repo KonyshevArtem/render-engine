@@ -36,7 +36,6 @@ add_library(GraphicsBackend
         enums/indices_data_type.h
         types/graphics_backend_texture.h
         types/graphics_backend_sampler.h
-        types/graphics_backend_texture_unit_index.h
         types/graphics_backend_vao.h
         types/graphics_backend_buffer.h
         types/graphics_backend_program.h
@@ -68,8 +67,12 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 endif()
 
-target_compile_definitions(GraphicsBackend PUBLIC GL_SILENCE_DEPRECATION ${PLATFORM_DEFINE} GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED)
-set(GRAPHICS_BACKEND_DEFINITIONS OPENGL_MAJOR_VERSION=4 OPENGL_MINOR_VERSION=${MINOR_VERSION} PARENT_SCOPE)
+target_compile_definitions(GraphicsBackend PUBLIC
+        GL_SILENCE_DEPRECATION
+        ${PLATFORM_DEFINE}
+        GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
+        OPENGL_MAJOR_VERSION=4
+        OPENGL_MINOR_VERSION=${MINOR_VERSION})
 
 target_include_directories(GraphicsBackend PUBLIC .)
 target_link_libraries(GraphicsBackend DebugUtil)

@@ -1,5 +1,6 @@
 #include "texture.h"
 #include "vector4/vector4.h"
+#include "graphics_backend_api.h"
 #include "enums/texture_parameter.h"
 #include "enums/framebuffer_target.h"
 #include "enums/sampler_parameter.h"
@@ -17,7 +18,7 @@ Texture::Texture(TextureType textureType, unsigned int width, unsigned int heigh
     SetWrapMode_Internal(TextureWrapMode::REPEAT);
     SetFiltering_Internal(mipLevels > 1 ? TextureFilteringMode::LINEAR_MIPMAP_NEAREST : TextureFilteringMode::LINEAR);
     GraphicsBackend::SetTextureParameterInt(m_TextureType, TextureParameter::MAX_LEVEL, mipLevels - 1);
-    GraphicsBackend::BindTexture(m_TextureType, 0);
+    GraphicsBackend::BindTexture(m_TextureType, GraphicsBackendTexture::NONE);
 }
 
 Texture::~Texture()
@@ -33,7 +34,7 @@ void Texture::Bind(TextureUnit unit) const
     GraphicsBackend::BindSampler(unit, m_Sampler);
 }
 
-void Texture::Attach(FramebufferAttachment attachment, GraphicsBackendTextureLevel level, GraphicsBackendTextureLayer layer) const
+void Texture::Attach(FramebufferAttachment attachment, int level, int layer) const
 {
     if (m_TextureType == TextureType::TEXTURE_2D)
     {
@@ -49,14 +50,14 @@ void Texture::SetBaseMipLevel(unsigned int baseMipLevel) const
 {
     GraphicsBackend::BindTexture(m_TextureType, m_Texture);
     GraphicsBackend::SetTextureParameterInt(m_TextureType, TextureParameter::BASE_LEVEL, baseMipLevel);
-    GraphicsBackend::BindTexture(m_TextureType, 0);
+    GraphicsBackend::BindTexture(m_TextureType, GraphicsBackendTexture::NONE);
 }
 
 void Texture::SetWrapMode(TextureWrapMode wrapMode) const
 {
     GraphicsBackend::BindTexture(m_TextureType, m_Texture);
     SetWrapMode_Internal(wrapMode);
-    GraphicsBackend::BindTexture(m_TextureType, 0);
+    GraphicsBackend::BindTexture(m_TextureType, GraphicsBackendTexture::NONE);
 }
 
 void Texture::SetWrapMode_Internal(TextureWrapMode wrapMode) const
@@ -70,7 +71,7 @@ void Texture::SetBorderColor(const Vector4 &color) const
 {
     GraphicsBackend::BindTexture(m_TextureType, m_Texture);
     GraphicsBackend::SetSamplerParameterFloatArray(m_Sampler, SamplerParameter::BORDER_COLOR, &color.x);
-    GraphicsBackend::BindTexture(m_TextureType, 0);
+    GraphicsBackend::BindTexture(m_TextureType, GraphicsBackendTexture::NONE);
 }
 
 void Texture::SetFiltering_Internal(TextureFilteringMode filtering) const
@@ -119,5 +120,5 @@ void Texture::UploadPixels(void *pixels, TextureTarget target, TextureInternalFo
             GraphicsBackend::TextureImage2D(target, mipLevel, textureFormat, width, height, 0, pixelFormat, dataType, pixels);
         }
     }
-    GraphicsBackend::BindTexture(m_TextureType, 0);
+    GraphicsBackend::BindTexture(m_TextureType, GraphicsBackendTexture::NONE);
 }

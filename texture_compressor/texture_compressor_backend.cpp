@@ -16,6 +16,7 @@
 #include "enums/texture_data_type.h"
 #include "enums/texture_parameter.h"
 #include "enums/texture_level_parameter.h"
+#include "types/graphics_backend_texture.h"
 
 namespace TextureCompressorBackend
 {
@@ -266,7 +267,7 @@ namespace TextureCompressorBackend
         TextureHeader header{};
         header.Depth = typeInfo.Count;
 
-        GraphicsBackendTexture texture;
+        GraphicsBackendTexture texture{};
         GraphicsBackend::GenerateTextures(1, &texture);
         GraphicsBackend::BindTexture(textureType, texture);
 
@@ -316,7 +317,7 @@ namespace TextureCompressorBackend
                   << "\n\tMipmaps: " << header.MipCount
                   << "\n" << std::endl;
 
-        GraphicsBackend::BindTexture(textureType, 0);
+        GraphicsBackend::BindTexture(textureType, GraphicsBackendTexture::NONE);
         GraphicsBackend::DeleteTextures(1, &texture);
     }
 }

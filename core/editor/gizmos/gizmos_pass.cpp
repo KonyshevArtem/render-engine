@@ -9,6 +9,7 @@
 #include "mesh/mesh.h"
 #include "renderer/renderer.h"
 #include "texture_2d/texture_2d.h"
+#include "graphics_backend_api.h"
 #include "graphics_backend_debug.h"
 #include "enums/clear_mask.h"
 

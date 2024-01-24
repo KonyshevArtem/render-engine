@@ -1,7 +1,9 @@
 #ifndef OPENGL_STUDY_DRAWABLE_GEOMETRY
 #define OPENGL_STUDY_DRAWABLE_GEOMETRY
 
-#include "graphics_backend_api.h"
+#include "enums/primitive_type.h"
+#include "types/graphics_backend_vao.h"
+#include "types/graphics_backend_buffer.h"
 
 class DrawableGeometry
 {
@@ -21,8 +23,8 @@ protected:
     DrawableGeometry();
 
 private:
-    GraphicsBackendVAO m_VertexArrayObject = 0;
-    GraphicsBackendBuffer m_VertexBuffer = 0;
+    GraphicsBackendVAO m_VertexArrayObject{};
+    GraphicsBackendBuffer m_VertexBuffer{};
 };
 
 #endif

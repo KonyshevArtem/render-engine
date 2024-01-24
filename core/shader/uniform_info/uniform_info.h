@@ -1,8 +1,8 @@
 #ifndef OPENGL_STUDY_UNIFORM_INFO_H
 #define OPENGL_STUDY_UNIFORM_INFO_H
 
-#include "graphics_backend.h"
 #include "enums/uniform_data_type.h"
+#include "types/graphics_backend_uniform_location.h"
 
 struct UniformInfo
 {

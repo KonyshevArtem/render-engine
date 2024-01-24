@@ -1,10 +1,17 @@
 #ifndef OPENGL_STUDY_TEXTURE_H
 #define OPENGL_STUDY_TEXTURE_H
 
-#include "graphics_backend_api.h"
 #include "enums/texture_type.h"
 #include "enums/texture_wrap_mode.h"
 #include "enums/texture_filtering_mode.h"
+#include "enums/framebuffer_attachment.h"
+#include "enums/texture_target.h"
+#include "enums/texture_internal_format.h"
+#include "enums/texture_pixel_format.h"
+#include "enums/texture_data_type.h"
+#include "enums/texture_unit.h"
+#include "types/graphics_backend_texture.h"
+#include "types/graphics_backend_sampler.h"
 
 struct Vector4;
 
@@ -14,7 +21,7 @@ public:
     virtual ~Texture();
 
     void Bind(TextureUnit unit) const;
-    void Attach(FramebufferAttachment attachment, GraphicsBackendTextureLevel level, GraphicsBackendTextureLayer layer) const;
+    void Attach(FramebufferAttachment attachment, int level, int layer) const;
     void SetBaseMipLevel(unsigned int baseMipLevel) const;
     void SetWrapMode(TextureWrapMode wrapMode) const;
     void SetBorderColor(const Vector4 &color) const;
@@ -52,8 +59,8 @@ private:
     unsigned int m_Width = 0;
     unsigned int m_Height = 0;
     unsigned int m_Depth = 0;
-    GraphicsBackendTexture m_Texture = 0;
-    GraphicsBackendSampler m_Sampler = 0;
+    GraphicsBackendTexture m_Texture{};
+    GraphicsBackendSampler m_Sampler{};
     TextureType m_TextureType = TextureType::TEXTURE_2D;
     unsigned int m_MipLevels = 0;
 };

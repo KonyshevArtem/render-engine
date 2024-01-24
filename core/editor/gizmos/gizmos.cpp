@@ -28,7 +28,7 @@ void Gizmos::GizmosPrimitive::Draw() const
 {
     GraphicsBackend::BindVertexArrayObject(m_VertexArrayObject);
     GraphicsBackend::DrawElements(PrimitiveType::LINES, m_IndexCount, IndicesDataType::UNSIGNED_INT, nullptr);
-    GraphicsBackend::BindVertexArrayObject(0);
+    GraphicsBackend::BindVertexArrayObject(GraphicsBackendVAO::NONE);
 }
 
 void Gizmos::DrawWireCube(const Matrix4x4 &_matrix)
@@ -39,9 +39,9 @@ void Gizmos::DrawWireCube(const Matrix4x4 &_matrix)
 void Gizmos::Init()
 {
     constexpr int PRIMITIVES_COUNT = 1;
-    GraphicsBackendVAO vertexArrayObjects[PRIMITIVES_COUNT]{0};
-    GraphicsBackendBuffer pointsBuffers[PRIMITIVES_COUNT]{0};
-    GraphicsBackendBuffer indexBuffers[PRIMITIVES_COUNT]{0};
+    GraphicsBackendVAO vertexArrayObjects[PRIMITIVES_COUNT];
+    GraphicsBackendBuffer pointsBuffers[PRIMITIVES_COUNT];
+    GraphicsBackendBuffer indexBuffers[PRIMITIVES_COUNT];
 
     GraphicsBackend::GenerateVertexArrayObjects(PRIMITIVES_COUNT, &vertexArrayObjects[0]);
     GraphicsBackend::GenerateBuffers(PRIMITIVES_COUNT, &pointsBuffers[0]);
@@ -73,7 +73,7 @@ void Gizmos::Init()
 
         GraphicsBackend::SetBufferData(BufferBindTarget::ARRAY_BUFFER, sizeof(Vector3) * WIRE_CUBE_POINTS_COUNT, &wireCubePoints[0], BufferUsageHint::STATIC_DRAW);
         GraphicsBackend::SetBufferData(BufferBindTarget::ELEMENT_ARRAY_BUFFER, sizeof(int) * WIRE_CUBE_INDEX_COUNT, &wireCubeIndexes[0], BufferUsageHint::STATIC_DRAW);
-        GraphicsBackend::BindVertexArrayObject(0);
+        GraphicsBackend::BindVertexArrayObject(GraphicsBackendVAO::NONE);
 
         m_WireCubePrimitive = std::make_shared<GizmosPrimitive>(vertexArrayObjects[INDEX], pointsBuffers[INDEX], indexBuffers[INDEX], WIRE_CUBE_INDEX_COUNT);
     }

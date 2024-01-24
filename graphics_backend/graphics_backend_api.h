@@ -32,6 +32,15 @@ enum class UniformParameter : GRAPHICS_BACKEND_TYPE_ENUM;
 enum class CullFaceOrientation : GRAPHICS_BACKEND_TYPE_ENUM;
 enum class IndicesDataType : GRAPHICS_BACKEND_TYPE_ENUM;
 
+class GraphicsBackendTexture;
+class GraphicsBackendSampler;
+class GraphicsBackendBuffer;
+class GraphicsBackendFramebuffer;
+class GraphicsBackendProgram;
+class GraphicsBackendShaderObject;
+class GraphicsBackendUniformLocation;
+class GraphicsBackendVAO;
+
 #ifdef OPENGL_STUDY_EDITOR
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \
     backendFunction;                                                   \
@@ -44,101 +53,102 @@ enum class IndicesDataType : GRAPHICS_BACKEND_TYPE_ENUM;
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction) backendFunction;
 #endif
 
-namespace GraphicsBackend
+class GraphicsBackend
 {
-    void GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr);
-    void GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr);
-    void DeleteTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr);
-    void DeleteSamplers(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr);
+public:
+    static void GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr);
+    static void GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr);
+    static void DeleteTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr);
+    static void DeleteSamplers(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr);
 
-    void BindTexture(TextureType type, GraphicsBackendTexture texture);
-    void BindSampler(TextureUnit unit, GraphicsBackendSampler sampler);
+    static void BindTexture(TextureType type, GraphicsBackendTexture texture);
+    static void BindSampler(TextureUnit unit, GraphicsBackendSampler sampler);
 
-    void GenerateMipmaps(TextureType type);
+    static void GenerateMipmaps(TextureType type);
 
-    void SetTextureParameterInt(TextureType type, TextureParameter parameter, int value);
-    void SetSamplerParameterInt(GraphicsBackendSampler sampler, SamplerParameter parameter, int value);
-    void SetSamplerParameterFloatArray(GraphicsBackendSampler sampler, SamplerParameter parameter, const float* valueArray);
+    static void SetTextureParameterInt(TextureType type, TextureParameter parameter, int value);
+    static void SetSamplerParameterInt(GraphicsBackendSampler sampler, SamplerParameter parameter, int value);
+    static void SetSamplerParameterFloatArray(GraphicsBackendSampler sampler, SamplerParameter parameter, const float* valueArray);
 
-    void GetTextureLevelParameterInt(TextureTarget target, GraphicsBackendTextureLevel level, TextureLevelParameter parameter, int* outValues);
+    static void GetTextureLevelParameterInt(TextureTarget target, int level, TextureLevelParameter parameter, int* outValues);
 
-    void TextureImage2D(TextureTarget target, GraphicsBackendTextureLevel level, TextureInternalFormat textureFormat, int width, int height, int border, TexturePixelFormat pixelFormat, TextureDataType dataType, const void* pixelsData);
-    void TextureImage3D(TextureTarget target, GraphicsBackendTextureLevel level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, TexturePixelFormat pixelFormat, TextureDataType dataType, const void* pixelsData);
-    void TextureCompressedImage2D(TextureTarget target, GraphicsBackendTextureLevel level, TextureInternalFormat textureFormat, int width, int height, int border, int imageSize, const void* pixelsData);
-    void TextureCompressedImage3D(TextureTarget target, GraphicsBackendTextureLevel level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, int imageSize, const void* pixelsData);
+    static void TextureImage2D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int border, TexturePixelFormat pixelFormat, TextureDataType dataType, const void* pixelsData);
+    static void TextureImage3D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, TexturePixelFormat pixelFormat, TextureDataType dataType, const void* pixelsData);
+    static void TextureCompressedImage2D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int border, int imageSize, const void* pixelsData);
+    static void TextureCompressedImage3D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, int imageSize, const void* pixelsData);
 
-    void GetTextureImage(TextureTarget target, GraphicsBackendTextureLevel level, TexturePixelFormat pixelFormat, TextureDataType dataType, void *outPixels);
-    void GetCompressedTextureImage(TextureTarget target, GraphicsBackendTextureLevel level, void* outPixels);
+    static void GetTextureImage(TextureTarget target, int level, TexturePixelFormat pixelFormat, TextureDataType dataType, void *outPixels);
+    static void GetCompressedTextureImage(TextureTarget target, int level, void* outPixels);
 
-    void SetActiveTextureUnit(TextureUnit unit);
-    void GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr);
-    void DeleteFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr);
-    void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer);
-    void SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, GraphicsBackendTextureLevel level);
-    void SetFramebufferTextureLayer(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, GraphicsBackendTextureLevel level, GraphicsBackendTextureLayer layer);
+    static void SetActiveTextureUnit(TextureUnit unit);
+    static void GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr);
+    static void DeleteFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr);
+    static void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer);
+    static void SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level);
+    static void SetFramebufferTextureLayer(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level, int layer);
 
-    void GenerateBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr);
-    void DeleteBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr);
-    void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer);
-    void BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size);
+    static void GenerateBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr);
+    static void DeleteBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr);
+    static void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer);
+    static void BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size);
 
-    void SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint);
-    void SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data);
+    static void SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint);
+    static void SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data);
 
-    void GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr);
-    void DeleteVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr);
-    void BindVertexArrayObject(GraphicsBackendVAO vao);
+    static void GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr);
+    static void DeleteVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr);
+    static void BindVertexArrayObject(GraphicsBackendVAO vao);
 
-    void EnableVertexAttributeArray(int index);
-    void DisableVertexAttributeArray(int index);
-    void SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer);
-    void SetVertexAttributeDivisor(int index, int divisor);
+    static void EnableVertexAttributeArray(int index);
+    static void DisableVertexAttributeArray(int index);
+    static void SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer);
+    static void SetVertexAttributeDivisor(int index, int divisor);
 
-    void SetCapability(GraphicsBackendCapability capability, bool enabled);
+    static void SetCapability(GraphicsBackendCapability capability, bool enabled);
 
-    void SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor);
-    void SetCullFace(CullFace cullFace);
-    void SetCullFaceOrientation(CullFaceOrientation orientation);
-    void SetDepthFunction(DepthFunction function);
-    void SetDepthWrite(bool enabled);
-    void SetDepthRange(double near, double far);
-    void SetViewport(int x, int y, int width, int height);
+    static void SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor);
+    static void SetCullFace(CullFace cullFace);
+    static void SetCullFaceOrientation(CullFaceOrientation orientation);
+    static void SetDepthFunction(DepthFunction function);
+    static void SetDepthWrite(bool enabled);
+    static void SetDepthRange(double near, double far);
+    static void SetViewport(int x, int y, int width, int height);
 
-    GraphicsBackendShaderObject CreateShader(ShaderType shaderType);
-    void DeleteShader(GraphicsBackendShaderObject shader);
-    void SetShaderSources(GraphicsBackendShaderObject shader, int sourcesCount, const char **sources, const int *sourceLengths);
-    void CompileShader(GraphicsBackendShaderObject shader);
-    void GetShaderParameter(GraphicsBackendShaderObject shader, ShaderParameter parameter, int* value);
-    void GetShaderInfoLog(GraphicsBackendShaderObject shader, int maxLength, int *length, char *infoLog);
-    bool IsShader(GraphicsBackendShaderObject shader);
-    void AttachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader);
-    void DetachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader);
+    static GraphicsBackendShaderObject CreateShader(ShaderType shaderType);
+    static void DeleteShader(GraphicsBackendShaderObject shader);
+    static void SetShaderSources(GraphicsBackendShaderObject shader, int sourcesCount, const char **sources, const int *sourceLengths);
+    static void CompileShader(GraphicsBackendShaderObject shader);
+    static void GetShaderParameter(GraphicsBackendShaderObject shader, ShaderParameter parameter, int* value);
+    static void GetShaderInfoLog(GraphicsBackendShaderObject shader, int maxLength, int *length, char *infoLog);
+    static bool IsShader(GraphicsBackendShaderObject shader);
+    static void AttachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader);
+    static void DetachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader);
 
-    GraphicsBackendProgram CreateProgram();
-    void DeleteProgram(GraphicsBackendProgram program);
-    void LinkProgram(GraphicsBackendProgram program);
-    void UseProgram(GraphicsBackendProgram program);
-    void GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int* value);
-    void GetProgramInfoLog(GraphicsBackendProgram program, int maxLength, int *length, char *infoLog);
-    bool TryGetUniformBlockIndex(GraphicsBackendProgram program, const char *name, int *index);
-    void SetUniformBlockBinding(GraphicsBackendProgram program, int uniformBlockIndex, int uniformBlockBinding);
-    void GetActiveUniform(GraphicsBackendProgram program, int index, int nameBufferSize, int *nameLength, int *size, UniformDataType *dataType, char *name);
-    void GetActiveUniformsParameter(GraphicsBackendProgram program, int uniformCount, const unsigned int *uniformIndices, UniformParameter parameter, int *values);
-    GraphicsBackendUniformLocation GetUniformLocation(GraphicsBackendProgram program, const char *uniformName);
-    void SetUniform(GraphicsBackendUniformLocation location, UniformDataType dataType, int count, const void *data, bool transpose = false);
-    void GetActiveUniformBlockParameter(GraphicsBackendProgram program, int uniformBlockIndex, UniformBlockParameter parameter, int *values);
+    static GraphicsBackendProgram CreateProgram();
+    static void DeleteProgram(GraphicsBackendProgram program);
+    static void LinkProgram(GraphicsBackendProgram program);
+    static void UseProgram(GraphicsBackendProgram program);
+    static void GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int* value);
+    static void GetProgramInfoLog(GraphicsBackendProgram program, int maxLength, int *length, char *infoLog);
+    static bool TryGetUniformBlockIndex(GraphicsBackendProgram program, const char *name, int *index);
+    static void SetUniformBlockBinding(GraphicsBackendProgram program, int uniformBlockIndex, int uniformBlockBinding);
+    static void GetActiveUniform(GraphicsBackendProgram program, int index, int nameBufferSize, int *nameLength, int *size, UniformDataType *dataType, char *name);
+    static void GetActiveUniformsParameter(GraphicsBackendProgram program, int uniformCount, const unsigned int *uniformIndices, UniformParameter parameter, int *values);
+    static GraphicsBackendUniformLocation GetUniformLocation(GraphicsBackendProgram program, const char *uniformName);
+    static void SetUniform(GraphicsBackendUniformLocation location, UniformDataType dataType, int count, const void *data, bool transpose = false);
+    static void GetActiveUniformBlockParameter(GraphicsBackendProgram program, int uniformBlockIndex, UniformBlockParameter parameter, int *values);
 
-    void Clear(ClearMask mask);
-    void SetClearColor(float r, float g, float b, float a);
-    void SetClearDepth(double depth);
+    static void Clear(ClearMask mask);
+    static void SetClearColor(float r, float g, float b, float a);
+    static void SetClearDepth(double depth);
 
-    void DrawArrays(PrimitiveType primitiveType, int firstIndex, int indicesCount);
-    void DrawArraysInstanced(PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount);
-    void DrawElements(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices);
-    void DrawElementsInstanced(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices, int instanceCount);
+    static void DrawArrays(PrimitiveType primitiveType, int firstIndex, int indicesCount);
+    static void DrawArraysInstanced(PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount);
+    static void DrawElements(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices);
+    static void DrawElementsInstanced(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices, int instanceCount);
 
-    GraphicsBackendError GetError();
-    const char *GetErrorString(GraphicsBackendError error);
-}
+    static GRAPHICS_BACKEND_TYPE_ENUM GetError();
+    static const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error);
+};
 
 #endif //OPENGL_STUDY_GRAPHICS_BACKEND_API_H

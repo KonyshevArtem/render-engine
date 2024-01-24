@@ -41,9 +41,9 @@ enum class TextureUnit : GRAPHICS_BACKEND_TYPE_ENUM
 
 namespace TextureUnitUtils
 {
-    inline GraphicsBackendTextureUnitIndex TextureUnitToIndex(TextureUnit unit)
+    inline uint32_t TextureUnitToIndex(TextureUnit unit)
     {
-        return static_cast<GraphicsBackendTextureUnitIndex>(static_cast<int>(unit) - static_cast<int>(TextureUnit::TEXTURE0));
+        return static_cast<uint32_t>(unit) - static_cast<uint32_t>(TextureUnit::TEXTURE0);
     }
 }
 

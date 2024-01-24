@@ -14,7 +14,7 @@ namespace GraphicsBackendDebug
     };
 
     void CheckError();
-    void LogError(GraphicsBackendError error, const std::string &file, int line);
+    void LogError(GRAPHICS_BACKEND_TYPE_ENUM error, const std::string &file, int line);
 }
 
 #endif //OPENGL_STUDY_GRAPHICS_BACKEND_DEBUG_H

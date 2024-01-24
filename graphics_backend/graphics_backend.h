@@ -13,20 +13,6 @@
 #define GRAPHICS_BACKEND_TYPE_INT    GLint
 #define GRAPHICS_BACKEND_TYPE_UINT   GLuint
 
-using GraphicsBackendTexture            = GRAPHICS_BACKEND_TYPE_ENUM;
-using GraphicsBackendSampler            = GRAPHICS_BACKEND_TYPE_UINT;
-using GraphicsBackendError              = GRAPHICS_BACKEND_TYPE_ENUM;
-using GraphicsBackendTextureLevel       = GRAPHICS_BACKEND_TYPE_INT;
-using GraphicsBackendTextureLayer       = GRAPHICS_BACKEND_TYPE_INT;
-using GraphicsBackendTextureUnitIndex   = GRAPHICS_BACKEND_TYPE_UINT;
-using GraphicsBackendVAO                = GRAPHICS_BACKEND_TYPE_UINT;
-using GraphicsBackendBuffer             = GRAPHICS_BACKEND_TYPE_UINT;
-using GraphicsBackendProgram            = GRAPHICS_BACKEND_TYPE_UINT;
-using GraphicsBackendShaderObject       = GRAPHICS_BACKEND_TYPE_UINT;
-using GraphicsBackendUniformLocation    = GRAPHICS_BACKEND_TYPE_INT;
-using GraphicsBackendUniformBlock       = GRAPHICS_BACKEND_TYPE_UINT;
-using GraphicsBackendFramebuffer        = GRAPHICS_BACKEND_TYPE_UINT;
-
 #define GRAPHICS_BACKEND_TEXTURE_1D                     GL_TEXTURE_1D
 #define GRAPHICS_BACKEND_TEXTURE_2D                     GL_TEXTURE_2D
 #define GRAPHICS_BACKEND_TEXTURE_2D_MULTISAMPLE         GL_TEXTURE_2D_MULTISAMPLE

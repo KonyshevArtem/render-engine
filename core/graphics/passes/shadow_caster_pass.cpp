@@ -7,6 +7,7 @@
 #include "renderer/renderer.h"
 #include "texture_2d/texture_2d.h"
 #include "texture_2d_array/texture_2d_array.h"
+#include "graphics_backend_api.h"
 #include "graphics_backend_debug.h"
 #include "enums/clear_mask.h"
 

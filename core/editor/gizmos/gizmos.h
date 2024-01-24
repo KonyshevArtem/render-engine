@@ -4,7 +4,8 @@
 #define OPENGL_STUDY_GIZMOS_H
 
 #include "matrix4x4/matrix4x4.h"
-#include "graphics_backend.h"
+#include "types/graphics_backend_vao.h"
+#include "types/graphics_backend_buffer.h"
 
 #include <memory>
 #include <vector>
@@ -22,9 +23,9 @@ namespace Gizmos
         void Draw() const;
 
     private:
-        GraphicsBackendVAO m_VertexArrayObject = 0;
-        GraphicsBackendBuffer m_PointsBuffer = 0;
-        GraphicsBackendBuffer m_IndexBuffer = 0;
+        GraphicsBackendVAO m_VertexArrayObject{};
+        GraphicsBackendBuffer m_PointsBuffer{};
+        GraphicsBackendBuffer m_IndexBuffer{};
         int m_IndexCount = 0;
     };
 

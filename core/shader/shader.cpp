@@ -3,6 +3,7 @@
 #include "texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
 #include "utils.h"
+#include "graphics_backend_api.h"
 #include "enums/program_parameter.h"
 #include "enums/graphics_backend_capability.h"
 

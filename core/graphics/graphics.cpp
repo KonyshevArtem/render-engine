@@ -13,6 +13,7 @@
 #include "renderer/renderer.h"
 #include "texture/texture.h"
 #include "uniform_block.h"
+#include "graphics_backend_api.h"
 #include "graphics_backend_debug.h"
 #include "enums/cull_face_orientation.h"
 #include "enums/graphics_backend_capability.h"
@@ -21,7 +22,7 @@
 #include "enums/vertex_attribute_data_type.h"
 #include "enums/indices_data_type.h"
 #include "enums/framebuffer_target.h"
-#include "enums/framebuffer_attachment.h"
+#include "types/graphics_backend_framebuffer.h"
 
 #include <boost/functional/hash/hash.hpp>
 
@@ -111,7 +112,7 @@ namespace Graphics
         GraphicsBackend::GenerateBuffers(1, &instancingMatricesBuffer);
         GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, instancingMatricesBuffer);
         GraphicsBackend::SetBufferData(BufferBindTarget::ARRAY_BUFFER, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, nullptr, BufferUsageHint::DYNAMIC_DRAW);
-        GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, 0);
+        GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, GraphicsBackendBuffer::NONE);
     }
 
     void InitSeamlessCubemap()
@@ -339,7 +340,7 @@ namespace Graphics
             GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, instancingMatricesBuffer);
             GraphicsBackend::SetBufferSubData(BufferBindTarget::ARRAY_BUFFER, 0, matricesSize, matrices.data());
             GraphicsBackend::SetBufferSubData(BufferBindTarget::ARRAY_BUFFER, normalsMatrixOffset, matricesSize, modelNormalMatrices.data());
-            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, 0);
+            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, GraphicsBackendBuffer::NONE);
         }
         else
         {
@@ -377,7 +378,7 @@ namespace Graphics
             GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 6, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size));
             GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 7, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size));
 
-            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, 0);
+            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, GraphicsBackendBuffer::NONE);
         }
         else
         {
@@ -391,8 +392,6 @@ namespace Graphics
 
     void Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings)
     {
-        static GraphicsBackendVAO currentBoundVAO = -1;
-
         // filter draw calls
         std::vector<DrawCallInfo> drawCalls;
         drawCalls.reserve(_drawCallInfos.size());
@@ -408,11 +407,7 @@ namespace Graphics
         for (const auto &info: drawCalls)
         {
             auto vao = info.Geometry->GetVertexArrayObject();
-            if (vao != currentBoundVAO)
-            {
-                currentBoundVAO = vao;
-                GraphicsBackend::BindVertexArrayObject(vao);
-            }
+            GraphicsBackend::BindVertexArrayObject(vao);
 
             FillMatrices(info, instancedMatricesMap);
 
@@ -522,7 +517,7 @@ namespace Graphics
     {
         if (!_colorAttachment && !_depthAttachment)
         {
-            GraphicsBackend::BindFramebuffer(FramebufferTarget::DRAW_FRAMEBUFFER, 0);
+            GraphicsBackend::BindFramebuffer(FramebufferTarget::DRAW_FRAMEBUFFER, GraphicsBackendFramebuffer::NONE);
             return;
         }
 
@@ -532,14 +527,14 @@ namespace Graphics
             _colorAttachment->Attach(FramebufferAttachment::COLOR_ATTACHMENT0, colorLevel, colorLayer);
         else
         {
-            GraphicsBackend::SetFramebufferTexture(FramebufferTarget::DRAW_FRAMEBUFFER, FramebufferAttachment::COLOR_ATTACHMENT0, 0, 0);
+            GraphicsBackend::SetFramebufferTexture(FramebufferTarget::DRAW_FRAMEBUFFER, FramebufferAttachment::COLOR_ATTACHMENT0, GraphicsBackendTexture::NONE, 0);
         }
 
         if (_depthAttachment)
             _depthAttachment->Attach(FramebufferAttachment::DEPTH_ATTACHMENT, depthLevel, depthLayer);
         else
         {
-            GraphicsBackend::SetFramebufferTexture(FramebufferTarget::DRAW_FRAMEBUFFER, FramebufferAttachment::DEPTH_ATTACHMENT, 0, 0);
+            GraphicsBackend::SetFramebufferTexture(FramebufferTarget::DRAW_FRAMEBUFFER, FramebufferAttachment::DEPTH_ATTACHMENT, GraphicsBackendTexture::NONE, 0);
         }
     }
 

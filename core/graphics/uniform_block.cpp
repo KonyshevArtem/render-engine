@@ -41,7 +41,7 @@ UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName, unsign
     GraphicsBackend::GenerateBuffers(1, &m_Buffer);
     GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, m_Buffer);
     GraphicsBackend::SetBufferData(BufferBindTarget::UNIFORM_BUFFER, blockSize, nullptr, BufferUsageHint::DYNAMIC_DRAW);
-    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, 0);
+    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, GraphicsBackendBuffer::NONE);
 
     m_Data.resize(blockSize);
 }
@@ -55,7 +55,7 @@ void UniformBlock::Bind() const
 {
     GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, m_Buffer);
     GraphicsBackend::BindBufferRange(BufferBindTarget::UNIFORM_BUFFER, m_BindIndex, m_Buffer, 0, m_Data.size());
-    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, 0);
+    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, GraphicsBackendBuffer::NONE);
 }
 
 void UniformBlock::SetUniform(const std::string &_name, const void *_data, unsigned long _size)
@@ -74,5 +74,5 @@ void UniformBlock::UploadData() const
 {
     GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, m_Buffer);
     GraphicsBackend::SetBufferSubData(BufferBindTarget::UNIFORM_BUFFER, 0, static_cast<GLsizei>(m_Data.size()), m_Data.data());
-    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, 0);
+    GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, GraphicsBackendBuffer::NONE);
 }

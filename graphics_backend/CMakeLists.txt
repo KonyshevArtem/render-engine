@@ -33,7 +33,16 @@ add_library(GraphicsBackend
         enums/uniform_block_parameter.h
         enums/uniform_parameter.h
         enums/cull_face_orientation.h
-        enums/indices_data_type.h)
+        enums/indices_data_type.h
+        types/graphics_backend_texture.h
+        types/graphics_backend_sampler.h
+        types/graphics_backend_texture_unit_index.h
+        types/graphics_backend_vao.h
+        types/graphics_backend_buffer.h
+        types/graphics_backend_program.h
+        types/graphics_backend_shader_object.h
+        types/graphics_backend_uniform_location.h
+        types/graphics_backend_framebuffer.h)
 
 # windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

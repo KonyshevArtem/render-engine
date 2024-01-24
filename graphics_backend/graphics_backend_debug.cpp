@@ -27,12 +27,12 @@ GraphicsBackendDebug::DebugGroup::~DebugGroup()
 
 void GraphicsBackendDebug::CheckError()
 {
-    GraphicsBackendError error = GraphicsBackend::GetError();
+    auto error = GraphicsBackend::GetError();
     if (error != 0)
         GraphicsBackendDebug::LogError(error, "", 0);
 }
 
-void GraphicsBackendDebug::LogError(GraphicsBackendError errorCode, const std::string &file, int line)
+void GraphicsBackendDebug::LogError(GRAPHICS_BACKEND_TYPE_ENUM errorCode, const std::string &file, int line)
 {
     auto *errorString = GraphicsBackend::GetErrorString(errorCode);
     if (errorString == nullptr)

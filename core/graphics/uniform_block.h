@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_UNIFORM_BLOCK_H
 #define OPENGL_STUDY_UNIFORM_BLOCK_H
 
-#include "graphics_backend.h"
+#include "types/graphics_backend_buffer.h"
 
 #include <string>
 #include <unordered_map>
@@ -27,7 +27,7 @@ public:
 
 private:
     std::string                            m_Name;
-    GraphicsBackendUniformBlock            m_Buffer = 0;
+    GraphicsBackendBuffer                  m_Buffer{};
     unsigned int                           m_BindIndex;
     std::vector<uint8_t>                   m_Data;
     std::unordered_map<std::string, int>   m_UniformOffsets;

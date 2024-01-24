@@ -1,6 +1,7 @@
 #include "render_pass.h"
 #include "graphics/context.h"
 #include "graphics/graphics.h"
+#include "graphics_backend_api.h"
 #include "graphics_backend_debug.h"
 
 #include <utility>

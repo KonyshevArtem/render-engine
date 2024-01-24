@@ -1,5 +1,6 @@
 #include "mesh.h"
 #include "vector2/vector2.h"
+#include "graphics_backend_api.h"
 #include "enums/buffer_usage_hint.h"
 #include "enums/buffer_bind_target.h"
 #include "enums/vertex_attribute_data_type.h"
@@ -55,7 +56,7 @@ Mesh::Mesh(const std::vector<Vector3> &_vertices,
     if (hasTangents)
         GraphicsBackend::SetBufferSubData(BufferBindTarget::ARRAY_BUFFER, vertexSize + normalsSize + uvSize, tangentsSize, _tangents.data());
 
-    GraphicsBackend::BindVertexArrayObject(0);
+    GraphicsBackend::BindVertexArrayObject(GraphicsBackendVAO::NONE);
 }
 
 Mesh::~Mesh()

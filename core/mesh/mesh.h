@@ -3,7 +3,6 @@
 
 #include "bounds/bounds.h"
 #include "drawable_geometry/drawable_geometry.h"
-#include "enums/primitive_type.h"
 
 #include <memory>
 #include <vector>
@@ -48,7 +47,7 @@ public:
     Mesh &operator=(Mesh &&) = delete;
 
 private:
-    GraphicsBackendBuffer m_IndexBuffer = 0;
+    GraphicsBackendBuffer m_IndexBuffer{};
 
     Bounds m_Bounds;
     int m_IndicesCount;

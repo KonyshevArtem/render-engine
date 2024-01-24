@@ -10,6 +10,7 @@
 #include "enums/cull_face.h"
 #include "enums/blend_factor.h"
 #include "enums/depth_function.h"
+#include "types/graphics_backend_program.h"
 
 #include <filesystem>
 #include <string>

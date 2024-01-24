@@ -1,15 +1,12 @@
 #include "skybox_pass.h"
-#include "../context.h"
-#include "debug.h"
+#include "graphics/context.h"
 #include "cubemap/cubemap.h"
 #include "fbx_asset/fbx_asset.h"
-#include "graphics/draw_call_info.h"
 #include "graphics/graphics.h"
 #include "graphics/render_settings.h"
-#include "material/material.h"
-#include "matrix4x4/matrix4x4.h"
 #include "mesh/mesh.h"
-#include "shader/shader.h"
+#include "graphics_backend_debug.h"
+
 #include <vector>
 
 void SkyboxPass::Execute(const Context &_ctx)
@@ -21,7 +18,7 @@ void SkyboxPass::Execute(const Context &_ctx)
     if (mesh == nullptr || _ctx.Skybox == nullptr)
         return;
 
-    auto debugGroup = Debug::DebugGroup("Skybox pass");
+    auto debugGroup = GraphicsBackendDebug::DebugGroup("Skybox pass");
 
     Matrix4x4 modelMatrix = Matrix4x4::Translation(_ctx.ViewMatrix.Invert().GetPosition());
     material->SetTexture("_Skybox", _ctx.Skybox);

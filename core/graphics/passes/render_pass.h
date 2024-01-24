@@ -3,32 +3,29 @@
 
 #include "graphics/draw_call_info.h"
 #include "graphics/render_settings.h"
+#include "enums/clear_mask.h"
+
 #include <string>
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
 
 struct Context;
 
 class RenderPass
 {
 public:
-    RenderPass(const std::string &_name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, GLbitfield _clearFlags, const std::string &_lightModeTag);
+    RenderPass(std::string _name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, ClearMask _clearMask, const std::string &_lightModeTag);
     ~RenderPass() = default;
 
     void Execute(const Context &_ctx);
 
-private:
     RenderPass(const RenderPass &) = delete;
     RenderPass(RenderPass &&)      = delete;
 
     RenderPass &operator=(const RenderPass &) = delete;
     RenderPass &operator=(RenderPass &&) = delete;
 
+private:
     std::string    m_Name;
-    GLbitfield     m_ClearFlags;
+    ClearMask      m_ClearMask;
     RenderSettings m_RenderSettings;
 };
 

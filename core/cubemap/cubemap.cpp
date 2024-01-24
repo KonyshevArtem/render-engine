@@ -1,16 +1,18 @@
 #include "cubemap.h"
 #include "debug.h"
-#include "texture_binary_reader.h"
+#include "texture/texture_binary_reader.h"
+#include "enums/texture_target.h"
+#include "enums/texture_data_type.h"
 
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
 #include <vector>
 
+TextureTarget GetTarget(int faceIndex)
+{
+    return static_cast<TextureTarget>(static_cast<int>(TextureTarget::CUBEMAP_FACE_POSITIVE_X) + faceIndex);
+}
+
 Cubemap::Cubemap(unsigned int width, unsigned int height, unsigned int mipLevels) :
-        Texture(GL_TEXTURE_CUBE_MAP, width, height, 0, mipLevels)
+        Texture(TextureType::TEXTURE_CUBEMAP, width, height, 0, mipLevels)
 {
 }
 
@@ -35,7 +37,7 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &path)
         for (int j = 0; j < header.MipCount; ++j)
         {
             auto pixels = reader.GetPixels(i, j);
-            cubemap->UploadPixels(pixels.data(), GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, header.InternalFormat, header.Format, GL_UNSIGNED_BYTE, pixels.size(), j, header.IsCompressed);
+            cubemap->UploadPixels(pixels.data(), GetTarget(i), header.TextureFormat, header.PixelFormat, TextureDataType::UNSIGNED_BYTE, pixels.size(), j, header.IsCompressed);
         }
     }
 
@@ -73,7 +75,7 @@ std::shared_ptr<Cubemap> Cubemap::CreateDefaultCubemap(unsigned char *pixels)
     auto cubemap = std::shared_ptr<Cubemap>(new Cubemap(1, 1, 1));
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        cubemap->UploadPixels(pixels, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, GL_SRGB, GL_RGB, GL_UNSIGNED_BYTE, 0, 0, false);
+        cubemap->UploadPixels(pixels, GetTarget(i), TextureInternalFormat::SRGB, TexturePixelFormat::RGB, TextureDataType::UNSIGNED_BYTE, 0, 0, false);
     }
     return cubemap;
 }

@@ -3,11 +3,9 @@
 #include "point/point.h"
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
-#include "vector3/vector3.h"
-#include "vector4/vector4.h"
 #include <vector>
 
-BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, std::shared_ptr<Texture2D> _texture) :
+BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, const std::shared_ptr<Texture2D> &_texture) :
     Renderer(_gameObject, nullptr), m_Point(std::make_shared<Point>())
 {
     static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard/billboard.shader", {});

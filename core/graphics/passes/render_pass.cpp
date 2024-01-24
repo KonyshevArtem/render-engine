@@ -1,24 +1,24 @@
 #include "render_pass.h"
-#include "../context.h"
-#include "debug.h"
+#include "graphics/context.h"
 #include "graphics/graphics.h"
-#include <algorithm>
-#include <iterator>
-#include <vector>
+#include "graphics_backend_api.h"
+#include "graphics_backend_debug.h"
 
-RenderPass::RenderPass(const std::string &_name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, GLbitfield _clearFlags, const std::string &_lightModeTag) :
-    m_Name(_name),
-    m_ClearFlags(_clearFlags),
+#include <utility>
+
+RenderPass::RenderPass(std::string _name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, ClearMask _clearMask, const std::string &_lightModeTag) :
+    m_Name(std::move(_name)),
+    m_ClearMask(_clearMask),
     m_RenderSettings(RenderSettings {{{"LightMode", _lightModeTag}}, _sorting, _filter})
 {
 }
 
 void RenderPass::Execute(const Context &_ctx)
 {
-    auto debugGroup = Debug::DebugGroup("Render pass " + m_Name);
+    auto debugGroup = GraphicsBackendDebug::DebugGroup("Render pass " + m_Name);
 
-    CHECK_GL(glDepthMask(GL_TRUE));
-    CHECK_GL(glClear(m_ClearFlags));
+    GraphicsBackend::SetDepthWrite(true);
+    GraphicsBackend::Clear(m_ClearMask);
 
     Graphics::Draw(_ctx.DrawCallInfos, m_RenderSettings);
 }

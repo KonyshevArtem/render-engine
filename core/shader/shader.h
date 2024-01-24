@@ -6,11 +6,12 @@
 #include "shader_loader/shader_loader.h"
 #include "uniform_info/uniform_info.h"
 #include "vector4/vector4.h"
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
+#include "enums/texture_unit.h"
+#include "enums/cull_face.h"
+#include "enums/blend_factor.h"
+#include "enums/depth_function.h"
+#include "types/graphics_backend_program.h"
+
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -26,32 +27,32 @@ class Shader
 public:
     struct BlendInfo
     {
-        bool   Enabled = false;
-        GLenum SrcFactor;
-        GLenum DstFactor;
+        bool Enabled = false;
+        BlendFactor SourceFactor;
+        BlendFactor DestinationFactor;
     };
 
     struct CullInfo
     {
-        bool   Enabled = true;
-        GLenum Face    = GL_BACK;
+        bool Enabled = true;
+        CullFace Face = CullFace::BACK;
     };
 
     struct DepthInfo
     {
-        bool   ZWrite = true;
-        GLenum ZTest  = GL_LEQUAL;
+        bool WriteDepth = true;
+        DepthFunction DepthFunction = DepthFunction::LEQUAL;
     };
 
     struct PassInfo
     {
-        GLuint                                       Program;
+        GraphicsBackendProgram                       Program;
         BlendInfo                                    BlendInfo;
         CullInfo                                     CullInfo;
         DepthInfo                                    DepthInfo;
         std::unordered_map<std::string, std::string> Tags;
         std::unordered_map<std::string, UniformInfo> Uniforms;
-        std::unordered_map<std::string, int>         TextureUnits;
+        std::unordered_map<std::string, TextureUnit> TextureUnits;
     };
 
 #pragma endregion
@@ -63,13 +64,14 @@ public:
 
     ~Shader();
 
-private:
-    Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues, bool _supportInstancing);
     Shader(const Shader &) = delete;
     Shader(Shader &&)      = delete;
 
     Shader &operator=(const Shader &) = delete;
     Shader &operator=(Shader &&) = delete;
+
+private:
+    Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues, bool _supportInstancing);
 
 #pragma endregion
 

@@ -9,9 +9,8 @@ public:
     SkyboxPass()  = default;
     ~SkyboxPass() = default;
 
-    void Execute(const Context &_ctx);
+    static void Execute(const Context &_ctx);
 
-private:
     SkyboxPass(const SkyboxPass &) = delete;
     SkyboxPass(SkyboxPass &&)      = delete;
 

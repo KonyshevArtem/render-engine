@@ -1,9 +1,4 @@
 #include "texture_compressor_formats.h"
-#ifdef TEXTURE_COMPRESSOR_WINDOWS
-#include <GL/glew.h>
-#elif TEXTURE_COMPRESSOR_MACOS
-#include <OpenGL/glu.h>
-#endif
 
 #include <vector>
 #include <unordered_map>
@@ -14,8 +9,8 @@ namespace TextureCompressorFormats
 {
     std::vector<TextureTypeInfo> textureTypesInfo =
             {
-                    {"Texture 2D", GL_TEXTURE_2D, 1},
-                    {"Cubemap", GL_TEXTURE_CUBE_MAP, 6},
+                    {"Texture 2D", TextureType::TEXTURE_2D, 1},
+                    {"Cubemap", TextureType::TEXTURE_CUBEMAP, 6},
             };
 
     std::vector<std::pair<int, std::string>> inputFormats =
@@ -26,75 +21,69 @@ namespace TextureCompressorFormats
                     {LCT_GREY_ALPHA, "GREY ALPHA"},
             };
 
-    std::unordered_map<int, int> colorTypeToFormat =
+    std::unordered_map<int, TexturePixelFormat> colorTypeToFormat =
             {
-                    {LCT_RGB,        GL_RGB},
-                    {LCT_RGBA,       GL_RGBA},
-                    {LCT_GREY,       GL_RED},
-                    {LCT_GREY_ALPHA, GL_RG}
+                    {LCT_RGB,        TexturePixelFormat::RGB},
+                    {LCT_RGBA,       TexturePixelFormat::RGBA},
+                    {LCT_GREY,       TexturePixelFormat::RED},
+                    {LCT_GREY_ALPHA, TexturePixelFormat::RG}
             };
 
-    std::vector<std::pair<int, std::string>> compressedFormats =
+    std::vector<std::pair<TextureInternalFormat, std::string>> textureFormats =
             {
-                    {GL_RGB, "RGB"},
-                    {GL_RGBA, "RGBA"},
-                    {GL_SRGB, "sRGB"},
-                    {GL_SRGB_ALPHA, "sRGBA"},
-                    {GL_COMPRESSED_RGB, "Compressed RGB"},
-                    {GL_COMPRESSED_RGBA, "Compressed RGBA"},
-                    {GL_COMPRESSED_SRGB, "Compressed sRGB"},
-                    {GL_COMPRESSED_SRGB_ALPHA, "Compressed sRGBA"},
+                    {TextureInternalFormat::RED, "Red"},
+                    {TextureInternalFormat::RG, "RG"},
+                    {TextureInternalFormat::RGB, "RGB"},
+                    {TextureInternalFormat::RGBA, "RGBA"},
+                    {TextureInternalFormat::SRGB, "sRGB"},
+                    {TextureInternalFormat::SRGB_ALPHA, "sRGBA"},
+                    {TextureInternalFormat::COMPRESSED_RGB, "Compressed RGB"},
+                    {TextureInternalFormat::COMPRESSED_RGBA, "Compressed RGBA"},
+                    {TextureInternalFormat::COMPRESSED_SRGB, "Compressed sRGB"},
+                    {TextureInternalFormat::COMPRESSED_SRGB_ALPHA, "Compressed sRGBA"},
 
-#if GL_ARB_texture_rg
-                    {GL_COMPRESSED_RED, "Compressed Red"},
-                    {GL_COMPRESSED_RG, "Compressed RG"},
-#endif
+                    {TextureInternalFormat::COMPRESSED_RED, "Compressed Red"},
+                    {TextureInternalFormat::COMPRESSED_RG, "Compressed RG"},
 
-                    {GL_R3_G3_B2, "R3 G3 B2"},
-                    {GL_RGB4, "RGB4"},
-                    {GL_RGB5, "RGB5"},
-                    {GL_RGB8, "RGB8"},
-                    {GL_RGB10, "RGB10"},
-                    {GL_RGB12, "RGB12"},
-                    {GL_RGB16, "RGB16"},
-                    {GL_RGBA2, "RGBA2"},
-                    {GL_RGBA4, "RGBA4"},
-                    {GL_RGB5_A1, "RGB5 A1"},
-                    {GL_RGBA8, "RGBA8"},
-                    {GL_RGB10_A2, "RGB10 A2"},
-                    {GL_RGBA12, "RGBA12"},
-                    {GL_RGBA16, "RGBA16"},
+                    {TextureInternalFormat::R3_G3_B2, "R3 G3 B2"},
+                    {TextureInternalFormat::RGB4, "RGB4"},
+                    {TextureInternalFormat::RGB5, "RGB5"},
+                    {TextureInternalFormat::RGB8, "RGB8"},
+                    {TextureInternalFormat::RGB10, "RGB10"},
+                    {TextureInternalFormat::RGB12, "RGB12"},
+                    {TextureInternalFormat::RGB16, "RGB16"},
+                    {TextureInternalFormat::RGBA2, "RGBA2"},
+                    {TextureInternalFormat::RGBA4, "RGBA4"},
+                    {TextureInternalFormat::RGB5_A1, "RGB5 A1"},
+                    {TextureInternalFormat::RGBA8, "RGBA8"},
+                    {TextureInternalFormat::RGB10_A2, "RGB10 A2"},
+                    {TextureInternalFormat::RGBA12, "RGBA12"},
+                    {TextureInternalFormat::RGBA16, "RGBA16"},
 
-#if GL_EXT_texture_compression_s3tc
-                    {GL_COMPRESSED_RGB_S3TC_DXT1_EXT, "RGB S3TC DXT1"},
-                    {GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, "RGBA S3TC DXT1"},
-                    {GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, "RGBA S3TC DXT3"},
-                    {GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, "RGBA S3TC DXT5"},
-#endif
+                    {TextureInternalFormat::COMPRESSED_RGB_S3TC_DXT1_EXT, "RGB S3TC DXT1"},
+                    {TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT1_EXT, "RGBA S3TC DXT1"},
+                    {TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT3_EXT, "RGBA S3TC DXT3"},
+                    {TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT5_EXT, "RGBA S3TC DXT5"},
 
-#if GL_EXT_texture_sRGB
-                    {GL_COMPRESSED_SRGB_S3TC_DXT1_EXT, "SRGB S3TC DXT1"},
-                    {GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT, "sRGBA S3TC DXT1"},
-                    {GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT, "sRGBA S3TC DXT3"},
-                    {GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT, "sRGBA S3TC DXT5"},
-#endif
+                    {TextureInternalFormat::COMPRESSED_SRGB_S3TC_DXT1_EXT, "SRGB S3TC DXT1"},
+                    {TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT, "sRGBA S3TC DXT1"},
+                    {TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT, "sRGBA S3TC DXT3"},
+                    {TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT, "sRGBA S3TC DXT5"},
 
-#if GL_ARB_texture_compression_rgtc
-                    {GL_COMPRESSED_RED_RGTC1, "RED RGTC1"},
-                    {GL_COMPRESSED_SIGNED_RED_RGTC1, "SIGNED RED RGTC1"},
-                    {GL_COMPRESSED_RG_RGTC2, "RG RGTC2"},
-                    {GL_COMPRESSED_SIGNED_RG_RGTC2, "SIGNED RG RGTC2"},
-#endif
+                    {TextureInternalFormat::COMPRESSED_RED_RGTC1, "RED RGTC1"},
+                    {TextureInternalFormat::COMPRESSED_SIGNED_RED_RGTC1, "SIGNED RED RGTC1"},
+                    {TextureInternalFormat::COMPRESSED_RG_RGTC2, "RG RGTC2"},
+                    {TextureInternalFormat::COMPRESSED_SIGNED_RG_RGTC2, "SIGNED RG RGTC2"},
             };
 
-    int GetFormatByColorType(int colorType)
+    TexturePixelFormat GetPixelFormatByColorType(int colorType)
     {
         return colorTypeToFormat[colorType];
     }
 
-    std::string GetCompressedFormatName(int format)
+    std::string GetTextureFormatName(TextureInternalFormat format)
     {
-        for (const auto &pair: compressedFormats)
+        for (const auto &pair: textureFormats)
         {
             if (pair.first == format)
             {
@@ -105,13 +94,13 @@ namespace TextureCompressorFormats
         return "Unknown";
     }
 
-    const TextureTypeInfo &GetTextureTypeInfo(int textureType)
+    const TextureTypeInfo &GetTextureTypeInfo(TextureType textureType)
     {
         const static TextureTypeInfo invalid{.Count = -1};
 
         for (const auto &typeInfo: textureTypesInfo)
         {
-            if (typeInfo.TypeGL == textureType)
+            if (typeInfo.Type == textureType)
             {
                 return typeInfo;
             }
@@ -130,8 +119,8 @@ namespace TextureCompressorFormats
         return inputFormats;
     }
 
-    const std::vector<std::pair<int, std::string>> &GetCompressedFormats()
+    const std::vector<std::pair<TextureInternalFormat, std::string>> &GetTextureFormats()
     {
-        return compressedFormats;
+        return textureFormats;
     }
 }

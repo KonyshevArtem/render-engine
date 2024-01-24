@@ -1,12 +1,13 @@
 #include "shader.h"
-#include "debug.h"
 #include "cubemap/cubemap.h"
-#include "property_block/property_block.h"
 #include "texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
 #include "utils.h"
+#include "graphics_backend_api.h"
+#include "enums/program_parameter.h"
+#include "enums/graphics_backend_capability.h"
 
-typedef std::unordered_map<std::string, std::unordered_map<UniformType, std::shared_ptr<Texture>>> DefaultTexturesMap;
+typedef std::unordered_map<std::string, std::unordered_map<UniformDataType, std::shared_ptr<Texture>>> DefaultTexturesMap;
 
 PropertyBlock           Shader::m_PropertyBlock;
 const Shader::PassInfo *Shader::m_CurrentPass = nullptr;
@@ -38,46 +39,46 @@ Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, st
 {
     for (auto &passInfo: m_Passes)
     {
-        auto lightingUniformIndex   = CHECK_GL(glGetUniformBlockIndex(passInfo.Program, "Lighting"));
-        auto cameraDataUniformIndex = CHECK_GL(glGetUniformBlockIndex(passInfo.Program, "CameraData"));
-        auto shadowDataUniformIndex = CHECK_GL(glGetUniformBlockIndex(passInfo.Program, "Shadows"));
+        int lightingUniformIndex;
+        int cameraDataUniformIndex;
+        int shadowDataUniformIndex;
 
-        if (cameraDataUniformIndex != GL_INVALID_INDEX)
-            CHECK_GL(glUniformBlockBinding(passInfo.Program, cameraDataUniformIndex, 0));
+        if (GraphicsBackend::TryGetUniformBlockIndex(passInfo.Program, "CameraData", &cameraDataUniformIndex))
+            GraphicsBackend::SetUniformBlockBinding(passInfo.Program, cameraDataUniformIndex, 0);
 
-        if (lightingUniformIndex != GL_INVALID_INDEX)
-            CHECK_GL(glUniformBlockBinding(passInfo.Program, lightingUniformIndex, 1));
+        if (GraphicsBackend::TryGetUniformBlockIndex(passInfo.Program, "Lighting", &lightingUniformIndex))
+            GraphicsBackend::SetUniformBlockBinding(passInfo.Program, lightingUniformIndex, 1);
 
-        if (shadowDataUniformIndex != GL_INVALID_INDEX)
-            CHECK_GL(glUniformBlockBinding(passInfo.Program, shadowDataUniformIndex, 2));
+        if (GraphicsBackend::TryGetUniformBlockIndex(passInfo.Program, "Shadows", &shadowDataUniformIndex))
+            GraphicsBackend::SetUniformBlockBinding(passInfo.Program, shadowDataUniformIndex, 2);
 
-        GLint count;
-        GLint buffSize;
-        CHECK_GL(glGetProgramiv(passInfo.Program, GL_ACTIVE_UNIFORMS, &count));
-        CHECK_GL(glGetProgramiv(passInfo.Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffSize));
+        int uniformCount;
+        int uniformNameBufferSize;
+        GraphicsBackend::GetProgramParameter(passInfo.Program, ProgramParameter::ACTIVE_UNIFORMS, &uniformCount);
+        GraphicsBackend::GetProgramParameter(passInfo.Program, ProgramParameter::ACTIVE_UNIFORM_MAX_LENGTH, &uniformNameBufferSize);
 
-        GLsizei             length;
-        GLenum              type;
-        GLint               size;
-        std::vector<GLchar> name(buffSize);
-        int                 textureUnit = 0;
+        int uniformSize;
+        int uniformNameLength;
+        UniformDataType uniformDataType;
+        std::vector<char> uniformNameBuffer(uniformNameBufferSize);
+        TextureUnit textureUnit = TextureUnit::TEXTURE0;
 
-        for (int i = 0; i < count; ++i)
+        for (int i = 0; i < uniformCount; ++i)
         {
-            CHECK_GL(glGetActiveUniform(passInfo.Program, i, buffSize, &length, &size, &type, &name[0]));
-            std::string nameStr(name.begin(), name.begin() + length);
+            GraphicsBackend::GetActiveUniform(passInfo.Program, i, uniformNameBufferSize, &uniformNameLength, &uniformSize, &uniformDataType, &uniformNameBuffer[0]);
+            std::string uniformName(uniformNameBuffer.begin(), uniformNameBuffer.begin() + uniformNameLength);
 
-            auto location      = CHECK_GL(glGetUniformLocation(passInfo.Program, &nameStr[0]));
-            auto convertedType = UniformUtils::ConvertUniformType(type);
+            auto location = GraphicsBackend::GetUniformLocation(passInfo.Program, &uniformName[0]);
 
             // TODO: correctly parse arrays
 
-            if (convertedType == UniformType::UNKNOWN)
-                Debug::LogErrorFormat("[Shader] Init error: Unknown OpenGL type for uniform %1%", {nameStr});
-            else if (UniformUtils::IsTexture(convertedType))
-                passInfo.TextureUnits[nameStr] = textureUnit++;
+            if (UniformDataTypeUtils::IsTexture(uniformDataType))
+            {
+                passInfo.TextureUnits[uniformName] = textureUnit;
+                textureUnit = static_cast<TextureUnit>(static_cast<int>(textureUnit) + 1);
+            }
 
-            passInfo.Uniforms[nameStr] = UniformInfo {convertedType, location, i};
+            passInfo.Uniforms[uniformName] = UniformInfo {uniformDataType, location, i};
         }
     }
 }
@@ -85,7 +86,7 @@ Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, st
 Shader::~Shader()
 {
     for (const auto &passInfo: m_Passes)
-        CHECK_GL(glDeleteProgram(passInfo.Program));
+        GraphicsBackend::DeleteProgram(passInfo.Program);
 }
 
 #pragma endregion
@@ -107,7 +108,7 @@ void Shader::Use(int _passIndex) const
         shaderInUse = this;
         passIndexInUse = _passIndex;
 
-        CHECK_GL(glUseProgram(m_CurrentPass->Program));
+        GraphicsBackend::UseProgram(m_CurrentPass->Program);
 
         SetBlendInfo(m_CurrentPass->BlendInfo);
         SetCullInfo(m_CurrentPass->CullInfo);
@@ -195,39 +196,41 @@ void Shader::SetBlendInfo(const Shader::BlendInfo &_blendInfo) const
 {
     if (_blendInfo.Enabled)
     {
-        CHECK_GL(glEnable(GL_BLEND));
-        CHECK_GL(glBlendFunc(_blendInfo.SrcFactor, _blendInfo.DstFactor));
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::BLEND, true);
+        GraphicsBackend::SetBlendFunction(_blendInfo.SourceFactor, _blendInfo.DestinationFactor);
     }
     else
-        CHECK_GL(glDisable(GL_BLEND));
+    {
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::BLEND, false);
+    }
 }
 
 void Shader::SetCullInfo(const Shader::CullInfo &_cullInfo) const
 {
     if (_cullInfo.Enabled)
     {
-        CHECK_GL(glEnable(GL_CULL_FACE));
-        CHECK_GL(glCullFace(_cullInfo.Face));
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::CULL_FACE, true);
+        GraphicsBackend::SetCullFace(_cullInfo.Face);
     }
     else
     {
-        CHECK_GL(glDisable(GL_CULL_FACE));
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::CULL_FACE, false);
     }
 }
 
 void Shader::SetDepthInfo(const Shader::DepthInfo &_depthInfo) const
 {
-    CHECK_GL(glDepthMask(_depthInfo.ZWrite ? GL_TRUE : GL_FALSE));
-    CHECK_GL(glDepthFunc(_depthInfo.ZTest));
+    GraphicsBackend::SetDepthWrite(_depthInfo.WriteDepth);
+    GraphicsBackend::SetDepthFunction(_depthInfo.DepthFunction);
 }
 
 DefaultTexturesMap GetDefaultTexturesMap()
 {
     DefaultTexturesMap map;
-    map["white"][UniformType::SAMPLER_2D]   = Texture2D::White();
-    map["white"][UniformType::SAMPLER_CUBE] = Cubemap::White();
-    map["black"][UniformType::SAMPLER_CUBE] = Cubemap::Black();
-    map["normal"][UniformType::SAMPLER_2D]  = Texture2D::Normal();
+    map["white"][UniformDataType::SAMPLER_2D]   = Texture2D::White();
+    map["white"][UniformDataType::SAMPLER_CUBE] = Cubemap::White();
+    map["black"][UniformDataType::SAMPLER_CUBE] = Cubemap::Black();
+    map["normal"][UniformDataType::SAMPLER_2D]  = Texture2D::Normal();
     return map;
 }
 
@@ -242,9 +245,9 @@ void Shader::SetDefaultValues(const std::unordered_map<std::string, UniformInfo>
             continue;
 
         auto &defaultValueLiteral = m_DefaultValues.at(uniformName);
-        auto  type                = pair.second.Type;
+        auto type = pair.second.Type;
 
-        if (UniformUtils::IsTexture(type))
+        if (UniformDataTypeUtils::IsTexture(type))
         {
             if (defaultTextures.contains(defaultValueLiteral) && defaultTextures.at(defaultValueLiteral).contains(type))
                 SetTextureUniform(uniformName, *defaultTextures.at(defaultValueLiteral).at(type));
@@ -259,7 +262,10 @@ void Shader::SetDefaultValues(const std::unordered_map<std::string, UniformInfo>
 void Shader::SetUniform(const std::string &_name, const void *_data)
 {
     if (m_CurrentPass != nullptr && m_CurrentPass->Uniforms.contains(_name))
-        UniformUtils::SetUniform(m_CurrentPass->Uniforms.at(_name), _data);
+    {
+        auto uniformInfo = m_CurrentPass->Uniforms.at(_name);
+        GraphicsBackend::SetUniform(uniformInfo.Location, uniformInfo.Type, 1, _data);
+    }
 }
 
 void Shader::SetTextureUniform(const std::string &_name, const Texture &_texture)
@@ -268,8 +274,9 @@ void Shader::SetTextureUniform(const std::string &_name, const Texture &_texture
         return;
 
     auto unit = m_CurrentPass->TextureUnits.at(_name);
+    auto unitIndex = TextureUnitUtils::TextureUnitToIndex(unit);
     _texture.Bind(unit);
-    SetUniform(_name, &unit);
+    SetUniform(_name, &unitIndex);
 
     Vector4 st = Vector4(0, 0, 1, 1);
     SetUniform(_name + "_ST", &st);

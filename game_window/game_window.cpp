@@ -34,6 +34,11 @@ GameWindow::GameWindow(int width,
     k_GameWindow = this;
 }
 
+void GameWindow::BeginMainLoop()
+{
+    glutMainLoop();
+}
+
 void GameWindow::resizeGL(int _width, int _height)
 {
     if (k_GameWindow->m_Resize)

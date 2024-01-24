@@ -25,7 +25,7 @@ public:
 private:
     Texture2D(unsigned int width, unsigned int height, unsigned int mipLevels);
 
-    static std::shared_ptr<Texture2D> Create_Internal(unsigned char *pixels, int width, int height, int internalFormat, int format);
+    static std::shared_ptr<Texture2D> Create_Internal(uint8_t *pixels, int width, int height, TextureInternalFormat textureFormat, TexturePixelFormat pixelFormat);
 };
 
 #endif //OPENGL_STUDY_TEXTURE_2D_H

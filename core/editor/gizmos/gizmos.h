@@ -4,13 +4,11 @@
 #define OPENGL_STUDY_GIZMOS_H
 
 #include "matrix4x4/matrix4x4.h"
+#include "types/graphics_backend_vao.h"
+#include "types/graphics_backend_buffer.h"
+
 #include <memory>
 #include <vector>
-#ifdef OPENGL_STUDY_WINDOWS
-#include "GL/glew.h"
-#elif OPENGL_STUDY_MACOS
-#include "OpenGL/gl3.h"
-#endif
 
 struct Matrix4x4;
 
@@ -19,16 +17,16 @@ namespace Gizmos
     class GizmosPrimitive
     {
     public:
-        GizmosPrimitive(GLuint _vertexArrayObject, GLuint _pointsBuffer, GLuint _indexBuffer, int _indexCount);
+        GizmosPrimitive(GraphicsBackendVAO _vertexArrayObject, GraphicsBackendBuffer _pointsBuffer, GraphicsBackendBuffer _indexBuffer, int _indexCount);
         ~GizmosPrimitive();
 
         void Draw() const;
 
     private:
-        GLuint m_VertexArrayObject = 0;
-        GLuint m_PointsBuffer      = 0;
-        GLuint m_IndexBuffer       = 0;
-        int    m_IndexCount        = 0;
+        GraphicsBackendVAO m_VertexArrayObject{};
+        GraphicsBackendBuffer m_PointsBuffer{};
+        GraphicsBackendBuffer m_IndexBuffer{};
+        int m_IndexCount = 0;
     };
 
     struct GizmosDrawInfo

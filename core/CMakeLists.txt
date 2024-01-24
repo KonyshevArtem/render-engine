@@ -42,7 +42,6 @@ add_library(
 	texture/texture_header.h
 	shader/shader_loader/shader_loader.cpp
 	shader/shader_loader/shader_loader.h
-	shader/uniform_info/uniform_info.cpp
 	shader/uniform_info/uniform_info.h
 	renderer/renderer.cpp
 	renderer/renderer.h
@@ -67,7 +66,9 @@ add_library(
 	point/point.h
 	point/point.cpp 
 	drawable_geometry/drawable_geometry.h
-	drawable_geometry/drawable_geometry.cpp)
+	drawable_geometry/drawable_geometry.cpp
+	texture/texture_binary_reader.h
+	texture/texture_binary_reader.cpp)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math Utils DebugUtil OpenFBX)
+target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend)

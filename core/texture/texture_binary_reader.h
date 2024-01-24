@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_TEXTURE_BINARY_READER_H
 #define OPENGL_STUDY_TEXTURE_BINARY_READER_H
 
-#include "../core/texture/texture_header.h"
+#include "texture_header.h"
 
 #include <filesystem>
 #include <vector>

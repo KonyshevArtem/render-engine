@@ -1,12 +1,8 @@
 #ifndef OPENGL_STUDY_UNIFORM_BLOCK_H
 #define OPENGL_STUDY_UNIFORM_BLOCK_H
 
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
-#include <memory>
+#include "types/graphics_backend_buffer.h"
+
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -23,18 +19,18 @@ public:
     void SetUniform(const std::string &_name, const void *_data, unsigned long _size);
     void UploadData() const;
 
-private:
     UniformBlock(const UniformBlock &) = delete;
     UniformBlock(UniformBlock &&)      = delete;
 
     UniformBlock &operator()(const UniformBlock &) = delete;
     UniformBlock &operator()(UniformBlock &&)      = delete;
 
+private:
     std::string                            m_Name;
-    GLuint                                 m_Buffer = 0;
+    GraphicsBackendBuffer                  m_Buffer{};
     unsigned int                           m_BindIndex;
     std::vector<uint8_t>                   m_Data;
-    std::unordered_map<std::string, GLint> m_UniformOffsets;
+    std::unordered_map<std::string, int>   m_UniformOffsets;
 };
 
 #endif //OPENGL_STUDY_UNIFORM_BLOCK_H

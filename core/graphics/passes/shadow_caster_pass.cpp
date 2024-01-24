@@ -1,19 +1,17 @@
 #include "shadow_caster_pass.h"
-#include "../context.h"
-#include "../graphics.h"
-#include "../uniform_block.h"
-#include "debug.h"
+#include "graphics/context.h"
+#include "graphics/graphics.h"
+#include "graphics/uniform_block.h"
 #include "graphics/render_settings.h"
 #include "light/light.h"
 #include "renderer/renderer.h"
 #include "texture_2d/texture_2d.h"
 #include "texture_2d_array/texture_2d_array.h"
+#include "graphics_backend_api.h"
+#include "graphics_backend_debug.h"
+#include "enums/clear_mask.h"
+
 #include <utility>
-#ifdef OPENGL_STUDY_WINDOWS
-#include <GL/glew.h>
-#elif OPENGL_STUDY_MACOS
-#include <OpenGL/gl3.h>
-#endif
 
 ShadowCasterPass::ShadowCasterPass(std::shared_ptr<UniformBlock> shadowsUniformBlock) :
     m_ShadowsUniformBlock(std::move(shadowsUniformBlock)),
@@ -26,13 +24,13 @@ ShadowCasterPass::ShadowCasterPass(std::shared_ptr<UniformBlock> shadowsUniformB
     Shader::SetGlobalTexture("_PointLightShadowMapArray", m_PointLightShadowMap);
 
     m_DirectionLightShadowMap->SetBorderColor({1, 1, 1, 1});
-    m_DirectionLightShadowMap->SetWrapMode(GL_CLAMP_TO_BORDER);
+    m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
 
     m_SpotLightShadowMapArray->SetBorderColor({1, 1, 1, 1});
-    m_SpotLightShadowMapArray->SetWrapMode(GL_CLAMP_TO_BORDER);
+    m_SpotLightShadowMapArray->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
 
     m_PointLightShadowMap->SetBorderColor({1, 1, 1, 1});
-    m_PointLightShadowMap->SetWrapMode(GL_CLAMP_TO_BORDER);
+    m_PointLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
 }
 
 void ShadowCasterPass::Execute(const Context &_ctx)
@@ -74,7 +72,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     if (_ctx.ShadowCasters.empty())
         return;
 
-    auto debugGroup = Debug::DebugGroup("Shadow pass");
+    auto debugGroup = GraphicsBackendDebug::DebugGroup("Shadow pass");
 
     int spotLightsCount = 0;
     int pointLightsCount = 0;
@@ -160,10 +158,10 @@ void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
 {
     static RenderSettings renderSettings {{{"LightMode", "ShadowCaster"}}};
 
-    auto debugGroup = Debug::DebugGroup("Render shadow map");
+    auto debugGroup = GraphicsBackendDebug::DebugGroup("Render shadow map");
 
-    CHECK_GL(glDepthMask(GL_TRUE))
-    CHECK_GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
+    GraphicsBackend::SetDepthWrite(true);
+    GraphicsBackend::Clear(ClearMask::COLOR_DEPTH);
 
     auto drawCalls = Graphics::DoCulling(_renderers);
     Graphics::Draw(drawCalls, renderSettings);

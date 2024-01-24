@@ -12,8 +12,6 @@
 //#include "editor_gui/editor_window.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 
-#include <GLUT/glut.h>
-
 void display()
 {
     Time::Update();
@@ -49,7 +47,7 @@ int main(int __argc, char **__argv)
     //PBRDemo::Load();
     //ShadowsDemo::Load();
 
-    glutMainLoop();
+    window.BeginMainLoop();
 
     Graphics::Shutdown();
 

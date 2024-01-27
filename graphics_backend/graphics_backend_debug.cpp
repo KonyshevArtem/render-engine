@@ -6,20 +6,20 @@ static int debugGroupID = 0;
 
 GraphicsBackendDebug::DebugGroup::DebugGroup(const std::string &_name)
 {
-#ifdef GRAPHICS_BACKEND_WINDOWS
-    CHECK_GL(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, debugGroupID++, -1, _name.c_str()));
+#ifdef GL_KHR_debug
+    CHECK_GRAPHICS_BACKEND_FUNC(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, debugGroupID++, -1, _name.c_str()));
 #endif
 }
 
 GraphicsBackendDebug::DebugGroup::~DebugGroup()
 {
-#ifdef GRAPHICS_BACKEND_WINDOWS
-    glPopDebugGroup();
+#ifdef GL_KHR_debug
+    CHECK_GRAPHICS_BACKEND_FUNC(glPopDebugGroup())
     --debugGroupID;
 
     if (debugGroupID < 0)
     {
-        LogError("Popping more debug groups than pushing");
+        Debug::LogError("Popping more debug groups than pushing");
         debugGroupID = 0;
     }
 #endif

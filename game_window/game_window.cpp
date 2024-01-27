@@ -1,7 +1,11 @@
 #include "game_window.h"
 
 #include <utility>
-#include "GLUT/glut.h"
+#if __has_include("GLUT/glut.h")
+#include <GLUT/glut.h>
+#elif __has_include("GL/glut.h")
+#include <GL/glut.h>
+#endif
 
 GameWindow *k_GameWindow = nullptr;
 
@@ -16,10 +20,14 @@ GameWindow::GameWindow(int width,
         m_KeyboardInputHandler(std::move(_keyboardInputHandler)),
         m_MouseMoveHandler(std::move(_mouseMoveHandler))
 {
+    unsigned int displayMode = GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH;
+    #ifdef GLUT_3_2_CORE_PROFILE
+    displayMode |= GLUT_3_2_CORE_PROFILE;
+    #endif
 
     int argc = 0;
     glutInit(&argc, nullptr);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_3_2_CORE_PROFILE);
+    glutInitDisplayMode(displayMode);
     glutInitWindowSize(width, height);
     glutCreateWindow("GameWindow");
 

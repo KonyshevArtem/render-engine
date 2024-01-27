@@ -9,7 +9,7 @@ namespace GraphicsBackendDebug
 {
     struct DebugGroup
     {
-        DebugGroup(const std::string &_name);
+        explicit DebugGroup(const std::string &_name);
         ~DebugGroup();
     };
 

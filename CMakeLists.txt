@@ -3,8 +3,8 @@ project(OpenGL_Study)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(
-    OPENGL_STUDY_SOURCES
+add_executable(
+	OpenGL_Study
     main.cpp
     scenes/test_scene.cpp
     scenes/test_scene.h
@@ -16,25 +16,12 @@ set(
 	scripts/camera_fly_controller/camera_fly_controller.h
 )
 
-# windows
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-
-    add_executable(OpenGL_Study WIN32 ${OPENGL_STUDY_SOURCES})
-    add_compile_definitions(OPENGL_STUDY_WINDOWS _USE_MATH_DEFINES WIN32_LEAN_AND_MEAN)
-
-# macos
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
-    add_executable(OpenGL_Study ${OPENGL_STUDY_SOURCES})
-    add_compile_definitions(OPENGL_STUDY_MACOS)
-
-endif()
-
 # boost
+# set(Boost_DEBUG ON)
+# set(Boost_ARCHITECTURE -x64) # might be required on windows, based on how boost was compiled
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost REQUIRED COMPONENTS json)
 include_directories(${Boost_INCLUDE_DIRS})
-target_link_libraries(OpenGL_Study Boost::json)
 
 # TODO add non-editor compile target
 add_compile_definitions(OPENGL_STUDY_EDITOR)

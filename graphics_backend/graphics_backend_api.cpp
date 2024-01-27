@@ -24,6 +24,15 @@ constexpr auto Cast(T value) -> typename std::underlying_type<T>::type
     return static_cast<typename std::underlying_type<T>::type>(value);
 }
 
+void GraphicsBackend::Init()
+{
+#ifdef REQUIRE_GLEW_INIT
+    auto result = glewInit();
+    if (result != GLEW_OK)
+        throw;
+#endif
+}
+
 void GraphicsBackend::GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glGenTextures(texturesCount, reinterpret_cast<GLuint *>(texturesPtr)))

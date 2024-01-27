@@ -49,6 +49,18 @@ Only forward rendering path is implemented for now
   * Place DLL files in `System32` and `SysWOW64` directories
   * Add paths to header and libs directories to `CMAKE_PREFIX_PATH`
 
+### GLUT
+
+* OSX
+  * Should be installed by default
+
+* Windows
+  * Download FreeGLUT from https://github.com/freeglut/freeglut
+  * Open project in CLion and build following README https://github.com/freeglut/freeglut/blob/master/README.win32
+  * Copy DLL to `System32` and `SysWOW64` directories
+  * Add paths to header and libs directories to `CMAKE_PREFIX_PATH`
+  * Additionally it might be required to add libs path to `OPENGL_LIBRARY_DIR`
+
 ### Boost
 
 * OSX
@@ -59,16 +71,16 @@ Only forward rendering path is implemented for now
   * Build binaries from sources using https://www.boost.org/doc/libs/1_49_0/more/getting_started/windows.html#or-build-binaries-from-source (Section 5.2 Simplified build from source)
   * Add path to boost include and lib directories to `CMAKE_PREFIX_PATH`
 
-### Qt
-* Download installer from https://www.qt.io/download and install
-* Add path to Qt to `CMAKE_PREFIX_PATH`
-* On Windows add path to Qt binaries to `PATH`
+#### Known issues
+
+CMake might not set architecture tag for boost, and would not be able to find libs. In that case, add line `set(Boost_ARCHITECTURE -x64)` to CMake file 
+
+In case of any problems, add `set(Boost_DEBUG ON)` line to CMake file
 
 ### Environment variables example
 
 ```
-set PATH=%PATH%;D:\Qt\6.2.3\msvc2019_64\bin;
-set CMAKE_PREFIX_PATH=F:/glew-2.1.0/include;F:/glew-2.1.0/lib/Release/x64;F:/boost_1_78_0;F:/boost_1_78_0/stage/lib;D:/Qt/6.2.3/msvc2019_64;
+set CMAKE_PREFIX_PATH=F:/glew-2.1.0/include;F:/glew-2.1.0/lib/Release/x64;F:/boost_1_78_0;F:/boost_1_78_0/stage/lib;C:\freeglut-3.4.0\include;C:\freeglut-3.4.0\cmake-build-debug\lib
 ```
 
 ## External Tools

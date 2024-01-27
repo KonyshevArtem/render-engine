@@ -3,9 +3,14 @@
 #include <boost/format.hpp>
 #include <iostream>
 
+#if __has_include("Windows.h")
+#include <Windows.h>
+#define WINDOWS_COUT_CONSOLE
+#endif
+
 void Debug::Init()
 {
-#if defined(OPENGL_STUDY_WINDOWS) && defined(_DEBUG)
+#ifdef WINDOWS_COUT_CONSOLE
     AllocConsole();
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);

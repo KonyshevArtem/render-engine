@@ -122,11 +122,7 @@ namespace Graphics
 
     void Init()
     {
-#ifdef OPENGL_STUDY_WINDOWS
-        auto result = glewInit();
-        if (result != GLEW_OK)
-            throw;
-#endif
+        GraphicsBackend::Init();
 
 #if OPENGL_STUDY_EDITOR
         Gizmos::Init();

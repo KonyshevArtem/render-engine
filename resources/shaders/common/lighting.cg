@@ -8,21 +8,21 @@ const float PI = 3.14159265359;
 
 /// Data ///
 
-layout(std140) struct DirectionalLight
+struct DirectionalLight
 {
     vec3 DirectionWS;
     float HasDirectionalLight;
     vec3 Intensity;
 };
 
-layout(std140) struct PointLight
+struct PointLight
 {
     vec3 PositionWS;
     vec3 Intensity;
     float Attenuation;
 };
 
-layout(std140) struct SpotLight
+struct SpotLight
 {
     vec3 PositionWS;
     vec3 DirectionWS;

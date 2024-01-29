@@ -2,11 +2,12 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
-#ifdef OPENGL_STUDY_WINDOWS
-#include <windows.h>
-#include <libloaderapi.h>
-#elif OPENGL_STUDY_MACOS
-#include <mach-o/dyld.h>
+#if __has_include("libloaderapi.h")
+    #include <libloaderapi.h>
+    #define EXECUTABLE_DIR_WIN
+#elif __has_include("mach-o/dyld.h")
+    #include <mach-o/dyld.h>
+    #define EXECUTABLE_DIR_MAC
 #endif
 #include <regex>
 #include <string>
@@ -99,12 +100,12 @@ namespace Utils
         if (!executableDir.empty())
             return executableDir;
 
-#ifdef OPENGL_STUDY_WINDOWS
+#if defined(EXECUTABLE_DIR_WIN)
 		char path[MAX_PATH];
 
 		GetModuleFileNameA(NULL, path, MAX_PATH);
 		executableDir = std::filesystem::path(path).parent_path();
-#elif OPENGL_STUDY_MACOS
+#elif defined(EXECUTABLE_DIR_MAC)
         char     path[100];
         uint32_t size = 100;
 

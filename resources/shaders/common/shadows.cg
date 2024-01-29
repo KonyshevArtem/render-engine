@@ -2,12 +2,12 @@
 #define SHADOWS
 
 #ifdef _RECEIVE_SHADOWS
-layout(std140) struct ShadowData
+struct ShadowData
 {
     mat4x4 LightViewProjMatrix;
 };
 
-layout(std140) struct PointLightShadowData
+struct PointLightShadowData
 {
     mat4x4 LightViewProjMatrices[6];
     vec4 LightPosWS;

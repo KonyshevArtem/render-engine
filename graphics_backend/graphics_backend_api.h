@@ -56,6 +56,8 @@ class GraphicsBackendVAO;
 class GraphicsBackend
 {
 public:
+    static void Init();
+
     static void GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr);
     static void GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr);
     static void DeleteTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr);

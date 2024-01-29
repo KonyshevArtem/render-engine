@@ -193,7 +193,7 @@ namespace ShaderLoader
             std::string logMsg(infoLogLength + 1, ' ');
             GraphicsBackend::GetShaderInfoLog(shader, infoLogLength, nullptr, &logMsg[0]);
 
-            throw std::runtime_error("Compilation failed with error: " + logMsg);
+            throw std::runtime_error("Compilation failed with errors:\n" + logMsg);
         }
 
         return shader;

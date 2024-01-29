@@ -1,6 +1,7 @@
 #ifndef OPENGL_STUDY_UTILS_H
 #define OPENGL_STUDY_UTILS_H
 
+#include <vector>
 #include <filesystem>
 #include <string>
 

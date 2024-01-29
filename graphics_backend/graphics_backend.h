@@ -1,11 +1,17 @@
 #ifndef OPENGL_STUDY_GRAPHICS_BACKEND_H
 #define OPENGL_STUDY_GRAPHICS_BACKEND_H
 
-#ifdef GRAPHICS_BACKEND_WINDOWS
+#if __has_include("GL/glew.h")
 #include <GL/glew.h>
-#elif GRAPHICS_BACKEND_MACOS
+#define REQUIRE_GLEW_INIT
+#endif
+#if __has_include("OpenGL/glu.h")
 #include <OpenGL/glu.h>
+#endif
+#if __has_include("OpenGL/gl3.h")
 #include <OpenGL/gl3.h>
+#endif
+#if __has_include("OpenGL/gl3ext.h")
 #include <OpenGL/gl3ext.h>
 #endif
 
@@ -295,8 +301,16 @@
 #define GRAPHICS_BACKEND_CLIP_DISTANCE3     GL_CLIP_DISTANCE3
 #define GRAPHICS_BACKEND_CLIP_DISTANCE4     GL_CLIP_DISTANCE4
 #define GRAPHICS_BACKEND_CLIP_DISTANCE5     GL_CLIP_DISTANCE5
+#ifdef GL_CLIP_DISTANCE6
 #define GRAPHICS_BACKEND_CLIP_DISTANCE6     GL_CLIP_DISTANCE6
+#else
+#define GRAPHICS_BACKEND_CLIP_DISTANCE6     0
+#endif
+#ifdef GL_CLIP_DISTANCE7
 #define GRAPHICS_BACKEND_CLIP_DISTANCE7     GL_CLIP_DISTANCE7
+#else
+#define GRAPHICS_BACKEND_CLIP_DISTANCE7     0
+#endif
 
 #define GRAPHICS_BACKEND_CULL_FACE      GL_CULL_FACE
 #define GRAPHICS_BACKEND_DEPTH_CLAMP    GL_DEPTH_CLAMP

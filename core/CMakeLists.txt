@@ -71,4 +71,4 @@ add_library(
 	texture/texture_binary_reader.cpp)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend)
+target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

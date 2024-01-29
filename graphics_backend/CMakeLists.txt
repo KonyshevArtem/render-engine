@@ -47,25 +47,25 @@ add_library(GraphicsBackend
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     set(MINOR_VERSION 6)
-    set(PLATFORM_DEFINE "GRAPHICS_BACKEND_WINDOWS")
 
     # glew for windows
     find_package(GLEW REQUIRED)
-    include_directories(${GLEW_INCLUDE_DIRS})
+    set(INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
     target_link_libraries(GraphicsBackend ${GLEW_LIBRARIES} glu32.lib opengl32.lib)
 
 # macos
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     set(MINOR_VERSION 1)
-    set(PLATFORM_DEFINE "GRAPHICS_BACKEND_MACOS")
 
     # opengl for macos
     find_package(OpenGL REQUIRED)
-    include_directories(${OPENGL_INCLUDE_DIRS})
+    set(INCLUDE_DIRS ${OPENGL_INCLUDE_DIRS})
     target_link_libraries(GraphicsBackend ${OPENGL_LIBRARIES})
 
 endif()
+
+include_directories(${INCLUDE_DIRS})
 
 target_compile_definitions(GraphicsBackend PUBLIC
         GL_SILENCE_DEPRECATION
@@ -74,5 +74,5 @@ target_compile_definitions(GraphicsBackend PUBLIC
         OPENGL_MAJOR_VERSION=4
         OPENGL_MINOR_VERSION=${MINOR_VERSION})
 
-target_include_directories(GraphicsBackend PUBLIC .)
+target_include_directories(GraphicsBackend PUBLIC . ${INCLUDE_DIRS})
 target_link_libraries(GraphicsBackend DebugUtil)

@@ -100,12 +100,12 @@ namespace Utils
         if (!executableDir.empty())
             return executableDir;
 
-#ifdef EXECUTABLE_DIR_WIN
+#if defined(EXECUTABLE_DIR_WIN)
 		char path[MAX_PATH];
 
 		GetModuleFileNameA(NULL, path, MAX_PATH);
 		executableDir = std::filesystem::path(path).parent_path();
-#elif EXECUTABLE_DIR_MAC
+#elif defined(EXECUTABLE_DIR_MAC)
         char     path[100];
         uint32_t size = 100;
 

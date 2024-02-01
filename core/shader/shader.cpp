@@ -192,7 +192,7 @@ Matrix4x4 Shader::GetGlobalMatrix(const std::string &_name)
 
 #pragma region service methods
 
-void Shader::SetBlendInfo(const Shader::BlendInfo &_blendInfo) const
+void Shader::SetBlendInfo(const BlendInfo &_blendInfo) const
 {
     if (_blendInfo.Enabled)
     {
@@ -205,7 +205,7 @@ void Shader::SetBlendInfo(const Shader::BlendInfo &_blendInfo) const
     }
 }
 
-void Shader::SetCullInfo(const Shader::CullInfo &_cullInfo) const
+void Shader::SetCullInfo(const CullInfo &_cullInfo) const
 {
     if (_cullInfo.Enabled)
     {
@@ -218,7 +218,7 @@ void Shader::SetCullInfo(const Shader::CullInfo &_cullInfo) const
     }
 }
 
-void Shader::SetDepthInfo(const Shader::DepthInfo &_depthInfo) const
+void Shader::SetDepthInfo(const DepthInfo &_depthInfo) const
 {
     GraphicsBackend::SetDepthWrite(_depthInfo.WriteDepth);
     GraphicsBackend::SetDepthFunction(_depthInfo.DepthFunction);

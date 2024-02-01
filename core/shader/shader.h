@@ -7,9 +7,7 @@
 #include "uniform_info/uniform_info.h"
 #include "vector4/vector4.h"
 #include "enums/texture_unit.h"
-#include "enums/cull_face.h"
-#include "enums/blend_factor.h"
-#include "enums/depth_function.h"
+#include "shader_structs.h"
 #include "types/graphics_backend_program.h"
 
 #include <filesystem>
@@ -25,25 +23,6 @@ class Shader
 #pragma region inner types
 
 public:
-    struct BlendInfo
-    {
-        bool Enabled = false;
-        BlendFactor SourceFactor;
-        BlendFactor DestinationFactor;
-    };
-
-    struct CullInfo
-    {
-        bool Enabled = true;
-        CullFace Face = CullFace::BACK;
-    };
-
-    struct DepthInfo
-    {
-        bool WriteDepth = true;
-        DepthFunction DepthFunction = DepthFunction::LEQUAL;
-    };
-
     struct PassInfo
     {
         GraphicsBackendProgram                       Program;

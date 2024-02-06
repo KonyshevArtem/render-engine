@@ -2,16 +2,17 @@
 #include "cubemap/cubemap.h"
 #include "texture_2d/texture_2d.h"
 #include "uniform_info/uniform_info.h"
-#include "utils.h"
 #include "graphics_backend_api.h"
 #include "enums/program_parameter.h"
 #include "enums/graphics_backend_capability.h"
+#include "property_block/property_block.h"
+#include "enums/uniform_block_parameter.h"
+#include "graphics/uniform_block.h"
 
 typedef std::unordered_map<std::string, std::unordered_map<UniformDataType, std::shared_ptr<Texture>>> DefaultTexturesMap;
 
-PropertyBlock           Shader::m_PropertyBlock;
-const Shader::PassInfo *Shader::m_CurrentPass = nullptr;
-
+PropertyBlock m_PropertyBlock;
+const Shader::PassInfo *m_CurrentPass;
 
 #pragma region construction
 
@@ -32,6 +33,15 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const s
     return shader;
 }
 
+int GetNameBufferSize(GraphicsBackendProgram program)
+{
+    int uniformNameLength;
+    int uniformBlockNameLength;
+    GraphicsBackend::GetProgramParameter(program, ProgramParameter::ACTIVE_UNIFORM_MAX_LENGTH, &uniformNameLength);
+    GraphicsBackend::GetProgramParameter(program, ProgramParameter::ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &uniformBlockNameLength);
+    return std::max(uniformNameLength, uniformBlockNameLength);
+}
+
 Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues, bool _supportInstancing) :
     m_Passes(std::move(_passes)),
     m_DefaultValues(std::move(_defaultValues)),
@@ -39,33 +49,48 @@ Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, st
 {
     for (auto &passInfo: m_Passes)
     {
-        int lightingUniformIndex;
-        int cameraDataUniformIndex;
-        int shadowDataUniformIndex;
+        std::vector<char> uniformNameBuffer(GetNameBufferSize(passInfo.Program));
 
-        if (GraphicsBackend::TryGetUniformBlockIndex(passInfo.Program, "CameraData", &cameraDataUniformIndex))
-            GraphicsBackend::SetUniformBlockBinding(passInfo.Program, cameraDataUniformIndex, 0);
+        int uniformBlocksCount;
+        GraphicsBackend::GetProgramParameter(passInfo.Program, ProgramParameter::ACTIVE_UNIFORM_BLOCKS, &uniformBlocksCount);
 
-        if (GraphicsBackend::TryGetUniformBlockIndex(passInfo.Program, "Lighting", &lightingUniformIndex))
-            GraphicsBackend::SetUniformBlockBinding(passInfo.Program, lightingUniformIndex, 1);
+        std::vector<int> freeBlockBindings(uniformBlocksCount);
+        for (int i = 0; i < uniformBlocksCount; ++i)
+        {
+            freeBlockBindings[i] = i;
+        }
 
-        if (GraphicsBackend::TryGetUniformBlockIndex(passInfo.Program, "Shadows", &shadowDataUniformIndex))
-            GraphicsBackend::SetUniformBlockBinding(passInfo.Program, shadowDataUniformIndex, 2);
+        for (int i = 0; i < uniformBlocksCount; ++i)
+        {
+            int binding;
+
+            GraphicsBackend::GetActiveUniformBlockParameter(passInfo.Program, i, UniformBlockParameter::BINDING, &binding);
+            if (binding == 0)
+            {
+                binding = freeBlockBindings[freeBlockBindings.size() - 1];
+                freeBlockBindings.pop_back();
+            }
+
+            GraphicsBackend::SetUniformBlockBinding(passInfo.Program, i, binding);
+
+            int uniformBlockNameSize;
+            GraphicsBackend::GetActiveUniformBlockName(passInfo.Program, i, uniformNameBuffer.size(), &uniformBlockNameSize, &uniformNameBuffer[0]);
+            std::string uniformBlockName(uniformNameBuffer.begin(), uniformNameBuffer.begin() + uniformBlockNameSize);
+
+            passInfo.UniformBlockBindings[uniformBlockName] = binding;
+        }
 
         int uniformCount;
-        int uniformNameBufferSize;
         GraphicsBackend::GetProgramParameter(passInfo.Program, ProgramParameter::ACTIVE_UNIFORMS, &uniformCount);
-        GraphicsBackend::GetProgramParameter(passInfo.Program, ProgramParameter::ACTIVE_UNIFORM_MAX_LENGTH, &uniformNameBufferSize);
 
-        int uniformSize;
-        int uniformNameLength;
-        UniformDataType uniformDataType;
-        std::vector<char> uniformNameBuffer(uniformNameBufferSize);
         TextureUnit textureUnit = TextureUnit::TEXTURE0;
-
         for (int i = 0; i < uniformCount; ++i)
         {
-            GraphicsBackend::GetActiveUniform(passInfo.Program, i, uniformNameBufferSize, &uniformNameLength, &uniformSize, &uniformDataType, &uniformNameBuffer[0]);
+            int uniformSize;
+            int uniformNameLength;
+            UniformDataType uniformDataType;
+
+            GraphicsBackend::GetActiveUniform(passInfo.Program, i, uniformNameBuffer.size(), &uniformNameLength, &uniformSize, &uniformDataType, &uniformNameBuffer[0]);
             std::string uniformName(uniformNameBuffer.begin(), uniformNameBuffer.begin() + uniformNameLength);
 
             auto location = GraphicsBackend::GetUniformLocation(passInfo.Program, &uniformName[0]);
@@ -142,6 +167,20 @@ void Shader::SetPropertyBlock(const PropertyBlock &_propertyBlock)
         SetUniform(pair.first, &pair.second);
     for (const auto &pair: _propertyBlock.m_Matrices)
         SetUniform(pair.first, &pair.second);
+}
+
+void Shader::SetUniformBlock(const UniformBlock &uniformBlock)
+{
+    if (m_CurrentPass == nullptr)
+    {
+        return;
+    }
+
+    auto it = m_CurrentPass->UniformBlockBindings.find(uniformBlock.GetName());
+    if (it != m_CurrentPass->UniformBlockBindings.end())
+    {
+        uniformBlock.Bind(it->second);
+    }
 }
 
 

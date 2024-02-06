@@ -2,7 +2,6 @@
 #define OPENGL_STUDY_SHADER_H
 
 #include "matrix4x4/matrix4x4.h"
-#include "property_block/property_block.h"
 #include "shader_loader/shader_loader.h"
 #include "uniform_info/uniform_info.h"
 #include "vector4/vector4.h"
@@ -17,6 +16,8 @@
 
 
 class Texture;
+class PropertyBlock;
+class UniformBlock;
 
 class Shader
 {
@@ -32,6 +33,7 @@ public:
         std::unordered_map<std::string, std::string> Tags;
         std::unordered_map<std::string, UniformInfo> Uniforms;
         std::unordered_map<std::string, TextureUnit> TextureUnits;
+        std::unordered_map<std::string, int>         UniformBlockBindings;
     };
 
 #pragma endregion
@@ -61,9 +63,6 @@ private:
     std::unordered_map<std::string, std::string> m_DefaultValues;
     bool                                         m_SupportInstancing;
 
-    static PropertyBlock   m_PropertyBlock;
-    static const PassInfo *m_CurrentPass;
-
 #pragma endregion
 
 #pragma region public methods
@@ -83,6 +82,7 @@ public:
     }
 
     static void SetPropertyBlock(const PropertyBlock &_propertyBlock);
+    static void SetUniformBlock(const UniformBlock &uniformBlock);
 
     static void SetGlobalTexture(const std::string &_name, std::shared_ptr<Texture> _value);
     static void SetGlobalVector(const std::string &_name, const Vector4 &_value);

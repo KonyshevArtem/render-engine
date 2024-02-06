@@ -85,13 +85,9 @@ namespace Graphics
     void InitUniformBlocks()
     {
         auto fullShader   = Shader::Load("resources/shaders/standard/standard.shader", {"_RECEIVE_SHADOWS"});
-        cameraDataBlock   = std::make_unique<UniformBlock>(*fullShader, "CameraData", 0);
-        lightingDataBlock = std::make_unique<UniformBlock>(*fullShader, "Lighting", 1);
-        shadowsDataBlock  = std::make_shared<UniformBlock>(*fullShader, "Shadows", 2);
-
-        cameraDataBlock->Bind();
-        lightingDataBlock->Bind();
-        shadowsDataBlock->Bind();
+        cameraDataBlock   = std::make_unique<UniformBlock>(*fullShader, "CameraData");
+        lightingDataBlock = std::make_unique<UniformBlock>(*fullShader, "Lighting");
+        shadowsDataBlock  = std::make_shared<UniformBlock>(*fullShader, "Shadows");
     }
 
     void InitPasses()
@@ -422,6 +418,9 @@ namespace Graphics
 
                 shader->Use(i);
 
+                Shader::SetUniformBlock(*lightingDataBlock);
+                Shader::SetUniformBlock(*cameraDataBlock);
+                Shader::SetUniformBlock(*shadowsDataBlock);
                 Shader::SetPropertyBlock(info.Material->GetPropertyBlock());
 
                 if (info.Instanced())

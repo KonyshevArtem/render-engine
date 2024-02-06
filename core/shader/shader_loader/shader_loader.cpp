@@ -93,7 +93,7 @@ namespace ShaderLoader
             std::string logMsg(infoLogLength + 1, ' ');
             GraphicsBackend::GetProgramInfoLog(program, infoLogLength, nullptr, &logMsg[0]);
 
-            throw std::runtime_error("Link failed with error: " + logMsg);
+            throw std::runtime_error("Link failed with error:\n" + logMsg);
         }
 
         return program;
@@ -101,7 +101,6 @@ namespace ShaderLoader
 
     std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords)
     {
-        auto shaderSource = Utils::ReadFileWithIncludes(_path);
         bool supportInstancing = false;
         std::string keywordsDirectives;
         for (const auto &keyword: _keywords)
@@ -112,6 +111,8 @@ namespace ShaderLoader
 
         try
         {
+            auto shaderSource = Utils::ReadFileWithIncludes(_path);
+
             std::vector<ShaderParser::PassInfo> passesInfo;
             std::unordered_map<std::string, std::string> properties;
             ShaderParser::Parse(shaderSource, passesInfo, properties);

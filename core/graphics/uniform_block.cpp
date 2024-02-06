@@ -7,8 +7,8 @@
 #include "enums/buffer_bind_target.h"
 #include "enums/buffer_usage_hint.h"
 
-UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName, unsigned int _index) :
-    m_Name(std::move(_blockName)), m_BindIndex(_index)
+UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName) :
+    m_Name(std::move(_blockName))
 {
     auto &pass = _shader.m_Passes.at(0);
 
@@ -51,10 +51,10 @@ UniformBlock::~UniformBlock()
     GraphicsBackend::DeleteBuffers(1, &m_Buffer);
 }
 
-void UniformBlock::Bind() const
+void UniformBlock::Bind(int binding) const
 {
     GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, m_Buffer);
-    GraphicsBackend::BindBufferRange(BufferBindTarget::UNIFORM_BUFFER, m_BindIndex, m_Buffer, 0, m_Data.size());
+    GraphicsBackend::BindBufferRange(BufferBindTarget::UNIFORM_BUFFER, binding, m_Buffer, 0, m_Data.size());
     GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, GraphicsBackendBuffer::NONE);
 }
 
@@ -73,6 +73,6 @@ void UniformBlock::SetUniform(const std::string &_name, const void *_data, unsig
 void UniformBlock::UploadData() const
 {
     GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, m_Buffer);
-    GraphicsBackend::SetBufferSubData(BufferBindTarget::UNIFORM_BUFFER, 0, static_cast<GLsizei>(m_Data.size()), m_Data.data());
+    GraphicsBackend::SetBufferSubData(BufferBindTarget::UNIFORM_BUFFER, 0, static_cast<long>(m_Data.size()), m_Data.data());
     GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, GraphicsBackendBuffer::NONE);
 }

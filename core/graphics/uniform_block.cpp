@@ -1,6 +1,7 @@
 #include "uniform_block.h"
 #include "debug.h"
 #include "shader/shader.h"
+#include "shader/shader_pass/shader_pass.h"
 #include "graphics_backend_api.h"
 #include "enums/uniform_block_parameter.h"
 #include "enums/uniform_parameter.h"
@@ -13,30 +14,30 @@ UniformBlock::UniformBlock(const Shader &_shader, std::string _blockName) :
     auto &pass = _shader.m_Passes.at(0);
 
     int blockIndex;
-    if (!GraphicsBackend::TryGetUniformBlockIndex(pass.Program, m_Name.c_str(), &blockIndex))
+    if (!GraphicsBackend::TryGetUniformBlockIndex(pass->GetProgram(), m_Name.c_str(), &blockIndex))
         return;
 
     int uniformCount;
-    GraphicsBackend::GetActiveUniformBlockParameter(pass.Program, blockIndex, UniformBlockParameter::ACTIVE_UNIFORMS, &uniformCount);
+    GraphicsBackend::GetActiveUniformBlockParameter(pass->GetProgram(), blockIndex, UniformBlockParameter::ACTIVE_UNIFORMS, &uniformCount);
 
     std::vector<int> uniformIndexes(uniformCount);
-    GraphicsBackend::GetActiveUniformBlockParameter(pass.Program, blockIndex, UniformBlockParameter::ACTIVE_UNIFORM_INDICES, &uniformIndexes[0]);
+    GraphicsBackend::GetActiveUniformBlockParameter(pass->GetProgram(), blockIndex, UniformBlockParameter::ACTIVE_UNIFORM_INDICES, &uniformIndexes[0]);
 
     std::vector<int> uniformOffsets(uniformCount);
-    GraphicsBackend::GetActiveUniformsParameter(pass.Program, uniformCount, reinterpret_cast<const unsigned int *>(&uniformIndexes[0]), UniformParameter::OFFSET, &uniformOffsets[0]);
+    GraphicsBackend::GetActiveUniformsParameter(pass->GetProgram(), uniformCount, reinterpret_cast<const unsigned int *>(&uniformIndexes[0]), UniformParameter::OFFSET, &uniformOffsets[0]);
 
     std::unordered_map<int, int> indexToOffset;
     for (int i = 0; i < uniformCount; ++i)
         indexToOffset[uniformIndexes[i]] = uniformOffsets[i];
 
-    for (const auto &pair: pass.Uniforms)
+    for (const auto &pair: pass->GetUniforms())
     {
         if (indexToOffset.contains(pair.second.Index))
             m_UniformOffsets[pair.first] = indexToOffset[pair.second.Index];
     }
 
     int blockSize;
-    GraphicsBackend::GetActiveUniformBlockParameter(pass.Program, blockIndex, UniformBlockParameter::DATA_SIZE, &blockSize);
+    GraphicsBackend::GetActiveUniformBlockParameter(pass->GetProgram(), blockIndex, UniformBlockParameter::DATA_SIZE, &blockSize);
 
     GraphicsBackend::GenerateBuffers(1, &m_Buffer);
     GraphicsBackend::BindBuffer(BufferBindTarget::UNIFORM_BUFFER, m_Buffer);

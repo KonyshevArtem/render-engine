@@ -8,8 +8,8 @@
 struct BlendInfo
 {
     bool Enabled = false;
-    BlendFactor SourceFactor;
-    BlendFactor DestinationFactor;
+    BlendFactor SourceFactor = BlendFactor::ONE;
+    BlendFactor DestinationFactor = BlendFactor::ONE;
 };
 
 struct CullInfo

@@ -18,32 +18,17 @@
 class Texture;
 class PropertyBlock;
 class UniformBlock;
+class ShaderPass;
 
 class Shader
 {
-#pragma region inner types
-
-public:
-    struct PassInfo
-    {
-        GraphicsBackendProgram                       Program;
-        BlendInfo                                    BlendInfo;
-        CullInfo                                     CullInfo;
-        DepthInfo                                    DepthInfo;
-        std::unordered_map<std::string, std::string> Tags;
-        std::unordered_map<std::string, UniformInfo> Uniforms;
-        std::unordered_map<std::string, TextureUnit> TextureUnits;
-        std::unordered_map<std::string, int>         UniformBlockBindings;
-    };
-
-#pragma endregion
-
 #pragma region construction
 
 public:
     static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords);
 
-    ~Shader();
+    Shader(std::vector<std::shared_ptr<ShaderPass>> _passes, std::unordered_map<std::string, std::string> _defaultValues, bool _supportInstancing);
+    ~Shader() = default;
 
     Shader(const Shader &) = delete;
     Shader(Shader &&)      = delete;
@@ -51,15 +36,12 @@ public:
     Shader &operator=(const Shader &) = delete;
     Shader &operator=(Shader &&) = delete;
 
-private:
-    Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues, bool _supportInstancing);
-
 #pragma endregion
 
 #pragma region fields
 
 private:
-    std::vector<PassInfo>                        m_Passes;
+    std::vector<std::shared_ptr<ShaderPass>>     m_Passes;
     std::unordered_map<std::string, std::string> m_DefaultValues;
     bool                                         m_SupportInstancing;
 
@@ -84,31 +66,16 @@ public:
     static void SetPropertyBlock(const PropertyBlock &_propertyBlock);
     static void SetUniformBlock(const UniformBlock &uniformBlock);
 
-    static void SetGlobalTexture(const std::string &_name, std::shared_ptr<Texture> _value);
-    static void SetGlobalVector(const std::string &_name, const Vector4 &_value);
-    static void SetGlobalFloat(const std::string &_name, float _value);
-    static void SetGlobalMatrix(const std::string &_name, const Matrix4x4 &_value);
-
-    static const std::shared_ptr<Texture> GetGlobalTexture(const std::string &_name);
-    static Vector4                        GetGlobalVector(const std::string &_name);
-    static float                          GetGlobalFloat(const std::string &_name);
-    static Matrix4x4                      GetGlobalMatrix(const std::string &_name);
-
 #pragma endregion
 
 #pragma region service methods
 
 private:
-    void        SetBlendInfo(const BlendInfo &_blendInfo) const;
-    void        SetCullInfo(const CullInfo &_cullInfo) const;
-    void        SetDepthInfo(const DepthInfo &_depthInfo) const;
     void        SetDefaultValues(const std::unordered_map<std::string, UniformInfo> &_uniforms) const;
     static void SetUniform(const std::string &_name, const void *_data);
     static void SetTextureUniform(const std::string &_name, const Texture &_texture);
 
 #pragma endregion
-
-    friend std::shared_ptr<Shader> ShaderLoader::Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords);
 
     friend class UniformBlock;
 };

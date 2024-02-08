@@ -71,7 +71,7 @@ void GizmosPass::Gizmos() const
 
     for (const auto &drawInfo: Gizmos::GetDrawInfos())
     {
-        Shader::SetGlobalMatrix("_ModelMatrix", drawInfo.Matrix);
+        Graphics::SetGlobalMatrix("_ModelMatrix", drawInfo.Matrix);
         gizmosShader->Use(0);
         drawInfo.Primitive->Draw();
     }

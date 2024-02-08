@@ -10,6 +10,7 @@
 #include "graphics_backend_api.h"
 #include "shader_parser.h"
 #include "shader_loader_utils.h"
+#include "shader/shader_pass/shader_pass.h"
 
 #include <boost/json.hpp>
 #include <span>
@@ -117,7 +118,7 @@ namespace ShaderLoader
             std::unordered_map<std::string, std::string> properties;
             ShaderParser::Parse(shaderSource, passesInfo, properties);
 
-            std::vector<Shader::PassInfo> passes;
+            std::vector<std::shared_ptr<ShaderPass>> passes;
             for (auto &passInfo: passesInfo)
             {
                 GraphicsBackendShaderObject shaders[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT];
@@ -135,17 +136,12 @@ namespace ShaderLoader
                     shaders[shadersCount++] = CompileShader(shaderType, partSource, keywordsDirectives, SHADER_DIRECTIVES[i]);
                 }
 
-                Shader::PassInfo info;
-                info.Program = LinkProgram(std::span<GraphicsBackendShaderObject>{shaders, shadersCount});
-                info.BlendInfo = passInfo.BlendInfo;
-                info.CullInfo = passInfo.CullInfo;
-                info.DepthInfo = passInfo.DepthInfo;
-                info.Tags = std::move(passInfo.Tags);
-
-                passes.push_back(info);
+                auto program = LinkProgram(std::span<GraphicsBackendShaderObject>{shaders, shadersCount});
+                auto passPtr = std::make_shared<ShaderPass>(program, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.Tags);
+                passes.push_back(passPtr);
             }
 
-            return std::shared_ptr<Shader>(new Shader(passes, properties, supportInstancing));
+            return std::make_shared<Shader>(passes, properties, supportInstancing);
         }
         catch (const std::exception &_exception)
         {

@@ -64,6 +64,8 @@ namespace Graphics
     GraphicsBackendBuffer instancingMatricesBuffer;
     GraphicsBackendFramebuffer framebuffer;
 
+    PropertyBlock globalPropertyBlock;
+
     void InitCulling()
     {
         GraphicsBackend::SetCullFaceOrientation(CullFaceOrientation::CLOCKWISE);
@@ -336,8 +338,8 @@ namespace Graphics
         }
         else
         {
-            Shader::SetGlobalMatrix(modelMatrixName, _info.ModelMatrix);
-            Shader::SetGlobalMatrix(modelNormalMatrixName, _info.ModelMatrix.Invert().Transpose());
+            SetGlobalMatrix(modelMatrixName, _info.ModelMatrix);
+            SetGlobalMatrix(modelNormalMatrixName, _info.ModelMatrix.Invert().Transpose());
         }
     }
 
@@ -421,6 +423,7 @@ namespace Graphics
                 Shader::SetUniformBlock(*lightingDataBlock);
                 Shader::SetUniformBlock(*cameraDataBlock);
                 Shader::SetUniformBlock(*shadowsDataBlock);
+                Shader::SetPropertyBlock(globalPropertyBlock);
                 Shader::SetPropertyBlock(info.Material->GetPropertyBlock());
 
                 if (info.Instanced())
@@ -536,5 +539,41 @@ namespace Graphics
     void SetViewport(const Vector4 &viewport)
     {
         GraphicsBackend::SetViewport(viewport.x, viewport.y, viewport.z, viewport.w);
+    }
+
+    void SetBlendState(bool enabled, BlendFactor sourceBlendFactor, BlendFactor destinationBlendFactor)
+    {
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::BLEND, enabled);
+
+        if (enabled)
+        {
+            GraphicsBackend::SetBlendFunction(sourceBlendFactor, destinationBlendFactor);
+        }
+    }
+
+    void SetCullState(bool enabled, CullFace cullFace)
+    {
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::CULL_FACE, enabled);
+
+        if (enabled)
+        {
+            GraphicsBackend::SetCullFace(cullFace);
+        }
+    }
+
+    void SetDepthState(bool writeDepth, DepthFunction depthFunction)
+    {
+        GraphicsBackend::SetDepthWrite(writeDepth);
+        GraphicsBackend::SetDepthFunction(depthFunction);
+    }
+
+    void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture)
+    {
+        globalPropertyBlock.SetTexture(name, texture);
+    }
+
+    void SetGlobalMatrix(const std::string &name, const Matrix4x4 &matrix)
+    {
+        globalPropertyBlock.SetMatrix(name, matrix);
     }
 } // namespace Graphics

@@ -72,7 +72,9 @@ add_library(
 	shader/shader_loader/shader_parser.cpp
 	shader/shader_loader/shader_parser.h
 	shader/shader_loader/shader_loader_utils.h
-	shader/shader_structs.h)
+	shader/shader_structs.h
+	shader/shader_pass/shader_pass.cpp
+	shader/shader_pass/shader_pass.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

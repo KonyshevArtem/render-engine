@@ -8,11 +8,12 @@
 #include "property_block/property_block.h"
 #include "enums/uniform_block_parameter.h"
 #include "graphics/uniform_block.h"
+#include "graphics/graphics.h"
+#include "shader_pass/shader_pass.h"
 
 typedef std::unordered_map<std::string, std::unordered_map<UniformDataType, std::shared_ptr<Texture>>> DefaultTexturesMap;
 
-PropertyBlock m_PropertyBlock;
-const Shader::PassInfo *m_CurrentPass;
+std::shared_ptr<ShaderPass> m_CurrentPass;
 
 #pragma region construction
 
@@ -33,85 +34,11 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const s
     return shader;
 }
 
-int GetNameBufferSize(GraphicsBackendProgram program)
-{
-    int uniformNameLength;
-    int uniformBlockNameLength;
-    GraphicsBackend::GetProgramParameter(program, ProgramParameter::ACTIVE_UNIFORM_MAX_LENGTH, &uniformNameLength);
-    GraphicsBackend::GetProgramParameter(program, ProgramParameter::ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &uniformBlockNameLength);
-    return std::max(uniformNameLength, uniformBlockNameLength);
-}
-
-Shader::Shader(std::vector<PassInfo> _passes, std::unordered_map<std::string, std::string> _defaultValues, bool _supportInstancing) :
+Shader::Shader(std::vector<std::shared_ptr<ShaderPass>> _passes, std::unordered_map<std::string, std::string> _defaultValues, bool _supportInstancing) :
     m_Passes(std::move(_passes)),
     m_DefaultValues(std::move(_defaultValues)),
     m_SupportInstancing(_supportInstancing)
 {
-    for (auto &passInfo: m_Passes)
-    {
-        std::vector<char> uniformNameBuffer(GetNameBufferSize(passInfo.Program));
-
-        int uniformBlocksCount;
-        GraphicsBackend::GetProgramParameter(passInfo.Program, ProgramParameter::ACTIVE_UNIFORM_BLOCKS, &uniformBlocksCount);
-
-        std::vector<int> freeBlockBindings(uniformBlocksCount);
-        for (int i = 0; i < uniformBlocksCount; ++i)
-        {
-            freeBlockBindings[i] = i;
-        }
-
-        for (int i = 0; i < uniformBlocksCount; ++i)
-        {
-            int binding;
-
-            GraphicsBackend::GetActiveUniformBlockParameter(passInfo.Program, i, UniformBlockParameter::BINDING, &binding);
-            if (binding == 0)
-            {
-                binding = freeBlockBindings[freeBlockBindings.size() - 1];
-                freeBlockBindings.pop_back();
-            }
-
-            GraphicsBackend::SetUniformBlockBinding(passInfo.Program, i, binding);
-
-            int uniformBlockNameSize;
-            GraphicsBackend::GetActiveUniformBlockName(passInfo.Program, i, uniformNameBuffer.size(), &uniformBlockNameSize, &uniformNameBuffer[0]);
-            std::string uniformBlockName(uniformNameBuffer.begin(), uniformNameBuffer.begin() + uniformBlockNameSize);
-
-            passInfo.UniformBlockBindings[uniformBlockName] = binding;
-        }
-
-        int uniformCount;
-        GraphicsBackend::GetProgramParameter(passInfo.Program, ProgramParameter::ACTIVE_UNIFORMS, &uniformCount);
-
-        TextureUnit textureUnit = TextureUnit::TEXTURE0;
-        for (int i = 0; i < uniformCount; ++i)
-        {
-            int uniformSize;
-            int uniformNameLength;
-            UniformDataType uniformDataType;
-
-            GraphicsBackend::GetActiveUniform(passInfo.Program, i, uniformNameBuffer.size(), &uniformNameLength, &uniformSize, &uniformDataType, &uniformNameBuffer[0]);
-            std::string uniformName(uniformNameBuffer.begin(), uniformNameBuffer.begin() + uniformNameLength);
-
-            auto location = GraphicsBackend::GetUniformLocation(passInfo.Program, &uniformName[0]);
-
-            // TODO: correctly parse arrays
-
-            if (UniformDataTypeUtils::IsTexture(uniformDataType))
-            {
-                passInfo.TextureUnits[uniformName] = textureUnit;
-                textureUnit = static_cast<TextureUnit>(static_cast<int>(textureUnit) + 1);
-            }
-
-            passInfo.Uniforms[uniformName] = UniformInfo {uniformDataType, location, i};
-        }
-    }
-}
-
-Shader::~Shader()
-{
-    for (const auto &passInfo: m_Passes)
-        GraphicsBackend::DeleteProgram(passInfo.Program);
 }
 
 #pragma endregion
@@ -126,22 +53,23 @@ void Shader::Use(int _passIndex) const
     if (_passIndex < 0 || _passIndex >= m_Passes.size())
         throw std::out_of_range("[Shader] Pass Index out of range");
 
-    m_CurrentPass = &m_Passes.at(_passIndex);
+    m_CurrentPass = m_Passes.at(_passIndex);
 
     if (shaderInUse != this || _passIndex != passIndexInUse)
     {
         shaderInUse = this;
         passIndexInUse = _passIndex;
 
-        GraphicsBackend::UseProgram(m_CurrentPass->Program);
+        GraphicsBackend::UseProgram(m_CurrentPass->GetProgram());
 
-        SetBlendInfo(m_CurrentPass->BlendInfo);
-        SetCullInfo(m_CurrentPass->CullInfo);
-        SetDepthInfo(m_CurrentPass->DepthInfo);
-        SetDefaultValues(m_CurrentPass->Uniforms);
+        auto &blendInfo = m_CurrentPass->GetBlendInfo();
+        auto &cullInfo = m_CurrentPass->GetCullInfo();
+        auto &depthInfo = m_CurrentPass->GetDepthInfo();
+        Graphics::SetBlendState(blendInfo.Enabled, blendInfo.SourceFactor, blendInfo.DestinationFactor);
+        Graphics::SetCullState(cullInfo.Enabled, cullInfo.Face);
+        Graphics::SetDepthState(depthInfo.WriteDepth, depthInfo.DepthFunction);
+        SetDefaultValues(m_CurrentPass->GetUniforms());
     }
-
-    SetPropertyBlock(m_PropertyBlock);
 }
 
 std::string Shader::GetPassTagValue(int _passIndex, const std::string &_tag) const
@@ -149,10 +77,8 @@ std::string Shader::GetPassTagValue(int _passIndex, const std::string &_tag) con
     if (_passIndex < 0 || _passIndex >= m_Passes.size())
         throw std::out_of_range("[Shader] Pass Index out of range");
 
-    const auto &pass = m_Passes.at(_passIndex);
-    return pass.Tags.contains(_tag) ? pass.Tags.at(_tag) : "";
+    return m_Passes.at(_passIndex)->GetTagValue(_tag);
 }
-
 
 void Shader::SetPropertyBlock(const PropertyBlock &_propertyBlock)
 {
@@ -176,92 +102,16 @@ void Shader::SetUniformBlock(const UniformBlock &uniformBlock)
         return;
     }
 
-    auto it = m_CurrentPass->UniformBlockBindings.find(uniformBlock.GetName());
-    if (it != m_CurrentPass->UniformBlockBindings.end())
+    auto it = m_CurrentPass->GetUniformBlockBindings().find(uniformBlock.GetName());
+    if (it != m_CurrentPass->GetUniformBlockBindings().end())
     {
         uniformBlock.Bind(it->second);
     }
 }
 
-
-void Shader::SetGlobalTexture(const std::string &_name, std::shared_ptr<Texture> _value)
-{
-    m_PropertyBlock.SetTexture(_name, _value);
-}
-
-const std::shared_ptr<Texture> Shader::GetGlobalTexture(const std::string &_name)
-{
-    return m_PropertyBlock.GetTexture(_name);
-}
-
-
-void Shader::SetGlobalVector(const std::string &_name, const Vector4 &_value)
-{
-    m_PropertyBlock.SetVector(_name, _value);
-}
-
-Vector4 Shader::GetGlobalVector(const std::string &_name)
-{
-    return m_PropertyBlock.GetVector(_name);
-}
-
-
-void Shader::SetGlobalFloat(const std::string &_name, float _value)
-{
-    m_PropertyBlock.SetFloat(_name, _value);
-}
-
-float Shader::GetGlobalFloat(const std::string &_name)
-{
-    return m_PropertyBlock.GetFloat(_name);
-}
-
-
-void Shader::SetGlobalMatrix(const std::string &_name, const Matrix4x4 &_value)
-{
-    m_PropertyBlock.SetMatrix(_name, _value);
-}
-
-Matrix4x4 Shader::GetGlobalMatrix(const std::string &_name)
-{
-    return m_PropertyBlock.GetMatrix(_name);
-}
-
 #pragma endregion
 
 #pragma region service methods
-
-void Shader::SetBlendInfo(const BlendInfo &_blendInfo) const
-{
-    if (_blendInfo.Enabled)
-    {
-        GraphicsBackend::SetCapability(GraphicsBackendCapability::BLEND, true);
-        GraphicsBackend::SetBlendFunction(_blendInfo.SourceFactor, _blendInfo.DestinationFactor);
-    }
-    else
-    {
-        GraphicsBackend::SetCapability(GraphicsBackendCapability::BLEND, false);
-    }
-}
-
-void Shader::SetCullInfo(const CullInfo &_cullInfo) const
-{
-    if (_cullInfo.Enabled)
-    {
-        GraphicsBackend::SetCapability(GraphicsBackendCapability::CULL_FACE, true);
-        GraphicsBackend::SetCullFace(_cullInfo.Face);
-    }
-    else
-    {
-        GraphicsBackend::SetCapability(GraphicsBackendCapability::CULL_FACE, false);
-    }
-}
-
-void Shader::SetDepthInfo(const DepthInfo &_depthInfo) const
-{
-    GraphicsBackend::SetDepthWrite(_depthInfo.WriteDepth);
-    GraphicsBackend::SetDepthFunction(_depthInfo.DepthFunction);
-}
 
 DefaultTexturesMap GetDefaultTexturesMap()
 {
@@ -300,19 +150,19 @@ void Shader::SetDefaultValues(const std::unordered_map<std::string, UniformInfo>
 
 void Shader::SetUniform(const std::string &_name, const void *_data)
 {
-    if (m_CurrentPass != nullptr && m_CurrentPass->Uniforms.contains(_name))
+    if (m_CurrentPass != nullptr && m_CurrentPass->GetUniforms().contains(_name))
     {
-        auto uniformInfo = m_CurrentPass->Uniforms.at(_name);
+        auto uniformInfo = m_CurrentPass->GetUniforms().at(_name);
         GraphicsBackend::SetUniform(uniformInfo.Location, uniformInfo.Type, 1, _data);
     }
 }
 
 void Shader::SetTextureUniform(const std::string &_name, const Texture &_texture)
 {
-    if (m_CurrentPass == nullptr || !m_CurrentPass->TextureUnits.contains(_name))
+    if (m_CurrentPass == nullptr || !m_CurrentPass->GetTextureUnits().contains(_name))
         return;
 
-    auto unit = m_CurrentPass->TextureUnits.at(_name);
+    auto unit = m_CurrentPass->GetTextureUnits().at(_name);
     auto unitIndex = TextureUnitUtils::TextureUnitToIndex(unit);
     _texture.Bind(unit);
     SetUniform(_name, &unitIndex);

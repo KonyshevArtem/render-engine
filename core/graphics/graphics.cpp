@@ -23,6 +23,8 @@
 #include "enums/indices_data_type.h"
 #include "enums/framebuffer_target.h"
 #include "types/graphics_backend_framebuffer.h"
+#include "shader/shader.h"
+#include "shader/shader_pass/shader_pass.h"
 
 #include <boost/functional/hash/hash.hpp>
 
@@ -384,6 +386,110 @@ namespace Graphics
         }
     }
 
+    void SetBlendState(const BlendInfo& blendInfo)
+    {
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::BLEND, blendInfo.Enabled);
+
+        if (blendInfo.Enabled)
+        {
+            GraphicsBackend::SetBlendFunction(blendInfo.SourceFactor, blendInfo.DestinationFactor);
+        }
+    }
+
+    void SetCullState(const CullInfo &cullInfo)
+    {
+        GraphicsBackend::SetCapability(GraphicsBackendCapability::CULL_FACE, cullInfo.Enabled);
+
+        if (cullInfo.Enabled)
+        {
+            GraphicsBackend::SetCullFace(cullInfo.Face);
+        }
+    }
+
+    void SetDepthState(const DepthInfo &depthInfo)
+    {
+        GraphicsBackend::SetDepthWrite(depthInfo.WriteDepth);
+        GraphicsBackend::SetDepthFunction(depthInfo.DepthFunction);
+    }
+
+    void SetUniform(const std::unordered_map<std::string, UniformInfo> &uniforms, const std::string &name, const void *data)
+    {
+        auto it = uniforms.find(name);
+        if (it != uniforms.end())
+        {
+            auto &uniformInfo = it->second;
+            GraphicsBackend::SetUniform(uniformInfo.Location, uniformInfo.Type, 1, data);
+        }
+    }
+
+    void SetTextureUniform(const std::unordered_map<std::string, UniformInfo> &uniforms,
+                           const std::unordered_map<std::string, TextureUnit> &textureUnits,
+                           const std::string &name, const Texture &texture)
+    {
+        auto it = textureUnits.find(name);
+        if (it == textureUnits.end())
+            return;
+
+        auto unit = it->second;
+        auto unitIndex = TextureUnitUtils::TextureUnitToIndex(unit);
+        texture.Bind(unit);
+        SetUniform(uniforms, name, &unitIndex);
+
+        Vector4 st = Vector4(0, 0, 1, 1);
+        SetUniform(uniforms, name + "_ST", &st);
+
+        int  width     = texture.GetWidth();
+        int  height    = texture.GetHeight();
+        auto texelSize = Vector4 {static_cast<float>(width), static_cast<float>(height), 1.0f / width, 1.0f / height};
+        SetUniform(uniforms, name + "_TexelSize", &texelSize);
+    }
+
+    void SetPropertyBlock(const PropertyBlock &propertyBlock, const ShaderPass &shaderPass)
+    {
+        const auto &uniforms = shaderPass.GetUniforms();
+        const auto &textureUnits = shaderPass.GetTextureUnits();
+
+        for (const auto &pair: propertyBlock.GetTextures())
+        {
+            if (pair.second != nullptr)
+                SetTextureUniform(uniforms, textureUnits, pair.first, *pair.second);
+        }
+        for (const auto &pair: propertyBlock.GetVectors())
+            SetUniform(uniforms, pair.first, &pair.second);
+        for (const auto &pair: propertyBlock.GetFloats())
+            SetUniform(uniforms, pair.first, &pair.second);
+        for (const auto &pair: propertyBlock.GetMatrices())
+            SetUniform(uniforms, pair.first, &pair.second);
+    }
+
+    void SetUniformBlock(const UniformBlock &uniformBlock, const ShaderPass &shaderPass)
+    {
+        const auto &uniformBlockBindings = shaderPass.GetUniformBlockBindings();
+
+        auto it = uniformBlockBindings.find(uniformBlock.GetName());
+        if (it != uniformBlockBindings.end())
+        {
+            uniformBlock.Bind(it->second);
+        }
+    }
+
+    void SetupShaderPass(const ShaderPass &shaderPass, const PropertyBlock &materialPropertyBlock)
+    {
+        GraphicsBackend::UseProgram(shaderPass.GetProgram());
+
+        SetBlendState(shaderPass.GetBlendInfo());
+        SetCullState(shaderPass.GetCullInfo());
+        SetDepthState(shaderPass.GetDepthInfo());
+
+        SetUniformBlock(*lightingDataBlock, shaderPass);
+        SetUniformBlock(*cameraDataBlock, shaderPass);
+        SetUniformBlock(*shadowsDataBlock, shaderPass);
+
+        SetPropertyBlock(shaderPass.GetDefaultValuesBlock(), shaderPass);
+        SetPropertyBlock(globalPropertyBlock, shaderPass);
+        SetPropertyBlock(materialPropertyBlock, shaderPass);
+    }
+
     void Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings)
     {
         // filter draw calls
@@ -415,16 +521,11 @@ namespace Graphics
 
             for (int i = 0; i < shader->PassesCount(); ++i)
             {
-                if (!_settings.TagsMatch(*shader, i))
+                auto pass = shader->GetPass(i);
+                if (!_settings.TagsMatch(*pass))
                     continue;
 
-                shader->Use(i);
-
-                Shader::SetUniformBlock(*lightingDataBlock);
-                Shader::SetUniformBlock(*cameraDataBlock);
-                Shader::SetUniformBlock(*shadowsDataBlock);
-                Shader::SetPropertyBlock(globalPropertyBlock);
-                Shader::SetPropertyBlock(info.Material->GetPropertyBlock());
+                SetupShaderPass(*pass, info.Material->GetPropertyBlock());
 
                 if (info.Instanced())
                 {
@@ -539,32 +640,6 @@ namespace Graphics
     void SetViewport(const Vector4 &viewport)
     {
         GraphicsBackend::SetViewport(viewport.x, viewport.y, viewport.z, viewport.w);
-    }
-
-    void SetBlendState(bool enabled, BlendFactor sourceBlendFactor, BlendFactor destinationBlendFactor)
-    {
-        GraphicsBackend::SetCapability(GraphicsBackendCapability::BLEND, enabled);
-
-        if (enabled)
-        {
-            GraphicsBackend::SetBlendFunction(sourceBlendFactor, destinationBlendFactor);
-        }
-    }
-
-    void SetCullState(bool enabled, CullFace cullFace)
-    {
-        GraphicsBackend::SetCapability(GraphicsBackendCapability::CULL_FACE, enabled);
-
-        if (enabled)
-        {
-            GraphicsBackend::SetCullFace(cullFace);
-        }
-    }
-
-    void SetDepthState(bool writeDepth, DepthFunction depthFunction)
-    {
-        GraphicsBackend::SetDepthWrite(writeDepth);
-        GraphicsBackend::SetDepthFunction(depthFunction);
     }
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture)

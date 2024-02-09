@@ -12,6 +12,7 @@
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug.h"
 #include "enums/clear_mask.h"
+#include "shader/shader.h"
 
 void GizmosPass::Execute(Context &_context)
 {
@@ -72,7 +73,7 @@ void GizmosPass::Gizmos() const
     for (const auto &drawInfo: Gizmos::GetDrawInfos())
     {
         Graphics::SetGlobalMatrix("_ModelMatrix", drawInfo.Matrix);
-        gizmosShader->Use(0);
+        //gizmosShader->Use(0);
         drawInfo.Primitive->Draw();
     }
 }

@@ -137,11 +137,11 @@ namespace ShaderLoader
                 }
 
                 auto program = LinkProgram(std::span<GraphicsBackendShaderObject>{shaders, shadersCount});
-                auto passPtr = std::make_shared<ShaderPass>(program, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.Tags);
+                auto passPtr = std::make_shared<ShaderPass>(program, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.Tags, properties);
                 passes.push_back(passPtr);
             }
 
-            return std::make_shared<Shader>(passes, properties, supportInstancing);
+            return std::make_shared<Shader>(passes, supportInstancing);
         }
         catch (const std::exception &_exception)
         {

@@ -6,6 +6,7 @@
 #include "graphics/render_settings.h"
 #include "mesh/mesh.h"
 #include "graphics_backend_debug.h"
+#include "shader/shader.h"
 
 #include <vector>
 

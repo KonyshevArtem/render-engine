@@ -2,6 +2,8 @@
 #include "graphics_backend_api.h"
 #include "enums/program_parameter.h"
 #include "enums/uniform_block_parameter.h"
+#include "texture_2d/texture_2d.h"
+#include "cubemap/cubemap.h"
 
 #include <vector>
 
@@ -14,8 +16,72 @@ int GetNameBufferSize(GraphicsBackendProgram program)
     return std::max(uniformNameLength, uniformBlockNameLength);
 }
 
+std::shared_ptr<Texture> GetTextureByLiteralAndType(const std::string &literal, UniformDataType dataType)
+{
+    if (literal == "white")
+    {
+        switch (dataType)
+        {
+            case UniformDataType::SAMPLER_2D:
+                return Texture2D::White();
+            case UniformDataType::SAMPLER_CUBE:
+                return Cubemap::White();
+        }
+    }
+
+    if (literal == "black")
+    {
+        switch (dataType)
+        {
+            case UniformDataType::SAMPLER_CUBE:
+                return Cubemap::Black();
+        }
+    }
+
+    if (literal == "normal")
+    {
+        switch (dataType)
+        {
+            case UniformDataType::SAMPLER_2D:
+                return Texture2D::Normal();
+        }
+    }
+
+    return nullptr;
+}
+
+void FillDefaultValuesPropertyBlock(const std::unordered_map<std::string, std::string> &defaultValues,
+                                    const std::unordered_map<std::string, UniformInfo> &uniforms,
+                                    PropertyBlock &propertyBlock)
+{
+    for (const auto &pair: defaultValues)
+    {
+        auto &uniformName = pair.first;
+
+        auto it = uniforms.find(uniformName);
+        if (it == uniforms.end())
+            continue;
+
+        auto &defaultValueLiteral = pair.second;
+        auto uniformDataType = it->second.Type;
+
+        if (UniformDataTypeUtils::IsTexture(uniformDataType))
+        {
+            auto texture = GetTextureByLiteralAndType(defaultValueLiteral, uniformDataType);
+            if (texture != nullptr)
+            {
+                propertyBlock.SetTexture(uniformName, texture);
+            }
+        }
+        else
+        {
+            // TODO: add support for default values for other types
+        }
+    }
+}
+
 ShaderPass::ShaderPass(GraphicsBackendProgram program, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
-                       std::unordered_map<std::string, std::string> &tags) :
+                       std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues) :
         m_Program(program),
         m_BlendInfo(blendInfo),
         m_CullInfo(cullInfo),
@@ -78,6 +144,8 @@ ShaderPass::ShaderPass(GraphicsBackendProgram program, BlendInfo blendInfo, Cull
 
         m_Uniforms[uniformName] = UniformInfo {uniformDataType, location, i};
     }
+
+    FillDefaultValuesPropertyBlock(defaultValues, m_Uniforms, m_DefaultValuesBlock);
 }
 
 ShaderPass::~ShaderPass()

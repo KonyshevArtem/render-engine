@@ -5,6 +5,7 @@
 #include "types/graphics_backend_program.h"
 #include "shader/shader_structs.h"
 #include "shader/uniform_info/uniform_info.h"
+#include "property_block/property_block.h"
 
 #include <string>
 #include <unordered_map>
@@ -13,7 +14,7 @@ class ShaderPass
 {
 public:
     ShaderPass(GraphicsBackendProgram program, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
-               std::unordered_map<std::string, std::string> &tags);
+               std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues);
 
     ~ShaderPass();
 
@@ -43,25 +44,31 @@ public:
         return m_DepthInfo;
     }
 
-    inline const std::unordered_map<std::string, UniformInfo> &GetUniforms()
+    inline const std::unordered_map<std::string, UniformInfo> &GetUniforms() const
     {
         return m_Uniforms;
     }
 
-    inline const std::unordered_map<std::string, TextureUnit> &GetTextureUnits()
+    inline const std::unordered_map<std::string, TextureUnit> &GetTextureUnits() const
     {
         return m_TextureUnits;
     }
 
-    inline const std::unordered_map<std::string, int> &GetUniformBlockBindings()
+    inline const std::unordered_map<std::string, int> &GetUniformBlockBindings() const
     {
         return m_UniformBlockBindings;
+    }
+
+    inline const PropertyBlock &GetDefaultValuesBlock() const
+    {
+        return m_DefaultValuesBlock;
     }
 
     std::string GetTagValue(const std::string &tag) const;
 
 private:
     GraphicsBackendProgram m_Program;
+    PropertyBlock m_DefaultValuesBlock;
 
     BlendInfo m_BlendInfo;
     CullInfo m_CullInfo;

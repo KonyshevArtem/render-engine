@@ -34,9 +34,6 @@ namespace Graphics
     void                      SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, int colorLevel, int colorLayer,
                                                const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer);
     void                      SetViewport(const Vector4& viewport);
-    void                      SetBlendState(bool enabled, BlendFactor sourceBlendFactor, BlendFactor destinationBlendFactor);
-    void                      SetCullState(bool enabled, CullFace cullFace);
-    void                      SetDepthState(bool writeDepth, DepthFunction depthFunction);
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture);
     void SetGlobalMatrix(const std::string &name, const Matrix4x4 &matrix);

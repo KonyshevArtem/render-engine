@@ -68,7 +68,15 @@ add_library(
 	drawable_geometry/drawable_geometry.h
 	drawable_geometry/drawable_geometry.cpp
 	texture/texture_binary_reader.h
-	texture/texture_binary_reader.cpp)
+	texture/texture_binary_reader.cpp
+	shader/shader_loader/shader_parser.cpp
+	shader/shader_loader/shader_parser.h
+	shader/shader_loader/shader_loader_utils.h
+	shader/shader_structs.h
+	shader/shader_pass/shader_pass.cpp
+	shader/shader_pass/shader_pass.h
+	lines/lines.cpp
+	lines/lines.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

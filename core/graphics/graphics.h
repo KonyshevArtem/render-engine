@@ -1,6 +1,10 @@
 #ifndef OPENGL_STUDY_GRAPHICS_H
 #define OPENGL_STUDY_GRAPHICS_H
 
+#include "enums/depth_function.h"
+#include "enums/blend_factor.h"
+#include "enums/cull_face.h"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -30,6 +34,10 @@ namespace Graphics
     void                      SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, int colorLevel, int colorLayer,
                                                const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer);
     void                      SetViewport(const Vector4& viewport);
+
+    void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture);
+    void SetGlobalMatrix(const std::string &name, const Matrix4x4 &matrix);
+
 }; // namespace Graphics
 
 #endif //OPENGL_STUDY_GRAPHICS_H

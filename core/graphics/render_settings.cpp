@@ -1,10 +1,11 @@
 #include "render_settings.h"
+#include "shader/shader_pass/shader_pass.h"
 
-bool RenderSettings::TagsMatch(const Shader &_shader, int _passIndex) const
+bool RenderSettings::TagsMatch(const ShaderPass &_shaderPass) const
 {
     for (const auto &pair: Tags)
     {
-        if (_shader.GetPassTagValue(_passIndex, pair.first) != pair.second)
+        if (_shaderPass.GetTagValue(pair.first) != pair.second)
             return false;
     }
     return true;

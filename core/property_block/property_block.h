@@ -22,13 +22,31 @@ public:
     float                          GetFloat(const std::string &_name) const;
     Matrix4x4                      GetMatrix(const std::string &_name) const;
 
+    inline const std::unordered_map<std::string, std::shared_ptr<Texture>> &GetTextures() const
+    {
+        return m_Textures;
+    }
+
+    inline const std::unordered_map<std::string, Vector4> &GetVectors() const
+    {
+        return m_Vectors;
+    }
+
+    inline const std::unordered_map<std::string, float> &GetFloats() const
+    {
+        return m_Floats;
+    }
+
+    inline const std::unordered_map<std::string, Matrix4x4> &GetMatrices() const
+    {
+        return m_Matrices;
+    }
+
 private:
     std::unordered_map<std::string, std::shared_ptr<Texture>> m_Textures;
-    std::unordered_map<std::string, Vector4>                  m_Vectors;
-    std::unordered_map<std::string, float>                    m_Floats;
-    std::unordered_map<std::string, Matrix4x4>                m_Matrices;
-
-    friend class Shader;
+    std::unordered_map<std::string, Vector4> m_Vectors;
+    std::unordered_map<std::string, float> m_Floats;
+    std::unordered_map<std::string, Matrix4x4> m_Matrices;
 };
 
 #endif

@@ -8,164 +8,28 @@
 #include "enums/program_parameter.h"
 #include "types/graphics_backend_shader_object.h"
 #include "graphics_backend_api.h"
+#include "shader_parser.h"
+#include "shader_loader_utils.h"
+#include "shader/shader_pass/shader_pass.h"
 
 #include <boost/json.hpp>
 #include <span>
-#include <unordered_map>
 
 // TODO use syntax analysis instead of regex
 
 namespace ShaderLoader
 {
-    constexpr int SUPPORTED_SHADERS_COUNT = 3;
     const std::string INSTANCING_KEYWORD = "_INSTANCING";
 
-    const ShaderType SHADER_TYPES[SUPPORTED_SHADERS_COUNT] {
+    const ShaderType SHADER_TYPES[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT]{
             ShaderType::VERTEX_SHADER,
             ShaderType::GEOMETRY_SHADER,
             ShaderType::FRAGMENT_SHADER};
 
-    const std::string SHADER_NAMES[SUPPORTED_SHADERS_COUNT] {
-            "vertex",
-            "geometry",
-            "fragment"};
-
-    const std::string SHADER_DIRECTIVES[SUPPORTED_SHADERS_COUNT] {
+    const std::string SHADER_DIRECTIVES[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT]{
             "#define VERTEX_PROGRAM\n",
             "#define GEOMETRY_PROGRAM\n",
             "#define FRAGMENT_PROGRAM\n"};
-
-    struct ShaderPassInfo
-    {
-        Shader::PassInfo Pass;
-        std::string ShaderPaths[SUPPORTED_SHADERS_COUNT];
-    };
-
-    struct ShaderInfo
-    {
-        std::vector<ShaderPassInfo>                  Passes;
-        std::unordered_map<std::string, std::string> DefaultValues;
-    };
-
-    BlendFactor ParseBlendFactor(const std::string &_literal)
-    {
-        if (_literal == "SrcAlpha")
-            return BlendFactor::SRC_ALPHA;
-
-        if (_literal == "OneMinusSrcAlpha")
-            return BlendFactor::ONE_MINUS_SRC_ALPHA;
-
-        Debug::LogErrorFormat("[ShaderLoader] Unsupported blend factor: %1%", {_literal});
-        return BlendFactor::ONE;
-    }
-
-    DepthFunction ParseDepthFunc(const std::string &_literal)
-    {
-        if (_literal == "Always")
-            return DepthFunction::ALWAYS;
-
-        Debug::LogErrorFormat("[Shader Loader] Unsupported depth func: %1%", {_literal});
-        return DepthFunction::LEQUAL;
-    }
-
-    Shader::BlendInfo ParseBlendInfo(const boost::json::object &_obj)
-    {
-        using namespace boost::json;
-
-        auto hasBlendInfo = _obj.contains("blend");
-
-        Shader::BlendInfo info {hasBlendInfo};
-        if (hasBlendInfo)
-        {
-            auto &infoObj = _obj.at("blend").as_object();
-            info.SourceFactor = ParseBlendFactor(value_to<std::string>(infoObj.at("SrcFactor")));
-            info.DestinationFactor = ParseBlendFactor(value_to<std::string>(infoObj.at("DstFactor")));
-        }
-
-        return info;
-    }
-
-    Shader::CullInfo ParseCullInfo(const boost::json::object &_obj)
-    {
-        using namespace boost::json;
-
-        Shader::CullInfo info {true, CullFace::BACK};
-        if (_obj.contains("cull"))
-        {
-            auto cull = value_to<std::string>(_obj.at("cull"));
-
-            if (cull == "Front")
-                info.Face = CullFace::FRONT;
-            else if (cull == "Back")
-                info.Face = CullFace::BACK;
-            else if (cull == "FrontBack")
-                info.Face = CullFace::FRONT_AND_BACK;
-            else if (cull == "None")
-                info.Enabled = false;
-        }
-
-        return info;
-    }
-
-    Shader::DepthInfo ParseDepthInfo(const boost::json::object &_obj)
-    {
-        using namespace boost::json;
-
-        Shader::DepthInfo info;
-
-        info.WriteDepth = !_obj.contains("zWrite") || _obj.at("zWrite").as_bool();
-        if (_obj.contains("zTest"))
-            info.DepthFunction = ParseDepthFunc(value_to<std::string>(_obj.at("zTest")));
-
-        return info;
-    }
-
-    Shader::PassInfo ParsePassInfo(const boost::json::object &_obj)
-    {
-        using namespace boost::json;
-
-        Shader::PassInfo info;
-
-        if (_obj.contains("tags"))
-            info.Tags = value_to<std::unordered_map<std::string, std::string>>(_obj.at("tags"));
-
-        info.DepthInfo = ParseDepthInfo(_obj);
-        info.BlendInfo = ParseBlendInfo(_obj);
-        info.CullInfo = ParseCullInfo(_obj);
-        return info;
-    }
-
-    ShaderPassInfo tag_invoke(const boost::json::value_to_tag<ShaderPassInfo> &, boost::json::value const &_value)
-    {
-        using namespace boost::json;
-
-        auto &obj = _value.as_object();
-
-        ShaderPassInfo info {ParsePassInfo(obj)};
-
-        for (int i = 0; i < SUPPORTED_SHADERS_COUNT; ++i)
-        {
-            if (obj.contains(SHADER_NAMES[i]))
-                info.ShaderPaths[i] = value_to<std::string>(obj.at(SHADER_NAMES[i]));
-        }
-
-        return info;
-    }
-
-    ShaderInfo tag_invoke(const boost::json::value_to_tag<ShaderInfo> &, boost::json::value const &_value)
-    {
-        using namespace boost::json;
-
-        auto &obj = _value.as_object();
-
-        ShaderInfo info {value_to<std::vector<ShaderPassInfo>>(obj.at("passes"))};
-
-        // parse default values
-        if (obj.contains("properties"))
-            info.DefaultValues = value_to<std::unordered_map<std::string, std::string>>(obj.at("properties"));
-
-        return info;
-    }
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string &keywordDirectives, const std::string &shaderPartDirective)
     {
@@ -230,22 +94,15 @@ namespace ShaderLoader
             std::string logMsg(infoLogLength + 1, ' ');
             GraphicsBackend::GetProgramInfoLog(program, infoLogLength, nullptr, &logMsg[0]);
 
-            throw std::runtime_error("Link failed with error: " + logMsg);
+            throw std::runtime_error("Link failed with error:\n" + logMsg);
         }
 
         return program;
     }
 
-    ShaderInfo ParseShaderInfo(const std::string &_shaderSource)
-    {
-        auto value = boost::json::parse(_shaderSource);
-        return boost::json::value_to<ShaderInfo>(value);
-    }
-
     std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords)
     {
-        auto        shaderSource      = Utils::ReadFileWithIncludes(_path);
-        bool        supportInstancing = false;
+        bool supportInstancing = false;
         std::string keywordsDirectives;
         for (const auto &keyword: _keywords)
         {
@@ -255,15 +112,19 @@ namespace ShaderLoader
 
         try
         {
-            ShaderInfo shaderInfo = ParseShaderInfo(shaderSource);
+            auto shaderSource = Utils::ReadFileWithIncludes(_path);
 
-            std::vector<Shader::PassInfo> passes;
-            for (auto &passInfo: shaderInfo.Passes)
+            std::vector<ShaderParser::PassInfo> passesInfo;
+            std::unordered_map<std::string, std::string> properties;
+            ShaderParser::Parse(shaderSource, passesInfo, properties);
+
+            std::vector<std::shared_ptr<ShaderPass>> passes;
+            for (auto &passInfo: passesInfo)
             {
-                GraphicsBackendShaderObject shaders[SUPPORTED_SHADERS_COUNT];
+                GraphicsBackendShaderObject shaders[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT];
                 size_t shadersCount = 0;
 
-                for (int i = 0; i < SUPPORTED_SHADERS_COUNT; ++i)
+                for (int i = 0; i < ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT; ++i)
                 {
                     auto shaderType = SHADER_TYPES[i];
                     auto &relativePath = passInfo.ShaderPaths[i];
@@ -275,12 +136,12 @@ namespace ShaderLoader
                     shaders[shadersCount++] = CompileShader(shaderType, partSource, keywordsDirectives, SHADER_DIRECTIVES[i]);
                 }
 
-                passInfo.Pass.Program = LinkProgram(std::span<GraphicsBackendShaderObject> {shaders, shadersCount});
-
-                passes.push_back(passInfo.Pass);
+                auto program = LinkProgram(std::span<GraphicsBackendShaderObject>{shaders, shadersCount});
+                auto passPtr = std::make_shared<ShaderPass>(program, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.Tags, properties);
+                passes.push_back(passPtr);
             }
 
-            return std::shared_ptr<Shader>(new Shader(passes, shaderInfo.DefaultValues, supportInstancing));
+            return std::make_shared<Shader>(passes, supportInstancing);
         }
         catch (const std::exception &_exception)
         {

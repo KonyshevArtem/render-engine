@@ -359,6 +359,11 @@ void GraphicsBackend::GetActiveUniformsParameter(GraphicsBackendProgram program,
     CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformsiv(program.Program, uniformCount, uniformIndices, Cast(parameter), values))
 }
 
+void GraphicsBackend::GetActiveUniformBlockName(GraphicsBackendProgram program, int uniformBlockIndex, int nameBufferSize, int *nameLength, char *name)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockName(program.Program, uniformBlockIndex, nameBufferSize, nameLength, name))
+}
+
 GraphicsBackendUniformLocation GraphicsBackend::GetUniformLocation(GraphicsBackendProgram program, const char *uniformName)
 {
     GraphicsBackendUniformLocation location{};

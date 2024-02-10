@@ -12,6 +12,7 @@
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug.h"
 #include "enums/clear_mask.h"
+#include "shader/shader.h"
 
 void GizmosPass::Execute(Context &_context)
 {
@@ -65,16 +66,19 @@ void GizmosPass::Outline() const
 
 void GizmosPass::Gizmos() const
 {
+    static RenderSettings renderSettings{{{"LightMode", "Gizmos"}}};
     static std::shared_ptr<Shader> gizmosShader = Shader::Load("resources/shaders/gizmos/gizmos.shader", {});
+    static std::shared_ptr<Material> gizmosMaterial = std::make_shared<Material>(gizmosShader);
 
     auto debugGroup = GraphicsBackendDebug::DebugGroup("Gizmos pass");
 
-    for (const auto &drawInfo: Gizmos::GetDrawInfos())
+    auto &drawCalls = Gizmos::GetDrawInfos();
+    for (auto &drawInfo: drawCalls)
     {
-        Shader::SetGlobalMatrix("_ModelMatrix", drawInfo.Matrix);
-        gizmosShader->Use(0);
-        drawInfo.Primitive->Draw();
+        drawInfo.Material = gizmosMaterial;
     }
+
+    Graphics::Draw(drawCalls, renderSettings);
 }
 
 void GizmosPass::CheckTexture(std::shared_ptr<Texture2D> &_texture) const

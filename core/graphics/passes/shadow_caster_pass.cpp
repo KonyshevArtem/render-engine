@@ -19,9 +19,9 @@ ShadowCasterPass::ShadowCasterPass(std::shared_ptr<UniformBlock> shadowsUniformB
     m_DirectionLightShadowMap(Texture2D::CreateShadowMap(DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE)),
     m_PointLightShadowMap(Texture2DArray::ShadowMapArray(POINT_LIGHT_SHADOW_MAP_FACE_SIZE, Graphics::MAX_POINT_LIGHT_SOURCES * 6))
 {
-    Shader::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
-    Shader::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
-    Shader::SetGlobalTexture("_PointLightShadowMapArray", m_PointLightShadowMap);
+    Graphics::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
+    Graphics::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
+    Graphics::SetGlobalTexture("_PointLightShadowMapArray", m_PointLightShadowMap);
 
     m_DirectionLightShadowMap->SetBorderColor({1, 1, 1, 1});
     m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);

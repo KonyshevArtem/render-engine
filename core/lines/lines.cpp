@@ -5,8 +5,7 @@
 #include "enums/buffer_usage_hint.h"
 
 Lines::Lines(const std::vector<Vector3> &points, const std::vector<int> &indices) :
-        DrawableGeometry(),
-        m_IndicesCount(indices.size()),
+        DrawableGeometry(PrimitiveType::LINES, indices.size(), true),
         m_Bounds(Bounds::FromPoints(points))
 {
     GraphicsBackend::GenerateBuffers(1, &m_IndexBuffer);

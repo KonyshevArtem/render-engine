@@ -5,7 +5,7 @@
 #include "enums/buffer_usage_hint.h"
 
 Point::Point() :
-    DrawableGeometry()
+    DrawableGeometry(PrimitiveType::POINTS, 1, false)
 {
     GraphicsBackend::EnableVertexAttributeArray(0);
     GraphicsBackend::SetVertexAttributePointer(0, 3, VertexAttributeDataType::FLOAT, false, 0, nullptr);

@@ -10,9 +10,20 @@ class DrawableGeometry
 public:
     virtual ~DrawableGeometry();
 
-    virtual PrimitiveType GetPrimitiveType() const = 0;
-    virtual bool HasIndexes() const = 0;
-    virtual int GetElementsCount() const = 0;
+    inline PrimitiveType GetPrimitiveType() const
+    {
+        return m_PrimitiveType;
+    }
+
+    inline bool HasIndexes() const
+    {
+        return m_HasIndices;
+    }
+
+    inline int GetElementsCount() const
+    {
+        return m_ElementsCount;
+    }
 
     inline GraphicsBackendVAO GetVertexArrayObject() const
     {
@@ -20,11 +31,15 @@ public:
     }
 
 protected:
-    DrawableGeometry();
+    DrawableGeometry(PrimitiveType primitiveType, int elementsCount, bool hasIndices);
 
 private:
     GraphicsBackendVAO m_VertexArrayObject{};
     GraphicsBackendBuffer m_VertexBuffer{};
+
+    PrimitiveType m_PrimitiveType;
+    int m_ElementsCount;
+    bool m_HasIndices;
 };
 
 #endif

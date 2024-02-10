@@ -19,21 +19,6 @@ public:
         return m_Bounds;
     }
 
-    inline PrimitiveType GetPrimitiveType() const override
-    {
-        return PrimitiveType::LINES;
-    }
-
-    inline bool HasIndexes() const override
-    {
-        return true;
-    }
-
-    inline int GetElementsCount() const override
-    {
-        return m_IndicesCount;
-    }
-
     Lines(const Lines &) = delete;
     Lines(Lines &&)      = delete;
 
@@ -44,7 +29,6 @@ private:
     GraphicsBackendBuffer m_IndexBuffer{};
 
     Bounds m_Bounds;
-    int m_IndicesCount;
 };
 
 

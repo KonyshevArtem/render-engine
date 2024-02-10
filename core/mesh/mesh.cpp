@@ -12,9 +12,8 @@ Mesh::Mesh(const std::vector<Vector3> &_vertices,
            const std::vector<int>     &_indexes,
            const std::vector<Vector2> &_uvs,
            const std::vector<Vector3> &_tangents) :
-    DrawableGeometry(),
-    m_Bounds(Bounds::FromPoints(std::span<const Vector3> {_vertices.data(), _vertices.size()})),
-    m_IndicesCount(_indexes.size())
+    DrawableGeometry(PrimitiveType::TRIANGLES, _indexes.size(), true),
+    m_Bounds(Bounds::FromPoints(std::span<const Vector3> {_vertices.data(), _vertices.size()}))
 {
     GraphicsBackend::GenerateBuffers(1, &m_IndexBuffer);
     GraphicsBackend::BindBuffer(BufferBindTarget::ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
@@ -62,11 +61,6 @@ Mesh::Mesh(const std::vector<Vector3> &_vertices,
 Mesh::~Mesh()
 {
     GraphicsBackend::DeleteBuffers(1, &m_IndexBuffer);
-}
-
-Bounds Mesh::GetBounds() const
-{
-    return m_Bounds;
 }
 
 const std::shared_ptr<Mesh> &Mesh::GetFullscreenMesh()

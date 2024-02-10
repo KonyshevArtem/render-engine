@@ -21,21 +21,9 @@ public:
          const std::vector<Vector3> &_tangents);
     ~Mesh() override;
 
-    Bounds GetBounds() const;
-
-    inline PrimitiveType GetPrimitiveType() const override
+    inline Bounds GetBounds() const
     {
-        return PrimitiveType::TRIANGLES;
-    }
-
-    inline bool HasIndexes() const override
-    {
-        return true;
-    }
-
-    inline int GetElementsCount() const override
-    {
-        return m_IndicesCount;
+        return m_Bounds;
     }
 
     static const std::shared_ptr<Mesh> &GetFullscreenMesh();
@@ -50,7 +38,6 @@ private:
     GraphicsBackendBuffer m_IndexBuffer{};
 
     Bounds m_Bounds;
-    int m_IndicesCount;
 };
 
 

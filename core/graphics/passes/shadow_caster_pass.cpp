@@ -1,7 +1,6 @@
 #include "shadow_caster_pass.h"
 #include "graphics/context.h"
-#include "graphics/graphics.h"
-#include "graphics/uniform_block.h"
+#include "uniform_block/uniform_block.h"
 #include "graphics/render_settings.h"
 #include "light/light.h"
 #include "renderer/renderer.h"
@@ -35,13 +34,7 @@ ShadowCasterPass::ShadowCasterPass(std::shared_ptr<UniformBlock> shadowsUniformB
 
 void ShadowCasterPass::Execute(const Context &_ctx)
 {
-    static const Matrix4x4   biasMatrix         = Matrix4x4::TRS(Vector3 {0.5f, 0.5f, 0.5f}, Quaternion(), Vector3 {0.5f, 0.5f, 0.5f});
-    static const std::string dirLightMatrixName = "_DirLightShadow.LightViewProjMatrix";
-
-    static bool namesInited = false;
-    static std::string spotLightNames[Graphics::MAX_SPOT_LIGHT_SOURCES];
-    static std::string pointLightMatrixArrayNames[Graphics::MAX_POINT_LIGHT_SOURCES];
-    static std::string pointLightPositionWSNames[Graphics::MAX_POINT_LIGHT_SOURCES];
+    static const Matrix4x4 biasMatrix = Matrix4x4::TRS(Vector3{0.5f, 0.5f, 0.5f}, Quaternion(), Vector3{0.5f, 0.5f, 0.5f});
 
     static Matrix4x4 pointLightViewMatrices[6]{
             Matrix4x4::TBN({0, 0, 1}, {0, 1, 0}, {-1, 0, 0}).Invert(), // right
@@ -51,23 +44,6 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             Matrix4x4::TBN({1, 0, 0}, {0, 1, 0}, {0, 0, 1}).Invert(), // forward
             Matrix4x4::TBN({-1, 0, 0}, {0, 1, 0}, {0, 0, -1}).Invert(), // back
     };
-
-    if (!namesInited)
-    {
-        for (int i = 0; i < Graphics::MAX_SPOT_LIGHT_SOURCES; ++i)
-        {
-            spotLightNames[i] = "_SpotLightShadows[" + std::to_string(i) + "].LightViewProjMatrix";
-        }
-        for (int i = 0; i < Graphics::MAX_POINT_LIGHT_SOURCES; ++i)
-        {
-            std::string indexStr = std::to_string(i);
-            pointLightMatrixArrayNames[i] = "_PointLightShadows[" + std::to_string(i) + "].LightViewProjMatrices[0]";
-            pointLightPositionWSNames[i] = "_PointLightShadows[" + std::to_string(i) + "].LightPosWS";
-        }
-        namesInited = true;
-    }
-
-    /// ----- ///
 
     if (_ctx.ShadowCasters.empty())
         return;
@@ -86,12 +62,11 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             Graphics::SetViewport({0, 0, SPOT_LIGHT_SHADOW_MAP_SIZE, SPOT_LIGHT_SHADOW_MAP_SIZE});
             Graphics::SetRenderTargets(nullptr, 0, 0, m_SpotLightShadowMapArray, 0, spotLightsCount);
 
-            auto view    = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
-            auto proj    = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, _ctx.ShadowDistance);
-            auto lightVP = biasMatrix * proj * view;
+            auto view = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
+            auto proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, _ctx.ShadowDistance);
 
             Graphics::SetCameraData(view, proj);
-            m_ShadowsUniformBlock->SetUniform(spotLightNames[spotLightsCount], &lightVP, sizeof(Matrix4x4));
+            m_ShadowsData.SpotLightsViewProjMatrices[spotLightsCount] = biasMatrix * proj * view;
             Render(_ctx.ShadowCasters);
 
             ++spotLightsCount;
@@ -100,23 +75,19 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         {
             Graphics::SetViewport({0, 0, POINT_LIGHT_SHADOW_MAP_FACE_SIZE, POINT_LIGHT_SHADOW_MAP_FACE_SIZE});
 
-            Matrix4x4 viewProjMatrices[6];
-
             auto proj = Matrix4x4::Perspective(90, 1, 0.01f, _ctx.ShadowDistance);
             for (int i = 0; i < 6; ++i)
             {
                 Graphics::SetRenderTargets(nullptr, 0, 0, m_PointLightShadowMap, 0, pointLightsCount * 6 + i);
 
                 auto view = pointLightViewMatrices[i] * Matrix4x4::Translation(-light->Position);
-                viewProjMatrices[i] = biasMatrix * proj * view;
+                m_ShadowsData.PointLightShadows[pointLightsCount].ViewProjMatrices[i] = biasMatrix * proj * view;
 
                 Graphics::SetCameraData(view, proj);
                 Render(_ctx.ShadowCasters);
             }
 
-            auto lightPos = light->Position.ToVector4(0);
-            m_ShadowsUniformBlock->SetUniform(pointLightPositionWSNames[pointLightsCount], &lightPos, sizeof(Vector4));
-            m_ShadowsUniformBlock->SetUniform(pointLightMatrixArrayNames[pointLightsCount], &viewProjMatrices[0], sizeof(Matrix4x4) * 6);
+            m_ShadowsData.PointLightShadows[pointLightsCount].Position = light->Position.ToVector4(0);
 
             ++pointLightsCount;
         }
@@ -142,14 +113,13 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
             Graphics::SetCameraData(viewMatrix, projMatrix);
 
-            auto lightVP = biasMatrix * projMatrix * viewMatrix;
-            m_ShadowsUniformBlock->SetUniform(dirLightMatrixName, &lightVP, sizeof(Matrix4x4));
+            m_ShadowsData.DirectionalLightViewProjMatrix = biasMatrix * projMatrix * viewMatrix;
 
             Render(_ctx.ShadowCasters);
         }
     }
 
-    m_ShadowsUniformBlock->UploadData();
+    m_ShadowsUniformBlock->SetData(&m_ShadowsData, 0, sizeof(ShadowsData));
 
     Graphics::SetRenderTargets(nullptr, 0, 0, nullptr, 0, 0);
 }

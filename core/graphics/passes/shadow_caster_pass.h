@@ -1,6 +1,8 @@
 #ifndef OPENGL_STUDY_SHADOW_CASTER_PASS_H
 #define OPENGL_STUDY_SHADOW_CASTER_PASS_H
 
+#include "graphics/data_structs/shadows_data.h"
+
 #include <memory>
 #include <vector>
 
@@ -33,6 +35,8 @@ private:
     std::shared_ptr<Texture2DArray> m_SpotLightShadowMapArray;
     std::shared_ptr<Texture2D>      m_DirectionLightShadowMap;
     std::shared_ptr<Texture2DArray> m_PointLightShadowMap;
+
+    ShadowsData m_ShadowsData{};
 
     static void Render(const std::vector<Renderer *> &renderers);
 };

@@ -79,7 +79,8 @@ add_library(
 	lines/lines.h
 	graphics/data_structs/shadows_data.h
 	graphics/data_structs/lighting_data.h
-	graphics/data_structs/camera_data.h)
+	graphics/data_structs/camera_data.h
+	graphics/data_structs/per_instance_data.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

@@ -26,6 +26,7 @@
 #include "shader/shader_pass/shader_pass.h"
 #include "data_structs/camera_data.h"
 #include "data_structs/lighting_data.h"
+#include "data_structs/per_instance_data.h"
 
 #include <cassert>
 #include <boost/functional/hash/hash.hpp>
@@ -46,12 +47,14 @@ namespace Graphics
     constexpr int MAX_INSTANCING_COUNT          = 256;
     constexpr int INSTANCING_BASE_VERTEX_ATTRIB = 4;
 
+    PerInstanceData perInstanceData{};
     LightingData lightingData{};
     CameraData cameraData{};
 
     std::unique_ptr<UniformBlock> lightingDataBlock;
     std::unique_ptr<UniformBlock> cameraDataBlock;
     std::shared_ptr<UniformBlock> shadowsDataBlock;
+    std::shared_ptr<UniformBlock> perInstanceDataBlock;
 
     std::unique_ptr<ShadowCasterPass> shadowCasterPass;
     std::unique_ptr<RenderPass>       opaqueRenderPass;
@@ -97,10 +100,12 @@ namespace Graphics
         assert(sizeof(CameraData) == 96);
         assert(sizeof(LightingData) == 288);
         assert(sizeof(ShadowsData) == 1456);
+        assert(sizeof(PerInstanceData) == 128);
 
-        cameraDataBlock   = std::make_unique<UniformBlock>(sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
+        cameraDataBlock = std::make_unique<UniformBlock>(sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
         lightingDataBlock = std::make_unique<UniformBlock>(sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
-        shadowsDataBlock  = std::make_shared<UniformBlock>(sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
+        shadowsDataBlock = std::make_shared<UniformBlock>(sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
+        perInstanceDataBlock = std::make_shared<UniformBlock>(sizeof(PerInstanceData), BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void InitPasses()
@@ -282,9 +287,6 @@ namespace Graphics
 
     void FillMatrices(const DrawCallInfo &_info, const std::vector<std::vector<Matrix4x4>> &_instancedMatricesMap)
     {
-        static const std::string modelMatrixName       = "_ModelMatrix";
-        static const std::string modelNormalMatrixName = "_ModelNormalMatrix";
-
         if (_info.Instanced())
         {
             auto &matrices = _instancedMatricesMap[_info.InstancedIndex];
@@ -303,8 +305,9 @@ namespace Graphics
         }
         else
         {
-            SetGlobalMatrix(modelMatrixName, _info.ModelMatrix);
-            SetGlobalMatrix(modelNormalMatrixName, _info.ModelMatrix.Invert().Transpose());
+            perInstanceData.ModelMatrix = _info.ModelMatrix;
+            perInstanceData.ModelNormalMatrix = _info.ModelMatrix.Invert().Transpose();
+            perInstanceDataBlock->SetData(&perInstanceData, 0, sizeof(perInstanceData));
         }
     }
 
@@ -447,6 +450,7 @@ namespace Graphics
         SetUniformBlock("Lighting", *lightingDataBlock, shaderPass);
         SetUniformBlock("CameraData", *cameraDataBlock, shaderPass);
         SetUniformBlock("Shadows", *shadowsDataBlock, shaderPass);
+        SetUniformBlock("PerInstanceData", *perInstanceDataBlock, shaderPass);
 
         SetPropertyBlock(shaderPass.GetDefaultValuesBlock(), shaderPass);
         SetPropertyBlock(globalPropertyBlock, shaderPass);
@@ -597,10 +601,5 @@ namespace Graphics
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture)
     {
         globalPropertyBlock.SetTexture(name, texture);
-    }
-
-    void SetGlobalMatrix(const std::string &name, const Matrix4x4 &matrix)
-    {
-        globalPropertyBlock.SetMatrix(name, matrix);
     }
 } // namespace Graphics

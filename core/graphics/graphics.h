@@ -36,7 +36,6 @@ namespace Graphics
     void                      SetViewport(const Vector4& viewport);
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture);
-    void SetGlobalMatrix(const std::string &name, const Matrix4x4 &matrix);
 
 }; // namespace Graphics
 

@@ -1,14 +1,15 @@
 #ifndef OPENGL_STUDY_SHADER_PASS_H
 #define OPENGL_STUDY_SHADER_PASS_H
 
-#include "enums/texture_unit.h"
 #include "types/graphics_backend_program.h"
 #include "shader/shader_structs.h"
-#include "shader/uniform_info/uniform_info.h"
 #include "property_block/property_block.h"
 
 #include <string>
 #include <unordered_map>
+
+struct UniformInfo;
+struct UniformBlockInfo;
 
 class ShaderPass
 {
@@ -49,12 +50,7 @@ public:
         return m_Uniforms;
     }
 
-    inline const std::unordered_map<std::string, TextureUnit> &GetTextureUnits() const
-    {
-        return m_TextureUnits;
-    }
-
-    inline const std::unordered_map<std::string, int> &GetUniformBlockBindings() const
+    inline const std::unordered_map<std::string, UniformBlockInfo> &GetUniformBlocks() const
     {
         return m_UniformBlockBindings;
     }
@@ -76,8 +72,7 @@ private:
 
     std::unordered_map<std::string, std::string> m_Tags;
     std::unordered_map<std::string, UniformInfo> m_Uniforms;
-    std::unordered_map<std::string, TextureUnit> m_TextureUnits;
-    std::unordered_map<std::string, int> m_UniformBlockBindings;
+    std::unordered_map<std::string, UniformBlockInfo> m_UniformBlockBindings;
 };
 
 

@@ -45,3 +45,8 @@ Matrix4x4 PropertyBlock::GetMatrix(const std::string &_name) const
 {
     return m_Matrices.contains(_name) ? m_Matrices.at(_name) : Matrix4x4::Zero();
 }
+
+bool PropertyBlock::HasProperty(const std::string &name) const
+{
+    return m_Textures.contains(name) || m_Floats.contains(name) || m_Matrices.contains(name) || m_Vectors.contains(name);
+}

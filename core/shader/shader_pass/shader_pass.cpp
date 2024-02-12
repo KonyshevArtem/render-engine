@@ -1,9 +1,12 @@
 #include "shader_pass.h"
 #include "graphics_backend_api.h"
 #include "enums/program_parameter.h"
+#include "enums/uniform_parameter.h"
 #include "enums/uniform_block_parameter.h"
 #include "texture_2d/texture_2d.h"
 #include "cubemap/cubemap.h"
+#include "shader/uniform_info/uniform_info.h"
+#include "shader/uniform_info/uniform_block_info.h"
 
 #include <vector>
 
@@ -101,48 +104,54 @@ ShaderPass::ShaderPass(GraphicsBackendProgram program, BlendInfo blendInfo, Cull
 
     for (int i = 0; i < uniformBlocksCount; ++i)
     {
-        int binding;
+        UniformBlockInfo uniformBlockInfo{i};
 
-        GraphicsBackend::GetActiveUniformBlockParameter(m_Program, i, UniformBlockParameter::BINDING, &binding);
-        if (binding == 0)
+        GraphicsBackend::GetActiveUniformBlockParameter(m_Program, i, UniformBlockParameter::BINDING, &uniformBlockInfo.Binding);
+        if (uniformBlockInfo.Binding == 0)
         {
-            binding = freeBlockBindings[freeBlockBindings.size() - 1];
+            uniformBlockInfo.Binding = freeBlockBindings[freeBlockBindings.size() - 1];
             freeBlockBindings.pop_back();
         }
 
-        GraphicsBackend::SetUniformBlockBinding(m_Program, i, binding);
+        GraphicsBackend::SetUniformBlockBinding(m_Program, i, uniformBlockInfo.Binding);
 
         int uniformBlockNameSize;
         GraphicsBackend::GetActiveUniformBlockName(m_Program, i, uniformNameBuffer.size(), &uniformBlockNameSize, &uniformNameBuffer[0]);
         std::string uniformBlockName(uniformNameBuffer.begin(), uniformNameBuffer.begin() + uniformBlockNameSize);
 
-        m_UniformBlockBindings[uniformBlockName] = binding;
+        GraphicsBackend::GetActiveUniformBlockParameter(m_Program, i, UniformBlockParameter::DATA_SIZE, &uniformBlockInfo.Size);
+
+        m_UniformBlockBindings[uniformBlockName] = uniformBlockInfo;
     }
 
     int uniformCount;
     GraphicsBackend::GetProgramParameter(m_Program, ProgramParameter::ACTIVE_UNIFORMS, &uniformCount);
 
     TextureUnit textureUnit = TextureUnit::TEXTURE0;
-    for (int i = 0; i < uniformCount; ++i)
+    for (unsigned int i = 0; i < uniformCount; ++i)
     {
         int uniformSize;
         int uniformNameLength;
-        UniformDataType uniformDataType;
+        UniformInfo uniformInfo{};
 
-        GraphicsBackend::GetActiveUniform(m_Program, i, uniformNameBuffer.size(), &uniformNameLength, &uniformSize, &uniformDataType, &uniformNameBuffer[0]);
+        GraphicsBackend::GetActiveUniform(m_Program, i, uniformNameBuffer.size(), &uniformNameLength, &uniformSize, &uniformInfo.Type, &uniformNameBuffer[0]);
         std::string uniformName(uniformNameBuffer.begin(), uniformNameBuffer.begin() + uniformNameLength);
 
-        auto location = GraphicsBackend::GetUniformLocation(m_Program, &uniformName[0]);
+        uniformInfo.Location = GraphicsBackend::GetUniformLocation(m_Program, &uniformName[0]);
 
         // TODO: correctly parse arrays
 
-        if (UniformDataTypeUtils::IsTexture(uniformDataType))
+        if (UniformDataTypeUtils::IsTexture(uniformInfo.Type))
         {
-            m_TextureUnits[uniformName] = textureUnit;
-            textureUnit = static_cast<TextureUnit>(static_cast<int>(textureUnit) + 1);
+            uniformInfo.IsTexture = true;
+            uniformInfo.TextureUnit = textureUnit;
+            textureUnit = TextureUnitUtils::Next(textureUnit);
         }
 
-        m_Uniforms[uniformName] = UniformInfo {uniformDataType, location, i};
+        GraphicsBackend::GetActiveUniformsParameter(m_Program, 1, &i, UniformParameter::BLOCK_INDEX, &uniformInfo.BlockIndex);
+        GraphicsBackend::GetActiveUniformsParameter(m_Program, 1, &i, UniformParameter::OFFSET, &uniformInfo.BlockOffset);
+
+        m_Uniforms[uniformName] = uniformInfo;
     }
 
     FillDefaultValuesPropertyBlock(defaultValues, m_Uniforms, m_DefaultValuesBlock);

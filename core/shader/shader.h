@@ -3,10 +3,8 @@
 
 #include <filesystem>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
-class UniformBlock;
 class ShaderPass;
 
 class Shader
@@ -38,8 +36,6 @@ public:
 private:
     std::vector<std::shared_ptr<ShaderPass>> m_Passes;
     bool m_SupportInstancing;
-
-    friend class UniformBlock;
 };
 
 #endif //OPENGL_STUDY_SHADER_H

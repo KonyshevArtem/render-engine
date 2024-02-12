@@ -1,7 +1,7 @@
 layout(location = 0) in vec3 vertPositionOS;
 layout(location = 2) in vec2 texcoord;
 
-uniform vec4 _Tex_TexelSize;
+#include "outlineBlit_per_material.cg"
 
 out vec2[5] uvs;
 

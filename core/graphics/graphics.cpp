@@ -12,20 +12,24 @@
 #include "render_settings.h"
 #include "renderer/renderer.h"
 #include "texture/texture.h"
-#include "uniform_block.h"
+#include "uniform_block/uniform_block.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug.h"
 #include "enums/cull_face_orientation.h"
 #include "enums/graphics_backend_capability.h"
 #include "enums/buffer_bind_target.h"
-#include "enums/buffer_usage_hint.h"
 #include "enums/vertex_attribute_data_type.h"
 #include "enums/indices_data_type.h"
 #include "enums/framebuffer_target.h"
 #include "types/graphics_backend_framebuffer.h"
 #include "shader/shader.h"
 #include "shader/shader_pass/shader_pass.h"
+#include "data_structs/camera_data.h"
+#include "data_structs/lighting_data.h"
+#include "data_structs/per_instance_data.h"
+#include "shader/uniform_info/uniform_block_info.h"
 
+#include <cassert>
 #include <boost/functional/hash/hash.hpp>
 
 namespace Graphics
@@ -44,9 +48,14 @@ namespace Graphics
     constexpr int MAX_INSTANCING_COUNT          = 256;
     constexpr int INSTANCING_BASE_VERTEX_ATTRIB = 4;
 
-    std::unique_ptr<UniformBlock> lightingDataBlock;
-    std::unique_ptr<UniformBlock> cameraDataBlock;
+    PerInstanceData perInstanceData{};
+    LightingData lightingData{};
+    CameraData cameraData{};
+
+    std::shared_ptr<UniformBlock> lightingDataBlock;
+    std::shared_ptr<UniformBlock> cameraDataBlock;
     std::shared_ptr<UniformBlock> shadowsDataBlock;
+    std::shared_ptr<UniformBlock> perInstanceDataBlock;
 
     std::unique_ptr<ShadowCasterPass> shadowCasterPass;
     std::unique_ptr<RenderPass>       opaqueRenderPass;
@@ -88,10 +97,16 @@ namespace Graphics
 
     void InitUniformBlocks()
     {
-        auto fullShader   = Shader::Load("resources/shaders/standard/standard.shader", {"_RECEIVE_SHADOWS"});
-        cameraDataBlock   = std::make_unique<UniformBlock>(*fullShader, "CameraData");
-        lightingDataBlock = std::make_unique<UniformBlock>(*fullShader, "Lighting");
-        shadowsDataBlock  = std::make_shared<UniformBlock>(*fullShader, "Shadows");
+        // C++ struct memory layout must match GPU side struct
+        assert(sizeof(CameraData) == 96);
+        assert(sizeof(LightingData) == 288);
+        assert(sizeof(ShadowsData) == 1456);
+        assert(sizeof(PerInstanceData) == 128);
+
+        cameraDataBlock = std::make_shared<UniformBlock>(sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
+        lightingDataBlock = std::make_shared<UniformBlock>(sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
+        shadowsDataBlock = std::make_shared<UniformBlock>(sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
+        perInstanceDataBlock = std::make_shared<UniformBlock>(sizeof(PerInstanceData), BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void InitPasses()
@@ -145,87 +160,41 @@ namespace Graphics
 
     void SetLightingData(const Vector3 &_ambient, const std::vector<Light *> &_lights)
     {
-        static const std::string ambientLightName      = "_AmbientLight";
-        static const std::string dirLightDirectionName = "_DirectionalLight.DirectionWS";
-        static const std::string dirLightIntensityName = "_DirectionalLight.Intensity";
-        static const std::string hasDirLightName       = "_DirectionalLight.HasDirectionalLight";
-
-        static const std::string pointLightsCountName = "_PointLightsCount";
-        static const std::string spotLightsCountName  = "_SpotLightsCount";
-
-        static bool        namesInited = false;
-        static std::string pointLightNames[MAX_POINT_LIGHT_SOURCES][3];
-        static std::string spotLightNames[MAX_SPOT_LIGHT_SOURCES][5];
-
-        if (!namesInited)
-        {
-            for (int i = 0; i < MAX_POINT_LIGHT_SOURCES; ++i)
-            {
-                auto prefix           = "_PointLights[" + std::to_string(i) + "].";
-                pointLightNames[i][0] = prefix + "PositionWS";
-                pointLightNames[i][1] = prefix + "Intensity";
-                pointLightNames[i][2] = prefix + "Attenuation";
-            }
-
-            for (int i = 0; i < MAX_SPOT_LIGHT_SOURCES; ++i)
-            {
-                auto prefix          = "_SpotLights[" + std::to_string(i) + "].";
-                spotLightNames[i][0] = prefix + "PositionWS";
-                spotLightNames[i][1] = prefix + "DirectionWS";
-                spotLightNames[i][2] = prefix + "Intensity";
-                spotLightNames[i][3] = prefix + "Attenuation";
-                spotLightNames[i][4] = prefix + "CutOffCos";
-            }
-
-            namesInited = true;
-        }
-
-        /// ------ ///
-
-        lightingDataBlock->SetUniform(ambientLightName, &_ambient, sizeof(Vector3));
-
-        int  pointLightsCount    = 0;
-        int  spotLightsCount     = 0;
-        bool hasDirectionalLight = false;
+        lightingData.AmbientLight = _ambient;
+        lightingData.PointLightsCount = 0;
+        lightingData.SpotLightsCount = 0;
+        lightingData.HasDirectionalLight = -1;
 
         for (const auto &light: _lights)
         {
             if (light == nullptr)
                 continue;
 
-            if (light->Type == LightType::DIRECTIONAL && !hasDirectionalLight)
+            if (light->Type == LightType::DIRECTIONAL && lightingData.HasDirectionalLight <= 0)
             {
-                hasDirectionalLight = true;
-                auto dir            = light->Rotation * Vector3(0, 0, 1);
-                lightingDataBlock->SetUniform(dirLightDirectionName, &dir, sizeof(Vector3));
-                lightingDataBlock->SetUniform(dirLightIntensityName, &light->Intensity, sizeof(Vector3));
+                lightingData.HasDirectionalLight = 1;
+                lightingData.DirLightDirection = light->Rotation * Vector3(0, 0, 1);
+                lightingData.DirLightIntensity = light->Intensity;
             }
-            else if (light->Type == LightType::POINT && pointLightsCount < MAX_POINT_LIGHT_SOURCES)
+            else if (light->Type == LightType::POINT && lightingData.PointLightsCount < MAX_POINT_LIGHT_SOURCES)
             {
-                lightingDataBlock->SetUniform(pointLightNames[pointLightsCount][0], &light->Position, sizeof(Vector3));
-                lightingDataBlock->SetUniform(pointLightNames[pointLightsCount][1], &light->Intensity, sizeof(Vector3));
-                lightingDataBlock->SetUniform(pointLightNames[pointLightsCount][2], &light->Attenuation, sizeof(float));
-                ++pointLightsCount;
+                lightingData.PointLightsData[lightingData.PointLightsCount].Position = light->Position.ToVector4(1);
+                lightingData.PointLightsData[lightingData.PointLightsCount].Intensity = light->Intensity;
+                lightingData.PointLightsData[lightingData.PointLightsCount].Attenuation = light->Attenuation;
+                ++lightingData.PointLightsCount;
             }
-            else if (light->Type == LightType::SPOT && spotLightsCount < MAX_POINT_LIGHT_SOURCES)
+            else if (light->Type == LightType::SPOT && lightingData.SpotLightsCount < MAX_POINT_LIGHT_SOURCES)
             {
-                auto dir       = light->Rotation * Vector3(0, 0, 1);
-                auto cutOffCos = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
-                lightingDataBlock->SetUniform(spotLightNames[spotLightsCount][0], &light->Position, sizeof(Vector3));
-                lightingDataBlock->SetUniform(spotLightNames[spotLightsCount][1], &dir, sizeof(Vector3));
-                lightingDataBlock->SetUniform(spotLightNames[spotLightsCount][2], &light->Intensity, sizeof(Vector3));
-                lightingDataBlock->SetUniform(spotLightNames[spotLightsCount][3], &light->Attenuation, sizeof(float));
-                lightingDataBlock->SetUniform(spotLightNames[spotLightsCount][4], &cutOffCos, sizeof(float));
-                ++spotLightsCount;
+                lightingData.SpotLightsData[lightingData.SpotLightsCount].Position = light->Position.ToVector4(1);
+                lightingData.SpotLightsData[lightingData.SpotLightsCount].Direction = light->Rotation * Vector3(0, 0, 1);
+                lightingData.SpotLightsData[lightingData.SpotLightsCount].Intensity = light->Intensity;
+                lightingData.SpotLightsData[lightingData.SpotLightsCount].Attenuation = light->Attenuation;
+                lightingData.SpotLightsData[lightingData.SpotLightsCount].CutOffCosine = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
+                ++lightingData.SpotLightsCount;
             }
         }
 
-        float hasDirLightFloat = hasDirectionalLight ? 1 : -1;
-        lightingDataBlock->SetUniform(pointLightsCountName, &pointLightsCount, sizeof(int));
-        lightingDataBlock->SetUniform(spotLightsCountName, &spotLightsCount, sizeof(int));
-        lightingDataBlock->SetUniform(hasDirLightName, &hasDirLightFloat, sizeof(float));
-
-        lightingDataBlock->UploadData();
+        lightingDataBlock->SetData(&lightingData, 0, sizeof(lightingData));
     }
 
     std::vector<DrawCallInfo> DoCulling(const std::vector<Renderer *> &_renderers)
@@ -319,9 +288,6 @@ namespace Graphics
 
     void FillMatrices(const DrawCallInfo &_info, const std::vector<std::vector<Matrix4x4>> &_instancedMatricesMap)
     {
-        static const std::string modelMatrixName       = "_ModelMatrix";
-        static const std::string modelNormalMatrixName = "_ModelNormalMatrix";
-
         if (_info.Instanced())
         {
             auto &matrices = _instancedMatricesMap[_info.InstancedIndex];
@@ -340,8 +306,9 @@ namespace Graphics
         }
         else
         {
-            SetGlobalMatrix(modelMatrixName, _info.ModelMatrix);
-            SetGlobalMatrix(modelNormalMatrixName, _info.ModelMatrix.Invert().Transpose());
+            perInstanceData.ModelMatrix = _info.ModelMatrix;
+            perInstanceData.ModelNormalMatrix = _info.ModelMatrix.Invert().Transpose();
+            perInstanceDataBlock->SetData(&perInstanceData, 0, sizeof(perInstanceData));
         }
     }
 
@@ -418,41 +385,37 @@ namespace Graphics
         if (it != uniforms.end())
         {
             auto &uniformInfo = it->second;
-            GraphicsBackend::SetUniform(uniformInfo.Location, uniformInfo.Type, 1, data);
+            if (uniformInfo.BlockIndex < 0)
+            {
+                GraphicsBackend::SetUniform(uniformInfo.Location, uniformInfo.Type, 1, data);
+            }
         }
     }
 
-    void SetTextureUniform(const std::unordered_map<std::string, UniformInfo> &uniforms,
-                           const std::unordered_map<std::string, TextureUnit> &textureUnits,
-                           const std::string &name, const Texture &texture)
+    void SetTextureUniform(const std::unordered_map<std::string, UniformInfo> &uniforms, const std::string &name, const Texture &texture)
     {
-        auto it = textureUnits.find(name);
-        if (it == textureUnits.end())
+        auto it = uniforms.find(name);
+        if (it == uniforms.end())
             return;
 
-        auto unit = it->second;
-        auto unitIndex = TextureUnitUtils::TextureUnitToIndex(unit);
-        texture.Bind(unit);
+        const auto& uniformInfo = it->second;
+        if (!uniformInfo.IsTexture)
+            return;
+
+        texture.Bind(uniformInfo.TextureUnit);
+
+        auto unitIndex = TextureUnitUtils::TextureUnitToIndex(uniformInfo.TextureUnit);
         SetUniform(uniforms, name, &unitIndex);
-
-        Vector4 st = Vector4(0, 0, 1, 1);
-        SetUniform(uniforms, name + "_ST", &st);
-
-        int  width     = texture.GetWidth();
-        int  height    = texture.GetHeight();
-        auto texelSize = Vector4 {static_cast<float>(width), static_cast<float>(height), 1.0f / width, 1.0f / height};
-        SetUniform(uniforms, name + "_TexelSize", &texelSize);
     }
 
     void SetPropertyBlock(const PropertyBlock &propertyBlock, const ShaderPass &shaderPass)
     {
         const auto &uniforms = shaderPass.GetUniforms();
-        const auto &textureUnits = shaderPass.GetTextureUnits();
 
         for (const auto &pair: propertyBlock.GetTextures())
         {
             if (pair.second != nullptr)
-                SetTextureUniform(uniforms, textureUnits, pair.first, *pair.second);
+                SetTextureUniform(uniforms, pair.first, *pair.second);
         }
         for (const auto &pair: propertyBlock.GetVectors())
             SetUniform(uniforms, pair.first, &pair.second);
@@ -462,18 +425,23 @@ namespace Graphics
             SetUniform(uniforms, pair.first, &pair.second);
     }
 
-    void SetUniformBlock(const UniformBlock &uniformBlock, const ShaderPass &shaderPass)
+    void SetUniformBlock(const std::string &name, const std::shared_ptr<UniformBlock> &uniformBlock, const ShaderPass &shaderPass)
     {
-        const auto &uniformBlockBindings = shaderPass.GetUniformBlockBindings();
-
-        auto it = uniformBlockBindings.find(uniformBlock.GetName());
-        if (it != uniformBlockBindings.end())
+        if (uniformBlock == nullptr)
         {
-            uniformBlock.Bind(it->second);
+            return;
+        }
+
+        const auto &uniformBlocks = shaderPass.GetUniformBlocks();
+
+        auto it = uniformBlocks.find(name);
+        if (it != uniformBlocks.end())
+        {
+            uniformBlock->Bind(it->second.Binding);
         }
     }
 
-    void SetupShaderPass(const ShaderPass &shaderPass, const PropertyBlock &materialPropertyBlock)
+    void SetupShaderPass(const ShaderPass &shaderPass, const PropertyBlock &materialPropertyBlock, const std::shared_ptr<UniformBlock> &perMaterialDataBlock)
     {
         GraphicsBackend::UseProgram(shaderPass.GetProgram());
 
@@ -481,9 +449,11 @@ namespace Graphics
         SetCullState(shaderPass.GetCullInfo());
         SetDepthState(shaderPass.GetDepthInfo());
 
-        SetUniformBlock(*lightingDataBlock, shaderPass);
-        SetUniformBlock(*cameraDataBlock, shaderPass);
-        SetUniformBlock(*shadowsDataBlock, shaderPass);
+        SetUniformBlock("Lighting", lightingDataBlock, shaderPass);
+        SetUniformBlock("CameraData", cameraDataBlock, shaderPass);
+        SetUniformBlock("Shadows", shadowsDataBlock, shaderPass);
+        SetUniformBlock("PerInstanceData", perInstanceDataBlock, shaderPass);
+        SetUniformBlock("PerMaterialData", perMaterialDataBlock, shaderPass);
 
         SetPropertyBlock(shaderPass.GetDefaultValuesBlock(), shaderPass);
         SetPropertyBlock(globalPropertyBlock, shaderPass);
@@ -525,7 +495,7 @@ namespace Graphics
                 if (!_settings.TagsMatch(*pass))
                     continue;
 
-                SetupShaderPass(*pass, info.Material->GetPropertyBlock());
+                SetupShaderPass(*pass, info.Material->GetPropertyBlock(), info.Material->GetPerMaterialDataBlock(i));
 
                 if (info.Instanced())
                 {
@@ -575,26 +545,15 @@ namespace Graphics
 
     void SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix)
     {
-        static const std::string vpMatrixName   = "_VPMatrix";
-        static const std::string cameraPosName  = "_CameraPosWS";
-        static const std::string nearClipName   = "_NearClipPlane";
-        static const std::string cameraFwdName  = "_CameraFwdWS";
-        static const std::string farClipName    = "_FarClipPlane";
+        cameraData.CameraPosition = _viewMatrix.Invert().GetPosition();
+        cameraData.NearClipPlane = Camera::Current->GetNearClipPlane();
+        cameraData.FarClipPlane = Camera::Current->GetFarClipPlane();
+        cameraData.ViewProjectionMatrix = _projectionMatrix * _viewMatrix;
+        cameraData.CameraDirection = Camera::Current->GetRotation() * Vector3{0, 0, 1};
 
-        auto cameraPosWS   = _viewMatrix.Invert().GetPosition();
-        auto nearClipPlane = Camera::Current->GetNearClipPlane();
-        auto farClipPlane  = Camera::Current->GetFarClipPlane();
-        auto vpMatrix = _projectionMatrix * _viewMatrix;
-        auto cameraFwdWS = Camera::Current->GetRotation() * Vector3{0, 0, 1};
+        cameraDataBlock->SetData(&cameraData, 0, sizeof(cameraData));
 
-        cameraDataBlock->SetUniform(vpMatrixName, &vpMatrix, sizeof(Matrix4x4));
-        cameraDataBlock->SetUniform(cameraPosName, &cameraPosWS, sizeof(Vector3));
-        cameraDataBlock->SetUniform(nearClipName, &nearClipPlane, sizeof(float));
-        cameraDataBlock->SetUniform(farClipName, &farClipPlane, sizeof(float));
-        cameraDataBlock->SetUniform(cameraFwdName, &cameraFwdWS, sizeof(Vector3));
-        cameraDataBlock->UploadData();
-
-        lastCameraPosition = cameraPosWS;
+        lastCameraPosition = cameraData.CameraPosition;
     }
 
     const std::string &GetGlobalShaderDirectives()
@@ -645,10 +604,5 @@ namespace Graphics
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture)
     {
         globalPropertyBlock.SetTexture(name, texture);
-    }
-
-    void SetGlobalMatrix(const std::string &name, const Matrix4x4 &matrix)
-    {
-        globalPropertyBlock.SetMatrix(name, matrix);
     }
 } // namespace Graphics

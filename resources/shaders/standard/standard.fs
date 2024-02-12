@@ -8,25 +8,34 @@ in Varyings
     vec2 UV;
 } vars;
 
+layout(std140) uniform PerMaterialData
+{
+    vec4 _Albedo_ST;
+#ifndef _DATA_MAP
+    float _Roughness;
+    float _Metallness;
+#endif
+#ifdef _NORMAL_MAP
+    vec4 _NormalMap_ST;
+    float _NormalIntensity;
+#endif
+#ifdef _REFLECTION
+    float _ReflectionCubeLevels;
+#endif
+};
+
 uniform sampler2D _Albedo;
-uniform vec4 _Albedo_ST;
 
 #ifdef _DATA_MAP
 uniform sampler2D _Data;
-#else
-uniform float _Roughness;
-uniform float _Metallness;
 #endif
 
 #ifdef _NORMAL_MAP
 uniform sampler2D _NormalMap;
-uniform vec4 _NormalMap_ST;
-uniform float _NormalIntensity;
 #endif
 
 #ifdef _REFLECTION
 uniform samplerCube _ReflectionCube;
-uniform float _ReflectionCubeLevels;
 #endif
 
 #include "../common/camera_data.cg"

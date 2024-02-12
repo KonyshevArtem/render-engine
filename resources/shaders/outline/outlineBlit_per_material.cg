@@ -1,0 +1,5 @@
+layout(std140) uniform PerMaterialData
+{
+    vec4 _Color;
+    vec4 _Tex_TexelSize;
+};

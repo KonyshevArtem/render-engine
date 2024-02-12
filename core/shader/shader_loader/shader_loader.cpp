@@ -12,10 +12,7 @@
 #include "shader_loader_utils.h"
 #include "shader/shader_pass/shader_pass.h"
 
-#include <boost/json.hpp>
 #include <span>
-
-// TODO use syntax analysis instead of regex
 
 namespace ShaderLoader
 {

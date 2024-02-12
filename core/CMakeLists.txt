@@ -21,8 +21,8 @@ add_library(
 	camera/camera.h
 	time/time.cpp
 	time/time.h
-	graphics/uniform_block.cpp
-	graphics/uniform_block.h
+	uniform_block/uniform_block.cpp
+	uniform_block/uniform_block.h
 	graphics/context.cpp
 	graphics/context.h
 	graphics/passes/shadow_caster_pass.cpp
@@ -76,7 +76,12 @@ add_library(
 	shader/shader_pass/shader_pass.cpp
 	shader/shader_pass/shader_pass.h
 	lines/lines.cpp
-	lines/lines.h)
+	lines/lines.h
+	graphics/data_structs/shadows_data.h
+	graphics/data_structs/lighting_data.h
+	graphics/data_structs/camera_data.h
+	graphics/data_structs/per_instance_data.h
+	shader/uniform_info/uniform_block_info.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

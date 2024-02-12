@@ -4,11 +4,16 @@
 #include "matrix4x4/matrix4x4.h"
 #include "property_block/property_block.h"
 #include "vector4/vector4.h"
+#include "shader/uniform_info/uniform_info.h"
+
+#include <vector>
+#include <unordered_map>
 #include <memory>
 #include <string>
 
 class Texture;
 class Shader;
+class UniformBlock;
 
 class Material
 {
@@ -16,45 +21,39 @@ public:
     explicit Material(std::shared_ptr<Shader> _shader);
     ~Material() = default;
 
+    Material(const Material &) = delete;
+    Material(Material &&) = delete;
 
-    inline void SetTexture(const std::string &_name, std::shared_ptr<Texture> _value)
+    Material &operator=(const Material &) = delete;
+    Material &operator=(Material &&) = delete;
+
+    inline std::shared_ptr<UniformBlock> GetPerMaterialDataBlock(int pass) const
     {
-        m_PropertyBlock.SetTexture(_name, _value);
+        return m_UniformBlocks[pass];
     }
 
+    void SetTexture(const std::string &name, std::shared_ptr<Texture> texture);
     inline const std::shared_ptr<Texture> GetTexture(const std::string &_name) const
     {
         return m_PropertyBlock.GetTexture(_name);
     }
 
 
-    inline void SetVector(const std::string &_name, const Vector4 &_value)
-    {
-        m_PropertyBlock.SetVector(_name, _value);
-    }
-
+    void SetVector(const std::string &_name, const Vector4 &_value);
     inline Vector4 GetVector(const std::string &_name) const
     {
         return m_PropertyBlock.GetVector(_name);
     }
 
 
-    inline void SetFloat(const std::string &_name, float _value)
-    {
-        m_PropertyBlock.SetFloat(_name, _value);
-    }
-
+    void SetFloat(const std::string &_name, float _value);
     inline float GetFloat(const std::string &_name) const
     {
         return m_PropertyBlock.GetFloat(_name);
     }
 
 
-    inline void SetMatrix(const std::string &_name, const Matrix4x4 &_value)
-    {
-        m_PropertyBlock.SetMatrix(_name, _value);
-    }
-
+    void SetMatrix(const std::string &_name, const Matrix4x4 &_value);
     inline Matrix4x4 GetMatrix(const std::string &_name) const
     {
         return m_PropertyBlock.GetMatrix(_name);
@@ -83,15 +82,13 @@ public:
     }
 
 private:
-    Material(const Material &) = delete;
-    Material(Material &&)      = delete;
+    void SetDataToUniformBlocks(const std::string &name, const void *data, uint64_t size);
 
-    Material &operator=(const Material &) = delete;
-    Material &operator=(Material &&) = delete;
-
+    std::vector<std::unordered_map<std::string, UniformInfo>> m_PerMaterialDataUniforms;
+    std::vector<std::shared_ptr<UniformBlock>> m_UniformBlocks;
     std::shared_ptr<Shader> m_Shader;
-    PropertyBlock           m_PropertyBlock;
-    int                     m_RenderQueue = 2000;
+    PropertyBlock m_PropertyBlock;
+    int m_RenderQueue = 2000;
 };
 
 #endif //OPENGL_STUDY_MATERIAL_H

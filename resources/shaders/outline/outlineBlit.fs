@@ -1,7 +1,8 @@
 in vec2[5] uvs;
 
+#include "outlineBlit_per_material.cg"
+
 uniform sampler2D _Tex;
-uniform vec4 _Color;
 
 out vec4 outColor;
 

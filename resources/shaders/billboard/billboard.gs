@@ -1,7 +1,10 @@
 layout (points) in;
 layout (triangle_strip, max_vertices = 4) out;
 
-uniform vec2 _Size;
+layout(std140) uniform PerMaterialData
+{
+    vec2 _Size;
+};
 
 #include "../common/camera_data.cg"
 

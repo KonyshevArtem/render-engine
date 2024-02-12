@@ -27,6 +27,7 @@
 #include "data_structs/camera_data.h"
 #include "data_structs/lighting_data.h"
 #include "data_structs/per_instance_data.h"
+#include "shader/uniform_info/uniform_block_info.h"
 
 #include <cassert>
 #include <boost/functional/hash/hash.hpp>
@@ -51,8 +52,8 @@ namespace Graphics
     LightingData lightingData{};
     CameraData cameraData{};
 
-    std::unique_ptr<UniformBlock> lightingDataBlock;
-    std::unique_ptr<UniformBlock> cameraDataBlock;
+    std::shared_ptr<UniformBlock> lightingDataBlock;
+    std::shared_ptr<UniformBlock> cameraDataBlock;
     std::shared_ptr<UniformBlock> shadowsDataBlock;
     std::shared_ptr<UniformBlock> perInstanceDataBlock;
 
@@ -102,8 +103,8 @@ namespace Graphics
         assert(sizeof(ShadowsData) == 1456);
         assert(sizeof(PerInstanceData) == 128);
 
-        cameraDataBlock = std::make_unique<UniformBlock>(sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
-        lightingDataBlock = std::make_unique<UniformBlock>(sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
+        cameraDataBlock = std::make_shared<UniformBlock>(sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
+        lightingDataBlock = std::make_shared<UniformBlock>(sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
         shadowsDataBlock = std::make_shared<UniformBlock>(sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
         perInstanceDataBlock = std::make_shared<UniformBlock>(sizeof(PerInstanceData), BufferUsageHint::DYNAMIC_DRAW);
     }
@@ -384,41 +385,37 @@ namespace Graphics
         if (it != uniforms.end())
         {
             auto &uniformInfo = it->second;
-            GraphicsBackend::SetUniform(uniformInfo.Location, uniformInfo.Type, 1, data);
+            if (uniformInfo.BlockIndex < 0)
+            {
+                GraphicsBackend::SetUniform(uniformInfo.Location, uniformInfo.Type, 1, data);
+            }
         }
     }
 
-    void SetTextureUniform(const std::unordered_map<std::string, UniformInfo> &uniforms,
-                           const std::unordered_map<std::string, TextureUnit> &textureUnits,
-                           const std::string &name, const Texture &texture)
+    void SetTextureUniform(const std::unordered_map<std::string, UniformInfo> &uniforms, const std::string &name, const Texture &texture)
     {
-        auto it = textureUnits.find(name);
-        if (it == textureUnits.end())
+        auto it = uniforms.find(name);
+        if (it == uniforms.end())
             return;
 
-        auto unit = it->second;
-        auto unitIndex = TextureUnitUtils::TextureUnitToIndex(unit);
-        texture.Bind(unit);
+        const auto& uniformInfo = it->second;
+        if (!uniformInfo.IsTexture)
+            return;
+
+        texture.Bind(uniformInfo.TextureUnit);
+
+        auto unitIndex = TextureUnitUtils::TextureUnitToIndex(uniformInfo.TextureUnit);
         SetUniform(uniforms, name, &unitIndex);
-
-        Vector4 st = Vector4(0, 0, 1, 1);
-        SetUniform(uniforms, name + "_ST", &st);
-
-        int  width     = texture.GetWidth();
-        int  height    = texture.GetHeight();
-        auto texelSize = Vector4 {static_cast<float>(width), static_cast<float>(height), 1.0f / width, 1.0f / height};
-        SetUniform(uniforms, name + "_TexelSize", &texelSize);
     }
 
     void SetPropertyBlock(const PropertyBlock &propertyBlock, const ShaderPass &shaderPass)
     {
         const auto &uniforms = shaderPass.GetUniforms();
-        const auto &textureUnits = shaderPass.GetTextureUnits();
 
         for (const auto &pair: propertyBlock.GetTextures())
         {
             if (pair.second != nullptr)
-                SetTextureUniform(uniforms, textureUnits, pair.first, *pair.second);
+                SetTextureUniform(uniforms, pair.first, *pair.second);
         }
         for (const auto &pair: propertyBlock.GetVectors())
             SetUniform(uniforms, pair.first, &pair.second);
@@ -428,18 +425,23 @@ namespace Graphics
             SetUniform(uniforms, pair.first, &pair.second);
     }
 
-    void SetUniformBlock(const std::string &name, const UniformBlock &uniformBlock, const ShaderPass &shaderPass)
+    void SetUniformBlock(const std::string &name, const std::shared_ptr<UniformBlock> &uniformBlock, const ShaderPass &shaderPass)
     {
-        const auto &uniformBlockBindings = shaderPass.GetUniformBlockBindings();
-
-        auto it = uniformBlockBindings.find(name);
-        if (it != uniformBlockBindings.end())
+        if (uniformBlock == nullptr)
         {
-            uniformBlock.Bind(it->second);
+            return;
+        }
+
+        const auto &uniformBlocks = shaderPass.GetUniformBlocks();
+
+        auto it = uniformBlocks.find(name);
+        if (it != uniformBlocks.end())
+        {
+            uniformBlock->Bind(it->second.Binding);
         }
     }
 
-    void SetupShaderPass(const ShaderPass &shaderPass, const PropertyBlock &materialPropertyBlock)
+    void SetupShaderPass(const ShaderPass &shaderPass, const PropertyBlock &materialPropertyBlock, const std::shared_ptr<UniformBlock> &perMaterialDataBlock)
     {
         GraphicsBackend::UseProgram(shaderPass.GetProgram());
 
@@ -447,10 +449,11 @@ namespace Graphics
         SetCullState(shaderPass.GetCullInfo());
         SetDepthState(shaderPass.GetDepthInfo());
 
-        SetUniformBlock("Lighting", *lightingDataBlock, shaderPass);
-        SetUniformBlock("CameraData", *cameraDataBlock, shaderPass);
-        SetUniformBlock("Shadows", *shadowsDataBlock, shaderPass);
-        SetUniformBlock("PerInstanceData", *perInstanceDataBlock, shaderPass);
+        SetUniformBlock("Lighting", lightingDataBlock, shaderPass);
+        SetUniformBlock("CameraData", cameraDataBlock, shaderPass);
+        SetUniformBlock("Shadows", shadowsDataBlock, shaderPass);
+        SetUniformBlock("PerInstanceData", perInstanceDataBlock, shaderPass);
+        SetUniformBlock("PerMaterialData", perMaterialDataBlock, shaderPass);
 
         SetPropertyBlock(shaderPass.GetDefaultValuesBlock(), shaderPass);
         SetPropertyBlock(globalPropertyBlock, shaderPass);
@@ -492,7 +495,7 @@ namespace Graphics
                 if (!_settings.TagsMatch(*pass))
                     continue;
 
-                SetupShaderPass(*pass, info.Material->GetPropertyBlock());
+                SetupShaderPass(*pass, info.Material->GetPropertyBlock(), info.Material->GetPerMaterialDataBlock(i));
 
                 if (info.Instanced())
                 {

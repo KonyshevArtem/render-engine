@@ -45,6 +45,11 @@ namespace TextureUnitUtils
     {
         return static_cast<uint32_t>(unit) - static_cast<uint32_t>(TextureUnit::TEXTURE0);
     }
+
+    inline TextureUnit Next(TextureUnit unit)
+    {
+        return unit == TextureUnit::TEXTURE31 ? unit : static_cast<TextureUnit>(static_cast<int>(unit) + 1);
+    }
 }
 
 #endif //OPENGL_STUDY_TEXTURE_UNIT_H

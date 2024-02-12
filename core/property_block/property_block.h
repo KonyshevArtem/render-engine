@@ -22,6 +22,8 @@ public:
     float                          GetFloat(const std::string &_name) const;
     Matrix4x4                      GetMatrix(const std::string &_name) const;
 
+    bool HasProperty(const std::string &name) const;
+
     inline const std::unordered_map<std::string, std::shared_ptr<Texture>> &GetTextures() const
     {
         return m_Textures;

@@ -12,12 +12,11 @@
 #include "render_settings.h"
 #include "renderer/renderer.h"
 #include "texture/texture.h"
-#include "uniform_block/uniform_block.h"
+#include "graphics_buffer/graphics_buffer.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug.h"
 #include "enums/cull_face_orientation.h"
 #include "enums/graphics_backend_capability.h"
-#include "enums/buffer_bind_target.h"
 #include "enums/vertex_attribute_data_type.h"
 #include "enums/indices_data_type.h"
 #include "enums/framebuffer_target.h"
@@ -41,10 +40,11 @@ namespace Graphics
     LightingData lightingData{};
     CameraData cameraData{};
 
-    std::shared_ptr<UniformBlock> lightingDataBlock;
-    std::shared_ptr<UniformBlock> cameraDataBlock;
-    std::shared_ptr<UniformBlock> shadowsDataBlock;
-    std::shared_ptr<UniformBlock> perInstanceDataBlock;
+    std::shared_ptr<GraphicsBuffer> instancingMatricesBuffer;
+    std::shared_ptr<GraphicsBuffer> lightingDataBlock;
+    std::shared_ptr<GraphicsBuffer> cameraDataBlock;
+    std::shared_ptr<GraphicsBuffer> shadowsDataBlock;
+    std::shared_ptr<GraphicsBuffer> perInstanceDataBlock;
 
     std::unique_ptr<ShadowCasterPass> shadowCasterPass;
     std::unique_ptr<RenderPass>       opaqueRenderPass;
@@ -61,7 +61,6 @@ namespace Graphics
 
     Vector3 lastCameraPosition;
 
-    GraphicsBackendBuffer instancingMatricesBuffer;
     GraphicsBackendFramebuffer framebuffer;
 
     PropertyBlock globalPropertyBlock;
@@ -92,10 +91,10 @@ namespace Graphics
         assert(sizeof(ShadowsData) == 1456);
         assert(sizeof(PerInstanceData) == 128);
 
-        cameraDataBlock = std::make_shared<UniformBlock>(sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
-        lightingDataBlock = std::make_shared<UniformBlock>(sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
-        shadowsDataBlock = std::make_shared<UniformBlock>(sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
-        perInstanceDataBlock = std::make_shared<UniformBlock>(sizeof(PerInstanceData), BufferUsageHint::DYNAMIC_DRAW);
+        cameraDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
+        lightingDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
+        shadowsDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
+        perInstanceDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(PerInstanceData), BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void InitPasses()
@@ -113,10 +112,7 @@ namespace Graphics
 
     void InitInstancing()
     {
-        GraphicsBackend::GenerateBuffers(1, &instancingMatricesBuffer);
-        GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, instancingMatricesBuffer);
-        GraphicsBackend::SetBufferData(BufferBindTarget::ARRAY_BUFFER, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, nullptr, BufferUsageHint::DYNAMIC_DRAW);
-        GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, GraphicsBackendBuffer::NONE);
+        instancingMatricesBuffer = std::make_shared<GraphicsBuffer>(BufferBindTarget::ARRAY_BUFFER, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void InitSeamlessCubemap()
@@ -143,7 +139,6 @@ namespace Graphics
 
     void Shutdown()
     {
-        GraphicsBackend::DeleteBuffers(1, &instancingMatricesBuffer);
         GraphicsBackend::DeleteFramebuffers(1, &framebuffer);
     }
 
@@ -297,10 +292,8 @@ namespace Graphics
 
             auto matricesSize        = sizeof(Matrix4x4) * count;
             auto normalsMatrixOffset = sizeof(Matrix4x4) * MAX_INSTANCING_COUNT;
-            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, instancingMatricesBuffer);
-            GraphicsBackend::SetBufferSubData(BufferBindTarget::ARRAY_BUFFER, 0, matricesSize, matrices.data());
-            GraphicsBackend::SetBufferSubData(BufferBindTarget::ARRAY_BUFFER, normalsMatrixOffset, matricesSize, modelNormalMatricesBuffer.data());
-            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, GraphicsBackendBuffer::NONE);
+            instancingMatricesBuffer->SetData(matrices.data(), 0, matricesSize);
+            instancingMatricesBuffer->SetData(modelNormalMatricesBuffer.data(), normalsMatrixOffset, matricesSize);
         }
         else
         {
@@ -315,7 +308,7 @@ namespace Graphics
         // make sure VAO is bound before calling this function
         if (_enabled)
         {
-            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, instancingMatricesBuffer);
+            instancingMatricesBuffer->Bind();
 
             // matrix4x4 requires 4 vertex attributes
             for (int i = 0; i < 8; ++i)
@@ -423,7 +416,7 @@ namespace Graphics
             SetUniform(uniforms, pair.first, &pair.second);
     }
 
-    void SetUniformBlock(const std::string &name, const std::shared_ptr<UniformBlock> &uniformBlock, const ShaderPass &shaderPass)
+    void SetUniformBlock(const std::string &name, const std::shared_ptr<GraphicsBuffer> &uniformBlock, const ShaderPass &shaderPass)
     {
         if (uniformBlock == nullptr)
         {
@@ -439,7 +432,7 @@ namespace Graphics
         }
     }
 
-    void SetupShaderPass(const ShaderPass &shaderPass, const PropertyBlock &materialPropertyBlock, const std::shared_ptr<UniformBlock> &perMaterialDataBlock)
+    void SetupShaderPass(const ShaderPass &shaderPass, const PropertyBlock &materialPropertyBlock, const std::shared_ptr<GraphicsBuffer> &perMaterialDataBlock)
     {
         GraphicsBackend::UseProgram(shaderPass.GetProgram());
 

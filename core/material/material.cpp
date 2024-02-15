@@ -3,7 +3,7 @@
 #include "texture/texture.h"
 #include "shader/shader_pass/shader_pass.h"
 #include "shader/uniform_info/uniform_block_info.h"
-#include "uniform_block/uniform_block.h"
+#include "graphics_buffer/graphics_buffer.h"
 
 #include <utility>
 
@@ -21,7 +21,7 @@ Material::Material(std::shared_ptr<Shader> _shader) :
         if (it != uniformBlocks.end())
         {
             const auto &uniformBlockInfo = it->second;
-            auto uniformBlock = std::make_shared<UniformBlock>(uniformBlockInfo.Size, BufferUsageHint::DYNAMIC_DRAW);
+            auto uniformBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, uniformBlockInfo.Size, BufferUsageHint::DYNAMIC_DRAW);
             m_UniformBlocks.push_back(uniformBlock);
 
             std::unordered_map<std::string, UniformInfo> perMaterialDataUniforms;

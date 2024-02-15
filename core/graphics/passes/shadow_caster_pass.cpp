@@ -1,6 +1,6 @@
 #include "shadow_caster_pass.h"
 #include "graphics/context.h"
-#include "uniform_block/uniform_block.h"
+#include "graphics_buffer/graphics_buffer.h"
 #include "graphics/render_settings.h"
 #include "light/light.h"
 #include "renderer/renderer.h"
@@ -12,7 +12,7 @@
 
 #include <utility>
 
-ShadowCasterPass::ShadowCasterPass(std::shared_ptr<UniformBlock> shadowsUniformBlock) :
+ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsUniformBlock) :
     m_ShadowsUniformBlock(std::move(shadowsUniformBlock)),
     m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SPOT_LIGHT_SHADOW_MAP_SIZE, Graphics::MAX_SPOT_LIGHT_SOURCES)),
     m_DirectionLightShadowMap(Texture2D::CreateShadowMap(DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE)),

@@ -21,8 +21,8 @@ add_library(
 	camera/camera.h
 	time/time.cpp
 	time/time.h
-	uniform_block/uniform_block.cpp
-	uniform_block/uniform_block.h
+	graphics_buffer/graphics_buffer.cpp
+	graphics_buffer/graphics_buffer.h
 	graphics/context.cpp
 	graphics/context.h
 	graphics/passes/shadow_caster_pass.cpp

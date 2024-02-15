@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-class UniformBlock;
+class GraphicsBuffer;
 struct Context;
 class Texture2DArray;
 class Texture2D;
@@ -15,7 +15,7 @@ class Renderer;
 class ShadowCasterPass
 {
 public:
-    explicit ShadowCasterPass(std::shared_ptr<UniformBlock> shadowsUniformBlock);
+    explicit ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsUniformBlock);
     ~ShadowCasterPass() = default;
 
     void Execute(const Context &_ctx);
@@ -31,7 +31,7 @@ private:
     static constexpr int DIR_LIGHT_SHADOW_MAP_SIZE  = 2048;
     static constexpr int POINT_LIGHT_SHADOW_MAP_FACE_SIZE = 512;
 
-    std::shared_ptr<UniformBlock>   m_ShadowsUniformBlock;
+    std::shared_ptr<GraphicsBuffer> m_ShadowsUniformBlock;
     std::shared_ptr<Texture2DArray> m_SpotLightShadowMapArray;
     std::shared_ptr<Texture2D>      m_DirectionLightShadowMap;
     std::shared_ptr<Texture2DArray> m_PointLightShadowMap;

@@ -15,6 +15,7 @@ void SkyboxPass::Execute(const Context &_ctx)
     static RenderSettings            renderSettings;
     static std::shared_ptr<Mesh>     mesh     = FBXAsset::Load("resources/models/cube.fbx")->GetMesh(0);
     static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("resources/shaders/skybox/skybox.shader", {}));
+    static std::vector<DrawCallInfo> drawCalls(1);
 
     if (mesh == nullptr || _ctx.Skybox == nullptr)
         return;
@@ -24,6 +25,6 @@ void SkyboxPass::Execute(const Context &_ctx)
     Matrix4x4 modelMatrix = Matrix4x4::Translation(_ctx.ViewMatrix.Invert().GetPosition());
     material->SetTexture("_Skybox", _ctx.Skybox);
 
-    DrawCallInfo info {mesh, material, {modelMatrix}};
-    Graphics::Draw(std::vector<DrawCallInfo> {info}, renderSettings);
+    drawCalls[0] = {mesh, material, modelMatrix};
+    Graphics::Draw(drawCalls, renderSettings);
 }

@@ -13,7 +13,7 @@ namespace Gizmos
     void DrawWireCube(const Matrix4x4 &_matrix);
 
     void Init();
-    std::vector<DrawCallInfo> &GetDrawInfos();
+    const std::vector<DrawCallInfo> &GetDrawInfos();
     void ClearDrawInfos();
 } // namespace Gizmos
 

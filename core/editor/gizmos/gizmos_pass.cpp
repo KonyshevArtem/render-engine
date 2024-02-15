@@ -45,10 +45,10 @@ void GizmosPass::Outline() const
         infos.reserve(renderers.size());
         for (const auto &renderer: renderers)
         {
-            infos.push_back(DrawCallInfo {renderer->GetGeometry(),
-                                          renderer->GetMaterial(),
-                                          {renderer->GetModelMatrix()},
-                                          renderer->GetAABB()});
+            infos.push_back(DrawCallInfo{renderer->GetGeometry(),
+                                         renderer->GetMaterial(),
+                                         renderer->GetModelMatrix(),
+                                         renderer->GetAABB()});
         }
         Graphics::Draw(infos, renderSettings);
         Graphics::SetRenderTargets(nullptr, 0, 0, nullptr, 0, 0);
@@ -60,25 +60,16 @@ void GizmosPass::Outline() const
         outlineMaterial->SetVector("_Color", outlineColor);
 
         auto info = DrawCallInfo {Mesh::GetFullscreenMesh(), outlineMaterial};
-        Graphics::Draw(std::vector<DrawCallInfo> {info}, renderSettings);
+        Graphics::Draw({info}, renderSettings);
     }
 }
 
 void GizmosPass::Gizmos() const
 {
     static RenderSettings renderSettings{{{"LightMode", "Gizmos"}}};
-    static std::shared_ptr<Shader> gizmosShader = Shader::Load("resources/shaders/gizmos/gizmos.shader", {});
-    static std::shared_ptr<Material> gizmosMaterial = std::make_shared<Material>(gizmosShader);
 
     auto debugGroup = GraphicsBackendDebug::DebugGroup("Gizmos pass");
-
-    auto &drawCalls = Gizmos::GetDrawInfos();
-    for (auto &drawInfo: drawCalls)
-    {
-        drawInfo.Material = gizmosMaterial;
-    }
-
-    Graphics::Draw(drawCalls, renderSettings);
+    Graphics::Draw(Gizmos::GetDrawInfos(), renderSettings);
 }
 
 void GizmosPass::CheckTexture(std::shared_ptr<Texture2D> &_texture) const

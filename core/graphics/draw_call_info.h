@@ -6,20 +6,23 @@
 #include "material/material.h"
 #include "matrix4x4/matrix4x4.h"
 #include "vector3/vector3.h"
+
 #include <functional>
 #include <memory>
+#include <vector>
 
 struct DrawCallInfo
 {
     std::shared_ptr<DrawableGeometry> Geometry;
-    std::shared_ptr<Material>         Material;
-    Matrix4x4                         ModelMatrix;
-    Bounds                            AABB;
-    int                               InstancedIndex = -1;
+    std::shared_ptr<Material> Material;
+    Matrix4x4 ModelMatrix;
+    Bounds AABB;
 
-    inline bool Instanced() const
+    std::vector<Matrix4x4> InstanceMatrices = std::vector<Matrix4x4>(0);
+
+    inline bool IsInstanced() const
     {
-        return InstancedIndex >= 0;
+        return InstanceMatrices.size() > 1;
     }
 
     enum class Sorting

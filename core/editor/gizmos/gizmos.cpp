@@ -4,17 +4,22 @@
 #include "vector3/vector3.h"
 #include "lines/lines.h"
 #include "graphics/draw_call_info.h"
+#include "shader/shader.h"
 
+std::shared_ptr<Material> m_GizmosMaterial;
 std::shared_ptr<Lines> m_WireCubePrimitive;
 std::vector<DrawCallInfo> m_DrawInfos;
 
 void Gizmos::DrawWireCube(const Matrix4x4 &_matrix)
 {
-    m_DrawInfos.push_back(DrawCallInfo{m_WireCubePrimitive, nullptr, _matrix, m_WireCubePrimitive->GetBounds()});
+    m_DrawInfos.push_back(DrawCallInfo{m_WireCubePrimitive, m_GizmosMaterial, _matrix, m_WireCubePrimitive->GetBounds()});
 }
 
 void Gizmos::Init()
 {
+    std::shared_ptr<Shader> gizmosShader = Shader::Load("resources/shaders/gizmos/gizmos.shader", {});
+    m_GizmosMaterial = std::make_shared<Material>(gizmosShader);
+
     // wire cube
     {
         std::vector<Vector3> wireCubePoints
@@ -37,7 +42,7 @@ void Gizmos::Init()
     }
 }
 
-std::vector<DrawCallInfo> &Gizmos::GetDrawInfos()
+const std::vector<DrawCallInfo> &Gizmos::GetDrawInfos()
 {
     return m_DrawInfos;
 }

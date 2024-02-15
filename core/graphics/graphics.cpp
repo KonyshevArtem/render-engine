@@ -34,17 +34,6 @@
 
 namespace Graphics
 {
-    struct DrawCallInfoHash
-    {
-        std::size_t operator()(const std::pair<Material *, DrawableGeometry *> &_pair) const
-        {
-            std::size_t seed = 0;
-            boost::hash_combine(seed, _pair.first);
-            boost::hash_combine(seed, _pair.second);
-            return seed;
-        }
-    };
-
     constexpr int MAX_INSTANCING_COUNT          = 256;
     constexpr int INSTANCING_BASE_VERTEX_ATTRIB = 4;
 
@@ -205,10 +194,54 @@ namespace Graphics
         {
             info[i] = {_renderers[i]->GetGeometry(),
                        _renderers[i]->GetMaterial(),
-                       {_renderers[i]->GetModelMatrix()},
+                       _renderers[i]->GetModelMatrix(),
                        _renderers[i]->GetAABB()};
         }
         return info;
+    }
+
+    std::size_t GetDrawCallInstancingHash(const DrawCallInfo &drawCallInfo)
+    {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, drawCallInfo.Material.get());
+        boost::hash_combine(seed, drawCallInfo.Geometry.get());
+        return seed;
+    }
+
+    void BatchDrawCalls(std::vector<DrawCallInfo> &drawCalls)
+    {
+        static std::unordered_map<std::size_t, int> instancingMap;
+
+        instancingMap.clear();
+        for (int i = 0; i < drawCalls.size(); ++i)
+        {
+            auto &info = drawCalls[i];
+            if (!info.Material->GetShader()->SupportInstancing())
+            {
+                continue;
+            }
+
+            auto hash = GetDrawCallInstancingHash(info);
+            auto it = instancingMap.find(hash);
+
+            if (it == instancingMap.end())
+            {
+                info.InstanceMatrices.push_back(info.ModelMatrix);
+                instancingMap[hash] = i;
+                continue;
+            }
+
+            auto &batchedInfo = drawCalls[it->second];
+            batchedInfo.InstanceMatrices.push_back(info.ModelMatrix);
+            batchedInfo.AABB = batchedInfo.AABB.Combine(info.AABB);
+
+            drawCalls[i] = drawCalls[drawCalls.size() - 1];
+            drawCalls.pop_back();
+            --i;
+
+            if (batchedInfo.InstanceMatrices.size() >= MAX_INSTANCING_COUNT)
+                instancingMap.erase(it);
+        }
     }
 
     void Render()
@@ -220,6 +253,7 @@ namespace Graphics
 
         Context ctx;
         ctx.DrawCallInfos = DoCulling(ctx.Renderers);
+        BatchDrawCalls(ctx.DrawCallInfos);
 
         SetLightingData(ctx.AmbientLight, ctx.Lights);
 
@@ -248,60 +282,24 @@ namespace Graphics
         GraphicsBackendDebug::CheckError();
     }
 
-    std::vector<DrawCallInfo> BatchDrawCalls(const std::vector<DrawCallInfo> &_drawCalls, std::vector<std::vector<Matrix4x4>> &_instancedMatricesMap)
+    void FillMatrices(const DrawCallInfo &_info)
     {
-        std::vector<DrawCallInfo> batchedDrawCalls;
-        batchedDrawCalls.reserve(_drawCalls.size());
+        static std::vector<Matrix4x4> modelNormalMatricesBuffer;
 
-        std::unordered_map<std::pair<Material *, DrawableGeometry *>, int, DrawCallInfoHash> instancingMap;
-        for (const auto &info: _drawCalls)
+        if (_info.IsInstanced())
         {
-            if (!info.Material->GetShader()->SupportInstancing())
-            {
-                batchedDrawCalls.push_back(info);
-                continue;
-            }
+            auto &matrices = _info.InstanceMatrices;
+            auto count = matrices.size();
 
-            auto index = batchedDrawCalls.size();
-            auto pair  = std::make_pair<Material *, DrawableGeometry *>(info.Material.get(), info.Geometry.get());
-            if (!instancingMap.contains(pair))
-            {
-                batchedDrawCalls.push_back(info);
-                batchedDrawCalls[index].InstancedIndex = _instancedMatricesMap.size();
-                _instancedMatricesMap.push_back({{info.ModelMatrix}});
-                instancingMap[pair] = index;
-                continue;
-            }
-
-            auto &drawCall = batchedDrawCalls[instancingMap[pair]];
-            drawCall.AABB  = drawCall.AABB.Combine(info.AABB);
-
-            auto &matrices = _instancedMatricesMap[drawCall.InstancedIndex];
-            matrices.push_back(info.ModelMatrix);
-
-            if (matrices.size() >= MAX_INSTANCING_COUNT)
-                instancingMap.erase(pair);
-        }
-
-        return batchedDrawCalls;
-    }
-
-    void FillMatrices(const DrawCallInfo &_info, const std::vector<std::vector<Matrix4x4>> &_instancedMatricesMap)
-    {
-        if (_info.Instanced())
-        {
-            auto &matrices = _instancedMatricesMap[_info.InstancedIndex];
-            auto  count    = matrices.size();
-
-            std::vector<Matrix4x4> modelNormalMatrices(count);
+            modelNormalMatricesBuffer.resize(count);
             for (int i = 0; i < count; ++i)
-                modelNormalMatrices[i] = matrices[i].Invert().Transpose();
+                modelNormalMatricesBuffer[i] = matrices[i].Invert().Transpose();
 
             auto matricesSize        = sizeof(Matrix4x4) * count;
             auto normalsMatrixOffset = sizeof(Matrix4x4) * MAX_INSTANCING_COUNT;
             GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, instancingMatricesBuffer);
             GraphicsBackend::SetBufferSubData(BufferBindTarget::ARRAY_BUFFER, 0, matricesSize, matrices.data());
-            GraphicsBackend::SetBufferSubData(BufferBindTarget::ARRAY_BUFFER, normalsMatrixOffset, matricesSize, modelNormalMatrices.data());
+            GraphicsBackend::SetBufferSubData(BufferBindTarget::ARRAY_BUFFER, normalsMatrixOffset, matricesSize, modelNormalMatricesBuffer.data());
             GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, GraphicsBackendBuffer::NONE);
         }
         else
@@ -462,13 +460,12 @@ namespace Graphics
 
     void Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings)
     {
+        static std::vector<DrawCallInfo> drawCalls;
+
         // filter draw calls
-        std::vector<DrawCallInfo> drawCalls;
+        drawCalls.clear();
         drawCalls.reserve(_drawCallInfos.size());
         copy_if(_drawCallInfos.begin(), _drawCallInfos.end(), std::back_inserter(drawCalls), _settings.Filter);
-
-        std::vector<std::vector<Matrix4x4>> instancedMatricesMap;
-        drawCalls = BatchDrawCalls(drawCalls, instancedMatricesMap);
 
         // sort draw calls
         if (_settings.Sorting != DrawCallInfo::Sorting::NO_SORTING)
@@ -479,13 +476,13 @@ namespace Graphics
             auto vao = info.Geometry->GetVertexArrayObject();
             GraphicsBackend::BindVertexArrayObject(vao);
 
-            FillMatrices(info, instancedMatricesMap);
+            FillMatrices(info);
 
-            if (info.Instanced())
+            if (info.IsInstanced())
                 SetInstancingEnabled(true);
 
             auto primitiveType = info.Geometry->GetPrimitiveType();
-            auto count = info.Geometry->GetElementsCount();
+            auto elementsCount = info.Geometry->GetElementsCount();
             auto hasIndexes = info.Geometry->HasIndexes();
             const auto &shader = info.Material->GetShader();
 
@@ -497,32 +494,32 @@ namespace Graphics
 
                 SetupShaderPass(*pass, info.Material->GetPropertyBlock(), info.Material->GetPerMaterialDataBlock(i));
 
-                if (info.Instanced())
+                if (info.IsInstanced())
                 {
-                    auto instanceCount = instancedMatricesMap[info.InstancedIndex].size();
+                    auto instanceCount = info.InstanceMatrices.size();
                     if (hasIndexes)
                     {
-                        GraphicsBackend::DrawElementsInstanced(primitiveType, count, IndicesDataType::UNSIGNED_INT, nullptr, instanceCount);
+                        GraphicsBackend::DrawElementsInstanced(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr, instanceCount);
                     }
                     else
                     {
-                        GraphicsBackend::DrawArraysInstanced(primitiveType, 0, count, instanceCount);
+                        GraphicsBackend::DrawArraysInstanced(primitiveType, 0, elementsCount, instanceCount);
                     }
                 }
                 else
                 {
                     if (hasIndexes)
                     {
-                        GraphicsBackend::DrawElements(primitiveType, count, IndicesDataType::UNSIGNED_INT, nullptr);
+                        GraphicsBackend::DrawElements(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr);
                     }
                     else
                     {
-                        GraphicsBackend::DrawArrays(primitiveType, 0, count);
+                        GraphicsBackend::DrawArrays(primitiveType, 0, elementsCount);
                     }
                 }
             }
 
-            if (info.Instanced())
+            if (info.IsInstanced())
                 SetInstancingEnabled(false);
         }
     }

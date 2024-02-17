@@ -10,6 +10,7 @@
 
 struct UniformInfo;
 struct UniformBlockInfo;
+struct ShaderStorageBlockInfo;
 
 class ShaderPass
 {
@@ -52,7 +53,12 @@ public:
 
     inline const std::unordered_map<std::string, UniformBlockInfo> &GetUniformBlocks() const
     {
-        return m_UniformBlockBindings;
+        return m_UniformBlocks;
+    }
+
+    inline const std::unordered_map<std::string, ShaderStorageBlockInfo> &GetShaderStorageBlocks() const
+    {
+        return m_ShaderStorageBlocks;
     }
 
     inline const PropertyBlock &GetDefaultValuesBlock() const
@@ -72,7 +78,8 @@ private:
 
     std::unordered_map<std::string, std::string> m_Tags;
     std::unordered_map<std::string, UniformInfo> m_Uniforms;
-    std::unordered_map<std::string, UniformBlockInfo> m_UniformBlockBindings;
+    std::unordered_map<std::string, UniformBlockInfo> m_UniformBlocks;
+    std::unordered_map<std::string, ShaderStorageBlockInfo> m_ShaderStorageBlocks;
 };
 
 

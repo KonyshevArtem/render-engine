@@ -24,6 +24,12 @@ constexpr auto Cast(T value) -> typename std::underlying_type<T>::type
     return static_cast<typename std::underlying_type<T>::type>(value);
 }
 
+template<typename T>
+constexpr auto Cast(T *values) -> typename std::underlying_type<T>::type*
+{
+    return reinterpret_cast<typename std::underlying_type<T>::type*>(values);
+}
+
 void GraphicsBackend::Init()
 {
 #ifdef REQUIRE_GLEW_INIT
@@ -573,6 +579,34 @@ void GraphicsBackend::DrawElements(PrimitiveType primitiveType, int elementsCoun
 void GraphicsBackend::DrawElementsInstanced(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices, int instanceCount)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glDrawElementsInstanced(Cast(primitiveType), elementsCount, Cast(dataType), indices, instanceCount))
+}
+
+void GraphicsBackend::GetProgramInterfaceParameter(GraphicsBackendProgram program, ProgramInterface interface, ProgramInterfaceParameter parameter, int *outValues)
+{
+#ifdef GL_ARB_program_interface_query
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInterfaceiv(program.Program, Cast(interface), Cast(parameter), outValues))
+#endif
+}
+
+void GraphicsBackend::GetProgramResourceParameters(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int parametersCount, ProgramResourceParameter *parameters, int bufferSize, int *lengths, int *outValues)
+{
+#ifdef GL_ARB_program_interface_query
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, Cast(interface), resourceIndex, parametersCount, Cast(parameters), bufferSize, lengths, outValues))
+#endif
+}
+
+void GraphicsBackend::GetProgramResourceName(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int bufferSize, int *outLength, char *outName)
+{
+#ifdef GL_ARB_program_interface_query
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceName(program.Program, Cast(interface), resourceIndex, bufferSize, outLength, outName))
+#endif
+}
+
+void GraphicsBackend::SetShaderStorageBlockBinding(GraphicsBackendProgram program, int blockIndex, int blockBinding)
+{
+#ifdef GL_ARB_shader_storage_buffer_object
+    CHECK_GRAPHICS_BACKEND_FUNC(glShaderStorageBlockBinding(program.Program, blockIndex, blockBinding))
+#endif
 }
 
 GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackend::GetError()

@@ -111,6 +111,8 @@ namespace Graphics
 
     void InitInstancing()
     {
+        instancingMatricesSSBO = GraphicsBackend::SupportShaderStorageBuffer();
+
         auto bindTarget = instancingMatricesSSBO ? BufferBindTarget::SHADER_STORAGE_BUFFER : BufferBindTarget::ARRAY_BUFFER;
         instancingMatricesBuffer = std::make_shared<GraphicsBuffer>(bindTarget, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, BufferUsageHint::DYNAMIC_DRAW);
     }

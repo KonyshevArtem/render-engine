@@ -11,12 +11,15 @@
 #include "types/graphics_backend_uniform_location.h"
 #include "types/graphics_backend_vao.h"
 
+#include <set>
 #include <type_traits>
 
 GraphicsBackendVAO GraphicsBackendVAO::NONE = GraphicsBackendVAO();
 GraphicsBackendBuffer GraphicsBackendBuffer::NONE = GraphicsBackendBuffer();
 GraphicsBackendTexture GraphicsBackendTexture::NONE = GraphicsBackendTexture();
 GraphicsBackendFramebuffer GraphicsBackendFramebuffer::NONE = GraphicsBackendFramebuffer();
+
+std::set<std::string> extensions;
 
 template<typename T>
 constexpr auto Cast(T value) -> typename std::underlying_type<T>::type
@@ -37,6 +40,14 @@ void GraphicsBackend::Init()
     if (result != GLEW_OK)
         throw;
 #endif
+
+    int extensionsCount;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetIntegerv(GL_NUM_EXTENSIONS, &extensionsCount))
+    for (int i = 0; i < extensionsCount; ++i)
+    {
+        const unsigned char *ext = CHECK_GRAPHICS_BACKEND_FUNC(glGetStringi(GL_EXTENSIONS, i))
+        extensions.insert(std::string(reinterpret_cast<const char *>(ext)));
+    }
 }
 
 void GraphicsBackend::GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr)
@@ -600,6 +611,13 @@ void GraphicsBackend::GetProgramResourceName(GraphicsBackendProgram program, Pro
 #ifdef GL_ARB_program_interface_query
     CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceName(program.Program, Cast(interface), resourceIndex, bufferSize, outLength, outName))
 #endif
+}
+
+bool GraphicsBackend::SupportShaderStorageBuffer()
+{
+    static bool result = extensions.contains("GL_ARB_shader_storage_buffer_object") &&
+                         extensions.contains("GL_ARB_program_interface_query"); // required to query info about SSBO in shaders
+    return result;
 }
 
 void GraphicsBackend::SetShaderStorageBlockBinding(GraphicsBackendProgram program, int blockIndex, int blockBinding)

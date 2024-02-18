@@ -159,6 +159,7 @@ public:
     static void GetProgramResourceParameters(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int parametersCount, ProgramResourceParameter *parameters, int bufferSize, int *lengths, int *outValues);
     static void GetProgramResourceName(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int bufferSize, int *outLength, char *outName);
 
+    static bool SupportShaderStorageBuffer();
     static void SetShaderStorageBlockBinding(GraphicsBackendProgram program, int blockIndex, int blockBinding);
 
     static GRAPHICS_BACKEND_TYPE_ENUM GetError();

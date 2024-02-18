@@ -1,0 +1,25 @@
+#ifndef OPENGL_STUDY_PER_DRAW_DATA
+#define OPENGL_STUDY_PER_DRAW_DATA
+
+#ifdef _INSTANCING
+    #if INSTANCING_MATRICES_SSBO
+        layout(std140) readonly buffer InstanceMatricesBuffer
+        {
+            mat4 InstanceMatrices[];
+        };
+
+        #define _ModelMatrix        InstanceMatrices[gl_InstanceID * 2 + 0]
+        #define _ModelNormalMatrix  InstanceMatrices[gl_InstanceID * 2 + 1]
+    #else
+        layout(location = 4) in mat4 _ModelMatrix;
+        layout(location = 8) in mat4 _ModelNormalMatrix;
+    #endif
+#else
+    layout(std140) uniform PerDrawData
+    {
+        mat4 _ModelMatrix;
+        mat4 _ModelNormalMatrix;
+    };
+#endif
+
+#endif

@@ -3,7 +3,7 @@ layout(location = 1) in vec3 vertNormalOS;
 layout(location = 2) in vec2 texCoord;
 layout(location = 3) in vec3 vertTangentOS;
 
-#include "../common/per_instance_data.cg"
+#include "../common/per_draw_data.cg"
 
 out Varyings
 {

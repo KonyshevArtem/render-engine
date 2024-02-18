@@ -25,8 +25,9 @@
 #include "shader/shader_pass/shader_pass.h"
 #include "data_structs/camera_data.h"
 #include "data_structs/lighting_data.h"
-#include "data_structs/per_instance_data.h"
+#include "data_structs/per_draw_data.h"
 #include "shader/uniform_info/uniform_block_info.h"
+#include "shader/uniform_info/shader_storage_block_info.h"
 
 #include <cassert>
 #include <boost/functional/hash/hash.hpp>
@@ -36,15 +37,13 @@ namespace Graphics
     constexpr int MAX_INSTANCING_COUNT          = 256;
     constexpr int INSTANCING_BASE_VERTEX_ATTRIB = 4;
 
-    PerInstanceData perInstanceData{};
-    LightingData lightingData{};
-    CameraData cameraData{};
+    bool instancingMatricesSSBO = true;
 
     std::shared_ptr<GraphicsBuffer> instancingMatricesBuffer;
     std::shared_ptr<GraphicsBuffer> lightingDataBlock;
     std::shared_ptr<GraphicsBuffer> cameraDataBlock;
     std::shared_ptr<GraphicsBuffer> shadowsDataBlock;
-    std::shared_ptr<GraphicsBuffer> perInstanceDataBlock;
+    std::shared_ptr<GraphicsBuffer> perDrawDataBlock;
 
     std::unique_ptr<ShadowCasterPass> shadowCasterPass;
     std::unique_ptr<RenderPass>       opaqueRenderPass;
@@ -89,12 +88,12 @@ namespace Graphics
         assert(sizeof(CameraData) == 96);
         assert(sizeof(LightingData) == 288);
         assert(sizeof(ShadowsData) == 1456);
-        assert(sizeof(PerInstanceData) == 128);
+        assert(sizeof(PerDrawData) == 128);
 
         cameraDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
         lightingDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
         shadowsDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
-        perInstanceDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(PerInstanceData), BufferUsageHint::DYNAMIC_DRAW);
+        perDrawDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(PerDrawData), BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void InitPasses()
@@ -112,7 +111,8 @@ namespace Graphics
 
     void InitInstancing()
     {
-        instancingMatricesBuffer = std::make_shared<GraphicsBuffer>(BufferBindTarget::ARRAY_BUFFER, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, BufferUsageHint::DYNAMIC_DRAW);
+        auto bindTarget = instancingMatricesSSBO ? BufferBindTarget::SHADER_STORAGE_BUFFER : BufferBindTarget::ARRAY_BUFFER;
+        instancingMatricesBuffer = std::make_shared<GraphicsBuffer>(bindTarget, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void InitSeamlessCubemap()
@@ -144,6 +144,7 @@ namespace Graphics
 
     void SetLightingData(const Vector3 &_ambient, const std::vector<Light *> &_lights)
     {
+        LightingData lightingData{};
         lightingData.AmbientLight = _ambient;
         lightingData.PointLightsCount = 0;
         lightingData.SpotLightsCount = 0;
@@ -279,32 +280,39 @@ namespace Graphics
 
     void FillMatrices(const DrawCallInfo &_info)
     {
-        static std::vector<Matrix4x4> modelNormalMatricesBuffer;
+        static std::vector<Matrix4x4> matricesBuffer;
 
         if (_info.IsInstanced())
         {
             auto &matrices = _info.InstanceMatrices;
             auto count = matrices.size();
 
-            modelNormalMatricesBuffer.resize(count);
+            matricesBuffer.resize(count * 2);
             for (int i = 0; i < count; ++i)
-                modelNormalMatricesBuffer[i] = matrices[i].Invert().Transpose();
+            {
+                matricesBuffer[i * 2 + 0] = matrices[i];
+                matricesBuffer[i * 2 + 1] = matrices[i].Invert().Transpose();
+            }
 
-            auto matricesSize        = sizeof(Matrix4x4) * count;
-            auto normalsMatrixOffset = sizeof(Matrix4x4) * MAX_INSTANCING_COUNT;
-            instancingMatricesBuffer->SetData(matrices.data(), 0, matricesSize);
-            instancingMatricesBuffer->SetData(modelNormalMatricesBuffer.data(), normalsMatrixOffset, matricesSize);
+            auto matricesSize = sizeof(Matrix4x4) * matricesBuffer.size() * 2;
+            instancingMatricesBuffer->SetData(matricesBuffer.data(), 0, matricesSize);
         }
         else
         {
-            perInstanceData.ModelMatrix = _info.ModelMatrix;
-            perInstanceData.ModelNormalMatrix = _info.ModelMatrix.Invert().Transpose();
-            perInstanceDataBlock->SetData(&perInstanceData, 0, sizeof(perInstanceData));
+            PerDrawData perDrawData{};
+            perDrawData.ModelMatrix = _info.ModelMatrix;
+            perDrawData.ModelNormalMatrix = _info.ModelMatrix.Invert().Transpose();
+            perDrawDataBlock->SetData(&perDrawData, 0, sizeof(perDrawData));
         }
     }
 
     void SetInstancingEnabled(bool _enabled)
     {
+        if (instancingMatricesSSBO)
+        {
+            return;
+        }
+
         // make sure VAO is bound before calling this function
         if (_enabled)
         {
@@ -320,17 +328,17 @@ namespace Graphics
             auto vec4Size = sizeof(Vector4);
 
             // model matrix
-            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 0, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(0));
-            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 1, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(1 * vec4Size));
-            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 2, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(2 * vec4Size));
-            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 3, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(3 * vec4Size));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 0, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(0));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 1, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(1 * vec4Size));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 2, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(2 * vec4Size));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 3, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(3 * vec4Size));
 
             // normal matrix
-            auto offset = sizeof(Matrix4x4) * MAX_INSTANCING_COUNT;
-            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 4, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(offset));
-            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 5, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(offset + 1 * vec4Size));
-            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 6, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size));
-            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 7, 4, VertexAttributeDataType::FLOAT, false, 4 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size));
+            auto offset = sizeof(Matrix4x4);
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 4, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 5, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 1 * vec4Size));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 6, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size));
+            GraphicsBackend::SetVertexAttributePointer(INSTANCING_BASE_VERTEX_ATTRIB + 7, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size));
 
             GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, GraphicsBackendBuffer::NONE);
         }
@@ -416,19 +424,34 @@ namespace Graphics
             SetUniform(uniforms, pair.first, &pair.second);
     }
 
-    void SetUniformBlock(const std::string &name, const std::shared_ptr<GraphicsBuffer> &uniformBlock, const ShaderPass &shaderPass)
+    bool TryGetGraphicsBufferBinding(const std::string &name, const ShaderPass &shaderPass, int &binding)
     {
-        if (uniformBlock == nullptr)
+        const auto &uniformBlocks = shaderPass.GetUniformBlocks();
+        const auto &shaderStorageBlocks = shaderPass.GetShaderStorageBlocks();
+
+        auto uniformBlocksIt = uniformBlocks.find(name);
+        if (uniformBlocksIt != uniformBlocks.end())
         {
-            return;
+            binding = uniformBlocksIt->second.Binding;
+            return true;
         }
 
-        const auto &uniformBlocks = shaderPass.GetUniformBlocks();
-
-        auto it = uniformBlocks.find(name);
-        if (it != uniformBlocks.end())
+        auto shaderStorageBlocksIt = shaderStorageBlocks.find(name);
+        if (shaderStorageBlocksIt != shaderStorageBlocks.end())
         {
-            uniformBlock->Bind(it->second.Binding);
+            binding = shaderStorageBlocksIt->second.Binding;
+            return true;
+        }
+
+        return false;
+    }
+
+    void SetGraphicsBuffer(const std::string &name, const std::shared_ptr<GraphicsBuffer> &buffer, const ShaderPass &shaderPass)
+    {
+        int binding;
+        if (buffer != nullptr && TryGetGraphicsBufferBinding(name, shaderPass, binding))
+        {
+            buffer->Bind(binding);
         }
     }
 
@@ -440,11 +463,15 @@ namespace Graphics
         SetCullState(shaderPass.GetCullInfo());
         SetDepthState(shaderPass.GetDepthInfo());
 
-        SetUniformBlock("Lighting", lightingDataBlock, shaderPass);
-        SetUniformBlock("CameraData", cameraDataBlock, shaderPass);
-        SetUniformBlock("Shadows", shadowsDataBlock, shaderPass);
-        SetUniformBlock("PerInstanceData", perInstanceDataBlock, shaderPass);
-        SetUniformBlock("PerMaterialData", perMaterialDataBlock, shaderPass);
+        SetGraphicsBuffer("Lighting", lightingDataBlock, shaderPass);
+        SetGraphicsBuffer("CameraData", cameraDataBlock, shaderPass);
+        SetGraphicsBuffer("Shadows", shadowsDataBlock, shaderPass);
+        SetGraphicsBuffer("PerDrawData", perDrawDataBlock, shaderPass);
+        SetGraphicsBuffer("PerMaterialData", perMaterialDataBlock, shaderPass);
+        if (instancingMatricesSSBO)
+        {
+            SetGraphicsBuffer("InstanceMatricesBuffer", instancingMatricesBuffer, shaderPass);
+        }
 
         SetPropertyBlock(shaderPass.GetDefaultValuesBlock(), shaderPass);
         SetPropertyBlock(globalPropertyBlock, shaderPass);
@@ -535,6 +562,7 @@ namespace Graphics
 
     void SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix)
     {
+        CameraData cameraData{};
         cameraData.CameraPosition = _viewMatrix.Invert().GetPosition();
         cameraData.NearClipPlane = Camera::Current->GetNearClipPlane();
         cameraData.FarClipPlane = Camera::Current->GetFarClipPlane();
@@ -554,7 +582,8 @@ namespace Graphics
         static std::string globalShaderDirectives = "#version " + std::to_string(GLSL_VERSION) + "\n"
                                                     "#define MAX_POINT_LIGHT_SOURCES " + std::to_string(MAX_POINT_LIGHT_SOURCES) + "\n"
                                                     "#define MAX_SPOT_LIGHT_SOURCES " + std::to_string(MAX_SPOT_LIGHT_SOURCES) + "\n"
-                                                    "#define MAX_INSTANCING_COUNT " + std::to_string(MAX_INSTANCING_COUNT) + "\n";
+                                                    "#define MAX_INSTANCING_COUNT " + std::to_string(MAX_INSTANCING_COUNT) + "\n"
+                                                    "#define INSTANCING_MATRICES_SSBO " + std::to_string(instancingMatricesSSBO ? 1 : 0) + "\n";
         // clang-format on
 
         return globalShaderDirectives;

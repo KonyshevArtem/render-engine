@@ -37,7 +37,7 @@ namespace Graphics
     constexpr int MAX_INSTANCING_COUNT          = 256;
     constexpr int INSTANCING_BASE_VERTEX_ATTRIB = 4;
 
-    bool instancingMatricesSSBO = true;
+    bool instancingMatricesSSBO;
 
     std::shared_ptr<GraphicsBuffer> instancingMatricesBuffer;
     std::shared_ptr<GraphicsBuffer> lightingDataBlock;
@@ -111,8 +111,6 @@ namespace Graphics
 
     void InitInstancing()
     {
-        instancingMatricesSSBO = GraphicsBackend::SupportShaderStorageBuffer();
-
         auto bindTarget = instancingMatricesSSBO ? BufferBindTarget::SHADER_STORAGE_BUFFER : BufferBindTarget::ARRAY_BUFFER;
         instancingMatricesBuffer = std::make_shared<GraphicsBuffer>(bindTarget, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, BufferUsageHint::DYNAMIC_DRAW);
     }
@@ -125,6 +123,9 @@ namespace Graphics
     void Init()
     {
         GraphicsBackend::Init();
+
+        // init this before loading shaders in gizmos
+        instancingMatricesSSBO = GraphicsBackend::SupportShaderStorageBuffer();
 
 #if OPENGL_STUDY_EDITOR
         Gizmos::Init();

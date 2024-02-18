@@ -2,7 +2,7 @@
 #include "graphics_backend_api.h"
 #include "enums/uniform_block_parameter.h"
 
-#include <cmath>
+#include <algorithm>
 
 GraphicsBuffer::GraphicsBuffer(BufferBindTarget bindTarget, uint64_t size, BufferUsageHint usageHint) :
         m_BindTarget(bindTarget),

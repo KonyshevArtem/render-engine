@@ -101,6 +101,7 @@ public:
 
     static void SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint);
     static void SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data);
+    static void CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size);
 
     static void GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr);
     static void DeleteVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr);

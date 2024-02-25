@@ -198,6 +198,11 @@ void GraphicsBackend::SetBufferSubData(BufferBindTarget target, long offset, lon
     CHECK_GRAPHICS_BACKEND_FUNC(glBufferSubData(Cast(target), offset, size, data))
 }
 
+void GraphicsBackend::CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glCopyBufferSubData(Cast(sourceTarget), Cast(destinationTarget), sourceOffset, destinationOffset, size))
+}
+
 void GraphicsBackend::GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glGenVertexArrays(vaoCount, reinterpret_cast<GLuint *>(vaoPtr)))

@@ -608,4 +608,17 @@ namespace Graphics
     {
         globalPropertyBlock.SetTexture(name, texture);
     }
+
+    void CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size)
+    {
+        if (!source || !destination)
+        {
+            return;
+        }
+
+        source->Bind(BufferBindTarget::COPY_READ_BUFFER);
+        destination->Bind(BufferBindTarget::COPY_WRITE_BUFFER);
+        GraphicsBackend::CopyBufferSubData(BufferBindTarget::COPY_READ_BUFFER, BufferBindTarget::COPY_WRITE_BUFFER, sourceOffset, destinationOffset, size);
+    }
+
 } // namespace Graphics

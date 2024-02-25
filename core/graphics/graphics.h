@@ -15,6 +15,7 @@ struct DrawCallInfo;
 struct RenderSettings;
 class Renderer;
 class Texture;
+class GraphicsBuffer;
 
 namespace Graphics
 {
@@ -34,6 +35,7 @@ namespace Graphics
     void                      SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, int colorLevel, int colorLayer,
                                                const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer);
     void                      SetViewport(const Vector4& viewport);
+    void                      CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size);
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture);
 

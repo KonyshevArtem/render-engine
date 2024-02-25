@@ -6,13 +6,13 @@
 
 GraphicsBuffer::GraphicsBuffer(BufferBindTarget bindTarget, uint64_t size, BufferUsageHint usageHint) :
         m_BindTarget(bindTarget),
+        m_UsageHint(usageHint),
         m_Size(size)
 {
     GraphicsBackend::GenerateBuffers(1, &m_Buffer);
 
     Bind();
-    GraphicsBackend::SetBufferData(m_BindTarget, size, nullptr, usageHint);
-    GraphicsBackend::BindBuffer(m_BindTarget, GraphicsBackendBuffer::NONE);
+    Resize(size);
 }
 
 GraphicsBuffer::~GraphicsBuffer()
@@ -22,14 +22,18 @@ GraphicsBuffer::~GraphicsBuffer()
 
 void GraphicsBuffer::Bind() const
 {
-    GraphicsBackend::BindBuffer(m_BindTarget, m_Buffer);
+    Bind(m_BindTarget);
 }
 
 void GraphicsBuffer::Bind(int binding) const
 {
     Bind();
     GraphicsBackend::BindBufferRange(m_BindTarget, binding, m_Buffer, 0, m_Size);
-    GraphicsBackend::BindBuffer(m_BindTarget, GraphicsBackendBuffer::NONE);
+}
+
+void GraphicsBuffer::Bind(BufferBindTarget bindTarget) const
+{
+    GraphicsBackend::BindBuffer(bindTarget, m_Buffer);
 }
 
 void GraphicsBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
@@ -39,5 +43,14 @@ void GraphicsBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
 
     Bind();
     GraphicsBackend::SetBufferSubData(m_BindTarget, offset, size, data);
-    GraphicsBackend::BindBuffer(m_BindTarget, GraphicsBackendBuffer::NONE);
+}
+
+void GraphicsBuffer::Resize(uint64_t size)
+{
+    if (size > 0)
+    {
+        Bind();
+        GraphicsBackend::SetBufferData(m_BindTarget, size, nullptr, m_UsageHint);
+        m_Size = size;
+    }
 }

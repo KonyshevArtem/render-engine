@@ -26,8 +26,7 @@
 #include "data_structs/camera_data.h"
 #include "data_structs/lighting_data.h"
 #include "data_structs/per_draw_data.h"
-#include "shader/uniform_info/uniform_block_info.h"
-#include "shader/uniform_info/shader_storage_block_info.h"
+#include "shader/uniform_info/buffer_info.h"
 
 #include <cassert>
 #include <boost/functional/hash/hash.hpp>
@@ -387,10 +386,7 @@ namespace Graphics
         if (it != uniforms.end())
         {
             auto &uniformInfo = it->second;
-            if (uniformInfo.BlockIndex < 0)
-            {
-                GraphicsBackend::SetUniform(uniformInfo.Location, uniformInfo.Type, 1, data);
-            }
+            GraphicsBackend::SetUniform(uniformInfo.Location, uniformInfo.Type, 1, data);
         }
     }
 
@@ -427,34 +423,19 @@ namespace Graphics
             SetUniform(uniforms, pair.first, &pair.second);
     }
 
-    bool TryGetGraphicsBufferBinding(const std::string &name, const ShaderPass &shaderPass, int &binding)
-    {
-        const auto &uniformBlocks = shaderPass.GetUniformBlocks();
-        const auto &shaderStorageBlocks = shaderPass.GetShaderStorageBlocks();
-
-        auto uniformBlocksIt = uniformBlocks.find(name);
-        if (uniformBlocksIt != uniformBlocks.end())
-        {
-            binding = uniformBlocksIt->second.Binding;
-            return true;
-        }
-
-        auto shaderStorageBlocksIt = shaderStorageBlocks.find(name);
-        if (shaderStorageBlocksIt != shaderStorageBlocks.end())
-        {
-            binding = shaderStorageBlocksIt->second.Binding;
-            return true;
-        }
-
-        return false;
-    }
-
     void SetGraphicsBuffer(const std::string &name, const std::shared_ptr<GraphicsBuffer> &buffer, const ShaderPass &shaderPass)
     {
-        int binding;
-        if (buffer != nullptr && TryGetGraphicsBufferBinding(name, shaderPass, binding))
+        if (!buffer)
         {
-            buffer->Bind(binding);
+            return;
+        }
+
+        const auto &buffers = shaderPass.GetBuffers();
+
+        auto it = buffers.find(name);
+        if (it != buffers.end())
+        {
+            buffer->Bind(it->second->GetBinding());
         }
     }
 

@@ -14,6 +14,7 @@
 class Texture;
 class Shader;
 class GraphicsBuffer;
+class GraphicsBufferWrapper;
 
 class Material
 {
@@ -27,10 +28,7 @@ public:
     Material &operator=(const Material &) = delete;
     Material &operator=(Material &&) = delete;
 
-    inline std::shared_ptr<GraphicsBuffer> GetPerMaterialDataBlock(int pass) const
-    {
-        return m_UniformBlocks[pass];
-    }
+    std::shared_ptr<GraphicsBuffer> GetPerMaterialDataBlock(int pass) const;
 
     void SetTexture(const std::string &name, std::shared_ptr<Texture> texture);
     inline const std::shared_ptr<Texture> GetTexture(const std::string &_name) const
@@ -84,8 +82,7 @@ public:
 private:
     void SetDataToUniformBlocks(const std::string &name, const void *data, uint64_t size);
 
-    std::vector<std::unordered_map<std::string, UniformInfo>> m_PerMaterialDataUniforms;
-    std::vector<std::shared_ptr<GraphicsBuffer>> m_UniformBlocks;
+    std::shared_ptr<GraphicsBufferWrapper> m_PerMaterialDataBufferWrapper;
     std::shared_ptr<Shader> m_Shader;
     PropertyBlock m_PropertyBlock;
     int m_RenderQueue = 2000;

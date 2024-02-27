@@ -16,6 +16,8 @@ struct RenderSettings;
 class Renderer;
 class Texture;
 class GraphicsBuffer;
+class DrawableGeometry;
+class Material;
 
 namespace Graphics
 {
@@ -27,6 +29,8 @@ namespace Graphics
     void                      Render();
     std::vector<DrawCallInfo> DoCulling(const std::vector<Renderer *> &_renderers);
     void                      Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings);
+    void                      Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex);
+    void                      DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex);
     void                      Reshape(int _width, int _height);
     const std::string        &GetGlobalShaderDirectives();
     void                      SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix);

@@ -274,41 +274,44 @@ namespace Graphics
         if (gizmosPass)
             gizmosPass->Execute(ctx);
 
-        Gizmos::ClearDrawInfos();
+        Gizmos::ClearGizmos();
 #endif
 
         GraphicsBackendDebug::CheckError();
     }
 
-    void FillMatrices(const DrawCallInfo &_info)
+    void SetupGeometry(const DrawableGeometry &geometry)
+    {
+        auto vao = geometry.GetVertexArrayObject();
+        GraphicsBackend::BindVertexArrayObject(vao);
+    }
+
+    void SetupMatrices(const Matrix4x4 &modelMatrix)
+    {
+        PerDrawData perDrawData{};
+        perDrawData.ModelMatrix = modelMatrix;
+        perDrawData.ModelNormalMatrix = modelMatrix.Invert().Transpose();
+        perDrawDataBlock->SetData(&perDrawData, 0, sizeof(perDrawData));
+    }
+
+    void SetupMatrices(const std::vector<Matrix4x4> &matrices)
     {
         static std::vector<Matrix4x4> matricesBuffer;
 
-        if (_info.IsInstanced())
-        {
-            auto &matrices = _info.InstanceMatrices;
-            auto count = matrices.size();
+        auto count = matrices.size();
 
-            matricesBuffer.resize(count * 2);
-            for (int i = 0; i < count; ++i)
-            {
-                matricesBuffer[i * 2 + 0] = matrices[i];
-                matricesBuffer[i * 2 + 1] = matrices[i].Invert().Transpose();
-            }
-
-            auto matricesSize = sizeof(Matrix4x4) * matricesBuffer.size() * 2;
-            instancingMatricesBuffer->SetData(matricesBuffer.data(), 0, matricesSize);
-        }
-        else
+        matricesBuffer.resize(count * 2);
+        for (int i = 0; i < count; ++i)
         {
-            PerDrawData perDrawData{};
-            perDrawData.ModelMatrix = _info.ModelMatrix;
-            perDrawData.ModelNormalMatrix = _info.ModelMatrix.Invert().Transpose();
-            perDrawDataBlock->SetData(&perDrawData, 0, sizeof(perDrawData));
+            matricesBuffer[i * 2 + 0] = matrices[i];
+            matricesBuffer[i * 2 + 1] = matrices[i].Invert().Transpose();
         }
+
+        auto matricesSize = sizeof(Matrix4x4) * matricesBuffer.size() * 2;
+        instancingMatricesBuffer->SetData(matricesBuffer.data(), 0, matricesSize);
     }
 
-    void SetInstancingEnabled(bool _enabled)
+    void SetupInstancing(bool _enabled)
     {
         if (instancingMatricesSSBO)
         {
@@ -439,8 +442,12 @@ namespace Graphics
         }
     }
 
-    void SetupShaderPass(const ShaderPass &shaderPass, const PropertyBlock &materialPropertyBlock, const std::shared_ptr<GraphicsBuffer> &perMaterialDataBlock)
+    void SetupShaderPass(int shaderPassIndex, const Material &material)
     {
+        const auto &shaderPass = *material.GetShader()->GetPass(shaderPassIndex);
+        const auto &perMaterialDataBlock = material.GetPerMaterialDataBlock(shaderPassIndex);
+        const auto &materialPropertyBlock = material.GetPropertyBlock();
+
         GraphicsBackend::UseProgram(shaderPass.GetProgram());
 
         SetBlendState(shaderPass.GetBlendInfo());
@@ -464,68 +471,78 @@ namespace Graphics
 
     void Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings)
     {
-        static std::vector<DrawCallInfo> drawCalls;
+        static std::vector<DrawCallInfo> filteredSortedDrawCalls;
 
         // filter draw calls
-        drawCalls.clear();
-        drawCalls.reserve(_drawCallInfos.size());
-        copy_if(_drawCallInfos.begin(), _drawCallInfos.end(), std::back_inserter(drawCalls), _settings.Filter);
+        filteredSortedDrawCalls.clear();
+        filteredSortedDrawCalls.reserve(_drawCallInfos.size());
+        copy_if(_drawCallInfos.begin(), _drawCallInfos.end(), std::back_inserter(filteredSortedDrawCalls), _settings.Filter);
 
         // sort draw calls
         if (_settings.Sorting != DrawCallInfo::Sorting::NO_SORTING)
-            std::sort(drawCalls.begin(), drawCalls.end(), DrawCallInfo::Comparer {_settings.Sorting, lastCameraPosition});
+            std::sort(filteredSortedDrawCalls.begin(), filteredSortedDrawCalls.end(), DrawCallInfo::Comparer {_settings.Sorting, lastCameraPosition});
 
-        for (const auto &info: drawCalls)
+        for (const auto &drawCall: filteredSortedDrawCalls)
         {
-            auto vao = info.Geometry->GetVertexArrayObject();
-            GraphicsBackend::BindVertexArrayObject(vao);
-
-            FillMatrices(info);
-
-            if (info.IsInstanced())
-                SetInstancingEnabled(true);
-
-            auto primitiveType = info.Geometry->GetPrimitiveType();
-            auto elementsCount = info.Geometry->GetElementsCount();
-            auto hasIndexes = info.Geometry->HasIndexes();
-            const auto &shader = info.Material->GetShader();
-
+            const auto &shader = drawCall.Material->GetShader();
             for (int i = 0; i < shader->PassesCount(); ++i)
             {
                 auto pass = shader->GetPass(i);
-                if (!_settings.TagsMatch(*pass))
-                    continue;
-
-                SetupShaderPass(*pass, info.Material->GetPropertyBlock(), info.Material->GetPerMaterialDataBlock(i));
-
-                if (info.IsInstanced())
+                if (_settings.TagsMatch(*pass))
                 {
-                    auto instanceCount = info.InstanceMatrices.size();
-                    if (hasIndexes)
+                    if (drawCall.IsInstanced())
                     {
-                        GraphicsBackend::DrawElementsInstanced(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr, instanceCount);
+                        DrawInstanced(*drawCall.Geometry, *drawCall.Material, drawCall.InstanceMatrices, i);
                     }
                     else
                     {
-                        GraphicsBackend::DrawArraysInstanced(primitiveType, 0, elementsCount, instanceCount);
-                    }
-                }
-                else
-                {
-                    if (hasIndexes)
-                    {
-                        GraphicsBackend::DrawElements(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr);
-                    }
-                    else
-                    {
-                        GraphicsBackend::DrawArrays(primitiveType, 0, elementsCount);
+                        Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrix, i);
                     }
                 }
             }
-
-            if (info.IsInstanced())
-                SetInstancingEnabled(false);
         }
+    }
+
+    void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex)
+    {
+        SetupGeometry(geometry);
+        SetupMatrices(modelMatrix);
+        SetupShaderPass(shaderPassIndex, material);
+
+        auto primitiveType = geometry.GetPrimitiveType();
+        auto elementsCount = geometry.GetElementsCount();
+
+        if (geometry.HasIndexes())
+        {
+            GraphicsBackend::DrawElements(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr);
+        }
+        else
+        {
+            GraphicsBackend::DrawArrays(primitiveType, 0, elementsCount);
+        }
+    }
+
+    void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex)
+    {
+        SetupGeometry(geometry);
+        SetupMatrices(modelMatrices);
+        SetupInstancing(true);
+        SetupShaderPass(shaderPassIndex, material);
+
+        auto primitiveType = geometry.GetPrimitiveType();
+        auto elementsCount = geometry.GetElementsCount();
+        auto instanceCount = modelMatrices.size();
+
+        if (geometry.HasIndexes())
+        {
+            GraphicsBackend::DrawElementsInstanced(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr, instanceCount);
+        }
+        else
+        {
+            GraphicsBackend::DrawArraysInstanced(primitiveType, 0, elementsCount, instanceCount);
+        }
+
+        SetupInstancing(false);
     }
 
     void Reshape(int _width, int _height)

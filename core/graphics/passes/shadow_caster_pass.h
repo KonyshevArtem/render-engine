@@ -38,7 +38,7 @@ private:
 
     ShadowsData m_ShadowsData{};
 
-    static void Render(const std::vector<Renderer *> &renderers);
+    static void Render(const std::vector<std::shared_ptr<Renderer>> &renderers);
 };
 
 #endif //OPENGL_STUDY_SHADOW_CASTER_PASS_H

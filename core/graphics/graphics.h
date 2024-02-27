@@ -11,7 +11,6 @@
 
 struct Vector4;
 struct Matrix4x4;
-struct DrawCallInfo;
 struct RenderSettings;
 class Renderer;
 class Texture;
@@ -27,8 +26,7 @@ namespace Graphics
     void                      Init();
     void                      Shutdown();
     void                      Render();
-    std::vector<DrawCallInfo> DoCulling(const std::vector<Renderer *> &_renderers);
-    void                      Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings);
+    void                      DrawRenderers(const std::vector<std::shared_ptr<Renderer>> &renderers, const RenderSettings &settings);
     void                      Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex);
     void                      DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex);
     void                      Reshape(int _width, int _height);

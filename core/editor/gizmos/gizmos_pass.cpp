@@ -5,7 +5,7 @@
 #include "gizmos.h"
 #include "graphics/context.h"
 #include "graphics/graphics.h"
-#include "graphics/render_settings.h"
+#include "graphics/render_settings/render_settings.h"
 #include "mesh/mesh.h"
 #include "renderer/renderer.h"
 #include "texture_2d/texture_2d.h"

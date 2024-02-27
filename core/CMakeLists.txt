@@ -59,10 +59,9 @@ add_library(
 	editor/hierarchy.cpp
 	property_block/property_block.h
 	property_block/property_block.cpp
-	graphics/render_settings.h
-	graphics/render_settings.cpp
+	graphics/render_settings/render_settings.h
+	graphics/render_settings/render_settings.cpp
 	graphics/draw_call_info.h
-	graphics/draw_call_info.cpp
 	point/point.h
 	point/point.cpp 
 	drawable_geometry/drawable_geometry.h
@@ -83,7 +82,11 @@ add_library(
 	graphics/data_structs/per_draw_data.h
 	shader/uniform_info/buffer_info.h
 	graphics_buffer/graphics_buffer_wrapper.h
-	graphics_buffer/graphics_buffer_wrapper.cpp)
+	graphics_buffer/graphics_buffer_wrapper.cpp
+	graphics/render_settings/draw_call_comparer.h
+	graphics/render_settings/draw_call_comparer.cpp
+	graphics/render_settings/draw_call_filter.cpp
+	graphics/render_settings/draw_call_filter.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

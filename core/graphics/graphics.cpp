@@ -9,7 +9,6 @@
 #include "passes/render_pass.h"
 #include "passes/shadow_caster_pass.h"
 #include "passes/skybox_pass.h"
-#include "render_settings.h"
 #include "renderer/renderer.h"
 #include "texture/texture.h"
 #include "graphics_buffer/graphics_buffer.h"
@@ -27,6 +26,8 @@
 #include "data_structs/lighting_data.h"
 #include "data_structs/per_draw_data.h"
 #include "shader/uniform_info/buffer_info.h"
+#include "render_settings/draw_call_comparer.h"
+#include "render_settings/draw_call_filter.h"
 
 #include <cassert>
 #include <boost/functional/hash/hash.hpp>
@@ -97,13 +98,13 @@ namespace Graphics
 
     void InitPasses()
     {
-        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::Opaque(), ClearMask::COLOR_DEPTH, "Forward");
-        transparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallInfo::Sorting::BACK_TO_FRONT, DrawCallInfo::Filter::Transparent(), ClearMask::NONE, "Forward");
+        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque(), ClearMask::COLOR_DEPTH, "Forward");
+        transparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent(), ClearMask::NONE, "Forward");
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
 
 #if OPENGL_STUDY_EDITOR
-        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallInfo::Sorting::FRONT_TO_BACK, DrawCallInfo::Filter::All(), ClearMask::NONE, "Fallback");
+        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::All(), ClearMask::NONE, "Fallback");
         gizmosPass         = std::make_unique<GizmosPass>();
 #endif
     }
@@ -184,60 +185,52 @@ namespace Graphics
         lightingDataBlock->SetData(&lightingData, 0, sizeof(lightingData));
     }
 
-    std::vector<DrawCallInfo> DoCulling(const std::vector<Renderer *> &_renderers)
-    {
-        // TODO: implement culling
-        std::vector<DrawCallInfo> info(_renderers.size());
-        for (int i = 0; i < _renderers.size(); ++i)
-        {
-            info[i] = {_renderers[i]->GetGeometry(),
-                       _renderers[i]->GetMaterial(),
-                       _renderers[i]->GetModelMatrix(),
-                       _renderers[i]->GetAABB()};
-        }
-        return info;
-    }
-
     std::size_t GetDrawCallInstancingHash(const DrawCallInfo &drawCallInfo)
     {
         std::size_t seed = 0;
-        boost::hash_combine(seed, drawCallInfo.Material.get());
-        boost::hash_combine(seed, drawCallInfo.Geometry.get());
+        boost::hash_combine(seed, drawCallInfo.Material);
+        boost::hash_combine(seed, drawCallInfo.Geometry);
         return seed;
     }
 
-    void BatchDrawCalls(std::vector<DrawCallInfo> &drawCalls)
+    void BatchDrawCalls(std::vector<DrawCallInfo> &drawCalls, std::vector<std::vector<Matrix4x4>> &instancesMatrices)
     {
         static std::unordered_map<std::size_t, int> instancingMap;
 
         instancingMap.clear();
+        instancesMatrices.clear();
+
         for (int i = 0; i < drawCalls.size(); ++i)
         {
-            auto &info = drawCalls[i];
-            if (!info.Material->GetShader()->SupportInstancing())
+            auto &drawCall = drawCalls[i];
+            if (!drawCall.Material->GetShader()->SupportInstancing())
             {
                 continue;
             }
 
-            auto hash = GetDrawCallInstancingHash(info);
+            auto hash = GetDrawCallInstancingHash(drawCall);
             auto it = instancingMap.find(hash);
 
             if (it == instancingMap.end())
             {
-                info.InstanceMatrices.push_back(info.ModelMatrix);
+                int instancesDataIndex = instancesMatrices.size();
+                instancesMatrices.push_back({drawCall.ModelMatrix});
+                drawCall.InstancesDataIndex = instancesDataIndex;
+                drawCall.Instanced = true;
                 instancingMap[hash] = i;
                 continue;
             }
 
-            auto &batchedInfo = drawCalls[it->second];
-            batchedInfo.InstanceMatrices.push_back(info.ModelMatrix);
-            batchedInfo.AABB = batchedInfo.AABB.Combine(info.AABB);
+            auto &instancedDrawCall = drawCalls[it->second];
+            int instancedDataIndex = instancedDrawCall.InstancesDataIndex;
+            instancesMatrices[instancedDataIndex].push_back(drawCall.ModelMatrix);
+            instancedDrawCall.AABB = instancedDrawCall.AABB.Combine(drawCall.AABB);
 
             drawCalls[i] = drawCalls[drawCalls.size() - 1];
             drawCalls.pop_back();
             --i;
 
-            if (batchedInfo.InstanceMatrices.size() >= MAX_INSTANCING_COUNT)
+            if (instancesMatrices[instancedDataIndex].size() >= MAX_INSTANCING_COUNT)
                 instancingMap.erase(it);
         }
     }
@@ -250,8 +243,6 @@ namespace Graphics
         GraphicsBackend::SetClearDepth(1);
 
         Context ctx;
-        ctx.DrawCallInfos = DoCulling(ctx.Renderers);
-        BatchDrawCalls(ctx.DrawCallInfos);
 
         SetLightingData(ctx.AmbientLight, ctx.Lights);
 
@@ -469,18 +460,54 @@ namespace Graphics
         SetPropertyBlock(materialPropertyBlock, shaderPass);
     }
 
-    void Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings)
+    void SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>> &renderers, std::vector<DrawCallInfo> &drawCalls)
+    {
+        drawCalls.clear();
+        drawCalls.reserve(renderers.size());
+
+        for (const auto &renderer : renderers)
+        {
+            if (renderer)
+            {
+                DrawableGeometry *geometry = renderer->GetGeometry().get();
+                Material *material = renderer->GetMaterial().get();
+                if (geometry && material)
+                {
+                    drawCalls.push_back({geometry, material, renderer->GetModelMatrix(), renderer->GetAABB()});
+                }
+            }
+        }
+    }
+
+    void FilterDrawCalls(std::vector<DrawCallInfo> &drawCalls, const DrawCallFilter &filter)
+    {
+        for (int i = 0; i < drawCalls.size(); ++i)
+        {
+            const auto &drawCall = drawCalls[i];
+            if (!filter(drawCall))
+            {
+                drawCalls[i] = drawCalls[drawCalls.size() - 1];
+                drawCalls.pop_back();
+                --i;
+            }
+        }
+    }
+
+    void SortDrawCalls(std::vector<DrawCallInfo> &drawCalls, DrawCallSortMode sortMode)
+    {
+        if (sortMode != DrawCallSortMode::NO_SORTING)
+            std::sort(drawCalls.begin(), drawCalls.end(), DrawCallComparer {sortMode, lastCameraPosition});
+    }
+
+    void DrawRenderers(const std::vector<std::shared_ptr<Renderer>> &renderers, const RenderSettings &settings)
     {
         static std::vector<DrawCallInfo> filteredSortedDrawCalls;
+        static std::vector<std::vector<Matrix4x4>> instancedMatrices;
 
-        // filter draw calls
-        filteredSortedDrawCalls.clear();
-        filteredSortedDrawCalls.reserve(_drawCallInfos.size());
-        copy_if(_drawCallInfos.begin(), _drawCallInfos.end(), std::back_inserter(filteredSortedDrawCalls), _settings.Filter);
-
-        // sort draw calls
-        if (_settings.Sorting != DrawCallInfo::Sorting::NO_SORTING)
-            std::sort(filteredSortedDrawCalls.begin(), filteredSortedDrawCalls.end(), DrawCallInfo::Comparer {_settings.Sorting, lastCameraPosition});
+        SetupDrawCalls(renderers, filteredSortedDrawCalls);
+        FilterDrawCalls(filteredSortedDrawCalls, settings.Filter);
+        BatchDrawCalls(filteredSortedDrawCalls, instancedMatrices);
+        SortDrawCalls(filteredSortedDrawCalls, settings.Sorting);
 
         for (const auto &drawCall: filteredSortedDrawCalls)
         {
@@ -488,11 +515,11 @@ namespace Graphics
             for (int i = 0; i < shader->PassesCount(); ++i)
             {
                 auto pass = shader->GetPass(i);
-                if (_settings.TagsMatch(*pass))
+                if (settings.TagsMatch(*pass))
                 {
-                    if (drawCall.IsInstanced())
+                    if (drawCall.Instanced)
                     {
-                        DrawInstanced(*drawCall.Geometry, *drawCall.Material, drawCall.InstanceMatrices, i);
+                        DrawInstanced(*drawCall.Geometry, *drawCall.Material, instancedMatrices[drawCall.InstancesDataIndex], i);
                     }
                     else
                     {

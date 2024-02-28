@@ -5,6 +5,7 @@
 #include "drawable_geometry/drawable_geometry.h"
 #include "material/material.h"
 #include "matrix4x4/matrix4x4.h"
+#include "graphics_buffer/graphics_buffer_wrapper.h"
 
 struct DrawCallInfo
 {
@@ -12,6 +13,7 @@ struct DrawCallInfo
     Material *Material;
     Matrix4x4 ModelMatrix;
     Bounds AABB;
+    GraphicsBufferWrapper *InstanceDataBuffer;
     bool CastShadows;
     bool Instanced;
     int InstancesDataIndex;

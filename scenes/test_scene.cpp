@@ -17,6 +17,7 @@
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include <cmath>
 #include <memory>
+#include <random>
 
 #if OPENGL_STUDY_EDITOR
 bool drawGizmos = false;
@@ -175,6 +176,9 @@ void TestScene::Init()
         transparentCube->SetLocalRotation(Quaternion::AngleAxis(30, {0, 1, 0}));
     }
 
+    std::default_random_engine random;
+    std::uniform_real_distribution<float> colorDistribution(0, 1);
+    std::uniform_real_distribution<float> sizeDistribution(0.75f, 1.25f);
     constexpr int spheresCount = 500;
     constexpr int gridSize     = 20;
     for (int i = 0; i < spheresCount; ++i)
@@ -186,6 +190,8 @@ void TestScene::Init()
         sphere->Renderer = std::make_shared<MeshRenderer>(sphere, sphereMesh, sphereMaterial);
         sphere->SetLocalPosition({-40.0f + 80.0f * x / gridSize, -15.0f - 2.5f * y, -40.0f + 80.0f * z / gridSize});
         sphere->Renderer->CastShadows = false;
+        sphere->Renderer->SetVector("_Color", {colorDistribution(random), colorDistribution(random), colorDistribution(random), 1});
+        sphere->Renderer->SetFloat("_Size", sizeDistribution(random));
     }
 
     // init lights

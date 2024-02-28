@@ -40,6 +40,7 @@ namespace Graphics
     bool instancingMatricesSSBO;
 
     std::shared_ptr<GraphicsBuffer> instancingMatricesBuffer;
+    std::shared_ptr<GraphicsBuffer> instancingDataBuffer;
     std::shared_ptr<GraphicsBuffer> lightingDataBlock;
     std::shared_ptr<GraphicsBuffer> cameraDataBlock;
     std::shared_ptr<GraphicsBuffer> shadowsDataBlock;
@@ -113,6 +114,7 @@ namespace Graphics
     {
         auto bindTarget = instancingMatricesSSBO ? BufferBindTarget::SHADER_STORAGE_BUFFER : BufferBindTarget::ARRAY_BUFFER;
         instancingMatricesBuffer = std::make_shared<GraphicsBuffer>(bindTarget, sizeof(Matrix4x4) * MAX_INSTANCING_COUNT * 2, BufferUsageHint::DYNAMIC_DRAW);
+        instancingDataBuffer = std::make_shared<GraphicsBuffer>(bindTarget, 0, BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void InitSeamlessCubemap()
@@ -193,12 +195,13 @@ namespace Graphics
         return seed;
     }
 
-    void BatchDrawCalls(std::vector<DrawCallInfo> &drawCalls, std::vector<std::vector<Matrix4x4>> &instancesMatrices)
+    void BatchDrawCalls(std::vector<DrawCallInfo> &drawCalls, std::vector<std::vector<Matrix4x4>> &instancesMatrices, std::vector<std::vector<GraphicsBufferWrapper*>> &instancesDataBuffers)
     {
         static std::unordered_map<std::size_t, int> instancingMap;
 
         instancingMap.clear();
         instancesMatrices.clear();
+        instancesDataBuffers.clear();
 
         for (int i = 0; i < drawCalls.size(); ++i)
         {
@@ -215,6 +218,7 @@ namespace Graphics
             {
                 int instancesDataIndex = instancesMatrices.size();
                 instancesMatrices.push_back({drawCall.ModelMatrix});
+                instancesDataBuffers.push_back({drawCall.InstanceDataBuffer});
                 drawCall.InstancesDataIndex = instancesDataIndex;
                 drawCall.Instanced = true;
                 instancingMap[hash] = i;
@@ -224,6 +228,7 @@ namespace Graphics
             auto &instancedDrawCall = drawCalls[it->second];
             int instancedDataIndex = instancedDrawCall.InstancesDataIndex;
             instancesMatrices[instancedDataIndex].push_back(drawCall.ModelMatrix);
+            instancesDataBuffers[instancedDataIndex].push_back(drawCall.InstanceDataBuffer);
             instancedDrawCall.AABB = instancedDrawCall.AABB.Combine(drawCall.AABB);
 
             drawCalls[i] = drawCalls[drawCalls.size() - 1];
@@ -433,7 +438,31 @@ namespace Graphics
         }
     }
 
-    void SetupShaderPass(int shaderPassIndex, const Material &material)
+    void SetupPerInstanceData(const std::vector<GraphicsBufferWrapper*> &instancesDataBuffers, int shaderPass)
+    {
+        auto debugGroup = GraphicsBackendDebug::DebugGroup("Setup PerInstanceData");
+
+        int instancesCount = instancesDataBuffers.size();
+        for (int i = 0; i < instancesCount; ++i)
+        {
+            auto bufferWrapper = instancesDataBuffers[i];
+            if (bufferWrapper)
+            {
+                auto &buffer = bufferWrapper->GetBuffer(shaderPass);
+                if (buffer && buffer->GetSize() > 0)
+                {
+                    auto dataSize = buffer->GetSize();
+                    if (instancingDataBuffer->GetSize() < dataSize * instancesCount)
+                    {
+                        instancingDataBuffer->Resize(dataSize * instancesCount);
+                    }
+                    CopyBufferData(buffer, instancingDataBuffer, 0, i * dataSize, dataSize);
+                }
+            }
+        }
+    }
+
+    void SetupShaderPass(int shaderPassIndex, const Material &material, const std::shared_ptr<GraphicsBuffer> &perInstanceDataBuffer)
     {
         const auto &shaderPass = *material.GetShader()->GetPass(shaderPassIndex);
         const auto &perMaterialDataBlock = material.GetPerMaterialDataBlock(shaderPassIndex);
@@ -450,6 +479,7 @@ namespace Graphics
         SetGraphicsBuffer("Shadows", shadowsDataBlock, shaderPass);
         SetGraphicsBuffer("PerDrawData", perDrawDataBlock, shaderPass);
         SetGraphicsBuffer("PerMaterialData", perMaterialDataBlock, shaderPass);
+        SetGraphicsBuffer("PerInstanceData", perInstanceDataBuffer, shaderPass);
         if (instancingMatricesSSBO)
         {
             SetGraphicsBuffer("InstanceMatricesBuffer", instancingMatricesBuffer, shaderPass);
@@ -469,11 +499,11 @@ namespace Graphics
         {
             if (renderer)
             {
-                DrawableGeometry *geometry = renderer->GetGeometry().get();
-                Material *material = renderer->GetMaterial().get();
+                auto geometry = renderer->GetGeometry().get();
+                auto material = renderer->GetMaterial().get();
                 if (geometry && material)
                 {
-                    drawCalls.push_back({geometry, material, renderer->GetModelMatrix(), renderer->GetAABB()});
+                    drawCalls.push_back({geometry, material, renderer->GetModelMatrix(), renderer->GetAABB(), renderer->GetInstanceDataBufferWrapper().get()});
                 }
             }
         }
@@ -503,10 +533,11 @@ namespace Graphics
     {
         static std::vector<DrawCallInfo> filteredSortedDrawCalls;
         static std::vector<std::vector<Matrix4x4>> instancedMatrices;
+        static std::vector<std::vector<GraphicsBufferWrapper*>> instancedDataBuffers;
 
         SetupDrawCalls(renderers, filteredSortedDrawCalls);
         FilterDrawCalls(filteredSortedDrawCalls, settings.Filter);
-        BatchDrawCalls(filteredSortedDrawCalls, instancedMatrices);
+        BatchDrawCalls(filteredSortedDrawCalls, instancedMatrices, instancedDataBuffers);
         SortDrawCalls(filteredSortedDrawCalls, settings.Sorting);
 
         for (const auto &drawCall: filteredSortedDrawCalls)
@@ -519,22 +550,24 @@ namespace Graphics
                 {
                     if (drawCall.Instanced)
                     {
-                        DrawInstanced(*drawCall.Geometry, *drawCall.Material, instancedMatrices[drawCall.InstancesDataIndex], i);
+                        SetupPerInstanceData(instancedDataBuffers[drawCall.InstancesDataIndex], i);
+                        DrawInstanced(*drawCall.Geometry, *drawCall.Material, instancedMatrices[drawCall.InstancesDataIndex], i, instancingDataBuffer);
                     }
                     else
                     {
-                        Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrix, i);
+                        auto &instanceDataBuffer = drawCall.InstanceDataBuffer ? drawCall.InstanceDataBuffer->GetBuffer(i) : nullptr;
+                        Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrix, i, instanceDataBuffer);
                     }
                 }
             }
         }
     }
 
-    void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex)
+    void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData)
     {
         SetupGeometry(geometry);
         SetupMatrices(modelMatrix);
-        SetupShaderPass(shaderPassIndex, material);
+        SetupShaderPass(shaderPassIndex, material, perInstanceData);
 
         auto primitiveType = geometry.GetPrimitiveType();
         auto elementsCount = geometry.GetElementsCount();
@@ -549,12 +582,12 @@ namespace Graphics
         }
     }
 
-    void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex)
+    void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData)
     {
         SetupGeometry(geometry);
         SetupMatrices(modelMatrices);
         SetupInstancing(true);
-        SetupShaderPass(shaderPassIndex, material);
+        SetupShaderPass(shaderPassIndex, material, perInstanceData);
 
         auto primitiveType = geometry.GetPrimitiveType();
         auto elementsCount = geometry.GetElementsCount();

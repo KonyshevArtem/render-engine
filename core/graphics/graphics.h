@@ -27,8 +27,8 @@ namespace Graphics
     void                      Shutdown();
     void                      Render();
     void                      DrawRenderers(const std::vector<std::shared_ptr<Renderer>> &renderers, const RenderSettings &settings);
-    void                      Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex);
-    void                      DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex);
+    void                      Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr);
+    void                      DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr);
     void                      Reshape(int _width, int _height);
     const std::string        &GetGlobalShaderDirectives();
     void                      SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix);

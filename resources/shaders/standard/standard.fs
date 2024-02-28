@@ -1,13 +1,3 @@
-in Varyings
-{
-    vec3 PositionWS;
-    vec3 NormalWS;
-#ifdef _NORMAL_MAP
-    vec3 TangentWS;
-#endif
-    vec2 UV;
-} vars;
-
 layout(std140) uniform PerMaterialData
 {
     vec4 _Albedo_ST;
@@ -38,12 +28,16 @@ uniform sampler2D _NormalMap;
 uniform samplerCube _ReflectionCube;
 #endif
 
+#include "../common/per_draw_data.cg"
 #include "../common/camera_data.cg"
 #include "../common/lighting.cg"
+#include "standard_shared.cg"
 
 out vec4 outColor;
 
 void main(){
+    SETUP_INSTANCE_ID(vars)
+
     #ifdef _NORMAL_MAP
     vec3 normalTS = texture(_NormalMap, vars.UV * _NormalMap_ST.zw + _NormalMap_ST.xy).rgb;
     vec3 normalWS = unpackNormal(normalTS, vars.NormalWS, vars.TangentWS, _NormalIntensity);
@@ -61,6 +55,9 @@ void main(){
     #endif
 
     vec4 albedo = texture(_Albedo, vars.UV * _Albedo_ST.zw + _Albedo_ST.xy);
+    #ifdef _PER_INSTANCE_DATA
+    albedo *= GET_PER_INSTANCE_VALUE(_Color);
+    #endif
 
     vec3 finalColor = getLightPBR(vars.PositionWS.xyz, normalWS, albedo.rgb, roughness, metallness);
     outColor = vec4(finalColor, albedo.a);

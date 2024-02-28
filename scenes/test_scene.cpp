@@ -67,7 +67,7 @@ void TestScene::Init()
     auto standardOpaqueShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
     auto standardOpaqueDataMapShader = Shader::Load("resources/shaders/standard/standard.shader", {"_DATA_MAP", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
     auto standardTransparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", {"_RECEIVE_SHADOWS"});
-    auto standardInstancingShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_INSTANCING"});
+    auto standardInstancingShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_PER_INSTANCE_DATA", "_INSTANCING"});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");

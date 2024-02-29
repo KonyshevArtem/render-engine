@@ -2,7 +2,7 @@ layout(location = 0) in vec3 vertPositionOS;
 
 out vec3 CubemapUV;
 
-#include "../common/per_instance_data.cg"
+#include "../common/per_draw_data.cg"
 #include "../common/camera_data.cg"
 
 void main(){

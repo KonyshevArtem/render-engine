@@ -11,8 +11,6 @@ struct UniformInfo
     GraphicsBackendUniformLocation Location{};
     TextureUnit TextureUnit = TextureUnit::TEXTURE0;
     bool IsTexture = false;
-    int BlockIndex = -1;
-    int BlockOffset = -1;
 };
 
 #endif //OPENGL_STUDY_UNIFORM_INFO_H

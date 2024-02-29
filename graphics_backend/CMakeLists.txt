@@ -41,7 +41,10 @@ add_library(GraphicsBackend
         types/graphics_backend_program.h
         types/graphics_backend_shader_object.h
         types/graphics_backend_uniform_location.h
-        types/graphics_backend_framebuffer.h)
+        types/graphics_backend_framebuffer.h
+        enums/program_interface.h
+        enums/program_interface_parameter.h
+        enums/program_resource_parameter.h)
 
 # windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

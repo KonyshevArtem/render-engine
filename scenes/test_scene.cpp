@@ -17,6 +17,7 @@
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include <cmath>
 #include <memory>
+#include <random>
 
 #if OPENGL_STUDY_EDITOR
 bool drawGizmos = false;
@@ -66,7 +67,7 @@ void TestScene::Init()
     auto standardOpaqueShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
     auto standardOpaqueDataMapShader = Shader::Load("resources/shaders/standard/standard.shader", {"_DATA_MAP", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
     auto standardTransparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", {"_RECEIVE_SHADOWS"});
-    auto standardInstancingShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_INSTANCING"});
+    auto standardInstancingShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_PER_INSTANCE_DATA", "_INSTANCING"});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");
@@ -175,6 +176,9 @@ void TestScene::Init()
         transparentCube->SetLocalRotation(Quaternion::AngleAxis(30, {0, 1, 0}));
     }
 
+    std::default_random_engine random;
+    std::uniform_real_distribution<float> colorDistribution(0, 1);
+    std::uniform_real_distribution<float> sizeDistribution(0.75f, 1.25f);
     constexpr int spheresCount = 500;
     constexpr int gridSize     = 20;
     for (int i = 0; i < spheresCount; ++i)
@@ -186,6 +190,8 @@ void TestScene::Init()
         sphere->Renderer = std::make_shared<MeshRenderer>(sphere, sphereMesh, sphereMaterial);
         sphere->SetLocalPosition({-40.0f + 80.0f * x / gridSize, -15.0f - 2.5f * y, -40.0f + 80.0f * z / gridSize});
         sphere->Renderer->CastShadows = false;
+        sphere->Renderer->SetVector("_Color", {colorDistribution(random), colorDistribution(random), colorDistribution(random), 1});
+        sphere->Renderer->SetFloat("_Size", sizeDistribution(random));
     }
 
     // init lights

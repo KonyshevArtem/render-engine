@@ -11,17 +11,27 @@
 #include "types/graphics_backend_uniform_location.h"
 #include "types/graphics_backend_vao.h"
 
+#include <set>
 #include <type_traits>
+#include <cstring>
 
 GraphicsBackendVAO GraphicsBackendVAO::NONE = GraphicsBackendVAO();
 GraphicsBackendBuffer GraphicsBackendBuffer::NONE = GraphicsBackendBuffer();
 GraphicsBackendTexture GraphicsBackendTexture::NONE = GraphicsBackendTexture();
 GraphicsBackendFramebuffer GraphicsBackendFramebuffer::NONE = GraphicsBackendFramebuffer();
 
+std::set<std::string> extensions;
+
 template<typename T>
 constexpr auto Cast(T value) -> typename std::underlying_type<T>::type
 {
     return static_cast<typename std::underlying_type<T>::type>(value);
+}
+
+template<typename T>
+constexpr auto Cast(T *values) -> typename std::underlying_type<T>::type*
+{
+    return reinterpret_cast<typename std::underlying_type<T>::type*>(values);
 }
 
 void GraphicsBackend::Init()
@@ -31,6 +41,14 @@ void GraphicsBackend::Init()
     if (result != GLEW_OK)
         throw;
 #endif
+
+    int extensionsCount;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetIntegerv(GL_NUM_EXTENSIONS, &extensionsCount))
+    for (int i = 0; i < extensionsCount; ++i)
+    {
+        const unsigned char *ext = CHECK_GRAPHICS_BACKEND_FUNC(glGetStringi(GL_EXTENSIONS, i))
+        extensions.insert(std::string(reinterpret_cast<const char *>(ext)));
+    }
 }
 
 void GraphicsBackend::GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr)
@@ -179,6 +197,11 @@ void GraphicsBackend::SetBufferData(BufferBindTarget target, long size, const vo
 void GraphicsBackend::SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glBufferSubData(Cast(target), offset, size, data))
+}
+
+void GraphicsBackend::CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glCopyBufferSubData(Cast(sourceTarget), Cast(destinationTarget), sourceOffset, destinationOffset, size))
 }
 
 void GraphicsBackend::GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr)
@@ -573,6 +596,64 @@ void GraphicsBackend::DrawElements(PrimitiveType primitiveType, int elementsCoun
 void GraphicsBackend::DrawElementsInstanced(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices, int instanceCount)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glDrawElementsInstanced(Cast(primitiveType), elementsCount, Cast(dataType), indices, instanceCount))
+}
+
+void GraphicsBackend::GetProgramInterfaceParameter(GraphicsBackendProgram program, ProgramInterface interface, ProgramInterfaceParameter parameter, int *outValues)
+{
+#ifdef GL_ARB_program_interface_query
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInterfaceiv(program.Program, Cast(interface), Cast(parameter), outValues))
+#else
+    if (outValues)
+    {
+        *outValues = 0;
+    }
+#endif
+}
+
+void GraphicsBackend::GetProgramResourceParameters(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int parametersCount, ProgramResourceParameter *parameters, int bufferSize, int *lengths, int *outValues)
+{
+#ifdef GL_ARB_program_interface_query
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, Cast(interface), resourceIndex, parametersCount, Cast(parameters), bufferSize, lengths, outValues))
+#else
+    if (lengths)
+    {
+        *lengths = 0;
+    }
+    if (outValues)
+    {
+        std::memset(outValues, 0, sizeof(int) * bufferSize);
+    }
+#endif
+}
+
+void GraphicsBackend::GetProgramResourceName(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int bufferSize, int *outLength, char *outName)
+{
+#ifdef GL_ARB_program_interface_query
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceName(program.Program, Cast(interface), resourceIndex, bufferSize, outLength, outName))
+#else
+    if (outLength)
+    {
+        *outLength = 0;
+    }
+    if (outName)
+    {
+        std::memset(outName, 0, bufferSize);
+    }
+#endif
+}
+
+bool GraphicsBackend::SupportShaderStorageBuffer()
+{
+    static bool result = extensions.contains("GL_ARB_shader_storage_buffer_object") &&
+                         extensions.contains("GL_ARB_program_interface_query"); // required to query info about SSBO in shaders
+    return result;
+}
+
+void GraphicsBackend::SetShaderStorageBlockBinding(GraphicsBackendProgram program, int blockIndex, int blockBinding)
+{
+#ifdef GL_ARB_shader_storage_buffer_object
+    CHECK_GRAPHICS_BACKEND_FUNC(glShaderStorageBlockBinding(program.Program, blockIndex, blockBinding))
+#endif
 }
 
 GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackend::GetError()

@@ -28,6 +28,21 @@ namespace ShaderLoader
             "#define GEOMETRY_PROGRAM\n",
             "#define FRAGMENT_PROGRAM\n"};
 
+    std::string GetShaderTypeName(ShaderType shaderType)
+    {
+        switch (shaderType)
+        {
+            case ShaderType::VERTEX_SHADER:
+                return "Vertex";
+            case ShaderType::FRAGMENT_SHADER:
+                return "Fragment";
+            case ShaderType::GEOMETRY_SHADER:
+                return "Geometry";
+            default:
+                return "Unknown";
+        }
+    }
+
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string &keywordDirectives, const std::string &shaderPartDirective)
     {
         constexpr int sourcesCount = 4;
@@ -54,7 +69,7 @@ namespace ShaderLoader
             std::string logMsg(infoLogLength + 1, ' ');
             GraphicsBackend::GetShaderInfoLog(shader, infoLogLength, nullptr, &logMsg[0]);
 
-            throw std::runtime_error("Compilation failed with errors:\n" + logMsg);
+            throw std::runtime_error(GetShaderTypeName(shaderType) + " shader compilation failed with errors:\n" + logMsg);
         }
 
         return shader;

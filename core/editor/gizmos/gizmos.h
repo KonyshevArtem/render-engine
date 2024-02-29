@@ -4,17 +4,18 @@
 #define OPENGL_STUDY_GIZMOS_H
 
 #include <vector>
+#include <memory>
 
 struct Matrix4x4;
-struct DrawCallInfo;
+class DrawableGeometry;
 
 namespace Gizmos
 {
     void DrawWireCube(const Matrix4x4 &_matrix);
 
     void Init();
-    std::vector<DrawCallInfo> &GetDrawInfos();
-    void ClearDrawInfos();
+    const std::vector<std::pair<std::shared_ptr<DrawableGeometry>, Matrix4x4>> &GetGizmosToDraw();
+    void ClearGizmos();
 } // namespace Gizmos
 
 #endif

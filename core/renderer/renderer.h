@@ -6,6 +6,8 @@
 class GameObject;
 class Shader;
 class Material;
+class GraphicsBufferWrapper;
+struct Vector4;
 struct Matrix4x4;
 struct Bounds;
 struct DrawableGeometry;
@@ -21,6 +23,15 @@ public:
     Matrix4x4                 GetModelMatrix() const;
     std::shared_ptr<Material> GetMaterial() const;
 
+    void SetVector(const std::string &name, const Vector4 &value);
+    void SetFloat(const std::string &name, float value);
+    void SetMatrix(const std::string &name, const Matrix4x4 &value);
+
+    inline const std::shared_ptr<GraphicsBufferWrapper> &GetInstanceDataBufferWrapper() const
+    {
+        return m_PerInstanceDataBufferWrapper;
+    }
+
     bool CastShadows = true;
 
 protected:
@@ -29,7 +40,10 @@ protected:
     std::shared_ptr<Material> m_Material;
 
 private:
+    void SetDataToBuffers(const std::string &name, const void *data, uint64_t size);
+
     std::weak_ptr<GameObject> m_GameObject;
+    std::shared_ptr<GraphicsBufferWrapper> m_PerInstanceDataBufferWrapper;
 };
 
 #endif //OPENGL_STUDY_RENDERER_H

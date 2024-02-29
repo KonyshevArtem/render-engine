@@ -3,34 +3,39 @@
 
 #include "graphics_backend.h"
 
-enum class TextureType : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class TextureParameter : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class TextureTarget : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class TextureLevelParameter : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class TextureInternalFormat : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class TexturePixelFormat : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class TextureDataType : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class TextureUnit : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class FramebufferAttachment : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class FramebufferTarget : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class SamplerParameter : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class PrimitiveType : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class BufferBindTarget : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class VertexAttributeDataType : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class BufferUsageHint : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class GraphicsBackendCapability : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class BlendFactor : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class CullFace : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class DepthFunction : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class ShaderType : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class ShaderParameter : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class ProgramParameter : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class UniformDataType : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class ClearMask : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class UniformBlockParameter : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class UniformParameter : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class CullFaceOrientation : GRAPHICS_BACKEND_TYPE_ENUM;
-enum class IndicesDataType : GRAPHICS_BACKEND_TYPE_ENUM;
+#define FORWARD_DECLARE_ENUM(name) enum class name : GRAPHICS_BACKEND_TYPE_ENUM;
+FORWARD_DECLARE_ENUM(TextureType)
+FORWARD_DECLARE_ENUM(TextureParameter)
+FORWARD_DECLARE_ENUM(TextureTarget)
+FORWARD_DECLARE_ENUM(TextureLevelParameter)
+FORWARD_DECLARE_ENUM(TextureInternalFormat)
+FORWARD_DECLARE_ENUM(TexturePixelFormat)
+FORWARD_DECLARE_ENUM(TextureDataType)
+FORWARD_DECLARE_ENUM(TextureUnit)
+FORWARD_DECLARE_ENUM(FramebufferAttachment)
+FORWARD_DECLARE_ENUM(FramebufferTarget)
+FORWARD_DECLARE_ENUM(SamplerParameter)
+FORWARD_DECLARE_ENUM(PrimitiveType)
+FORWARD_DECLARE_ENUM(BufferBindTarget)
+FORWARD_DECLARE_ENUM(VertexAttributeDataType)
+FORWARD_DECLARE_ENUM(BufferUsageHint)
+FORWARD_DECLARE_ENUM(GraphicsBackendCapability)
+FORWARD_DECLARE_ENUM(BlendFactor)
+FORWARD_DECLARE_ENUM(CullFace)
+FORWARD_DECLARE_ENUM(DepthFunction)
+FORWARD_DECLARE_ENUM(ShaderType)
+FORWARD_DECLARE_ENUM(ShaderParameter)
+FORWARD_DECLARE_ENUM(ProgramParameter)
+FORWARD_DECLARE_ENUM(UniformDataType)
+FORWARD_DECLARE_ENUM(ClearMask)
+FORWARD_DECLARE_ENUM(UniformBlockParameter)
+FORWARD_DECLARE_ENUM(UniformParameter)
+FORWARD_DECLARE_ENUM(CullFaceOrientation)
+FORWARD_DECLARE_ENUM(IndicesDataType)
+FORWARD_DECLARE_ENUM(ProgramInterface)
+FORWARD_DECLARE_ENUM(ProgramInterfaceParameter)
+FORWARD_DECLARE_ENUM(ProgramResourceParameter)
+#undef FORWARD_DECLARE_ENUM
 
 class GraphicsBackendTexture;
 class GraphicsBackendSampler;
@@ -96,6 +101,7 @@ public:
 
     static void SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint);
     static void SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data);
+    static void CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size);
 
     static void GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr);
     static void DeleteVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr);
@@ -149,6 +155,13 @@ public:
     static void DrawArraysInstanced(PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount);
     static void DrawElements(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices);
     static void DrawElementsInstanced(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices, int instanceCount);
+
+    static void GetProgramInterfaceParameter(GraphicsBackendProgram program, ProgramInterface interface, ProgramInterfaceParameter parameter, int *outValues);
+    static void GetProgramResourceParameters(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int parametersCount, ProgramResourceParameter *parameters, int bufferSize, int *lengths, int *outValues);
+    static void GetProgramResourceName(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int bufferSize, int *outLength, char *outName);
+
+    static bool SupportShaderStorageBuffer();
+    static void SetShaderStorageBlockBinding(GraphicsBackendProgram program, int blockIndex, int blockBinding);
 
     static GRAPHICS_BACKEND_TYPE_ENUM GetError();
     static const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error);

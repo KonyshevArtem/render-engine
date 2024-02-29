@@ -11,21 +11,21 @@
 
 struct Vector4;
 struct Matrix4x4;
-struct DrawCallInfo;
 struct RenderSettings;
 class Renderer;
 class Texture;
+class GraphicsBuffer;
+class DrawableGeometry;
+class Material;
 
 namespace Graphics
 {
-    constexpr int MAX_SPOT_LIGHT_SOURCES = 3;
-    constexpr int MAX_POINT_LIGHT_SOURCES = 3;
-
     void                      Init();
     void                      Shutdown();
     void                      Render();
-    std::vector<DrawCallInfo> DoCulling(const std::vector<Renderer *> &_renderers);
-    void                      Draw(const std::vector<DrawCallInfo> &_drawCallInfos, const RenderSettings &_settings);
+    void                      DrawRenderers(const std::vector<std::shared_ptr<Renderer>> &renderers, const RenderSettings &settings);
+    void                      Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr);
+    void                      DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr);
     void                      Reshape(int _width, int _height);
     const std::string        &GetGlobalShaderDirectives();
     void                      SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix);
@@ -34,6 +34,7 @@ namespace Graphics
     void                      SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, int colorLevel, int colorLayer,
                                                const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer);
     void                      SetViewport(const Vector4& viewport);
+    void                      CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size);
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture);
 

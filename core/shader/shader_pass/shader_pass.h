@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 struct UniformInfo;
-struct UniformBlockInfo;
+class BufferInfo;
 
 class ShaderPass
 {
@@ -50,9 +50,9 @@ public:
         return m_Uniforms;
     }
 
-    inline const std::unordered_map<std::string, UniformBlockInfo> &GetUniformBlocks() const
+    inline const std::unordered_map<std::string, std::shared_ptr<BufferInfo>> &GetBuffers() const
     {
-        return m_UniformBlockBindings;
+        return m_Buffers;
     }
 
     inline const PropertyBlock &GetDefaultValuesBlock() const
@@ -72,7 +72,7 @@ private:
 
     std::unordered_map<std::string, std::string> m_Tags;
     std::unordered_map<std::string, UniformInfo> m_Uniforms;
-    std::unordered_map<std::string, UniformBlockInfo> m_UniformBlockBindings;
+    std::unordered_map<std::string, std::shared_ptr<BufferInfo>> m_Buffers;
 };
 
 

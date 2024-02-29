@@ -1,7 +1,8 @@
 #include "shadow_caster_pass.h"
+#include "graphics/graphics.h"
 #include "graphics/context.h"
-#include "uniform_block/uniform_block.h"
-#include "graphics/render_settings.h"
+#include "graphics_buffer/graphics_buffer.h"
+#include "graphics/render_settings/render_settings.h"
 #include "light/light.h"
 #include "renderer/renderer.h"
 #include "texture_2d/texture_2d.h"
@@ -12,11 +13,11 @@
 
 #include <utility>
 
-ShadowCasterPass::ShadowCasterPass(std::shared_ptr<UniformBlock> shadowsUniformBlock) :
+ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsUniformBlock) :
     m_ShadowsUniformBlock(std::move(shadowsUniformBlock)),
-    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SPOT_LIGHT_SHADOW_MAP_SIZE, Graphics::MAX_SPOT_LIGHT_SOURCES)),
+    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SPOT_LIGHT_SHADOW_MAP_SIZE, GlobalConstants::MaxSpotLightSources)),
     m_DirectionLightShadowMap(Texture2D::CreateShadowMap(DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE)),
-    m_PointLightShadowMap(Texture2DArray::ShadowMapArray(POINT_LIGHT_SHADOW_MAP_FACE_SIZE, Graphics::MAX_POINT_LIGHT_SOURCES * 6))
+    m_PointLightShadowMap(Texture2DArray::ShadowMapArray(POINT_LIGHT_SHADOW_MAP_FACE_SIZE, GlobalConstants::MaxPointLightSources * 6))
 {
     Graphics::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
     Graphics::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
@@ -45,7 +46,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             Matrix4x4::TBN({-1, 0, 0}, {0, 1, 0}, {0, 0, -1}).Invert(), // back
     };
 
-    if (_ctx.ShadowCasters.empty())
+    if (_ctx.ShadowCastersCount == 0)
         return;
 
     auto debugGroup = GraphicsBackendDebug::DebugGroup("Shadow pass");
@@ -67,7 +68,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
             Graphics::SetCameraData(view, proj);
             m_ShadowsData.SpotLightsViewProjMatrices[spotLightsCount] = biasMatrix * proj * view;
-            Render(_ctx.ShadowCasters);
+            Render(_ctx.Renderers);
 
             ++spotLightsCount;
         }
@@ -84,7 +85,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
                 m_ShadowsData.PointLightShadows[pointLightsCount].ViewProjMatrices[i] = biasMatrix * proj * view;
 
                 Graphics::SetCameraData(view, proj);
-                Render(_ctx.ShadowCasters);
+                Render(_ctx.Renderers);
             }
 
             m_ShadowsData.PointLightShadows[pointLightsCount].Position = light->Position.ToVector4(0);
@@ -96,9 +97,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             Graphics::SetViewport({0, 0, DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE});
             Graphics::SetRenderTargets(nullptr, 0, 0, m_DirectionLightShadowMap, 0, 0);
 
-            auto bounds = _ctx.ShadowCasters[0]->GetAABB();
-            for (const auto &renderer: _ctx.ShadowCasters)
-                bounds = bounds.Combine(renderer->GetAABB());
+            auto &bounds = _ctx.ShadowCasterBounds;
 
             auto extentsWorldSpace   = bounds.GetExtents();
             auto maxExtentWorldSpace = std::max({extentsWorldSpace.x, extentsWorldSpace.y, extentsWorldSpace.z});
@@ -115,7 +114,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
             m_ShadowsData.DirectionalLightViewProjMatrix = biasMatrix * projMatrix * viewMatrix;
 
-            Render(_ctx.ShadowCasters);
+            Render(_ctx.Renderers);
         }
     }
 
@@ -124,15 +123,14 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     Graphics::SetRenderTargets(nullptr, 0, 0, nullptr, 0, 0);
 }
 
-void ShadowCasterPass::Render(const std::vector<Renderer *> &_renderers)
+void ShadowCasterPass::Render(const std::vector<std::shared_ptr<Renderer>> &_renderers)
 {
-    static RenderSettings renderSettings {{{"LightMode", "ShadowCaster"}}};
+    static RenderSettings renderSettings {{{"LightMode", "ShadowCaster"}}, DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters()};
 
     auto debugGroup = GraphicsBackendDebug::DebugGroup("Render shadow map");
 
     GraphicsBackend::SetDepthWrite(true);
     GraphicsBackend::Clear(ClearMask::COLOR_DEPTH);
 
-    auto drawCalls = Graphics::DoCulling(_renderers);
-    Graphics::Draw(drawCalls, renderSettings);
+    Graphics::DrawRenderers(_renderers, renderSettings);
 }

@@ -1,8 +1,9 @@
 #ifndef OPENGL_STUDY_RENDER_PASS_H
 #define OPENGL_STUDY_RENDER_PASS_H
 
-#include "graphics/draw_call_info.h"
-#include "graphics/render_settings.h"
+#include "graphics/render_settings/draw_call_comparer.h"
+#include "graphics/render_settings/draw_call_filter.h"
+#include "graphics/render_settings/render_settings.h"
 #include "enums/clear_mask.h"
 
 #include <string>
@@ -12,7 +13,7 @@ struct Context;
 class RenderPass
 {
 public:
-    RenderPass(std::string _name, DrawCallInfo::Sorting _sorting, DrawCallInfo::Filter _filter, ClearMask _clearMask, const std::string &_lightModeTag);
+    RenderPass(std::string _name, DrawCallSortMode _sorting, DrawCallFilter _filter, ClearMask _clearMask, const std::string &_lightModeTag);
     ~RenderPass() = default;
 
     void Execute(const Context &_ctx);

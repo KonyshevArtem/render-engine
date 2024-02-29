@@ -1,46 +1,15 @@
 #include "material.h"
 #include "shader/shader.h"
 #include "texture/texture.h"
-#include "shader/shader_pass/shader_pass.h"
-#include "shader/uniform_info/uniform_block_info.h"
-#include "uniform_block/uniform_block.h"
+#include "graphics_buffer/graphics_buffer_wrapper.h"
+#include "global_constants.h"
 
 #include <utility>
 
 Material::Material(std::shared_ptr<Shader> _shader) :
         m_Shader(std::move(_shader))
 {
-    int passesCount = m_Shader->PassesCount();
-    for (int i = 0; i < passesCount; ++i)
-    {
-        auto pass = m_Shader->GetPass(i);
-        const auto &uniforms = pass->GetUniforms();
-        const auto &uniformBlocks = pass->GetUniformBlocks();
-
-        auto it = uniformBlocks.find("PerMaterialData");
-        if (it != uniformBlocks.end())
-        {
-            const auto &uniformBlockInfo = it->second;
-            auto uniformBlock = std::make_shared<UniformBlock>(uniformBlockInfo.Size, BufferUsageHint::DYNAMIC_DRAW);
-            m_UniformBlocks.push_back(uniformBlock);
-
-            std::unordered_map<std::string, UniformInfo> perMaterialDataUniforms;
-            for (const auto &pair: uniforms)
-            {
-                const auto &uniformInfo = pair.second;
-                if (uniformInfo.BlockIndex == uniformBlockInfo.Index)
-                {
-                    perMaterialDataUniforms[pair.first] = uniformInfo;
-                }
-            }
-            m_PerMaterialDataUniforms.push_back(perMaterialDataUniforms);
-        }
-        else
-        {
-            m_UniformBlocks.push_back(nullptr);
-            m_PerMaterialDataUniforms.emplace_back(0);
-        }
-    }
+    m_PerMaterialDataBufferWrapper = std::make_shared<GraphicsBufferWrapper>(m_Shader, GlobalConstants::PerMaterialDataBufferName);
 }
 
 void Material::SetTexture(const std::string &name, std::shared_ptr<Texture> texture)
@@ -85,12 +54,11 @@ void Material::SetDataToUniformBlocks(const std::string &name, const void *data,
     int passesCount = m_Shader->PassesCount();
     for (int i = 0; i < passesCount; ++i)
     {
-        const auto &uniforms = m_PerMaterialDataUniforms[i];
-
-        auto it = uniforms.find(name);
-        if (it != uniforms.end())
-        {
-            m_UniformBlocks[i]->SetData(data, it->second.BlockOffset, size);
-        }
+        m_PerMaterialDataBufferWrapper->TrySetVariable(name, data, size);
     }
+}
+
+std::shared_ptr<GraphicsBuffer> Material::GetPerMaterialDataBlock(int pass) const
+{
+    return m_PerMaterialDataBufferWrapper->GetBuffer(pass);
 }

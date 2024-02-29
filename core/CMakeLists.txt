@@ -21,8 +21,8 @@ add_library(
 	camera/camera.h
 	time/time.cpp
 	time/time.h
-	uniform_block/uniform_block.cpp
-	uniform_block/uniform_block.h
+	graphics_buffer/graphics_buffer.cpp
+	graphics_buffer/graphics_buffer.h
 	graphics/context.cpp
 	graphics/context.h
 	graphics/passes/shadow_caster_pass.cpp
@@ -59,10 +59,9 @@ add_library(
 	editor/hierarchy.cpp
 	property_block/property_block.h
 	property_block/property_block.cpp
-	graphics/render_settings.h
-	graphics/render_settings.cpp
+	graphics/render_settings/render_settings.h
+	graphics/render_settings/render_settings.cpp
 	graphics/draw_call_info.h
-	graphics/draw_call_info.cpp
 	point/point.h
 	point/point.cpp 
 	drawable_geometry/drawable_geometry.h
@@ -80,8 +79,15 @@ add_library(
 	graphics/data_structs/shadows_data.h
 	graphics/data_structs/lighting_data.h
 	graphics/data_structs/camera_data.h
-	graphics/data_structs/per_instance_data.h
-	shader/uniform_info/uniform_block_info.h)
+	graphics/data_structs/per_draw_data.h
+	shader/uniform_info/buffer_info.h
+	graphics_buffer/graphics_buffer_wrapper.h
+	graphics_buffer/graphics_buffer_wrapper.cpp
+	graphics/render_settings/draw_call_comparer.h
+	graphics/render_settings/draw_call_comparer.cpp
+	graphics/render_settings/draw_call_filter.cpp
+	graphics/render_settings/draw_call_filter.h
+	global_constants.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

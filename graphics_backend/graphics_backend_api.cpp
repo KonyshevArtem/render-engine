@@ -13,6 +13,7 @@
 
 #include <set>
 #include <type_traits>
+#include <cstring>
 
 GraphicsBackendVAO GraphicsBackendVAO::NONE = GraphicsBackendVAO();
 GraphicsBackendBuffer GraphicsBackendBuffer::NONE = GraphicsBackendBuffer();
@@ -601,6 +602,11 @@ void GraphicsBackend::GetProgramInterfaceParameter(GraphicsBackendProgram progra
 {
 #ifdef GL_ARB_program_interface_query
     CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInterfaceiv(program.Program, Cast(interface), Cast(parameter), outValues))
+#else
+    if (outValues)
+    {
+        *outValues = 0;
+    }
 #endif
 }
 
@@ -608,6 +614,15 @@ void GraphicsBackend::GetProgramResourceParameters(GraphicsBackendProgram progra
 {
 #ifdef GL_ARB_program_interface_query
     CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, Cast(interface), resourceIndex, parametersCount, Cast(parameters), bufferSize, lengths, outValues))
+#else
+    if (lengths)
+    {
+        *lengths = 0;
+    }
+    if (outValues)
+    {
+        std::memset(outValues, 0, sizeof(int) * bufferSize);
+    }
 #endif
 }
 
@@ -615,6 +630,15 @@ void GraphicsBackend::GetProgramResourceName(GraphicsBackendProgram program, Pro
 {
 #ifdef GL_ARB_program_interface_query
     CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceName(program.Program, Cast(interface), resourceIndex, bufferSize, outLength, outName))
+#else
+    if (outLength)
+    {
+        *outLength = 0;
+    }
+    if (outName)
+    {
+        std::memset(outName, 0, bufferSize);
+    }
 #endif
 }
 

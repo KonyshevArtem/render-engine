@@ -3,10 +3,15 @@
 
 #define BEGIN_PER_INSTANCE_DATA struct PerInstanceDataStruct {
 
-#if defined(_INSTANCING) && INSTANCING_MATRICES_SSBO
+#ifdef _INSTANCING
     int _InstanceID;
 
-    #define END_PER_INSTANCE_DATA               }; layout(std140) readonly buffer PerInstanceData { PerInstanceDataStruct PerInstance[]; };
+    #if SUPPORT_SSBO
+        #define END_PER_INSTANCE_DATA   }; layout(std140) readonly buffer PerInstanceData { PerInstanceDataStruct PerInstance[]; };
+    #else
+        #define END_PER_INSTANCE_DATA   }; layout(std140) uniform PerInstanceData { PerInstanceDataStruct PerInstance[MAX_INSTANCING_COUNT]; };
+    #endif
+
     #define GET_PER_INSTANCE_VALUE(name)        PerInstance[_InstanceID].name
     #define DECLARE_INSTANCE_ID_VARYING         flat int instanceID;
     #define TRANSFER_INSTANCE_ID_VARYING(vars)  vars.instanceID = gl_InstanceID;
@@ -20,7 +25,7 @@
 #endif
 
 #ifdef _INSTANCING
-    #if INSTANCING_MATRICES_SSBO
+    #if SUPPORT_SSBO
         layout(std140) readonly buffer InstanceMatricesBuffer
         {
             mat4 InstanceMatrices[];

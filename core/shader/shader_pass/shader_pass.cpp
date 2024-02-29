@@ -10,6 +10,7 @@
 #include "cubemap/cubemap.h"
 #include "shader/uniform_info/uniform_info.h"
 #include "shader/uniform_info/buffer_info.h"
+#include "global_constants.h"
 
 #include <vector>
 
@@ -88,7 +89,7 @@ void FillDefaultValuesPropertyBlock(const std::unordered_map<std::string, std::s
     }
 }
 
-void FillUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockIndex, std::shared_ptr<BufferInfo> &buffer, std::vector<char> nameBuffer)
+std::unordered_map<std::string, int> GetUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockIndex, std::vector<char> nameBuffer)
 {
     int uniformsCount;
     GraphicsBackend::GetActiveUniformBlockParameter(program, uniformBlockIndex, UniformBlockParameter::ACTIVE_UNIFORMS, &uniformsCount);
@@ -96,6 +97,7 @@ void FillUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockI
     std::vector<int> uniformsIndices(uniformsCount);
     GraphicsBackend::GetActiveUniformBlockParameter(program, uniformBlockIndex, UniformBlockParameter::ACTIVE_UNIFORM_INDICES, &uniformsIndices[0]);
 
+    std::unordered_map<std::string, int> variables;
     for (unsigned int i = 0; i < uniformsCount; ++i)
     {
         int uniformNameLength;
@@ -105,12 +107,16 @@ void FillUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockI
         int uniformOffset;
         GraphicsBackend::GetActiveUniformsParameter(program, 1, reinterpret_cast<unsigned int *>(&uniformsIndices[i]), UniformParameter::OFFSET, &uniformOffset);
 
-        buffer->AddVariable(uniformName, uniformOffset);
+        variables[uniformName] = uniformOffset;
     }
+
+    return variables;
 }
 
 void FillUniformBlocks(GraphicsBackendProgram program, std::unordered_map<std::string, std::shared_ptr<BufferInfo>> &buffers, std::vector<char> &nameBuffer)
 {
+    const static std::string perInstanceStructName = std::string(GlobalConstants::PerInstanceStructName) + "[1]";
+
     int uniformBlocksCount;
     GraphicsBackend::GetProgramParameter(program, ProgramParameter::ACTIVE_UNIFORM_BLOCKS, &uniformBlocksCount);
 
@@ -125,9 +131,23 @@ void FillUniformBlocks(GraphicsBackendProgram program, std::unordered_map<std::s
         int blockSize;
         GraphicsBackend::GetActiveUniformBlockParameter(program, i, UniformBlockParameter::DATA_SIZE, &blockSize);
 
-        auto buffer = std::make_shared<BufferInfo>(BufferInfo::BufferType::UNIFORM, i, blockSize);
-        FillUniformBlockVariables(program, i, buffer, nameBuffer);
-        buffers[uniformBlockName] = std::move(buffer);
+        auto variables = GetUniformBlockVariables(program, i, nameBuffer);
+
+        // special hack for PerInstanceData buffer when SSBO is not supported
+        // replace real block size with array stride so each renderer allocates buffer to store only 1 element
+        // for SSBO this happens by default, when it has an array without size - returned block size is equal to the size of 1 element
+        if (uniformBlockName == GlobalConstants::PerInstanceDataBufferName)
+        {
+            for (const auto &pair : variables)
+            {
+                if (pair.first.find(perInstanceStructName) != std::string::npos)
+                {
+                    blockSize = std::min(blockSize, pair.second);
+                }
+            }
+        }
+
+        buffers[uniformBlockName] = std::make_shared<BufferInfo>(BufferInfo::BufferType::UNIFORM, i, blockSize, variables);
     }
 }
 
@@ -167,7 +187,7 @@ void FillUniforms(GraphicsBackendProgram program, std::unordered_map<std::string
     }
 }
 
-void FillShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboIndex, std::shared_ptr<BufferInfo> &buffer)
+std::unordered_map<std::string, int> GetShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboIndex)
 {
     int variablesCount;
     auto variablesCountParameter = ProgramResourceParameter::NUM_ACTIVE_VARIABLES;
@@ -179,6 +199,8 @@ void FillShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboInd
 
     constexpr int variableParametersCount = 2;
     ProgramResourceParameter variableParameters[variableParametersCount] = {ProgramResourceParameter::NAME_LENGTH, ProgramResourceParameter::OFFSET};
+
+    std::unordered_map<std::string, int> variables;
     for(int i = 0; i < variablesCount; ++i)
     {
         int values[variableParametersCount];
@@ -188,8 +210,10 @@ void FillShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboInd
         GraphicsBackend::GetProgramResourceName(program, ProgramInterface::BUFFER_VARIABLE, variablesIndices[i], nameData.size(), nullptr, &nameData[0]);
         std::string name(nameData.begin(), nameData.end() - 1);
 
-        buffer->AddVariable(name, values[1]);
+        variables[name] = values[1];
     }
+
+    return variables;
 }
 
 void FillShaderStorageBlocks(GraphicsBackendProgram program, std::unordered_map<std::string, std::shared_ptr<BufferInfo>> &buffers, std::vector<char> &nameBuffer)
@@ -209,9 +233,8 @@ void FillShaderStorageBlocks(GraphicsBackendProgram program, std::unordered_map<
         auto blockSizeParameter = ProgramResourceParameter::BUFFER_DATA_SIZE;
         GraphicsBackend::GetProgramResourceParameters(program, ProgramInterface::SHADER_STORAGE_BLOCK, i, 1, &blockSizeParameter, 1, nullptr, &blockSize);
 
-        auto buffer = std::make_shared<BufferInfo>(BufferInfo::BufferType::SHADER_STORAGE, i, blockSize);
-        FillShaderStorageBlockVariables(program, i, buffer);
-        buffers[blockName] = std::move(buffer);
+        auto variables = GetShaderStorageBlockVariables(program, i);
+        buffers[blockName] = std::make_shared<BufferInfo>(BufferInfo::BufferType::SHADER_STORAGE, i, blockSize, variables);
     }
 }
 

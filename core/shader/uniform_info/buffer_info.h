@@ -13,7 +13,7 @@ public:
         SHADER_STORAGE
     };
 
-    BufferInfo(BufferType bufferType, int binding, int size) : m_BufferType(bufferType), m_Binding(binding), m_Size(size) {}
+    BufferInfo(BufferType bufferType, int binding, int size, std::unordered_map<std::string, int> variables) : m_BufferType(bufferType), m_Binding(binding), m_Size(size), m_Variables(std::move(variables)) {}
     ~BufferInfo() = default;
 
     inline BufferType GetBufferType() const
@@ -29,11 +29,6 @@ public:
     inline int GetSize() const
     {
         return m_Size;
-    }
-
-    inline void AddVariable(const std::string &name, int uniformOffset)
-    {
-        m_Variables[name] = uniformOffset;
     }
 
     inline const std::unordered_map<std::string, int> &GetVariables() const

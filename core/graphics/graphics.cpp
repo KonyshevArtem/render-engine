@@ -502,7 +502,8 @@ namespace Graphics
                 auto material = renderer->GetMaterial().get();
                 if (geometry && material)
                 {
-                    drawCalls.push_back({geometry, material, renderer->GetModelMatrix(), renderer->GetAABB(), renderer->GetInstanceDataBufferWrapper().get()});
+                    drawCalls.push_back({geometry, material, renderer->GetModelMatrix(), renderer->GetAABB(),
+                                         renderer->GetInstanceDataBufferWrapper().get(), renderer->CastShadows});
                 }
             }
         }

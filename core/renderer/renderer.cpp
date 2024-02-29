@@ -2,6 +2,7 @@
 #include "gameObject/gameObject.h"
 #include "material/material.h"
 #include "graphics_buffer/graphics_buffer_wrapper.h"
+#include "global_constants.h"
 
 Renderer::Renderer(const std::shared_ptr<GameObject> &_gameObject, const std::shared_ptr<Material> &_material) :
     m_GameObject(_gameObject), m_Material(_material)
@@ -39,6 +40,8 @@ void Renderer::SetMatrix(const std::string &name, const Matrix4x4 &value)
 
 void Renderer::SetDataToBuffers(const std::string &name, const void *data, uint64_t size)
 {
+    const static std::string prefix = std::string(GlobalConstants::PerInstanceStructName) + "[0].";
+
     if (!m_Material)
     {
         return;
@@ -52,8 +55,8 @@ void Renderer::SetDataToBuffers(const std::string &name, const void *data, uint6
 
     if (!m_PerInstanceDataBufferWrapper)
     {
-        m_PerInstanceDataBufferWrapper = std::make_shared<GraphicsBufferWrapper>(shader, "PerInstanceData");
+        m_PerInstanceDataBufferWrapper = std::make_shared<GraphicsBufferWrapper>(shader, GlobalConstants::PerInstanceDataBufferName);
     }
 
-    m_PerInstanceDataBufferWrapper->TrySetVariable("PerInstance[0]." + name, data, size);
+    m_PerInstanceDataBufferWrapper->TrySetVariable(prefix + name, data, size);
 }

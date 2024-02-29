@@ -86,7 +86,8 @@ add_library(
 	graphics/render_settings/draw_call_comparer.h
 	graphics/render_settings/draw_call_comparer.cpp
 	graphics/render_settings/draw_call_filter.cpp
-	graphics/render_settings/draw_call_filter.h)
+	graphics/render_settings/draw_call_filter.h
+	global_constants.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

@@ -1,16 +1,15 @@
 #include "draw_call_filter.h"
 #include "graphics/draw_call_info.h"
-
-static constexpr int TRANSPARENT_RENDER_QUEUE = 3000;
+#include "global_constants.h"
 
 DrawCallFilter DrawCallFilter::Opaque()
 {
-    return DrawCallFilter{[](const DrawCallInfo &drawCall) { return drawCall.Material->GetRenderQueue() < TRANSPARENT_RENDER_QUEUE; }};
+    return DrawCallFilter{[](const DrawCallInfo &drawCall) { return drawCall.Material->GetRenderQueue() < GlobalConstants::TransparentRenderQueue; }};
 }
 
 DrawCallFilter DrawCallFilter::Transparent()
 {
-    return DrawCallFilter{[](const DrawCallInfo &drawCall) { return drawCall.Material->GetRenderQueue() >= TRANSPARENT_RENDER_QUEUE; }};
+    return DrawCallFilter{[](const DrawCallInfo &drawCall) { return drawCall.Material->GetRenderQueue() >= GlobalConstants::TransparentRenderQueue; }};
 }
 
 DrawCallFilter DrawCallFilter::All()

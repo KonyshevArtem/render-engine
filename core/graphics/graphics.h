@@ -20,9 +20,6 @@ class Material;
 
 namespace Graphics
 {
-    constexpr int MAX_SPOT_LIGHT_SOURCES = 3;
-    constexpr int MAX_POINT_LIGHT_SOURCES = 3;
-
     void                      Init();
     void                      Shutdown();
     void                      Render();

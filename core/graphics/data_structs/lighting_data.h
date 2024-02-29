@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_LIGHTING_DATA_H
 #define OPENGL_STUDY_LIGHTING_DATA_H
 
-#include "graphics/graphics.h"
+#include "global_constants.h"
 #include "vector3/vector3.h"
 #include "vector4/vector4.h"
 
@@ -35,8 +35,8 @@ struct LightingData
 
     uint32_t SpotLightsCount = 0;
 
-    PointLightData PointLightsData[Graphics::MAX_POINT_LIGHT_SOURCES]{};
-    SpotLightData SpotLightsData[Graphics::MAX_SPOT_LIGHT_SOURCES]{};
+    PointLightData PointLightsData[GlobalConstants::MaxPointLightSources]{};
+    SpotLightData SpotLightsData[GlobalConstants::MaxSpotLightSources]{};
 };
 
 #endif //OPENGL_STUDY_LIGHTING_DATA_H

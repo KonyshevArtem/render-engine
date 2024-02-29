@@ -1,7 +1,7 @@
 #ifndef OPENGL_STUDY_SHADOWS_DATA_H
 #define OPENGL_STUDY_SHADOWS_DATA_H
 
-#include "graphics/graphics.h"
+#include "global_constants.h"
 #include "vector4/vector4.h"
 #include "matrix4x4/matrix4x4.h"
 
@@ -15,8 +15,8 @@ struct ShadowsData
     };
 
     Matrix4x4 DirectionalLightViewProjMatrix{};
-    Matrix4x4 SpotLightsViewProjMatrices[Graphics::MAX_SPOT_LIGHT_SOURCES]{};
-    PointLightShadowData PointLightShadows[Graphics::MAX_POINT_LIGHT_SOURCES]{};
+    Matrix4x4 SpotLightsViewProjMatrices[GlobalConstants::MaxSpotLightSources]{};
+    PointLightShadowData PointLightShadows[GlobalConstants::MaxPointLightSources]{};
 };
 
 #endif //OPENGL_STUDY_SHADOWS_DATA_H

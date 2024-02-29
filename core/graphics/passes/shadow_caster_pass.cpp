@@ -1,4 +1,5 @@
 #include "shadow_caster_pass.h"
+#include "graphics/graphics.h"
 #include "graphics/context.h"
 #include "graphics_buffer/graphics_buffer.h"
 #include "graphics/render_settings/render_settings.h"
@@ -14,9 +15,9 @@
 
 ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsUniformBlock) :
     m_ShadowsUniformBlock(std::move(shadowsUniformBlock)),
-    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SPOT_LIGHT_SHADOW_MAP_SIZE, Graphics::MAX_SPOT_LIGHT_SOURCES)),
+    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SPOT_LIGHT_SHADOW_MAP_SIZE, GlobalConstants::MaxSpotLightSources)),
     m_DirectionLightShadowMap(Texture2D::CreateShadowMap(DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE)),
-    m_PointLightShadowMap(Texture2DArray::ShadowMapArray(POINT_LIGHT_SHADOW_MAP_FACE_SIZE, Graphics::MAX_POINT_LIGHT_SOURCES * 6))
+    m_PointLightShadowMap(Texture2DArray::ShadowMapArray(POINT_LIGHT_SHADOW_MAP_FACE_SIZE, GlobalConstants::MaxPointLightSources * 6))
 {
     Graphics::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
     Graphics::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);

@@ -2,13 +2,14 @@
 #include "shader/shader.h"
 #include "texture/texture.h"
 #include "graphics_buffer/graphics_buffer_wrapper.h"
+#include "global_constants.h"
 
 #include <utility>
 
 Material::Material(std::shared_ptr<Shader> _shader) :
         m_Shader(std::move(_shader))
 {
-    m_PerMaterialDataBufferWrapper = std::make_shared<GraphicsBufferWrapper>(m_Shader, "PerMaterialData");
+    m_PerMaterialDataBufferWrapper = std::make_shared<GraphicsBufferWrapper>(m_Shader, GlobalConstants::PerMaterialDataBufferName);
 }
 
 void Material::SetTexture(const std::string &name, std::shared_ptr<Texture> texture)

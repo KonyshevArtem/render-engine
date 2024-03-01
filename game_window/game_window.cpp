@@ -1,45 +1,82 @@
 #include "game_window.h"
+#include "graphics_backend_api.h"
+
+#include "imgui.h"
+#include "imgui_impl_glut.h"
+#include "imgui_impl_opengl3.h"
 
 #include <utility>
 #if __has_include("GLUT/glut.h")
 #include <GLUT/glut.h>
-#elif __has_include("GL/glut.h")
-#include <GL/glut.h>
+#elif __has_include("GL/freeglut.h")
+#include <GL/freeglut.h>
 #endif
 
-GameWindow *k_GameWindow = nullptr;
+ResizeHandler s_ResizeHandler;
+RenderHandler s_RenderHandler;
+KeyboardInputHandlerDelegate s_KeyboardInputHandler;
+MouseMoveHandlerDelegate s_MouseMoveHandler;
+
+void ResizeFunction(int width, int height);
+void RenderFunction();
+void KeyboardPressFunction(unsigned char key, int x, int y);
+void KeyboardReleaseFunction(unsigned char key, int x, int y);
+void MouseMoveFunction(int x, int y);
 
 GameWindow::GameWindow(int width,
                        int height,
-                       std::function<void(int, int)> _resize,
-                       std::function<void()> _render,
-                       KeyboardInputHandlerDelegate _keyboardInputHandler,
-                       MouseMoveHandlerDelegate _mouseMoveHandler) :
-        m_Resize(std::move(_resize)),
-        m_Render(std::move(_render)),
-        m_KeyboardInputHandler(std::move(_keyboardInputHandler)),
-        m_MouseMoveHandler(std::move(_mouseMoveHandler))
+                       ResizeHandler resizeHandler,
+                       RenderHandler renderHandler,
+                       KeyboardInputHandlerDelegate keyboardInputHandler,
+                       MouseMoveHandlerDelegate mouseMoveHandler)
 {
+    s_ResizeHandler = std::move(resizeHandler);
+    s_RenderHandler = std::move(renderHandler);
+    s_KeyboardInputHandler = std::move(keyboardInputHandler);
+    s_MouseMoveHandler = std::move(mouseMoveHandler);
+
     unsigned int displayMode = GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH;
-    #ifdef GLUT_3_2_CORE_PROFILE
+#ifdef GLUT_3_2_CORE_PROFILE
     displayMode |= GLUT_3_2_CORE_PROFILE;
-    #endif
+#endif
 
     int argc = 0;
     glutInit(&argc, nullptr);
     glutInitDisplayMode(displayMode);
     glutInitWindowSize(width, height);
+#ifdef GLUT_CORE_PROFILE
+    glutInitContextProfile(GLUT_CORE_PROFILE);
+    glutInitContextVersion(GraphicsBackend::GetMajorVersion(), GraphicsBackend::GetMinorVersion());
+#endif
     glutCreateWindow("GameWindow");
 
-    glutKeyboardFunc(keyPressEvent);
-    glutKeyboardUpFunc(keyReleaseEvent);
-    glutMotionFunc(mouseMoveEvent);
-    glutPassiveMotionFunc(mouseMoveEvent);
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    glutDisplayFunc(paintGL);
-    glutReshapeFunc(resizeGL);
+    ImGui::StyleColorsDark();
+    ImGui_ImplGLUT_Init();
+    ImGui_ImplOpenGL3_Init(GraphicsBackend::GetShadingLanguageDirective().c_str());
+    ImGui_ImplGLUT_InstallFuncs();
 
-    k_GameWindow = this;
+    // call these after installing handles for ImGui to override them
+    // ImGui handles are called inside of custom handlers
+    glutKeyboardFunc(KeyboardPressFunction);
+    glutKeyboardUpFunc(KeyboardReleaseFunction);
+    glutMotionFunc(MouseMoveFunction);
+    glutPassiveMotionFunc(MouseMoveFunction);
+
+    glutDisplayFunc(RenderFunction);
+    glutReshapeFunc(ResizeFunction);
+}
+
+GameWindow::~GameWindow()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGLUT_Shutdown();
+    ImGui::DestroyContext();
 }
 
 void GameWindow::BeginMainLoop()
@@ -47,45 +84,69 @@ void GameWindow::BeginMainLoop()
     glutMainLoop();
 }
 
-void GameWindow::resizeGL(int _width, int _height)
+void ResizeFunction(int width, int height)
 {
-    if (k_GameWindow->m_Resize)
+    ImGui_ImplGLUT_ReshapeFunc(width, height);
+
+    if (s_ResizeHandler)
     {
-        k_GameWindow->m_Resize(_width, _height);
+        s_ResizeHandler(width, height);
     }
 }
 
-void GameWindow::paintGL()
+void RenderFunction()
 {
-    if (k_GameWindow->m_Render)
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGLUT_NewFrame();
+    ImGui::NewFrame();
+
+    if (s_RenderHandler)
     {
-        k_GameWindow->m_Render();
+        s_RenderHandler();
     }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     glutSwapBuffers();
     glutPostRedisplay();
 }
 
-void GameWindow::keyPressEvent(unsigned char key, int x, int y)
+void KeyboardPressFunction(unsigned char key, int x, int y)
 {
-    if (k_GameWindow->m_KeyboardInputHandler)
+    auto &io = ImGui::GetIO();
+    if (io.WantCaptureKeyboard)
     {
-        k_GameWindow->m_KeyboardInputHandler(static_cast<char>(key), true);
+        ImGui_ImplGLUT_KeyboardFunc(key, x, y);
+    }
+    else if (s_KeyboardInputHandler)
+    {
+        s_KeyboardInputHandler(static_cast<char>(key), true);
     }
 }
 
-void GameWindow::keyReleaseEvent(unsigned char key, int x, int y)
+void KeyboardReleaseFunction(unsigned char key, int x, int y)
 {
-    if (k_GameWindow->m_KeyboardInputHandler)
+    auto &io = ImGui::GetIO();
+    if (io.WantCaptureKeyboard)
     {
-        k_GameWindow->m_KeyboardInputHandler(static_cast<char>(key), false);
+        ImGui_ImplGLUT_KeyboardUpFunc(key, x, y);
+    }
+    else if (s_KeyboardInputHandler)
+    {
+        s_KeyboardInputHandler(static_cast<char>(key), false);
     }
 }
 
-void GameWindow::mouseMoveEvent(int x, int y)
+void MouseMoveFunction(int x, int y)
 {
-    if (k_GameWindow->m_MouseMoveHandler)
+    auto &io = ImGui::GetIO();
+    if (io.WantCaptureMouse)
     {
-        k_GameWindow->m_MouseMoveHandler(x, y);
+        ImGui_ImplGLUT_MotionFunc(x, y);
+    }
+    else if (s_MouseMoveHandler)
+    {
+        s_MouseMoveHandler(x, y);
     }
 }

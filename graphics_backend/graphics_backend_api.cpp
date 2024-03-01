@@ -51,6 +51,22 @@ void GraphicsBackend::Init()
     }
 }
 
+int GraphicsBackend::GetMajorVersion()
+{
+    return OPENGL_MAJOR_VERSION;
+}
+
+int GraphicsBackend::GetMinorVersion()
+{
+    return OPENGL_MINOR_VERSION;
+}
+
+const std::string &GraphicsBackend::GetShadingLanguageDirective()
+{
+    static std::string languageDirective = "#version " + std::to_string(GetMajorVersion() * 100 + GetMinorVersion() * 10);
+    return languageDirective;
+}
+
 void GraphicsBackend::GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glGenTextures(texturesCount, reinterpret_cast<GLuint *>(texturesPtr)))

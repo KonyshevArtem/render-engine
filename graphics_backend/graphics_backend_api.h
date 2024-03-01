@@ -3,6 +3,8 @@
 
 #include "graphics_backend.h"
 
+#include <string>
+
 #define FORWARD_DECLARE_ENUM(name) enum class name : GRAPHICS_BACKEND_TYPE_ENUM;
 FORWARD_DECLARE_ENUM(TextureType)
 FORWARD_DECLARE_ENUM(TextureParameter)
@@ -62,6 +64,9 @@ class GraphicsBackend
 {
 public:
     static void Init();
+    static int GetMajorVersion();
+    static int GetMinorVersion();
+    static const std::string &GetShadingLanguageDirective();
 
     static void GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr);
     static void GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr);

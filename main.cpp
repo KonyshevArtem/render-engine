@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 //    editor.show();
 //    #endif
 
-    GameWindow window(1024, 720, Graphics::Reshape, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
+    GameWindow window(1920, 1080, Graphics::Reshape, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
 
     Graphics::Init();
     Time::Init();

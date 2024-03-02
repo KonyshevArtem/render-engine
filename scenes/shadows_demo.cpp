@@ -101,8 +101,5 @@ void ShadowsDemo::Init()
 
 void ShadowsDemo::UpdateInternal()
 {
-    if (Input::GetKeyDown('q'))
-        exit(0);
-
     m_CameraFlyControl->Update();
 }

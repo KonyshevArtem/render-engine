@@ -20,7 +20,6 @@
 #include <random>
 
 #if OPENGL_STUDY_EDITOR
-bool drawGizmos = false;
 int debugBaseMipLevel = 0;
 std::vector<std::shared_ptr<Texture>> textures;
 #endif
@@ -257,9 +256,6 @@ Vector3 TestScene::CalcScale(float _phase)
 
 void TestScene::UpdateInternal()
 {
-    if (Input::GetKeyDown('q'))
-        exit(0);
-
     m_CameraFlyControl->Update();
 
     float phase = fmodf(fmodf(Time::GetElapsedTime(), LOOP_DURATION) / LOOP_DURATION, 1.0f);
@@ -290,22 +286,6 @@ void TestScene::UpdateInternal()
 
 // gizmos and cheats
 #if OPENGL_STUDY_EDITOR
-    if (Input::GetKeyDown('g'))
-        drawGizmos = !drawGizmos;
-
-    if (drawGizmos)
-    {
-        for (auto it = cbegin(); it != cend(); it++)
-        {
-            const auto &go = *it;
-            if (!go || !go->Renderer)
-                continue;
-
-            auto bounds = go->Renderer->GetAABB();
-            Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
-        }
-    }
-
     int baseMipLevel = debugBaseMipLevel;
     if (Input::GetKeyDown('p'))
         ++baseMipLevel;

@@ -263,8 +263,19 @@ namespace Graphics
 #if OPENGL_STUDY_EDITOR
         if (fallbackRenderPass)
             fallbackRenderPass->Execute(ctx);
+
         if (gizmosPass)
+        {
+            for (const auto &renderer : ctx.Renderers)
+            {
+                if (renderer)
+                {
+                    auto bounds = renderer->GetAABB();
+                    Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
+                }
+            }
             gizmosPass->Execute(ctx);
+        }
 
         Gizmos::ClearGizmos();
 #endif

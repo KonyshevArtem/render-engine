@@ -21,9 +21,6 @@ void display()
 
 int main(int argc, char **argv)
 {
-    // init debug first so that errors from initialization of other components will be intercepted
-    Debug::Init();
-
 //    #if OPENGL_STUDY_EDITOR
 //    EditorWindow editor;
 //    editor.resize(1024, 720);

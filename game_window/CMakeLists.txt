@@ -9,7 +9,11 @@ add_library(
         windows/debug_console_window.cpp
         windows/debug_console_window.h
         windows/windows_id_pool.cpp
-        windows/windows_id_pool.h)
+        windows/windows_id_pool.h
+        windows/scene_hierarchy_window.cpp
+        windows/scene_hierarchy_window.h
+        window_manager.cpp
+        window_manager.h)
 
 add_compile_definitions(GL_SILENCE_DEPRECATION)
 target_include_directories(GameWindow PUBLIC .)

@@ -9,8 +9,6 @@ ImVec4 s_LogHoverColor = {0.12f, 0.12f, 0.12f, 1};
 ImVec4 s_LogSelectedColor = {0.15f, 0.15f, 0.15f, 1};
 ImVec4 s_ErrorLogTextColor = {1, 0.1f, 0.1f, 1};
 
-DebugConsoleWindow::_init DebugConsoleWindow::init;
-
 DebugConsoleWindow::DebugConsoleWindow() : BaseWindow(600, 800, "Debug Console", typeid(DebugConsoleWindow).hash_code())
 {
     ++s_WindowsCount;
@@ -94,11 +92,11 @@ void CreateWindowListener(std::string _)
 {
     if (s_WindowsCount == 0)
     {
-        BaseWindow::Create<DebugConsoleWindow>();
+        WindowManager::Create<DebugConsoleWindow>();
     }
 }
 
-DebugConsoleWindow::_init::_init()
+DEFINE_STATIC_CONSTRUCTOR(DebugConsoleWindow)
 {
     Debug::AddListener(-1, CreateWindowListener);
 }

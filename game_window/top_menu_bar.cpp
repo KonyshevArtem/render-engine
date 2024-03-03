@@ -36,7 +36,7 @@ void DrawWindowsMenu()
     {
         if (ImGui::MenuItem("Debug Console"))
         {
-            BaseWindow::Create<DebugConsoleWindow>();
+            WindowManager::Create<DebugConsoleWindow>();
         }
 
         ImGui::EndMenu();

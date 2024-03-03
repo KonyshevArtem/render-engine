@@ -4,13 +4,18 @@
 #include <iostream>
 #include <unordered_map>
 
-std::unordered_map<int, std::function<void(std::string)>> s_Listeners;
+std::unordered_map<int, std::function<void(std::string)>>& GetListeners()
+{
+    static std::unordered_map<int, std::function<void(std::string)>> listeners;
+    return listeners;
+}
 
 void Debug::LogError(const std::string &_string)
 {
     std::cerr << "[ERROR] " << _string << std::endl;
 
-    for (const auto &pair : s_Listeners)
+    auto &listeners = GetListeners();
+    for (const auto &pair : listeners)
     {
         pair.second(_string);
     }
@@ -26,10 +31,10 @@ void Debug::LogErrorFormat(const std::string &_format, std::initializer_list<std
 
 void Debug::AddListener(int listenerId, std::function<void(std::string)> listener)
 {
-    s_Listeners[listenerId] = std::move(listener);
+    GetListeners()[listenerId] = std::move(listener);
 }
 
 void Debug::RemoveListener(int listenerId)
 {
-    s_Listeners.erase(listenerId);
+    GetListeners().erase(listenerId);
 }

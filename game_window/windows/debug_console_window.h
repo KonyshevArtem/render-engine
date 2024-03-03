@@ -2,6 +2,7 @@
 #define OPENGL_STUDY_DEBUG_CONSOLE_WINDOW_H
 
 #include "base_window.h"
+#include "window_manager.h"
 
 #include <vector>
 
@@ -15,11 +16,7 @@ protected:
     void DrawInternal() override;
 
 private:
-    static class _init
-    {
-    public:
-        _init();
-    } init;
+    DECLARE_STATIC_CONSTRUCTOR;
 
     void OnDebugLog(std::string string);
 

@@ -1,7 +1,7 @@
 #include "game_window.h"
 #include "graphics_backend_api.h"
 #include "top_menu_bar.h"
-#include "windows/base_window.h"
+#include "window_manager.h"
 
 #include "imgui.h"
 #include "imgui_impl_glut.h"
@@ -108,7 +108,7 @@ void RenderFunction()
     }
 
     TopMenuBar::Draw();
-    BaseWindow::DrawAllWindows();
+    WindowManager::DrawAllWindows();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

@@ -2,11 +2,11 @@
 
 #include <boost/format.hpp>
 #include <iostream>
-#include <unordered_map>
+#include <map>
 
-std::unordered_map<int, std::function<void(std::string)>>& GetListeners()
+std::map<int, std::function<void(std::string)>>& GetListeners()
 {
-    static std::unordered_map<int, std::function<void(std::string)>> listeners;
+    static std::map<int, std::function<void(std::string)>> listeners;
     return listeners;
 }
 

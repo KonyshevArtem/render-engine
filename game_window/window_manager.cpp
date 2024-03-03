@@ -7,18 +7,17 @@ std::vector<std::shared_ptr<BaseWindow>> s_Windows;
 
 void WindowManager::DrawAllWindows()
 {
-    for (auto it = s_Windows.begin(); it != s_Windows.end();)
+    for (int i = 0; i < s_Windows.size(); ++i)
     {
-        auto window = it->get();
-        window->Draw();
-
+        auto window = s_Windows[i];
         if (window->IsOpened())
         {
-            ++it;
+            window->Draw();
         }
         else
         {
-            it = s_Windows.erase(it);
+            s_Windows.erase(s_Windows.begin() + i);
+            --i;
         }
     }
 }

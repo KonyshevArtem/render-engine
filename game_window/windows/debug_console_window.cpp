@@ -65,6 +65,11 @@ void DebugConsoleWindow::DrawInternal()
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
             {
                 DrawLog(m_Logs[i], i, m_Selected);
+
+                if (i == clipper.DisplayEnd - 1 && m_NewLogAdded)
+                {
+                    ImGui::SetScrollHereY(1.0f);
+                }
             }
         }
     }
@@ -78,6 +83,8 @@ void DebugConsoleWindow::DrawInternal()
         }
     }
     ImGui::EndChild();
+
+    m_NewLogAdded = false;
 }
 
 void DebugConsoleWindow::OnDebugLog(std::string string)
@@ -85,6 +92,7 @@ void DebugConsoleWindow::OnDebugLog(std::string string)
     if (!m_Paused)
     {
         m_Logs.push_back(std::move(string));
+        m_NewLogAdded = true;
     }
 }
 

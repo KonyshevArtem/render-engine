@@ -22,6 +22,7 @@ private:
 
     int m_Selected = -1;
     bool m_Paused = false;
+    bool m_NewLogAdded = false;
     std::vector<std::string> m_Logs;
 };
 

@@ -65,12 +65,12 @@ void DebugConsoleWindow::DrawInternal()
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
             {
                 DrawLog(m_Logs[i], i, m_Selected);
-
-                if (i == clipper.DisplayEnd - 1 && m_NewLogAdded)
-                {
-                    ImGui::SetScrollHereY(1.0f);
-                }
             }
+        }
+
+        if (m_NewLogAdded)
+        {
+            ImGui::SetScrollY(ImGui::GetScrollMaxY() + ImGui::GetItemRectMax().y);
         }
     }
     ImGui::EndChild();

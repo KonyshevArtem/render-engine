@@ -4,13 +4,14 @@
 
 WindowsIdPool s_WindowsIdPool;
 
-BaseWindow::BaseWindow(float width, float height, const std::string &title, size_t typeHashCode) :
+BaseWindow::BaseWindow(float width, float height, const std::string &title, size_t typeHashCode, bool topBar) :
         m_TypeHashCode(typeHashCode),
         m_Id(s_WindowsIdPool.GetID(typeHashCode)),
         m_Title(title + "##" + std::to_string(m_Id)),
         m_IsOpened(true),
         m_InitialWidth(width),
-        m_InitialHeight(height)
+        m_InitialHeight(height),
+        m_TopBar(topBar)
 {
 }
 
@@ -24,7 +25,9 @@ void BaseWindow::Draw()
     if (m_IsOpened)
     {
         ImGui::SetNextWindowSize({m_InitialWidth, m_InitialHeight}, ImGuiCond_FirstUseEver);
-        if (ImGui::Begin(m_Title.c_str(), &m_IsOpened, ImGuiWindowFlags_MenuBar))
+
+        ImGuiWindowFlags_ flags = m_TopBar ? ImGuiWindowFlags_MenuBar : ImGuiWindowFlags_None;
+        if (ImGui::Begin(m_Title.c_str(), &m_IsOpened, flags))
         {
             DrawInternal();
         }

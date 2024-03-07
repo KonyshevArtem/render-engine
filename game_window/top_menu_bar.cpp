@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "editor/gizmos/gizmos.h"
 #include "windows/debug_console_window.h"
+#include "windows/scene_hierarchy_window.h"
 
 void DrawEngineMenu()
 {
@@ -34,6 +35,11 @@ void DrawWindowsMenu()
 {
     if (ImGui::BeginMenu("Windows"))
     {
+        if (ImGui::MenuItem("Scene Hierarchy"))
+        {
+            WindowManager::Create<SceneHierarchyWindow>();
+        }
+
         if (ImGui::MenuItem("Debug Console"))
         {
             WindowManager::Create<DebugConsoleWindow>();

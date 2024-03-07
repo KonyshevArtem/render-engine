@@ -21,7 +21,7 @@ public:
     std::shared_ptr<Renderer>                Renderer;
 
     std::shared_ptr<GameObject> GetParent() const;
-    void                        SetParent(const std::shared_ptr<GameObject> &_gameObject, int _index = -1);
+    void                        SetParent(const std::shared_ptr<GameObject> &newParent, int _index = -1);
 
     // global
     void SetPosition(const Vector3 &_position);

@@ -175,6 +175,8 @@ void TestScene::Init()
         transparentCube->SetLocalRotation(Quaternion::AngleAxis(30, {0, 1, 0}));
     }
 
+    auto spheresParent = GameObject::Create("Spheres Parent");
+
     std::default_random_engine random;
     std::uniform_real_distribution<float> colorDistribution(0, 1);
     std::uniform_real_distribution<float> sizeDistribution(0.75f, 1.25f);
@@ -191,6 +193,8 @@ void TestScene::Init()
         sphere->Renderer->CastShadows = false;
         sphere->Renderer->SetVector("_Color", {colorDistribution(random), colorDistribution(random), colorDistribution(random), 1});
         sphere->Renderer->SetFloat("_Size", sizeDistribution(random));
+
+        sphere->SetParent(spheresParent);
     }
 
     // init lights

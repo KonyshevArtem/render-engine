@@ -8,20 +8,23 @@ std::shared_ptr<GameObject> GameObject::Create(const std::string &_name)
         return nullptr;
 
     auto ptr = std::shared_ptr<GameObject>(new GameObject(_name));
-    Scene::Current->m_GameObjects.push_back(ptr);
+    Scene::Current->GetRootGameObjects().push_back(ptr);
     return ptr;
 }
 
-void RemoveGameObjectFromCollection(GameObject *_go, std::vector<std::shared_ptr<GameObject>> &_collection)
+int RemoveGameObjectFromCollection(GameObject *_go, std::vector<std::shared_ptr<GameObject>> &_collection)
 {
-    for (auto it = _collection.cbegin(); it != _collection.cend(); it++)
+    for (int i = 0; i < _collection.size(); ++i)
     {
-        if (it->get() == _go)
+        auto &gameObject = _collection[i];
+        if (gameObject.get() == _go)
         {
-            _collection.erase(it);
-            return;
+            _collection.erase(_collection.begin() + i);
+            return i;
         }
     }
+
+    return 0;
 }
 
 void GameObject::Destroy()
@@ -30,7 +33,7 @@ void GameObject::Destroy()
     if (!parent && !Scene::Current)
         return;
 
-    auto &collection = parent ? parent->Children : Scene::Current->m_GameObjects;
+    auto &collection = parent ? parent->Children : Scene::Current->GetRootGameObjects();
     RemoveGameObjectFromCollection(this, collection);
 }
 
@@ -44,27 +47,33 @@ std::shared_ptr<GameObject> GameObject::GetParent() const
     return !m_Parent.expired() ? m_Parent.lock() : nullptr;
 }
 
-void GameObject::SetParent(const std::shared_ptr<GameObject> &_gameObject, int _index)
+void GameObject::SetParent(const std::shared_ptr<GameObject> &newParent, int _index)
 {
-    if (_gameObject.get() == this || IsParent(_gameObject))
+    if (newParent.get() == this || IsParent(newParent))
         return;
 
     auto oldParent = GetParent();
-    if (oldParent == _gameObject && _index < 0)
+    if (oldParent == newParent && _index < 0)
         return;
 
     auto thisPtr = shared_from_this(); // make pointer copy before removing gameObject from children
-    auto pos     = GetPosition();
-    auto rot     = GetRotation();
+    auto pos = GetPosition();
+    auto rot = GetRotation();
 
-    auto &oldCollection = oldParent ? oldParent->Children : Scene::Current->m_GameObjects;
-    RemoveGameObjectFromCollection(this, oldCollection);
+    auto &oldCollection = oldParent ? oldParent->Children : Scene::Current->GetRootGameObjects();
+    int oldIndex = RemoveGameObjectFromCollection(this, oldCollection);
+    if (oldParent == newParent && _index > oldIndex)
+    {
+        --_index;
+    }
 
-    m_Parent = _gameObject;
+    m_Parent = newParent;
 
-    auto &newCollection = _gameObject ? _gameObject->Children : Scene::Current->m_GameObjects;
+    auto &newCollection = newParent ? newParent->Children : Scene::Current->GetRootGameObjects();
     if (_index < 0 || _index >= newCollection.size())
+    {
         newCollection.push_back(thisPtr);
+    }
     else
     {
         auto it = newCollection.begin() + _index;

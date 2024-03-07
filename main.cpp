@@ -1,11 +1,9 @@
-#include "debug.h"
 #include "game_window.h"
 #include "graphics/graphics.h"
 #include "input/input.h"
 #include "scenes/test_scene.h"
 #include "scenes/pbr_demo.h"
 #include "scenes/shadows_demo.h"
-//#include "editor_gui/editor_window.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 
 void display()
@@ -21,12 +19,6 @@ void display()
 
 int main(int argc, char **argv)
 {
-//    #if OPENGL_STUDY_EDITOR
-//    EditorWindow editor;
-//    editor.resize(1024, 720);
-//    editor.show();
-//    #endif
-
     GameWindow window(1920, 1080, Graphics::Reshape, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
 
     Graphics::Init();

@@ -14,7 +14,7 @@ public:
     }
 
 protected:
-    BaseWindow(float width, float height, const std::string &title, size_t typeHashCode);
+    BaseWindow(float width, float height, const std::string &title, size_t typeHashCode, bool topBar = true);
     virtual ~BaseWindow();
 
     virtual void DrawInternal() = 0;
@@ -28,6 +28,7 @@ private:
     bool m_IsOpened;
     float m_InitialWidth;
     float m_InitialHeight;
+    bool m_TopBar;
 };
 
 #endif //OPENGL_STUDY_BASE_WINDOW_H

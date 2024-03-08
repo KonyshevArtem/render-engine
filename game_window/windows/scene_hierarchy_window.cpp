@@ -151,7 +151,8 @@ void DrawGameObjectsHierarchy(std::vector<std::shared_ptr<GameObject>> &gameObje
         auto &children = go->Children;
 
         auto flags = GetFlags(selectedGameObjects.contains(go), !children.empty());
-        bool opened = ImGui::TreeNodeEx(go->Name.c_str(), flags);
+        auto treeNodeLabel = go->Name + "###" + std::to_string(go->GetUniqueID());
+        bool opened = ImGui::TreeNodeEx(treeNodeLabel.c_str(), flags);
         s_LastItemY = ImGui::GetCursorPos().y;
 
         HandleSelect(go, selectedGameObjects, selectAll, selectRange);

@@ -49,31 +49,37 @@ public:
         return m_LocalRotation;
     };
 
-
     inline const Vector3 &GetLocalScale() const
     {
         return m_LocalScale;
     };
 
+    inline int GetUniqueID() const
+    {
+        return m_UniqueId;
+    }
+
     // helpers
     bool IsParent(const std::shared_ptr<GameObject> &_child) const;
 
-private:
-    GameObject(const std::string &_name);
     GameObject(const GameObject &) = delete;
-    GameObject(GameObject &&)      = delete;
+    GameObject(GameObject &&) = delete;
 
     GameObject &operator=(const GameObject &) = delete;
     GameObject &operator=(GameObject &&) = delete;
 
+private:
+    explicit GameObject(std::string _name);
+
     std::weak_ptr<GameObject> m_Parent;
-    Vector3                   m_LocalPosition;
-    Quaternion                m_LocalRotation      = Quaternion();
-    Quaternion                m_Rotation           = Quaternion();
-    Vector3                   m_LocalScale         = Vector3::One();
-    Matrix4x4                 m_LocalToWorldMatrix = Matrix4x4::Identity();
-    Matrix4x4                 m_WorldToLocalMatrix = Matrix4x4::Identity();
-    bool                      m_DirtyTransform     = true;
+    Vector3 m_LocalPosition;
+    Quaternion m_LocalRotation = Quaternion();
+    Quaternion m_Rotation = Quaternion();
+    Vector3 m_LocalScale = Vector3::One();
+    Matrix4x4 m_LocalToWorldMatrix = Matrix4x4::Identity();
+    Matrix4x4 m_WorldToLocalMatrix = Matrix4x4::Identity();
+    bool m_DirtyTransform = true;
+    int m_UniqueId = -1;
 
     void InvalidateTransform();
     void ValidateTransform();

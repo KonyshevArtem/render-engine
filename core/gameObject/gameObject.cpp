@@ -37,9 +37,12 @@ void GameObject::Destroy()
     RemoveGameObjectFromCollection(this, collection);
 }
 
-GameObject::GameObject(const std::string &_name) :
-    Name(_name)
+GameObject::GameObject(std::string _name) :
+    Name(std::move(_name))
 {
+    static int uniqueIdCounter = 0;
+
+    m_UniqueId = uniqueIdCounter++;
 }
 
 std::shared_ptr<GameObject> GameObject::GetParent() const

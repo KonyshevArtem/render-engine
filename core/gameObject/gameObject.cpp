@@ -1,6 +1,9 @@
 #include "gameObject.h"
 #include "scene/scene.h"
 #include "vector4/vector4.h"
+#if OPENGL_STUDY_EDITOR
+#include "editor/hierarchy.h"
+#endif
 
 std::shared_ptr<GameObject> GameObject::Create(const std::string &_name)
 {
@@ -32,6 +35,18 @@ void GameObject::Destroy()
     auto parent = GetParent();
     if (!parent && !Scene::Current)
         return;
+
+#if OPENGL_STUDY_EDITOR
+    auto &selectedGameObjects = Hierarchy::GetSelectedGameObjects();
+    for (auto &go : selectedGameObjects)
+    {
+        if (this == go.get())
+        {
+            Hierarchy::GetSelectedGameObjects().erase(go);
+            break;
+        }
+    }
+#endif
 
     auto &collection = parent ? parent->Children : Scene::Current->GetRootGameObjects();
     RemoveGameObjectFromCollection(this, collection);

@@ -19,4 +19,4 @@ add_library(
         imgui/misc/cpp/imgui_stdlib.cpp)
 
 target_link_libraries(ImGui glut)
-target_include_directories(ImGui PUBLIC imgui imgui/backends)
+target_include_directories(ImGui PUBLIC imgui imgui/backends imgui/misc/cpp)

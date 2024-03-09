@@ -81,8 +81,5 @@ void PBRDemo::Init()
 
 void PBRDemo::UpdateInternal()
 {
-    if (Input::GetKeyDown('q'))
-        exit(0);
-
     light->Rotation = Quaternion::AngleAxis(80.0f * Time::GetDeltaTime(), Vector3 {0, 1, 0}) * light->Rotation;
 }

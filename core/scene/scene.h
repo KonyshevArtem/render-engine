@@ -20,17 +20,15 @@ public:
 
     static void Update();
 
-    std::vector<std::shared_ptr<GameObject>>::const_iterator cbegin();
-    std::vector<std::shared_ptr<GameObject>>::const_iterator cend();
+    inline std::vector<std::shared_ptr<GameObject>> &GetRootGameObjects()
+    {
+        return m_GameObjects;
+    }
 
 private:
     std::vector<std::shared_ptr<GameObject>> m_GameObjects;
 
     virtual void UpdateInternal() = 0;
-
-    friend void                        GameObject::SetParent(const std::shared_ptr<GameObject> &, int);
-    friend std::shared_ptr<GameObject> GameObject::Create(const std::string &);
-    friend void                        GameObject::Destroy();
 };
 
 #endif //OPENGL_STUDY_SCENE_H

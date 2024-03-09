@@ -4,17 +4,14 @@
 #define OPENGL_STUDY_HIERARCHY
 
 #include <memory>
-#include <vector>
+#include <unordered_set>
 
 class GameObject;
-class Renderer;
 
 namespace Hierarchy
 {
-    const std::vector<std::shared_ptr<GameObject>> &GetSelectedGameObjects();
-    std::vector<std::shared_ptr<Renderer>>          GetSelectedRenderers();
-    void                                            SetSelectedGameObjects(const std::vector<std::shared_ptr<GameObject>> &_gameObjects);
-}; // namespace Hierarchy
+    std::unordered_set<std::shared_ptr<GameObject>> &GetSelectedGameObjects();
+};
 
 #endif
 

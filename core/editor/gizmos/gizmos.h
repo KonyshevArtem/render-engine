@@ -16,6 +16,9 @@ namespace Gizmos
     void Init();
     const std::vector<std::pair<std::shared_ptr<DrawableGeometry>, Matrix4x4>> &GetGizmosToDraw();
     void ClearGizmos();
+
+    bool IsEnabled();
+    void SetEnabled(bool enabled);
 } // namespace Gizmos
 
 #endif

@@ -13,6 +13,7 @@
 #include "graphics_backend_debug.h"
 #include "enums/clear_mask.h"
 #include "shader/shader.h"
+#include "gameObject/gameObject.h"
 
 void GizmosPass::Execute(Context &_context)
 {
@@ -26,8 +27,8 @@ void GizmosPass::Outline() const
     static std::shared_ptr<Texture2D> outlineTexture  = nullptr;
     static Vector4                    outlineColor {1, 0.73f, 0, 1};
 
-    auto renderers = Hierarchy::GetSelectedRenderers();
-    if (renderers.empty())
+    auto selectedGameObjects = Hierarchy::GetSelectedGameObjects();
+    if (selectedGameObjects.empty())
         return;
 
     auto debugGroup = GraphicsBackendDebug::DebugGroup("Selected outline pass");
@@ -40,14 +41,27 @@ void GizmosPass::Outline() const
 
         GraphicsBackend::Clear(ClearMask::COLOR_DEPTH);
 
-        for (const auto &renderer: renderers)
+        for (const auto &go: selectedGameObjects)
         {
+            if (!go || !go->Renderer)
+            {
+                continue;
+            }
+
+            const auto &renderer = go->Renderer;
             const auto &geometry = renderer->GetGeometry();
             const auto &material = renderer->GetMaterial();
 
             if (geometry && material)
             {
-                Graphics::Draw(*geometry, *material, renderer->GetModelMatrix(), 0);
+                if (material->GetShader()->SupportInstancing())
+                {
+                    Graphics::DrawInstanced(*geometry,*material, {renderer->GetModelMatrix()}, 0);
+                }
+                else
+                {
+                    Graphics::Draw(*geometry, *material, renderer->GetModelMatrix(), 0);
+                }
             }
         }
 

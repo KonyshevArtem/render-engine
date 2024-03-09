@@ -2,26 +2,23 @@
 
 #include <boost/format.hpp>
 #include <iostream>
+#include <map>
 
-#if __has_include("Windows.h")
-#include <Windows.h>
-#define WINDOWS_COUT_CONSOLE
-#endif
-
-void Debug::Init()
+std::map<int, std::function<void(std::string)>> *GetListeners()
 {
-#ifdef WINDOWS_COUT_CONSOLE
-    AllocConsole();
-    SetConsoleCP(CP_UTF8);
-    SetConsoleOutputCP(CP_UTF8);
-    auto *cout = freopen("CONOUT$", "w", stdout);
-    auto *cerr = freopen("CONOUT$", "w", stderr);
-#endif
+    static auto *listeners = new std::map<int, std::function<void(std::string)>>();
+    return listeners;
 }
 
 void Debug::LogError(const std::string &_string)
 {
     std::cerr << "[ERROR] " << _string << std::endl;
+
+    auto &listeners = *GetListeners();
+    for (const auto &pair : listeners)
+    {
+        pair.second(_string);
+    }
 }
 
 void Debug::LogErrorFormat(const std::string &_format, std::initializer_list<std::string> _values)
@@ -30,4 +27,18 @@ void Debug::LogErrorFormat(const std::string &_format, std::initializer_list<std
     for (const auto &v: _values)
         format = format % v;
     LogError(format.str());
+}
+
+void Debug::AddListener(int listenerId, std::function<void(std::string)> listener)
+{
+    (*GetListeners())[listenerId] = std::move(listener);
+}
+
+void Debug::RemoveListener(int listenerId)
+{
+    auto listeners = GetListeners();
+    if (listeners)
+    {
+        (*listeners).erase(listenerId);
+    }
 }

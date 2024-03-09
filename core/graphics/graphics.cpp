@@ -263,8 +263,19 @@ namespace Graphics
 #if OPENGL_STUDY_EDITOR
         if (fallbackRenderPass)
             fallbackRenderPass->Execute(ctx);
+
         if (gizmosPass)
+        {
+            for (const auto &renderer : ctx.Renderers)
+            {
+                if (renderer)
+                {
+                    auto bounds = renderer->GetAABB();
+                    Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
+                }
+            }
             gizmosPass->Execute(ctx);
+        }
 
         Gizmos::ClearGizmos();
 #endif
@@ -637,10 +648,8 @@ namespace Graphics
 
     const std::string &GetGlobalShaderDirectives()
     {
-        static constexpr int GLSL_VERSION = OPENGL_MAJOR_VERSION * 100 + OPENGL_MINOR_VERSION * 10;
-
         // clang-format off
-        static std::string globalShaderDirectives = "#version " + std::to_string(GLSL_VERSION) + "\n"
+        static std::string globalShaderDirectives = GraphicsBackend::GetShadingLanguageDirective() + "\n"
                                                     "#define MAX_POINT_LIGHT_SOURCES " + std::to_string(GlobalConstants::MaxPointLightSources) + "\n"
                                                     "#define MAX_SPOT_LIGHT_SOURCES " + std::to_string(GlobalConstants::MaxSpotLightSources) + "\n"
                                                     "#define MAX_INSTANCING_COUNT " + std::to_string(GlobalConstants::MaxInstancingCount) + "\n"

@@ -5,12 +5,16 @@
 #include "matrix4x4/matrix4x4.h"
 #include "lines/lines.h"
 
+bool m_IsEnabled;
 std::shared_ptr<Lines> m_WireCubePrimitive;
 std::vector<std::pair<std::shared_ptr<DrawableGeometry>, Matrix4x4>> m_GizmosToDraw;
 
 void Gizmos::DrawWireCube(const Matrix4x4 &_matrix)
 {
-    m_GizmosToDraw.emplace_back(m_WireCubePrimitive, _matrix);
+    if (m_IsEnabled)
+    {
+        m_GizmosToDraw.emplace_back(m_WireCubePrimitive, _matrix);
+    }
 }
 
 void Gizmos::Init()
@@ -45,6 +49,16 @@ const std::vector<std::pair<std::shared_ptr<DrawableGeometry>, Matrix4x4>> &Gizm
 void Gizmos::ClearGizmos()
 {
     m_GizmosToDraw.clear();
+}
+
+bool Gizmos::IsEnabled()
+{
+    return m_IsEnabled;
+}
+
+void Gizmos::SetEnabled(bool enabled)
+{
+    m_IsEnabled = enabled;
 }
 
 #endif

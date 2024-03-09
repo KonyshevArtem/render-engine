@@ -17,8 +17,9 @@ Context::Context()
     ProjectionMatrix = Camera::Current->GetProjectionMatrix();
     ShadowDistance   = Camera::Current->GetShadowDistance();
 
-    for (auto it = Scene::Current->cbegin(); it != Scene::Current->cend(); it++)
-        CollectRenderers(*it);
+    auto &gameObjects = Scene::Current->GetRootGameObjects();
+    for (auto &go : gameObjects)
+        CollectRenderers(go);
 
     for (const auto &light: scene->Lights)
     {

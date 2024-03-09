@@ -8,7 +8,6 @@ const char *s_DragPayloadName = "DragAndDropPayload";
 constexpr ImGuiTreeNodeFlags s_BaseFlags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow |
                                            ImGuiTreeNodeFlags_SpanFullWidth;
 
-float s_LastItemY;
 bool s_IsSelectingRange;
 std::shared_ptr<GameObject> s_SelectingRangeTarget;
 std::vector<std::weak_ptr<GameObject>> s_SelectedGameObjectsCopy;
@@ -136,17 +135,15 @@ void HandleDrop(const std::shared_ptr<GameObject> &newParent, int reparentIndex 
     }
 }
 
-void HandleFreeDrop()
+void HandleFreeDrop(int index)
 {
-    auto max = ImGui::GetContentRegionMax();
-    auto size = ImVec2{max.x, max.y - s_LastItemY};
+    auto size = ImGui::GetContentRegionAvail();
 
     if (size.x > 0 && size.y > 0)
     {
-        ImGui::SetCursorPos({0, s_LastItemY});
         ImGui::InvisibleButton("Free Drop", size);
 
-        HandleDrop(nullptr);
+        HandleDrop(nullptr, index);
     }
 }
 
@@ -159,11 +156,13 @@ bool SceneHierarchyWindow::DrawRenameInput(std::shared_ptr<GameObject> &go)
         return false;
     }
 
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {0, 0});
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
     if (ImGui::InputText("###RenameInput", &renameBuffer, ImGuiInputTextFlags_EnterReturnsTrue))
     {
         go->Name = renameBuffer;
     }
+    ImGui::PopStyleVar();
 
     if (m_RenamingNeedsFocus)
     {
@@ -210,65 +209,75 @@ void DrawInBetweenDropTarget()
     ImGui::InvisibleButton("In-between drop", {ImGui::GetContentRegionMax().x, 3});
 }
 
-void SceneHierarchyWindow::DrawGameObjectsHierarchy(std::vector<std::shared_ptr<GameObject>> &gameObjects, std::unordered_set<std::shared_ptr<GameObject>> &selectedGameObjects,
-                                                    bool selectAll, bool selectRange, int startIndex, int endIndex)
+void ChangeIndent(bool indent, int depth)
+{
+    for (int j = 0; j < depth; ++j)
+    {
+        if (indent)
+        {
+            ImGui::Indent();
+        }
+        else
+        {
+            ImGui::Unindent();
+        }
+    }
+}
+
+void SceneHierarchyWindow::DrawGameObjectsHierarchy(std::unordered_set<std::shared_ptr<GameObject>> &selectedGameObjects, bool selectAll, bool selectRange, int startIndex, int endIndex)
 {
     for (int i = startIndex; i < endIndex; ++i)
     {
-        auto &go = gameObjects[i];
+        auto &entry = m_LinearHierarchy[i];
+        if (entry.GameObject.expired())
+        {
+            continue;
+        }
+
+        auto go = entry.GameObject.lock();
         auto &children = go->Children;
+
+        DrawInBetweenDropTarget();
+        HandleDrop(go->GetParent(), entry.LocalIndex);
 
         bool isRenaming = DrawRenameInput(go);
 
         auto flags = GetFlags(selectedGameObjects.contains(go), !children.empty());
         auto label = GetLabel(go, isRenaming);
 
+        ChangeIndent(true, entry.Depth);
         bool opened = ImGui::TreeNodeEx(label.c_str(), flags);
-        s_LastItemY = ImGui::GetCursorPos().y;
+        ChangeIndent(false, entry.Depth);
 
         DrawContextMenu(go, selectedGameObjects);
         HandleSelect(go, selectedGameObjects, selectAll, selectRange);
         HandleDrag(go, selectedGameObjects);
-        HandleDrop(go);
+        HandleDrop(go, children.size());
 
+        m_GameObjectsExpandedMap[go->GetUniqueID()] = opened && !children.empty();
         if (opened)
         {
-            if (!children.empty())
-            {
-                DrawGameObjectsHierarchy(children, selectedGameObjects, selectAll, selectRange);
-            }
-
             ImGui::TreePop();
         }
-
-        DrawInBetweenDropTarget();
-        HandleDrop(go->GetParent(), i + 1);
     }
 }
 
-void SceneHierarchyWindow::DrawGameObjectsHierarchy(std::vector<std::shared_ptr<GameObject>> &gameObjects, std::unordered_set<std::shared_ptr<GameObject>> &selectedGameObjects,
-                                                    bool selectAll, bool selectRange)
+void SceneHierarchyWindow::DrawGameObjectsHierarchy(std::unordered_set<std::shared_ptr<GameObject>> &selectedGameObjects, bool selectAll, bool selectRange)
 {
     bool traverseAll = selectAll || selectRange;
 
-    if (!gameObjects.empty())
-    {
-        DrawInBetweenDropTarget();
-        HandleDrop(gameObjects[0]->GetParent(), 0);
-    }
-
     if (traverseAll)
     {
-        DrawGameObjectsHierarchy(gameObjects, selectedGameObjects, selectAll, selectRange, 0, gameObjects.size());
+        DrawGameObjectsHierarchy(selectedGameObjects, selectAll, selectRange, 0, m_LinearHierarchy.size());
     }
     else
     {
         ImGuiListClipper clipper;
-        clipper.Begin(gameObjects.size());
+        clipper.Begin(m_LinearHierarchy.size());
 
         while (clipper.Step())
         {
-            DrawGameObjectsHierarchy(gameObjects, selectedGameObjects, selectAll, selectRange, clipper.DisplayStart, clipper.DisplayEnd);
+            DrawGameObjectsHierarchy(selectedGameObjects, selectAll, selectRange, clipper.DisplayStart, clipper.DisplayEnd);
         }
     }
 }
@@ -345,17 +354,35 @@ void SceneHierarchyWindow::Reset()
     }
 }
 
+void SceneHierarchyWindow::BuildLinearHierarchy(std::vector<std::shared_ptr<GameObject>> &gameObjects, int depth)
+{
+    for (int i = 0; i < gameObjects.size(); ++i)
+    {
+        auto &go = gameObjects[i];
+        m_LinearHierarchy.push_back({go, i, depth});
+
+        if (m_GameObjectsExpandedMap[go->GetUniqueID()])
+        {
+            BuildLinearHierarchy(go->Children, depth + 1);
+        }
+    }
+}
+
 void SceneHierarchyWindow::DrawInternal()
 {
     auto &selectedGameObjects = Hierarchy::GetSelectedGameObjects();
     bool selectAll = ShouldSelectAll(selectedGameObjects);
     bool selectRange = ShouldSelectRange(selectedGameObjects);
+    auto &rootGameObjects = Scene::Current->GetRootGameObjects();
+
+    m_LinearHierarchy.clear();
+    BuildLinearHierarchy(rootGameObjects, 0);
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
     if (ImGui::BeginChild("Hierarchy", {0, 0}, ImGuiChildFlags_Border))
     {
-        DrawGameObjectsHierarchy(Scene::Current->GetRootGameObjects(), selectedGameObjects, selectAll, selectRange);
-        HandleFreeDrop();
+        DrawGameObjectsHierarchy(selectedGameObjects, selectAll, selectRange);
+        HandleFreeDrop(rootGameObjects.size());
     }
     ImGui::EndChild();
     ImGui::PopStyleVar();

@@ -236,8 +236,11 @@ namespace Graphics
         }
     }
 
-    void Render()
+    void Render(int width, int height)
     {
+        screenWidth  = width;
+        screenHeight = height;
+
         auto debugGroup = GraphicsBackendDebug::DebugGroup("Render Frame");
 
         GraphicsBackend::SetClearColor(0, 0, 0, 0);
@@ -614,12 +617,6 @@ namespace Graphics
         }
 
         SetupInstancing(false);
-    }
-
-    void Reshape(int _width, int _height)
-    {
-        screenWidth  = _width;
-        screenHeight = _height;
     }
 
     int GetScreenWidth()

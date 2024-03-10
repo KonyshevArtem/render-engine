@@ -4,13 +4,13 @@
 #include "windows/debug_console_window.h"
 #include "windows/scene_hierarchy_window.h"
 
-void DrawEngineMenu()
+void DrawEngineMenu(std::function<void()> &closeWindow)
 {
     if (ImGui::BeginMenu("Engine"))
     {
-        if (ImGui::MenuItem("Exit"))
+        if (ImGui::MenuItem("Exit") && closeWindow)
         {
-            exit(0);
+            closeWindow();
         }
 
         ImGui::EndMenu();
@@ -49,11 +49,11 @@ void DrawWindowsMenu()
     }
 }
 
-void TopMenuBar::Draw()
+void TopMenuBar::Draw(std::function<void()> closeWindow)
 {
     if (ImGui::BeginMainMenuBar())
     {
-        DrawEngineMenu();
+        DrawEngineMenu(closeWindow);
         DrawDebugMenu();
         DrawWindowsMenu();
 

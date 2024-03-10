@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_MATERIAL_H
-#define OPENGL_STUDY_MATERIAL_H
+#ifndef RENDER_ENGINE_MATERIAL_H
+#define RENDER_ENGINE_MATERIAL_H
 
 #include "matrix4x4/matrix4x4.h"
 #include "property_block/property_block.h"
@@ -88,4 +88,4 @@ private:
     int m_RenderQueue = 2000;
 };
 
-#endif //OPENGL_STUDY_MATERIAL_H
+#endif //RENDER_ENGINE_MATERIAL_H

@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_RENDER_SETTINGS_H
-#define OPENGL_STUDY_RENDER_SETTINGS_H
+#ifndef RENDER_ENGINE_RENDER_SETTINGS_H
+#define RENDER_ENGINE_RENDER_SETTINGS_H
 
 #include "draw_call_comparer.h"
 #include "draw_call_filter.h"

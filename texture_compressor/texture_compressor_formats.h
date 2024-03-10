@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_TEXTURE_COMPRESSOR_FORMATS_H
-#define OPENGL_STUDY_TEXTURE_COMPRESSOR_FORMATS_H
+#ifndef RENDER_ENGINE_TEXTURE_COMPRESSOR_FORMATS_H
+#define RENDER_ENGINE_TEXTURE_COMPRESSOR_FORMATS_H
 
 #include <string>
 #include <vector>
@@ -26,4 +26,4 @@ namespace TextureCompressorFormats
     const std::vector<std::pair<TextureInternalFormat, std::string>> &GetTextureFormats();
 }
 
-#endif //OPENGL_STUDY_TEXTURE_COMPRESSOR_FORMATS_H
+#endif //RENDER_ENGINE_TEXTURE_COMPRESSOR_FORMATS_H

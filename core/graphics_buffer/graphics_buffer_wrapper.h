@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_GRAPHICS_BUFFER_WRAPPER_H
-#define OPENGL_STUDY_GRAPHICS_BUFFER_WRAPPER_H
+#ifndef RENDER_ENGINE_GRAPHICS_BUFFER_WRAPPER_H
+#define RENDER_ENGINE_GRAPHICS_BUFFER_WRAPPER_H
 
 #include <memory>
 #include <string>
@@ -33,4 +33,4 @@ private:
     std::vector<std::shared_ptr<BufferInfo>> m_PassBuffersInfo;
 };
 
-#endif //OPENGL_STUDY_GRAPHICS_BUFFER_WRAPPER_H
+#endif //RENDER_ENGINE_GRAPHICS_BUFFER_WRAPPER_H

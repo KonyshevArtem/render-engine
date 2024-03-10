@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_SHADER_LOADER_H
-#define OPENGL_STUDY_SHADER_LOADER_H
+#ifndef RENDER_ENGINE_SHADER_LOADER_H
+#define RENDER_ENGINE_SHADER_LOADER_H
 
 #include <filesystem>
 #include <memory>
@@ -12,4 +12,4 @@ namespace ShaderLoader
     std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords);
 }; // namespace ShaderLoader
 
-#endif //OPENGL_STUDY_SHADER_LOADER_H
+#endif //RENDER_ENGINE_SHADER_LOADER_H

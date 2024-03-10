@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_CLEAR_MASK_H
-#define OPENGL_STUDY_CLEAR_MASK_H
+#ifndef RENDER_ENGINE_CLEAR_MASK_H
+#define RENDER_ENGINE_CLEAR_MASK_H
 
 #include "graphics_backend.h"
 
@@ -18,4 +18,4 @@ enum class ClearMask : GRAPHICS_BACKEND_TYPE_ENUM
     ALL = COLOR | DEPTH | STENCIL,
 };
 
-#endif //OPENGL_STUDY_CLEAR_MASK_H
+#endif //RENDER_ENGINE_CLEAR_MASK_H

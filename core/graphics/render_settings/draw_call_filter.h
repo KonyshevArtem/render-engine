@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_DRAW_CALL_FILTER_H
-#define OPENGL_STUDY_DRAW_CALL_FILTER_H
+#ifndef RENDER_ENGINE_DRAW_CALL_FILTER_H
+#define RENDER_ENGINE_DRAW_CALL_FILTER_H
 
 #include <functional>
 
@@ -17,4 +17,4 @@ struct DrawCallFilter
     bool operator()(const DrawCallInfo &drawCall) const;
 };
 
-#endif //OPENGL_STUDY_DRAW_CALL_FILTER_H
+#endif //RENDER_ENGINE_DRAW_CALL_FILTER_H

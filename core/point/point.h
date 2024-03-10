@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_POINT
-#define OPENGL_STUDY_POINT
+#ifndef RENDER_ENGINE_POINT
+#define RENDER_ENGINE_POINT
 
 #include "drawable_geometry/drawable_geometry.h"
 

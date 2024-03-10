@@ -36,7 +36,7 @@ GameWindow::GameWindow(int width,
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GraphicsBackend::GetMinorVersion());
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    m_WindowPtr = glfwCreateWindow(width, height, "GameWindow", nullptr, nullptr);
+    m_WindowPtr = glfwCreateWindow(width, height, "RenderEngine", nullptr, nullptr);
     if (m_WindowPtr == nullptr)
     {
         return;

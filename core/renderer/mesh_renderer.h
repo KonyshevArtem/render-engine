@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_MESH_RENDERER_H
-#define OPENGL_STUDY_MESH_RENDERER_H
+#ifndef RENDER_ENGINE_MESH_RENDERER_H
+#define RENDER_ENGINE_MESH_RENDERER_H
 
 #include "renderer.h"
 #include <memory>
@@ -27,4 +27,4 @@ private:
     std::shared_ptr<Mesh> m_Mesh;
 };
 
-#endif //OPENGL_STUDY_MESH_RENDERER_H
+#endif //RENDER_ENGINE_MESH_RENDERER_H

@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_SCENE_H
-#define OPENGL_STUDY_SCENE_H
+#ifndef RENDER_ENGINE_SCENE_H
+#define RENDER_ENGINE_SCENE_H
 
 #include "gameObject/gameObject.h"
 #include "vector3/vector3.h"
@@ -31,4 +31,4 @@ private:
     virtual void UpdateInternal() = 0;
 };
 
-#endif //OPENGL_STUDY_SCENE_H
+#endif //RENDER_ENGINE_SCENE_H

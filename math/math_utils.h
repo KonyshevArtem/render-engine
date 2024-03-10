@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_MATH_UTILS_H
-#define OPENGL_STUDY_MATH_UTILS_H
+#ifndef RENDER_ENGINE_MATH_UTILS_H
+#define RENDER_ENGINE_MATH_UTILS_H
 
 namespace Math
 {
@@ -12,4 +12,4 @@ namespace Math
     }
 }; // namespace Math
 
-#endif //OPENGL_STUDY_MATH_UTILS_H
+#endif //RENDER_ENGINE_MATH_UTILS_H

@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_RENDER_PASS_H
-#define OPENGL_STUDY_RENDER_PASS_H
+#ifndef RENDER_ENGINE_RENDER_PASS_H
+#define RENDER_ENGINE_RENDER_PASS_H
 
 #include "graphics/render_settings/draw_call_comparer.h"
 #include "graphics/render_settings/draw_call_filter.h"
@@ -30,4 +30,4 @@ private:
     RenderSettings m_RenderSettings;
 };
 
-#endif //OPENGL_STUDY_RENDER_PASS_H
+#endif //RENDER_ENGINE_RENDER_PASS_H

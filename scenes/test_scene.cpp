@@ -19,7 +19,7 @@
 #include <memory>
 #include <random>
 
-#if OPENGL_STUDY_EDITOR
+#if RENDER_ENGINE_EDITOR
 int debugBaseMipLevel = 0;
 std::vector<std::shared_ptr<Texture>> textures;
 #endif
@@ -47,7 +47,7 @@ void TestScene::Init()
     auto carNormal     = Texture2D::Load("resources/textures/car/car_normal");
     auto carData       = Texture2D::Load("resources/textures/car/car_data");
 
-#ifdef OPENGL_STUDY_EDITOR
+#ifdef RENDER_ENGINE_EDITOR
     textures.push_back(brickTexture);
     textures.push_back(brickNormal);
     textures.push_back(waterTexture);
@@ -289,7 +289,7 @@ void TestScene::UpdateInternal()
     m_SpotLight->Rotation        = Camera::Current->GetRotation();
 
 // gizmos and cheats
-#if OPENGL_STUDY_EDITOR
+#if RENDER_ENGINE_EDITOR
     int baseMipLevel = debugBaseMipLevel;
     if (Input::GetKeyDown('P'))
         ++baseMipLevel;

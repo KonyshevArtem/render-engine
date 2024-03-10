@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_UNIFORM_INFO_H
-#define OPENGL_STUDY_UNIFORM_INFO_H
+#ifndef RENDER_ENGINE_UNIFORM_INFO_H
+#define RENDER_ENGINE_UNIFORM_INFO_H
 
 #include "enums/texture_unit.h"
 #include "enums/uniform_data_type.h"
@@ -13,4 +13,4 @@ struct UniformInfo
     bool IsTexture = false;
 };
 
-#endif //OPENGL_STUDY_UNIFORM_INFO_H
+#endif //RENDER_ENGINE_UNIFORM_INFO_H

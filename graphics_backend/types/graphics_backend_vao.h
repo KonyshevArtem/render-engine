@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_GRAPHICS_BACKEND_VAO_H
-#define OPENGL_STUDY_GRAPHICS_BACKEND_VAO_H
+#ifndef RENDER_ENGINE_GRAPHICS_BACKEND_VAO_H
+#define RENDER_ENGINE_GRAPHICS_BACKEND_VAO_H
 
 #include "graphics_backend.h"
 
@@ -14,4 +14,4 @@ private:
     friend class GraphicsBackend;
 };
 
-#endif //OPENGL_STUDY_GRAPHICS_BACKEND_VAO_H
+#endif //RENDER_ENGINE_GRAPHICS_BACKEND_VAO_H

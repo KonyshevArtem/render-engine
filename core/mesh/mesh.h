@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_MESH_H
-#define OPENGL_STUDY_MESH_H
+#ifndef RENDER_ENGINE_MESH_H
+#define RENDER_ENGINE_MESH_H
 
 #include "bounds/bounds.h"
 #include "drawable_geometry/drawable_geometry.h"
@@ -41,4 +41,4 @@ private:
 };
 
 
-#endif //OPENGL_STUDY_MESH_H
+#endif //RENDER_ENGINE_MESH_H

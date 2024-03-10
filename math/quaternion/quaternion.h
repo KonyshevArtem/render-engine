@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_QUATERNION_H
-#define OPENGL_STUDY_QUATERNION_H
+#ifndef RENDER_ENGINE_QUATERNION_H
+#define RENDER_ENGINE_QUATERNION_H
 
 struct Vector3;
 
@@ -24,4 +24,4 @@ public:
     Vector3 operator*(const Vector3 &_vector) const;
 };
 
-#endif //OPENGL_STUDY_QUATERNION_H
+#endif //RENDER_ENGINE_QUATERNION_H

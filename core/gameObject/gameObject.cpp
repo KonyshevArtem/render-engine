@@ -1,7 +1,7 @@
 #include "gameObject.h"
 #include "scene/scene.h"
 #include "vector4/vector4.h"
-#if OPENGL_STUDY_EDITOR
+#if RENDER_ENGINE_EDITOR
 #include "editor/hierarchy.h"
 #endif
 
@@ -36,7 +36,7 @@ void GameObject::Destroy()
     if (!parent && !Scene::Current)
         return;
 
-#if OPENGL_STUDY_EDITOR
+#if RENDER_ENGINE_EDITOR
     auto &selectedGameObjects = Hierarchy::GetSelectedGameObjects();
     for (auto &go : selectedGameObjects)
     {

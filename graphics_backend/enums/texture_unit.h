@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_TEXTURE_UNIT_H
-#define OPENGL_STUDY_TEXTURE_UNIT_H
+#ifndef RENDER_ENGINE_TEXTURE_UNIT_H
+#define RENDER_ENGINE_TEXTURE_UNIT_H
 
 #include "graphics_backend.h"
 
@@ -52,4 +52,4 @@ namespace TextureUnitUtils
     }
 }
 
-#endif //OPENGL_STUDY_TEXTURE_UNIT_H
+#endif //RENDER_ENGINE_TEXTURE_UNIT_H

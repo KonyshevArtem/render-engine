@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_GRAPHICS_BUFFER_H
-#define OPENGL_STUDY_GRAPHICS_BUFFER_H
+#ifndef RENDER_ENGINE_GRAPHICS_BUFFER_H
+#define RENDER_ENGINE_GRAPHICS_BUFFER_H
 
 #include "types/graphics_backend_buffer.h"
 #include "enums/buffer_usage_hint.h"
@@ -35,4 +35,4 @@ private:
     uint64_t m_Size;
 };
 
-#endif //OPENGL_STUDY_GRAPHICS_BUFFER_H
+#endif //RENDER_ENGINE_GRAPHICS_BUFFER_H

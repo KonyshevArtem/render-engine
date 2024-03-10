@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_PER_DRAW_DATA_H
-#define OPENGL_STUDY_PER_DRAW_DATA_H
+#ifndef RENDER_ENGINE_PER_DRAW_DATA_H
+#define RENDER_ENGINE_PER_DRAW_DATA_H
 
 #include "matrix4x4/matrix4x4.h"
 
@@ -10,4 +10,4 @@ struct PerDrawData
     Matrix4x4 ModelNormalMatrix;
 };
 
-#endif //OPENGL_STUDY_PER_DRAW_DATA_H
+#endif //RENDER_ENGINE_PER_DRAW_DATA_H

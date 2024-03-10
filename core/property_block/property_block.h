@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_PROPERTY_BLOCK_H
-#define OPENGL_STUDY_PROPERTY_BLOCK_H
+#ifndef RENDER_ENGINE_PROPERTY_BLOCK_H
+#define RENDER_ENGINE_PROPERTY_BLOCK_H
 
 #include "matrix4x4/matrix4x4.h"
 #include "vector4/vector4.h"

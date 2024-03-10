@@ -1,7 +1,7 @@
-#if OPENGL_STUDY_EDITOR
+#if RENDER_ENGINE_EDITOR
 
-#ifndef OPENGL_STUDY_HIERARCHY
-#define OPENGL_STUDY_HIERARCHY
+#ifndef RENDER_ENGINE_HIERARCHY
+#define RENDER_ENGINE_HIERARCHY
 
 #include <memory>
 #include <unordered_set>

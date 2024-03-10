@@ -8,7 +8,7 @@
             "name": "(lldb) Запустить",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/OpenGL_Study",
+            "program": "${workspaceFolder}/build/RenderEngine",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

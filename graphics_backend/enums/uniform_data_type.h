@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_UNIFORM_DATA_TYPE_H
-#define OPENGL_STUDY_UNIFORM_DATA_TYPE_H
+#ifndef RENDER_ENGINE_UNIFORM_DATA_TYPE_H
+#define RENDER_ENGINE_UNIFORM_DATA_TYPE_H
 
 #include "graphics_backend.h"
 
@@ -133,4 +133,4 @@ namespace UniformDataTypeUtils
     }
 }
 
-#endif //OPENGL_STUDY_UNIFORM_DATA_TYPE_H
+#endif //RENDER_ENGINE_UNIFORM_DATA_TYPE_H

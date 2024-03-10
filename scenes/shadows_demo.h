@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_SHADOWS_DEMO_H
-#define OPENGL_STUDY_SHADOWS_DEMO_H
+#ifndef RENDER_ENGINE_SHADOWS_DEMO_H
+#define RENDER_ENGINE_SHADOWS_DEMO_H
 
 #include "scene/scene.h"
 #include "../scripts/camera_fly_controller/camera_fly_controller.h"
@@ -17,4 +17,4 @@ private:
     std::unique_ptr<CameraFlyController> m_CameraFlyControl;
 };
 
-#endif //OPENGL_STUDY_SHADOWS_DEMO_H
+#endif //RENDER_ENGINE_SHADOWS_DEMO_H

@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_CAMERA_H
-#define OPENGL_STUDY_CAMERA_H
+#ifndef RENDER_ENGINE_CAMERA_H
+#define RENDER_ENGINE_CAMERA_H
 
 #include "matrix4x4/matrix4x4.h"
 #include "quaternion/quaternion.h"
@@ -66,4 +66,4 @@ private:
     int        m_ScreenHeight;
 };
 
-#endif //OPENGL_STUDY_CAMERA_H
+#endif //RENDER_ENGINE_CAMERA_H

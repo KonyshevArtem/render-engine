@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_VECTOR3_H
-#define OPENGL_STUDY_VECTOR3_H
+#ifndef RENDER_ENGINE_VECTOR3_H
+#define RENDER_ENGINE_VECTOR3_H
 
 struct Vector4;
 
@@ -41,4 +41,4 @@ public:
     static Vector3 Cross(const Vector3 &_a, const Vector3 &_b);
 };
 
-#endif //OPENGL_STUDY_VECTOR3_H
+#endif //RENDER_ENGINE_VECTOR3_H

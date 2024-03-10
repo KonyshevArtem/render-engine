@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_TEXTURE_2D_H
-#define OPENGL_STUDY_TEXTURE_2D_H
+#ifndef RENDER_ENGINE_TEXTURE_2D_H
+#define RENDER_ENGINE_TEXTURE_2D_H
 
 #include "texture/texture.h"
 #include <filesystem>
@@ -28,4 +28,4 @@ private:
     static std::shared_ptr<Texture2D> Create_Internal(uint8_t *pixels, int width, int height, TextureInternalFormat textureFormat, TexturePixelFormat pixelFormat);
 };
 
-#endif //OPENGL_STUDY_TEXTURE_2D_H
+#endif //RENDER_ENGINE_TEXTURE_2D_H

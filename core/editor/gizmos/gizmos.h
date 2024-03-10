@@ -1,7 +1,7 @@
-#if OPENGL_STUDY_EDITOR
+#if RENDER_ENGINE_EDITOR
 
-#ifndef OPENGL_STUDY_GIZMOS_H
-#define OPENGL_STUDY_GIZMOS_H
+#ifndef RENDER_ENGINE_GIZMOS_H
+#define RENDER_ENGINE_GIZMOS_H
 
 #include <vector>
 #include <memory>

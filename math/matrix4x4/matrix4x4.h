@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_MATRIX4X4_H
-#define OPENGL_STUDY_MATRIX4X4_H
+#ifndef RENDER_ENGINE_MATRIX4X4_H
+#define RENDER_ENGINE_MATRIX4X4_H
 
 #include <string>
 
@@ -64,4 +64,4 @@ public:
     Vector3 GetScale() const;
 };
 
-#endif //OPENGL_STUDY_MATRIX4X4_H
+#endif //RENDER_ENGINE_MATRIX4X4_H

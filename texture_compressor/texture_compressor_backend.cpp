@@ -53,7 +53,7 @@ namespace TextureCompressorBackend
 
     bool GetImagePixelsTGA(const std::filesystem::path &path, std::vector<uint8_t> &pixels, int &width, int &height, int &colorType)
     {
-        FILE* f = std::fopen(path.c_str(), "rb");
+        FILE* f = std::fopen(path.string().c_str(), "rb");
         tga::StdioFileInterface file(f);
         tga::Decoder decoder(&file);
         tga::Header tgaHeader;
@@ -129,7 +129,7 @@ namespace TextureCompressorBackend
             return GetImagePixelsTGA(path, pixels, width, height, colorType);
         }
 
-        Debug::LogErrorFormat("%1% file extension is not supported", {extension});
+        Debug::LogErrorFormat("%1% file extension is not supported", {extension.string()});
         return false;
     }
 

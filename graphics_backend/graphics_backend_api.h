@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_GRAPHICS_BACKEND_API_H
-#define OPENGL_STUDY_GRAPHICS_BACKEND_API_H
+#ifndef RENDER_ENGINE_GRAPHICS_BACKEND_API_H
+#define RENDER_ENGINE_GRAPHICS_BACKEND_API_H
 
 #include "graphics_backend.h"
 
@@ -48,7 +48,7 @@ class GraphicsBackendShaderObject;
 class GraphicsBackendUniformLocation;
 class GraphicsBackendVAO;
 
-#ifdef OPENGL_STUDY_EDITOR
+#ifdef RENDER_ENGINE_EDITOR
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \
     backendFunction;                                                   \
     {                                                                  \
@@ -172,4 +172,4 @@ public:
     static const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error);
 };
 
-#endif //OPENGL_STUDY_GRAPHICS_BACKEND_API_H
+#endif //RENDER_ENGINE_GRAPHICS_BACKEND_API_H

@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.19)
-project(OpenGL_Study)
+project(RenderEngine)
 
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(
-	OpenGL_Study
+	RenderEngine
     main.cpp
     scenes/test_scene.cpp
     scenes/test_scene.h
@@ -24,7 +24,7 @@ find_package(Boost REQUIRED COMPONENTS json)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # TODO add non-editor compile target
-add_compile_definitions(OPENGL_STUDY_EDITOR)
+add_compile_definitions(RENDER_ENGINE_EDITOR)
 
 # source code
 add_subdirectory(graphics_backend)
@@ -38,15 +38,15 @@ add_subdirectory(math)
 add_subdirectory(utils)
 add_subdirectory(debug_util)
 add_subdirectory(game_window)
-target_link_libraries(OpenGL_Study Core GameWindow)
+target_link_libraries(RenderEngine Core GameWindow)
 
 # copy resources to build directory
 add_custom_target(PreBuild ALL
-        COMMAND ${CMAKE_COMMAND} -E rm -rf $<TARGET_FILE_DIR:OpenGL_Study>/resources
-        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:OpenGL_Study>/resources
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:OpenGL_Study>/resources
+        COMMAND ${CMAKE_COMMAND} -E rm -rf $<TARGET_FILE_DIR:RenderEngine>/resources
+        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:RenderEngine>/resources
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:RenderEngine>/resources
         COMMAND ${CMAKE_COMMAND} -E echo \"[Pre Build] Resources copied\")
-add_dependencies(OpenGL_Study PreBuild)
+add_dependencies(RenderEngine PreBuild)
 
 # texture compressor utility
 add_subdirectory(texture_compressor)

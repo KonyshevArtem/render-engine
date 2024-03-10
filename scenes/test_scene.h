@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_TEST_SCENE_H
-#define OPENGL_STUDY_TEST_SCENE_H
+#ifndef RENDER_ENGINE_TEST_SCENE_H
+#define RENDER_ENGINE_TEST_SCENE_H
 
 #include "../core/scene/scene.h"
 
@@ -32,4 +32,4 @@ private:
     std::weak_ptr<GameObject> m_RotatingCylinder2;
 };
 
-#endif //OPENGL_STUDY_TEST_SCENE_H
+#endif //RENDER_ENGINE_TEST_SCENE_H

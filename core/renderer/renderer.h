@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_RENDERER_H
-#define OPENGL_STUDY_RENDERER_H
+#ifndef RENDER_ENGINE_RENDERER_H
+#define RENDER_ENGINE_RENDERER_H
 
 #include <memory>
 
@@ -46,4 +46,4 @@ private:
     std::shared_ptr<GraphicsBufferWrapper> m_PerInstanceDataBufferWrapper;
 };
 
-#endif //OPENGL_STUDY_RENDERER_H
+#endif //RENDER_ENGINE_RENDERER_H

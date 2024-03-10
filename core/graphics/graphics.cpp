@@ -46,7 +46,7 @@ namespace Graphics
     std::unique_ptr<RenderPass>       transparentRenderPass;
     std::unique_ptr<SkyboxPass>       skyboxPass;
 
-#if OPENGL_STUDY_EDITOR
+#if RENDER_ENGINE_EDITOR
     std::unique_ptr<RenderPass> fallbackRenderPass;
     std::unique_ptr<GizmosPass> gizmosPass;
 #endif
@@ -99,7 +99,7 @@ namespace Graphics
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
 
-#if OPENGL_STUDY_EDITOR
+#if RENDER_ENGINE_EDITOR
         fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::All(), ClearMask::NONE, "Fallback");
         gizmosPass         = std::make_unique<GizmosPass>();
 #endif
@@ -125,7 +125,7 @@ namespace Graphics
     {
         GraphicsBackend::Init();
 
-#if OPENGL_STUDY_EDITOR
+#if RENDER_ENGINE_EDITOR
         Gizmos::Init();
 #endif
 
@@ -263,7 +263,7 @@ namespace Graphics
         if (transparentRenderPass)
             transparentRenderPass->Execute(ctx);
 
-#if OPENGL_STUDY_EDITOR
+#if RENDER_ENGINE_EDITOR
         if (fallbackRenderPass)
             fallbackRenderPass->Execute(ctx);
 

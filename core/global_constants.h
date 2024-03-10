@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_GLOBAL_CONSTANTS_H
-#define OPENGL_STUDY_GLOBAL_CONSTANTS_H
+#ifndef RENDER_ENGINE_GLOBAL_CONSTANTS_H
+#define RENDER_ENGINE_GLOBAL_CONSTANTS_H
 
 #include <string>
 
@@ -23,4 +23,4 @@ namespace GlobalConstants
     constexpr int TransparentRenderQueue = 3000;
 }
 
-#endif //OPENGL_STUDY_GLOBAL_CONSTANTS_H
+#endif //RENDER_ENGINE_GLOBAL_CONSTANTS_H

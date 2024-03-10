@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_SHADER_PARSER_H
-#define OPENGL_STUDY_SHADER_PARSER_H
+#ifndef RENDER_ENGINE_SHADER_PARSER_H
+#define RENDER_ENGINE_SHADER_PARSER_H
 
 #include "shader/shader_structs.h"
 #include "shader_loader_utils.h"
@@ -23,4 +23,4 @@ namespace ShaderParser
     void Parse(const std::string &shaderSource, std::vector<ShaderParser::PassInfo> &passes, std::unordered_map<std::string, std::string> &properties);
 }
 
-#endif //OPENGL_STUDY_SHADER_PARSER_H
+#endif //RENDER_ENGINE_SHADER_PARSER_H

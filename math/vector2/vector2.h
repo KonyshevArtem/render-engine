@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_VECTOR2_H
-#define OPENGL_STUDY_VECTOR2_H
+#ifndef RENDER_ENGINE_VECTOR2_H
+#define RENDER_ENGINE_VECTOR2_H
 
 struct [[nodiscard]] Vector2
 {
@@ -22,4 +22,4 @@ public:
     Vector2 operator*(float _value) const;
 };
 
-#endif //OPENGL_STUDY_VECTOR2_H
+#endif //RENDER_ENGINE_VECTOR2_H

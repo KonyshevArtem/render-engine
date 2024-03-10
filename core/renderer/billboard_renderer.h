@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_BILLBOARD_RENDERER_H
-#define OPENGL_STUDY_BILLBOARD_RENDERER_H
+#ifndef RENDER_ENGINE_BILLBOARD_RENDERER_H
+#define RENDER_ENGINE_BILLBOARD_RENDERER_H
 
 #include "bounds/bounds.h"
 #include "renderer.h"
@@ -31,4 +31,4 @@ private:
     Bounds                 m_Bounds;
 };
 
-#endif //OPENGL_STUDY_BILLBOARD_RENDERER_H
+#endif //RENDER_ENGINE_BILLBOARD_RENDERER_H

@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_CAMERA_DATA_H
-#define OPENGL_STUDY_CAMERA_DATA_H
+#ifndef RENDER_ENGINE_CAMERA_DATA_H
+#define RENDER_ENGINE_CAMERA_DATA_H
 
 #include "vector3/vector3.h"
 #include "matrix4x4/matrix4x4.h"
@@ -14,4 +14,4 @@ struct CameraData
     float FarClipPlane = 0;
 };
 
-#endif //OPENGL_STUDY_CAMERA_DATA_H
+#endif //RENDER_ENGINE_CAMERA_DATA_H

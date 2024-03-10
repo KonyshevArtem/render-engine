@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_GRAPHICS_BACKEND_DEBUG_H
-#define OPENGL_STUDY_GRAPHICS_BACKEND_DEBUG_H
+#ifndef RENDER_ENGINE_GRAPHICS_BACKEND_DEBUG_H
+#define RENDER_ENGINE_GRAPHICS_BACKEND_DEBUG_H
 
 #include <string>
 
@@ -17,4 +17,4 @@ namespace GraphicsBackendDebug
     void LogError(GRAPHICS_BACKEND_TYPE_ENUM error, const std::string &file, int line);
 }
 
-#endif //OPENGL_STUDY_GRAPHICS_BACKEND_DEBUG_H
+#endif //RENDER_ENGINE_GRAPHICS_BACKEND_DEBUG_H

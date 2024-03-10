@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_TIME_H
-#define OPENGL_STUDY_TIME_H
+#ifndef RENDER_ENGINE_TIME_H
+#define RENDER_ENGINE_TIME_H
 
 namespace Time
 {
@@ -9,4 +9,4 @@ namespace Time
     double GetDeltaTime();
 }; // namespace Time
 
-#endif //OPENGL_STUDY_TIME_H
+#endif //RENDER_ENGINE_TIME_H

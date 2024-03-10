@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_SHADER_STRUCTS_H
-#define OPENGL_STUDY_SHADER_STRUCTS_H
+#ifndef RENDER_ENGINE_SHADER_STRUCTS_H
+#define RENDER_ENGINE_SHADER_STRUCTS_H
 
 #include "enums/depth_function.h"
 #include "enums/blend_factor.h"
@@ -24,4 +24,4 @@ struct DepthInfo
     DepthFunction DepthFunction = DepthFunction::LEQUAL;
 };
 
-#endif //OPENGL_STUDY_SHADER_STRUCTS_H
+#endif //RENDER_ENGINE_SHADER_STRUCTS_H

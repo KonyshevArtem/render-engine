@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_LINES_H
-#define OPENGL_STUDY_LINES_H
+#ifndef RENDER_ENGINE_LINES_H
+#define RENDER_ENGINE_LINES_H
 
 #include "drawable_geometry/drawable_geometry.h"
 #include "bounds/bounds.h"
@@ -32,4 +32,4 @@ private:
 };
 
 
-#endif //OPENGL_STUDY_LINES_H
+#endif //RENDER_ENGINE_LINES_H

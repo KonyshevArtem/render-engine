@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_CUBEMAP_H
-#define OPENGL_STUDY_CUBEMAP_H
+#ifndef RENDER_ENGINE_CUBEMAP_H
+#define RENDER_ENGINE_CUBEMAP_H
 
 #include "texture/texture.h"
 #include <filesystem>

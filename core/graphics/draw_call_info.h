@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_DRAW_CALL_INFO
-#define OPENGL_STUDY_DRAW_CALL_INFO
+#ifndef RENDER_ENGINE_DRAW_CALL_INFO
+#define RENDER_ENGINE_DRAW_CALL_INFO
 
 #include "bounds/bounds.h"
 #include "drawable_geometry/drawable_geometry.h"

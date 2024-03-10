@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_TEXTURE_H
-#define OPENGL_STUDY_TEXTURE_H
+#ifndef RENDER_ENGINE_TEXTURE_H
+#define RENDER_ENGINE_TEXTURE_H
 
 #include "enums/texture_type.h"
 #include "enums/texture_wrap_mode.h"
@@ -65,4 +65,4 @@ private:
     unsigned int m_MipLevels = 0;
 };
 
-#endif //OPENGL_STUDY_TEXTURE_H
+#endif //RENDER_ENGINE_TEXTURE_H

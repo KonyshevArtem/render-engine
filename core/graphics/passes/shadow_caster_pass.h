@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_SHADOW_CASTER_PASS_H
-#define OPENGL_STUDY_SHADOW_CASTER_PASS_H
+#ifndef RENDER_ENGINE_SHADOW_CASTER_PASS_H
+#define RENDER_ENGINE_SHADOW_CASTER_PASS_H
 
 #include "graphics/data_structs/shadows_data.h"
 
@@ -41,4 +41,4 @@ private:
     static void Render(const std::vector<std::shared_ptr<Renderer>> &renderers);
 };
 
-#endif //OPENGL_STUDY_SHADOW_CASTER_PASS_H
+#endif //RENDER_ENGINE_SHADOW_CASTER_PASS_H

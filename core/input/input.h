@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_INPUT_H
-#define OPENGL_STUDY_INPUT_H
+#ifndef RENDER_ENGINE_INPUT_H
+#define RENDER_ENGINE_INPUT_H
 
 struct Vector2;
 
@@ -17,4 +17,4 @@ namespace Input
     const Vector2 &GetMouseDelta();
 }; // namespace Input
 
-#endif //OPENGL_STUDY_INPUT_H
+#endif //RENDER_ENGINE_INPUT_H

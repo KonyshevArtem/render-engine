@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_TEXTURE_2D_ARRAY_H
-#define OPENGL_STUDY_TEXTURE_2D_ARRAY_H
+#ifndef RENDER_ENGINE_TEXTURE_2D_ARRAY_H
+#define RENDER_ENGINE_TEXTURE_2D_ARRAY_H
 
 #include "texture/texture.h"
 #include <memory>
@@ -21,4 +21,4 @@ private:
     Texture2DArray(unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels);
 };
 
-#endif //OPENGL_STUDY_TEXTURE_2D_ARRAY_H
+#endif //RENDER_ENGINE_TEXTURE_2D_ARRAY_H

@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_SHADER_PASS_H
-#define OPENGL_STUDY_SHADER_PASS_H
+#ifndef RENDER_ENGINE_SHADER_PASS_H
+#define RENDER_ENGINE_SHADER_PASS_H
 
 #include "types/graphics_backend_program.h"
 #include "shader/shader_structs.h"
@@ -76,4 +76,4 @@ private:
 };
 
 
-#endif //OPENGL_STUDY_SHADER_PASS_H
+#endif //RENDER_ENGINE_SHADER_PASS_H

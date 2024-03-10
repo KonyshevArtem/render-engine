@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_LIGHT_H
-#define OPENGL_STUDY_LIGHT_H
+#ifndef RENDER_ENGINE_LIGHT_H
+#define RENDER_ENGINE_LIGHT_H
 
 #include "quaternion/quaternion.h"
 #include "vector3/vector3.h"
@@ -22,4 +22,4 @@ public:
     float      CutOffAngle;
 };
 
-#endif //OPENGL_STUDY_LIGHT_H
+#endif //RENDER_ENGINE_LIGHT_H

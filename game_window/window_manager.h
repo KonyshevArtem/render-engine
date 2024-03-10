@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_WINDOW_MANAGER_H
-#define OPENGL_STUDY_WINDOW_MANAGER_H
+#ifndef RENDER_ENGINE_WINDOW_MANAGER_H
+#define RENDER_ENGINE_WINDOW_MANAGER_H
 
 #include <memory>
 #include <type_traits>
@@ -24,4 +24,4 @@ namespace WindowManager
     }
 }
 
-#endif //OPENGL_STUDY_WINDOW_MANAGER_H
+#endif //RENDER_ENGINE_WINDOW_MANAGER_H

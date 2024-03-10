@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_SKYBOX_PASS_H
-#define OPENGL_STUDY_SKYBOX_PASS_H
+#ifndef RENDER_ENGINE_SKYBOX_PASS_H
+#define RENDER_ENGINE_SKYBOX_PASS_H
 
 struct Context;
 
@@ -18,4 +18,4 @@ public:
     SkyboxPass &operator=(SkyboxPass &&)      = delete;
 };
 
-#endif //OPENGL_STUDY_SKYBOX_PASS_H
+#endif //RENDER_ENGINE_SKYBOX_PASS_H

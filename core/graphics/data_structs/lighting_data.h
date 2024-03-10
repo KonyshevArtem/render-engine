@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_LIGHTING_DATA_H
-#define OPENGL_STUDY_LIGHTING_DATA_H
+#ifndef RENDER_ENGINE_LIGHTING_DATA_H
+#define RENDER_ENGINE_LIGHTING_DATA_H
 
 #include "global_constants.h"
 #include "vector3/vector3.h"
@@ -39,4 +39,4 @@ struct LightingData
     SpotLightData SpotLightsData[GlobalConstants::MaxSpotLightSources]{};
 };
 
-#endif //OPENGL_STUDY_LIGHTING_DATA_H
+#endif //RENDER_ENGINE_LIGHTING_DATA_H

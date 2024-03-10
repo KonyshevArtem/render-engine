@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_GRAPHICS_H
-#define OPENGL_STUDY_GRAPHICS_H
+#ifndef RENDER_ENGINE_GRAPHICS_H
+#define RENDER_ENGINE_GRAPHICS_H
 
 #include "enums/depth_function.h"
 #include "enums/blend_factor.h"
@@ -39,4 +39,4 @@ namespace Graphics
 
 }; // namespace Graphics
 
-#endif //OPENGL_STUDY_GRAPHICS_H
+#endif //RENDER_ENGINE_GRAPHICS_H

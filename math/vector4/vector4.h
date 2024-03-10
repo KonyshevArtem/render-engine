@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_VECTOR4_H
-#define OPENGL_STUDY_VECTOR4_H
+#ifndef RENDER_ENGINE_VECTOR4_H
+#define RENDER_ENGINE_VECTOR4_H
 
 struct [[nodiscard]] Vector4
 {
@@ -20,4 +20,4 @@ public:
     static const Vector4 &Zero();
 };
 
-#endif //OPENGL_STUDY_VECTOR4_H
+#endif //RENDER_ENGINE_VECTOR4_H

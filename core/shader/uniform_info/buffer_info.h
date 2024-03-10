@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_BUFFER_INFO_H
-#define OPENGL_STUDY_BUFFER_INFO_H
+#ifndef RENDER_ENGINE_BUFFER_INFO_H
+#define RENDER_ENGINE_BUFFER_INFO_H
 
 #include <unordered_map>
 #include <string>
@@ -50,4 +50,4 @@ private:
     std::unordered_map<std::string, int> m_Variables;
 };
 
-#endif //OPENGL_STUDY_BUFFER_INFO_H
+#endif //RENDER_ENGINE_BUFFER_INFO_H

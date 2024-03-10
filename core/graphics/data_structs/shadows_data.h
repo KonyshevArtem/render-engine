@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_SHADOWS_DATA_H
-#define OPENGL_STUDY_SHADOWS_DATA_H
+#ifndef RENDER_ENGINE_SHADOWS_DATA_H
+#define RENDER_ENGINE_SHADOWS_DATA_H
 
 #include "global_constants.h"
 #include "vector4/vector4.h"
@@ -19,4 +19,4 @@ struct ShadowsData
     PointLightShadowData PointLightShadows[GlobalConstants::MaxPointLightSources]{};
 };
 
-#endif //OPENGL_STUDY_SHADOWS_DATA_H
+#endif //RENDER_ENGINE_SHADOWS_DATA_H

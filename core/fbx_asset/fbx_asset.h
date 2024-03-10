@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_FBX_ASSET_H
-#define OPENGL_STUDY_FBX_ASSET_H
+#ifndef RENDER_ENGINE_FBX_ASSET_H
+#define RENDER_ENGINE_FBX_ASSET_H
 
 #include "ofbx.h"
 #include <filesystem>
@@ -29,4 +29,4 @@ private:
     std::vector<std::shared_ptr<Mesh>> m_Meshes;
 };
 
-#endif //OPENGL_STUDY_FBX_ASSET_H
+#endif //RENDER_ENGINE_FBX_ASSET_H

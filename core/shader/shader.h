@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_SHADER_H
-#define OPENGL_STUDY_SHADER_H
+#ifndef RENDER_ENGINE_SHADER_H
+#define RENDER_ENGINE_SHADER_H
 
 #include <filesystem>
 #include <string>
@@ -38,4 +38,4 @@ private:
     bool m_SupportInstancing;
 };
 
-#endif //OPENGL_STUDY_SHADER_H
+#endif //RENDER_ENGINE_SHADER_H

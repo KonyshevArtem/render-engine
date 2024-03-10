@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_BASE_WINDOW_H
-#define OPENGL_STUDY_BASE_WINDOW_H
+#ifndef RENDER_ENGINE_BASE_WINDOW_H
+#define RENDER_ENGINE_BASE_WINDOW_H
 
 #include <string>
 
@@ -31,4 +31,4 @@ private:
     bool m_TopBar;
 };
 
-#endif //OPENGL_STUDY_BASE_WINDOW_H
+#endif //RENDER_ENGINE_BASE_WINDOW_H

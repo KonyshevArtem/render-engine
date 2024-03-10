@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_DEBUG_H
-#define OPENGL_STUDY_DEBUG_H
+#ifndef RENDER_ENGINE_DEBUG_H
+#define RENDER_ENGINE_DEBUG_H
 
 #include <string>
 #include <functional>

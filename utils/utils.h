@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_UTILS_H
-#define OPENGL_STUDY_UTILS_H
+#ifndef RENDER_ENGINE_UTILS_H
+#define RENDER_ENGINE_UTILS_H
 
 #include <vector>
 #include <filesystem>
@@ -14,4 +14,4 @@ namespace Utils
     const std::filesystem::path &GetExecutableDirectory();
 }; // namespace Utils
 
-#endif //OPENGL_STUDY_UTILS_H
+#endif //RENDER_ENGINE_UTILS_H

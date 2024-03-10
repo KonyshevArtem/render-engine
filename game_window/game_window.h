@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_WINDOW
-#define OPENGL_STUDY_WINDOW
+#ifndef RENDER_ENGINE_WINDOW
+#define RENDER_ENGINE_WINDOW
 
 #include <functional>
 

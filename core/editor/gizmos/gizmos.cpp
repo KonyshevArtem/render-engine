@@ -1,4 +1,4 @@
-#if OPENGL_STUDY_EDITOR
+#if RENDER_ENGINE_EDITOR
 
 #include "gizmos.h"
 #include "vector3/vector3.h"

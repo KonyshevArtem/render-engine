@@ -1,4 +1,4 @@
-# OpenGL study project
+# Render Engine project
 
 Simple project to study how rendering works in games and how
 game engines work.

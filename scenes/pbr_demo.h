@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_PBR_DEMO_H
-#define OPENGL_STUDY_PBR_DEMO_H
+#ifndef RENDER_ENGINE_PBR_DEMO_H
+#define RENDER_ENGINE_PBR_DEMO_H
 
 #include "scene/scene.h"
 

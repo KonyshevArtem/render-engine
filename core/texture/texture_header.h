@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_TEXTURE_HEADER_H
-#define OPENGL_STUDY_TEXTURE_HEADER_H
+#ifndef RENDER_ENGINE_TEXTURE_HEADER_H
+#define RENDER_ENGINE_TEXTURE_HEADER_H
 
 #include "enums/texture_internal_format.h"
 #include "enums/texture_pixel_format.h"

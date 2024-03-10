@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_BOUNDS
-#define OPENGL_STUDY_BOUNDS
+#ifndef RENDER_ENGINE_BOUNDS
+#define RENDER_ENGINE_BOUNDS
 
 #include "vector3/vector3.h"
 #include <array>

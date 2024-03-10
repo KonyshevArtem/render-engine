@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_WINDOWS_ID_POOL_H
-#define OPENGL_STUDY_WINDOWS_ID_POOL_H
+#ifndef RENDER_ENGINE_WINDOWS_ID_POOL_H
+#define RENDER_ENGINE_WINDOWS_ID_POOL_H
 
 #include <vector>
 #include <unordered_map>
@@ -16,4 +16,4 @@ private:
 };
 
 
-#endif //OPENGL_STUDY_WINDOWS_ID_POOL_H
+#endif //RENDER_ENGINE_WINDOWS_ID_POOL_H

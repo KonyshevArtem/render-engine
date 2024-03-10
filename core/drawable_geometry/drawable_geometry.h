@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_DRAWABLE_GEOMETRY
-#define OPENGL_STUDY_DRAWABLE_GEOMETRY
+#ifndef RENDER_ENGINE_DRAWABLE_GEOMETRY
+#define RENDER_ENGINE_DRAWABLE_GEOMETRY
 
 #include "enums/primitive_type.h"
 #include "types/graphics_backend_vao.h"

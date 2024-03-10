@@ -1,5 +1,5 @@
-#ifndef OPENGL_STUDY_DRAW_CALL_COMPARER_H
-#define OPENGL_STUDY_DRAW_CALL_COMPARER_H
+#ifndef RENDER_ENGINE_DRAW_CALL_COMPARER_H
+#define RENDER_ENGINE_DRAW_CALL_COMPARER_H
 
 #include <vector3/vector3.h>
 
@@ -21,4 +21,4 @@ struct DrawCallComparer
     bool operator()(const DrawCallInfo &drawCallA, const DrawCallInfo &drawCallB);
 };
 
-#endif //OPENGL_STUDY_DRAW_CALL_COMPARER_H
+#endif //RENDER_ENGINE_DRAW_CALL_COMPARER_H

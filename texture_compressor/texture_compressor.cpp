@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 
+#include "graphics_backend_api.h"
 #include "texture_compressor_backend.h"
 #include "texture_compressor_formats.h"
 #include "game_window.h"
@@ -11,7 +12,7 @@ TextureInternalFormat textureFormat;
 int colorType;
 bool generateMips;
 
-void Render()
+void Render(int width, int height)
 {
     TextureCompressorBackend::CompressTexture(texturePaths, textureType, colorType,
                                               textureFormat, generateMips);
@@ -44,24 +45,26 @@ void PrintHelp()
     std::cout << std::endl;
 }
 
-int main(int __argc, char **__argv)
+int main(int argc, char **argv)
 {
-    if (__argc < 6)
+    if (argc < 6)
     {
         PrintHelp();
         return 0;
     }
 
-    GameWindow window(0, 0, nullptr, Render, nullptr, nullptr);
+    GameWindow window(1, 1, Render, nullptr, nullptr);
 
-    textureType = static_cast<TextureType>(std::stoi(__argv[1]));
-    colorType = std::stoi(__argv[2]);
-    textureFormat = static_cast<TextureInternalFormat>(std::stoi(__argv[3]));
-    generateMips = std::stoi(__argv[4]) == 1;
+    GraphicsBackend::Init();
 
-    for (int i = 5; i < __argc; ++i)
+    textureType = static_cast<TextureType>(std::stoi(argv[1]));
+    colorType = std::stoi(argv[2]);
+    textureFormat = static_cast<TextureInternalFormat>(std::stoi(argv[3]));
+    generateMips = std::stoi(argv[4]) == 1;
+
+    for (int i = 5; i < argc; ++i)
     {
-        texturePaths.emplace_back(__argv[i]);
+        texturePaths.emplace_back(argv[i]);
     }
 
     window.BeginMainLoop();

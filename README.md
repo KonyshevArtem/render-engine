@@ -49,18 +49,6 @@ Only forward rendering path is implemented for now
   * Place DLL files in `System32` and `SysWOW64` directories
   * Add paths to header and libs directories to `CMAKE_PREFIX_PATH`
 
-### GLUT
-
-* OSX
-  * Should be installed by default
-
-* Windows
-  * Download FreeGLUT from https://github.com/freeglut/freeglut
-  * Open project in CLion and build following README https://github.com/freeglut/freeglut/blob/master/README.win32
-  * Copy DLL to `System32` and `SysWOW64` directories
-  * Add paths to header and libs directories to `CMAKE_PREFIX_PATH`
-  * Additionally it might be required to add libs path to `OPENGL_LIBRARY_DIR`
-
 ### Boost
 
 * OSX

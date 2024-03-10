@@ -11,12 +11,12 @@ add_library(
         imgui/imstb_rectpack.h
         imgui/imstb_textedit.h
         imgui/imstb_truetype.h
-        imgui/backends/imgui_impl_glut.h
-        imgui/backends/imgui_impl_glut.cpp
+        imgui/backends/imgui_impl_glfw.h
+        imgui/backends/imgui_impl_glfw.cpp
         imgui/backends/imgui_impl_opengl3.h
         imgui/backends/imgui_impl_opengl3.cpp
         imgui/misc/cpp/imgui_stdlib.h
         imgui/misc/cpp/imgui_stdlib.cpp)
 
-target_link_libraries(ImGui glut)
+target_link_libraries(ImGui glfw)
 target_include_directories(ImGui PUBLIC imgui imgui/backends imgui/misc/cpp)

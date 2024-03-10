@@ -291,9 +291,9 @@ void TestScene::UpdateInternal()
 // gizmos and cheats
 #if OPENGL_STUDY_EDITOR
     int baseMipLevel = debugBaseMipLevel;
-    if (Input::GetKeyDown('p'))
+    if (Input::GetKeyDown('P'))
         ++baseMipLevel;
-    if (Input::GetKeyDown('o'))
+    if (Input::GetKeyDown('O'))
         baseMipLevel = std::max(baseMipLevel - 1, 0);
 
     if (baseMipLevel != debugBaseMipLevel)

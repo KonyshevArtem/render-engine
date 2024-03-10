@@ -5,7 +5,7 @@
 
 void CameraFlyController::Update()
 {
-    if (Input::GetKey('e'))
+    if (Input::GetKey('E'))
         m_CameraEulerAngles = m_CameraEulerAngles + Input::GetMouseDelta() * (CAMERA_ROT_SPEED * Time::GetDeltaTime());
     if (m_CameraEulerAngles.x < 0)
         m_CameraEulerAngles.x = 360;
@@ -24,13 +24,13 @@ void CameraFlyController::Update()
 
     auto cameraFwd   = cameraRotation * Vector3(0, 0, 1);
     auto cameraRight = cameraRotation * Vector3(1, 0, 0);
-    if (Input::GetKey('w'))
+    if (Input::GetKey('W'))
         cameraPosition = cameraPosition + cameraFwd * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
-    if (Input::GetKey('s'))
+    if (Input::GetKey('S'))
         cameraPosition = cameraPosition - cameraFwd * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
-    if (Input::GetKey('d'))
+    if (Input::GetKey('D'))
         cameraPosition = cameraPosition + cameraRight * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
-    if (Input::GetKey('a'))
+    if (Input::GetKey('A'))
         cameraPosition = cameraPosition - cameraRight * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
 
     Camera::Current->SetPosition(cameraPosition);

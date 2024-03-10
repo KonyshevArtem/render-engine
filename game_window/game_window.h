@@ -3,17 +3,17 @@
 
 #include <functional>
 
-typedef std::function<void(int, int)> ResizeHandler;
-typedef std::function<void()> RenderHandler;
+typedef std::function<void(int, int)> RenderHandler;
 typedef std::function<void(unsigned char, bool)> KeyboardInputHandlerDelegate;
-typedef std::function<void(int, int)> MouseMoveHandlerDelegate;
+typedef std::function<void(double, double)> MouseMoveHandlerDelegate;
+
+struct GLFWwindow;
 
 class GameWindow
 {
 public:
     GameWindow(int width,
                int height,
-               ResizeHandler resizeHandler,
                RenderHandler renderHandler,
                KeyboardInputHandlerDelegate keyboardInputHandler,
                MouseMoveHandlerDelegate mouseMoveHandler);
@@ -21,6 +21,11 @@ public:
     virtual ~GameWindow();
 
     void BeginMainLoop();
+
+private:
+    GLFWwindow* m_WindowPtr;
+
+    void SetCloseFlag();
 };
 
 #endif

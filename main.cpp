@@ -6,20 +6,20 @@
 #include "scenes/shadows_demo.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 
-void display()
+void display(int width, int height)
 {
     Time::Update();
     Input::Update();
     Scene::Update();
 
-    Graphics::Render();
+    Graphics::Render(width, height);
 
     Input::CleanUp();
 }
 
 int main(int argc, char **argv)
 {
-    GameWindow window(1920, 1080, Graphics::Reshape, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
+    GameWindow window(1920, 1080, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
 
     Graphics::Init();
     Time::Init();

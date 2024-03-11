@@ -44,7 +44,9 @@ add_library(GraphicsBackend
         types/graphics_backend_framebuffer.h
         enums/program_interface.h
         enums/program_interface_parameter.h
-        enums/program_resource_parameter.h)
+        enums/program_resource_parameter.h
+        enums/blit_framebuffer_mask.h
+        enums/blit_framebuffer_filter.h)
 
 # windows
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

@@ -4,6 +4,8 @@
 #include "enums/depth_function.h"
 #include "enums/blend_factor.h"
 #include "enums/cull_face.h"
+#include "enums/blit_framebuffer_mask.h"
+#include "enums/blit_framebuffer_filter.h"
 
 #include <memory>
 #include <string>
@@ -34,6 +36,8 @@ namespace Graphics
                                                const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer);
     void                      SetViewport(const Vector4& viewport);
     void                      CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size);
+    void                      Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, int destinationLevel, int destinationLayer, Material &material);
+    void                      Blit(const std::shared_ptr<Texture> &source, BlitFramebufferMask mask, BlitFramebufferFilter filter);
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture);
 

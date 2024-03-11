@@ -2,7 +2,6 @@
 #include "vector4/vector4.h"
 #include "graphics_backend_api.h"
 #include "enums/texture_parameter.h"
-#include "enums/framebuffer_target.h"
 #include "enums/sampler_parameter.h"
 
 Texture::Texture(TextureType textureType, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels) :
@@ -34,15 +33,15 @@ void Texture::Bind(TextureUnit unit) const
     GraphicsBackend::BindSampler(unit, m_Sampler);
 }
 
-void Texture::Attach(FramebufferAttachment attachment, int level, int layer) const
+void Texture::Attach(FramebufferTarget target, FramebufferAttachment attachment, int level, int layer) const
 {
     if (m_TextureType == TextureType::TEXTURE_2D)
     {
-        GraphicsBackend::SetFramebufferTexture(FramebufferTarget::FRAMEBUFFER, attachment, m_Texture, level);
+        GraphicsBackend::SetFramebufferTexture(target, attachment, m_Texture, level);
     }
     else
     {
-        GraphicsBackend::SetFramebufferTextureLayer(FramebufferTarget::FRAMEBUFFER, attachment, m_Texture, level, layer);
+        GraphicsBackend::SetFramebufferTextureLayer(target, attachment, m_Texture, level, layer);
     }
 }
 

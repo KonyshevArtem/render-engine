@@ -28,6 +28,10 @@
 #include "shader/uniform_info/buffer_info.h"
 #include "render_settings/draw_call_comparer.h"
 #include "render_settings/draw_call_filter.h"
+#include "texture_2d/texture_2d.h"
+#include "mesh/mesh.h"
+#include "passes/final_blit_pass.h"
+#include "editor/selection_outline/selection_outline_pass.h"
 
 #include <cassert>
 #include <boost/functional/hash/hash.hpp>
@@ -45,10 +49,12 @@ namespace Graphics
     std::unique_ptr<RenderPass>       opaqueRenderPass;
     std::unique_ptr<RenderPass>       transparentRenderPass;
     std::unique_ptr<SkyboxPass>       skyboxPass;
+    std::unique_ptr<FinalBlitPass>    finalBlitPass;
 
 #if RENDER_ENGINE_EDITOR
     std::unique_ptr<RenderPass> fallbackRenderPass;
     std::unique_ptr<GizmosPass> gizmosPass;
+    std::unique_ptr<SelectionOutlinePass> selectionOutlinePass;
 #endif
 
     int screenWidth  = 0;
@@ -98,10 +104,12 @@ namespace Graphics
         transparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent(), ClearMask::NONE, "Forward");
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
+        finalBlitPass        = std::make_unique<FinalBlitPass>();
 
 #if RENDER_ENGINE_EDITOR
         fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::All(), ClearMask::NONE, "Fallback");
         gizmosPass         = std::make_unique<GizmosPass>();
+        selectionOutlinePass = std::make_unique<SelectionOutlinePass>();
 #endif
     }
 
@@ -238,8 +246,17 @@ namespace Graphics
 
     void Render(int width, int height)
     {
+        static std::shared_ptr<Texture2D> cameraColorTarget;
+        static std::shared_ptr<Texture2D> cameraDepthTarget;
+
         screenWidth  = width;
         screenHeight = height;
+
+        if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
+        {
+            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGB16F, TexturePixelFormat::RGB, TextureDataType::FLOAT);
+            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, TexturePixelFormat::DEPTH_COMPONENT, TextureDataType::FLOAT);
+        }
 
         auto debugGroup = GraphicsBackendDebug::DebugGroup("Render Frame");
 
@@ -256,16 +273,31 @@ namespace Graphics
         SetViewport({0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight)});
         SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix);
 
+        SetRenderTargets(cameraColorTarget, 0, 0, cameraDepthTarget, 0, 0);
+
         if (opaqueRenderPass)
             opaqueRenderPass->Execute(ctx);
-        if (skyboxPass)
-            skyboxPass->Execute(ctx);
-        if (transparentRenderPass)
-            transparentRenderPass->Execute(ctx);
 
 #if RENDER_ENGINE_EDITOR
         if (fallbackRenderPass)
             fallbackRenderPass->Execute(ctx);
+#endif
+
+        if (skyboxPass)
+            skyboxPass->Execute(ctx);
+        if (transparentRenderPass)
+            transparentRenderPass->Execute(ctx);
+        if (finalBlitPass)
+            finalBlitPass->Execute(ctx, cameraColorTarget);
+
+        SetRenderTargets(nullptr, 0, 0, nullptr, 0, 0);
+
+#if RENDER_ENGINE_EDITOR
+
+        {
+            auto copyDepthDebugGroup = GraphicsBackendDebug::DebugGroup("Copy Depth to BackBuffer");
+            Blit(cameraDepthTarget, BlitFramebufferMask::DEPTH, BlitFramebufferFilter::NEAREST);
+        }
 
         if (gizmosPass)
         {
@@ -279,6 +311,9 @@ namespace Graphics
             }
             gizmosPass->Execute(ctx);
         }
+
+        if (selectionOutlinePass)
+            selectionOutlinePass->Execute(ctx);
 
         Gizmos::ClearGizmos();
 #endif
@@ -659,26 +694,28 @@ namespace Graphics
     void SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, int colorLevel, int colorLayer,
                           const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer)
     {
+        constexpr FramebufferTarget target = FramebufferTarget::DRAW_FRAMEBUFFER;
+
         if (!_colorAttachment && !_depthAttachment)
         {
-            GraphicsBackend::BindFramebuffer(FramebufferTarget::DRAW_FRAMEBUFFER, GraphicsBackendFramebuffer::NONE);
+            GraphicsBackend::BindFramebuffer(target, GraphicsBackendFramebuffer::NONE);
             return;
         }
 
-        GraphicsBackend::BindFramebuffer(FramebufferTarget::DRAW_FRAMEBUFFER, framebuffer);
+        GraphicsBackend::BindFramebuffer(target, framebuffer);
 
         if (_colorAttachment)
-            _colorAttachment->Attach(FramebufferAttachment::COLOR_ATTACHMENT0, colorLevel, colorLayer);
+            _colorAttachment->Attach(target, FramebufferAttachment::COLOR_ATTACHMENT0, colorLevel, colorLayer);
         else
         {
-            GraphicsBackend::SetFramebufferTexture(FramebufferTarget::DRAW_FRAMEBUFFER, FramebufferAttachment::COLOR_ATTACHMENT0, GraphicsBackendTexture::NONE, 0);
+            GraphicsBackend::SetFramebufferTexture(target, FramebufferAttachment::COLOR_ATTACHMENT0, GraphicsBackendTexture::NONE, 0);
         }
 
         if (_depthAttachment)
-            _depthAttachment->Attach(FramebufferAttachment::DEPTH_ATTACHMENT, depthLevel, depthLayer);
+            _depthAttachment->Attach(target, FramebufferAttachment::DEPTH_ATTACHMENT, depthLevel, depthLayer);
         else
         {
-            GraphicsBackend::SetFramebufferTexture(FramebufferTarget::DRAW_FRAMEBUFFER, FramebufferAttachment::DEPTH_ATTACHMENT, GraphicsBackendTexture::NONE, 0);
+            GraphicsBackend::SetFramebufferTexture(target, FramebufferAttachment::DEPTH_ATTACHMENT, GraphicsBackendTexture::NONE, 0);
         }
     }
 
@@ -704,4 +741,36 @@ namespace Graphics
         GraphicsBackend::CopyBufferSubData(BufferBindTarget::COPY_READ_BUFFER, BufferBindTarget::COPY_WRITE_BUFFER, sourceOffset, destinationOffset, size);
     }
 
+    void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, int destinationLevel, int destinationLayer, Material &material)
+    {
+        static std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
+
+        material.SetTexture("_BlitTexture", source);
+
+        SetRenderTargets(destination, destinationLevel, destinationLayer, nullptr, 0, 0);
+        Draw(*fullscreenMesh, material, Matrix4x4::Identity(), 0);
+    }
+
+    void Blit(const std::shared_ptr<Texture> &source, BlitFramebufferMask mask, BlitFramebufferFilter filter)
+    {
+        FramebufferAttachment attachment = FramebufferAttachment::COLOR_ATTACHMENT0;
+        if (mask == BlitFramebufferMask::DEPTH)
+        {
+            attachment = FramebufferAttachment::DEPTH_ATTACHMENT;
+        }
+        else if (mask == BlitFramebufferMask::STENCIL)
+        {
+            attachment = FramebufferAttachment::STENCIL_ATTACHMENT;
+        }
+        else if (mask == BlitFramebufferMask::DEPTH_STENCIL)
+        {
+            attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+        }
+
+        GraphicsBackend::BindFramebuffer(FramebufferTarget::READ_FRAMEBUFFER, framebuffer);
+        source->Attach(FramebufferTarget::READ_FRAMEBUFFER, attachment, 0, 0);
+
+        GraphicsBackend::BindFramebuffer(FramebufferTarget::DRAW_FRAMEBUFFER, GraphicsBackendFramebuffer::NONE);
+        GraphicsBackend::BlitFramebuffer(0, 0, source->GetWidth(), source->GetHeight(), 0, 0, screenWidth, screenHeight, mask, filter);
+    }
 } // namespace Graphics

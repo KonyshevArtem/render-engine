@@ -672,6 +672,11 @@ void GraphicsBackend::SetShaderStorageBlockBinding(GraphicsBackendProgram progra
 #endif
 }
 
+void GraphicsBackend::BlitFramebuffer(int srcMinX, int srcMinY, int srcMaxX, int srcMaxY, int dstMinX, int dstMinY, int dstMaxX, int dstMaxY, BlitFramebufferMask mask, BlitFramebufferFilter filter)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glBlitFramebuffer(srcMinX, srcMinY, srcMaxX, srcMaxY, dstMinX, dstMinY, dstMaxX, dstMaxY, Cast(mask), Cast(filter)))
+}
+
 GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackend::GetError()
 {
     return glGetError();

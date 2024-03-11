@@ -3,8 +3,8 @@
     {
       "zWrite": false,
       "zTest": "Always",
-      "vertex": "outlineBlit.vs",
-      "fragment": "outlineBlit.fs"
+      "vertex": "final_blit.vs",
+      "fragment": "final_blit.fs"
     }
   ]
 }

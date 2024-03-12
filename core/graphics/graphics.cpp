@@ -80,7 +80,6 @@ namespace Graphics
 
     void InitFramebuffer()
     {
-        GraphicsBackend::SetCapability(GraphicsBackendCapability::FRAMEBUFFER_SRGB, true);
         GraphicsBackend::GenerateFramebuffers(1, &framebuffer);
     }
 

@@ -49,6 +49,12 @@ void Material::SetMatrix(const std::string &name, const Matrix4x4 &value)
     SetDataToUniformBlocks(name, &value, sizeof(Matrix4x4));
 }
 
+void Material::SetInt(const std::string &name, int value)
+{
+    m_PropertyBlock.SetInt(name, value);
+    SetDataToUniformBlocks(name, &value, sizeof(int));
+}
+
 void Material::SetDataToUniformBlocks(const std::string &name, const void *data, uint64_t size)
 {
     int passesCount = m_Shader->PassesCount();

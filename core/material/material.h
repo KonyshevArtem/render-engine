@@ -57,6 +57,11 @@ public:
         return m_PropertyBlock.GetMatrix(_name);
     }
 
+    void SetInt(const std::string &name, int value);
+    inline int GetInt(const std::string &name) const
+    {
+        return m_PropertyBlock.GetInt(name);
+    }
 
     inline const std::shared_ptr<Shader> &GetShader() const
     {

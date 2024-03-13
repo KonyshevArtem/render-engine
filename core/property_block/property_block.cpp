@@ -46,6 +46,18 @@ Matrix4x4 PropertyBlock::GetMatrix(const std::string &_name) const
     return m_Matrices.contains(_name) ? m_Matrices.at(_name) : Matrix4x4::Zero();
 }
 
+
+void PropertyBlock::SetInt(const std::string &name, int value)
+{
+    m_Ints[name] = value;
+}
+
+int PropertyBlock::GetInt(const std::string &name) const
+{
+    return m_Ints.contains(name) ? m_Ints.at(name) : 0;
+}
+
+
 bool PropertyBlock::HasProperty(const std::string &name) const
 {
     return m_Textures.contains(name) || m_Floats.contains(name) || m_Matrices.contains(name) || m_Vectors.contains(name);

@@ -16,11 +16,13 @@ public:
     void SetVector(const std::string &_name, const Vector4 &_value);
     void SetFloat(const std::string &_name, float _value);
     void SetMatrix(const std::string &_name, const Matrix4x4 &_value);
+    void SetInt(const std::string &name, int value);
 
     const std::shared_ptr<Texture> GetTexture(const std::string &_name) const;
     Vector4                        GetVector(const std::string &_name) const;
     float                          GetFloat(const std::string &_name) const;
     Matrix4x4                      GetMatrix(const std::string &_name) const;
+    int                            GetInt(const std::string &name) const;
 
     bool HasProperty(const std::string &name) const;
 
@@ -44,11 +46,17 @@ public:
         return m_Matrices;
     }
 
+    inline const std::unordered_map<std::string, int> &GetInts() const
+    {
+        return m_Ints;
+    }
+
 private:
     std::unordered_map<std::string, std::shared_ptr<Texture>> m_Textures;
     std::unordered_map<std::string, Vector4> m_Vectors;
     std::unordered_map<std::string, float> m_Floats;
     std::unordered_map<std::string, Matrix4x4> m_Matrices;
+    std::unordered_map<std::string, int> m_Ints;
 };
 
 #endif

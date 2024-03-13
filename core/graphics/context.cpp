@@ -11,7 +11,6 @@ Context::Context()
 
     const auto &scene = Scene::Current;
 
-    AmbientLight     = scene->AmbientLight;
     Skybox           = scene->Skybox;
     ViewMatrix       = Camera::Current->GetViewMatrix();
     ProjectionMatrix = Camera::Current->GetProjectionMatrix();

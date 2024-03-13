@@ -5,6 +5,7 @@
 #include "enums/texture_wrap_mode.h"
 #include "enums/texture_filtering_mode.h"
 #include "enums/framebuffer_attachment.h"
+#include "enums/framebuffer_target.h"
 #include "enums/texture_target.h"
 #include "enums/texture_internal_format.h"
 #include "enums/texture_pixel_format.h"
@@ -21,7 +22,7 @@ public:
     virtual ~Texture();
 
     void Bind(TextureUnit unit) const;
-    void Attach(FramebufferAttachment attachment, int level, int layer) const;
+    void Attach(FramebufferTarget target, FramebufferAttachment attachment, int level, int layer) const;
     void SetBaseMipLevel(unsigned int baseMipLevel) const;
     void SetWrapMode(TextureWrapMode wrapMode) const;
     void SetBorderColor(const Vector4 &color) const;

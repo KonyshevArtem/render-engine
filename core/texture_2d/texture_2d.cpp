@@ -10,14 +10,14 @@ Texture2D::Texture2D(unsigned int width, unsigned int height, unsigned int mipLe
 {
 }
 
-std::shared_ptr<Texture2D> Texture2D::Create(int _width, int _height)
+std::shared_ptr<Texture2D> Texture2D::Create(int _width, int _height, TextureInternalFormat textureFormat, TexturePixelFormat pixelFormat, TextureDataType dataType)
 {
-    return Create_Internal(nullptr, _width, _height, TextureInternalFormat::SRGB_ALPHA, TexturePixelFormat::RGBA);
+    return Create_Internal(nullptr, _width, _height, textureFormat, pixelFormat, dataType);
 }
 
 std::shared_ptr<Texture2D> Texture2D::CreateShadowMap(int _width, int _height)
 {
-    return Create_Internal(nullptr, _width, _height, TextureInternalFormat::DEPTH_COMPONENT, TexturePixelFormat::DEPTH_COMPONENT);
+    return Create_Internal(nullptr, _width, _height, TextureInternalFormat::DEPTH_COMPONENT, TexturePixelFormat::DEPTH_COMPONENT, TextureDataType::UNSIGNED_BYTE);
 }
 
 std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path)
@@ -47,7 +47,7 @@ const std::shared_ptr<Texture2D> &Texture2D::White()
     if (white == nullptr)
     {
         unsigned char pixels[3] {255, 255, 255};
-        white = Create_Internal(&pixels[0], 1, 1, TextureInternalFormat::SRGB, TexturePixelFormat::RGB);
+        white = Create_Internal(&pixels[0], 1, 1, TextureInternalFormat::SRGB, TexturePixelFormat::RGB, TextureDataType::UNSIGNED_BYTE);
     }
 
     return white;
@@ -60,7 +60,7 @@ const std::shared_ptr<Texture2D> &Texture2D::Normal()
     if (normal == nullptr)
     {
         unsigned char pixels[3] {125, 125, 255};
-        normal = Create_Internal(&pixels[0], 1, 1, TextureInternalFormat::RGB, TexturePixelFormat::RGB);
+        normal = Create_Internal(&pixels[0], 1, 1, TextureInternalFormat::RGB, TexturePixelFormat::RGB, TextureDataType::UNSIGNED_BYTE);
     }
 
     return normal;
@@ -72,9 +72,9 @@ const std::shared_ptr<Texture2D> &Texture2D::Null()
     return null;
 }
 
-std::shared_ptr<Texture2D> Texture2D::Create_Internal(uint8_t *pixels, int width, int height, TextureInternalFormat textureFormat, TexturePixelFormat pixelFormat)
+std::shared_ptr<Texture2D> Texture2D::Create_Internal(uint8_t *pixels, int width, int height, TextureInternalFormat textureFormat, TexturePixelFormat pixelFormat, TextureDataType dataType)
 {
     auto texture = std::shared_ptr<Texture2D>(new Texture2D(width, height, 1));
-    texture->UploadPixels(pixels, TextureTarget::TEXTURE_2D, textureFormat, pixelFormat, TextureDataType::UNSIGNED_BYTE, 0, 0, false);
+    texture->UploadPixels(pixels, TextureTarget::TEXTURE_2D, textureFormat, pixelFormat, dataType, 0, 0, false);
     return texture;
 }

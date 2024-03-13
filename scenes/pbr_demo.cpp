@@ -74,8 +74,6 @@ void PBRDemo::Init()
     spotLight->Attenuation = 0.001f;
     Lights.push_back(spotLight);
 
-    AmbientLight = {0.05f, 0.05f, 0.05f};
-
     Camera::Current->SetPosition({7.5f, 7.5f, -15});
 }
 

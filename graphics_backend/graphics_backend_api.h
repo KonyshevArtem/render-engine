@@ -37,6 +37,8 @@ FORWARD_DECLARE_ENUM(IndicesDataType)
 FORWARD_DECLARE_ENUM(ProgramInterface)
 FORWARD_DECLARE_ENUM(ProgramInterfaceParameter)
 FORWARD_DECLARE_ENUM(ProgramResourceParameter)
+FORWARD_DECLARE_ENUM(BlitFramebufferMask)
+FORWARD_DECLARE_ENUM(BlitFramebufferFilter)
 #undef FORWARD_DECLARE_ENUM
 
 class GraphicsBackendTexture;
@@ -167,6 +169,8 @@ public:
 
     static bool SupportShaderStorageBuffer();
     static void SetShaderStorageBlockBinding(GraphicsBackendProgram program, int blockIndex, int blockBinding);
+
+    static void BlitFramebuffer(int srcMinX, int srcMinY, int srcMaxX, int srcMaxY, int dstMinX, int dstMinY, int dstMaxX, int dstMaxY, BlitFramebufferMask mask, BlitFramebufferFilter filter);
 
     static GRAPHICS_BACKEND_TYPE_ENUM GetError();
     static const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error);

@@ -26,6 +26,7 @@ public:
     void SetVector(const std::string &name, const Vector4 &value);
     void SetFloat(const std::string &name, float value);
     void SetMatrix(const std::string &name, const Matrix4x4 &value);
+    void SetInt(const std::string &name, int value);
 
     inline const std::shared_ptr<GraphicsBufferWrapper> &GetInstanceDataBufferWrapper() const
     {

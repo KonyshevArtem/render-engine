@@ -38,6 +38,11 @@ void Renderer::SetMatrix(const std::string &name, const Matrix4x4 &value)
     SetDataToBuffers(name, &value, sizeof(Matrix4x4));
 }
 
+void Renderer::SetInt(const std::string &name, int value)
+{
+    SetDataToBuffers(name, &value, sizeof(int));
+}
+
 void Renderer::SetDataToBuffers(const std::string &name, const void *data, uint64_t size)
 {
     const static std::string prefix = std::string(GlobalConstants::PerInstanceStructName) + "[0].";

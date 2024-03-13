@@ -87,7 +87,13 @@ add_library(
 	graphics/render_settings/draw_call_comparer.cpp
 	graphics/render_settings/draw_call_filter.cpp
 	graphics/render_settings/draw_call_filter.h
-	global_constants.h)
+	global_constants.h
+	graphics/passes/final_blit_pass.cpp
+	graphics/passes/final_blit_pass.h
+	editor/selection_outline/selection_outline_pass.cpp
+	editor/selection_outline/selection_outline_pass.h
+	graphics/graphics_settings.cpp
+	graphics/graphics_settings.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

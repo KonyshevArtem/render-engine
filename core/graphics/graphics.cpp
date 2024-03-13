@@ -32,6 +32,7 @@
 #include "mesh/mesh.h"
 #include "passes/final_blit_pass.h"
 #include "editor/selection_outline/selection_outline_pass.h"
+#include "graphics_settings.h"
 
 #include <cassert>
 #include <boost/functional/hash/hash.hpp>
@@ -150,10 +151,10 @@ namespace Graphics
         GraphicsBackend::DeleteFramebuffers(1, &framebuffer);
     }
 
-    void SetLightingData(const Vector3 &_ambient, const std::vector<Light *> &_lights)
+    void SetLightingData(const std::vector<Light *> &_lights)
     {
         LightingData lightingData{};
-        lightingData.AmbientLight = _ambient;
+        lightingData.AmbientLight = GraphicsSettings::GetAmbientLightColor() * GraphicsSettings::GetAmbientLightIntensity();
         lightingData.PointLightsCount = 0;
         lightingData.SpotLightsCount = 0;
         lightingData.HasDirectionalLight = -1;
@@ -167,7 +168,7 @@ namespace Graphics
             {
                 lightingData.HasDirectionalLight = 1;
                 lightingData.DirLightDirection = light->Rotation * Vector3(0, 0, 1);
-                lightingData.DirLightIntensity = light->Intensity;
+                lightingData.DirLightIntensity = GraphicsSettings::GetSunLightColor() * GraphicsSettings::GetSunLightIntensity();
             }
             else if (light->Type == LightType::POINT && lightingData.PointLightsCount < GlobalConstants::MaxPointLightSources)
             {
@@ -264,7 +265,7 @@ namespace Graphics
 
         Context ctx;
 
-        SetLightingData(ctx.AmbientLight, ctx.Lights);
+        SetLightingData(ctx.Lights);
 
         if (shadowCasterPass)
             shadowCasterPass->Execute(ctx);
@@ -466,6 +467,8 @@ namespace Graphics
         for (const auto &pair: propertyBlock.GetFloats())
             SetUniform(uniforms, pair.first, &pair.second);
         for (const auto &pair: propertyBlock.GetMatrices())
+            SetUniform(uniforms, pair.first, &pair.second);
+        for (const auto &pair: propertyBlock.GetInts())
             SetUniform(uniforms, pair.first, &pair.second);
     }
 

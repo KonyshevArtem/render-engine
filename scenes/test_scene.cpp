@@ -224,8 +224,6 @@ void TestScene::Init()
     spotLight2->CutOffAngle = 15;
     spotLight2->Type        = LightType::SPOT;
 
-    AmbientLight = Vector3(0.1f, 0.1f, 0.1f);
-
     Lights.push_back(m_DirectionalLight);
     Lights.push_back(pointLight);
     Lights.push_back(m_SpotLight);

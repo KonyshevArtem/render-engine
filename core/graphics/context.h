@@ -22,7 +22,6 @@ struct Context
 public:
     Context();
 
-    Vector3 AmbientLight;
     std::vector<Light *> Lights;
 
     std::vector<std::shared_ptr<Renderer>> Renderers;

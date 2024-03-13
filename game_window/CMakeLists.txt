@@ -13,7 +13,9 @@ add_library(
         windows/scene_hierarchy_window.cpp
         windows/scene_hierarchy_window.h
         window_manager.cpp
-        window_manager.h)
+        window_manager.h
+        windows/graphics_settings_window.cpp
+        windows/graphics_settings_window.h)
 
 add_compile_definitions(GL_SILENCE_DEPRECATION)
 target_include_directories(GameWindow PUBLIC .)

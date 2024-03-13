@@ -91,7 +91,9 @@ add_library(
 	graphics/passes/final_blit_pass.cpp
 	graphics/passes/final_blit_pass.h
 	editor/selection_outline/selection_outline_pass.cpp
-	editor/selection_outline/selection_outline_pass.h)
+	editor/selection_outline/selection_outline_pass.h
+	graphics/graphics_settings.cpp
+	graphics/graphics_settings.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

@@ -94,8 +94,6 @@ void ShadowsDemo::Init()
     Lights.push_back(pointLight1);
     Lights.push_back(pointLight2);
 
-    AmbientLight = {0.05f, 0.05f, 0.05f};
-
     m_CameraFlyControl = std::make_unique<CameraFlyController>();
 }
 

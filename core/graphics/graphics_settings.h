@@ -3,29 +3,33 @@
 
 #include "vector3/vector3.h"
 
+#define DECLARE_GRAPHICS_SETTING(type, name)    void Set##name(type value); \
+                                                type Get##name();
+
 namespace GraphicsSettings
 {
     enum class TonemappingMode
     {
-        NONE        = 0,
-        REINHARD    = 1,
+        NONE                                    = 0,
+        REINHARD_SIMPLE                         = 1,
+        REINHARD_LUMINANCE                      = 2,
+        REINHARD_LUMINANCE_WHITE_PRESERVING     = 3,
+        ROMBINDAHOUSE                           = 4,
+        FILMIC                                  = 5,
+        UNCHARTED2                              = 6,
+        ACES                                    = 7,
+        ACES_APPROXIMATE                        = 8
     };
 
-    void SetAmbientLightColor(const Vector3 &color);
-    void SetAmbientLightIntensity(float intensity);
-    Vector3 GetAmbientLightColor();
-    float GetAmbientLightIntensity();
+    DECLARE_GRAPHICS_SETTING(Vector3, AmbientLightColor)
+    DECLARE_GRAPHICS_SETTING(float, AmbientLightIntensity)
 
-    void SetSunLightColor(const Vector3 &color);
-    void SetSunLightIntensity(float intensity);
-    Vector3 GetSunLightColor();
-    float GetSunLightIntensity();
+    DECLARE_GRAPHICS_SETTING(Vector3, SunLightColor)
+    DECLARE_GRAPHICS_SETTING(float, SunLightIntensity)
 
-    void SetGamma(float gamma);
-    float GetGamma();
-
-    void SetTonemappingMode(TonemappingMode mode);
-    TonemappingMode GetTonemappingMode();
+    DECLARE_GRAPHICS_SETTING(float, Gamma)
+    DECLARE_GRAPHICS_SETTING(float, Exposure)
+    DECLARE_GRAPHICS_SETTING(TonemappingMode, TonemappingMode)
 }
 
 #endif //RENDER_ENGINE_GRAPHICS_SETTINGS_H

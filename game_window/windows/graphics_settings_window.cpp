@@ -3,47 +3,51 @@
 #include "imgui.h"
 
 #include <vector>
+#include <functional>
 #include <typeinfo>
 
 GraphicsSettingsWindow::GraphicsSettingsWindow() : BaseWindow(500, 400, "Graphics Settings", typeid(GraphicsSettingsWindow).hash_code(), false)
 {
 }
 
+void DrawFloatSetting(const std::string &name, const std::function<float()> &getter, const std::function<void(float)> &setter, float min = 0.0f, float max = 100.0f)
+{
+    float value = getter();
+    ImGui::DragFloat(name.c_str(), &value, 0.01f, min, max, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+    setter(value);
+}
+
+void DrawColorSetting(const std::string &name, const std::function<Vector3()> &getter, const std::function<void(Vector3)> &setter)
+{
+    Vector3 value = getter();
+    ImGui::ColorEdit3(name.c_str(), reinterpret_cast<float*>(&value));
+    setter(value);
+}
+
 void DrawLightingSettings()
 {
     ImGui::SeparatorText("Lighting");
 
-    Vector3 ambientColor = GraphicsSettings::GetAmbientLightColor();
-    ImGui::ColorEdit3("Ambient Light Color", reinterpret_cast<float*>(&ambientColor));
-    GraphicsSettings::SetAmbientLightColor(ambientColor);
-
-    float ambientIntensity = GraphicsSettings::GetAmbientLightIntensity();
-    ImGui::DragFloat("Ambient Light Intensity", &ambientIntensity, 0.01f, 0.0f, 100.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-    GraphicsSettings::SetAmbientLightIntensity(ambientIntensity);
+    DrawColorSetting("Ambient Light Color", GraphicsSettings::GetAmbientLightColor, GraphicsSettings::SetAmbientLightColor);
+    DrawFloatSetting("Ambient Light Intensity", GraphicsSettings::GetAmbientLightIntensity, GraphicsSettings::SetAmbientLightIntensity);
 
     ImGui::Spacing();
 
-    Vector3 sunColor = GraphicsSettings::GetSunLightColor();
-    ImGui::ColorEdit3("Sun Light Color", reinterpret_cast<float*>(&sunColor));
-    GraphicsSettings::SetSunLightColor(sunColor);
-
-    float sunIntensity = GraphicsSettings::GetSunLightIntensity();
-    ImGui::DragFloat("Sun Light Intensity", &sunIntensity, 0.01f, 0.0f, 100.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-    GraphicsSettings::SetSunLightIntensity(sunIntensity);
+    DrawColorSetting("Sun Light Color", GraphicsSettings::GetSunLightColor, GraphicsSettings::SetSunLightColor);
+    DrawFloatSetting("Sun Light Intensity", GraphicsSettings::GetSunLightIntensity, GraphicsSettings::SetSunLightIntensity);
 }
 
 void DrawTonemappingSettings()
 {
-    static std::vector<std::string> tonemappingModes = {"No Tonemapping", "Reinhard Tonemapping"};
+    const static std::vector<std::string> tonemappingModes = {"None", "Reinhard Simple", "Reinhard Luminance", "Reinhard Luminance White Preserving", "RomBinDaHouse", "Filmic", "Uncharted 2", "ACES", "ACES Approximation"};
 
     ImGui::SeparatorText("Tonemapping");
 
-    float gamma = GraphicsSettings::GetGamma();
-    ImGui::DragFloat("Gamma", &gamma, 0.01f, 0.0f, 10.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-    GraphicsSettings::SetGamma(gamma);
+    DrawFloatSetting("Gamma", GraphicsSettings::GetGamma, GraphicsSettings::SetGamma, 0.01f);
+    DrawFloatSetting("Exposure", GraphicsSettings::GetExposure, GraphicsSettings::SetExposure, 0.01f);
 
     int selectedTonemapping = static_cast<int>(GraphicsSettings::GetTonemappingMode());
-    if (ImGui::BeginCombo("Mode", tonemappingModes[selectedTonemapping].c_str()))
+    if (ImGui::BeginCombo("Tonemapping Mode", tonemappingModes[selectedTonemapping].c_str()))
     {
         for (int i = 0; i < tonemappingModes.size(); i++)
         {

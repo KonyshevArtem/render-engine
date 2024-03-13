@@ -14,7 +14,8 @@ void FinalBlitPass::Execute(Context &context, const std::shared_ptr<Texture2D> &
 
     GraphicsSettings::TonemappingMode tonemappingMode = GraphicsSettings::GetTonemappingMode();
 
-    material->SetFloat("_Gamma", GraphicsSettings::GetGamma());
+    material->SetFloat("_OneOverGamma", 1 / GraphicsSettings::GetGamma());
+    material->SetFloat("_Exposure", GraphicsSettings::GetExposure());
     material->SetInt("_TonemappingMode", static_cast<int>(tonemappingMode));
     Graphics::Blit(source, nullptr, 0, 0, *material);
 }

@@ -201,17 +201,16 @@ void TestScene::Init()
     m_DirectionalLight            = std::make_shared<Light>();
     m_DirectionalLight->Position  = Vector3(0, -0.3f, -1);
     m_DirectionalLight->Rotation  = Quaternion::AngleAxis(-150, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(1, 0, 0));
-    m_DirectionalLight->Intensity = Vector3(0.5f, 0.5f, 0.5f);
     m_DirectionalLight->Type      = LightType::DIRECTIONAL;
 
     auto pointLight         = std::make_shared<Light>();
     pointLight->Position    = Vector3(-3, -3, 4);
-    pointLight->Intensity   = Vector3(1, 0, 0);
+    pointLight->Intensity   = Vector3(10, 0, 0);
     pointLight->Attenuation = 0.3f;
     pointLight->Type        = LightType::POINT;
 
     m_SpotLight              = std::make_shared<Light>();
-    m_SpotLight->Intensity   = Vector3(1, 1, 1);
+    m_SpotLight->Intensity   = Vector3(10, 10, 10);
     m_SpotLight->Attenuation = 0.005f;
     m_SpotLight->CutOffAngle = 15;
     m_SpotLight->Type        = LightType::SPOT;

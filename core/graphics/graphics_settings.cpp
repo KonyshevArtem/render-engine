@@ -1,70 +1,18 @@
 #include "graphics_settings.h"
 
-Vector3 s_AmbientLightColor = {1, 1, 1};
-float s_AmbientLightIntensity = 0.1f;
+#define DEFINE_GRAPHICS_SETTING(type, name, defaultValue)       type s_##name = defaultValue; \
+                                                                void Set##name(type value) { s_##name = value; } \
+                                                                type Get##name() { return s_##name; }
 
-Vector3 s_SunLightColor = {1, 1, 1};
-float s_SunLightIntensity = 5;
-
-float s_Gamma = 2.2f;
-GraphicsSettings::TonemappingMode s_TonemappingMode = GraphicsSettings::TonemappingMode::REINHARD;
-
-void GraphicsSettings::SetAmbientLightColor(const Vector3 &color)
+namespace GraphicsSettings
 {
-    s_AmbientLightColor = color;
-}
+    DEFINE_GRAPHICS_SETTING(Vector3, AmbientLightColor, Vector3(1, 1, 1))
+    DEFINE_GRAPHICS_SETTING(float, AmbientLightIntensity, 0.1f)
 
-void GraphicsSettings::SetAmbientLightIntensity(float intensity)
-{
-    s_AmbientLightIntensity = intensity;
-}
+    DEFINE_GRAPHICS_SETTING(Vector3, SunLightColor, Vector3(1, 1, 1))
+    DEFINE_GRAPHICS_SETTING(float, SunLightIntensity, 5)
 
-Vector3 GraphicsSettings::GetAmbientLightColor()
-{
-    return s_AmbientLightColor;
-}
-
-float GraphicsSettings::GetAmbientLightIntensity()
-{
-    return s_AmbientLightIntensity;
-}
-
-void GraphicsSettings::SetSunLightColor(const Vector3 &color)
-{
-    s_SunLightColor = color;
-}
-
-void GraphicsSettings::SetSunLightIntensity(float intensity)
-{
-    s_SunLightIntensity = intensity;
-}
-
-Vector3 GraphicsSettings::GetSunLightColor()
-{
-    return s_SunLightColor;
-}
-
-float GraphicsSettings::GetSunLightIntensity()
-{
-    return s_SunLightIntensity;
-}
-
-void GraphicsSettings::SetGamma(float gamma)
-{
-    s_Gamma = gamma;
-}
-
-float GraphicsSettings::GetGamma()
-{
-    return s_Gamma;
-}
-
-void GraphicsSettings::SetTonemappingMode(TonemappingMode mode)
-{
-    s_TonemappingMode = mode;
-}
-
-GraphicsSettings::TonemappingMode GraphicsSettings::GetTonemappingMode()
-{
-    return s_TonemappingMode;
+    DEFINE_GRAPHICS_SETTING(float, Gamma, 2.2f)
+    DEFINE_GRAPHICS_SETTING(float, Exposure, 1.0f)
+    DEFINE_GRAPHICS_SETTING(TonemappingMode, TonemappingMode, TonemappingMode::ACES_APPROXIMATE)
 }

@@ -4,6 +4,7 @@
 #define RENDER_ENGINE_GIZMOS_H
 
 #include <vector>
+#include <unordered_map>
 #include <memory>
 
 struct Matrix4x4;
@@ -14,7 +15,7 @@ namespace Gizmos
     void DrawWireCube(const Matrix4x4 &_matrix);
 
     void Init();
-    const std::vector<std::pair<std::shared_ptr<DrawableGeometry>, Matrix4x4>> &GetGizmosToDraw();
+    const std::unordered_map<std::shared_ptr<DrawableGeometry>, std::vector<Matrix4x4>> &GetGizmosToDraw();
     void ClearGizmos();
 
     bool IsEnabled();

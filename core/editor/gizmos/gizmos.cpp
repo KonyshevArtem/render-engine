@@ -7,13 +7,13 @@
 
 bool m_IsEnabled;
 std::shared_ptr<Lines> m_WireCubePrimitive;
-std::vector<std::pair<std::shared_ptr<DrawableGeometry>, Matrix4x4>> m_GizmosToDraw;
+std::unordered_map<std::shared_ptr<DrawableGeometry>, std::vector<Matrix4x4>> m_GizmosToDraw;
 
 void Gizmos::DrawWireCube(const Matrix4x4 &_matrix)
 {
     if (m_IsEnabled)
     {
-        m_GizmosToDraw.emplace_back(m_WireCubePrimitive, _matrix);
+        m_GizmosToDraw[m_WireCubePrimitive].push_back(_matrix);
     }
 }
 
@@ -38,17 +38,21 @@ void Gizmos::Init()
         };
 
         m_WireCubePrimitive = std::make_shared<Lines>(wireCubePoints, wireCubeIndices);
+        m_GizmosToDraw[m_WireCubePrimitive] = {};
     }
 }
 
-const std::vector<std::pair<std::shared_ptr<DrawableGeometry>, Matrix4x4>> &Gizmos::GetGizmosToDraw()
+const std::unordered_map<std::shared_ptr<DrawableGeometry>, std::vector<Matrix4x4>> &Gizmos::GetGizmosToDraw()
 {
     return m_GizmosToDraw;
 }
 
 void Gizmos::ClearGizmos()
 {
-    m_GizmosToDraw.clear();
+    for (auto &pair : m_GizmosToDraw)
+    {
+        pair.second.clear();
+    }
 }
 
 bool Gizmos::IsEnabled()

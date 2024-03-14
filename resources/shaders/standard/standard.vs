@@ -9,7 +9,7 @@ layout(location = 3) in vec3 vertTangentOS;
 
 void main(){
     TRANSFER_INSTANCE_ID_VARYING(vars)
-    SETUP_INSTANCE_ID(vars)
+    SETUP_INSTANCE_ID
 
     vec3 vertPos = vertPositionOS;
 #ifdef _PER_INSTANCE_DATA

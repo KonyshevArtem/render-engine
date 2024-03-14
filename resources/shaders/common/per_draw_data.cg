@@ -15,13 +15,23 @@
     #define GET_PER_INSTANCE_VALUE(name)        PerInstance[_InstanceID].name
     #define DECLARE_INSTANCE_ID_VARYING         flat int instanceID;
     #define TRANSFER_INSTANCE_ID_VARYING(vars)  vars.instanceID = gl_InstanceID;
-    #define SETUP_INSTANCE_ID(vars)             _InstanceID = vars.instanceID;
+
+    #if defined(VERTEX_PROGRAM)
+        #define SETUP_INSTANCE_ID                   _InstanceID = gl_InstanceID;
+    #elif defined(FRAGMENT_PROGRAM)
+        #define SETUP_INSTANCE_ID(vars)             _InstanceID = vars.instanceID;
+    #endif
 #else
     #define END_PER_INSTANCE_DATA               }; layout(std140) uniform PerInstanceData { PerInstanceDataStruct PerInstance[1]; };
     #define GET_PER_INSTANCE_VALUE(name)        PerInstance[0].name
     #define DECLARE_INSTANCE_ID_VARYING
     #define TRANSFER_INSTANCE_ID_VARYING(vars)
-    #define SETUP_INSTANCE_ID(vars)
+
+    #if defined(VERTEX_PROGRAM)
+        #define SETUP_INSTANCE_ID
+    #elif defined(FRAGMENT_PROGRAM)
+        #define SETUP_INSTANCE_ID(vars)
+    #endif
 #endif
 
 #ifdef _INSTANCING

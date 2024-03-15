@@ -19,7 +19,7 @@ void display(int width, int height)
 
 int main(int argc, char **argv)
 {
-    GameWindow window(1920, 1080, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
+    auto *window = GameWindow::Create(1920, 1080, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
 
     Graphics::Init();
     Time::Init();
@@ -28,9 +28,11 @@ int main(int argc, char **argv)
     //PBRDemo::Load();
     //ShadowsDemo::Load();
 
-    window.BeginMainLoop();
+    window->BeginMainLoop();
 
     Graphics::Shutdown();
+
+    delete window;
 
     return 0;
 }

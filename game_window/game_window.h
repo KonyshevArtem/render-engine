@@ -7,25 +7,31 @@ typedef std::function<void(int, int)> RenderHandler;
 typedef std::function<void(unsigned char, bool)> KeyboardInputHandlerDelegate;
 typedef std::function<void(double, double)> MouseMoveHandlerDelegate;
 
-struct GLFWwindow;
-
 class GameWindow
 {
 public:
-    GameWindow(int width,
-               int height,
-               RenderHandler renderHandler,
+    static GameWindow* Create(int width, int height,
+                              RenderHandler renderHandler,
+                              KeyboardInputHandlerDelegate keyboardInputHandler,
+                              MouseMoveHandlerDelegate mouseMoveHandler);
+
+    virtual ~GameWindow() = default;
+
+    virtual void BeginMainLoop() = 0;
+
+protected:
+    GameWindow(RenderHandler renderHandler,
                KeyboardInputHandlerDelegate keyboardInputHandler,
                MouseMoveHandlerDelegate mouseMoveHandler);
 
-    virtual ~GameWindow();
+    void DrawInternal(int width, int height);
 
-    void BeginMainLoop();
+protected:
+    virtual void SetCloseFlag() = 0;
 
-private:
-    GLFWwindow* m_WindowPtr;
-
-    void SetCloseFlag();
+    static void HandleKeyboardInput(unsigned char key, bool pressed);
+    static void HandleMouseMove(double x, double y);
+    static const std::string &GetWindowTitle();
 };
 
 #endif

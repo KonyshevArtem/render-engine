@@ -15,8 +15,12 @@ add_library(
         window_manager.cpp
         window_manager.h
         windows/graphics_settings_window.cpp
-        windows/graphics_settings_window.h)
+        windows/graphics_settings_window.h
+        game_window_implementations/game_window_opengl.cpp
+        game_window_implementations/game_window_opengl.h
+        game_window_implementations/game_window_metal.cpp
+        game_window_implementations/game_window_metal.h)
 
 add_compile_definitions(GL_SILENCE_DEPRECATION)
 target_include_directories(GameWindow PUBLIC .)
-target_link_libraries(GameWindow ImGui Core)
+target_link_libraries(GameWindow ImGui Core metal-cpp metal-cpp-extensions)

@@ -11,31 +11,29 @@
 
 #include <utility>
 
-RenderHandler s_RenderHandler;
-KeyboardInputHandlerDelegate s_KeyboardInputHandler;
-MouseMoveHandlerDelegate s_MouseMoveHandler;
-
 GameWindow *GameWindow::Create(void* viewPtr,
                                RenderHandler renderHandler,
                                KeyboardInputHandlerDelegate keyboardInputHandler,
                                MouseMoveHandlerDelegate mouseMoveHandler)
 {
-    s_RenderHandler = std::move(renderHandler);
-    s_KeyboardInputHandler = std::move(keyboardInputHandler);
-    s_MouseMoveHandler = std::move(mouseMoveHandler);
-
 #if RENDER_ENGINE_WINDOWS
-    return new GameWindowPlatformWindows(viewPtr);
+    GameWindow *window = new GameWindowPlatformWindows(viewPtr);
 #elif RENDER_ENGINE_APPLE
-    return new GameWindowPlatformApple(viewPtr);
+    GameWindow *window = new GameWindowPlatformApple(viewPtr);
 #endif
+
+    window->m_RenderHandler = std::move(renderHandler);
+    window->m_KeyboardInputHandler = std::move(keyboardInputHandler);
+    window->m_MouseMoveHandler = std::move(mouseMoveHandler);
+
+    return window;
 }
 
 void GameWindow::DrawInternal(int width, int height)
 {
-    if (s_RenderHandler)
+    if (m_RenderHandler)
     {
-        s_RenderHandler(width, height);
+        m_RenderHandler(width, height);
     }
 
     TopMenuBar::Draw([this](){ m_CloseFlag = true; });
@@ -45,18 +43,18 @@ void GameWindow::DrawInternal(int width, int height)
 void GameWindow::ProcessKeyPress(char key, bool pressed)
 {
     auto &io = ImGui::GetIO();
-    if (!io.WantCaptureKeyboard && s_KeyboardInputHandler)
+    if (!io.WantCaptureKeyboard && m_KeyboardInputHandler)
     {
-        s_KeyboardInputHandler(key, pressed);
+        m_KeyboardInputHandler(key, pressed);
     }
 }
 
 void GameWindow::ProcessMouseMove(float x, float y)
 {
     auto &io = ImGui::GetIO();
-    if (!io.WantCaptureMouse && s_MouseMoveHandler)
+    if (!io.WantCaptureMouse && m_MouseMoveHandler)
     {
-        s_MouseMoveHandler(x, y);
+        m_MouseMoveHandler(x, y);
     }
 }
 

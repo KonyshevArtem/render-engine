@@ -32,30 +32,23 @@
 		935D1DE82BAA222B00362748 /* EngineFrameworkWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		935D1DEA2BAA222B00362748 /* EngineFrameworkWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */; };
 		935D1DF82BAA260700362748 /* EngineFrameworkWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */; };
-		935D1DF92BAA261D00362748 /* libRenderEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1D792BA7A81D00362748 /* libRenderEngine.a */; };
 		935D1DFA2BAA265500362748 /* libEngineFrameworkWrapper.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper.a */; };
-		935D1E052BAA28A900362748 /* libGraphicsBackend.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DFD2BAA28A900362748 /* libGraphicsBackend.a */; };
-		935D1E062BAA28A900362748 /* libImGui.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DFE2BAA28A900362748 /* libImGui.a */; };
-		935D1E072BAA28A900362748 /* libGameWindow.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DFF2BAA28A900362748 /* libGameWindow.a */; };
-		935D1E082BAA28A900362748 /* libOpenFBX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E002BAA28A900362748 /* libOpenFBX.a */; };
-		935D1E092BAA28A900362748 /* libCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E012BAA28A900362748 /* libCore.a */; };
-		935D1E0A2BAA28A900362748 /* libDebugUtil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E022BAA28A900362748 /* libDebugUtil.a */; };
-		935D1E0B2BAA28A900362748 /* libUtils.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E032BAA28A900362748 /* libUtils.a */; };
-		935D1E0C2BAA28A900362748 /* libMath.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E042BAA28A900362748 /* libMath.a */; };
-		935D1E0D2BAA28B300362748 /* libUtils.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E032BAA28A900362748 /* libUtils.a */; };
-		935D1E0E2BAA28B500362748 /* libOpenFBX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E002BAA28A900362748 /* libOpenFBX.a */; };
-		935D1E0F2BAA28B800362748 /* libMath.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E042BAA28A900362748 /* libMath.a */; };
-		935D1E102BAA28BA00362748 /* libImGui.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DFE2BAA28A900362748 /* libImGui.a */; };
-		935D1E112BAA28BE00362748 /* libGraphicsBackend.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DFD2BAA28A900362748 /* libGraphicsBackend.a */; };
-		935D1E122BAA28C000362748 /* libGameWindow.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DFF2BAA28A900362748 /* libGameWindow.a */; };
-		935D1E132BAA28C200362748 /* libDebugUtil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E022BAA28A900362748 /* libDebugUtil.a */; };
-		935D1E142BAA28C400362748 /* libCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E012BAA28A900362748 /* libCore.a */; };
 		935D1E1B2BAA2CA500362748 /* libboost_json-mt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E192BAA2CA500362748 /* libboost_json-mt.a */; };
 		935D1E1C2BAA2CA500362748 /* libboost_json.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E1A2BAA2CA500362748 /* libboost_json.a */; };
 		935D1E212BAA2FAC00362748 /* resources in Resources */ = {isa = PBXBuildFile; fileRef = 935D1E202BAA2FAC00362748 /* resources */; };
 		935D1E232BAA41CE00362748 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E222BAA41CE00362748 /* GameController.framework */; };
 		935D1E2C2BAE2C6100362748 /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
-		935D1E2F2BAE3D0700362748 /* engine_framework.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1E2D2BAE3C5600362748 /* engine_framework.h */; };
+		935D1E2F2BAE3D0700362748 /* EngineFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1E2D2BAE3C5600362748 /* EngineFramework.h */; };
+		93A9F0382BAF74220023B4D5 /* libRenderEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F02E2BAF74220023B4D5 /* libRenderEngine.a */; };
+		93A9F0392BAF74230023B4D5 /* libUtils.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F02F2BAF74220023B4D5 /* libUtils.a */; };
+		93A9F03A2BAF74230023B4D5 /* libGameWindow.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0302BAF74220023B4D5 /* libGameWindow.a */; };
+		93A9F03B2BAF74230023B4D5 /* libDebugUtil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0312BAF74220023B4D5 /* libDebugUtil.a */; };
+		93A9F03C2BAF74230023B4D5 /* libMath.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0322BAF74220023B4D5 /* libMath.a */; };
+		93A9F03D2BAF74230023B4D5 /* libOpenFBX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0332BAF74220023B4D5 /* libOpenFBX.a */; };
+		93A9F03E2BAF74230023B4D5 /* libImGui.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0342BAF74220023B4D5 /* libImGui.a */; };
+		93A9F03F2BAF74230023B4D5 /* libGraphicsBackend.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0352BAF74220023B4D5 /* libGraphicsBackend.a */; };
+		93A9F0402BAF74230023B4D5 /* libCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0362BAF74220023B4D5 /* libCore.a */; };
+		93A9F0412BAF74230023B4D5 /* libRenderEngineApple.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0372BAF74220023B4D5 /* libRenderEngineApple.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -95,28 +88,27 @@
 		3ABD530B2283CAB50050D28E /* AAPLOpenGLViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAPLOpenGLViewController.h; sourceTree = "<group>"; };
 		3AFFA00B22A1F0C900D8184A /* AAPLOpenGLViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAPLOpenGLViewController.m; sourceTree = "<group>"; };
 		78FA0B4078F9C9B000000001 /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
-		935D1D662BA79E7500362748 /* libRenderEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libRenderEngine.a; path = RenderEngine/libRenderEngine.a; sourceTree = "<group>"; };
-		935D1D6D2BA7A1FD00362748 /* render_engine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = render_engine.h; path = RenderEngine/render_engine.h; sourceTree = "<group>"; };
 		935D1D712BA7A5F400362748 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
-		935D1D792BA7A81D00362748 /* libRenderEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libRenderEngine.a; sourceTree = "<group>"; };
 		935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libEngineFrameworkWrapper.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EngineFrameworkWrapper.h; sourceTree = "<group>"; };
 		935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EngineFrameworkWrapper.mm; sourceTree = "<group>"; };
-		935D1DFD2BAA28A900362748 /* libGraphicsBackend.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libGraphicsBackend.a; sourceTree = "<group>"; };
-		935D1DFE2BAA28A900362748 /* libImGui.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libImGui.a; sourceTree = "<group>"; };
-		935D1DFF2BAA28A900362748 /* libGameWindow.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libGameWindow.a; sourceTree = "<group>"; };
-		935D1E002BAA28A900362748 /* libOpenFBX.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libOpenFBX.a; sourceTree = "<group>"; };
-		935D1E012BAA28A900362748 /* libCore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libCore.a; sourceTree = "<group>"; };
-		935D1E022BAA28A900362748 /* libDebugUtil.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libDebugUtil.a; sourceTree = "<group>"; };
-		935D1E032BAA28A900362748 /* libUtils.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libUtils.a; sourceTree = "<group>"; };
-		935D1E042BAA28A900362748 /* libMath.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libMath.a; sourceTree = "<group>"; };
 		935D1E152BAA2BED00362748 /* libboost_json.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libboost_json.dylib; path = ../../../../usr/local/Cellar/boost/1.83.0/lib/libboost_json.dylib; sourceTree = "<group>"; };
 		935D1E172BAA2C3E00362748 /* libboost_json-mt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libboost_json-mt.dylib"; path = "../../../../usr/local/Cellar/boost/1.83.0/lib/libboost_json-mt.dylib"; sourceTree = "<group>"; };
 		935D1E192BAA2CA500362748 /* libboost_json-mt.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libboost_json-mt.a"; path = "../../../../usr/local/Cellar/boost/1.83.0/lib/libboost_json-mt.a"; sourceTree = "<group>"; };
 		935D1E1A2BAA2CA500362748 /* libboost_json.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_json.a; path = ../../../../usr/local/Cellar/boost/1.83.0/lib/libboost_json.a; sourceTree = "<group>"; };
-		935D1E202BAA2FAC00362748 /* resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = resources; path = "../../../resources"; sourceTree = "<group>"; };
+		935D1E202BAA2FAC00362748 /* resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = resources; path = ../../../resources; sourceTree = "<group>"; };
 		935D1E222BAA41CE00362748 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
-		935D1E2D2BAE3C5600362748 /* engine_framework.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = engine_framework.h; sourceTree = "<group>"; };
+		935D1E2D2BAE3C5600362748 /* EngineFramework.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EngineFramework.h; sourceTree = "<group>"; };
+		93A9F02E2BAF74220023B4D5 /* libRenderEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libRenderEngine.a; sourceTree = "<group>"; };
+		93A9F02F2BAF74220023B4D5 /* libUtils.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libUtils.a; sourceTree = "<group>"; };
+		93A9F0302BAF74220023B4D5 /* libGameWindow.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libGameWindow.a; sourceTree = "<group>"; };
+		93A9F0312BAF74220023B4D5 /* libDebugUtil.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libDebugUtil.a; sourceTree = "<group>"; };
+		93A9F0322BAF74220023B4D5 /* libMath.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libMath.a; sourceTree = "<group>"; };
+		93A9F0332BAF74220023B4D5 /* libOpenFBX.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libOpenFBX.a; sourceTree = "<group>"; };
+		93A9F0342BAF74220023B4D5 /* libImGui.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libImGui.a; sourceTree = "<group>"; };
+		93A9F0352BAF74220023B4D5 /* libGraphicsBackend.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libGraphicsBackend.a; sourceTree = "<group>"; };
+		93A9F0362BAF74220023B4D5 /* libCore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libCore.a; sourceTree = "<group>"; };
+		93A9F0372BAF74220023B4D5 /* libRenderEngineApple.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libRenderEngineApple.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,14 +116,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				935D1E082BAA28A900362748 /* libOpenFBX.a in Frameworks */,
-				935D1E0C2BAA28A900362748 /* libMath.a in Frameworks */,
-				935D1E0B2BAA28A900362748 /* libUtils.a in Frameworks */,
-				935D1E052BAA28A900362748 /* libGraphicsBackend.a in Frameworks */,
-				935D1E062BAA28A900362748 /* libImGui.a in Frameworks */,
-				935D1E0A2BAA28A900362748 /* libDebugUtil.a in Frameworks */,
-				935D1E092BAA28A900362748 /* libCore.a in Frameworks */,
-				935D1E072BAA28A900362748 /* libGameWindow.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -162,17 +146,18 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93A9F03A2BAF74230023B4D5 /* libGameWindow.a in Frameworks */,
+				93A9F0382BAF74220023B4D5 /* libRenderEngine.a in Frameworks */,
+				93A9F03E2BAF74230023B4D5 /* libImGui.a in Frameworks */,
+				93A9F0392BAF74230023B4D5 /* libUtils.a in Frameworks */,
+				93A9F0412BAF74230023B4D5 /* libRenderEngineApple.a in Frameworks */,
+				93A9F03C2BAF74230023B4D5 /* libMath.a in Frameworks */,
+				93A9F03F2BAF74230023B4D5 /* libGraphicsBackend.a in Frameworks */,
+				93A9F03D2BAF74230023B4D5 /* libOpenFBX.a in Frameworks */,
+				93A9F0402BAF74230023B4D5 /* libCore.a in Frameworks */,
+				93A9F03B2BAF74230023B4D5 /* libDebugUtil.a in Frameworks */,
 				935D1E1B2BAA2CA500362748 /* libboost_json-mt.a in Frameworks */,
 				935D1E1C2BAA2CA500362748 /* libboost_json.a in Frameworks */,
-				935D1DF92BAA261D00362748 /* libRenderEngine.a in Frameworks */,
-				935D1E142BAA28C400362748 /* libCore.a in Frameworks */,
-				935D1E132BAA28C200362748 /* libDebugUtil.a in Frameworks */,
-				935D1E122BAA28C000362748 /* libGameWindow.a in Frameworks */,
-				935D1E112BAA28BE00362748 /* libGraphicsBackend.a in Frameworks */,
-				935D1E102BAA28BA00362748 /* libImGui.a in Frameworks */,
-				935D1E0D2BAA28B300362748 /* libUtils.a in Frameworks */,
-				935D1E0F2BAA28B800362748 /* libMath.a in Frameworks */,
-				935D1E0E2BAA28B500362748 /* libOpenFBX.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -182,17 +167,8 @@
 		3A40C59F2277F0F500DBB29F = {
 			isa = PBXGroup;
 			children = (
-				935D1E2D2BAE3C5600362748 /* engine_framework.h */,
+				935D1E312BAF516D00362748 /* EngineFramework */,
 				935D1E202BAA2FAC00362748 /* resources */,
-				935D1E012BAA28A900362748 /* libCore.a */,
-				935D1E022BAA28A900362748 /* libDebugUtil.a */,
-				935D1DFF2BAA28A900362748 /* libGameWindow.a */,
-				935D1DFD2BAA28A900362748 /* libGraphicsBackend.a */,
-				935D1DFE2BAA28A900362748 /* libImGui.a */,
-				935D1E042BAA28A900362748 /* libMath.a */,
-				935D1E002BAA28A900362748 /* libOpenFBX.a */,
-				935D1E032BAA28A900362748 /* libUtils.a */,
-				935D1D792BA7A81D00362748 /* libRenderEngine.a */,
 				3ABD52FD2283BE710050D28E /* Metal */,
 				3ABD53072283C4110050D28E /* OpenGL */,
 				3ABD53012283C3710050D28E /* Common */,
@@ -346,8 +322,6 @@
 				935D1E172BAA2C3E00362748 /* libboost_json-mt.dylib */,
 				935D1E152BAA2BED00362748 /* libboost_json.dylib */,
 				935D1D712BA7A5F400362748 /* libc++.tbd */,
-				935D1D662BA79E7500362748 /* libRenderEngine.a */,
-				935D1D6D2BA7A1FD00362748 /* render_engine.h */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -359,6 +333,40 @@
 				935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */,
 			);
 			path = EngineFrameworkWrapper;
+			sourceTree = "<group>";
+		};
+		935D1E312BAF516D00362748 /* EngineFramework */ = {
+			isa = PBXGroup;
+			children = (
+				935D1E5E2BAF60F700362748 /* Libraries */,
+				935D1E3F2BAF534B00362748 /* Include */,
+			);
+			path = EngineFramework;
+			sourceTree = "<group>";
+		};
+		935D1E3F2BAF534B00362748 /* Include */ = {
+			isa = PBXGroup;
+			children = (
+				935D1E2D2BAE3C5600362748 /* EngineFramework.h */,
+			);
+			path = Include;
+			sourceTree = "<group>";
+		};
+		935D1E5E2BAF60F700362748 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				93A9F0362BAF74220023B4D5 /* libCore.a */,
+				93A9F0312BAF74220023B4D5 /* libDebugUtil.a */,
+				93A9F0302BAF74220023B4D5 /* libGameWindow.a */,
+				93A9F0352BAF74220023B4D5 /* libGraphicsBackend.a */,
+				93A9F0342BAF74220023B4D5 /* libImGui.a */,
+				93A9F0322BAF74220023B4D5 /* libMath.a */,
+				93A9F0332BAF74220023B4D5 /* libOpenFBX.a */,
+				93A9F02E2BAF74220023B4D5 /* libRenderEngine.a */,
+				93A9F0372BAF74220023B4D5 /* libRenderEngineApple.a */,
+				93A9F02F2BAF74220023B4D5 /* libUtils.a */,
+			);
+			path = Libraries;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -377,7 +385,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				935D1DE82BAA222B00362748 /* EngineFrameworkWrapper.h in Headers */,
-				935D1E2F2BAE3D0700362748 /* engine_framework.h in Headers */,
+				935D1E2F2BAE3D0700362748 /* EngineFramework.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -782,6 +790,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/EngineFramework/Libraries",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -815,6 +824,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/EngineFramework/Libraries",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_FAST_MATH = YES;
@@ -883,6 +893,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -1013,6 +1024,8 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 					/usr/local/Cellar/boost/1.83.0/lib,
+					"$(PROJECT_DIR)/EngineLibraries",
+					"$(PROJECT_DIR)/EngineFramework/Libraries",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -1037,9 +1050,12 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 					/usr/local/Cellar/boost/1.83.0/lib,
+					"$(PROJECT_DIR)/EngineLibraries",
+					"$(PROJECT_DIR)/EngineFramework/Libraries",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.2;
 				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;

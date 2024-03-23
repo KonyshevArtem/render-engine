@@ -12,6 +12,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 	add_compile_definitions(RENDER_ENGINE_WINDOWS=0 RENDER_ENGINE_APPLE=1)
 	set(RENDER_ENGINE_APPLE_PLATFORM 1)
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/launchers/apple_launcher/xcode/EngineFramework/Libraries")
 
 endif ()
 

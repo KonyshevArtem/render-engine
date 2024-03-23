@@ -29,6 +29,10 @@ protected:
 
 private:
     bool m_CloseFlag = false;
+
+    RenderHandler m_RenderHandler;
+    KeyboardInputHandlerDelegate m_KeyboardInputHandler;
+    MouseMoveHandlerDelegate  m_MouseMoveHandler;
 };
 
 #endif

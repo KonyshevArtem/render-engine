@@ -1,9 +1,13 @@
 #include "game_window.h"
-#include "graphics_backend_api.h"
 #include "top_menu_bar.h"
 #include "window_manager.h"
-#include "game_window_implementations/game_window_opengl.h"
-#include "game_window_implementations/game_window_metal.h"
+#include "imgui.h"
+
+#if RENDER_ENGINE_WINDOWS
+#include "game_window_implementations/game_window_platform_windows.h"
+#elif RENDER_ENGINE_APPLE
+#include "game_window_implementations/game_window_platform_apple.h"
+#endif
 
 #include <utility>
 
@@ -11,22 +15,20 @@ RenderHandler s_RenderHandler;
 KeyboardInputHandlerDelegate s_KeyboardInputHandler;
 MouseMoveHandlerDelegate s_MouseMoveHandler;
 
-GameWindow *GameWindow::Create(int width, int height,
+GameWindow *GameWindow::Create(void* viewPtr,
                                RenderHandler renderHandler,
                                KeyboardInputHandlerDelegate keyboardInputHandler,
                                MouseMoveHandlerDelegate mouseMoveHandler)
 {
-    return new GameWindowOpenGL(width, height, std::move(renderHandler), std::move(keyboardInputHandler),
-                                std::move(mouseMoveHandler));
-}
-
-GameWindow::GameWindow(RenderHandler renderHandler,
-                       KeyboardInputHandlerDelegate keyboardInputHandler,
-                       MouseMoveHandlerDelegate mouseMoveHandler)
-{
     s_RenderHandler = std::move(renderHandler);
     s_KeyboardInputHandler = std::move(keyboardInputHandler);
     s_MouseMoveHandler = std::move(mouseMoveHandler);
+
+#if RENDER_ENGINE_WINDOWS
+    return new GameWindowPlatformWindows(viewPtr);
+#elif RENDER_ENGINE_APPLE
+    return new GameWindowPlatformApple(viewPtr);
+#endif
 }
 
 void GameWindow::DrawInternal(int width, int height)
@@ -36,28 +38,29 @@ void GameWindow::DrawInternal(int width, int height)
         s_RenderHandler(width, height);
     }
 
-    TopMenuBar::Draw([this](){ SetCloseFlag(); });
+    TopMenuBar::Draw([this](){ m_CloseFlag = true; });
     WindowManager::DrawAllWindows();
 }
 
-void GameWindow::HandleKeyboardInput(unsigned char key, bool pressed)
+void GameWindow::ProcessKeyPress(char key, bool pressed)
 {
-    if (s_KeyboardInputHandler)
+    auto &io = ImGui::GetIO();
+    if (!io.WantCaptureKeyboard && s_KeyboardInputHandler)
     {
         s_KeyboardInputHandler(key, pressed);
     }
 }
 
-void GameWindow::HandleMouseMove(double x, double y)
+void GameWindow::ProcessMouseMove(float x, float y)
 {
-    if (s_MouseMoveHandler)
+    auto &io = ImGui::GetIO();
+    if (!io.WantCaptureMouse && s_MouseMoveHandler)
     {
         s_MouseMoveHandler(x, y);
     }
 }
 
-const std::string &GameWindow::GetWindowTitle()
+bool GameWindow::ShouldCloseWindow() const
 {
-    static std::string title = "RenderEngine";
-    return title;
+    return m_CloseFlag;
 }

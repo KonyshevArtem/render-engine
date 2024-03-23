@@ -4,10 +4,8 @@
 #include <fstream>
 #if __has_include("libloaderapi.h")
     #include <libloaderapi.h>
-    #define EXECUTABLE_DIR_WIN
 #elif __has_include("mach-o/dyld.h")
     #include <mach-o/dyld.h>
-    #define EXECUTABLE_DIR_MAC
 #endif
 #include <regex>
 #include <string>
@@ -100,12 +98,12 @@ namespace Utils
         if (!executableDir.empty())
             return executableDir;
 
-#if defined(EXECUTABLE_DIR_WIN)
+#if RENDER_ENGINE_WINDOWS
 		char path[MAX_PATH];
 
 		GetModuleFileNameA(NULL, path, MAX_PATH);
 		executableDir = std::filesystem::path(path).parent_path();
-#elif defined(EXECUTABLE_DIR_MAC)
+#elif RENDER_ENGINE_APPLE
         char     path[100];
         uint32_t size = 100;
 
@@ -117,6 +115,8 @@ namespace Utils
         }
         else
             executableDir = std::filesystem::path(path).parent_path();
+
+        executableDir = executableDir.append("..").append("Resources");
 #endif
 
         return executableDir;

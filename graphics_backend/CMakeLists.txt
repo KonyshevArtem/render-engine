@@ -48,8 +48,7 @@ add_library(GraphicsBackend
         enums/blit_framebuffer_mask.h
         enums/blit_framebuffer_filter.h)
 
-# windows
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 
     set(MINOR_VERSION 6)
 
@@ -58,8 +57,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
     target_link_libraries(GraphicsBackend ${GLEW_LIBRARIES} glu32.lib opengl32.lib)
 
-# macos
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+elseif (${RENDER_ENGINE_APPLE_PLATFORM})
 
     set(MINOR_VERSION 1)
 

@@ -1,5 +1,6 @@
-add_library(
-        GameWindow
+list(
+        APPEND
+        GAME_WINDOW_SOURCES
         game_window.cpp
         game_window.h
         top_menu_bar.cpp
@@ -16,11 +17,26 @@ add_library(
         window_manager.h
         windows/graphics_settings_window.cpp
         windows/graphics_settings_window.h
-        game_window_implementations/game_window_opengl.cpp
-        game_window_implementations/game_window_opengl.h
-        game_window_implementations/game_window_metal.cpp
-        game_window_implementations/game_window_metal.h)
+)
+
+if (${RENDER_ENGINE_WINDOWS_PLATFORM})
+    list(
+            APPEND
+            GAME_WINDOW_SOURCES
+            game_window_implementations/game_window_platform_windows.cpp
+            game_window_implementations/game_window_platform_windows.h
+    )
+elseif (${RENDER_ENGINE_APPLE_PLATFORM})
+    list(
+            APPEND
+            GAME_WINDOW_SOURCES
+            game_window_implementations/game_window_platform_apple.cpp
+            game_window_implementations/game_window_platform_apple.h
+    )
+endif ()
+
+add_library(GameWindow STATIC ${GAME_WINDOW_SOURCES})
 
 add_compile_definitions(GL_SILENCE_DEPRECATION)
 target_include_directories(GameWindow PUBLIC .)
-target_link_libraries(GameWindow ImGui Core metal-cpp metal-cpp-extensions)
+target_link_libraries(GameWindow ImGui Core)

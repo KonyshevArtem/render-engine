@@ -52,6 +52,14 @@
 		93A9F0482BB0453B0023B4D5 /* libEngineFrameworkWrapper.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper.a */; };
 		93A9F05B2BB0658E0023B4D5 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E222BAA41CE00362748 /* GameController.framework */; };
 		93A9F05F2BB06A6C0023B4D5 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E222BAA41CE00362748 /* GameController.framework */; };
+		93A9F0632BB08DE30023B4D5 /* libImGuiOpenGL.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0602BB08DE30023B4D5 /* libImGuiOpenGL.a */; };
+		93A9F0642BB08DE30023B4D5 /* libImGuiOSX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0612BB08DE30023B4D5 /* libImGuiOSX.a */; };
+		93A9F0652BB08DE30023B4D5 /* libImGuiMetal.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0622BB08DE30023B4D5 /* libImGuiMetal.a */; };
+		93A9F0712BB0935C0023B4D5 /* ImGuiWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 93A9F0702BB0935C0023B4D5 /* ImGuiWrapper.mm */; };
+		93A9F0732BB0936F0023B4D5 /* ImGuiWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F0722BB0936F0023B4D5 /* ImGuiWrapper.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		93A9F0792BB09B0F0023B4D5 /* ImGuiWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F0722BB0936F0023B4D5 /* ImGuiWrapper.h */; };
+		93A9F07B2BB0A8030023B4D5 /* ImGuiWrapperApple.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F07A2BB0A8030023B4D5 /* ImGuiWrapperApple.h */; };
+		93A9F07C2BB0B5420023B4D5 /* ImGuiWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F0722BB0936F0023B4D5 /* ImGuiWrapper.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -122,6 +130,12 @@
 		93A9F04E2BB063640023B4D5 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		93A9F0502BB0636A0023B4D5 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		93A9F0522BB063710023B4D5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		93A9F0602BB08DE30023B4D5 /* libImGuiOpenGL.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libImGuiOpenGL.a; sourceTree = "<group>"; };
+		93A9F0612BB08DE30023B4D5 /* libImGuiOSX.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libImGuiOSX.a; sourceTree = "<group>"; };
+		93A9F0622BB08DE30023B4D5 /* libImGuiMetal.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libImGuiMetal.a; sourceTree = "<group>"; };
+		93A9F0702BB0935C0023B4D5 /* ImGuiWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ImGuiWrapper.mm; sourceTree = "<group>"; };
+		93A9F0722BB0936F0023B4D5 /* ImGuiWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImGuiWrapper.h; sourceTree = "<group>"; };
+		93A9F07A2BB0A8030023B4D5 /* ImGuiWrapperApple.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImGuiWrapperApple.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -162,12 +176,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				93A9F03A2BAF74230023B4D5 /* libGameWindow.a in Frameworks */,
+				93A9F0652BB08DE30023B4D5 /* libImGuiMetal.a in Frameworks */,
 				93A9F0382BAF74220023B4D5 /* libRenderEngine.a in Frameworks */,
 				93A9F03E2BAF74230023B4D5 /* libImGui.a in Frameworks */,
 				93A9F0392BAF74230023B4D5 /* libUtils.a in Frameworks */,
+				93A9F0632BB08DE30023B4D5 /* libImGuiOpenGL.a in Frameworks */,
 				93A9F0412BAF74230023B4D5 /* libRenderEngineApple.a in Frameworks */,
 				93A9F03C2BAF74230023B4D5 /* libMath.a in Frameworks */,
 				93A9F03F2BAF74230023B4D5 /* libGraphicsBackend.a in Frameworks */,
+				93A9F0642BB08DE30023B4D5 /* libImGuiOSX.a in Frameworks */,
 				93A9F03D2BAF74230023B4D5 /* libOpenFBX.a in Frameworks */,
 				93A9F0402BAF74230023B4D5 /* libCore.a in Frameworks */,
 				93A9F03B2BAF74230023B4D5 /* libDebugUtil.a in Frameworks */,
@@ -349,6 +366,8 @@
 			children = (
 				935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */,
 				935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */,
+				93A9F0722BB0936F0023B4D5 /* ImGuiWrapper.h */,
+				93A9F0702BB0935C0023B4D5 /* ImGuiWrapper.mm */,
 			);
 			path = EngineFrameworkWrapper;
 			sourceTree = "<group>";
@@ -365,6 +384,7 @@
 		935D1E3F2BAF534B00362748 /* Include */ = {
 			isa = PBXGroup;
 			children = (
+				93A9F07A2BB0A8030023B4D5 /* ImGuiWrapperApple.h */,
 				935D1E2D2BAE3C5600362748 /* EngineFramework.h */,
 			);
 			path = Include;
@@ -373,6 +393,9 @@
 		935D1E5E2BAF60F700362748 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				93A9F0622BB08DE30023B4D5 /* libImGuiMetal.a */,
+				93A9F0602BB08DE30023B4D5 /* libImGuiOpenGL.a */,
+				93A9F0612BB08DE30023B4D5 /* libImGuiOSX.a */,
 				93A9F0362BAF74220023B4D5 /* libCore.a */,
 				93A9F0312BAF74220023B4D5 /* libDebugUtil.a */,
 				93A9F0302BAF74220023B4D5 /* libGameWindow.a */,
@@ -395,6 +418,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				935D1DF82BAA260700362748 /* EngineFrameworkWrapper.h in Headers */,
+				93A9F0792BB09B0F0023B4D5 /* ImGuiWrapper.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -403,7 +427,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				935D1DE82BAA222B00362748 /* EngineFrameworkWrapper.h in Headers */,
+				93A9F0732BB0936F0023B4D5 /* ImGuiWrapper.h in Headers */,
 				935D1E2F2BAE3D0700362748 /* EngineFramework.h in Headers */,
+				93A9F07B2BB0A8030023B4D5 /* ImGuiWrapperApple.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -412,6 +438,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				93A9F0462BB03BDE0023B4D5 /* EngineFrameworkWrapper.h in Headers */,
+				93A9F07C2BB0B5420023B4D5 /* ImGuiWrapper.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -639,6 +666,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				935D1DEA2BAA222B00362748 /* EngineFrameworkWrapper.mm in Sources */,
+				93A9F0712BB0935C0023B4D5 /* ImGuiWrapper.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

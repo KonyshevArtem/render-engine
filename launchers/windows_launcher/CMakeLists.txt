@@ -2,7 +2,7 @@ if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 
     add_executable(RenderEngineWindows main.cpp)
 
-    target_link_libraries(RenderEngineWindows RenderEngine)
+    target_link_libraries(RenderEngineWindows RenderEngine ImGuiGLFW ImGuiOpenGL)
     target_include_directories(RenderEngineWindows PUBLIC ${PROJECT_SOURCE_DIR}/engine_framework)
 
     # copy resources to build directory

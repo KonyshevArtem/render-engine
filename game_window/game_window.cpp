@@ -2,12 +2,8 @@
 #include "top_menu_bar.h"
 #include "window_manager.h"
 #include "imgui.h"
-
-#if RENDER_ENGINE_WINDOWS
 #include "game_window_implementations/game_window_platform_windows.h"
-#elif RENDER_ENGINE_APPLE
 #include "game_window_implementations/game_window_platform_apple.h"
-#endif
 
 #include <utility>
 

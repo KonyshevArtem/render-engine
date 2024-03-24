@@ -2,7 +2,6 @@
 #import "AAPLOpenGLRenderer.h"
 #import "EngineFrameworkWrapper.h"
 
-
 #ifdef TARGET_MACOS
 #import <AppKit/AppKit.h>
 #define PlatformGLContext NSOpenGLContext
@@ -68,7 +67,7 @@ NSTrackingArea* trackingArea;
 
     [self makeCurrentContext];
 
-    _openGLRenderer = [[AAPLOpenGLRenderer alloc] initWithDefaultFBOName:_defaultFBOName];
+    _openGLRenderer = [[AAPLOpenGLRenderer alloc] initWithView:_view defaultFBOName:_defaultFBOName];
 
     if(!_openGLRenderer)
     {
@@ -78,8 +77,6 @@ NSTrackingArea* trackingArea;
 
     _viewSize = [self drawableSize];
     [_openGLRenderer resize:_viewSize];
-    
-    [EngineFrameworkWrapper Initialize:(void*)_view graphicsBackend:@"OpenGL"];
 }
 
 #if TARGET_MACOS
@@ -163,11 +160,6 @@ NSTrackingArea* trackingArea;
     [_openGLRenderer resize:_viewSize];
 
     CGLUnlockContext(_context.CGLContextObj);
-}
-
-- (void)dealloc
-{
-    [EngineFrameworkWrapper Shutdown];
 }
 
 #else

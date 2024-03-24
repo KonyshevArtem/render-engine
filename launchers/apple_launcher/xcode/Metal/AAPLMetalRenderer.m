@@ -2,6 +2,7 @@
 
 #import "AAPLMetalRenderer.h"
 #import "EngineFrameworkWrapper.h"
+#import "ImGuiWrapper.h"
 
 static const MTLPixelFormat AAPLDepthFormat = MTLPixelFormatDepth32Float;
 static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm_sRGB;
@@ -25,6 +26,7 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     if(self)
     {
         _device = mtkView.device;
+        _commandQueue = [_device newCommandQueue];
 
         mtkView.colorPixelFormat        = AAPLColorFormat;
         mtkView.depthStencilPixelFormat = AAPLDepthFormat;
@@ -38,6 +40,8 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm_sRGB;
         }
         
         [EngineFrameworkWrapper Initialize:(void*)mtkView graphicsBackend:@"Metal"];
+        [ImGuiWrapper Init_OSX:mtkView];
+        [ImGuiWrapper Init_Metal:_device];
     }
 
     return self;
@@ -45,6 +49,8 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 - (void) dealloc
 {
+    [ImGuiWrapper Shutdown_Metal];
+    [ImGuiWrapper Shutdown_OSX];
     [EngineFrameworkWrapper Shutdown];
 }
 
@@ -63,7 +69,20 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm_sRGB;
         return;
     }
     
+    MTLRenderPassDescriptor* renderPassDescriptor = [view currentRenderPassDescriptor];
+    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+    id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+    
+    [ImGuiWrapper NewFrame_Metal:[view currentRenderPassDescriptor]];
+    [ImGuiWrapper NewFrame_OSX:view];
+    
     [EngineFrameworkWrapper TickMainLoop:_viewSize.width height:_viewSize.height];
+    
+    [ImGuiWrapper Render_Metal:commandBuffer commandEncoder:commandEncoder];
+    
+    [commandEncoder endEncoding];
+    [commandBuffer presentDrawable:view.currentDrawable];
+    [commandBuffer commit];
 }
 
 @end

@@ -79,7 +79,7 @@ NSTrackingArea* trackingArea;
     _viewSize = [self drawableSize];
     [_openGLRenderer resize:_viewSize];
     
-    [EngineFrameworkWrapper Initialize:(void*)_view];
+    [EngineFrameworkWrapper Initialize:(void*)_view graphicsBackend:@"OpenGL"];
 }
 
 #if TARGET_MACOS

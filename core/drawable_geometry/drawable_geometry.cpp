@@ -7,15 +7,15 @@ DrawableGeometry::DrawableGeometry(PrimitiveType primitiveType, int elementsCoun
           m_ElementsCount(elementsCount),
           m_HasIndices(hasIndices)
 {
-    GraphicsBackend::GenerateVertexArrayObjects(1, &m_VertexArrayObject);
-    GraphicsBackend::GenerateBuffers(1, &m_VertexBuffer);
+    GraphicsBackend::Current()->GenerateVertexArrayObjects(1, &m_VertexArrayObject);
+    GraphicsBackend::Current()->GenerateBuffers(1, &m_VertexBuffer);
 
-    GraphicsBackend::BindVertexArrayObject(m_VertexArrayObject);
-    GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, m_VertexBuffer);
+    GraphicsBackend::Current()->BindVertexArrayObject(m_VertexArrayObject);
+    GraphicsBackend::Current()->BindBuffer(BufferBindTarget::ARRAY_BUFFER, m_VertexBuffer);
 }
 
 DrawableGeometry::~DrawableGeometry()
 {
-    GraphicsBackend::DeleteVertexArrayObjects(1, &m_VertexArrayObject);
-    GraphicsBackend::DeleteBuffers(1, &m_VertexBuffer);
+    GraphicsBackend::Current()->DeleteVertexArrayObjects(1, &m_VertexArrayObject);
+    GraphicsBackend::Current()->DeleteBuffers(1, &m_VertexBuffer);
 }

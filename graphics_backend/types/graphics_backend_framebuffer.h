@@ -11,7 +11,8 @@ public:
 private:
     GRAPHICS_BACKEND_TYPE_UINT Framebuffer;
 
-    friend class GraphicsBackend;
+    friend class GraphicsBackendOpenGL;
+    friend class GraphicsBackendMetal;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_FRAMEBUFFER_H

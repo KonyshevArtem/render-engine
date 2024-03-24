@@ -27,7 +27,14 @@ if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 elseif (${RENDER_ENGINE_APPLE_PLATFORM})
 
     set(IMGUI_LINK_LIBS metal-cpp)
-    list(APPEND IMGUI_SOURCES imgui/backends/imgui_impl_osx.h imgui/backends/imgui_impl_osx.mm)
+    list(
+            APPEND
+            IMGUI_SOURCES
+            imgui/backends/imgui_impl_osx.h
+            imgui/backends/imgui_impl_osx.mm
+            imgui/backends/imgui_impl_metal.h
+            imgui/backends/imgui_impl_metal.mm
+    )
     set(IMGUI_COMPILE_DEFINITIONS IMGUI_IMPL_METAL_CPP IMGUI_IMPL_METAL_CPP_EXTENSIONS)
 
 endif ()

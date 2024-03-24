@@ -2,7 +2,7 @@
 
 @interface EngineFrameworkWrapper : NSObject
 
-+ (void) Initialize:(void*)viewPtr;
++ (void) Initialize:(void*)viewPtr graphicsBackend:(NSString*)graphicsBackend;
 + (void) TickMainLoop:(int)widht height:(int)height;
 + (void) Shutdown;
 + (bool) ShouldCloseWindow;

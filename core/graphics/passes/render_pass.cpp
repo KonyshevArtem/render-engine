@@ -17,8 +17,8 @@ void RenderPass::Execute(const Context &_ctx)
 {
     auto debugGroup = GraphicsBackendDebug::DebugGroup("Render pass " + m_Name);
 
-    GraphicsBackend::SetDepthWrite(true);
-    GraphicsBackend::Clear(m_ClearMask);
+    GraphicsBackend::Current()->SetDepthWrite(true);
+    GraphicsBackend::Current()->Clear(m_ClearMask);
 
     Graphics::DrawRenderers(_ctx.Renderers, m_RenderSettings);
 }

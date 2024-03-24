@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "3A40C5B42277F0F500DBB29F"
-               BuildableName = "MetalRenderer.app"
+               BuildableName = "Render Engine.app"
                BlueprintName = "RenderEngineMetal-macOS"
-               ReferencedContainer = "container:OpenGLToMetal.xcodeproj">
+               ReferencedContainer = "container:RenderEngine.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "3A40C5B42277F0F500DBB29F"
-            BuildableName = "MetalRenderer.app"
+            BuildableName = "Render Engine.app"
             BlueprintName = "RenderEngineMetal-macOS"
-            ReferencedContainer = "container:OpenGLToMetal.xcodeproj">
+            ReferencedContainer = "container:RenderEngine.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -57,16 +57,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "3A40C5B42277F0F500DBB29F"
-            BuildableName = "MetalRenderer.app"
+            BuildableName = "Render Engine.app"
             BlueprintName = "RenderEngineMetal-macOS"
-            ReferencedContainer = "container:OpenGLToMetal.xcodeproj">
+            ReferencedContainer = "container:RenderEngine.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

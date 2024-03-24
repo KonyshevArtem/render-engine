@@ -6,6 +6,7 @@
 #include "../scenes/pbr_demo.h"
 #include "../scenes/shadows_demo.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
+#include "graphics_backend_api.h"
 
 GameWindow* window = nullptr;
 
@@ -20,8 +21,10 @@ void display(int width, int height)
     Input::CleanUp();
 }
 
-void EngineFramework::Initialize(void* viewPtr)
+void EngineFramework::Initialize(void* viewPtr, const char *graphicsBackend)
 {
+    GraphicsBackend::Init(graphicsBackend);
+
     window = GameWindow::Create(viewPtr, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
 
     Graphics::Init();

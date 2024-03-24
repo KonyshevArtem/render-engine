@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "3ABD52CC2283BAFB0050D28E"
-               BuildableName = "MetalRenderer.app"
+               BuildableName = "Render Engine.app"
                BlueprintName = "RenderEngineMetal-iOS"
-               ReferencedContainer = "container:OpenGLToMetal.xcodeproj">
+               ReferencedContainer = "container:RenderEngine.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -40,16 +40,6 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "3ABD52CC2283BAFB0050D28E"
-            BuildableName = "MetalRenderer.app"
-            BlueprintName = "RenderEngineMetal-iOS"
-            ReferencedContainer = "container:OpenGLToMetal.xcodeproj">
-         </BuildableReference>
-      </BuildableProductRunnable>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -57,16 +47,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "3ABD52CC2283BAFB0050D28E"
-            BuildableName = "MetalRenderer.app"
+            BuildableName = "Render Engine.app"
             BlueprintName = "RenderEngineMetal-iOS"
-            ReferencedContainer = "container:OpenGLToMetal.xcodeproj">
+            ReferencedContainer = "container:RenderEngine.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

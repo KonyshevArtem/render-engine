@@ -129,8 +129,8 @@ void ShadowCasterPass::Render(const std::vector<std::shared_ptr<Renderer>> &_ren
 
     auto debugGroup = GraphicsBackendDebug::DebugGroup("Render shadow map");
 
-    GraphicsBackend::SetDepthWrite(true);
-    GraphicsBackend::Clear(ClearMask::COLOR_DEPTH);
+    GraphicsBackend::Current()->SetDepthWrite(true);
+    GraphicsBackend::Current()->Clear(ClearMask::COLOR_DEPTH);
 
     Graphics::DrawRenderers(_renderers, renderSettings);
 }

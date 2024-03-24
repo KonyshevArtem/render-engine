@@ -11,7 +11,8 @@ public:
 private:
     GRAPHICS_BACKEND_TYPE_UINT VAO;
 
-    friend class GraphicsBackend;
+    friend class GraphicsBackendOpenGL;
+    friend class GraphicsBackendMetal;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_VAO_H

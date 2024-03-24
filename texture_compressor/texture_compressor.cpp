@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 
     GameWindow window(1, 1, Render, nullptr, nullptr);
 
-    GraphicsBackend::Init();
+    GraphicsBackend::Current()->Init();
 
     textureType = static_cast<TextureType>(std::stoi(argv[1]));
     colorType = std::stoi(argv[2]);

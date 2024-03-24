@@ -46,7 +46,14 @@ add_library(GraphicsBackend
         enums/program_interface_parameter.h
         enums/program_resource_parameter.h
         enums/blit_framebuffer_mask.h
-        enums/blit_framebuffer_filter.h)
+        enums/blit_framebuffer_filter.h
+        enums/graphics_backend_name.h
+        graphics_backend_implementations/graphics_backend_api_base.cpp
+        graphics_backend_implementations/graphics_backend_api_base.h
+        graphics_backend_implementations/graphics_backend_api_opengl.cpp
+        graphics_backend_implementations/graphics_backend_api_opengl.h
+        graphics_backend_implementations/graphics_backend_api_metal.cpp
+        graphics_backend_implementations/graphics_backend_api_metal.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 
@@ -65,6 +72,9 @@ elseif (${RENDER_ENGINE_APPLE_PLATFORM})
     find_package(OpenGL REQUIRED)
     set(INCLUDE_DIRS ${OPENGL_INCLUDE_DIRS})
     target_link_libraries(GraphicsBackend ${OPENGL_LIBRARIES})
+
+    # metal for macos
+    target_link_libraries(GraphicsBackend metal-cpp)
 
 endif()
 

@@ -1,3 +1,5 @@
+#if RENDER_ENGINE_APPLE
+
 #include "game_window_platform_apple.h"
 #include "imgui.h"
 #include "imgui_impl_osx.h"
@@ -16,25 +18,62 @@ GameWindowPlatformApple::GameWindowPlatformApple(void *viewPtr) : GameWindow(),
 
     ImGui::StyleColorsDark();
 
-    ImGui_ImplOSX_Init(viewPtr);
-    ImGui_ImplOpenGL3_Init(GraphicsBackend::GetShadingLanguageDirective().c_str());
+    ImGui_ImplOSX_Init(m_ViewPtr);
+    switch (GraphicsBackend::Current()->GetName())
+    {
+        case GraphicsBackendName::OPENGL:
+            ImGui_ImplOpenGL3_Init(GraphicsBackend::Current()->GetShadingLanguageDirective().c_str());
+            break;
+        case GraphicsBackendName::METAL:
+            ImGui_ImplMetal_Init(nullptr);
+            break;
+    }
 }
 
 GameWindowPlatformApple::~GameWindowPlatformApple()
 {
-    ImGui_ImplOpenGL3_Shutdown();
+    switch (GraphicsBackend::Current()->GetName())
+    {
+        case GraphicsBackendName::OPENGL:
+            ImGui_ImplOpenGL3_Shutdown();
+            break;
+        case GraphicsBackendName::METAL:
+            ImGui_ImplMetal_Shutdown();
+            break;
+    }
+
     ImGui_ImplOSX_Shutdown();
     ImGui::DestroyContext();
 }
 
 void GameWindowPlatformApple::TickMainLoop(int width, int height)
 {
-    ImGui_ImplOpenGL3_NewFrame();
+    switch (GraphicsBackend::Current()->GetName())
+    {
+        case GraphicsBackendName::OPENGL:
+            ImGui_ImplOpenGL3_NewFrame();
+            break;
+        case GraphicsBackendName::METAL:
+            ImGui_ImplMetal_NewFrame(nullptr);
+            break;
+    }
+
     ImGui_ImplOSX_NewFrame(m_ViewPtr);
     ImGui::NewFrame();
 
     DrawInternal(width, height);
 
     ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    switch (GraphicsBackend::Current()->GetName())
+    {
+        case GraphicsBackendName::OPENGL:
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            break;
+        case GraphicsBackendName::METAL:
+            ImGui_ImplMetal_RenderDrawData(ImGui::GetDrawData(), nullptr, nullptr);
+            break;
+    }
 }
+
+#endif

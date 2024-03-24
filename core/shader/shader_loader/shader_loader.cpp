@@ -54,20 +54,20 @@ namespace ShaderLoader
                 shaderPartDirective.c_str(),
                 source.c_str()};
 
-        auto shader = GraphicsBackend::CreateShader(shaderType);
-        GraphicsBackend::SetShaderSources(shader, sourcesCount, sources, nullptr);
+        auto shader = GraphicsBackend::Current()->CreateShader(shaderType);
+        GraphicsBackend::Current()->SetShaderSources(shader, sourcesCount, sources, nullptr);
 
-        GraphicsBackend::CompileShader(shader);
+        GraphicsBackend::Current()->CompileShader(shader);
 
         int isCompiled;
-        GraphicsBackend::GetShaderParameter(shader, ShaderParameter::COMPILE_STATUS, &isCompiled);
+        GraphicsBackend::Current()->GetShaderParameter(shader, ShaderParameter::COMPILE_STATUS, &isCompiled);
         if (!isCompiled)
         {
             int infoLogLength;
-            GraphicsBackend::GetShaderParameter(shader, ShaderParameter::INFO_LOG_LENGTH, &infoLogLength);
+            GraphicsBackend::Current()->GetShaderParameter(shader, ShaderParameter::INFO_LOG_LENGTH, &infoLogLength);
 
             std::string logMsg(infoLogLength + 1, ' ');
-            GraphicsBackend::GetShaderInfoLog(shader, infoLogLength, nullptr, &logMsg[0]);
+            GraphicsBackend::Current()->GetShaderInfoLog(shader, infoLogLength, nullptr, &logMsg[0]);
 
             throw std::runtime_error(GetShaderTypeName(shaderType) + " shader compilation failed with errors:\n" + logMsg);
         }
@@ -77,34 +77,34 @@ namespace ShaderLoader
 
     GraphicsBackendProgram LinkProgram(const std::span<GraphicsBackendShaderObject> &shaders)
     {
-        auto program = GraphicsBackend::CreateProgram();
+        auto program = GraphicsBackend::Current()->CreateProgram();
 
         for (const auto &shader: shaders)
         {
-            if (GraphicsBackend::IsShader(shader))
-                GraphicsBackend::AttachShader(program, shader);
+            if (GraphicsBackend::Current()->IsShader(shader))
+                GraphicsBackend::Current()->AttachShader(program, shader);
         }
 
-        GraphicsBackend::LinkProgram(program);
+        GraphicsBackend::Current()->LinkProgram(program);
 
         for (const auto &shader: shaders)
         {
-            if (GraphicsBackend::IsShader(shader))
+            if (GraphicsBackend::Current()->IsShader(shader))
             {
-                GraphicsBackend::DetachShader(program, shader);
-                GraphicsBackend::DeleteShader(shader);
+                GraphicsBackend::Current()->DetachShader(program, shader);
+                GraphicsBackend::Current()->DeleteShader(shader);
             }
         }
 
         int isLinked;
-        GraphicsBackend::GetProgramParameter(program, ProgramParameter::LINK_STATUS, &isLinked);
+        GraphicsBackend::Current()->GetProgramParameter(program, ProgramParameter::LINK_STATUS, &isLinked);
         if (!isLinked)
         {
             int infoLogLength;
-            GraphicsBackend::GetProgramParameter(program, ProgramParameter::INFO_LOG_LENGTH, &infoLogLength);
+            GraphicsBackend::Current()->GetProgramParameter(program, ProgramParameter::INFO_LOG_LENGTH, &infoLogLength);
 
             std::string logMsg(infoLogLength + 1, ' ');
-            GraphicsBackend::GetProgramInfoLog(program, infoLogLength, nullptr, &logMsg[0]);
+            GraphicsBackend::Current()->GetProgramInfoLog(program, infoLogLength, nullptr, &logMsg[0]);
 
             throw std::runtime_error("Link failed with error:\n" + logMsg);
         }

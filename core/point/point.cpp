@@ -7,11 +7,11 @@
 Point::Point() :
     DrawableGeometry(PrimitiveType::POINTS, 1, false)
 {
-    GraphicsBackend::EnableVertexAttributeArray(0);
-    GraphicsBackend::SetVertexAttributePointer(0, 3, VertexAttributeDataType::FLOAT, false, 0, nullptr);
+    GraphicsBackend::Current()->EnableVertexAttributeArray(0);
+    GraphicsBackend::Current()->SetVertexAttributePointer(0, 3, VertexAttributeDataType::FLOAT, false, 0, nullptr);
 
     float zero[3] {0, 0, 0};
-    GraphicsBackend::SetBufferData(BufferBindTarget::ARRAY_BUFFER, sizeof(zero), &zero, BufferUsageHint::STATIC_DRAW);
+    GraphicsBackend::Current()->SetBufferData(BufferBindTarget::ARRAY_BUFFER, sizeof(zero), &zero, BufferUsageHint::STATIC_DRAW);
 
-    GraphicsBackend::BindVertexArrayObject(GraphicsBackendVAO::NONE);
+    GraphicsBackend::Current()->BindVertexArrayObject(GraphicsBackendVAO::NONE);
 }

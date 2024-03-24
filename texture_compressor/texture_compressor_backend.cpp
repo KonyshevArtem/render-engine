@@ -193,7 +193,7 @@ namespace TextureCompressorBackend
                 pixelFormat = TextureCompressorFormats::GetPixelFormatByColorType(colorType);
 
                 auto uploadTarget = GetTextureTarget(textureType, i);
-                GraphicsBackend::TextureImage2D(uploadTarget, 0, textureFormat, width, height, 0, pixelFormat, TextureDataType::UNSIGNED_BYTE, pixels.data());
+                GraphicsBackend::Current()->TextureImage2D(uploadTarget, 0, textureFormat, width, height, 0, pixelFormat, TextureDataType::UNSIGNED_BYTE, pixels.data());
 
                 originalSizes[i] = pixels.size();
                 pixels.clear();
@@ -218,7 +218,7 @@ namespace TextureCompressorBackend
                 int compressedSize;
                 if (header.IsCompressed)
                 {
-                    GraphicsBackend::GetTextureLevelParameterInt(textureTarget, j, TextureLevelParameter::COMPRESSED_IMAGE_SIZE, &compressedSize);
+                    GraphicsBackend::Current()->GetTextureLevelParameterInt(textureTarget, j, TextureLevelParameter::COMPRESSED_IMAGE_SIZE, &compressedSize);
                 }
                 else
                 {
@@ -240,11 +240,11 @@ namespace TextureCompressorBackend
             {
                 if (header.IsCompressed)
                 {
-                    GraphicsBackend::GetCompressedTextureImage(textureTarget, j, &compressedPixels[0]);
+                    GraphicsBackend::Current()->GetCompressedTextureImage(textureTarget, j, &compressedPixels[0]);
                 }
                 else
                 {
-                    GraphicsBackend::GetTextureImage(textureTarget, j, header.PixelFormat, TextureDataType::UNSIGNED_BYTE, &compressedPixels[0]);
+                    GraphicsBackend::Current()->GetTextureImage(textureTarget, j, header.PixelFormat, TextureDataType::UNSIGNED_BYTE, &compressedPixels[0]);
                 }
 
                 int size = sizes[i * header.MipCount + j];
@@ -268,8 +268,8 @@ namespace TextureCompressorBackend
         header.Depth = typeInfo.Count;
 
         GraphicsBackendTexture texture{};
-        GraphicsBackend::GenerateTextures(1, &texture);
-        GraphicsBackend::BindTexture(textureType, texture);
+        GraphicsBackend::Current()->GenerateTextures(1, &texture);
+        GraphicsBackend::Current()->BindTexture(textureType, texture);
 
         std::vector<int> originalSizes;
         if (!TryLoadImagesAndSendToGPU(pathStrings, textureType, header.Width, header.Height, header.Depth,
@@ -279,17 +279,17 @@ namespace TextureCompressorBackend
         }
 
         header.MipCount = GetMipsCount(generateMips, header.Width, header.Height);
-        GraphicsBackend::SetTextureParameterInt(textureType, TextureParameter::BASE_LEVEL, 0);
-        GraphicsBackend::SetTextureParameterInt(textureType, TextureParameter::MAX_LEVEL, header.MipCount - 1);
+        GraphicsBackend::Current()->SetTextureParameterInt(textureType, TextureParameter::BASE_LEVEL, 0);
+        GraphicsBackend::Current()->SetTextureParameterInt(textureType, TextureParameter::MAX_LEVEL, header.MipCount - 1);
         if (generateMips)
         {
-            GraphicsBackend::GenerateMipmaps(textureType);
+            GraphicsBackend::Current()->GenerateMipmaps(textureType);
         }
 
         int textureFormatInt;
         auto baseTarget = GetTextureTarget(textureType, 0);
-        GraphicsBackend::GetTextureLevelParameterInt(baseTarget, 0, TextureLevelParameter::COMPRESSED, &header.IsCompressed);
-        GraphicsBackend::GetTextureLevelParameterInt(baseTarget, 0, TextureLevelParameter::INTERNAL_FORMAT, &textureFormatInt);
+        GraphicsBackend::Current()->GetTextureLevelParameterInt(baseTarget, 0, TextureLevelParameter::COMPRESSED, &header.IsCompressed);
+        GraphicsBackend::Current()->GetTextureLevelParameterInt(baseTarget, 0, TextureLevelParameter::INTERNAL_FORMAT, &textureFormatInt);
         header.TextureFormat = static_cast<TextureInternalFormat>(textureFormatInt);
 
         std::ofstream fout;
@@ -317,7 +317,7 @@ namespace TextureCompressorBackend
                   << "\n\tMipmaps: " << header.MipCount
                   << "\n" << std::endl;
 
-        GraphicsBackend::BindTexture(textureType, GraphicsBackendTexture::NONE);
-        GraphicsBackend::DeleteTextures(1, &texture);
+        GraphicsBackend::Current()->BindTexture(textureType, GraphicsBackendTexture::NONE);
+        GraphicsBackend::Current()->DeleteTextures(1, &texture);
     }
 }

@@ -69,19 +69,19 @@ namespace Graphics
 
     void InitCulling()
     {
-        GraphicsBackend::SetCullFaceOrientation(CullFaceOrientation::CLOCKWISE);
+        GraphicsBackend::Current()->SetCullFaceOrientation(CullFaceOrientation::CLOCKWISE);
     }
 
     void InitDepth()
     {
-        GraphicsBackend::SetCapability(GraphicsBackendCapability::DEPTH_TEST, true);
-        GraphicsBackend::SetDepthWrite(true);
-        GraphicsBackend::SetDepthRange(0, 1);
+        GraphicsBackend::Current()->SetCapability(GraphicsBackendCapability::DEPTH_TEST, true);
+        GraphicsBackend::Current()->SetDepthWrite(true);
+        GraphicsBackend::Current()->SetDepthRange(0, 1);
     }
 
     void InitFramebuffer()
     {
-        GraphicsBackend::GenerateFramebuffers(1, &framebuffer);
+        GraphicsBackend::Current()->GenerateFramebuffers(1, &framebuffer);
     }
 
     void InitUniformBlocks()
@@ -115,7 +115,7 @@ namespace Graphics
 
     void InitInstancing()
     {
-        auto supportSSBO = GraphicsBackend::SupportShaderStorageBuffer();
+        auto supportSSBO = GraphicsBackend::Current()->SupportShaderStorageBuffer();
         auto matricesBufferTarget = supportSSBO ? BufferBindTarget::SHADER_STORAGE_BUFFER : BufferBindTarget::ARRAY_BUFFER;
         auto dataBufferTarget = supportSSBO ? BufferBindTarget::SHADER_STORAGE_BUFFER : BufferBindTarget::UNIFORM_BUFFER;
         auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
@@ -126,13 +126,11 @@ namespace Graphics
 
     void InitSeamlessCubemap()
     {
-        GraphicsBackend::SetCapability(GraphicsBackendCapability::TEXTURE_CUBE_MAP_SEAMLESS, true);
+        GraphicsBackend::Current()->SetCapability(GraphicsBackendCapability::TEXTURE_CUBE_MAP_SEAMLESS, true);
     }
 
     void Init()
     {
-        GraphicsBackend::Init();
-
 #if RENDER_ENGINE_EDITOR
         Gizmos::Init();
 #endif
@@ -148,7 +146,7 @@ namespace Graphics
 
     void Shutdown()
     {
-        GraphicsBackend::DeleteFramebuffers(1, &framebuffer);
+        GraphicsBackend::Current()->DeleteFramebuffers(1, &framebuffer);
     }
 
     void SetLightingData(const std::vector<Light *> &_lights)
@@ -260,8 +258,8 @@ namespace Graphics
 
         auto debugGroup = GraphicsBackendDebug::DebugGroup("Render Frame");
 
-        GraphicsBackend::SetClearColor(0, 0, 0, 0);
-        GraphicsBackend::SetClearDepth(1);
+        GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
+        GraphicsBackend::Current()->SetClearDepth(1);
 
         Context ctx;
 
@@ -324,7 +322,7 @@ namespace Graphics
     void SetupGeometry(const DrawableGeometry &geometry)
     {
         auto vao = geometry.GetVertexArrayObject();
-        GraphicsBackend::BindVertexArrayObject(vao);
+        GraphicsBackend::Current()->BindVertexArrayObject(vao);
     }
 
     void SetupMatrices(const Matrix4x4 &modelMatrix)
@@ -354,7 +352,7 @@ namespace Graphics
 
     void SetupInstancing(bool _enabled)
     {
-        if (GraphicsBackend::SupportShaderStorageBuffer())
+        if (GraphicsBackend::Current()->SupportShaderStorageBuffer())
         {
             // matrices are supplied in SSBO if it is supported
             return;
@@ -370,61 +368,61 @@ namespace Graphics
             // matrix4x4 requires 4 vertex attributes
             for (int i = 0; i < 8; ++i)
             {
-                GraphicsBackend::EnableVertexAttributeArray(baseAttribute + i);
-                GraphicsBackend::SetVertexAttributeDivisor(baseAttribute + i, 1);
+                GraphicsBackend::Current()->EnableVertexAttributeArray(baseAttribute + i);
+                GraphicsBackend::Current()->SetVertexAttributeDivisor(baseAttribute + i, 1);
             }
 
             auto vec4Size = sizeof(Vector4);
 
             // model matrix
-            GraphicsBackend::SetVertexAttributePointer(baseAttribute + 0, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(0));
-            GraphicsBackend::SetVertexAttributePointer(baseAttribute + 1, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(1 * vec4Size));
-            GraphicsBackend::SetVertexAttributePointer(baseAttribute + 2, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(2 * vec4Size));
-            GraphicsBackend::SetVertexAttributePointer(baseAttribute + 3, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(3 * vec4Size));
+            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 0, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(0));
+            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 1, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(1 * vec4Size));
+            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 2, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(2 * vec4Size));
+            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 3, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(3 * vec4Size));
 
             // normal matrix
             auto offset = sizeof(Matrix4x4);
-            GraphicsBackend::SetVertexAttributePointer(baseAttribute + 4, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset));
-            GraphicsBackend::SetVertexAttributePointer(baseAttribute + 5, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 1 * vec4Size));
-            GraphicsBackend::SetVertexAttributePointer(baseAttribute + 6, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size));
-            GraphicsBackend::SetVertexAttributePointer(baseAttribute + 7, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size));
+            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 4, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset));
+            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 5, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 1 * vec4Size));
+            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 6, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size));
+            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 7, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size));
 
-            GraphicsBackend::BindBuffer(BufferBindTarget::ARRAY_BUFFER, GraphicsBackendBuffer::NONE);
+            GraphicsBackend::Current()->BindBuffer(BufferBindTarget::ARRAY_BUFFER, GraphicsBackendBuffer::NONE);
         }
         else
         {
             for (int i = 0; i < 8; ++i)
             {
-                GraphicsBackend::DisableVertexAttributeArray(baseAttribute + i);
-                GraphicsBackend::SetVertexAttributeDivisor(baseAttribute + i, 0);
+                GraphicsBackend::Current()->DisableVertexAttributeArray(baseAttribute + i);
+                GraphicsBackend::Current()->SetVertexAttributeDivisor(baseAttribute + i, 0);
             }
         }
     }
 
     void SetBlendState(const BlendInfo& blendInfo)
     {
-        GraphicsBackend::SetCapability(GraphicsBackendCapability::BLEND, blendInfo.Enabled);
+        GraphicsBackend::Current()->SetCapability(GraphicsBackendCapability::BLEND, blendInfo.Enabled);
 
         if (blendInfo.Enabled)
         {
-            GraphicsBackend::SetBlendFunction(blendInfo.SourceFactor, blendInfo.DestinationFactor);
+            GraphicsBackend::Current()->SetBlendFunction(blendInfo.SourceFactor, blendInfo.DestinationFactor);
         }
     }
 
     void SetCullState(const CullInfo &cullInfo)
     {
-        GraphicsBackend::SetCapability(GraphicsBackendCapability::CULL_FACE, cullInfo.Enabled);
+        GraphicsBackend::Current()->SetCapability(GraphicsBackendCapability::CULL_FACE, cullInfo.Enabled);
 
         if (cullInfo.Enabled)
         {
-            GraphicsBackend::SetCullFace(cullInfo.Face);
+            GraphicsBackend::Current()->SetCullFace(cullInfo.Face);
         }
     }
 
     void SetDepthState(const DepthInfo &depthInfo)
     {
-        GraphicsBackend::SetDepthWrite(depthInfo.WriteDepth);
-        GraphicsBackend::SetDepthFunction(depthInfo.DepthFunction);
+        GraphicsBackend::Current()->SetDepthWrite(depthInfo.WriteDepth);
+        GraphicsBackend::Current()->SetDepthFunction(depthInfo.DepthFunction);
     }
 
     void SetUniform(const std::unordered_map<std::string, UniformInfo> &uniforms, const std::string &name, const void *data)
@@ -433,7 +431,7 @@ namespace Graphics
         if (it != uniforms.end())
         {
             auto &uniformInfo = it->second;
-            GraphicsBackend::SetUniform(uniformInfo.Location, uniformInfo.Type, 1, data);
+            GraphicsBackend::Current()->SetUniform(uniformInfo.Location, uniformInfo.Type, 1, data);
         }
     }
 
@@ -518,7 +516,7 @@ namespace Graphics
         const auto &perMaterialDataBlock = material.GetPerMaterialDataBlock(shaderPassIndex);
         const auto &materialPropertyBlock = material.GetPropertyBlock();
 
-        GraphicsBackend::UseProgram(shaderPass.GetProgram());
+        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram());
 
         SetBlendState(shaderPass.GetBlendInfo());
         SetCullState(shaderPass.GetCullInfo());
@@ -530,7 +528,7 @@ namespace Graphics
         SetGraphicsBuffer(GlobalConstants::PerDrawDataBufferName, perDrawDataBlock, shaderPass);
         SetGraphicsBuffer(GlobalConstants::PerMaterialDataBufferName, perMaterialDataBlock, shaderPass);
         SetGraphicsBuffer(GlobalConstants::PerInstanceDataBufferName, perInstanceDataBuffer, shaderPass);
-        if (GraphicsBackend::SupportShaderStorageBuffer())
+        if (GraphicsBackend::Current()->SupportShaderStorageBuffer())
         {
             SetGraphicsBuffer(GlobalConstants::InstanceMatricesBufferName, instancingMatricesBuffer, shaderPass);
         }
@@ -625,11 +623,11 @@ namespace Graphics
 
         if (geometry.HasIndexes())
         {
-            GraphicsBackend::DrawElements(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr);
+            GraphicsBackend::Current()->DrawElements(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr);
         }
         else
         {
-            GraphicsBackend::DrawArrays(primitiveType, 0, elementsCount);
+            GraphicsBackend::Current()->DrawArrays(primitiveType, 0, elementsCount);
         }
     }
 
@@ -646,11 +644,11 @@ namespace Graphics
 
         if (geometry.HasIndexes())
         {
-            GraphicsBackend::DrawElementsInstanced(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr, instanceCount);
+            GraphicsBackend::Current()->DrawElementsInstanced(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr, instanceCount);
         }
         else
         {
-            GraphicsBackend::DrawArraysInstanced(primitiveType, 0, elementsCount, instanceCount);
+            GraphicsBackend::Current()->DrawArraysInstanced(primitiveType, 0, elementsCount, instanceCount);
         }
 
         SetupInstancing(false);
@@ -683,11 +681,11 @@ namespace Graphics
     const std::string &GetGlobalShaderDirectives()
     {
         // clang-format off
-        static std::string globalShaderDirectives = GraphicsBackend::GetShadingLanguageDirective() + "\n"
+        static std::string globalShaderDirectives = GraphicsBackend::Current()->GetShadingLanguageDirective() + "\n"
                                                     "#define MAX_POINT_LIGHT_SOURCES " + std::to_string(GlobalConstants::MaxPointLightSources) + "\n"
                                                     "#define MAX_SPOT_LIGHT_SOURCES " + std::to_string(GlobalConstants::MaxSpotLightSources) + "\n"
                                                     "#define MAX_INSTANCING_COUNT " + std::to_string(GlobalConstants::MaxInstancingCount) + "\n"
-                                                    "#define SUPPORT_SSBO " + std::to_string(GraphicsBackend::SupportShaderStorageBuffer() ? 1 : 0) + "\n";
+                                                    "#define SUPPORT_SSBO " + std::to_string(GraphicsBackend::Current()->SupportShaderStorageBuffer() ? 1 : 0) + "\n";
         // clang-format on
 
         return globalShaderDirectives;
@@ -700,30 +698,30 @@ namespace Graphics
 
         if (!_colorAttachment && !_depthAttachment)
         {
-            GraphicsBackend::BindFramebuffer(target, GraphicsBackendFramebuffer::NONE);
+            GraphicsBackend::Current()->BindFramebuffer(target, GraphicsBackendFramebuffer::NONE);
             return;
         }
 
-        GraphicsBackend::BindFramebuffer(target, framebuffer);
+        GraphicsBackend::Current()->BindFramebuffer(target, framebuffer);
 
         if (_colorAttachment)
             _colorAttachment->Attach(target, FramebufferAttachment::COLOR_ATTACHMENT0, colorLevel, colorLayer);
         else
         {
-            GraphicsBackend::SetFramebufferTexture(target, FramebufferAttachment::COLOR_ATTACHMENT0, GraphicsBackendTexture::NONE, 0);
+            GraphicsBackend::Current()->SetFramebufferTexture(target, FramebufferAttachment::COLOR_ATTACHMENT0, GraphicsBackendTexture::NONE, 0);
         }
 
         if (_depthAttachment)
             _depthAttachment->Attach(target, FramebufferAttachment::DEPTH_ATTACHMENT, depthLevel, depthLayer);
         else
         {
-            GraphicsBackend::SetFramebufferTexture(target, FramebufferAttachment::DEPTH_ATTACHMENT, GraphicsBackendTexture::NONE, 0);
+            GraphicsBackend::Current()->SetFramebufferTexture(target, FramebufferAttachment::DEPTH_ATTACHMENT, GraphicsBackendTexture::NONE, 0);
         }
     }
 
     void SetViewport(const Vector4 &viewport)
     {
-        GraphicsBackend::SetViewport(viewport.x, viewport.y, viewport.z, viewport.w);
+        GraphicsBackend::Current()->SetViewport(viewport.x, viewport.y, viewport.z, viewport.w);
     }
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture)
@@ -740,7 +738,7 @@ namespace Graphics
 
         source->Bind(BufferBindTarget::COPY_READ_BUFFER);
         destination->Bind(BufferBindTarget::COPY_WRITE_BUFFER);
-        GraphicsBackend::CopyBufferSubData(BufferBindTarget::COPY_READ_BUFFER, BufferBindTarget::COPY_WRITE_BUFFER, sourceOffset, destinationOffset, size);
+        GraphicsBackend::Current()->CopyBufferSubData(BufferBindTarget::COPY_READ_BUFFER, BufferBindTarget::COPY_WRITE_BUFFER, sourceOffset, destinationOffset, size);
     }
 
     void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, int destinationLevel, int destinationLayer, Material &material)
@@ -769,10 +767,10 @@ namespace Graphics
             attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
         }
 
-        GraphicsBackend::BindFramebuffer(FramebufferTarget::READ_FRAMEBUFFER, framebuffer);
+        GraphicsBackend::Current()->BindFramebuffer(FramebufferTarget::READ_FRAMEBUFFER, framebuffer);
         source->Attach(FramebufferTarget::READ_FRAMEBUFFER, attachment, 0, 0);
 
-        GraphicsBackend::BindFramebuffer(FramebufferTarget::DRAW_FRAMEBUFFER, GraphicsBackendFramebuffer::NONE);
-        GraphicsBackend::BlitFramebuffer(0, 0, source->GetWidth(), source->GetHeight(), 0, 0, screenWidth, screenHeight, mask, filter);
+        GraphicsBackend::Current()->BindFramebuffer(FramebufferTarget::DRAW_FRAMEBUFFER, GraphicsBackendFramebuffer::NONE);
+        GraphicsBackend::Current()->BlitFramebuffer(0, 0, source->GetWidth(), source->GetHeight(), 0, 0, screenWidth, screenHeight, mask, filter);
     }
 } // namespace Graphics

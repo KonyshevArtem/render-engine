@@ -1,3 +1,5 @@
+#if RENDER_ENGINE_WINDOWS
+
 #include "game_window_platform_windows.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -15,7 +17,7 @@ GameWindowPlatformWindows::GameWindowPlatformWindows(void *viewPtr) : GameWindow
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(reinterpret_cast<GLFWwindow*>(viewPtr), true);
-    ImGui_ImplOpenGL3_Init(GraphicsBackend::GetShadingLanguageDirective().c_str());
+    ImGui_ImplOpenGL3_Init(GraphicsBackend::Current()->GetShadingLanguageDirective().c_str());
 }
 
 GameWindowPlatformWindows::~GameWindowPlatformWindows()
@@ -36,3 +38,5 @@ void GameWindowPlatformWindows::TickMainLoop(int width, int height)
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
+
+#endif

@@ -25,8 +25,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GraphicsBackend::GetMajorVersion());
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GraphicsBackend::GetMinorVersion());
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GraphicsBackend::Current()->GetMajorVersion());
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GraphicsBackend::Current()->GetMinorVersion());
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     int width = 1920;
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     glfwSetCursorPosCallback(s_Window, MouseMoveFunction);
     glfwSetKeyCallback(s_Window, KeyboardFunction);
 
-    EngineFramework::Initialize(s_Window);
+    EngineFramework::Initialize(s_Window, "OpenGL");
 
     while (!glfwWindowShouldClose(s_Window))
     {

@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		3A40C5C12277F0F500DBB29F /* AAPLMetalRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A40C5A82277F0F500DBB29F /* AAPLMetalRenderer.m */; };
-		3A40C5C52277F0F500DBB29F /* AAPLShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 3A40C5AC2277F0F500DBB29F /* AAPLShaders.metal */; };
 		3A4DDD522283D8C20095BC87 /* AAPLOpenGLRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A4DDD462283CE4D0095BC87 /* AAPLOpenGLRenderer.m */; settings = {COMPILER_FLAGS = "-Wno-deprecated-declarations"; }; };
 		3A4DDD552283D8C20095BC87 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52E92283BB9B0050D28E /* main.m */; settings = {COMPILER_FLAGS = "-xobjective-c++"; }; };
 		3A4DDD692283D9150095BC87 /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
@@ -21,10 +20,9 @@
 		3ABD52DC2283BAFE0050D28E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3ABD52DA2283BAFE0050D28E /* LaunchScreen.storyboard */; };
 		3ABD52EA2283BB9B0050D28E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3ABD52E42283BB9B0050D28E /* Main.storyboard */; };
 		3ABD52EC2283BB9B0050D28E /* AAPLMetalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52E82283BB9B0050D28E /* AAPLMetalViewController.m */; };
-		3ABD52ED2283BB9B0050D28E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52E92283BB9B0050D28E /* main.m */; };
+		3ABD52ED2283BB9B0050D28E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52E92283BB9B0050D28E /* main.m */; settings = {COMPILER_FLAGS = "-xobjective-c++"; }; };
 		3ABD52F02283BC260050D28E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52E92283BB9B0050D28E /* main.m */; };
 		3ABD52F62283BDB70050D28E /* AAPLMetalRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A40C5A82277F0F500DBB29F /* AAPLMetalRenderer.m */; };
-		3ABD52F92283BDC10050D28E /* AAPLShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 3A40C5AC2277F0F500DBB29F /* AAPLShaders.metal */; };
 		3ABD52FB2283BE4B0050D28E /* AAPLMetalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52E82283BB9B0050D28E /* AAPLMetalViewController.m */; };
 		3ABD53092283C4FE0050D28E /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
 		3AFFA01122A1F0C900D8184A /* AAPLOpenGLViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3AFFA00B22A1F0C900D8184A /* AAPLOpenGLViewController.m */; settings = {COMPILER_FLAGS = "-Wno-deprecated-declarations"; }; };
@@ -36,7 +34,6 @@
 		935D1E1B2BAA2CA500362748 /* libboost_json-mt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E192BAA2CA500362748 /* libboost_json-mt.a */; };
 		935D1E1C2BAA2CA500362748 /* libboost_json.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E1A2BAA2CA500362748 /* libboost_json.a */; };
 		935D1E212BAA2FAC00362748 /* resources in Resources */ = {isa = PBXBuildFile; fileRef = 935D1E202BAA2FAC00362748 /* resources */; };
-		935D1E232BAA41CE00362748 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E222BAA41CE00362748 /* GameController.framework */; };
 		935D1E2C2BAE2C6100362748 /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
 		935D1E2F2BAE3D0700362748 /* EngineFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1E2D2BAE3C5600362748 /* EngineFramework.h */; };
 		93A9F0382BAF74220023B4D5 /* libRenderEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F02E2BAF74220023B4D5 /* libRenderEngine.a */; };
@@ -49,6 +46,12 @@
 		93A9F03F2BAF74230023B4D5 /* libGraphicsBackend.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0352BAF74220023B4D5 /* libGraphicsBackend.a */; };
 		93A9F0402BAF74230023B4D5 /* libCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0362BAF74220023B4D5 /* libCore.a */; };
 		93A9F0412BAF74230023B4D5 /* libRenderEngineApple.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0372BAF74220023B4D5 /* libRenderEngineApple.a */; };
+		93A9F0422BB03BCF0023B4D5 /* resources in Resources */ = {isa = PBXBuildFile; fileRef = 935D1E202BAA2FAC00362748 /* resources */; };
+		93A9F0462BB03BDE0023B4D5 /* EngineFrameworkWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */; };
+		93A9F0472BB0452E0023B4D5 /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
+		93A9F0482BB0453B0023B4D5 /* libEngineFrameworkWrapper.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper.a */; };
+		93A9F05B2BB0658E0023B4D5 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E222BAA41CE00362748 /* GameController.framework */; };
+		93A9F05F2BB06A6C0023B4D5 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E222BAA41CE00362748 /* GameController.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,13 +62,18 @@
 			remoteGlobalIDString = 935D1DE42BAA222B00362748;
 			remoteInfo = RenderEngineWrapper;
 		};
+		93A9F0432BB03BD40023B4D5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3A40C5A02277F0F500DBB29F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 935D1DE42BAA222B00362748;
+			remoteInfo = EngineFrameworkWrapper;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		3A40C5A72277F0F500DBB29F /* AAPLMetalRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AAPLMetalRenderer.h; sourceTree = "<group>"; };
 		3A40C5A82277F0F500DBB29F /* AAPLMetalRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AAPLMetalRenderer.m; sourceTree = "<group>"; };
-		3A40C5AB2277F0F500DBB29F /* AAPLShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AAPLShaderTypes.h; sourceTree = "<group>"; };
-		3A40C5AC2277F0F500DBB29F /* AAPLShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = AAPLShaders.metal; sourceTree = "<group>"; };
 		3A40C5B52277F0F500DBB29F /* Render Engine.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Render Engine.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3A4DDD462283CE4D0095BC87 /* AAPLOpenGLRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AAPLOpenGLRenderer.m; sourceTree = "<group>"; };
 		3A4DDD472283CE4D0095BC87 /* AAPLOpenGLRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AAPLOpenGLRenderer.h; sourceTree = "<group>"; };
@@ -109,6 +117,11 @@
 		93A9F0352BAF74220023B4D5 /* libGraphicsBackend.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libGraphicsBackend.a; sourceTree = "<group>"; };
 		93A9F0362BAF74220023B4D5 /* libCore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libCore.a; sourceTree = "<group>"; };
 		93A9F0372BAF74220023B4D5 /* libRenderEngineApple.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libRenderEngineApple.a; sourceTree = "<group>"; };
+		93A9F04A2BB0628D0023B4D5 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		93A9F04C2BB062920023B4D5 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		93A9F04E2BB063640023B4D5 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		93A9F0502BB0636A0023B4D5 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		93A9F0522BB063710023B4D5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +129,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93A9F05B2BB0658E0023B4D5 /* GameController.framework in Frameworks */,
+				93A9F0482BB0453B0023B4D5 /* libEngineFrameworkWrapper.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -123,7 +138,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				935D1E232BAA41CE00362748 /* GameController.framework in Frameworks */,
+				93A9F05F2BB06A6C0023B4D5 /* GameController.framework in Frameworks */,
 				935D1DFA2BAA265500362748 /* libEngineFrameworkWrapper.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -248,8 +263,6 @@
 				3ABD52E82283BB9B0050D28E /* AAPLMetalViewController.m */,
 				3A40C5A72277F0F500DBB29F /* AAPLMetalRenderer.h */,
 				3A40C5A82277F0F500DBB29F /* AAPLMetalRenderer.m */,
-				3A40C5AB2277F0F500DBB29F /* AAPLShaderTypes.h */,
-				3A40C5AC2277F0F500DBB29F /* AAPLShaders.metal */,
 				3ABD52C72283B7830050D28E /* Application */,
 			);
 			path = Metal;
@@ -316,6 +329,11 @@
 		935D1D652BA79E7500362748 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				93A9F0522BB063710023B4D5 /* Foundation.framework */,
+				93A9F0502BB0636A0023B4D5 /* Metal.framework */,
+				93A9F04E2BB063640023B4D5 /* QuartzCore.framework */,
+				93A9F04C2BB062920023B4D5 /* MetalKit.framework */,
+				93A9F04A2BB0628D0023B4D5 /* AppKit.framework */,
 				935D1E222BAA41CE00362748 /* GameController.framework */,
 				935D1E192BAA2CA500362748 /* libboost_json-mt.a */,
 				935D1E1A2BAA2CA500362748 /* libboost_json.a */,
@@ -389,6 +407,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		93A9F0452BB03BD80023B4D5 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				93A9F0462BB03BDE0023B4D5 /* EngineFrameworkWrapper.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
@@ -396,6 +422,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3A40C5CC2277F0F500DBB29F /* Build configuration list for PBXNativeTarget "RenderEngineMetal-macOS" */;
 			buildPhases = (
+				93A9F0452BB03BD80023B4D5 /* Headers */,
 				3A40C5B12277F0F500DBB29F /* Sources */,
 				3A40C5B22277F0F500DBB29F /* Frameworks */,
 				3A40C5B32277F0F500DBB29F /* Resources */,
@@ -403,6 +430,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				93A9F0442BB03BD40023B4D5 /* PBXTargetDependency */,
 			);
 			name = "RenderEngineMetal-macOS";
 			productName = macOS;
@@ -528,6 +556,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3ABD52EA2283BB9B0050D28E /* Main.storyboard in Resources */,
+				93A9F0422BB03BCF0023B4D5 /* resources in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -567,8 +596,8 @@
 			files = (
 				3A40C5C12277F0F500DBB29F /* AAPLMetalRenderer.m in Sources */,
 				3ABD52EC2283BB9B0050D28E /* AAPLMetalViewController.m in Sources */,
-				3A40C5C52277F0F500DBB29F /* AAPLShaders.metal in Sources */,
 				3ABD52ED2283BB9B0050D28E /* main.m in Sources */,
+				93A9F0472BB0452E0023B4D5 /* AAPLAppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -598,7 +627,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3ABD52F92283BDC10050D28E /* AAPLShaders.metal in Sources */,
 				3ABD52FB2283BE4B0050D28E /* AAPLMetalViewController.m in Sources */,
 				3ABD52F62283BDB70050D28E /* AAPLMetalRenderer.m in Sources */,
 				3ABD53092283C4FE0050D28E /* AAPLAppDelegate.m in Sources */,
@@ -621,6 +649,11 @@
 			isa = PBXTargetDependency;
 			target = 935D1DE42BAA222B00362748 /* EngineFrameworkWrapper */;
 			targetProxy = 935D1DFB2BAA266000362748 /* PBXContainerItemProxy */;
+		};
+		93A9F0442BB03BD40023B4D5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 935D1DE42BAA222B00362748 /* EngineFrameworkWrapper */;
+			targetProxy = 93A9F0432BB03BD40023B4D5 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

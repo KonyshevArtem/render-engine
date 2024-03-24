@@ -1,10 +1,3 @@
-/*
-See LICENSE folder for this sample’s licensing information.
-
-Abstract:
-Implementation of the cross-platform view controller that displays Metal content.
-*/
-
 #import "AAPLMetalViewController.h"
 #import "AAPLMetalRenderer.h"
 

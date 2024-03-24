@@ -43,7 +43,7 @@ void SelectionOutlinePass::Execute(Context &_context)
     {
         Graphics::SetRenderTargets(outlineTexture, 0, 0, nullptr, 0, 0);
 
-        GraphicsBackend::Clear(ClearMask::COLOR_DEPTH);
+        GraphicsBackend::Current()->Clear(ClearMask::COLOR_DEPTH);
 
         for (const auto &go: selectedGameObjects)
         {

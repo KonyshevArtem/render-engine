@@ -3,9 +3,9 @@
 
 @implementation EngineFrameworkWrapper
 
-+ (void) Initialize:(void*)viewPtr
++ (void) Initialize:(void*)viewPtr graphicsBackend:(NSString*)graphicsBackend
 {
-    EngineFramework::Initialize(viewPtr);
+    EngineFramework::Initialize(viewPtr, [graphicsBackend UTF8String]);
 }
 
 + (void) TickMainLoop:(int)width height:(int)height

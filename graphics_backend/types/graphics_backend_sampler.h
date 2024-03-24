@@ -8,7 +8,8 @@ class GraphicsBackendSampler
 private:
     GRAPHICS_BACKEND_TYPE_UINT Sampler;
 
-    friend class GraphicsBackend;
+    friend class GraphicsBackendOpenGL;
+    friend class GraphicsBackendMetal;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_SAMPLER_H

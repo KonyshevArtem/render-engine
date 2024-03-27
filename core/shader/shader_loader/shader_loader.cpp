@@ -28,88 +28,11 @@ namespace ShaderLoader
             "#define GEOMETRY_PROGRAM\n",
             "#define FRAGMENT_PROGRAM\n"};
 
-    std::string GetShaderTypeName(ShaderType shaderType)
-    {
-        switch (shaderType)
-        {
-            case ShaderType::VERTEX_SHADER:
-                return "Vertex";
-            case ShaderType::FRAGMENT_SHADER:
-                return "Fragment";
-            case ShaderType::GEOMETRY_SHADER:
-                return "Geometry";
-            default:
-                return "Unknown";
-        }
-    }
-
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string &keywordDirectives, const std::string &shaderPartDirective)
     {
-        constexpr int sourcesCount = 4;
-
         const auto &globalDirectives = Graphics::GetGlobalShaderDirectives();
-        const char *sources[sourcesCount]{
-                globalDirectives.c_str(),
-                keywordDirectives.c_str(),
-                shaderPartDirective.c_str(),
-                source.c_str()};
-
-        auto shader = GraphicsBackend::Current()->CreateShader(shaderType);
-        GraphicsBackend::Current()->SetShaderSources(shader, sourcesCount, sources, nullptr);
-
-        GraphicsBackend::Current()->CompileShader(shader);
-
-        int isCompiled;
-        GraphicsBackend::Current()->GetShaderParameter(shader, ShaderParameter::COMPILE_STATUS, &isCompiled);
-        if (!isCompiled)
-        {
-            int infoLogLength;
-            GraphicsBackend::Current()->GetShaderParameter(shader, ShaderParameter::INFO_LOG_LENGTH, &infoLogLength);
-
-            std::string logMsg(infoLogLength + 1, ' ');
-            GraphicsBackend::Current()->GetShaderInfoLog(shader, infoLogLength, nullptr, &logMsg[0]);
-
-            throw std::runtime_error(GetShaderTypeName(shaderType) + " shader compilation failed with errors:\n" + logMsg);
-        }
-
-        return shader;
-    }
-
-    GraphicsBackendProgram LinkProgram(const std::span<GraphicsBackendShaderObject> &shaders)
-    {
-        auto program = GraphicsBackend::Current()->CreateProgram();
-
-        for (const auto &shader: shaders)
-        {
-            if (GraphicsBackend::Current()->IsShader(shader))
-                GraphicsBackend::Current()->AttachShader(program, shader);
-        }
-
-        GraphicsBackend::Current()->LinkProgram(program);
-
-        for (const auto &shader: shaders)
-        {
-            if (GraphicsBackend::Current()->IsShader(shader))
-            {
-                GraphicsBackend::Current()->DetachShader(program, shader);
-                GraphicsBackend::Current()->DeleteShader(shader);
-            }
-        }
-
-        int isLinked;
-        GraphicsBackend::Current()->GetProgramParameter(program, ProgramParameter::LINK_STATUS, &isLinked);
-        if (!isLinked)
-        {
-            int infoLogLength;
-            GraphicsBackend::Current()->GetProgramParameter(program, ProgramParameter::INFO_LOG_LENGTH, &infoLogLength);
-
-            std::string logMsg(infoLogLength + 1, ' ');
-            GraphicsBackend::Current()->GetProgramInfoLog(program, infoLogLength, nullptr, &logMsg[0]);
-
-            throw std::runtime_error("Link failed with error:\n" + logMsg);
-        }
-
-        return program;
+        auto fullSource = globalDirectives + "\n" + keywordDirectives + "\n" + shaderPartDirective + "\n" + source;
+        return GraphicsBackend::Current()->CompileShader(shaderType, fullSource);
     }
 
     std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords)
@@ -134,7 +57,7 @@ namespace ShaderLoader
             for (auto &passInfo: passesInfo)
             {
                 GraphicsBackendShaderObject shaders[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT];
-                size_t shadersCount = 0;
+                int shadersCount = 0;
 
                 for (int i = 0; i < ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT; ++i)
                 {
@@ -148,7 +71,7 @@ namespace ShaderLoader
                     shaders[shadersCount++] = CompileShader(shaderType, partSource, keywordsDirectives, SHADER_DIRECTIVES[i]);
                 }
 
-                auto program = LinkProgram(std::span<GraphicsBackendShaderObject>{shaders, shadersCount});
+                auto program = GraphicsBackend::Current()->CreateProgram(&shaders[0], shadersCount);
                 auto passPtr = std::make_shared<ShaderPass>(program, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.Tags, properties);
                 passes.push_back(passPtr);
             }

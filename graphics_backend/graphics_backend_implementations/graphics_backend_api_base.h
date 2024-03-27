@@ -26,7 +26,7 @@ FORWARD_DECLARE_ENUM(GraphicsBackendCapability)
 FORWARD_DECLARE_ENUM(BlendFactor)
 FORWARD_DECLARE_ENUM(CullFace)
 FORWARD_DECLARE_ENUM(DepthFunction)
-FORWARD_DECLARE_ENUM(ShaderType)
+enum class ShaderType;
 FORWARD_DECLARE_ENUM(ShaderParameter)
 FORWARD_DECLARE_ENUM(ProgramParameter)
 FORWARD_DECLARE_ENUM(UniformDataType)
@@ -122,22 +122,11 @@ public:
     virtual void SetDepthRange(double near, double far) = 0;
     virtual void SetViewport(int x, int y, int width, int height) = 0;
 
-    virtual GraphicsBackendShaderObject CreateShader(ShaderType shaderType) = 0;
-    virtual void DeleteShader(GraphicsBackendShaderObject shader) = 0;
-    virtual void SetShaderSources(GraphicsBackendShaderObject shader, int sourcesCount, const char **sources, const int *sourceLengths) = 0;
-    virtual void CompileShader(GraphicsBackendShaderObject shader) = 0;
-    virtual void GetShaderParameter(GraphicsBackendShaderObject shader, ShaderParameter parameter, int* value) = 0;
-    virtual void GetShaderInfoLog(GraphicsBackendShaderObject shader, int maxLength, int *length, char *infoLog) = 0;
-    virtual bool IsShader(GraphicsBackendShaderObject shader) = 0;
-    virtual void AttachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader) = 0;
-    virtual void DetachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader) = 0;
-
-    virtual GraphicsBackendProgram CreateProgram() = 0;
+    virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) = 0;
+    virtual GraphicsBackendProgram CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
-    virtual void LinkProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;
     virtual void GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int* value) = 0;
-    virtual void GetProgramInfoLog(GraphicsBackendProgram program, int maxLength, int *length, char *infoLog) = 0;
     virtual bool TryGetUniformBlockIndex(GraphicsBackendProgram program, const char *name, int *index) = 0;
     virtual void SetUniformBlockBinding(GraphicsBackendProgram program, int uniformBlockIndex, int uniformBlockBinding) = 0;
     virtual void GetActiveUniform(GraphicsBackendProgram program, int index, int nameBufferSize, int *nameLength, int *size, UniformDataType *dataType, char *name) = 0;

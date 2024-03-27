@@ -323,58 +323,104 @@ void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height)
     CHECK_GRAPHICS_BACKEND_FUNC(glViewport(x, y, width, height))
 }
 
-GraphicsBackendShaderObject GraphicsBackendOpenGL::CreateShader(ShaderType shaderType)
+std::string GetShaderTypeName(ShaderType shaderType)
+{
+    switch (shaderType)
+    {
+        case ShaderType::VERTEX_SHADER:
+            return "Vertex";
+        case ShaderType::FRAGMENT_SHADER:
+            return "Fragment";
+        case ShaderType::GEOMETRY_SHADER:
+            return "Geometry";
+        default:
+            return "Unknown";
+    }
+}
+
+GLuint ToOpenGLShaderType(ShaderType shaderType)
+{
+    switch (shaderType)
+    {
+        case ShaderType::VERTEX_SHADER:
+            return GL_VERTEX_SHADER;
+        case ShaderType::TESS_CONTROL_SHADER:
+            return GL_TESS_CONTROL_SHADER;
+        case ShaderType::TESS_EVALUATION_SHADER:
+            return GL_TESS_EVALUATION_SHADER;
+        case ShaderType::GEOMETRY_SHADER:
+            return GL_GEOMETRY_SHADER;
+        case ShaderType::FRAGMENT_SHADER:
+            return GL_FRAGMENT_SHADER;
+    }
+}
+
+GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string &source)
 {
     GraphicsBackendShaderObject shaderObject{};
-    shaderObject.ShaderObject = CHECK_GRAPHICS_BACKEND_FUNC(glCreateShader(Cast(shaderType)))
+    shaderObject.ShaderObject = CHECK_GRAPHICS_BACKEND_FUNC(glCreateShader(ToOpenGLShaderType(shaderType)))
+
+    auto *sourceChar = source.c_str();
+    CHECK_GRAPHICS_BACKEND_FUNC(glShaderSource(shaderObject.ShaderObject, 1, &sourceChar, nullptr))
+    CHECK_GRAPHICS_BACKEND_FUNC(glCompileShader(shaderObject.ShaderObject))
+
+    int isCompiled;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderiv(shaderObject.ShaderObject, GL_COMPILE_STATUS, &isCompiled))
+    if (!isCompiled)
+    {
+        int infoLogLength;
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderiv(shaderObject.ShaderObject, GL_INFO_LOG_LENGTH, &infoLogLength));
+
+        std::string logMsg(infoLogLength + 1, ' ');
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderInfoLog(shaderObject.ShaderObject, infoLogLength, nullptr, &logMsg[0]))
+
+        throw std::runtime_error(GetShaderTypeName(shaderType) + " shader compilation failed with errors:\n" + logMsg);
+    }
+
     return shaderObject;
 }
 
-void GraphicsBackendOpenGL::DeleteShader(GraphicsBackendShaderObject shader)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteShader(shader.ShaderObject))
-}
-
-void GraphicsBackendOpenGL::SetShaderSources(GraphicsBackendShaderObject shader, int sourcesCount, const char **sources, const int *sourceLengths)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glShaderSource(shader.ShaderObject, sourcesCount, sources, sourceLengths))
-}
-
-void GraphicsBackendOpenGL::CompileShader(GraphicsBackendShaderObject shader)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glCompileShader(shader.ShaderObject))
-}
-
-void GraphicsBackendOpenGL::GetShaderParameter(GraphicsBackendShaderObject shader, ShaderParameter parameter, int *value)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderiv(shader.ShaderObject, Cast(parameter), value))
-}
-
-void GraphicsBackendOpenGL::GetShaderInfoLog(GraphicsBackendShaderObject shader, int maxLength, int *length, char *infoLog)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderInfoLog(shader.ShaderObject, maxLength, length, infoLog))
-}
-
-bool GraphicsBackendOpenGL::IsShader(GraphicsBackendShaderObject shader)
-{
-    auto isShader = CHECK_GRAPHICS_BACKEND_FUNC(glIsShader(shader.ShaderObject))
-    return isShader == GL_TRUE;
-}
-
-void GraphicsBackendOpenGL::AttachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glAttachShader(program.Program, shader.ShaderObject))
-}
-
-void GraphicsBackendOpenGL::DetachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glDetachShader(program.Program, shader.ShaderObject))
-}
-
-GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram()
+GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount)
 {
     GraphicsBackendProgram program{};
     program.Program = CHECK_GRAPHICS_BACKEND_FUNC(glCreateProgram())
+
+    for (int i = 0; i < shadersCount; ++i)
+    {
+        auto shader = *(shaders + i);
+        bool isShader = CHECK_GRAPHICS_BACKEND_FUNC(glIsShader(shader.ShaderObject))
+        if (isShader)
+        {
+            CHECK_GRAPHICS_BACKEND_FUNC(glAttachShader(program.Program, shader.ShaderObject))
+        }
+    }
+
+    CHECK_GRAPHICS_BACKEND_FUNC(glLinkProgram(program.Program))
+
+    for (int i = 0; i < shadersCount; ++i)
+    {
+        auto shader = *(shaders + i);
+        bool isShader = CHECK_GRAPHICS_BACKEND_FUNC(glIsShader(shader.ShaderObject))
+        if (isShader)
+        {
+            CHECK_GRAPHICS_BACKEND_FUNC(glDetachShader(program.Program, shader.ShaderObject))
+            CHECK_GRAPHICS_BACKEND_FUNC(glDeleteShader(shader.ShaderObject))
+        }
+    }
+
+    int isLinked;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_LINK_STATUS, &isLinked))
+    if (!isLinked)
+    {
+        int infoLogLength;
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_INFO_LOG_LENGTH, &infoLogLength))
+
+        std::string logMsg(infoLogLength + 1, ' ');
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInfoLog(program.Program, infoLogLength, nullptr, &logMsg[0]))
+
+        throw std::runtime_error("Link failed with error:\n" + logMsg);
+    }
+
     return program;
 }
 
@@ -383,19 +429,9 @@ void GraphicsBackendOpenGL::DeleteProgram(GraphicsBackendProgram program)
     CHECK_GRAPHICS_BACKEND_FUNC(glDeleteProgram(program.Program))
 }
 
-void GraphicsBackendOpenGL::LinkProgram(GraphicsBackendProgram program)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glLinkProgram(program.Program))
-}
-
 void GraphicsBackendOpenGL::GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int *value)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, Cast(parameter), value))
-}
-
-void GraphicsBackendOpenGL::GetProgramInfoLog(GraphicsBackendProgram program, int maxLength, int *length, char *infoLog)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInfoLog(program.Program, maxLength, length, infoLog))
 }
 
 bool GraphicsBackendOpenGL::TryGetUniformBlockIndex(GraphicsBackendProgram program, const char *name, int *index)

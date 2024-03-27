@@ -72,22 +72,14 @@ public:
     void SetDepthRange(double near, double far) override;
     void SetViewport(int x, int y, int width, int height) override;
 
-    GraphicsBackendShaderObject CreateShader(ShaderType shaderType) override;
-    void DeleteShader(GraphicsBackendShaderObject shader) override;
-    void SetShaderSources(GraphicsBackendShaderObject shader, int sourcesCount, const char **sources, const int *sourceLengths) override;
-    void CompileShader(GraphicsBackendShaderObject shader) override;
-    void GetShaderParameter(GraphicsBackendShaderObject shader, ShaderParameter parameter, int* value) override;
-    void GetShaderInfoLog(GraphicsBackendShaderObject shader, int maxLength, int *length, char *infoLog) override;
-    bool IsShader(GraphicsBackendShaderObject shader) override;
-    void AttachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader) override;
-    void DetachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader) override;
+    GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
 
-    GraphicsBackendProgram CreateProgram() override;
+    GraphicsBackendProgram CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount) override;
     void DeleteProgram(GraphicsBackendProgram program) override;
-    void LinkProgram(GraphicsBackendProgram program) override;
+
     void UseProgram(GraphicsBackendProgram program) override;
     void GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int* value) override;
-    void GetProgramInfoLog(GraphicsBackendProgram program, int maxLength, int *length, char *infoLog) override;
+
     bool TryGetUniformBlockIndex(GraphicsBackendProgram program, const char *name, int *index) override;
     void SetUniformBlockBinding(GraphicsBackendProgram program, int uniformBlockIndex, int uniformBlockBinding) override;
     void GetActiveUniform(GraphicsBackendProgram program, int index, int nameBufferSize, int *nameLength, int *size, UniformDataType *dataType, char *name) override;

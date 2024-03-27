@@ -36,7 +36,9 @@ int GraphicsBackendMetal::GetMinorVersion()
 
 const std::string &GraphicsBackendMetal::GetShadingLanguageDirective()
 {
-    return "";
+    static const std::string directives = "#include <metal_stdlib>\nusing namespace metal;\n";
+
+    return directives;
 }
 
 GraphicsBackendName GraphicsBackendMetal::GetName()
@@ -232,66 +234,82 @@ void GraphicsBackendMetal::SetViewport(int x, int y, int width, int height)
 {
 }
 
-GraphicsBackendShaderObject GraphicsBackendMetal::CreateShader(ShaderType shaderType)
+GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shaderType, const std::string &source)
 {
-    GraphicsBackendShaderObject shader{};
-    shader.ShaderObject = 0;
-    return shader;
+    auto library = m_Device->newLibrary(NS::String::string(source.c_str(), NS::UTF8StringEncoding), nullptr, &s_Error);
+    if (!library)
+    {
+        throw std::runtime_error(s_Error->localizedDescription()->utf8String());
+    }
+
+    GraphicsBackendShaderObject shaderObject{};
+    shaderObject.ShaderObject = reinterpret_cast<uint64_t>(library);
+    shaderObject.ShaderType = shaderType;
+    return shaderObject;
 }
 
-void GraphicsBackendMetal::DeleteShader(GraphicsBackendShaderObject shader)
+std::string GetShaderFunctionName(ShaderType shaderType)
 {
+    switch (shaderType)
+    {
+        case ShaderType::VERTEX_SHADER:
+            return "vertexMain";
+        case ShaderType::FRAGMENT_SHADER:
+            return "fragmentMain";
+        default:
+            return "";
+    }
 }
 
-void GraphicsBackendMetal::SetShaderSources(GraphicsBackendShaderObject shader, int sourcesCount, const char **sources, const int *sourceLengths)
+GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount)
 {
-}
+    MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
+    desc->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB);
+    desc->setDepthAttachmentPixelFormat(MTL::PixelFormat::PixelFormatDepth32Float);
 
-void GraphicsBackendMetal::CompileShader(GraphicsBackendShaderObject shader)
-{
-}
+    for (int i = 0; i < shadersCount; ++i)
+    {
+        auto shader = *(shaders + i);
+        auto *library = reinterpret_cast<MTL::Library*>(shader.ShaderObject);
+        auto *function = library->newFunction(NS::String::string(GetShaderFunctionName(shader.ShaderType).c_str(), NS::UTF8StringEncoding));
+        switch (shader.ShaderType)
+        {
+            case ShaderType::VERTEX_SHADER:
+                desc->setVertexFunction(function);
+                break;
+            case ShaderType::FRAGMENT_SHADER:
+                desc->setFragmentFunction(function);
+                break;
+        }
+    }
 
-void GraphicsBackendMetal::GetShaderParameter(GraphicsBackendShaderObject shader, ShaderParameter parameter, int *value)
-{
-}
+    MTL::VertexDescriptor *vertDesc = MTL::VertexDescriptor::alloc()->init();
+    MTL::VertexAttributeDescriptor *attrDesc = MTL::VertexAttributeDescriptor::alloc()->init();
+    attrDesc->setFormat(MTL::VertexFormatFloat3);
+    attrDesc->setBufferIndex(0);
+    attrDesc->setOffset(0);
+    vertDesc->attributes()->setObject(attrDesc, 0);
 
-void GraphicsBackendMetal::GetShaderInfoLog(GraphicsBackendShaderObject shader, int maxLength, int *length, char *infoLog)
-{
-}
+    MTL::VertexBufferLayoutDescriptor *layoutDesc = MTL::VertexBufferLayoutDescriptor::alloc()->init();
+    layoutDesc->setStride(12);
+    layoutDesc->setStepRate(1);
+    layoutDesc->setStepFunction(MTL::VertexStepFunctionPerVertex);
+    vertDesc->layouts()->setObject(layoutDesc, 0);
+    desc->setVertexDescriptor(vertDesc);
 
-bool GraphicsBackendMetal::IsShader(GraphicsBackendShaderObject shader)
-{
-    return false;
-}
+    auto *pso = m_Device->newRenderPipelineState(desc, &s_Error);
 
-void GraphicsBackendMetal::AttachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader)
-{
-}
-
-void GraphicsBackendMetal::DetachShader(GraphicsBackendProgram program, GraphicsBackendShaderObject shader)
-{
-}
-
-GraphicsBackendProgram GraphicsBackendMetal::CreateProgram()
-{
     GraphicsBackendProgram program{};
-    program.Program = 0;
+    program.Program = reinterpret_cast<uint64_t>(pso);
     return program;
 }
 
 void GraphicsBackendMetal::DeleteProgram(GraphicsBackendProgram program)
 {
-}
-
-void GraphicsBackendMetal::LinkProgram(GraphicsBackendProgram program)
-{
+    reinterpret_cast<MTL::RenderPipelineState*>(program.Program)->release();
 }
 
 void GraphicsBackendMetal::GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int *value)
-{
-}
-
-void GraphicsBackendMetal::GetProgramInfoLog(GraphicsBackendProgram program, int maxLength, int *length, char *infoLog)
 {
 }
 

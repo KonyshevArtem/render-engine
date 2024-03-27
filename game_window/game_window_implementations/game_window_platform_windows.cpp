@@ -3,7 +3,7 @@
 #include "game_window_platform_windows.h"
 #include "imgui.h"
 
-GameWindowPlatformWindows::GameWindowPlatformWindows(void *viewPtr) : GameWindow()
+GameWindowPlatformWindows::GameWindowPlatformWindows() : GameWindow()
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();

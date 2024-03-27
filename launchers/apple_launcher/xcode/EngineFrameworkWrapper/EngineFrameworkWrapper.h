@@ -2,8 +2,8 @@
 
 @interface EngineFrameworkWrapper : NSObject
 
-+ (void) Initialize:(void*)viewPtr graphicsBackend:(NSString*)graphicsBackend;
-+ (void) TickMainLoop:(int)widht height:(int)height;
++ (void) Initialize:(void*)graphicsDevice graphicsBackend:(NSString*)graphicsBackend;
++ (void) TickMainLoop:(void*)commandBufferPtr backbufferDescriptor:(void*)backbufferDescriptor width:(int)widht height:(int)height;
 + (void) Shutdown;
 + (bool) ShouldCloseWindow;
 

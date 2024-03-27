@@ -33,11 +33,6 @@ NSTrackingArea* trackingArea;
     [self addTrackingArea:trackingArea];
 }
 
-- (void) closeWindow
-{
-    [[self window] performClose:self];
-}
-
 @end
 
 @implementation AAPLOpenGLViewController
@@ -95,12 +90,6 @@ NSTrackingArea* trackingArea;
 
 - (void)draw
 {
-    if ([EngineFrameworkWrapper ShouldCloseWindow])
-    {
-        [_view closeWindow];
-        return;
-    }
-    
     CGLLockContext(_context.CGLContextObj);
 
     [_context makeCurrentContext];

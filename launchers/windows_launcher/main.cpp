@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     glfwSetCursorPosCallback(s_Window, MouseMoveFunction);
     glfwSetKeyCallback(s_Window, KeyboardFunction);
 
-    EngineFramework::Initialize(s_Window, "OpenGL");
+    EngineFramework::Initialize(nullptr, "OpenGL");
 
     ImGui_ImplGlfw_InitForOpenGL(s_Window, true);
     ImGui_ImplOpenGL3_Init(GraphicsBackend::Current()->GetShadingLanguageDirective().c_str());
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
 
-        EngineFramework::TickMainLoop(width, height);
+        EngineFramework::TickMainLoop(nullptr, nullptr, width, height);
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

@@ -8,7 +8,7 @@
 class GameWindowPlatformWindows : public GameWindow
 {
 public:
-    explicit GameWindowPlatformWindows(void* viewPtr);
+    explicit GameWindowPlatformWindows();
     ~GameWindowPlatformWindows() override;
 
     void TickMainLoop(int width, int height) override;

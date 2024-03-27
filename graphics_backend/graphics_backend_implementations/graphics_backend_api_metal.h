@@ -5,14 +5,22 @@
 
 #include "graphics_backend_api_base.h"
 
+namespace MTL
+{
+    class Device;
+    class CommandBuffer;
+    class RenderPassDescriptor;
+}
+
 class GraphicsBackendMetal : public GraphicsBackendBase
 {
 public:
-    void Init() override;
+    void Init(void *device) override;
     int GetMajorVersion() override;
     int GetMinorVersion() override;
     const std::string &GetShadingLanguageDirective() override;
     GraphicsBackendName GetName() override;
+    void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) override;
 
     void GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr) override;
     void GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr) override;
@@ -121,6 +129,11 @@ public:
 
     GRAPHICS_BACKEND_TYPE_ENUM GetError() override;
     const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) override;
+
+private:
+    MTL::Device *m_Device = nullptr;
+    MTL::CommandBuffer *m_CommandBuffer = nullptr;
+    MTL::RenderPassDescriptor *m_BackbufferDescriptor = nullptr;
 };
 
 

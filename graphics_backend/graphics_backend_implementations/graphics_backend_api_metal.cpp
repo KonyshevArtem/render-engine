@@ -13,9 +13,15 @@
 #include "types/graphics_backend_uniform_location.h"
 #include "types/graphics_backend_vao.h"
 
+#define NS_PRIVATE_IMPLEMENTATION
+#define MTL_PRIVATE_IMPLEMENTATION
+#include "Metal/Metal.hpp"
 
-void GraphicsBackendMetal::Init()
+NS::Error *s_Error;
+
+void GraphicsBackendMetal::Init(void *device)
 {
+    m_Device = reinterpret_cast<MTL::Device*>(device);
 }
 
 int GraphicsBackendMetal::GetMajorVersion()
@@ -36,6 +42,12 @@ const std::string &GraphicsBackendMetal::GetShadingLanguageDirective()
 GraphicsBackendName GraphicsBackendMetal::GetName()
 {
     return GraphicsBackendName::METAL;
+}
+
+void GraphicsBackendMetal::PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor)
+{
+    m_CommandBuffer = reinterpret_cast<MTL::CommandBuffer*>(commandBufferPtr);
+    m_BackbufferDescriptor = reinterpret_cast<MTL::RenderPassDescriptor*>(backbufferDescriptor);
 }
 
 void GraphicsBackendMetal::GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr)

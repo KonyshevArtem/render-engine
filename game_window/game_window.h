@@ -10,8 +10,7 @@ typedef std::function<void(double, double)> MouseMoveHandlerDelegate;
 class GameWindow
 {
 public:
-    static GameWindow* Create(void* viewPtr,
-                              RenderHandler renderHandler,
+    static GameWindow* Create(RenderHandler renderHandler,
                               KeyboardInputHandlerDelegate keyboardInputHandler,
                               MouseMoveHandlerDelegate mouseMoveHandler);
 

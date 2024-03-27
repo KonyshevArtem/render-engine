@@ -56,11 +56,12 @@ class GraphicsBackendBase
 public:
     static GraphicsBackendBase *Create(const std::string &backend);
 
-    virtual void Init() = 0;
+    virtual void Init(void *device) = 0;
     virtual int GetMajorVersion() = 0;
     virtual int GetMinorVersion() = 0;
     virtual const std::string &GetShadingLanguageDirective() = 0;
     virtual GraphicsBackendName GetName() = 0;
+    virtual void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) = 0;
 
     virtual void GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr) = 0;
     virtual void GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr) = 0;

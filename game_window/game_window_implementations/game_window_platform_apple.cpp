@@ -3,8 +3,7 @@
 #include "game_window_platform_apple.h"
 #include "imgui.h"
 
-GameWindowPlatformApple::GameWindowPlatformApple(void *viewPtr) : GameWindow(),
-    m_ViewPtr(viewPtr)
+GameWindowPlatformApple::GameWindowPlatformApple() : GameWindow()
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();

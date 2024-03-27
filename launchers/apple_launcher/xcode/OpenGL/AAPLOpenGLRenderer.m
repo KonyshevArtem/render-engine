@@ -20,7 +20,7 @@
         _view = view;
         _defaultFBOName = defaultFBOName;
         
-        [EngineFrameworkWrapper Initialize:(void*)_view graphicsBackend:@"OpenGL"];
+        [EngineFrameworkWrapper Initialize:(void*)nil graphicsBackend:@"OpenGL"];
         [ImGuiWrapper Init_OSX:_view];
         [ImGuiWrapper Init_OpenGL];
     }
@@ -37,10 +37,16 @@
 {
 //    glBindFramebuffer(GL_FRAMEBUFFER, _defaultFBOName);
     
+    if ([EngineFrameworkWrapper ShouldCloseWindow])
+    {
+        [[_view window] performClose:self];
+        return;
+    }
+    
     [ImGuiWrapper NewFrame_OpenGL];
     [ImGuiWrapper NewFrame_OSX:_view];
     
-    [EngineFrameworkWrapper TickMainLoop:_viewSize.width height:_viewSize.height];
+    [EngineFrameworkWrapper TickMainLoop:nil backbufferDescriptor:nil width:_viewSize.width height:_viewSize.height];
     
     [ImGuiWrapper Render_OpenGL];
 }

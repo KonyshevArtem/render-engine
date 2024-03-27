@@ -7,15 +7,14 @@
 
 #include <utility>
 
-GameWindow *GameWindow::Create(void* viewPtr,
-                               RenderHandler renderHandler,
+GameWindow *GameWindow::Create(RenderHandler renderHandler,
                                KeyboardInputHandlerDelegate keyboardInputHandler,
                                MouseMoveHandlerDelegate mouseMoveHandler)
 {
 #if RENDER_ENGINE_WINDOWS
-    GameWindow *window = new GameWindowPlatformWindows(viewPtr);
+    GameWindow *window = new GameWindowPlatformWindows();
 #elif RENDER_ENGINE_APPLE
-    GameWindow *window = new GameWindowPlatformApple(viewPtr);
+    GameWindow *window = new GameWindowPlatformApple();
 #endif
 
     window->m_RenderHandler = std::move(renderHandler);

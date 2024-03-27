@@ -39,7 +39,7 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm_sRGB;
             _depthState = [_device newDepthStencilStateWithDescriptor:depthStencilDesc];
         }
         
-        [EngineFrameworkWrapper Initialize:(void*)mtkView graphicsBackend:@"Metal"];
+        [EngineFrameworkWrapper Initialize:(void*)_device graphicsBackend:@"Metal"];
         [ImGuiWrapper Init_OSX:mtkView];
         [ImGuiWrapper Init_Metal:_device];
     }
@@ -71,16 +71,16 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     
     MTLRenderPassDescriptor* renderPassDescriptor = [view currentRenderPassDescriptor];
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-    id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
     
-    [ImGuiWrapper NewFrame_Metal:[view currentRenderPassDescriptor]];
+    [ImGuiWrapper NewFrame_Metal:renderPassDescriptor];
     [ImGuiWrapper NewFrame_OSX:view];
     
-    [EngineFrameworkWrapper TickMainLoop:_viewSize.width height:_viewSize.height];
+    [EngineFrameworkWrapper TickMainLoop:(void*)commandBuffer backbufferDescriptor:(void*)renderPassDescriptor width:_viewSize.width height:_viewSize.height];
     
+    id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
     [ImGuiWrapper Render_Metal:commandBuffer commandEncoder:commandEncoder];
-    
     [commandEncoder endEncoding];
+    
     [commandBuffer presentDrawable:view.currentDrawable];
     [commandBuffer commit];
 }

@@ -29,6 +29,8 @@ add_library(
     scenes/shadows_demo.h
     scripts/camera_fly_controller/camera_fly_controller.cpp
 	scripts/camera_fly_controller/camera_fly_controller.h
+	scenes/empty_scene.cpp
+	scenes/empty_scene.h
 )
 
 # boost

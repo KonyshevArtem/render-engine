@@ -11,7 +11,6 @@
 @interface AAPLOpenGLView : PlatformViewBase
 
 - (void) updateTrackingAreas;
-- (void) closeWindow;
 
 @end
 

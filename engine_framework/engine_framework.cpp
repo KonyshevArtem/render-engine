@@ -5,6 +5,7 @@
 #include "../scenes/test_scene.h"
 #include "../scenes/pbr_demo.h"
 #include "../scenes/shadows_demo.h"
+#include "../scenes/empty_scene.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "graphics_backend_api.h"
 
@@ -21,24 +22,26 @@ void display(int width, int height)
     Input::CleanUp();
 }
 
-void EngineFramework::Initialize(void* viewPtr, const char *graphicsBackend)
+void EngineFramework::Initialize(void *graphicsDevice, const char *graphicsBackend)
 {
-    GraphicsBackend::Init(graphicsBackend);
+    GraphicsBackend::Init(graphicsDevice, graphicsBackend);
 
-    window = GameWindow::Create(viewPtr, display, Input::HandleKeyboardInput, Input::HandleMouseMove);
+    window = GameWindow::Create(display, Input::HandleKeyboardInput, Input::HandleMouseMove);
 
     Graphics::Init();
     Time::Init();
 
-    TestScene::Load();
+//    TestScene::Load();
     //PBRDemo::Load();
     //ShadowsDemo::Load();
+    EmptyScene::Load();
 }
 
-void EngineFramework::TickMainLoop(int width, int height)
+void EngineFramework::TickMainLoop(void *commandBufferPtr, void *backbufferDescriptor, int width, int height)
 {
     if (window)
     {
+        GraphicsBackend::Current()->PlatformDependentSetup(commandBufferPtr, backbufferDescriptor);
         window->TickMainLoop(width, height);
     }
 }

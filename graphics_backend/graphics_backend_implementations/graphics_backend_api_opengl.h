@@ -6,11 +6,12 @@
 class GraphicsBackendOpenGL : public GraphicsBackendBase
 {
 public:
-    void Init() override;
+    void Init(void *device) override;
     int GetMajorVersion() override;
     int GetMinorVersion() override;
     const std::string &GetShadingLanguageDirective() override;
     GraphicsBackendName GetName() override;
+    void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) override;
 
     void GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr) override;
     void GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr) override;

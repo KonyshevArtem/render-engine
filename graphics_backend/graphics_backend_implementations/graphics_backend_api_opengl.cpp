@@ -46,7 +46,7 @@ constexpr auto Cast(T *values) -> typename std::underlying_type<T>::type*
     return reinterpret_cast<typename std::underlying_type<T>::type*>(values);
 }
 
-void GraphicsBackendOpenGL::Init()
+void GraphicsBackendOpenGL::Init(void *device)
 {
 #ifdef REQUIRE_GLEW_INIT
     auto result = glewInit();
@@ -82,6 +82,10 @@ const std::string &GraphicsBackendOpenGL::GetShadingLanguageDirective()
 GraphicsBackendName GraphicsBackendOpenGL::GetName()
 {
     return GraphicsBackendName::OPENGL;
+}
+
+void GraphicsBackendOpenGL::PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor)
+{
 }
 
 void GraphicsBackendOpenGL::GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr)

@@ -125,11 +125,6 @@
 		93A9F0352BAF74220023B4D5 /* libGraphicsBackend.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libGraphicsBackend.a; sourceTree = "<group>"; };
 		93A9F0362BAF74220023B4D5 /* libCore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libCore.a; sourceTree = "<group>"; };
 		93A9F0372BAF74220023B4D5 /* libRenderEngineApple.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libRenderEngineApple.a; sourceTree = "<group>"; };
-		93A9F04A2BB0628D0023B4D5 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
-		93A9F04C2BB062920023B4D5 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
-		93A9F04E2BB063640023B4D5 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		93A9F0502BB0636A0023B4D5 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		93A9F0522BB063710023B4D5 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		93A9F0602BB08DE30023B4D5 /* libImGuiOpenGL.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libImGuiOpenGL.a; sourceTree = "<group>"; };
 		93A9F0612BB08DE30023B4D5 /* libImGuiOSX.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libImGuiOSX.a; sourceTree = "<group>"; };
 		93A9F0622BB08DE30023B4D5 /* libImGuiMetal.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libImGuiMetal.a; sourceTree = "<group>"; };
@@ -346,11 +341,6 @@
 		935D1D652BA79E7500362748 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				93A9F0522BB063710023B4D5 /* Foundation.framework */,
-				93A9F0502BB0636A0023B4D5 /* Metal.framework */,
-				93A9F04E2BB063640023B4D5 /* QuartzCore.framework */,
-				93A9F04C2BB062920023B4D5 /* MetalKit.framework */,
-				93A9F04A2BB0628D0023B4D5 /* AppKit.framework */,
 				935D1E222BAA41CE00362748 /* GameController.framework */,
 				935D1E192BAA2CA500362748 /* libboost_json-mt.a */,
 				935D1E1A2BAA2CA500362748 /* libboost_json.a */,

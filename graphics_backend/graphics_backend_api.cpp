@@ -3,10 +3,10 @@
 
 GraphicsBackendBase *s_GraphicsBackend;
 
-void GraphicsBackend::Init(const std::string &backend)
+void GraphicsBackend::Init(void *device, const std::string &backend)
 {
     s_GraphicsBackend = GraphicsBackendBase::Create(backend);
-    s_GraphicsBackend->Init();
+    s_GraphicsBackend->Init(device);
 }
 
 GraphicsBackendBase *GraphicsBackend::Current()

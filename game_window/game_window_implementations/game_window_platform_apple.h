@@ -8,13 +8,10 @@
 class GameWindowPlatformApple : public GameWindow
 {
 public:
-    explicit GameWindowPlatformApple(void *viewPtr);
+    explicit GameWindowPlatformApple();
     ~GameWindowPlatformApple() override;
 
     void TickMainLoop(int width, int height) override;
-
-private:
-    void *m_ViewPtr;
 };
 
 

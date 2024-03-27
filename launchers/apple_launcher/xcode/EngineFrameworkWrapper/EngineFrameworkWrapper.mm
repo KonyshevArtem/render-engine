@@ -3,14 +3,14 @@
 
 @implementation EngineFrameworkWrapper
 
-+ (void) Initialize:(void*)viewPtr graphicsBackend:(NSString*)graphicsBackend
++ (void) Initialize:(void*)graphicsDevice graphicsBackend:(NSString*)graphicsBackend
 {
-    EngineFramework::Initialize(viewPtr, [graphicsBackend UTF8String]);
+    EngineFramework::Initialize(graphicsDevice, [graphicsBackend UTF8String]);
 }
 
-+ (void) TickMainLoop:(int)width height:(int)height
++ (void) TickMainLoop:(void*)commandBufferPtr backbufferDescriptor:(void*)backbufferDescriptor width:(int)width height:(int)height
 {
-    EngineFramework::TickMainLoop(width, height);
+    EngineFramework::TickMainLoop(commandBufferPtr, backbufferDescriptor, width, height);
 }
 
 + (void) Shutdown

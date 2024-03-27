@@ -121,7 +121,7 @@ namespace Graphics
         auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
 
         instancingMatricesBuffer = std::make_shared<GraphicsBuffer>(matricesBufferTarget, matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW);
-        instancingDataBuffer = std::make_shared<GraphicsBuffer>(dataBufferTarget, 0, BufferUsageHint::DYNAMIC_DRAW);
+        instancingDataBuffer = std::make_shared<GraphicsBuffer>(dataBufferTarget, 1, BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void InitSeamlessCubemap()

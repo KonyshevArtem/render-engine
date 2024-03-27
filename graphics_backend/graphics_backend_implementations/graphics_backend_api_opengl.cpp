@@ -46,6 +46,106 @@ constexpr auto Cast(T *values) -> typename std::underlying_type<T>::type*
     return reinterpret_cast<typename std::underlying_type<T>::type*>(values);
 }
 
+std::string GetShaderTypeName(ShaderType shaderType)
+{
+    switch (shaderType)
+    {
+        case ShaderType::VERTEX_SHADER:
+            return "Vertex";
+        case ShaderType::FRAGMENT_SHADER:
+            return "Fragment";
+        case ShaderType::GEOMETRY_SHADER:
+            return "Geometry";
+        default:
+            return "Unknown";
+    }
+}
+
+GLuint ToOpenGLShaderType(ShaderType shaderType)
+{
+    switch (shaderType)
+    {
+        case ShaderType::VERTEX_SHADER:
+            return GL_VERTEX_SHADER;
+        case ShaderType::TESS_CONTROL_SHADER:
+            return GL_TESS_CONTROL_SHADER;
+        case ShaderType::TESS_EVALUATION_SHADER:
+            return GL_TESS_EVALUATION_SHADER;
+        case ShaderType::GEOMETRY_SHADER:
+            return GL_GEOMETRY_SHADER;
+        case ShaderType::FRAGMENT_SHADER:
+            return GL_FRAGMENT_SHADER;
+    }
+}
+
+GLenum ToOpenGLBufferBindTarget(BufferBindTarget bindTarget)
+{
+    switch (bindTarget)
+    {
+        case BufferBindTarget::ARRAY_BUFFER:
+            return GL_ARRAY_BUFFER;
+        case BufferBindTarget::COPY_READ_BUFFER:
+            return GL_COPY_READ_BUFFER;
+        case BufferBindTarget::COPY_WRITE_BUFFER:
+            return GL_COPY_WRITE_BUFFER;
+        case BufferBindTarget::DRAW_INDIRECT_BUFFER:
+            return GL_DRAW_INDIRECT_BUFFER;
+        case BufferBindTarget::ELEMENT_ARRAY_BUFFER:
+            return GL_ELEMENT_ARRAY_BUFFER;
+        case BufferBindTarget::PIXEL_PACK_BUFFER:
+            return GL_PIXEL_PACK_BUFFER;
+        case BufferBindTarget::PIXEL_UNPACK_BUFFER:
+            return GL_PIXEL_UNPACK_BUFFER;
+        case BufferBindTarget::TEXTURE_BUFFER:
+            return GL_TEXTURE_BUFFER;
+        case BufferBindTarget::TRANSFORM_FEEDBACK_BUFFER:
+            return GL_TRANSFORM_FEEDBACK_BUFFER;
+        case BufferBindTarget::UNIFORM_BUFFER:
+            return GL_UNIFORM_BUFFER;
+#ifdef GL_ARB_compute_shader
+        case BufferBindTarget::DISPATCH_INDIRECT_BUFFER:
+            return GL_DISPATCH_INDIRECT_BUFFER;
+#endif
+#ifdef GL_ARB_query_buffer_object
+        case BufferBindTarget::QUERY_BUFFER:
+            return GL_QUERY_BUFFER;
+#endif
+#ifdef GL_ARB_shader_storage_buffer_object
+        case BufferBindTarget::SHADER_STORAGE_BUFFER:
+            return GL_SHADER_STORAGE_BUFFER;
+#endif
+        default:
+            return 0;
+    }
+}
+
+GLenum ToOpenGLBufferUsageHint(BufferUsageHint usageHint)
+{
+    switch (usageHint)
+    {
+        case BufferUsageHint::STREAM_DRAW:
+            return GL_STREAM_DRAW;
+        case BufferUsageHint::STREAM_READ:
+            return GL_STREAM_READ;
+        case BufferUsageHint::STREAM_COPY:
+            return GL_STREAM_COPY;
+        case BufferUsageHint::STATIC_DRAW:
+            return GL_STATIC_DRAW;
+        case BufferUsageHint::STATIC_READ:
+            return GL_STATIC_READ;
+        case BufferUsageHint::STATIC_COPY:
+            return GL_STATIC_COPY;
+        case BufferUsageHint::DYNAMIC_DRAW:
+            return GL_DYNAMIC_DRAW;
+        case BufferUsageHint::DYNAMIC_READ:
+            return GL_DYNAMIC_READ;
+        case BufferUsageHint::DYNAMIC_COPY:
+            return GL_DYNAMIC_COPY;
+        default:
+            return 0;
+    }
+}
+
 void GraphicsBackendOpenGL::Init(void *device)
 {
 #ifdef REQUIRE_GLEW_INIT
@@ -206,39 +306,46 @@ void GraphicsBackendOpenGL::SetFramebufferTextureLayer(FramebufferTarget target,
     CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTextureLayer(Cast(target), Cast(attachment), texture.Texture, level, layer))
 }
 
-void GraphicsBackendOpenGL::GenerateBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr)
+GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenBuffers(buffersCount, reinterpret_cast<GLuint *>(buffersPtr)))
+    GraphicsBackendBuffer buffer{};
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenBuffers(1, reinterpret_cast<GLuint*>(&buffer.Buffer)))
+
+    buffer.BindTarget = bindTarget;
+    buffer.UsageHint = usageHint;
+    buffer.IsDataInitialized = false;
+    buffer.Size = size;
+    return buffer;
 }
 
-void GraphicsBackendOpenGL::DeleteBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr)
+void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteBuffers(buffersCount, reinterpret_cast<GLuint *>(buffersPtr)))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteBuffers(1, reinterpret_cast<const GLuint *>(&buffer.Buffer)))
 }
 
 void GraphicsBackendOpenGL::BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(Cast(target), buffer.Buffer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(ToOpenGLBufferBindTarget(target), buffer.Buffer))
 }
 
 void GraphicsBackendOpenGL::BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBufferRange(Cast(target), bindingPointIndex, buffer.Buffer, offset, size))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBufferRange(ToOpenGLBufferBindTarget(target), bindingPointIndex, buffer.Buffer, offset, size))
 }
 
-void GraphicsBackendOpenGL::SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint)
+void GraphicsBackendOpenGL::SetBufferData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(Cast(target), size, data, Cast(usageHint)))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(ToOpenGLBufferBindTarget(target), size, data, ToOpenGLBufferUsageHint(usageHint)))
 }
 
-void GraphicsBackendOpenGL::SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data)
+void GraphicsBackendOpenGL::SetBufferSubData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long offset, long size, const void *data)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBufferSubData(Cast(target), offset, size, data))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBufferSubData(ToOpenGLBufferBindTarget(target), offset, size, data))
 }
 
 void GraphicsBackendOpenGL::CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glCopyBufferSubData(Cast(sourceTarget), Cast(destinationTarget), sourceOffset, destinationOffset, size))
+    CHECK_GRAPHICS_BACKEND_FUNC(glCopyBufferSubData(ToOpenGLBufferBindTarget(sourceTarget), ToOpenGLBufferBindTarget(destinationTarget), sourceOffset, destinationOffset, size))
 }
 
 void GraphicsBackendOpenGL::GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr)
@@ -321,38 +428,6 @@ void GraphicsBackendOpenGL::SetDepthRange(double near, double far)
 void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glViewport(x, y, width, height))
-}
-
-std::string GetShaderTypeName(ShaderType shaderType)
-{
-    switch (shaderType)
-    {
-        case ShaderType::VERTEX_SHADER:
-            return "Vertex";
-        case ShaderType::FRAGMENT_SHADER:
-            return "Fragment";
-        case ShaderType::GEOMETRY_SHADER:
-            return "Geometry";
-        default:
-            return "Unknown";
-    }
-}
-
-GLuint ToOpenGLShaderType(ShaderType shaderType)
-{
-    switch (shaderType)
-    {
-        case ShaderType::VERTEX_SHADER:
-            return GL_VERTEX_SHADER;
-        case ShaderType::TESS_CONTROL_SHADER:
-            return GL_TESS_CONTROL_SHADER;
-        case ShaderType::TESS_EVALUATION_SHADER:
-            return GL_TESS_EVALUATION_SHADER;
-        case ShaderType::GEOMETRY_SHADER:
-            return GL_GEOMETRY_SHADER;
-        case ShaderType::FRAGMENT_SHADER:
-            return GL_FRAGMENT_SHADER;
-    }
 }
 
 GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string &source)
@@ -746,6 +821,14 @@ void GraphicsBackendOpenGL::PopDebugGroup()
 #ifdef GL_KHR_debug
     CHECK_GRAPHICS_BACKEND_FUNC(glPopDebugGroup())
 #endif
+}
+
+void GraphicsBackendOpenGL::BeginRenderPass()
+{
+}
+
+void GraphicsBackendOpenGL::EndRenderPass()
+{
 }
 
 GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackendOpenGL::GetError()

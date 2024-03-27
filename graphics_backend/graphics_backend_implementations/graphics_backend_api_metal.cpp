@@ -146,12 +146,21 @@ void GraphicsBackendMetal::SetFramebufferTextureLayer(FramebufferTarget target, 
 {
 }
 
-void GraphicsBackendMetal::GenerateBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr)
+GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint)
 {
+    auto metalBuffer = m_Device->newBuffer(size, MTL::ResourceStorageModeManaged);
+    GraphicsBackendBuffer buffer{};
+    buffer.Buffer = reinterpret_cast<uint64_t>(metalBuffer);
+    buffer.IsDataInitialized = true;
+    buffer.UsageHint = usageHint;
+    buffer.Size = size;
+    return buffer;
 }
 
-void GraphicsBackendMetal::DeleteBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr)
+void GraphicsBackendMetal::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
+    auto *metalBuffer = reinterpret_cast<MTL::Device*>(buffer.Buffer);
+    metalBuffer->release();
 }
 
 void GraphicsBackendMetal::BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer)
@@ -162,12 +171,23 @@ void GraphicsBackendMetal::BindBufferRange(BufferBindTarget target, int bindingP
 {
 }
 
-void GraphicsBackendMetal::SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint)
+void GraphicsBackendMetal::SetBufferData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint)
 {
+    auto metalBuffer = reinterpret_cast<MTL::Buffer*>(buffer.Buffer);
+    if (data != nullptr)
+    {
+        void *contents = metalBuffer->contents();
+        memcpy(contents, data, size);
+        metalBuffer->didModifyRange(NS::Range::Make(0, size));
+    }
 }
 
-void GraphicsBackendMetal::SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data)
+void GraphicsBackendMetal::SetBufferSubData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long offset, long size, const void *data)
 {
+    auto metalBuffer = reinterpret_cast<MTL::Buffer*>(buffer.Buffer);
+    void *contents = metalBuffer->contents();
+    memcpy(contents, data, size);
+    metalBuffer->didModifyRange(NS::Range::Make(0, size));
 }
 
 void GraphicsBackendMetal::CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size)
@@ -283,19 +303,17 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShader
         }
     }
 
-    MTL::VertexDescriptor *vertDesc = MTL::VertexDescriptor::alloc()->init();
-    MTL::VertexAttributeDescriptor *attrDesc = MTL::VertexAttributeDescriptor::alloc()->init();
+    auto *vertDesc = desc->vertexDescriptor();
+
+    auto *attrDesc = vertDesc->attributes()->object(0);
     attrDesc->setFormat(MTL::VertexFormatFloat3);
     attrDesc->setBufferIndex(0);
     attrDesc->setOffset(0);
-    vertDesc->attributes()->setObject(attrDesc, 0);
 
-    MTL::VertexBufferLayoutDescriptor *layoutDesc = MTL::VertexBufferLayoutDescriptor::alloc()->init();
+    auto *layoutDesc = vertDesc->layouts()->object(0);
     layoutDesc->setStride(12);
     layoutDesc->setStepRate(1);
     layoutDesc->setStepFunction(MTL::VertexStepFunctionPerVertex);
-    vertDesc->layouts()->setObject(layoutDesc, 0);
-    desc->setVertexDescriptor(vertDesc);
 
     auto *pso = m_Device->newRenderPipelineState(desc, &s_Error);
 
@@ -412,6 +430,21 @@ void GraphicsBackendMetal::PushDebugGroup(const std::string &name, int id)
 
 void GraphicsBackendMetal::PopDebugGroup()
 {
+}
+
+void GraphicsBackendMetal::BeginRenderPass()
+{
+    EndRenderPass();
+    m_CurrentCommandEncoder = m_CommandBuffer->renderCommandEncoder(m_BackbufferDescriptor);
+}
+
+void GraphicsBackendMetal::EndRenderPass()
+{
+    if (m_CurrentCommandEncoder)
+    {
+        m_CurrentCommandEncoder->endEncoding();
+        m_CurrentCommandEncoder = nullptr;
+    }
 }
 
 GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackendMetal::GetError()

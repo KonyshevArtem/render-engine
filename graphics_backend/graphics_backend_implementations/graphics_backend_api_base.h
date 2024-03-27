@@ -19,9 +19,9 @@ FORWARD_DECLARE_ENUM(FramebufferAttachment)
 FORWARD_DECLARE_ENUM(FramebufferTarget)
 FORWARD_DECLARE_ENUM(SamplerParameter)
 FORWARD_DECLARE_ENUM(PrimitiveType)
-FORWARD_DECLARE_ENUM(BufferBindTarget)
+enum class BufferBindTarget;
 FORWARD_DECLARE_ENUM(VertexAttributeDataType)
-FORWARD_DECLARE_ENUM(BufferUsageHint)
+enum class BufferUsageHint;
 FORWARD_DECLARE_ENUM(GraphicsBackendCapability)
 FORWARD_DECLARE_ENUM(BlendFactor)
 FORWARD_DECLARE_ENUM(CullFace)
@@ -94,13 +94,13 @@ public:
     virtual void SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level) = 0;
     virtual void SetFramebufferTextureLayer(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level, int layer) = 0;
 
-    virtual void GenerateBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr) = 0;
-    virtual void DeleteBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr) = 0;
+    virtual GraphicsBackendBuffer CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint) = 0;
+    virtual void DeleteBuffer(const GraphicsBackendBuffer &buffer) = 0;
     virtual void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer) = 0;
     virtual void BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size) = 0;
 
-    virtual void SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint) = 0;
-    virtual void SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data) = 0;
+    virtual void SetBufferData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint) = 0;
+    virtual void SetBufferSubData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long offset, long size, const void *data) = 0;
     virtual void CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size) = 0;
 
     virtual void GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr) = 0;
@@ -156,6 +156,9 @@ public:
 
     virtual void PushDebugGroup(const std::string& name, int id) = 0;
     virtual void PopDebugGroup() = 0;
+
+    virtual void BeginRenderPass() = 0;
+    virtual void EndRenderPass() = 0;
 
     virtual GRAPHICS_BACKEND_TYPE_ENUM GetError() = 0;
     virtual const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) = 0;

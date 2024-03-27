@@ -10,6 +10,7 @@ namespace MTL
     class Device;
     class CommandBuffer;
     class RenderPassDescriptor;
+    class RenderCommandEncoder;
 }
 
 class GraphicsBackendMetal : public GraphicsBackendBase
@@ -53,13 +54,13 @@ public:
     void SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level) override;
     void SetFramebufferTextureLayer(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level, int layer) override;
 
-    void GenerateBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr) override;
-    void DeleteBuffers(int buffersCount, GraphicsBackendBuffer *buffersPtr) override;
+    GraphicsBackendBuffer CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint) override;
+    void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
     void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer) override;
     void BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size) override;
 
-    void SetBufferData(BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint) override;
-    void SetBufferSubData(BufferBindTarget target, long offset, long size, const void *data) override;
+    void SetBufferData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint) override;
+    void SetBufferSubData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long offset, long size, const void *data) override;
     void CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size) override;
 
     void GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr) override;
@@ -116,6 +117,9 @@ public:
     void PushDebugGroup(const std::string& name, int id) override;
     void PopDebugGroup() override;
 
+    void BeginRenderPass() override;
+    void EndRenderPass() override;
+
     GRAPHICS_BACKEND_TYPE_ENUM GetError() override;
     const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) override;
 
@@ -123,6 +127,7 @@ private:
     MTL::Device *m_Device = nullptr;
     MTL::CommandBuffer *m_CommandBuffer = nullptr;
     MTL::RenderPassDescriptor *m_BackbufferDescriptor = nullptr;
+    MTL::RenderCommandEncoder *m_CurrentCommandEncoder = nullptr;
 };
 
 

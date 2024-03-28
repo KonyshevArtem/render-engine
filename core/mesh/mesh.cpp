@@ -1,7 +1,6 @@
 #include "mesh.h"
 #include "vector2/vector2.h"
 #include "graphics_backend_api.h"
-#include "enums/vertex_attribute_data_type.h"
 
 #include <span>
 
@@ -13,54 +12,42 @@ Mesh::Mesh(const std::vector<Vector3> &_vertices,
     DrawableGeometry(PrimitiveType::TRIANGLES, _indexes.size(), true),
     m_Bounds(Bounds::FromPoints(std::span<const Vector3> {_vertices.data(), _vertices.size()}))
 {
-    long vertexSize   = sizeof(Vector3) * _vertices.size();
-    long normalsSize  = sizeof(Vector3) * _normals.size();
-    long indexSize    = sizeof(int) * _indexes.size();
-    long uvSize       = sizeof(Vector2) * _uvs.size();
-    long tangentsSize = sizeof(Vector3) * _tangents.size();
+    int vertexSize   = sizeof(Vector3) * _vertices.size();
+    int normalsSize  = sizeof(Vector3) * _normals.size();
+    int indexSize    = sizeof(int) * _indexes.size();
+    int uvSize       = sizeof(Vector2) * _uvs.size();
+    int tangentsSize = sizeof(Vector3) * _tangents.size();
 
     bool hasNormals  = normalsSize > 0;
     bool hasUV       = uvSize > 0;
     bool hasTangents = tangentsSize > 0;
 
-    m_VertexBuffer = GraphicsBackend::Current()->CreateBuffer(vertexSize + normalsSize + uvSize + tangentsSize, BufferBindTarget::ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
-    GraphicsBackend::Current()->BindBuffer(BufferBindTarget::ARRAY_BUFFER, m_VertexBuffer);
-    GraphicsBackend::Current()->SetBufferData(m_VertexBuffer, BufferBindTarget::ARRAY_BUFFER, vertexSize + normalsSize + uvSize + tangentsSize, nullptr, BufferUsageHint::STATIC_DRAW);
+    auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(vertexSize + normalsSize + uvSize + tangentsSize, BufferBindTarget::ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
+    auto indexBuffer = GraphicsBackend::Current()->CreateBuffer(indexSize, BufferBindTarget::ELEMENT_ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
+    GraphicsBackend::Current()->SetBufferData(indexBuffer, 0, indexSize, _indexes.data());
 
-    m_IndexBuffer = GraphicsBackend::Current()->CreateBuffer(indexSize, BufferBindTarget::ELEMENT_ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
-    GraphicsBackend::Current()->BindBuffer(BufferBindTarget::ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
-    GraphicsBackend::Current()->SetBufferData(m_IndexBuffer, BufferBindTarget::ELEMENT_ARRAY_BUFFER, indexSize, _indexes.data(), BufferUsageHint::STATIC_DRAW);
+    std::vector<GraphicsBackendVertexAttributeDescriptor> attributes;
 
-    GraphicsBackend::Current()->EnableVertexAttributeArray(0);
+    attributes.push_back({0, 3, VertexAttributeDataType::FLOAT, false, 0, 0});
+    GraphicsBackend::Current()->SetBufferData(vertexBuffer, 0, vertexSize, _vertices.data());
+
     if (hasNormals)
-        GraphicsBackend::Current()->EnableVertexAttributeArray(1);
+    {
+        attributes.push_back({1, 3, VertexAttributeDataType::FLOAT, false, 0, vertexSize});
+        GraphicsBackend::Current()->SetBufferData(vertexBuffer, vertexSize, normalsSize, _normals.data());
+    }
     if (hasUV)
-        GraphicsBackend::Current()->EnableVertexAttributeArray(2);
+    {
+        attributes.push_back({2, 2, VertexAttributeDataType::FLOAT, false, 0, vertexSize + normalsSize});
+        GraphicsBackend::Current()->SetBufferData(vertexBuffer, vertexSize + normalsSize, uvSize, _uvs.data());
+    }
     if (hasTangents)
-        GraphicsBackend::Current()->EnableVertexAttributeArray(3);
+    {
+        attributes.push_back({3, 3, VertexAttributeDataType::FLOAT, false, 0, vertexSize + normalsSize + uvSize});
+        GraphicsBackend::Current()->SetBufferData(vertexBuffer, vertexSize + normalsSize + uvSize, tangentsSize, _tangents.data());
+    }
 
-    GraphicsBackend::Current()->SetVertexAttributePointer(0, 3, VertexAttributeDataType::FLOAT, false, 0, nullptr);
-    if (hasNormals)
-        GraphicsBackend::Current()->SetVertexAttributePointer(1, 3, VertexAttributeDataType::FLOAT, false, 0, reinterpret_cast<const void *>(vertexSize));
-    if (hasUV)
-        GraphicsBackend::Current()->SetVertexAttributePointer(2, 2, VertexAttributeDataType::FLOAT, false, 0, reinterpret_cast<const void *>((vertexSize + normalsSize)));
-    if (hasTangents)
-        GraphicsBackend::Current()->SetVertexAttributePointer(3, 3, VertexAttributeDataType::FLOAT, false, 0, reinterpret_cast<const void *>((vertexSize + normalsSize + uvSize)));
-
-    GraphicsBackend::Current()->SetBufferSubData(m_VertexBuffer, BufferBindTarget::ARRAY_BUFFER, 0, vertexSize, _vertices.data());
-    if (hasNormals)
-        GraphicsBackend::Current()->SetBufferSubData(m_VertexBuffer, BufferBindTarget::ARRAY_BUFFER, vertexSize, normalsSize, _normals.data());
-    if (hasUV)
-        GraphicsBackend::Current()->SetBufferSubData(m_VertexBuffer, BufferBindTarget::ARRAY_BUFFER, vertexSize + normalsSize, uvSize, _uvs.data());
-    if (hasTangents)
-        GraphicsBackend::Current()->SetBufferSubData(m_VertexBuffer, BufferBindTarget::ARRAY_BUFFER, vertexSize + normalsSize + uvSize, tangentsSize, _tangents.data());
-
-    GraphicsBackend::Current()->BindVertexArrayObject(GraphicsBackendVAO::NONE);
-}
-
-Mesh::~Mesh()
-{
-    GraphicsBackend::Current()->DeleteBuffer(m_IndexBuffer);
+    m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, attributes);
 }
 
 const std::shared_ptr<Mesh> &Mesh::GetFullscreenMesh()

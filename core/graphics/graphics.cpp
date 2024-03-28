@@ -386,8 +386,6 @@ namespace Graphics
             GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 5, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 1 * vec4Size));
             GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 6, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size));
             GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 7, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size));
-
-            GraphicsBackend::Current()->BindBuffer(BufferBindTarget::ARRAY_BUFFER, GraphicsBackendBuffer::NONE);
         }
         else
         {
@@ -614,7 +612,6 @@ namespace Graphics
 
     void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData)
     {
-        SetupGeometry(geometry);
         SetupMatrices(modelMatrix);
         SetupShaderPass(shaderPassIndex, material, perInstanceData);
 
@@ -623,17 +620,16 @@ namespace Graphics
 
         if (geometry.HasIndexes())
         {
-            GraphicsBackend::Current()->DrawElements(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr);
+            GraphicsBackend::Current()->DrawElements(geometry.GetGraphicsBackendGeometry(), primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT);
         }
         else
         {
-            GraphicsBackend::Current()->DrawArrays(primitiveType, 0, elementsCount);
+            GraphicsBackend::Current()->DrawArrays(geometry.GetGraphicsBackendGeometry(), primitiveType, 0, elementsCount);
         }
     }
 
     void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData)
     {
-        SetupGeometry(geometry);
         SetupMatrices(modelMatrices);
         SetupInstancing(true);
         SetupShaderPass(shaderPassIndex, material, perInstanceData);
@@ -644,11 +640,11 @@ namespace Graphics
 
         if (geometry.HasIndexes())
         {
-            GraphicsBackend::Current()->DrawElementsInstanced(primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, nullptr, instanceCount);
+            GraphicsBackend::Current()->DrawElementsInstanced(geometry.GetGraphicsBackendGeometry(), primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, instanceCount);
         }
         else
         {
-            GraphicsBackend::Current()->DrawArraysInstanced(primitiveType, 0, elementsCount, instanceCount);
+            GraphicsBackend::Current()->DrawArraysInstanced(geometry.GetGraphicsBackendGeometry(), primitiveType, 0, elementsCount, instanceCount);
         }
 
         SetupInstancing(false);

@@ -8,9 +8,6 @@
 class GraphicsBackendBuffer
 {
 public:
-    static GraphicsBackendBuffer NONE;
-
-public:
     uint64_t Buffer;
 
     BufferBindTarget BindTarget;

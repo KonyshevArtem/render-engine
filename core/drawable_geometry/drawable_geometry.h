@@ -2,7 +2,7 @@
 #define RENDER_ENGINE_DRAWABLE_GEOMETRY
 
 #include "enums/primitive_type.h"
-#include "types/graphics_backend_vao.h"
+#include "types/graphics_backend_geometry.h"
 #include "types/graphics_backend_buffer.h"
 
 class DrawableGeometry
@@ -25,18 +25,17 @@ public:
         return m_ElementsCount;
     }
 
-    inline GraphicsBackendVAO GetVertexArrayObject() const
+    inline const GraphicsBackendGeometry &GetGraphicsBackendGeometry() const
     {
-        return m_VertexArrayObject;
+        return m_GraphicsBackendGeometry;
     }
 
 protected:
+    GraphicsBackendGeometry m_GraphicsBackendGeometry{};
+
     DrawableGeometry(PrimitiveType primitiveType, int elementsCount, bool hasIndices);
 
 private:
-    GraphicsBackendVAO m_VertexArrayObject{};
-    GraphicsBackendBuffer m_VertexBuffer{};
-
     PrimitiveType m_PrimitiveType;
     int m_ElementsCount;
     bool m_HasIndices;

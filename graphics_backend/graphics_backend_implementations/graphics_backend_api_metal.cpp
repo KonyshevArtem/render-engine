@@ -4,6 +4,8 @@
 #include "graphics_backend_debug.h"
 #include "enums/texture_unit.h"
 #include "enums/uniform_data_type.h"
+#include "enums/primitive_type.h"
+#include "enums/indices_data_type.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "types/graphics_backend_buffer.h"
@@ -11,13 +13,44 @@
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_uniform_location.h"
-#include "types/graphics_backend_vao.h"
+#include "types/graphics_backend_geometry.h"
 
 #define NS_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
 #include "Metal/Metal.hpp"
 
 NS::Error *s_Error;
+
+MTL::PrimitiveType ToMetalPrimitiveType(PrimitiveType primitiveType)
+{
+    switch (primitiveType)
+    {
+        case PrimitiveType::POINTS:
+            return MTL::PrimitiveType::PrimitiveTypePoint;
+        case PrimitiveType::LINE_STRIP:
+            return MTL::PrimitiveType::PrimitiveTypeLineStrip;
+        case PrimitiveType::LINES:
+            return MTL::PrimitiveType::PrimitiveTypeLine;
+        case PrimitiveType::TRIANGLE_STRIP:
+            return MTL::PrimitiveType::PrimitiveTypeTriangleStrip;
+        case PrimitiveType::TRIANGLES:
+            return MTL::PrimitiveType::PrimitiveTypeTriangle;
+        default:
+            return MTL::PrimitiveType::PrimitiveTypeTriangle;
+    }
+}
+
+MTL::IndexType ToMetalIndicesDataType(IndicesDataType dataType)
+{
+    switch (dataType)
+    {
+        case IndicesDataType::UNSIGNED_BYTE:
+        case IndicesDataType::UNSIGNED_SHORT:
+            return MTL::IndexType::IndexTypeUInt16;
+        case IndicesDataType::UNSIGNED_INT:
+            return MTL::IndexType::IndexTypeUInt32;
+    }
+}
 
 void GraphicsBackendMetal::Init(void *device)
 {
@@ -171,39 +204,30 @@ void GraphicsBackendMetal::BindBufferRange(BufferBindTarget target, int bindingP
 {
 }
 
-void GraphicsBackendMetal::SetBufferData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint)
+void GraphicsBackendMetal::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
 {
-    auto metalBuffer = reinterpret_cast<MTL::Buffer*>(buffer.Buffer);
-    if (data != nullptr)
-    {
-        void *contents = metalBuffer->contents();
-        memcpy(contents, data, size);
-        metalBuffer->didModifyRange(NS::Range::Make(0, size));
-    }
-}
-
-void GraphicsBackendMetal::SetBufferSubData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long offset, long size, const void *data)
-{
-    auto metalBuffer = reinterpret_cast<MTL::Buffer*>(buffer.Buffer);
-    void *contents = metalBuffer->contents();
+    auto metalBuffer = reinterpret_cast<MTL::Buffer *>(buffer.Buffer);
+    auto contents = reinterpret_cast<uint8_t*>(metalBuffer->contents()) + offset;
     memcpy(contents, data, size);
-    metalBuffer->didModifyRange(NS::Range::Make(0, size));
+    metalBuffer->didModifyRange(NS::Range::Make(offset, size));
 }
 
 void GraphicsBackendMetal::CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size)
 {
 }
 
-void GraphicsBackendMetal::GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr)
+GraphicsBackendGeometry GraphicsBackendMetal::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
+    GraphicsBackendGeometry geometry{};
+    geometry.VertexBuffer = vertexBuffer;
+    geometry.IndexBuffer = indexBuffer;
+    return geometry;
 }
 
-void GraphicsBackendMetal::DeleteVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr)
+void GraphicsBackendMetal::DeleteGeometry(const GraphicsBackendGeometry &geometry)
 {
-}
-
-void GraphicsBackendMetal::BindVertexArrayObject(GraphicsBackendVAO vao)
-{
+    DeleteBuffer(geometry.VertexBuffer);
+    DeleteBuffer(geometry.IndexBuffer);
 }
 
 void GraphicsBackendMetal::EnableVertexAttributeArray(int index)
@@ -383,20 +407,28 @@ void GraphicsBackendMetal::SetClearDepth(double depth)
 {
 }
 
-void GraphicsBackendMetal::DrawArrays(PrimitiveType primitiveType, int firstIndex, int count)
+void GraphicsBackendMetal::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
 {
+    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
+    m_CurrentCommandEncoder->drawPrimitives(ToMetalPrimitiveType(primitiveType), firstIndex, count);
 }
 
-void GraphicsBackendMetal::DrawArraysInstanced(PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
+void GraphicsBackendMetal::DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
+    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
+    m_CurrentCommandEncoder->drawPrimitives(ToMetalPrimitiveType(primitiveType), firstIndex, indicesCount, indicesCount);
 }
 
-void GraphicsBackendMetal::DrawElements(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices)
+void GraphicsBackendMetal::DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType)
 {
+    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
+    m_CurrentCommandEncoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(elementsCount), ToMetalIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0);
 }
 
-void GraphicsBackendMetal::DrawElementsInstanced(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices, int instanceCount)
+void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
+    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
+    m_CurrentCommandEncoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(elementsCount), ToMetalIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0, instanceCount);
 }
 
 void GraphicsBackendMetal::GetProgramInterfaceParameter(GraphicsBackendProgram program, ProgramInterface interface, ProgramInterfaceParameter parameter, int *outValues)

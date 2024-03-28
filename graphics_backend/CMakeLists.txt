@@ -36,7 +36,7 @@ add_library(GraphicsBackend
         enums/indices_data_type.h
         types/graphics_backend_texture.h
         types/graphics_backend_sampler.h
-        types/graphics_backend_vao.h
+        types/graphics_backend_geometry.h
         types/graphics_backend_buffer.h
         types/graphics_backend_program.h
         types/graphics_backend_shader_object.h
@@ -53,7 +53,8 @@ add_library(GraphicsBackend
         graphics_backend_implementations/graphics_backend_api_opengl.cpp
         graphics_backend_implementations/graphics_backend_api_opengl.h
         graphics_backend_implementations/graphics_backend_api_metal.cpp
-        graphics_backend_implementations/graphics_backend_api_metal.h)
+        graphics_backend_implementations/graphics_backend_api_metal.h
+        types/graphics_backend_vertex_attribute_descriptor.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

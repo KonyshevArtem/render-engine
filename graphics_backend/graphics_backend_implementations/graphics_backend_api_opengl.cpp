@@ -2,6 +2,8 @@
 #include "graphics_backend_debug.h"
 #include "enums/texture_unit.h"
 #include "enums/uniform_data_type.h"
+#include "enums/primitive_type.h"
+#include "enums/indices_data_type.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "types/graphics_backend_buffer.h"
@@ -9,14 +11,12 @@
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_uniform_location.h"
-#include "types/graphics_backend_vao.h"
+#include "types/graphics_backend_geometry.h"
 
 #include <set>
 #include <type_traits>
 #include <cstring>
 
-GraphicsBackendVAO GraphicsBackendVAO::NONE = GraphicsBackendVAO();
-GraphicsBackendBuffer GraphicsBackendBuffer::NONE = GraphicsBackendBuffer();
 GraphicsBackendTexture GraphicsBackendTexture::NONE = GraphicsBackendTexture();
 GraphicsBackendFramebuffer GraphicsBackendFramebuffer::NONE = GraphicsBackendFramebuffer();
 
@@ -143,6 +143,83 @@ GLenum ToOpenGLBufferUsageHint(BufferUsageHint usageHint)
             return GL_DYNAMIC_COPY;
         default:
             return 0;
+    }
+}
+
+GLenum ToOpenGLPrimitiveType(PrimitiveType primitiveType)
+{
+    switch (primitiveType)
+    {
+        case PrimitiveType::POINTS:
+            return GL_POINTS;
+        case PrimitiveType::LINE_STRIP:
+            return GL_LINE_STRIP;
+        case PrimitiveType::LINE_LOOP:
+            return GL_LINE_LOOP;
+        case PrimitiveType::LINES:
+            return GL_LINES;
+        case PrimitiveType::LINE_STRIP_ADJACENCY:
+            return GL_LINE_STRIP_ADJACENCY;
+        case PrimitiveType::LINES_ADJACENCY:
+            return GL_LINES_ADJACENCY;
+        case PrimitiveType::TRIANGLE_STRIP:
+            return GL_TRIANGLE_STRIP;
+        case PrimitiveType::TRIANGLE_FAN:
+            return GL_TRIANGLE_FAN;
+        case PrimitiveType::TRIANGLES:
+            return GL_TRIANGLES;
+        case PrimitiveType::TRIANGLE_STRIP_ADJACENCY:
+            return GL_TRIANGLE_STRIP_ADJACENCY;
+        case PrimitiveType::TRIANGLES_ADJACENCY:
+            return GL_TRIANGLES_ADJACENCY;
+        case PrimitiveType::PATCHES:
+            return GL_PATCHES;
+    }
+}
+
+GLenum ToOpenGLIndicesDataType(IndicesDataType dataType)
+{
+    switch (dataType)
+    {
+        case IndicesDataType::UNSIGNED_BYTE:
+            return GL_UNSIGNED_BYTE;
+        case IndicesDataType::UNSIGNED_SHORT:
+            return GL_UNSIGNED_SHORT;
+        case IndicesDataType::UNSIGNED_INT:
+            return GL_UNSIGNED_INT;
+    }
+}
+
+GLenum ToOpenGLVertexAttributeDataType(VertexAttributeDataType dataType)
+{
+    switch (dataType)
+    {
+        case VertexAttributeDataType::BYTE:
+            return GL_BYTE;
+        case VertexAttributeDataType::UNSIGNED_BYTE:
+            return GL_UNSIGNED_BYTE;
+        case VertexAttributeDataType::SHORT:
+            return GL_SHORT;
+        case VertexAttributeDataType::UNSIGNED_SHORT:
+            return GL_UNSIGNED_SHORT;
+        case VertexAttributeDataType::INT:
+            return GL_INT;
+        case VertexAttributeDataType::UNSIGNED_INT:
+            return GL_UNSIGNED_INT;
+        case VertexAttributeDataType::HALF_FLOAT:
+            return GL_HALF_FLOAT;
+        case VertexAttributeDataType::FLOAT:
+            return GL_FLOAT;
+        case VertexAttributeDataType::DOUBLE:
+            return GL_DOUBLE;
+        case VertexAttributeDataType::FIXED:
+            return GL_FIXED;
+        case VertexAttributeDataType::INT_2_10_10_10_REV:
+            return GL_INT_2_10_10_10_REV;
+        case VertexAttributeDataType::UNSIGNED_INT_2_10_10_10_REV:
+            return GL_UNSIGNED_INT_2_10_10_10_REV;
+        case VertexAttributeDataType::UNSIGNED_INT_10F_11F_11F_REV:
+            return GL_UNSIGNED_INT_10F_11F_11F_REV;
     }
 }
 
@@ -333,14 +410,16 @@ void GraphicsBackendOpenGL::BindBufferRange(BufferBindTarget target, int binding
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBufferRange(ToOpenGLBufferBindTarget(target), bindingPointIndex, buffer.Buffer, offset, size))
 }
 
-void GraphicsBackendOpenGL::SetBufferData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint)
+void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(ToOpenGLBufferBindTarget(target), size, data, ToOpenGLBufferUsageHint(usageHint)))
-}
-
-void GraphicsBackendOpenGL::SetBufferSubData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long offset, long size, const void *data)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glBufferSubData(ToOpenGLBufferBindTarget(target), offset, size, data))
+    GLenum bindTarget = ToOpenGLBufferBindTarget(buffer.BindTarget);
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(bindTarget, buffer.Buffer))
+    if (!buffer.IsDataInitialized)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(bindTarget, buffer.Size, nullptr, ToOpenGLBufferUsageHint(buffer.UsageHint)))
+        buffer.IsDataInitialized = true;
+    }
+    CHECK_GRAPHICS_BACKEND_FUNC(glBufferSubData(bindTarget, offset, size, data))
 }
 
 void GraphicsBackendOpenGL::CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size)
@@ -348,19 +427,31 @@ void GraphicsBackendOpenGL::CopyBufferSubData(BufferBindTarget sourceTarget, Buf
     CHECK_GRAPHICS_BACKEND_FUNC(glCopyBufferSubData(ToOpenGLBufferBindTarget(sourceTarget), ToOpenGLBufferBindTarget(destinationTarget), sourceOffset, destinationOffset, size))
 }
 
-void GraphicsBackendOpenGL::GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr)
+GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenVertexArrays(vaoCount, reinterpret_cast<GLuint *>(vaoPtr)))
+    GraphicsBackendGeometry geometry{};
+    geometry.VertexBuffer = vertexBuffer;
+    geometry.IndexBuffer = indexBuffer;
+
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenVertexArrays(1, reinterpret_cast<GLuint *>(&geometry.VertexArrayObject)))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.Buffer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.Buffer))
+
+    for (const auto &descriptor : vertexAttributes)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glEnableVertexAttribArray(descriptor.Index))
+        CHECK_GRAPHICS_BACKEND_FUNC(glVertexAttribPointer(descriptor.Index, descriptor.Dimensions, ToOpenGLVertexAttributeDataType(descriptor.DataType), descriptor.IsNormalized ? GL_TRUE : GL_FALSE, descriptor.Stride, reinterpret_cast<const void *>(descriptor.Offset)))
+    }
+
+    return geometry;
 }
 
-void GraphicsBackendOpenGL::DeleteVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr)
+void GraphicsBackendOpenGL::DeleteGeometry(const GraphicsBackendGeometry &geometry)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteVertexArrays(vaoCount, reinterpret_cast<GLuint *>(vaoPtr)))
-}
-
-void GraphicsBackendOpenGL::BindVertexArrayObject(GraphicsBackendVAO vao)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(vao.VAO))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteVertexArrays(1, reinterpret_cast<const GLuint *>(&geometry.VertexArrayObject)))
+    DeleteBuffer(geometry.VertexBuffer);
+    DeleteBuffer(geometry.IndexBuffer);
 }
 
 void GraphicsBackendOpenGL::EnableVertexAttributeArray(int index)
@@ -726,24 +817,28 @@ void GraphicsBackendOpenGL::SetClearDepth(double depth)
     CHECK_GRAPHICS_BACKEND_FUNC(glClearDepth(depth))
 }
 
-void GraphicsBackendOpenGL::DrawArrays(PrimitiveType primitiveType, int firstIndex, int count)
+void GraphicsBackendOpenGL::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArrays(Cast(primitiveType), firstIndex, count))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArrays(ToOpenGLPrimitiveType(primitiveType), firstIndex, count))
 }
 
-void GraphicsBackendOpenGL::DrawArraysInstanced(PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
+void GraphicsBackendOpenGL::DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArraysInstanced(Cast(primitiveType), firstIndex, indicesCount, instanceCount))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArraysInstanced(ToOpenGLPrimitiveType(primitiveType), firstIndex, indicesCount, instanceCount))
 }
 
-void GraphicsBackendOpenGL::DrawElements(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices)
+void GraphicsBackendOpenGL::DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElements(Cast(primitiveType), elementsCount, Cast(dataType), indices))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElements(ToOpenGLPrimitiveType(primitiveType), elementsCount, ToOpenGLIndicesDataType(dataType), nullptr))
 }
 
-void GraphicsBackendOpenGL::DrawElementsInstanced(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices, int instanceCount)
+void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElementsInstanced(Cast(primitiveType), elementsCount, Cast(dataType), indices, instanceCount))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElementsInstanced(ToOpenGLPrimitiveType(primitiveType), elementsCount, ToOpenGLIndicesDataType(dataType), nullptr, instanceCount))
 }
 
 void GraphicsBackendOpenGL::GetProgramInterfaceParameter(GraphicsBackendProgram program, ProgramInterface interface, ProgramInterfaceParameter parameter, int *outValues)

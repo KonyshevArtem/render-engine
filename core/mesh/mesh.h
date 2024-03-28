@@ -19,7 +19,7 @@ public:
          const std::vector<int>     &_indexes,
          const std::vector<Vector2> &_uvs,
          const std::vector<Vector3> &_tangents);
-    ~Mesh() override;
+    ~Mesh() override = default;
 
     inline Bounds GetBounds() const
     {
@@ -35,8 +35,6 @@ public:
     Mesh &operator=(Mesh &&) = delete;
 
 private:
-    GraphicsBackendBuffer m_IndexBuffer{};
-
     Bounds m_Bounds;
 };
 

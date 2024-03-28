@@ -3,8 +3,10 @@
 
 #include "graphics_backend.h"
 #include "enums/graphics_backend_name.h"
+#include "types/graphics_backend_vertex_attribute_descriptor.h"
 
 #include <string>
+#include <vector>
 
 #define FORWARD_DECLARE_ENUM(name) enum class name : GRAPHICS_BACKEND_TYPE_ENUM;
 FORWARD_DECLARE_ENUM(TextureType)
@@ -18,9 +20,9 @@ FORWARD_DECLARE_ENUM(TextureUnit)
 FORWARD_DECLARE_ENUM(FramebufferAttachment)
 FORWARD_DECLARE_ENUM(FramebufferTarget)
 FORWARD_DECLARE_ENUM(SamplerParameter)
-FORWARD_DECLARE_ENUM(PrimitiveType)
+enum class PrimitiveType;
 enum class BufferBindTarget;
-FORWARD_DECLARE_ENUM(VertexAttributeDataType)
+enum class VertexAttributeDataType;
 enum class BufferUsageHint;
 FORWARD_DECLARE_ENUM(GraphicsBackendCapability)
 FORWARD_DECLARE_ENUM(BlendFactor)
@@ -34,7 +36,7 @@ FORWARD_DECLARE_ENUM(ClearMask)
 FORWARD_DECLARE_ENUM(UniformBlockParameter)
 FORWARD_DECLARE_ENUM(UniformParameter)
 FORWARD_DECLARE_ENUM(CullFaceOrientation)
-FORWARD_DECLARE_ENUM(IndicesDataType)
+enum class IndicesDataType;
 FORWARD_DECLARE_ENUM(ProgramInterface)
 FORWARD_DECLARE_ENUM(ProgramInterfaceParameter)
 FORWARD_DECLARE_ENUM(ProgramResourceParameter)
@@ -49,7 +51,7 @@ class GraphicsBackendFramebuffer;
 class GraphicsBackendProgram;
 class GraphicsBackendShaderObject;
 class GraphicsBackendUniformLocation;
-class GraphicsBackendVAO;
+class GraphicsBackendGeometry;
 
 class GraphicsBackendBase
 {
@@ -99,13 +101,11 @@ public:
     virtual void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer) = 0;
     virtual void BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size) = 0;
 
-    virtual void SetBufferData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint) = 0;
-    virtual void SetBufferSubData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long offset, long size, const void *data) = 0;
+    virtual void SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data) = 0;
     virtual void CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size) = 0;
 
-    virtual void GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr) = 0;
-    virtual void DeleteVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr) = 0;
-    virtual void BindVertexArrayObject(GraphicsBackendVAO vao) = 0;
+    virtual GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;
+    virtual void DeleteGeometry(const GraphicsBackendGeometry &geometry) = 0;
 
     virtual void EnableVertexAttributeArray(int index) = 0;
     virtual void DisableVertexAttributeArray(int index) = 0;
@@ -140,10 +140,10 @@ public:
     virtual void SetClearColor(float r, float g, float b, float a) = 0;
     virtual void SetClearDepth(double depth) = 0;
 
-    virtual void DrawArrays(PrimitiveType primitiveType, int firstIndex, int indicesCount) = 0;
-    virtual void DrawArraysInstanced(PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount) = 0;
-    virtual void DrawElements(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices) = 0;
-    virtual void DrawElementsInstanced(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices, int instanceCount) = 0;
+    virtual void DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount) = 0;
+    virtual void DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount) = 0;
+    virtual void DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType) = 0;
+    virtual void DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount) = 0;
 
     virtual void GetProgramInterfaceParameter(GraphicsBackendProgram program, ProgramInterface interface, ProgramInterfaceParameter parameter, int *outValues) = 0;
     virtual void GetProgramResourceParameters(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int parametersCount, ProgramResourceParameter *parameters, int bufferSize, int *lengths, int *outValues) = 0;

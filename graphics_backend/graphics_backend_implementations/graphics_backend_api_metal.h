@@ -59,13 +59,11 @@ public:
     void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer) override;
     void BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size) override;
 
-    void SetBufferData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long size, const void *data, BufferUsageHint usageHint) override;
-    void SetBufferSubData(const GraphicsBackendBuffer &buffer, BufferBindTarget target, long offset, long size, const void *data) override;
+    void SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data) override;
     void CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size) override;
 
-    void GenerateVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr) override;
-    void DeleteVertexArrayObjects(int vaoCount, GraphicsBackendVAO *vaoPtr) override;
-    void BindVertexArrayObject(GraphicsBackendVAO vao) override;
+    GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;
+    void DeleteGeometry(const GraphicsBackendGeometry &geometry) override;
 
     void EnableVertexAttributeArray(int index) override;
     void DisableVertexAttributeArray(int index) override;
@@ -100,10 +98,10 @@ public:
     void SetClearColor(float r, float g, float b, float a) override;
     void SetClearDepth(double depth) override;
 
-    void DrawArrays(PrimitiveType primitiveType, int firstIndex, int indicesCount) override;
-    void DrawArraysInstanced(PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount) override;
-    void DrawElements(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices) override;
-    void DrawElementsInstanced(PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, const void *indices, int instanceCount) override;
+    void DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount) override;
+    void DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount) override;
+    void DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType) override;
+    void DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount) override;
 
     void GetProgramInterfaceParameter(GraphicsBackendProgram program, ProgramInterface interface, ProgramInterfaceParameter parameter, int *outValues) override;
     void GetProgramResourceParameters(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int parametersCount, ProgramResourceParameter *parameters, int bufferSize, int *lengths, int *outValues) override;

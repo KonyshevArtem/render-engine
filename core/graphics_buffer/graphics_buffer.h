@@ -2,6 +2,7 @@
 #define RENDER_ENGINE_GRAPHICS_BUFFER_H
 
 #include "types/graphics_backend_buffer.h"
+#include "types/graphics_backend_resource_bindings.h"
 #include "enums/buffer_usage_hint.h"
 #include "enums/buffer_bind_target.h"
 
@@ -11,8 +12,7 @@ public:
     GraphicsBuffer(BufferBindTarget bindTarget, uint64_t size, BufferUsageHint usageHint);
     ~GraphicsBuffer();
 
-    void Bind() const;
-    void Bind(int binding) const;
+    void Bind(GraphicsBackendResourceBindings binding) const;
     void Bind(BufferBindTarget bindTarget) const;
     void SetData(const void *data, uint64_t offset, uint64_t size);
     void Resize(uint64_t size);

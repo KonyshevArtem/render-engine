@@ -4,8 +4,6 @@
 #include "graphics/graphics.h"
 #include "utils.h"
 #include "enums/shader_type.h"
-#include "enums/shader_parameter.h"
-#include "enums/program_parameter.h"
 #include "types/graphics_backend_shader_object.h"
 #include "graphics_backend_api.h"
 #include "shader_parser.h"

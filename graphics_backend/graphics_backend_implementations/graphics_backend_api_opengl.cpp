@@ -10,8 +10,9 @@
 #include "types/graphics_backend_framebuffer.h"
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
-#include "types/graphics_backend_uniform_location.h"
 #include "types/graphics_backend_geometry.h"
+#include "types/graphics_backend_uniform_info.h"
+#include "types/graphics_backend_buffer_info.h"
 
 #include <set>
 #include <type_traits>
@@ -405,9 +406,11 @@ void GraphicsBackendOpenGL::BindBuffer(BufferBindTarget target, GraphicsBackendB
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(ToOpenGLBufferBindTarget(target), buffer.Buffer))
 }
 
-void GraphicsBackendOpenGL::BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size)
+void GraphicsBackendOpenGL::BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBufferRange(ToOpenGLBufferBindTarget(target), bindingPointIndex, buffer.Buffer, offset, size))
+    auto bindTarget = ToOpenGLBufferBindTarget(buffer.BindTarget);
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(bindTarget, buffer.Buffer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBufferRange(bindTarget, bindings.VertexIndex, buffer.Buffer, offset, size))
 }
 
 void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
@@ -595,42 +598,109 @@ void GraphicsBackendOpenGL::DeleteProgram(GraphicsBackendProgram program)
     CHECK_GRAPHICS_BACKEND_FUNC(glDeleteProgram(program.Program))
 }
 
-void GraphicsBackendOpenGL::GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int *value)
+void GraphicsBackendOpenGL::IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, Cast(parameter), value))
-}
+    static const std::string perInstanceStructName = "PerInstance[1]";
+    static const std::string perInstanceDataBufferName = "PerInstanceData";
 
-bool GraphicsBackendOpenGL::TryGetUniformBlockIndex(GraphicsBackendProgram program, const char *name, int *index)
-{
-    *index = CHECK_GRAPHICS_BACKEND_FUNC(glGetUniformBlockIndex(program.Program, name))
-    return *index != GL_INVALID_INDEX;
-}
+    std::vector<char> nameBuffer(GetNameBufferSize(program));
 
-void GraphicsBackendOpenGL::SetUniformBlockBinding(GraphicsBackendProgram program, int uniformBlockIndex, int uniformBlockBinding)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glUniformBlockBinding(program.Program, uniformBlockIndex, uniformBlockBinding))
-}
+    // Uniforms
 
-void GraphicsBackendOpenGL::GetActiveUniform(GraphicsBackendProgram program, int index, int nameBufferSize, int *nameLength, int *size, UniformDataType *dataType, char *name)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniform(program.Program, index, nameBufferSize, nameLength, size, reinterpret_cast<GLenum*>(dataType), name))
-}
+    int uniformCount;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_ACTIVE_UNIFORMS, &uniformCount))
 
-void GraphicsBackendOpenGL::GetActiveUniformsParameter(GraphicsBackendProgram program, int uniformCount, const unsigned int *uniformIndices, UniformParameter parameter, int *values)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformsiv(program.Program, uniformCount, uniformIndices, Cast(parameter), values))
-}
+    TextureUnit textureUnit = TextureUnit::TEXTURE0;
+    for (unsigned int i = 0; i < uniformCount; ++i)
+    {
+        int blockIndex;
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformsiv(program.Program, 1, &i, GL_UNIFORM_BLOCK_INDEX, &blockIndex))
+        if (blockIndex >= 0)
+        {
+            continue;
+        }
 
-void GraphicsBackendOpenGL::GetActiveUniformBlockName(GraphicsBackendProgram program, int uniformBlockIndex, int nameBufferSize, int *nameLength, char *name)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockName(program.Program, uniformBlockIndex, nameBufferSize, nameLength, name))
-}
+        GraphicsBackendUniformInfo uniformInfo{};
 
-GraphicsBackendUniformLocation GraphicsBackendOpenGL::GetUniformLocation(GraphicsBackendProgram program, const char *uniformName)
-{
-    GraphicsBackendUniformLocation location{};
-    location.UniformLocation = CHECK_GRAPHICS_BACKEND_FUNC(glGetUniformLocation(program.Program, uniformName))
-    return location;
+        int uniformNameLength;
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniform(program.Program, i, nameBuffer.size(), &uniformNameLength, nullptr, reinterpret_cast<GLenum*>(&uniformInfo.Type), &nameBuffer[0]))
+        std::string uniformName(nameBuffer.begin(), nameBuffer.begin() + uniformNameLength);
+
+        uniformInfo.Location = CHECK_GRAPHICS_BACKEND_FUNC(glGetUniformLocation(program.Program, &uniformName[0]))
+
+        // TODO: correctly parse arrays
+
+        if (UniformDataTypeUtils::IsTexture(uniformInfo.Type))
+        {
+            uniformInfo.IsTexture = true;
+            uniformInfo.TextureUnit = textureUnit;
+            textureUnit = TextureUnitUtils::Next(textureUnit);
+        }
+
+        uniforms[uniformName] = uniformInfo;
+    }
+
+    // UBO
+
+    int uniformBlocksCount;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_ACTIVE_UNIFORM_BLOCKS, &uniformBlocksCount))
+
+    for (int i = 0; i < uniformBlocksCount; ++i)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformBlockBinding(program.Program, i, i))
+
+        int nameSize;
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockName(program.Program, i, nameBuffer.size(), &nameSize, &nameBuffer[0]))
+        std::string uniformBlockName(nameBuffer.begin(), nameBuffer.begin() + nameSize);
+
+        int blockSize;
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockiv(program.Program, i, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize))
+
+        auto variables = GetUniformBlockVariables(program, i, nameBuffer);
+
+        // special hack for PerInstanceData buffer when SSBO is not supported
+        // replace real block size with array stride so each renderer allocates buffer to store only 1 element
+        // for SSBO this happens by default, when it has an array without size - returned block size is equal to the size of 1 element
+        if (uniformBlockName == perInstanceDataBufferName)
+        {
+            for (const auto &pair : variables)
+            {
+                if (pair.first.find(perInstanceStructName) != std::string::npos)
+                {
+                    blockSize = std::min(blockSize, pair.second);
+                }
+            }
+        }
+
+        auto buffer = std::make_shared<GraphicsBackendBufferInfo>(GraphicsBackendBufferInfo::BufferType::UNIFORM, blockSize, variables);
+        buffer->SetBindings({i, i});
+        buffers[uniformBlockName] = buffer;
+    }
+
+    // SSBO
+
+#ifdef GL_ARB_program_interface_query
+    int blocksCount;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInterfaceiv(program.Program, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &blocksCount))
+
+    for (int i = 0; i < blocksCount; ++i)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glShaderStorageBlockBinding(program.Program, i, i))
+
+        int nameSize;
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceName(program.Program, GL_SHADER_STORAGE_BLOCK, i, nameBuffer.size(), &nameSize, nameBuffer.data()))
+        std::string blockName(nameBuffer.begin(), nameBuffer.begin() + nameSize);
+
+        int blockSize;
+        auto blockSizeParameter = GL_BUFFER_DATA_SIZE;
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, GL_SHADER_STORAGE_BLOCK, i, 1, &blockSizeParameter, 1, nullptr, &blockSize))
+
+        auto variables = GetShaderStorageBlockVariables(program, i);
+        auto buffer = std::make_shared<GraphicsBackendBufferInfo>(GraphicsBackendBufferInfo::BufferType::SHADER_STORAGE, blockSize, variables);
+        buffer->SetBindings({i, i});
+        buffers[blockName] = buffer;
+    }
+#endif
 }
 
 void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
@@ -638,122 +708,122 @@ void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
     CHECK_GRAPHICS_BACKEND_FUNC(glUseProgram(program.Program))
 }
 
-void GraphicsBackendOpenGL::SetUniform(GraphicsBackendUniformLocation location, UniformDataType dataType, int count, const void *data, bool transpose)
+void GraphicsBackendOpenGL::SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose)
 {
     GLboolean transposeFlag = transpose ? GL_TRUE : GL_FALSE;
 
     switch (dataType)
     {
         case UniformDataType::FLOAT:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform1fv(location.UniformLocation, count, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform1fv(location, count, reinterpret_cast<const GLfloat *>(data)))
             break;
         case UniformDataType::FLOAT_VEC2:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform2fv(location.UniformLocation, count, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform2fv(location, count, reinterpret_cast<const GLfloat *>(data)))
             break;
         case UniformDataType::FLOAT_VEC3:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform3fv(location.UniformLocation, count, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform3fv(location, count, reinterpret_cast<const GLfloat *>(data)))
             break;
         case UniformDataType::FLOAT_VEC4:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform4fv(location.UniformLocation, count, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform4fv(location, count, reinterpret_cast<const GLfloat *>(data)))
             break;
 
         case UniformDataType::DOUBLE:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform1dv(location.UniformLocation, count, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform1dv(location, count, reinterpret_cast<const GLdouble *>(data)))
             break;
         case UniformDataType::DOUBLE_VEC2:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform2dv(location.UniformLocation, count, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform2dv(location, count, reinterpret_cast<const GLdouble *>(data)))
             break;
         case UniformDataType::DOUBLE_VEC3:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform3dv(location.UniformLocation, count, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform3dv(location, count, reinterpret_cast<const GLdouble *>(data)))
             break;
         case UniformDataType::DOUBLE_VEC4:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform4dv(location.UniformLocation, count, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform4dv(location, count, reinterpret_cast<const GLdouble *>(data)))
             break;
 
         case UniformDataType::INT:
         case UniformDataType::BOOL:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform1iv(location.UniformLocation, count, reinterpret_cast<const GLint *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform1iv(location, count, reinterpret_cast<const GLint *>(data)))
             break;
         case UniformDataType::INT_VEC2:
         case UniformDataType::BOOL_VEC2:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform2iv(location.UniformLocation, count, reinterpret_cast<const GLint *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform2iv(location, count, reinterpret_cast<const GLint *>(data)))
             break;
         case UniformDataType::INT_VEC3:
         case UniformDataType::BOOL_VEC3:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform3iv(location.UniformLocation, count, reinterpret_cast<const GLint *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform3iv(location, count, reinterpret_cast<const GLint *>(data)))
             break;
         case UniformDataType::INT_VEC4:
         case UniformDataType::BOOL_VEC4:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform4iv(location.UniformLocation, count, reinterpret_cast<const GLint *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform4iv(location, count, reinterpret_cast<const GLint *>(data)))
             break;
 
         case UniformDataType::UNSIGNED_INT:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform1uiv(location.UniformLocation, count, reinterpret_cast<const GLuint *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform1uiv(location, count, reinterpret_cast<const GLuint *>(data)))
             break;
         case UniformDataType::UNSIGNED_INT_VEC2:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform2uiv(location.UniformLocation, count, reinterpret_cast<const GLuint *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform2uiv(location, count, reinterpret_cast<const GLuint *>(data)))
             break;
         case UniformDataType::UNSIGNED_INT_VEC3:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform3uiv(location.UniformLocation, count, reinterpret_cast<const GLuint *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform3uiv(location, count, reinterpret_cast<const GLuint *>(data)))
             break;
         case UniformDataType::UNSIGNED_INT_VEC4:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform4uiv(location.UniformLocation, count, reinterpret_cast<const GLuint *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform4uiv(location, count, reinterpret_cast<const GLuint *>(data)))
             break;
 
         case UniformDataType::FLOAT_MAT2:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2fv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2fv(location, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
             break;
         case UniformDataType::FLOAT_MAT3:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3fv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3fv(location, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
             break;
         case UniformDataType::FLOAT_MAT4:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4fv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4fv(location, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
             break;
         case UniformDataType::FLOAT_MAT2x3:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2x3fv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2x3fv(location, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
             break;
         case UniformDataType::FLOAT_MAT2x4:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2x4fv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2x4fv(location, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
             break;
         case UniformDataType::FLOAT_MAT3x2:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3x2fv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3x2fv(location, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
             break;
         case UniformDataType::FLOAT_MAT3x4:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3x4fv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3x4fv(location, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
             break;
         case UniformDataType::FLOAT_MAT4x2:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4x2fv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4x2fv(location, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
             break;
         case UniformDataType::FLOAT_MAT4x3:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4x3fv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4x3fv(location, count, transposeFlag, reinterpret_cast<const GLfloat *>(data)))
             break;
 
         case UniformDataType::DOUBLE_MAT2:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2dv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2dv(location, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
             break;
         case UniformDataType::DOUBLE_MAT3:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3dv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3dv(location, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
             break;
         case UniformDataType::DOUBLE_MAT4:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4dv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4dv(location, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
             break;
         case UniformDataType::DOUBLE_MAT2x3:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2x3dv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2x3dv(location, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
             break;
         case UniformDataType::DOUBLE_MAT2x4:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2x4dv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix2x4dv(location, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
             break;
         case UniformDataType::DOUBLE_MAT3x2:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3x2dv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3x2dv(location, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
             break;
         case UniformDataType::DOUBLE_MAT3x4:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3x4dv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix3x4dv(location, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
             break;
         case UniformDataType::DOUBLE_MAT4x2:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4x2dv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4x2dv(location, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
             break;
         case UniformDataType::DOUBLE_MAT4x3:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4x3dv(location.UniformLocation, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniformMatrix4x3dv(location, count, transposeFlag, reinterpret_cast<const GLdouble *>(data)))
             break;
 
         case UniformDataType::SAMPLER_1D:
@@ -792,14 +862,9 @@ void GraphicsBackendOpenGL::SetUniform(GraphicsBackendUniformLocation location, 
         case UniformDataType::UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
         case UniformDataType::UNSIGNED_INT_SAMPLER_BUFFER:
         case UniformDataType::UNSIGNED_INT_SAMPLER_2D_RECT:
-        CHECK_GRAPHICS_BACKEND_FUNC(glUniform1i(location.UniformLocation, *(reinterpret_cast<const GLint *>(data))))
+        CHECK_GRAPHICS_BACKEND_FUNC(glUniform1i(location, *(reinterpret_cast<const GLint *>(data))))
             break;
     }
-}
-
-void GraphicsBackendOpenGL::GetActiveUniformBlockParameter(GraphicsBackendProgram program, int uniformBlockIndex, UniformBlockParameter parameter, int *values)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockiv(program.Program, uniformBlockIndex, Cast(parameter), values))
 }
 
 void GraphicsBackendOpenGL::Clear(ClearMask mask)
@@ -841,62 +906,11 @@ void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry 
     CHECK_GRAPHICS_BACKEND_FUNC(glDrawElementsInstanced(ToOpenGLPrimitiveType(primitiveType), elementsCount, ToOpenGLIndicesDataType(dataType), nullptr, instanceCount))
 }
 
-void GraphicsBackendOpenGL::GetProgramInterfaceParameter(GraphicsBackendProgram program, ProgramInterface interface, ProgramInterfaceParameter parameter, int *outValues)
-{
-#ifdef GL_ARB_program_interface_query
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInterfaceiv(program.Program, Cast(interface), Cast(parameter), outValues))
-#else
-    if (outValues)
-    {
-        *outValues = 0;
-    }
-#endif
-}
-
-void GraphicsBackendOpenGL::GetProgramResourceParameters(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int parametersCount, ProgramResourceParameter *parameters, int bufferSize, int *lengths, int *outValues)
-{
-#ifdef GL_ARB_program_interface_query
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, Cast(interface), resourceIndex, parametersCount, Cast(parameters), bufferSize, lengths, outValues))
-#else
-    if (lengths)
-    {
-        *lengths = 0;
-    }
-    if (outValues)
-    {
-        std::memset(outValues, 0, sizeof(int) * bufferSize);
-    }
-#endif
-}
-
-void GraphicsBackendOpenGL::GetProgramResourceName(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int bufferSize, int *outLength, char *outName)
-{
-#ifdef GL_ARB_program_interface_query
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceName(program.Program, Cast(interface), resourceIndex, bufferSize, outLength, outName))
-#else
-    if (outLength)
-    {
-        *outLength = 0;
-    }
-    if (outName)
-    {
-        std::memset(outName, 0, bufferSize);
-    }
-#endif
-}
-
 bool GraphicsBackendOpenGL::SupportShaderStorageBuffer()
 {
     static bool result = extensions.contains("GL_ARB_shader_storage_buffer_object") &&
                          extensions.contains("GL_ARB_program_interface_query"); // required to query info about SSBO in shaders
     return result;
-}
-
-void GraphicsBackendOpenGL::SetShaderStorageBlockBinding(GraphicsBackendProgram program, int blockIndex, int blockBinding)
-{
-#ifdef GL_ARB_shader_storage_buffer_object
-    CHECK_GRAPHICS_BACKEND_FUNC(glShaderStorageBlockBinding(program.Program, blockIndex, blockBinding))
-#endif
 }
 
 void GraphicsBackendOpenGL::BlitFramebuffer(int srcMinX, int srcMinY, int srcMaxX, int srcMaxY, int dstMinX, int dstMinY, int dstMaxX, int dstMaxY, BlitFramebufferMask mask, BlitFramebufferFilter filter)
@@ -934,4 +948,74 @@ GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackendOpenGL::GetError()
 const char *GraphicsBackendOpenGL::GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error)
 {
     return reinterpret_cast<const char *>(gluGetString(error));
+}
+
+int GraphicsBackendOpenGL::GetNameBufferSize(GraphicsBackendProgram program)
+{
+    int uniformNameLength = 0;
+    int uniformBlockNameLength = 0;
+    int shaderStorageBlockNameLength = 0;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &uniformNameLength))
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &uniformBlockNameLength))
+#ifdef GL_ARB_program_interface_query
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInterfaceiv(program.Program, GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &shaderStorageBlockNameLength))
+#endif
+    return std::max(uniformNameLength, std::max(uniformBlockNameLength, shaderStorageBlockNameLength));
+}
+
+std::unordered_map<std::string, int> GraphicsBackendOpenGL::GetUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockIndex, std::vector<char> nameBuffer)
+{
+    int uniformsCount;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockiv(program.Program, uniformBlockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformsCount))
+
+    std::vector<int> uniformsIndices(uniformsCount);
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockiv(program.Program, uniformBlockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &uniformsIndices[0]))
+
+    std::unordered_map<std::string, int> variables;
+    for (unsigned int i = 0; i < uniformsCount; ++i)
+    {
+        int uniformNameLength;
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniform(program.Program, uniformsIndices[i], nameBuffer.size(), &uniformNameLength, nullptr, nullptr, &nameBuffer[0]))
+        std::string uniformName(nameBuffer.begin(), nameBuffer.begin() + uniformNameLength);
+
+        int uniformOffset;
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformsiv(program.Program, 1, reinterpret_cast<unsigned int *>(&uniformsIndices[i]), GL_UNIFORM_OFFSET, &uniformOffset))
+
+        variables[uniformName] = uniformOffset;
+    }
+
+    return variables;
+}
+
+std::unordered_map<std::string, int> GraphicsBackendOpenGL::GetShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboIndex)
+{
+#ifdef GL_ARB_program_interface_query
+    int variablesCount;
+    auto variablesCountParameter = GL_NUM_ACTIVE_VARIABLES;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, GL_SHADER_STORAGE_BLOCK, ssboIndex, 1, &variablesCountParameter, 1, nullptr, &variablesCount))
+
+    std::vector<int> variablesIndices(variablesCount);
+    auto variablesIndicesParameter = GL_ACTIVE_VARIABLES;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, GL_SHADER_STORAGE_BLOCK, ssboIndex, 1, &variablesIndicesParameter, variablesCount, nullptr, &variablesIndices[0]))
+
+    constexpr int variableParametersCount = 2;
+    GLenum variableParameters[variableParametersCount] = {GL_NAME_LENGTH, GL_OFFSET};
+
+    std::unordered_map<std::string, int> variables;
+    for(int i = 0; i < variablesCount; ++i)
+    {
+        int values[variableParametersCount];
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, GL_BUFFER_VARIABLE, variablesIndices[i], variableParametersCount, &variableParameters[0], variableParametersCount, nullptr, &values[0]))
+
+        std::vector<char> nameData(values[0]);
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceName(program.Program, GL_BUFFER_VARIABLE, variablesIndices[i], nameData.size(), nullptr, &nameData[0]))
+        std::string name(nameData.begin(), nameData.end() - 1);
+
+        variables[name] = values[1];
+    }
+
+    return variables;
+#else
+    return {};
+#endif
 }

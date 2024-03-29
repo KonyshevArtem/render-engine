@@ -7,7 +7,7 @@
 
 class Shader;
 class GraphicsBuffer;
-class BufferInfo;
+class GraphicsBackendBufferInfo;
 
 class GraphicsBufferWrapper
 {
@@ -30,7 +30,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<GraphicsBuffer>> m_PassBuffers;
-    std::vector<std::shared_ptr<BufferInfo>> m_PassBuffersInfo;
+    std::vector<std::shared_ptr<GraphicsBackendBufferInfo>> m_PassBuffersInfo;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BUFFER_WRAPPER_H

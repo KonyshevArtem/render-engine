@@ -47,7 +47,7 @@ public:
     GraphicsBackendBuffer CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
     void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer) override;
-    void BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size) override;
+    void BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
 
     void SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data) override;
     void CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size) override;
@@ -71,21 +71,11 @@ public:
     void SetViewport(int x, int y, int width, int height) override;
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
-
     GraphicsBackendProgram CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount) override;
     void DeleteProgram(GraphicsBackendProgram program) override;
-
     void UseProgram(GraphicsBackendProgram program) override;
-    void GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int* value) override;
-
-    bool TryGetUniformBlockIndex(GraphicsBackendProgram program, const char *name, int *index) override;
-    void SetUniformBlockBinding(GraphicsBackendProgram program, int uniformBlockIndex, int uniformBlockBinding) override;
-    void GetActiveUniform(GraphicsBackendProgram program, int index, int nameBufferSize, int *nameLength, int *size, UniformDataType *dataType, char *name) override;
-    void GetActiveUniformsParameter(GraphicsBackendProgram program, int uniformCount, const unsigned int *uniformIndices, UniformParameter parameter, int *values) override;
-    GraphicsBackendUniformLocation GetUniformLocation(GraphicsBackendProgram program, const char *uniformName) override;
-    void SetUniform(GraphicsBackendUniformLocation location, UniformDataType dataType, int count, const void *data, bool transpose = false) override;
-    void GetActiveUniformBlockParameter(GraphicsBackendProgram program, int uniformBlockIndex, UniformBlockParameter parameter, int *values) override;
-    void GetActiveUniformBlockName(GraphicsBackendProgram program, int uniformBlockIndex, int nameBufferSize, int *nameLength, char *name) override;
+    void SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose = false) override;
+    void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers) override;
 
     void Clear(ClearMask mask) override;
     void SetClearColor(float r, float g, float b, float a) override;
@@ -96,12 +86,7 @@ public:
     void DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType) override;
     void DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount) override;
 
-    void GetProgramInterfaceParameter(GraphicsBackendProgram program, ProgramInterface interface, ProgramInterfaceParameter parameter, int *outValues) override;
-    void GetProgramResourceParameters(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int parametersCount, ProgramResourceParameter *parameters, int bufferSize, int *lengths, int *outValues) override;
-    void GetProgramResourceName(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int bufferSize, int *outLength, char *outName) override;
-
     bool SupportShaderStorageBuffer() override;
-    void SetShaderStorageBlockBinding(GraphicsBackendProgram program, int blockIndex, int blockBinding) override;
 
     void BlitFramebuffer(int srcMinX, int srcMinY, int srcMaxX, int srcMaxY, int dstMinX, int dstMinY, int dstMaxX, int dstMaxY, BlitFramebufferMask mask, BlitFramebufferFilter filter) override;
 
@@ -113,6 +98,11 @@ public:
 
     GRAPHICS_BACKEND_TYPE_ENUM GetError() override;
     const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) override;
+
+private:
+    int GetNameBufferSize(GraphicsBackendProgram program);
+    std::unordered_map<std::string, int> GetUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockIndex, std::vector<char> nameBuffer);
+    std::unordered_map<std::string, int> GetShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboIndex);
 };
 
 

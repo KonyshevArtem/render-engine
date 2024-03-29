@@ -1,6 +1,5 @@
 #include "graphics_buffer.h"
 #include "graphics_backend_api.h"
-#include "enums/uniform_block_parameter.h"
 
 #include <algorithm>
 
@@ -17,15 +16,9 @@ GraphicsBuffer::~GraphicsBuffer()
     GraphicsBackend::Current()->DeleteBuffer(m_Buffer);
 }
 
-void GraphicsBuffer::Bind() const
+void GraphicsBuffer::Bind(GraphicsBackendResourceBindings binding) const
 {
-    Bind(m_BindTarget);
-}
-
-void GraphicsBuffer::Bind(int binding) const
-{
-    Bind();
-    GraphicsBackend::Current()->BindBufferRange(m_BindTarget, binding, m_Buffer, 0, m_Size);
+    GraphicsBackend::Current()->BindBufferRange(m_Buffer, binding, 0, m_Size);
 }
 
 void GraphicsBuffer::Bind(BufferBindTarget bindTarget) const

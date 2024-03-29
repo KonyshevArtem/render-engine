@@ -7,6 +7,8 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <memory>
 
 #define FORWARD_DECLARE_ENUM(name) enum class name : GRAPHICS_BACKEND_TYPE_ENUM;
 FORWARD_DECLARE_ENUM(TextureType)
@@ -30,15 +32,10 @@ FORWARD_DECLARE_ENUM(CullFace)
 FORWARD_DECLARE_ENUM(DepthFunction)
 enum class ShaderType;
 FORWARD_DECLARE_ENUM(ShaderParameter)
-FORWARD_DECLARE_ENUM(ProgramParameter)
 FORWARD_DECLARE_ENUM(UniformDataType)
 FORWARD_DECLARE_ENUM(ClearMask)
-FORWARD_DECLARE_ENUM(UniformBlockParameter)
-FORWARD_DECLARE_ENUM(UniformParameter)
 FORWARD_DECLARE_ENUM(CullFaceOrientation)
 enum class IndicesDataType;
-FORWARD_DECLARE_ENUM(ProgramInterface)
-FORWARD_DECLARE_ENUM(ProgramInterfaceParameter)
 FORWARD_DECLARE_ENUM(ProgramResourceParameter)
 FORWARD_DECLARE_ENUM(BlitFramebufferMask)
 FORWARD_DECLARE_ENUM(BlitFramebufferFilter)
@@ -50,8 +47,10 @@ class GraphicsBackendBuffer;
 class GraphicsBackendFramebuffer;
 class GraphicsBackendProgram;
 class GraphicsBackendShaderObject;
-class GraphicsBackendUniformLocation;
 class GraphicsBackendGeometry;
+class GraphicsBackendUniformInfo;
+class GraphicsBackendBufferInfo;
+struct GraphicsBackendResourceBindings;
 
 class GraphicsBackendBase
 {
@@ -99,7 +98,7 @@ public:
     virtual GraphicsBackendBuffer CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint) = 0;
     virtual void DeleteBuffer(const GraphicsBackendBuffer &buffer) = 0;
     virtual void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer) = 0;
-    virtual void BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size) = 0;
+    virtual void BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;
 
     virtual void SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data) = 0;
     virtual void CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size) = 0;
@@ -126,15 +125,8 @@ public:
     virtual GraphicsBackendProgram CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;
-    virtual void GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int* value) = 0;
-    virtual bool TryGetUniformBlockIndex(GraphicsBackendProgram program, const char *name, int *index) = 0;
-    virtual void SetUniformBlockBinding(GraphicsBackendProgram program, int uniformBlockIndex, int uniformBlockBinding) = 0;
-    virtual void GetActiveUniform(GraphicsBackendProgram program, int index, int nameBufferSize, int *nameLength, int *size, UniformDataType *dataType, char *name) = 0;
-    virtual void GetActiveUniformsParameter(GraphicsBackendProgram program, int uniformCount, const unsigned int *uniformIndices, UniformParameter parameter, int *values) = 0;
-    virtual GraphicsBackendUniformLocation GetUniformLocation(GraphicsBackendProgram program, const char *uniformName) = 0;
-    virtual void SetUniform(GraphicsBackendUniformLocation location, UniformDataType dataType, int count, const void *data, bool transpose = false) = 0;
-    virtual void GetActiveUniformBlockParameter(GraphicsBackendProgram program, int uniformBlockIndex, UniformBlockParameter parameter, int *values) = 0;
-    virtual void GetActiveUniformBlockName(GraphicsBackendProgram program, int uniformBlockIndex, int nameBufferSize, int *nameLength, char *name) = 0;
+    virtual void SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose = false) = 0;
+    virtual void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers) = 0;
 
     virtual void Clear(ClearMask mask) = 0;
     virtual void SetClearColor(float r, float g, float b, float a) = 0;
@@ -145,12 +137,7 @@ public:
     virtual void DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType) = 0;
     virtual void DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount) = 0;
 
-    virtual void GetProgramInterfaceParameter(GraphicsBackendProgram program, ProgramInterface interface, ProgramInterfaceParameter parameter, int *outValues) = 0;
-    virtual void GetProgramResourceParameters(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int parametersCount, ProgramResourceParameter *parameters, int bufferSize, int *lengths, int *outValues) = 0;
-    virtual void GetProgramResourceName(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int bufferSize, int *outLength, char *outName) = 0;
-
     virtual bool SupportShaderStorageBuffer() = 0;
-    virtual void SetShaderStorageBlockBinding(GraphicsBackendProgram program, int blockIndex, int blockBinding) = 0;
 
     virtual void BlitFramebuffer(int srcMinX, int srcMinY, int srcMaxX, int srcMaxY, int dstMinX, int dstMinY, int dstMaxX, int dstMaxY, BlitFramebufferMask mask, BlitFramebufferFilter filter) = 0;
 

@@ -3,12 +3,11 @@
 
 #include "enums/texture_unit.h"
 #include "enums/uniform_data_type.h"
-#include "types/graphics_backend_uniform_location.h"
 
-struct UniformInfo
+struct GraphicsBackendUniformInfo
 {
     UniformDataType Type = UniformDataType::FLOAT;
-    GraphicsBackendUniformLocation Location{};
+    int Location = 0;
     TextureUnit TextureUnit = TextureUnit::TEXTURE0;
     bool IsTexture = false;
 };

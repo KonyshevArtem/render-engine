@@ -4,7 +4,7 @@
 #include "matrix4x4/matrix4x4.h"
 #include "property_block/property_block.h"
 #include "vector4/vector4.h"
-#include "shader/uniform_info/uniform_info.h"
+#include "types/graphics_backend_uniform_info.h"
 
 #include <vector>
 #include <unordered_map>

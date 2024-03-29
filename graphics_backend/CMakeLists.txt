@@ -27,11 +27,8 @@ add_library(GraphicsBackend
         enums/depth_function.h
         enums/shader_type.h
         enums/shader_parameter.h
-        enums/program_parameter.h
         enums/uniform_data_type.h
         enums/clear_mask.h
-        enums/uniform_block_parameter.h
-        enums/uniform_parameter.h
         enums/cull_face_orientation.h
         enums/indices_data_type.h
         types/graphics_backend_texture.h
@@ -40,10 +37,7 @@ add_library(GraphicsBackend
         types/graphics_backend_buffer.h
         types/graphics_backend_program.h
         types/graphics_backend_shader_object.h
-        types/graphics_backend_uniform_location.h
         types/graphics_backend_framebuffer.h
-        enums/program_interface.h
-        enums/program_interface_parameter.h
         enums/program_resource_parameter.h
         enums/blit_framebuffer_mask.h
         enums/blit_framebuffer_filter.h
@@ -54,7 +48,8 @@ add_library(GraphicsBackend
         graphics_backend_implementations/graphics_backend_api_opengl.h
         graphics_backend_implementations/graphics_backend_api_metal.cpp
         graphics_backend_implementations/graphics_backend_api_metal.h
-        types/graphics_backend_vertex_attribute_descriptor.h)
+        types/graphics_backend_vertex_attribute_descriptor.h
+        types/graphics_backend_resource_bindings.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

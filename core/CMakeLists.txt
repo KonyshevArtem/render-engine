@@ -42,7 +42,6 @@ add_library(
 	texture/texture_header.h
 	shader/shader_loader/shader_loader.cpp
 	shader/shader_loader/shader_loader.h
-	shader/uniform_info/uniform_info.h
 	renderer/renderer.cpp
 	renderer/renderer.h
 	renderer/mesh_renderer.cpp
@@ -80,7 +79,6 @@ add_library(
 	graphics/data_structs/lighting_data.h
 	graphics/data_structs/camera_data.h
 	graphics/data_structs/per_draw_data.h
-	shader/uniform_info/buffer_info.h
 	graphics_buffer/graphics_buffer_wrapper.h
 	graphics_buffer/graphics_buffer_wrapper.cpp
 	graphics/render_settings/draw_call_comparer.h

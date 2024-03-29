@@ -12,8 +12,10 @@
 #include "types/graphics_backend_framebuffer.h"
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
-#include "types/graphics_backend_uniform_location.h"
 #include "types/graphics_backend_geometry.h"
+#include "types/graphics_backend_uniform_info.h"
+#include "types/graphics_backend_buffer_info.h"
+#include "debug.h"
 
 #define NS_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
@@ -192,7 +194,7 @@ GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferBindTar
 
 void GraphicsBackendMetal::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
-    auto *metalBuffer = reinterpret_cast<MTL::Device*>(buffer.Buffer);
+    auto *metalBuffer = reinterpret_cast<MTL::Buffer*>(buffer.Buffer);
     metalBuffer->release();
 }
 
@@ -200,8 +202,17 @@ void GraphicsBackendMetal::BindBuffer(BufferBindTarget target, GraphicsBackendBu
 {
 }
 
-void GraphicsBackendMetal::BindBufferRange(BufferBindTarget target, int bindingPointIndex, GraphicsBackendBuffer buffer, int offset, int size)
+void GraphicsBackendMetal::BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
+    auto *metalBuffer = reinterpret_cast<MTL::Buffer*>(buffer.Buffer);
+    if (bindings.VertexIndex >= 0)
+    {
+        m_CurrentCommandEncoder->setVertexBuffer(metalBuffer, offset, bindings.VertexIndex);
+    }
+    if (bindings.FragmentIndex >= 0)
+    {
+        m_CurrentCommandEncoder->setFragmentBuffer(metalBuffer, offset, bindings.FragmentIndex);
+    }
 }
 
 void GraphicsBackendMetal::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
@@ -339,10 +350,13 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShader
     layoutDesc->setStepRate(1);
     layoutDesc->setStepFunction(MTL::VertexStepFunctionPerVertex);
 
-    auto *pso = m_Device->newRenderPipelineState(desc, &s_Error);
+    MTL::AutoreleasedRenderPipelineReflection reflection;
+    MTL::PipelineOption options = MTL::PipelineOptionArgumentInfo | MTL::PipelineOptionBufferTypeInfo;
+    auto *pso = m_Device->newRenderPipelineState(desc, options, &reflection, &s_Error);
 
     GraphicsBackendProgram program{};
     program.Program = reinterpret_cast<uint64_t>(pso);
+    program.Reflection = reinterpret_cast<uint64_t>(reflection);
     return program;
 }
 
@@ -351,47 +365,71 @@ void GraphicsBackendMetal::DeleteProgram(GraphicsBackendProgram program)
     reinterpret_cast<MTL::RenderPipelineState*>(program.Program)->release();
 }
 
-void GraphicsBackendMetal::GetProgramParameter(GraphicsBackendProgram program, ProgramParameter parameter, int *value)
+void SetBindingIndex(GraphicsBackendResourceBindings &bindings, int index, bool isVertexShader)
 {
+    if (isVertexShader)
+    {
+        bindings.VertexIndex = index;
+    }
+    else
+    {
+        bindings.FragmentIndex = index;
+    }
 }
 
-bool GraphicsBackendMetal::TryGetUniformBlockIndex(GraphicsBackendProgram program, const char *name, int *index)
+void ParseArguments(NS::Array *arguments, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers, bool isVertexShader)
 {
-    return false;
+    for (int i = 0; i < arguments->count(); ++i)
+    {
+        auto argument = reinterpret_cast<MTL::Argument*>(arguments->object(i));
+        if (argument->bufferDataType() == MTL::DataType::DataTypeStruct)
+        {
+            auto bufferName = argument->name()->utf8String();
+            auto bufferIndex = argument->index();
+
+            auto it = buffers.find(bufferName);
+            if (it != buffers.end())
+            {
+                auto bindings = it->second->GetBinding();
+                SetBindingIndex(bindings, bufferIndex, isVertexShader);
+                it->second->SetBindings(bindings);
+            }
+            else
+            {
+                std::unordered_map<std::string, int> variables;
+
+                auto members = argument->bufferStructType()->members();
+                for (int j = 0; j < members->count(); ++j)
+                {
+                    auto member = reinterpret_cast<MTL::StructMember*>(members->object(j));
+                    variables[member->name()->utf8String()] = member->offset();
+                }
+
+                auto bufferSize = argument->bufferDataSize();
+                auto buffer = std::make_shared<GraphicsBackendBufferInfo>(GraphicsBackendBufferInfo::BufferType::SHADER_STORAGE, bufferSize, variables);
+
+                GraphicsBackendResourceBindings bindings;
+                SetBindingIndex(bindings, bufferIndex, isVertexShader);
+                buffer->SetBindings(bindings);
+
+                buffers[bufferName] = buffer;
+            }
+        }
+    }
 }
 
-void GraphicsBackendMetal::SetUniformBlockBinding(GraphicsBackendProgram program, int uniformBlockIndex, int uniformBlockBinding)
+void GraphicsBackendMetal::IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers)
 {
-}
-
-void GraphicsBackendMetal::GetActiveUniform(GraphicsBackendProgram program, int index, int nameBufferSize, int *nameLength, int *size, UniformDataType *dataType, char *name)
-{
-}
-
-void GraphicsBackendMetal::GetActiveUniformsParameter(GraphicsBackendProgram program, int uniformCount, const unsigned int *uniformIndices, UniformParameter parameter, int *values)
-{
-}
-
-void GraphicsBackendMetal::GetActiveUniformBlockName(GraphicsBackendProgram program, int uniformBlockIndex, int nameBufferSize, int *nameLength, char *name)
-{
-}
-
-GraphicsBackendUniformLocation GraphicsBackendMetal::GetUniformLocation(GraphicsBackendProgram program, const char *uniformName)
-{
-    GraphicsBackendUniformLocation location{};
-    location.UniformLocation = 0;
-    return location;
+    auto reflection = reinterpret_cast<MTL::AutoreleasedRenderPipelineReflection>(program.Reflection);
+    ParseArguments(reflection->vertexArguments(), uniforms, buffers, true);
+    ParseArguments(reflection->fragmentArguments(), uniforms, buffers, false);
 }
 
 void GraphicsBackendMetal::UseProgram(GraphicsBackendProgram program)
 {
 }
 
-void GraphicsBackendMetal::SetUniform(GraphicsBackendUniformLocation location, UniformDataType dataType, int count, const void *data, bool transpose)
-{
-}
-
-void GraphicsBackendMetal::GetActiveUniformBlockParameter(GraphicsBackendProgram program, int uniformBlockIndex, UniformBlockParameter parameter, int *values)
+void GraphicsBackendMetal::SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose)
 {
 }
 
@@ -431,25 +469,9 @@ void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &
     m_CurrentCommandEncoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(elementsCount), ToMetalIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0, instanceCount);
 }
 
-void GraphicsBackendMetal::GetProgramInterfaceParameter(GraphicsBackendProgram program, ProgramInterface interface, ProgramInterfaceParameter parameter, int *outValues)
-{
-}
-
-void GraphicsBackendMetal::GetProgramResourceParameters(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int parametersCount, ProgramResourceParameter *parameters, int bufferSize, int *lengths, int *outValues)
-{
-}
-
-void GraphicsBackendMetal::GetProgramResourceName(GraphicsBackendProgram program, ProgramInterface interface, int resourceIndex, int bufferSize, int *outLength, char *outName)
-{
-}
-
 bool GraphicsBackendMetal::SupportShaderStorageBuffer()
 {
-    return false;
-}
-
-void GraphicsBackendMetal::SetShaderStorageBlockBinding(GraphicsBackendProgram program, int blockIndex, int blockBinding)
-{
+    return true;
 }
 
 void GraphicsBackendMetal::BlitFramebuffer(int srcMinX, int srcMinY, int srcMaxX, int srcMaxY, int dstMinX, int dstMinY, int dstMaxX, int dstMaxY, BlitFramebufferMask mask, BlitFramebufferFilter filter)

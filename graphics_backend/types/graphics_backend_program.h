@@ -7,6 +7,7 @@ class GraphicsBackendProgram
 {
 private:
     uint64_t Program;
+    uint64_t Reflection;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;

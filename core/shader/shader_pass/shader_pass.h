@@ -8,8 +8,8 @@
 #include <string>
 #include <unordered_map>
 
-struct UniformInfo;
-class BufferInfo;
+struct GraphicsBackendUniformInfo;
+class GraphicsBackendBufferInfo;
 
 class ShaderPass
 {
@@ -45,12 +45,12 @@ public:
         return m_DepthInfo;
     }
 
-    inline const std::unordered_map<std::string, UniformInfo> &GetUniforms() const
+    inline const std::unordered_map<std::string, GraphicsBackendUniformInfo> &GetUniforms() const
     {
         return m_Uniforms;
     }
 
-    inline const std::unordered_map<std::string, std::shared_ptr<BufferInfo>> &GetBuffers() const
+    inline const std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &GetBuffers() const
     {
         return m_Buffers;
     }
@@ -71,8 +71,8 @@ private:
     DepthInfo m_DepthInfo;
 
     std::unordered_map<std::string, std::string> m_Tags;
-    std::unordered_map<std::string, UniformInfo> m_Uniforms;
-    std::unordered_map<std::string, std::shared_ptr<BufferInfo>> m_Buffers;
+    std::unordered_map<std::string, GraphicsBackendUniformInfo> m_Uniforms;
+    std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
 };
 
 

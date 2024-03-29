@@ -25,7 +25,7 @@
 #include "data_structs/camera_data.h"
 #include "data_structs/lighting_data.h"
 #include "data_structs/per_draw_data.h"
-#include "shader/uniform_info/buffer_info.h"
+#include "types/graphics_backend_buffer_info.h"
 #include "render_settings/draw_call_comparer.h"
 #include "render_settings/draw_call_filter.h"
 #include "texture_2d/texture_2d.h"
@@ -363,8 +363,6 @@ namespace Graphics
         // make sure VAO is bound before calling this function
         if (_enabled)
         {
-            instancingMatricesBuffer->Bind();
-
             // matrix4x4 requires 4 vertex attributes
             for (int i = 0; i < 8; ++i)
             {
@@ -423,7 +421,7 @@ namespace Graphics
         GraphicsBackend::Current()->SetDepthFunction(depthInfo.DepthFunction);
     }
 
-    void SetUniform(const std::unordered_map<std::string, UniformInfo> &uniforms, const std::string &name, const void *data)
+    void SetUniform(const std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, const std::string &name, const void *data)
     {
         auto it = uniforms.find(name);
         if (it != uniforms.end())
@@ -433,7 +431,7 @@ namespace Graphics
         }
     }
 
-    void SetTextureUniform(const std::unordered_map<std::string, UniformInfo> &uniforms, const std::string &name, const Texture &texture)
+    void SetTextureUniform(const std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, const std::string &name, const Texture &texture)
     {
         auto it = uniforms.find(name);
         if (it == uniforms.end())

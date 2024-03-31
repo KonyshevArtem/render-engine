@@ -1,15 +1,9 @@
-#if defined(TARGET_IOS) || defined(TARGET_TVOS)
-@import UIKit;
-#define PlatformViewController UIViewController
-#else
-@import AppKit;
-#define PlatformViewController NSViewController
-#endif
+#import "RenderEngineViewController.h"
 
 @import MetalKit;
 
-#import "AAPLMetalRenderer.h"
+@interface AAPLMetalView : MTKView
+@end
 
-@interface AAPLMetalViewController : PlatformViewController
-
+@interface AAPLMetalViewController : RenderEngineViewController
 @end

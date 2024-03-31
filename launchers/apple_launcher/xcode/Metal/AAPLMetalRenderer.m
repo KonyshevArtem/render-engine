@@ -1,5 +1,3 @@
-@import MetalKit;
-
 #import "AAPLMetalRenderer.h"
 #import "EngineFrameworkWrapper.h"
 #import "ImGuiWrapper.h"
@@ -9,14 +7,13 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
 /// Main class that performs the rendering.
 @implementation AAPLMetalRenderer
-{
-    id<MTLDevice>        _device;
-    id<MTLCommandQueue>  _commandQueue;
 
-    id<MTLDepthStencilState>   _depthState;
-    
-    CGSize _viewSize;
-}
+id<MTLDevice>        _device;
+id<MTLCommandQueue>  _commandQueue;
+
+id<MTLDepthStencilState>   _depthState;
+
+CGSize _viewSize;
 
 /// Initialize the renderer with the MetalKit view that references the Metal device you render with.
 /// You also use the MetalKit view to set the pixel format and other properties of the drawable.
@@ -83,6 +80,11 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     
     [commandBuffer presentDrawable:view.currentDrawable];
     [commandBuffer commit];
+}
+
+- (CGSize) getViewSize
+{
+    return _viewSize;
 }
 
 @end

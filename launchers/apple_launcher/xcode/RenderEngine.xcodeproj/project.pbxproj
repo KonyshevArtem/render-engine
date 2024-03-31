@@ -27,6 +27,12 @@
 		3ABD53092283C4FE0050D28E /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
 		3AFFA01122A1F0C900D8184A /* AAPLOpenGLViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3AFFA00B22A1F0C900D8184A /* AAPLOpenGLViewController.m */; settings = {COMPILER_FLAGS = "-Wno-deprecated-declarations"; }; };
 		3AFFA01222A1F0C900D8184A /* AAPLOpenGLViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3AFFA00B22A1F0C900D8184A /* AAPLOpenGLViewController.m */; settings = {COMPILER_FLAGS = "-Wno-deprecated-declarations"; }; };
+		932D9AA72BB99B2300A4C3AB /* RenderEngineViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */; };
+		932D9AA82BB99B2300A4C3AB /* RenderEngineViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */; };
+		932D9AAA2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
+		932D9AAB2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
+		932D9AAC2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
+		932D9AAD2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
 		935D1DE82BAA222B00362748 /* EngineFrameworkWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		935D1DEA2BAA222B00362748 /* EngineFrameworkWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */; };
 		935D1DF82BAA260700362748 /* EngineFrameworkWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */; };
@@ -104,6 +110,8 @@
 		3ABD530B2283CAB50050D28E /* AAPLOpenGLViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAPLOpenGLViewController.h; sourceTree = "<group>"; };
 		3AFFA00B22A1F0C900D8184A /* AAPLOpenGLViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAPLOpenGLViewController.m; sourceTree = "<group>"; };
 		78FA0B4078F9C9B000000001 /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenderEngineViewController.h; sourceTree = "<group>"; };
+		932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RenderEngineViewController.m; sourceTree = "<group>"; };
 		935D1D712BA7A5F400362748 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libEngineFrameworkWrapper.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EngineFrameworkWrapper.h; sourceTree = "<group>"; };
@@ -287,6 +295,8 @@
 				3ABD52F12283BC300050D28E /* AAPLAppDelegate.h */,
 				3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */,
 				3ABD53032283C3970050D28E /* Application */,
+				932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */,
+				932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -409,6 +419,7 @@
 			files = (
 				935D1DF82BAA260700362748 /* EngineFrameworkWrapper.h in Headers */,
 				93A9F0792BB09B0F0023B4D5 /* ImGuiWrapper.h in Headers */,
+				932D9AA82BB99B2300A4C3AB /* RenderEngineViewController.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -429,6 +440,7 @@
 			files = (
 				93A9F0462BB03BDE0023B4D5 /* EngineFrameworkWrapper.h in Headers */,
 				93A9F07C2BB0B5420023B4D5 /* ImGuiWrapper.h in Headers */,
+				932D9AA72BB99B2300A4C3AB /* RenderEngineViewController.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -613,6 +625,7 @@
 			files = (
 				3A40C5C12277F0F500DBB29F /* AAPLMetalRenderer.m in Sources */,
 				3ABD52EC2283BB9B0050D28E /* AAPLMetalViewController.m in Sources */,
+				932D9AAA2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */,
 				3ABD52ED2283BB9B0050D28E /* main.m in Sources */,
 				93A9F0472BB0452E0023B4D5 /* AAPLAppDelegate.m in Sources */,
 			);
@@ -624,6 +637,7 @@
 			files = (
 				3A4DDD552283D8C20095BC87 /* main.m in Sources */,
 				3AFFA01122A1F0C900D8184A /* AAPLOpenGLViewController.m in Sources */,
+				932D9AAC2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */,
 				3A4DDD522283D8C20095BC87 /* AAPLOpenGLRenderer.m in Sources */,
 				935D1E2C2BAE2C6100362748 /* AAPLAppDelegate.m in Sources */,
 			);
@@ -635,6 +649,7 @@
 			files = (
 				3A4DDD692283D9150095BC87 /* AAPLAppDelegate.m in Sources */,
 				3A8BF91B22BC13DF0037A7F0 /* AAPLOpenGLRenderer.m in Sources */,
+				932D9AAD2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */,
 				3A4DDD6A2283D9150095BC87 /* main.m in Sources */,
 				3AFFA01222A1F0C900D8184A /* AAPLOpenGLViewController.m in Sources */,
 			);
@@ -646,6 +661,7 @@
 			files = (
 				3ABD52FB2283BE4B0050D28E /* AAPLMetalViewController.m in Sources */,
 				3ABD52F62283BDB70050D28E /* AAPLMetalRenderer.m in Sources */,
+				932D9AAB2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */,
 				3ABD53092283C4FE0050D28E /* AAPLAppDelegate.m in Sources */,
 				3ABD52F02283BC260050D28E /* main.m in Sources */,
 			);

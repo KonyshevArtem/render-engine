@@ -1,19 +1,33 @@
 #import "AAPLMetalViewController.h"
 #import "AAPLMetalRenderer.h"
 
-@implementation AAPLMetalViewController
-{
-    MTKView *_view;
+@implementation AAPLMetalView
 
-    AAPLMetalRenderer *_renderer;
+TrackingAreaProvider *_trackingAreaProvider;
+
+- (void) updateTrackingAreas
+{
+    if (_trackingAreaProvider == nil)
+    {
+        _trackingAreaProvider = [TrackingAreaProvider alloc];
+    }
+
+    [_trackingAreaProvider updateTrackingArea:self];
 }
+
+@end
+
+@implementation AAPLMetalViewController
+
+AAPLMetalView *_view;
+AAPLMetalRenderer *_renderer;
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
 
     // Set the view to use the default device.
-    _view = (MTKView *)self.view;
+    _view = (AAPLMetalView *)self.view;
     _view.device = MTLCreateSystemDefaultDevice();
 
     if(!_view.device)
@@ -34,6 +48,11 @@
     [_renderer mtkView:_view drawableSizeWillChange:_view.drawableSize];
 
     _view.delegate = _renderer;
+}
+
+- (CGSize) getViewSize
+{
+    return [_renderer getViewSize];
 }
 
 @end

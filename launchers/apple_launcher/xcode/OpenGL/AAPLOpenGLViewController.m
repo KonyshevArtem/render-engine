@@ -1,6 +1,5 @@
 #import "AAPLOpenGLViewController.h"
 #import "AAPLOpenGLRenderer.h"
-#import "EngineFrameworkWrapper.h"
 
 #ifdef TARGET_MACOS
 #import <AppKit/AppKit.h>
@@ -12,7 +11,7 @@
 
 @implementation AAPLOpenGLView
 
-NSTrackingArea* trackingArea;
+TrackingAreaProvider *_trackingAreaProvider;
 
 #if defined(TARGET_IOS) || defined(TARGET_TVOS)
 + (Class) layerClass
@@ -23,14 +22,12 @@ NSTrackingArea* trackingArea;
 
 - (void) updateTrackingAreas
 {
-    if (trackingArea != nil)
+    if (_trackingAreaProvider == nil)
     {
-        [self removeTrackingArea:trackingArea];
+        _trackingAreaProvider = [TrackingAreaProvider alloc];
     }
     
-    NSTrackingAreaOptions options = NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingActiveInKeyWindow;
-    trackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds options:options owner:self userInfo:nil];
-    [self addTrackingArea:trackingArea];
+    [_trackingAreaProvider updateTrackingArea:self];
 }
 
 @end
@@ -72,6 +69,11 @@ NSTrackingArea* trackingArea;
 
     _viewSize = [self drawableSize];
     [_openGLRenderer resize:_viewSize];
+}
+
+- (CGSize) getViewSize
+{
+    return _viewSize;
 }
 
 #if TARGET_MACOS
@@ -252,26 +254,5 @@ NSTrackingArea* trackingArea;
 }
 
 #endif
-
-- (void) mouseMoved:(NSEvent *)event
-{
-    NSPoint point = event.locationInWindow;
-    [EngineFrameworkWrapper ProcessMouseMove:point.x y:_viewSize.height - point.y];
-}
-
-- (void) keyPress:(NSEvent *)event pressed:(bool)pressed
-{
-    [EngineFrameworkWrapper ProcessKeyPress:[[event.characters uppercaseString] characterAtIndex:0] pressed:pressed];
-}
-
-- (void) keyDown:(NSEvent *)event
-{
-    [self keyPress:event pressed:true];
-}
-
-- (void) keyUp:(NSEvent *)event
-{
-    [self keyPress:event pressed:false];
-}
 
 @end

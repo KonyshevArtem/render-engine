@@ -1,23 +1,13 @@
+#import "RenderEngineViewController.h"
+
 #if defined(TARGET_IOS) || defined(TARGET_TVOS)
-@import UIKit;
 #define PlatformViewBase UIView
-#define PlatformViewController UIViewController
 #else
-@import AppKit;
 #define PlatformViewBase NSOpenGLView
-#define PlatformViewController NSViewController
 #endif
 
 @interface AAPLOpenGLView : PlatformViewBase
-
-- (void) updateTrackingAreas;
-
 @end
 
-@interface AAPLOpenGLViewController : PlatformViewController
-
-- (void) mouseMoved:(NSEvent *)event;
-- (void) keyDown:(NSEvent *)event;
-- (void) keyUp:(NSEvent *)event;
-
+@interface AAPLOpenGLViewController : RenderEngineViewController
 @end

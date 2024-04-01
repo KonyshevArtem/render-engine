@@ -148,10 +148,16 @@ namespace ShaderParser
 
         PassInfo info{ParsePassInfo(passInfoObject)};
 
-        for (int i = 0; i < ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT; ++i)
+        boost::json::object openGLSources;
+        if (TryGetValue(passInfoObject, "opengl", openGLSources))
         {
-            TryGetValue(passInfoObject, SHADER_NAMES[i], info.ShaderPaths[i]);
+            for (int i = 0; i < ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT; ++i)
+            {
+                TryGetValue(openGLSources, SHADER_NAMES[i], info.OpenGLShaderSourcePaths[i]);
+            }
         }
+
+        TryGetValue(passInfoObject, "metal", info.MetalShaderSourcePath);
 
         return info;
     }

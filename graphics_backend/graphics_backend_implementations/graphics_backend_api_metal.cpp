@@ -71,8 +71,7 @@ int GraphicsBackendMetal::GetMinorVersion()
 
 const std::string &GraphicsBackendMetal::GetShadingLanguageDirective()
 {
-    static const std::string directives = "#include <metal_stdlib>\nusing namespace metal;\n";
-
+    static const std::string directives = "#include <metal_stdlib>\nusing namespace metal;\n#define METAL_SHADER\n";
     return directives;
 }
 
@@ -299,21 +298,7 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
 
     GraphicsBackendShaderObject shaderObject{};
     shaderObject.ShaderObject = reinterpret_cast<uint64_t>(library);
-    shaderObject.ShaderType = shaderType;
     return shaderObject;
-}
-
-std::string GetShaderFunctionName(ShaderType shaderType)
-{
-    switch (shaderType)
-    {
-        case ShaderType::VERTEX_SHADER:
-            return "vertexMain";
-        case ShaderType::FRAGMENT_SHADER:
-            return "fragmentMain";
-        default:
-            return "";
-    }
 }
 
 GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount)
@@ -322,21 +307,10 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShader
     desc->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB);
     desc->setDepthAttachmentPixelFormat(MTL::PixelFormat::PixelFormatDepth32Float);
 
-    for (int i = 0; i < shadersCount; ++i)
-    {
-        auto shader = *(shaders + i);
-        auto *library = reinterpret_cast<MTL::Library*>(shader.ShaderObject);
-        auto *function = library->newFunction(NS::String::string(GetShaderFunctionName(shader.ShaderType).c_str(), NS::UTF8StringEncoding));
-        switch (shader.ShaderType)
-        {
-            case ShaderType::VERTEX_SHADER:
-                desc->setVertexFunction(function);
-                break;
-            case ShaderType::FRAGMENT_SHADER:
-                desc->setFragmentFunction(function);
-                break;
-        }
-    }
+    auto shader = shaders[0];
+    auto *library = reinterpret_cast<MTL::Library *>(shader.ShaderObject);
+    desc->setVertexFunction(library->newFunction(NS::String::string("vertexMain", NS::UTF8StringEncoding)));
+    desc->setFragmentFunction(library->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding)));
 
     auto *vertDesc = desc->vertexDescriptor();
 
@@ -427,6 +401,8 @@ void GraphicsBackendMetal::IntrospectProgram(GraphicsBackendProgram program, std
 
 void GraphicsBackendMetal::UseProgram(GraphicsBackendProgram program)
 {
+    auto pso = reinterpret_cast<MTL::RenderPipelineState*>(program.Program);
+    m_CurrentCommandEncoder->setRenderPipelineState(pso);
 }
 
 void GraphicsBackendMetal::SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose)

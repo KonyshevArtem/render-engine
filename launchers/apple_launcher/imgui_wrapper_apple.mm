@@ -1,14 +1,18 @@
+#ifndef __OBJC__
 #define __OBJC__
+#endif
 
 #include "imgui_wrapper_apple.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_metal.h"
 #include "imgui_impl_osx.h"
 #include "graphics_backend_api.h"
+#include "graphics_backend_implementations/graphics_backend_api_opengl.h"
 
 bool ImGui_OpenGL3_Init()
 {
-    return ImGui_ImplOpenGL3_Init(GraphicsBackend::Current()->GetShadingLanguageDirective().c_str());
+    auto backend = reinterpret_cast<GraphicsBackendOpenGL*>(GraphicsBackend::Current());
+    return ImGui_ImplOpenGL3_Init(backend->GetGLSLVersionString().c_str());
 }
 
 void ImGui_OpenGL3_Shutdown()

@@ -17,7 +17,8 @@ namespace ShaderParser
         DepthInfo DepthInfo;
 
         std::unordered_map<std::string, std::string> Tags;
-        std::string ShaderPaths[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT];
+        std::string OpenGLShaderSourcePaths[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT];
+        std::string MetalShaderSourcePath;
     };
 
     void Parse(const std::string &shaderSource, std::vector<ShaderParser::PassInfo> &passes, std::unordered_map<std::string, std::string> &properties);

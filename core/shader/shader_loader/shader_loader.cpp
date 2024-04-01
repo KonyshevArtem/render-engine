@@ -26,9 +26,10 @@ namespace ShaderLoader
             "#define GEOMETRY_PROGRAM\n",
             "#define FRAGMENT_PROGRAM\n"};
 
-    GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string &keywordDirectives, const std::string &shaderPartDirective)
+    GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::filesystem::path &partPath, const std::string &keywordDirectives, const std::string &shaderPartDirective)
     {
-        const auto &globalDirectives = Graphics::GetGlobalShaderDirectives();
+        auto source = Utils::ReadFileWithIncludes(partPath);
+        auto &globalDirectives = Graphics::GetGlobalShaderDirectives();
         auto fullSource = globalDirectives + "\n" + keywordDirectives + "\n" + shaderPartDirective + "\n" + source;
         return GraphicsBackend::Current()->CompileShader(shaderType, fullSource);
     }
@@ -57,16 +58,23 @@ namespace ShaderLoader
                 GraphicsBackendShaderObject shaders[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT];
                 int shadersCount = 0;
 
-                for (int i = 0; i < ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT; ++i)
+                if (GraphicsBackend::Current()->GetName() == GraphicsBackendName::OPENGL)
                 {
-                    auto shaderType = SHADER_TYPES[i];
-                    auto &relativePath = passInfo.ShaderPaths[i];
-                    if (relativePath.empty())
-                        continue;
+                    for (int i = 0; i < ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT; ++i)
+                    {
+                        auto shaderType = SHADER_TYPES[i];
+                        auto &relativePath = passInfo.OpenGLShaderSourcePaths[i];
+                        if (relativePath.empty())
+                            continue;
 
-                    auto partPath = _path.parent_path() / relativePath;
-                    auto partSource = Utils::ReadFileWithIncludes(partPath);
-                    shaders[shadersCount++] = CompileShader(shaderType, partSource, keywordsDirectives, SHADER_DIRECTIVES[i]);
+                        auto partPath = _path.parent_path() / relativePath;
+                        shaders[shadersCount++] = CompileShader(shaderType, partPath, keywordsDirectives, SHADER_DIRECTIVES[i]);
+                    }
+                }
+                else
+                {
+                    auto partPath = _path.parent_path() / passInfo.MetalShaderSourcePath;
+                    shaders[0] = CompileShader(ShaderType::VERTEX_SHADER, partPath, keywordsDirectives, "");
                 }
 
                 auto program = GraphicsBackend::Current()->CreateProgram(&shaders[0], shadersCount);

@@ -251,9 +251,15 @@ int GraphicsBackendOpenGL::GetMinorVersion()
     return OPENGL_MINOR_VERSION;
 }
 
+const std::string &GraphicsBackendOpenGL::GetGLSLVersionString()
+{
+    static std::string glslVersion = "#version " + std::to_string(GetMajorVersion() * 100 + GetMinorVersion() * 10);
+    return glslVersion;
+}
+
 const std::string &GraphicsBackendOpenGL::GetShadingLanguageDirective()
 {
-    static std::string languageDirective = "#version " + std::to_string(GetMajorVersion() * 100 + GetMinorVersion() * 10);
+    static std::string languageDirective = GetGLSLVersionString() + "\n#define OPENGL_SHADER\n";
     return languageDirective;
 }
 

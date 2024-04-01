@@ -8,7 +8,6 @@ class GraphicsBackendShaderObject
 {
 private:
     uint64_t ShaderObject;
-    ShaderType ShaderType;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;

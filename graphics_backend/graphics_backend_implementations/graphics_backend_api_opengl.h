@@ -9,6 +9,7 @@ public:
     void Init(void *device) override;
     int GetMajorVersion() override;
     int GetMinorVersion() override;
+    const std::string &GetGLSLVersionString();
     const std::string &GetShadingLanguageDirective() override;
     GraphicsBackendName GetName() override;
     void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) override;

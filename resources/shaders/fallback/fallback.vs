@@ -1,8 +1,14 @@
 layout(location = 0) in vec3 vertPositionOS;
 
-#include "../common/per_draw_data.cg"
-#include "../common/camera_data.cg"
+#include "fallback_shared.h"
+
+DECLARE_UBO(PerDrawData);
+DECLARE_UBO(CameraData);
 
 void main(){
-    gl_Position = _VPMatrix * _ModelMatrix * vec4(vertPositionOS, 1);
+    Attributes attributes;
+    attributes.positionOS = vertPositionOS;
+
+    Varyings vars = vertexFunction(attributes, PerDrawData.Data, CameraData.Data);
+    gl_Position = vars.positionCS;
 }

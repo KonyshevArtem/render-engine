@@ -1,5 +1,7 @@
-out vec4 outColor;
+out mediump vec4 outColor;
+
+#include "fallback_shared.h"
 
 void main(){
-    outColor = vec4(1, 0, 1, 1);
+    outColor = fragmentFunction();
 }

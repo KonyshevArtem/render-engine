@@ -4,8 +4,11 @@
       "tags": {
         "LightMode": "Fallback"
       },
-      "vertex": "fallback.vs",
-      "fragment": "fallback.fs"
+      "opengl": {
+        "vertex": "fallback.vs",
+        "fragment": "fallback.fs"
+      },
+      "metal": "fallback.metal"
     }
   ]
 }

@@ -1,6 +1,8 @@
 #ifndef RENDER_ENGINE_PER_DRAW_DATA
 #define RENDER_ENGINE_PER_DRAW_DATA
 
+#include "graphics_backend_macros.h"
+
 #define BEGIN_PER_INSTANCE_DATA struct PerInstanceDataStruct {
 
 #ifdef _INSTANCING
@@ -48,10 +50,10 @@
         layout(location = 8) in mat4 _ModelNormalMatrix;
     #endif
 #else
-    layout(std140) uniform PerDrawData
+    struct PerDrawDataStruct
     {
-        mat4 _ModelMatrix;
-        mat4 _ModelNormalMatrix;
+        float4x4 _ModelMatrix;
+        float4x4 _ModelNormalMatrix;
     };
 #endif
 

@@ -9,6 +9,6 @@ void main(){
     Attributes attributes;
     attributes.positionOS = vertPositionOS;
 
-    Varyings vars = vertexFunction(attributes, PerDrawData.Data, CameraData.Data);
+    Varyings vars = vertexFunction(attributes, PerDrawDataVar, CameraDataVar);
     gl_Position = vars.positionCS;
 }

@@ -24,30 +24,38 @@ Mesh::Mesh(const std::vector<Vector3> &_vertices,
 
     auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(vertexSize + normalsSize + uvSize + tangentsSize, BufferBindTarget::ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
     auto indexBuffer = GraphicsBackend::Current()->CreateBuffer(indexSize, BufferBindTarget::ELEMENT_ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
-    GraphicsBackend::Current()->SetBufferData(indexBuffer, 0, indexSize, _indexes.data());
 
     std::vector<GraphicsBackendVertexAttributeDescriptor> attributes;
-
     attributes.push_back({0, 3, VertexAttributeDataType::FLOAT, false, 0, 0});
-    GraphicsBackend::Current()->SetBufferData(vertexBuffer, 0, vertexSize, _vertices.data());
-
     if (hasNormals)
     {
         attributes.push_back({1, 3, VertexAttributeDataType::FLOAT, false, 0, vertexSize});
-        GraphicsBackend::Current()->SetBufferData(vertexBuffer, vertexSize, normalsSize, _normals.data());
     }
     if (hasUV)
     {
         attributes.push_back({2, 2, VertexAttributeDataType::FLOAT, false, 0, vertexSize + normalsSize});
-        GraphicsBackend::Current()->SetBufferData(vertexBuffer, vertexSize + normalsSize, uvSize, _uvs.data());
     }
     if (hasTangents)
     {
         attributes.push_back({3, 3, VertexAttributeDataType::FLOAT, false, 0, vertexSize + normalsSize + uvSize});
-        GraphicsBackend::Current()->SetBufferData(vertexBuffer, vertexSize + normalsSize + uvSize, tangentsSize, _tangents.data());
     }
 
     m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, attributes);
+
+    GraphicsBackend::Current()->SetBufferData(indexBuffer, 0, indexSize, _indexes.data());
+    GraphicsBackend::Current()->SetBufferData(vertexBuffer, 0, vertexSize, _vertices.data());
+    if (hasNormals)
+    {
+        GraphicsBackend::Current()->SetBufferData(vertexBuffer, vertexSize, normalsSize, _normals.data());
+    }
+    if (hasUV)
+    {
+        GraphicsBackend::Current()->SetBufferData(vertexBuffer, vertexSize + normalsSize, uvSize, _uvs.data());
+    }
+    if (hasTangents)
+    {
+        GraphicsBackend::Current()->SetBufferData(vertexBuffer, vertexSize + normalsSize + uvSize, tangentsSize, _tangents.data());
+    }
 }
 
 const std::shared_ptr<Mesh> &Mesh::GetFullscreenMesh()

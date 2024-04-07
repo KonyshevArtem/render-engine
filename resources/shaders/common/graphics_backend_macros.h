@@ -13,7 +13,7 @@
     #define ATTRIBUTE(index)
     #define SV_POSITION
 
-    #define DECLARE_UBO(name) layout(std140) uniform name { name##Struct Data; } name
+    #define DECLARE_UBO(name) layout(std140) uniform name { name##Struct name##Var; }
 
 #elif defined(METAL_SHADER)
 

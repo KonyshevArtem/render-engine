@@ -1,6 +1,5 @@
 #include "graphics_backend_api_opengl.h"
 #include "graphics_backend_debug.h"
-#include "enums/texture_unit.h"
 #include "enums/uniform_data_type.h"
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
@@ -13,10 +12,10 @@
 #include "types/graphics_backend_geometry.h"
 #include "types/graphics_backend_uniform_info.h"
 #include "types/graphics_backend_buffer_info.h"
+#include "helpers/opengl_helpers.h"
 
 #include <set>
 #include <type_traits>
-#include <cstring>
 
 GraphicsBackendTexture GraphicsBackendTexture::NONE = GraphicsBackendTexture();
 GraphicsBackendFramebuffer GraphicsBackendFramebuffer::NONE = GraphicsBackendFramebuffer();
@@ -45,183 +44,6 @@ template<typename T>
 constexpr auto Cast(T *values) -> typename std::underlying_type<T>::type*
 {
     return reinterpret_cast<typename std::underlying_type<T>::type*>(values);
-}
-
-std::string GetShaderTypeName(ShaderType shaderType)
-{
-    switch (shaderType)
-    {
-        case ShaderType::VERTEX_SHADER:
-            return "Vertex";
-        case ShaderType::FRAGMENT_SHADER:
-            return "Fragment";
-        case ShaderType::GEOMETRY_SHADER:
-            return "Geometry";
-        default:
-            return "Unknown";
-    }
-}
-
-GLuint ToOpenGLShaderType(ShaderType shaderType)
-{
-    switch (shaderType)
-    {
-        case ShaderType::VERTEX_SHADER:
-            return GL_VERTEX_SHADER;
-        case ShaderType::TESS_CONTROL_SHADER:
-            return GL_TESS_CONTROL_SHADER;
-        case ShaderType::TESS_EVALUATION_SHADER:
-            return GL_TESS_EVALUATION_SHADER;
-        case ShaderType::GEOMETRY_SHADER:
-            return GL_GEOMETRY_SHADER;
-        case ShaderType::FRAGMENT_SHADER:
-            return GL_FRAGMENT_SHADER;
-    }
-}
-
-GLenum ToOpenGLBufferBindTarget(BufferBindTarget bindTarget)
-{
-    switch (bindTarget)
-    {
-        case BufferBindTarget::ARRAY_BUFFER:
-            return GL_ARRAY_BUFFER;
-        case BufferBindTarget::COPY_READ_BUFFER:
-            return GL_COPY_READ_BUFFER;
-        case BufferBindTarget::COPY_WRITE_BUFFER:
-            return GL_COPY_WRITE_BUFFER;
-        case BufferBindTarget::DRAW_INDIRECT_BUFFER:
-            return GL_DRAW_INDIRECT_BUFFER;
-        case BufferBindTarget::ELEMENT_ARRAY_BUFFER:
-            return GL_ELEMENT_ARRAY_BUFFER;
-        case BufferBindTarget::PIXEL_PACK_BUFFER:
-            return GL_PIXEL_PACK_BUFFER;
-        case BufferBindTarget::PIXEL_UNPACK_BUFFER:
-            return GL_PIXEL_UNPACK_BUFFER;
-        case BufferBindTarget::TEXTURE_BUFFER:
-            return GL_TEXTURE_BUFFER;
-        case BufferBindTarget::TRANSFORM_FEEDBACK_BUFFER:
-            return GL_TRANSFORM_FEEDBACK_BUFFER;
-        case BufferBindTarget::UNIFORM_BUFFER:
-            return GL_UNIFORM_BUFFER;
-#ifdef GL_ARB_compute_shader
-        case BufferBindTarget::DISPATCH_INDIRECT_BUFFER:
-            return GL_DISPATCH_INDIRECT_BUFFER;
-#endif
-#ifdef GL_ARB_query_buffer_object
-        case BufferBindTarget::QUERY_BUFFER:
-            return GL_QUERY_BUFFER;
-#endif
-#ifdef GL_ARB_shader_storage_buffer_object
-        case BufferBindTarget::SHADER_STORAGE_BUFFER:
-            return GL_SHADER_STORAGE_BUFFER;
-#endif
-        default:
-            return 0;
-    }
-}
-
-GLenum ToOpenGLBufferUsageHint(BufferUsageHint usageHint)
-{
-    switch (usageHint)
-    {
-        case BufferUsageHint::STREAM_DRAW:
-            return GL_STREAM_DRAW;
-        case BufferUsageHint::STREAM_READ:
-            return GL_STREAM_READ;
-        case BufferUsageHint::STREAM_COPY:
-            return GL_STREAM_COPY;
-        case BufferUsageHint::STATIC_DRAW:
-            return GL_STATIC_DRAW;
-        case BufferUsageHint::STATIC_READ:
-            return GL_STATIC_READ;
-        case BufferUsageHint::STATIC_COPY:
-            return GL_STATIC_COPY;
-        case BufferUsageHint::DYNAMIC_DRAW:
-            return GL_DYNAMIC_DRAW;
-        case BufferUsageHint::DYNAMIC_READ:
-            return GL_DYNAMIC_READ;
-        case BufferUsageHint::DYNAMIC_COPY:
-            return GL_DYNAMIC_COPY;
-        default:
-            return 0;
-    }
-}
-
-GLenum ToOpenGLPrimitiveType(PrimitiveType primitiveType)
-{
-    switch (primitiveType)
-    {
-        case PrimitiveType::POINTS:
-            return GL_POINTS;
-        case PrimitiveType::LINE_STRIP:
-            return GL_LINE_STRIP;
-        case PrimitiveType::LINE_LOOP:
-            return GL_LINE_LOOP;
-        case PrimitiveType::LINES:
-            return GL_LINES;
-        case PrimitiveType::LINE_STRIP_ADJACENCY:
-            return GL_LINE_STRIP_ADJACENCY;
-        case PrimitiveType::LINES_ADJACENCY:
-            return GL_LINES_ADJACENCY;
-        case PrimitiveType::TRIANGLE_STRIP:
-            return GL_TRIANGLE_STRIP;
-        case PrimitiveType::TRIANGLE_FAN:
-            return GL_TRIANGLE_FAN;
-        case PrimitiveType::TRIANGLES:
-            return GL_TRIANGLES;
-        case PrimitiveType::TRIANGLE_STRIP_ADJACENCY:
-            return GL_TRIANGLE_STRIP_ADJACENCY;
-        case PrimitiveType::TRIANGLES_ADJACENCY:
-            return GL_TRIANGLES_ADJACENCY;
-        case PrimitiveType::PATCHES:
-            return GL_PATCHES;
-    }
-}
-
-GLenum ToOpenGLIndicesDataType(IndicesDataType dataType)
-{
-    switch (dataType)
-    {
-        case IndicesDataType::UNSIGNED_BYTE:
-            return GL_UNSIGNED_BYTE;
-        case IndicesDataType::UNSIGNED_SHORT:
-            return GL_UNSIGNED_SHORT;
-        case IndicesDataType::UNSIGNED_INT:
-            return GL_UNSIGNED_INT;
-    }
-}
-
-GLenum ToOpenGLVertexAttributeDataType(VertexAttributeDataType dataType)
-{
-    switch (dataType)
-    {
-        case VertexAttributeDataType::BYTE:
-            return GL_BYTE;
-        case VertexAttributeDataType::UNSIGNED_BYTE:
-            return GL_UNSIGNED_BYTE;
-        case VertexAttributeDataType::SHORT:
-            return GL_SHORT;
-        case VertexAttributeDataType::UNSIGNED_SHORT:
-            return GL_UNSIGNED_SHORT;
-        case VertexAttributeDataType::INT:
-            return GL_INT;
-        case VertexAttributeDataType::UNSIGNED_INT:
-            return GL_UNSIGNED_INT;
-        case VertexAttributeDataType::HALF_FLOAT:
-            return GL_HALF_FLOAT;
-        case VertexAttributeDataType::FLOAT:
-            return GL_FLOAT;
-        case VertexAttributeDataType::DOUBLE:
-            return GL_DOUBLE;
-        case VertexAttributeDataType::FIXED:
-            return GL_FIXED;
-        case VertexAttributeDataType::INT_2_10_10_10_REV:
-            return GL_INT_2_10_10_10_REV;
-        case VertexAttributeDataType::UNSIGNED_INT_2_10_10_10_REV:
-            return GL_UNSIGNED_INT_2_10_10_10_REV;
-        case VertexAttributeDataType::UNSIGNED_INT_10F_11F_11F_REV:
-            return GL_UNSIGNED_INT_10F_11F_11F_REV;
-    }
 }
 
 void GraphicsBackendOpenGL::Init(void *device)
@@ -272,97 +94,152 @@ void GraphicsBackendOpenGL::PlatformDependentSetup(void *commandBufferPtr, void 
 {
 }
 
-void GraphicsBackendOpenGL::GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr)
+GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenTextures(texturesCount, reinterpret_cast<GLuint *>(texturesPtr)))
+    GraphicsBackendTexture texture{};
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture)))
+    texture.Type = type;
+    texture.Format = format;
+    return texture;
 }
 
-void GraphicsBackendOpenGL::GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr)
+GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenSamplers(samplersCount, reinterpret_cast<GLuint *>(samplersPtr)))
+    GraphicsBackendSampler sampler{};
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenSamplers(1, reinterpret_cast<GLuint *>(&sampler.Sampler)))
+
+    GLint wrap = OpenGLHelpers::ToTextureWrapMode(wrapMode);
+    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_S, wrap))
+    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_T, wrap))
+    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_R, wrap))
+
+    GLint minFilter, magFilter;
+    OpenGLHelpers::ToTextureFilteringMode(filteringMode, minFilter, magFilter);
+    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_FILTER, minFilter))
+    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MAG_FILTER, magFilter))
+
+    if (borderColor != nullptr)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameterfv(sampler.Sampler, GL_TEXTURE_BORDER_COLOR, borderColor))
+    }
+
+    return sampler;
 }
 
-void GraphicsBackendOpenGL::DeleteTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr)
+void GraphicsBackendOpenGL::DeleteTexture(const GraphicsBackendTexture &texture)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteTextures(texturesCount, reinterpret_cast<GLuint *>(texturesPtr)))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteTextures(1, reinterpret_cast<const GLuint *>(&texture.Texture)))
 }
 
-void GraphicsBackendOpenGL::DeleteSamplers(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr)
+void GraphicsBackendOpenGL::DeleteSampler(const GraphicsBackendSampler &sampler)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteSamplers(samplersCount, reinterpret_cast<GLuint *>(samplersPtr)))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteSamplers(1, reinterpret_cast<const GLuint *>(&sampler.Sampler)))
+}
+
+void GraphicsBackendOpenGL::BindTexture(const GraphicsBackendResourceBindings &bindings, int uniformLocation, const GraphicsBackendTexture &texture)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glActiveTexture(OpenGLHelpers::ToTextureUnit(bindings.FragmentIndex)))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(OpenGLHelpers::ToTextureType(texture.Type), texture.Texture))
+    CHECK_GRAPHICS_BACKEND_FUNC(glUniform1i(uniformLocation, bindings.FragmentIndex))
 }
 
 void GraphicsBackendOpenGL::BindTexture(TextureType type, GraphicsBackendTexture texture)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(Cast(type), texture.Texture))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(OpenGLHelpers::ToTextureType(type), texture.Texture))
 }
 
-void GraphicsBackendOpenGL::BindSampler(TextureUnit unit, GraphicsBackendSampler sampler)
+void GraphicsBackendOpenGL::BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler)
 {
-    auto unitIndex = TextureUnitUtils::TextureUnitToIndex(unit);
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindSampler(unitIndex, sampler.Sampler))
+    CHECK_GRAPHICS_BACKEND_FUNC(glActiveTexture(OpenGLHelpers::ToTextureUnit(bindings.FragmentIndex)))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindSampler(bindings.FragmentIndex, sampler.Sampler))
 }
 
 void GraphicsBackendOpenGL::GenerateMipmaps(TextureType type)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenerateMipmap(Cast(type)))
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenerateMipmap(OpenGLHelpers::ToTextureType(type)))
 }
 
 void GraphicsBackendOpenGL::SetTextureParameterInt(TextureType type, TextureParameter parameter, int value)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glTexParameteri(Cast(type), Cast(parameter), value))
+    CHECK_GRAPHICS_BACKEND_FUNC(glTexParameteri(OpenGLHelpers::ToTextureType(type), Cast(parameter), value))
 }
 
-void GraphicsBackendOpenGL::SetSamplerParameterInt(GraphicsBackendSampler sampler, SamplerParameter parameter, int value)
+void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, Cast(parameter), value))
+    GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
+    GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, slice);
+    GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(texture.Format);
+    bool isImage3D = texture.Type == TextureType::TEXTURE_2D_ARRAY;
+
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
+    if (OpenGLHelpers::IsCompressedTextureFormat(texture.Format) && imageSize != 0)
+    {
+        if (isImage3D)
+        {
+            CHECK_GRAPHICS_BACKEND_FUNC(glCompressedTexImage3D(target, level, internalFormat, width, height, depth, 0, imageSize, pixelsData))
+        }
+        else
+        {
+            CHECK_GRAPHICS_BACKEND_FUNC(glCompressedTexImage2D(target, level, internalFormat, width, height, 0, imageSize, pixelsData))
+        }
+    }
+    else
+    {
+        GLenum pixelFormat = OpenGLHelpers::ToTextureFormat(texture.Format);
+        GLenum dataType = OpenGLHelpers::ToTextureDataType(texture.Format);
+        if (isImage3D)
+        {
+            CHECK_GRAPHICS_BACKEND_FUNC(glTexImage3D(target, level, internalFormat, width, height, depth, 0, pixelFormat, dataType, pixelsData))
+        }
+        else
+        {
+            CHECK_GRAPHICS_BACKEND_FUNC(glTexImage2D(target, level, internalFormat, width, height, 0, pixelFormat, dataType, pixelsData))
+        }
+    }
 }
 
-void GraphicsBackendOpenGL::SetSamplerParameterFloatArray(GraphicsBackendSampler sampler, SamplerParameter parameter, const float *valueArray)
+void GraphicsBackendOpenGL::DownloadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, void *outPixels)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameterfv(sampler.Sampler, Cast(parameter), valueArray))
+    GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
+    GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, slice);
+
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
+    if (OpenGLHelpers::IsCompressedTextureFormat(texture.Format))
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetCompressedTexImage(target, level, outPixels))
+    }
+    else
+    {
+        GLenum pixelFormat = OpenGLHelpers::ToTextureFormat(texture.Format);
+        GLenum dataType = OpenGLHelpers::ToTextureDataType(texture.Format);
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetTexImage(target, level, pixelFormat, dataType, outPixels))
+    }
 }
 
-void GraphicsBackendOpenGL::GetTextureLevelParameterInt(TextureTarget target, int level, TextureLevelParameter parameter, int *outValues)
+TextureInternalFormat GraphicsBackendOpenGL::GetTextureFormat(const GraphicsBackendTexture &texture)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetTexLevelParameteriv(Cast(target), level, Cast(parameter), outValues))
+    GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
+    GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, 0);
+
+    GLint internalFormat;
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
+    CHECK_GRAPHICS_BACKEND_FUNC(glGetTexLevelParameteriv(target, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat))
+    return OpenGLHelpers::FromTextureInternalFormat(internalFormat);
 }
 
-void GraphicsBackendOpenGL::TextureImage2D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int border, TexturePixelFormat pixelFormat, TextureDataType dataType,
-                                     const void *pixelsData)
+int GraphicsBackendOpenGL::GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glTexImage2D(Cast(target), level, Cast(textureFormat), width, height, border, Cast(pixelFormat), Cast(dataType), pixelsData))
-}
+    GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
+    GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, 0);
 
-void GraphicsBackendOpenGL::TextureImage3D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, TexturePixelFormat pixelFormat, TextureDataType dataType,
-                                     const void *pixelsData)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glTexImage3D(Cast(target), level, Cast(textureFormat), width, height, depth, border, Cast(pixelFormat), Cast(dataType), pixelsData))
-}
+    int size = 0;
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
+    if (OpenGLHelpers::IsCompressedTextureFormat(texture.Format))
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetTexLevelParameteriv(target, 0, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size))
+    }
 
-void GraphicsBackendOpenGL::TextureCompressedImage2D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int border, int imageSize, const void *pixelsData)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glCompressedTexImage2D(Cast(target), level, Cast(textureFormat), width, height, border, imageSize, pixelsData))
-}
-
-void GraphicsBackendOpenGL::TextureCompressedImage3D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, int imageSize, const void *pixelsData)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glCompressedTexImage3D(Cast(target), level, Cast(textureFormat), width, height, depth, border, imageSize, pixelsData))
-}
-
-void GraphicsBackendOpenGL::GetTextureImage(TextureTarget target, int level, TexturePixelFormat pixelFormat, TextureDataType dataType, void *outPixels)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetTexImage(Cast(target), level, Cast(pixelFormat), Cast(dataType), outPixels))
-}
-
-void GraphicsBackendOpenGL::GetCompressedTextureImage(TextureTarget target, int level, void *outPixels)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetCompressedTexImage(Cast(target), level, outPixels))
-}
-
-void GraphicsBackendOpenGL::SetActiveTextureUnit(TextureUnit unit)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glActiveTexture(Cast(unit)))
+    return size;
 }
 
 void GraphicsBackendOpenGL::GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr)
@@ -409,23 +286,23 @@ void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 
 void GraphicsBackendOpenGL::BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(ToOpenGLBufferBindTarget(target), buffer.Buffer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(OpenGLHelpers::ToBufferBindTarget(target), buffer.Buffer))
 }
 
 void GraphicsBackendOpenGL::BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
-    auto bindTarget = ToOpenGLBufferBindTarget(buffer.BindTarget);
+    auto bindTarget = OpenGLHelpers::ToBufferBindTarget(buffer.BindTarget);
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(bindTarget, buffer.Buffer))
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBufferRange(bindTarget, bindings.VertexIndex, buffer.Buffer, offset, size))
 }
 
 void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
 {
-    GLenum bindTarget = ToOpenGLBufferBindTarget(buffer.BindTarget);
+    GLenum bindTarget = OpenGLHelpers::ToBufferBindTarget(buffer.BindTarget);
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(bindTarget, buffer.Buffer))
     if (!buffer.IsDataInitialized)
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(bindTarget, buffer.Size, nullptr, ToOpenGLBufferUsageHint(buffer.UsageHint)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(bindTarget, buffer.Size, nullptr, OpenGLHelpers::ToBufferUsageHint(buffer.UsageHint)))
         buffer.IsDataInitialized = true;
     }
     CHECK_GRAPHICS_BACKEND_FUNC(glBufferSubData(bindTarget, offset, size, data))
@@ -433,7 +310,7 @@ void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long of
 
 void GraphicsBackendOpenGL::CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glCopyBufferSubData(ToOpenGLBufferBindTarget(sourceTarget), ToOpenGLBufferBindTarget(destinationTarget), sourceOffset, destinationOffset, size))
+    CHECK_GRAPHICS_BACKEND_FUNC(glCopyBufferSubData(OpenGLHelpers::ToBufferBindTarget(sourceTarget), OpenGLHelpers::ToBufferBindTarget(destinationTarget), sourceOffset, destinationOffset, size))
 }
 
 GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
@@ -450,7 +327,7 @@ GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBack
     for (const auto &descriptor : vertexAttributes)
     {
         CHECK_GRAPHICS_BACKEND_FUNC(glEnableVertexAttribArray(descriptor.Index))
-        CHECK_GRAPHICS_BACKEND_FUNC(glVertexAttribPointer(descriptor.Index, descriptor.Dimensions, ToOpenGLVertexAttributeDataType(descriptor.DataType), descriptor.IsNormalized ? GL_TRUE : GL_FALSE, descriptor.Stride, reinterpret_cast<const void *>(descriptor.Offset)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glVertexAttribPointer(descriptor.Index, descriptor.Dimensions, OpenGLHelpers::ToVertexAttributeDataType(descriptor.DataType), descriptor.IsNormalized ? GL_TRUE : GL_FALSE, descriptor.Stride, reinterpret_cast<const void *>(descriptor.Offset)))
     }
 
     return geometry;
@@ -533,7 +410,7 @@ void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height)
 GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string &source)
 {
     GraphicsBackendShaderObject shaderObject{};
-    shaderObject.ShaderObject = CHECK_GRAPHICS_BACKEND_FUNC(glCreateShader(ToOpenGLShaderType(shaderType)))
+    shaderObject.ShaderObject = CHECK_GRAPHICS_BACKEND_FUNC(glCreateShader(OpenGLHelpers::ToShaderType(shaderType)))
 
     auto *sourceChar = source.c_str();
     CHECK_GRAPHICS_BACKEND_FUNC(glShaderSource(shaderObject.ShaderObject, 1, &sourceChar, nullptr))
@@ -549,7 +426,7 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
         std::string logMsg(infoLogLength + 1, ' ');
         CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderInfoLog(shaderObject.ShaderObject, infoLogLength, nullptr, &logMsg[0]))
 
-        throw std::runtime_error(GetShaderTypeName(shaderType) + " shader compilation failed with errors:\n" + logMsg);
+        throw std::runtime_error(OpenGLHelpers::GetShaderTypeName(shaderType) + " shader compilation failed with errors:\n" + logMsg);
     }
 
     return shaderObject;
@@ -616,7 +493,7 @@ void GraphicsBackendOpenGL::IntrospectProgram(GraphicsBackendProgram program, st
     int uniformCount;
     CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_ACTIVE_UNIFORMS, &uniformCount))
 
-    TextureUnit textureUnit = TextureUnit::TEXTURE0;
+    int binding = 0;
     for (unsigned int i = 0; i < uniformCount; ++i)
     {
         int blockIndex;
@@ -639,8 +516,9 @@ void GraphicsBackendOpenGL::IntrospectProgram(GraphicsBackendProgram program, st
         if (UniformDataTypeUtils::IsTexture(uniformInfo.Type))
         {
             uniformInfo.IsTexture = true;
-            uniformInfo.TextureUnit = textureUnit;
-            textureUnit = TextureUnitUtils::Next(textureUnit);
+            uniformInfo.HasSampler = true;
+            uniformInfo.TextureBindings = GraphicsBackendResourceBindings{binding, binding};
+            ++binding;
         }
 
         uniforms[uniformName] = uniformInfo;
@@ -891,25 +769,25 @@ void GraphicsBackendOpenGL::SetClearDepth(double depth)
 void GraphicsBackendOpenGL::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArrays(ToOpenGLPrimitiveType(primitiveType), firstIndex, count))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArrays(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, count))
 }
 
 void GraphicsBackendOpenGL::DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArraysInstanced(ToOpenGLPrimitiveType(primitiveType), firstIndex, indicesCount, instanceCount))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArraysInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, instanceCount))
 }
 
 void GraphicsBackendOpenGL::DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElements(ToOpenGLPrimitiveType(primitiveType), elementsCount, ToOpenGLIndicesDataType(dataType), nullptr))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElements(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr))
 }
 
 void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElementsInstanced(ToOpenGLPrimitiveType(primitiveType), elementsCount, ToOpenGLIndicesDataType(dataType), nullptr, instanceCount))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElementsInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr, instanceCount))
 }
 
 bool GraphicsBackendOpenGL::SupportShaderStorageBuffer()

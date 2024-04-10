@@ -20,7 +20,7 @@ void CheckTexture(std::shared_ptr<Texture2D> &_texture)
     int height = Graphics::GetScreenHeight();
     if (!_texture || _texture->GetWidth() != width || _texture->GetHeight() != height)
     {
-        _texture = Texture2D::Create(width, height, TextureInternalFormat::SRGB_ALPHA, TexturePixelFormat::RGBA, TextureDataType::UNSIGNED_BYTE);
+        _texture = Texture2D::Create(width, height, TextureInternalFormat::SRGB_ALPHA);
         _texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
     }
 }

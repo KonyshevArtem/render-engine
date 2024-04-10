@@ -23,31 +23,24 @@ public:
     GraphicsBackendName GetName() override;
     void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) override;
 
-    void GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr) override;
-    void GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr) override;
-    void DeleteTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr) override;
-    void DeleteSamplers(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr) override;
+    GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format) override;
+    GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor) override;
+    void DeleteTexture(const GraphicsBackendTexture &texture) override;
+    void DeleteSampler(const GraphicsBackendSampler &sampler) override;
 
+    void BindTexture(const GraphicsBackendResourceBindings &bindings, int uniformLocation, const GraphicsBackendTexture &texture) override;
     void BindTexture(TextureType type, GraphicsBackendTexture texture) override;
-    void BindSampler(TextureUnit unit, GraphicsBackendSampler sampler) override;
+    void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) override;
 
     void GenerateMipmaps(TextureType type) override;
 
     void SetTextureParameterInt(TextureType type, TextureParameter parameter, int value) override;
-    void SetSamplerParameterInt(GraphicsBackendSampler sampler, SamplerParameter parameter, int value) override;
-    void SetSamplerParameterFloatArray(GraphicsBackendSampler sampler, SamplerParameter parameter, const float* valueArray) override;
 
-    void GetTextureLevelParameterInt(TextureTarget target, int level, TextureLevelParameter parameter, int* outValues) override;
+    void UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData) override;
+    void DownloadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, void *outPixels) override;
+    TextureInternalFormat GetTextureFormat(const GraphicsBackendTexture &texture) override;
+    int GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice) override;
 
-    void TextureImage2D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int border, TexturePixelFormat pixelFormat, TextureDataType dataType, const void* pixelsData) override;
-    void TextureImage3D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, TexturePixelFormat pixelFormat, TextureDataType dataType, const void* pixelsData) override;
-    void TextureCompressedImage2D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int border, int imageSize, const void* pixelsData) override;
-    void TextureCompressedImage3D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, int imageSize, const void* pixelsData) override;
-
-    void GetTextureImage(TextureTarget target, int level, TexturePixelFormat pixelFormat, TextureDataType dataType, void *outPixels) override;
-    void GetCompressedTextureImage(TextureTarget target, int level, void* outPixels) override;
-
-    void SetActiveTextureUnit(TextureUnit unit) override;
     void GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr) override;
     void DeleteFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr) override;
     void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer) override;

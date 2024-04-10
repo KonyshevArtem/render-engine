@@ -4,20 +4,8 @@
 #include "graphics_backend_api.h"
 #include "texture_compressor_backend.h"
 #include "texture_compressor_formats.h"
-#include "game_window.h"
 
-TextureType textureType;
-std::vector<std::string> texturePaths;
-TextureInternalFormat textureFormat;
-int colorType;
-bool generateMips;
-
-void Render(int width, int height)
-{
-    TextureCompressorBackend::CompressTexture(texturePaths, textureType, colorType,
-                                              textureFormat, generateMips);
-    exit(0);
-}
+#include <GLFW/glfw3.h>
 
 void PrintHelp()
 {
@@ -53,21 +41,45 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    GameWindow window(1, 1, Render, nullptr, nullptr);
+    if (!glfwInit())
+    {
+        return 1;
+    }
 
-    GraphicsBackend::Current()->Init();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR_VERSION);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_MINOR_VERSION);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    textureType = static_cast<TextureType>(std::stoi(argv[1]));
-    colorType = std::stoi(argv[2]);
-    textureFormat = static_cast<TextureInternalFormat>(std::stoi(argv[3]));
-    generateMips = std::stoi(argv[4]) == 1;
+    GLFWwindow* window = glfwCreateWindow(1, 1, "RenderEngine", nullptr, nullptr);
+    if (!window)
+    {
+        return 1;
+    }
 
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
+
+    GraphicsBackend::Init(nullptr, "OpenGL");
+
+    auto textureType = static_cast<TextureType>(std::stoi(argv[1]));
+    int colorType = std::stoi(argv[2]);
+    auto textureFormat = static_cast<TextureInternalFormat>(std::stoi(argv[3]));
+    bool generateMips = std::stoi(argv[4]) == 1;
+
+    std::vector<std::string> texturePaths;
     for (int i = 5; i < argc; ++i)
     {
         texturePaths.emplace_back(argv[i]);
     }
 
-    window.BeginMainLoop();
+    while (!glfwWindowShouldClose(window))
+    {
+        TextureCompressorBackend::CompressTexture(texturePaths, textureType, colorType, textureFormat, generateMips);
+        break;
+    }
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
 
     return 0;
 }

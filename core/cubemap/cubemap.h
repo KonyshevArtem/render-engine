@@ -21,7 +21,7 @@ public:
     Cubemap &operator=(Cubemap &&) = delete;
 
 private:
-    Cubemap(unsigned int width, unsigned int height, unsigned int mipLevels);
+    Cubemap(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int mipLevels);
 
     static std::shared_ptr<Cubemap> CreateDefaultCubemap(unsigned char *pixels);
 

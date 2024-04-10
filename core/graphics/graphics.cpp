@@ -252,8 +252,8 @@ namespace Graphics
 
         if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
         {
-            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGB16F, TexturePixelFormat::RGB, TextureDataType::FLOAT);
-            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, TexturePixelFormat::DEPTH_COMPONENT, TextureDataType::FLOAT);
+            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGB16F);
+            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT);
         }
 
         auto debugGroup = GraphicsBackendDebug::DebugGroup("Render Frame");
@@ -438,13 +438,10 @@ namespace Graphics
             return;
 
         const auto& uniformInfo = it->second;
-        if (!uniformInfo.IsTexture)
-            return;
-
-        texture.Bind(uniformInfo.TextureUnit);
-
-        auto unitIndex = TextureUnitUtils::TextureUnitToIndex(uniformInfo.TextureUnit);
-        SetUniform(uniforms, name, &unitIndex);
+        if (uniformInfo.IsTexture)
+        {
+            texture.Bind(uniformInfo.TextureBindings, uniformInfo.HasSampler, uniformInfo.Location);
+        }
     }
 
     void SetPropertyBlock(const PropertyBlock &propertyBlock, const ShaderPass &shaderPass)

@@ -2,7 +2,6 @@
 
 #include "graphics_backend_api_metal.h"
 #include "graphics_backend_debug.h"
-#include "enums/texture_unit.h"
 #include "enums/uniform_data_type.h"
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
@@ -15,44 +14,12 @@
 #include "types/graphics_backend_geometry.h"
 #include "types/graphics_backend_uniform_info.h"
 #include "types/graphics_backend_buffer_info.h"
+#include "helpers/metal_helpers.h"
 #include "debug.h"
 
-#define NS_PRIVATE_IMPLEMENTATION
-#define MTL_PRIVATE_IMPLEMENTATION
 #include "Metal/Metal.hpp"
 
 NS::Error *s_Error;
-
-MTL::PrimitiveType ToMetalPrimitiveType(PrimitiveType primitiveType)
-{
-    switch (primitiveType)
-    {
-        case PrimitiveType::POINTS:
-            return MTL::PrimitiveType::PrimitiveTypePoint;
-        case PrimitiveType::LINE_STRIP:
-            return MTL::PrimitiveType::PrimitiveTypeLineStrip;
-        case PrimitiveType::LINES:
-            return MTL::PrimitiveType::PrimitiveTypeLine;
-        case PrimitiveType::TRIANGLE_STRIP:
-            return MTL::PrimitiveType::PrimitiveTypeTriangleStrip;
-        case PrimitiveType::TRIANGLES:
-            return MTL::PrimitiveType::PrimitiveTypeTriangle;
-        default:
-            return MTL::PrimitiveType::PrimitiveTypeTriangle;
-    }
-}
-
-MTL::IndexType ToMetalIndicesDataType(IndicesDataType dataType)
-{
-    switch (dataType)
-    {
-        case IndicesDataType::UNSIGNED_BYTE:
-        case IndicesDataType::UNSIGNED_SHORT:
-            return MTL::IndexType::IndexTypeUInt16;
-        case IndicesDataType::UNSIGNED_INT:
-            return MTL::IndexType::IndexTypeUInt32;
-    }
-}
 
 void GraphicsBackendMetal::Init(void *device)
 {
@@ -86,28 +53,95 @@ void GraphicsBackendMetal::PlatformDependentSetup(void *commandBufferPtr, void *
     m_BackbufferDescriptor = reinterpret_cast<MTL::RenderPassDescriptor*>(backbufferDescriptor);
 }
 
-void GraphicsBackendMetal::GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr)
+GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format)
 {
+    auto descriptor = MTL::TextureDescriptor::alloc()->init();
+    descriptor->setWidth(width);
+    descriptor->setHeight(height);
+    descriptor->setPixelFormat(MetalHelpers::ToTextureInternalFormat(format));
+    descriptor->setTextureType(MetalHelpers::ToTextureType(type));
+    descriptor->setStorageMode(MTL::StorageModeManaged);
+    descriptor->setUsage(MTL::ResourceUsageSample | MTL::ResourceUsageRead);
+
+    auto metalTexture = m_Device->newTexture(descriptor);
+    descriptor->release();
+
+    GraphicsBackendTexture texture{};
+    texture.Texture = reinterpret_cast<uint64_t>(metalTexture);
+    texture.Type = type;
+    texture.Format = format;
+    return texture;
 }
 
-void GraphicsBackendMetal::GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr)
+GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor)
 {
+    auto descriptor = MTL::SamplerDescriptor::alloc()->init();
+
+    auto wrap = MetalHelpers::ToTextureWrapMode(wrapMode);
+    descriptor->setRAddressMode(wrap);
+    descriptor->setSAddressMode(wrap);
+    descriptor->setTAddressMode(wrap);
+
+    auto filtering = MetalHelpers::ToTextureFilteringMode(filteringMode);
+    descriptor->setMinFilter(filtering);
+    descriptor->setMagFilter(filtering);
+
+    if (borderColor != nullptr)
+    {
+        auto border = MetalHelpers::ToTextureBorderColor(borderColor);
+        descriptor->setBorderColor(border);
+    }
+
+    auto metalSampler = m_Device->newSamplerState(descriptor);
+    descriptor->release();
+
+    GraphicsBackendSampler sampler{};
+    sampler.Sampler = reinterpret_cast<uint64_t>(metalSampler);
+    return sampler;
 }
 
-void GraphicsBackendMetal::DeleteTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr)
+void GraphicsBackendMetal::DeleteTexture(const GraphicsBackendTexture &texture)
 {
+    auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
+    metalTexture->release();
 }
 
-void GraphicsBackendMetal::DeleteSamplers(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr)
+void GraphicsBackendMetal::DeleteSampler(const GraphicsBackendSampler &sampler)
 {
+    auto metalSampler = reinterpret_cast<MTL::SamplerState*>(sampler.Sampler);
+    metalSampler->release();
+}
+
+void GraphicsBackendMetal::BindTexture(const GraphicsBackendResourceBindings &bindings, int uniformLocation, const GraphicsBackendTexture &texture)
+{
+    auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
+
+    if (bindings.VertexIndex >= 0)
+    {
+        m_CurrentCommandEncoder->setVertexTexture(metalTexture, bindings.VertexIndex);
+    }
+    if (bindings.FragmentIndex >= 0)
+    {
+        m_CurrentCommandEncoder->setFragmentTexture(metalTexture, bindings.FragmentIndex);
+    }
 }
 
 void GraphicsBackendMetal::BindTexture(TextureType type, GraphicsBackendTexture texture)
 {
 }
 
-void GraphicsBackendMetal::BindSampler(TextureUnit unit, GraphicsBackendSampler sampler)
+void GraphicsBackendMetal::BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler)
 {
+    auto metalSampler = reinterpret_cast<MTL::SamplerState *>(sampler.Sampler);
+
+    if (bindings.VertexIndex >= 0)
+    {
+        m_CurrentCommandEncoder->setVertexSamplerState(metalSampler, bindings.VertexIndex);
+    }
+    if (bindings.FragmentIndex >= 0)
+    {
+        m_CurrentCommandEncoder->setFragmentSamplerState(metalSampler, bindings.FragmentIndex);
+    }
 }
 
 void GraphicsBackendMetal::GenerateMipmaps(TextureType type)
@@ -118,46 +152,24 @@ void GraphicsBackendMetal::SetTextureParameterInt(TextureType type, TextureParam
 {
 }
 
-void GraphicsBackendMetal::SetSamplerParameterInt(GraphicsBackendSampler sampler, SamplerParameter parameter, int value)
+void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData)
+{
+    auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
+    metalTexture->replaceRegion(MTL::Region::Make3D(0, 0, depth, width, height, 1), level, slice, pixelsData, imageSize / height, 0);
+}
+
+void GraphicsBackendMetal::DownloadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, void *outPixels)
 {
 }
 
-void GraphicsBackendMetal::SetSamplerParameterFloatArray(GraphicsBackendSampler sampler, SamplerParameter parameter, const float *valueArray)
+TextureInternalFormat GraphicsBackendMetal::GetTextureFormat(const GraphicsBackendTexture &texture)
 {
+    return TextureInternalFormat::SRGB_ALPHA;
 }
 
-void GraphicsBackendMetal::GetTextureLevelParameterInt(TextureTarget target, int level, TextureLevelParameter parameter, int *outValues)
+int GraphicsBackendMetal::GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice)
 {
-}
-
-void GraphicsBackendMetal::TextureImage2D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int border, TexturePixelFormat pixelFormat, TextureDataType dataType,
-                                           const void *pixelsData)
-{
-}
-
-void GraphicsBackendMetal::TextureImage3D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, TexturePixelFormat pixelFormat, TextureDataType dataType,
-                                           const void *pixelsData)
-{
-}
-
-void GraphicsBackendMetal::TextureCompressedImage2D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int border, int imageSize, const void *pixelsData)
-{
-}
-
-void GraphicsBackendMetal::TextureCompressedImage3D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, int imageSize, const void *pixelsData)
-{
-}
-
-void GraphicsBackendMetal::GetTextureImage(TextureTarget target, int level, TexturePixelFormat pixelFormat, TextureDataType dataType, void *outPixels)
-{
-}
-
-void GraphicsBackendMetal::GetCompressedTextureImage(TextureTarget target, int level, void *outPixels)
-{
-}
-
-void GraphicsBackendMetal::SetActiveTextureUnit(TextureUnit unit)
-{
+    return 0;
 }
 
 void GraphicsBackendMetal::GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr)
@@ -356,16 +368,18 @@ void ParseArguments(NS::Array *arguments, std::unordered_map<std::string, Graphi
     for (int i = 0; i < arguments->count(); ++i)
     {
         auto argument = reinterpret_cast<MTL::Argument*>(arguments->object(i));
-        if (argument->bufferDataType() == MTL::DataType::DataTypeStruct)
-        {
-            auto bufferName = argument->name()->utf8String();
-            auto bufferIndex = argument->index();
 
-            auto it = buffers.find(bufferName);
+        auto type = argument->type();
+        auto name = argument->name()->utf8String();
+        auto index = argument->index();
+
+        if (type == MTL::ArgumentType::ArgumentTypeBuffer)
+        {
+            auto it = buffers.find(name);
             if (it != buffers.end())
             {
                 auto bindings = it->second->GetBinding();
-                SetBindingIndex(bindings, bufferIndex, isVertexShader);
+                SetBindingIndex(bindings, index, isVertexShader);
                 it->second->SetBindings(bindings);
             }
             else
@@ -383,10 +397,45 @@ void ParseArguments(NS::Array *arguments, std::unordered_map<std::string, Graphi
                 auto buffer = std::make_shared<GraphicsBackendBufferInfo>(GraphicsBackendBufferInfo::BufferType::SHADER_STORAGE, bufferSize, variables);
 
                 GraphicsBackendResourceBindings bindings;
-                SetBindingIndex(bindings, bufferIndex, isVertexShader);
+                SetBindingIndex(bindings, index, isVertexShader);
                 buffer->SetBindings(bindings);
 
-                buffers[bufferName] = buffer;
+                buffers[name] = buffer;
+            }
+        }
+        else if (type == MTL::ArgumentType::ArgumentTypeTexture)
+        {
+            auto it = uniforms.find(name);
+            if (it != uniforms.end())
+            {
+                SetBindingIndex(it->second.TextureBindings, index, isVertexShader);
+            }
+            else
+            {
+                GraphicsBackendUniformInfo uniformInfo;
+                uniformInfo.IsTexture = true;
+                SetBindingIndex(uniformInfo.TextureBindings, index, isVertexShader);
+
+                uniforms[name] = uniformInfo;
+            }
+        }
+        else if (type == MTL::ArgumentType::ArgumentTypeSampler)
+        {
+            bool textureFound = false;
+            for (auto &it : uniforms)
+            {
+                auto &info = it.second;
+                if (isVertexShader && info.TextureBindings.VertexIndex == index ||
+                    !isVertexShader && info.TextureBindings.FragmentIndex == index)
+                {
+                    info.HasSampler = true;
+                    textureFound = true;
+                }
+            }
+
+            if (!textureFound)
+            {
+                Debug::LogErrorFormat("Sampler %1% on index %2% is declared before or without a texture", {name, std::to_string(index)});
             }
         }
     }
@@ -424,25 +473,25 @@ void GraphicsBackendMetal::SetClearDepth(double depth)
 void GraphicsBackendMetal::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
 {
     m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
-    m_CurrentCommandEncoder->drawPrimitives(ToMetalPrimitiveType(primitiveType), firstIndex, count);
+    m_CurrentCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
 }
 
 void GraphicsBackendMetal::DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
     m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
-    m_CurrentCommandEncoder->drawPrimitives(ToMetalPrimitiveType(primitiveType), firstIndex, indicesCount, indicesCount);
+    m_CurrentCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, indicesCount);
 }
 
 void GraphicsBackendMetal::DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType)
 {
     m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
-    m_CurrentCommandEncoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(elementsCount), ToMetalIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0);
+    m_CurrentCommandEncoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0);
 }
 
 void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
     m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
-    m_CurrentCommandEncoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(elementsCount), ToMetalIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0, instanceCount);
+    m_CurrentCommandEncoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0, instanceCount);
 }
 
 bool GraphicsBackendMetal::SupportShaderStorageBuffer()

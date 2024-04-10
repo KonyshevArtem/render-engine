@@ -1,18 +1,11 @@
 #include "cubemap.h"
 #include "debug.h"
 #include "texture/texture_binary_reader.h"
-#include "enums/texture_target.h"
-#include "enums/texture_data_type.h"
 
 #include <vector>
 
-TextureTarget GetTarget(int faceIndex)
-{
-    return static_cast<TextureTarget>(static_cast<int>(TextureTarget::CUBEMAP_FACE_POSITIVE_X) + faceIndex);
-}
-
-Cubemap::Cubemap(unsigned int width, unsigned int height, unsigned int mipLevels) :
-        Texture(TextureType::TEXTURE_CUBEMAP, width, height, 0, mipLevels)
+Cubemap::Cubemap(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int mipLevels) :
+        Texture(TextureType::TEXTURE_CUBEMAP, format, width, height, 0, mipLevels)
 {
 }
 
@@ -31,13 +24,13 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &path)
         return nullptr;
     }
 
-    std::shared_ptr<Cubemap> cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.Width, header.Height, header.MipCount));
+    std::shared_ptr<Cubemap> cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.TextureFormat, header.Width, header.Height, header.MipCount));
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
         for (int j = 0; j < header.MipCount; ++j)
         {
             auto pixels = reader.GetPixels(i, j);
-            cubemap->UploadPixels(pixels.data(), GetTarget(i), header.TextureFormat, header.PixelFormat, TextureDataType::UNSIGNED_BYTE, pixels.size(), j, header.IsCompressed);
+            cubemap->UploadPixels(pixels.data(), pixels.size(), 0, j, i);
         }
     }
 
@@ -50,7 +43,7 @@ std::shared_ptr<Cubemap> &Cubemap::White()
 
     if (white == nullptr)
     {
-        unsigned char pixels[3] = {255, 255, 255};
+        unsigned char pixels[4] = {255, 255, 255, 255};
         white = CreateDefaultCubemap(&pixels[0]);
     }
 
@@ -63,7 +56,7 @@ std::shared_ptr<Cubemap> &Cubemap::Black()
 
     if (black == nullptr)
     {
-        unsigned char pixels[3] = {0, 0, 0};
+        unsigned char pixels[4] = {0, 0, 0, 255};
         black = CreateDefaultCubemap(&pixels[0]);
     }
 
@@ -72,10 +65,10 @@ std::shared_ptr<Cubemap> &Cubemap::Black()
 
 std::shared_ptr<Cubemap> Cubemap::CreateDefaultCubemap(unsigned char *pixels)
 {
-    auto cubemap = std::shared_ptr<Cubemap>(new Cubemap(1, 1, 1));
+    auto cubemap = std::shared_ptr<Cubemap>(new Cubemap(TextureInternalFormat::SRGB_ALPHA, 1, 1, 1));
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
-        cubemap->UploadPixels(pixels, GetTarget(i), TextureInternalFormat::SRGB, TexturePixelFormat::RGB, TextureDataType::UNSIGNED_BYTE, 0, 0, false);
+        cubemap->UploadPixels(pixels, 0, 0, 0, 0);
     }
     return cubemap;
 }

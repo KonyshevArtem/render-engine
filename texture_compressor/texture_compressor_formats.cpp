@@ -1,7 +1,6 @@
 #include "texture_compressor_formats.h"
 
 #include <vector>
-#include <unordered_map>
 
 #include "lodepng.h"
 
@@ -19,14 +18,6 @@ namespace TextureCompressorFormats
                     {LCT_RGBA,       "RGBA"},
                     {LCT_GREY,       "GREY"},
                     {LCT_GREY_ALPHA, "GREY ALPHA"},
-            };
-
-    std::unordered_map<int, TexturePixelFormat> colorTypeToFormat =
-            {
-                    {LCT_RGB,        TexturePixelFormat::RGB},
-                    {LCT_RGBA,       TexturePixelFormat::RGBA},
-                    {LCT_GREY,       TexturePixelFormat::RED},
-                    {LCT_GREY_ALPHA, TexturePixelFormat::RG}
             };
 
     std::vector<std::pair<TextureInternalFormat, std::string>> textureFormats =
@@ -122,11 +113,6 @@ namespace TextureCompressorFormats
                     {TextureInternalFormat::COMPRESSED_RG_RGTC2, "RG RGTC2"},
                     {TextureInternalFormat::COMPRESSED_SIGNED_RG_RGTC2, "SIGNED RG RGTC2"},
             };
-
-    TexturePixelFormat GetPixelFormatByColorType(int colorType)
-    {
-        return colorTypeToFormat[colorType];
-    }
 
     std::string GetTextureFormatName(TextureInternalFormat format)
     {

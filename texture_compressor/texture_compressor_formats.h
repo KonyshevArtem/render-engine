@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include "enums/texture_type.h"
-#include "enums/texture_pixel_format.h"
 #include "enums/texture_internal_format.h"
 
 struct TextureTypeInfo
@@ -19,7 +18,6 @@ namespace TextureCompressorFormats
 {
     std::string GetTextureFormatName(TextureInternalFormat format);
     const TextureTypeInfo &GetTextureTypeInfo(TextureType textureType);
-    TexturePixelFormat GetPixelFormatByColorType(int colorType);
 
     const std::vector<TextureTypeInfo> &GetTextureTypesInfo();
     const std::vector<std::pair<int, std::string>> &GetInputFormats();

@@ -14,4 +14,4 @@ set(
 )
 
 add_executable(TextureCompressor ${TEXTURE_COMPRESSOR_SOURCES})
-target_link_libraries(TextureCompressor LodePNG tga-lib GameWindow GraphicsBackend)
+target_link_libraries(TextureCompressor LodePNG tga-lib GraphicsBackend ImGuiGLFW ImGuiOpenGL)

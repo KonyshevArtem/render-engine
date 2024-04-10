@@ -11,17 +11,12 @@
 #include <memory>
 
 #define FORWARD_DECLARE_ENUM(name) enum class name : GRAPHICS_BACKEND_TYPE_ENUM;
-FORWARD_DECLARE_ENUM(TextureType)
+enum class TextureType;
 FORWARD_DECLARE_ENUM(TextureParameter)
 FORWARD_DECLARE_ENUM(TextureTarget)
-FORWARD_DECLARE_ENUM(TextureLevelParameter)
-FORWARD_DECLARE_ENUM(TextureInternalFormat)
-FORWARD_DECLARE_ENUM(TexturePixelFormat)
-FORWARD_DECLARE_ENUM(TextureDataType)
-FORWARD_DECLARE_ENUM(TextureUnit)
+enum class TextureInternalFormat;
 FORWARD_DECLARE_ENUM(FramebufferAttachment)
 FORWARD_DECLARE_ENUM(FramebufferTarget)
-FORWARD_DECLARE_ENUM(SamplerParameter)
 enum class PrimitiveType;
 enum class BufferBindTarget;
 enum class VertexAttributeDataType;
@@ -39,6 +34,8 @@ enum class IndicesDataType;
 FORWARD_DECLARE_ENUM(ProgramResourceParameter)
 FORWARD_DECLARE_ENUM(BlitFramebufferMask)
 FORWARD_DECLARE_ENUM(BlitFramebufferFilter)
+enum class TextureWrapMode;
+enum class TextureFilteringMode;
 #undef FORWARD_DECLARE_ENUM
 
 class GraphicsBackendTexture;
@@ -64,31 +61,24 @@ public:
     virtual GraphicsBackendName GetName() = 0;
     virtual void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) = 0;
 
-    virtual void GenerateTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr) = 0;
-    virtual void GenerateSampler(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr) = 0;
-    virtual void DeleteTextures(uint32_t texturesCount, GraphicsBackendTexture *texturesPtr) = 0;
-    virtual void DeleteSamplers(uint32_t samplersCount, GraphicsBackendSampler *samplersPtr) = 0;
+    virtual GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format) = 0;
+    virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor) = 0;
+    virtual void DeleteTexture(const GraphicsBackendTexture &texture) = 0;
+    virtual void DeleteSampler(const GraphicsBackendSampler &sampler) = 0;
 
+    virtual void BindTexture(const GraphicsBackendResourceBindings &bindings, int uniformLocation, const GraphicsBackendTexture &texture) = 0;
     virtual void BindTexture(TextureType type, GraphicsBackendTexture texture) = 0;
-    virtual void BindSampler(TextureUnit unit, GraphicsBackendSampler sampler) = 0;
+    virtual void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) = 0;
 
     virtual void GenerateMipmaps(TextureType type) = 0;
 
     virtual void SetTextureParameterInt(TextureType type, TextureParameter parameter, int value) = 0;
-    virtual void SetSamplerParameterInt(GraphicsBackendSampler sampler, SamplerParameter parameter, int value) = 0;
-    virtual void SetSamplerParameterFloatArray(GraphicsBackendSampler sampler, SamplerParameter parameter, const float* valueArray) = 0;
 
-    virtual void GetTextureLevelParameterInt(TextureTarget target, int level, TextureLevelParameter parameter, int* outValues) = 0;
+    virtual void UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData) = 0;
+    virtual void DownloadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, void *outPixels) = 0;
+    virtual TextureInternalFormat GetTextureFormat(const GraphicsBackendTexture &texture) = 0;
+    virtual int GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice) = 0;
 
-    virtual void TextureImage2D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int border, TexturePixelFormat pixelFormat, TextureDataType dataType, const void* pixelsData) = 0;
-    virtual void TextureImage3D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, TexturePixelFormat pixelFormat, TextureDataType dataType, const void* pixelsData) = 0;
-    virtual void TextureCompressedImage2D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int border, int imageSize, const void* pixelsData) = 0;
-    virtual void TextureCompressedImage3D(TextureTarget target, int level, TextureInternalFormat textureFormat, int width, int height, int depth, int border, int imageSize, const void* pixelsData) = 0;
-
-    virtual void GetTextureImage(TextureTarget target, int level, TexturePixelFormat pixelFormat, TextureDataType dataType, void *outPixels) = 0;
-    virtual void GetCompressedTextureImage(TextureTarget target, int level, void* outPixels) = 0;
-
-    virtual void SetActiveTextureUnit(TextureUnit unit) = 0;
     virtual void GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr) = 0;
     virtual void DeleteFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr) = 0;
     virtual void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer) = 0;

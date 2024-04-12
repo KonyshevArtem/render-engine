@@ -1,8 +1,10 @@
 uniform samplerCube _Skybox;
 
-in vec3 CubemapUV;
+#include "skybox_shared.h"
+
+in Varyings vars;
 out vec4 outColor;
 
 void main(){
-    outColor = textureLod(_Skybox, CubemapUV, 0);
+    outColor = fragmentFunction(vars, _Skybox);
 }

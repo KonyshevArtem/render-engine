@@ -10,16 +10,9 @@ struct Attributes
     float3 positionOS ATTRIBUTE(0);
 };
 
-struct Varyings
+float4 vertexFunction(Attributes attributes, PerDrawDataStruct perDrawData, CameraDataStruct cameraData)
 {
-    float4 positionCS SV_POSITION;
-};
-
-Varyings vertexFunction(Attributes attributes, PerDrawDataStruct perDrawData, CameraDataStruct cameraData)
-{
-    Varyings vars;
-    vars.positionCS = cameraData._VPMatrix * perDrawData._ModelMatrix * float4(attributes.positionOS, 1.0);
-    return vars;
+    return cameraData._VPMatrix * perDrawData._ModelMatrix * float4(attributes.positionOS, 1.0);
 }
 
 half4_type fragmentFunction()

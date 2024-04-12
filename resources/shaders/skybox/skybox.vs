@@ -1,14 +1,16 @@
 layout(location = 0) in vec3 vertPositionOS;
 
-out vec3 CubemapUV;
+#include "skybox_shared.h"
 
-#include "../common/per_draw_data.cg"
-#include "../common/camera_data.cg"
+out Varyings vars;
 
-void main(){
-    gl_Position = _VPMatrix * _ModelMatrix * vec4(vertPositionOS, 1);
-    // make z equals w so it would be 1 after perspective divide to render skybox behind all geometry
-    gl_Position = gl_Position.xyww;
+DECLARE_UBO(CameraData);
+DECLARE_UBO(PerDrawData);
 
-    CubemapUV = vertPositionOS;
+void main()
+{
+    Attributes attributes;
+    attributes.positionOS = vertPositionOS;
+
+    vars = vertexFunction(attributes, PerDrawDataVar, CameraDataVar);
 }

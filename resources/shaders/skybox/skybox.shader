@@ -2,8 +2,11 @@
   "passes": [
     {
       "cull": "Front",
-      "vertex": "skybox.vs",
-      "fragment": "skybox.fs"
+      "opengl": {
+        "vertex": "skybox.vs",
+        "fragment": "skybox.fs"
+      },
+      "metal": "skybox.metal"
     }
   ]
 }

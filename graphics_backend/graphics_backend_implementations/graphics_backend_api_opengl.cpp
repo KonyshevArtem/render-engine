@@ -172,7 +172,7 @@ void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &text
     bool isImage3D = texture.Type == TextureType::TEXTURE_2D_ARRAY;
 
     CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
-    if (OpenGLHelpers::IsCompressedTextureFormat(texture.Format) && imageSize != 0)
+    if (IsCompressedTextureFormat(texture.Format) && imageSize != 0)
     {
         if (isImage3D)
         {
@@ -204,7 +204,7 @@ void GraphicsBackendOpenGL::DownloadImagePixels(const GraphicsBackendTexture &te
     GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, slice);
 
     CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
-    if (OpenGLHelpers::IsCompressedTextureFormat(texture.Format))
+    if (IsCompressedTextureFormat(texture.Format))
     {
         CHECK_GRAPHICS_BACKEND_FUNC(glGetCompressedTexImage(target, level, outPixels))
     }
@@ -234,9 +234,9 @@ int GraphicsBackendOpenGL::GetTextureSize(const GraphicsBackendTexture &texture,
 
     int size = 0;
     CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
-    if (OpenGLHelpers::IsCompressedTextureFormat(texture.Format))
+    if (IsCompressedTextureFormat(texture.Format))
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetTexLevelParameteriv(target, 0, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size))
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetTexLevelParameteriv(target, level, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size))
     }
 
     return size;

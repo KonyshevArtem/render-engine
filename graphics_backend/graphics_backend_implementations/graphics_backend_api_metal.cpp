@@ -151,7 +151,18 @@ void GraphicsBackendMetal::GenerateMipmaps(const GraphicsBackendTexture &texture
 void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData)
 {
     auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
-    metalTexture->replaceRegion(MTL::Region::Make3D(0, 0, depth, width, height, 1), level, slice, pixelsData, imageSize / height, 0);
+    int bytesPerRow;
+    if (IsCompressedTextureFormat(texture.Format))
+    {
+        int blockSize = GetBlockSize(texture.Format);
+        int blocksPerRow = (width + (blockSize - 1)) / blockSize;
+        bytesPerRow = blocksPerRow * GetBlockBytes(texture.Format);
+    }
+    else
+    {
+        bytesPerRow = imageSize / height;
+    }
+    metalTexture->replaceRegion(MTL::Region::Make3D(0, 0, depth, width, height, 1), level, slice, pixelsData, bytesPerRow, 0);
 }
 
 void GraphicsBackendMetal::DownloadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, void *outPixels)

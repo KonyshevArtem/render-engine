@@ -173,6 +173,18 @@ MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat for
             return MTL::PixelFormat::PixelFormatDepth32Float;
         case TextureInternalFormat::DEPTH_STENCIL:
             return MTL::PixelFormat::PixelFormatDepth32Float_Stencil8;
+        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT1_EXT:
+            return MTL::PixelFormat::PixelFormatBC1_RGBA;
+        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT3_EXT:
+            return MTL::PixelFormat::PixelFormatBC2_RGBA;
+        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT5_EXT:
+            return MTL::PixelFormat::PixelFormatBC3_RGBA;
+        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+            return MTL::PixelFormat::PixelFormatBC1_RGBA_sRGB;
+        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+            return MTL::PixelFormat::PixelFormatBC2_RGBA_sRGB;
+        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+            return MTL::PixelFormat::PixelFormatBC3_RGBA_sRGB;
         default:
             return MTL::PixelFormat::PixelFormatInvalid;
     }

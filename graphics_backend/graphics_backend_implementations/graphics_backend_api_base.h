@@ -133,6 +133,10 @@ public:
 
     virtual GRAPHICS_BACKEND_TYPE_ENUM GetError() = 0;
     virtual const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) = 0;
+
+    bool IsCompressedTextureFormat(TextureInternalFormat format);
+    int GetBlockSize(TextureInternalFormat format);
+    int GetBlockBytes(TextureInternalFormat format);
 };
 
 

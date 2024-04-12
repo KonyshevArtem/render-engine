@@ -46,7 +46,6 @@ namespace OpenGLHelpers
     GLint ToTextureWrapMode(TextureWrapMode wrapMode);
     GLenum ToTextureTarget(TextureType type, int slice);
     void ToTextureFilteringMode(TextureFilteringMode filteringMode, GLint &outMinFilter, GLint &outMagFilter);
-    bool IsCompressedTextureFormat(TextureInternalFormat format);
 }
 
 #endif //RENDER_ENGINE_OPENGL_HELPERS_H

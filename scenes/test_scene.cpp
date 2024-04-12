@@ -297,10 +297,10 @@ void TestScene::UpdateInternal()
     {
         debugBaseMipLevel = baseMipLevel;
 
-        Skybox->SetBaseMipLevel(debugBaseMipLevel);
+        Skybox->SetMinMipLevel(debugBaseMipLevel);
         for (const auto& t: textures)
         {
-            t->SetBaseMipLevel(debugBaseMipLevel);
+            t->SetMinMipLevel(debugBaseMipLevel);
         }
     }
 #endif

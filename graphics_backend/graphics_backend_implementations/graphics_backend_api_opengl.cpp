@@ -94,16 +94,22 @@ void GraphicsBackendOpenGL::PlatformDependentSetup(void *commandBufferPtr, void 
 {
 }
 
-GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format)
+GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels)
 {
     GraphicsBackendTexture texture{};
     CHECK_GRAPHICS_BACKEND_FUNC(glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture)))
+
+    GLenum textureType = OpenGLHelpers::ToTextureType(type);
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(textureType, texture.Texture))
+    CHECK_GRAPHICS_BACKEND_FUNC(glTexParameteri(textureType, GL_TEXTURE_BASE_LEVEL, 0))
+    CHECK_GRAPHICS_BACKEND_FUNC(glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, mipLevels - 1))
+
     texture.Type = type;
     texture.Format = format;
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor)
+GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod)
 {
     GraphicsBackendSampler sampler{};
     CHECK_GRAPHICS_BACKEND_FUNC(glGenSamplers(1, reinterpret_cast<GLuint *>(&sampler.Sampler)))
@@ -122,6 +128,8 @@ GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrap
     {
         CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameterfv(sampler.Sampler, GL_TEXTURE_BORDER_COLOR, borderColor))
     }
+
+    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_LOD, minLod))
 
     return sampler;
 }
@@ -143,25 +151,17 @@ void GraphicsBackendOpenGL::BindTexture(const GraphicsBackendResourceBindings &b
     CHECK_GRAPHICS_BACKEND_FUNC(glUniform1i(uniformLocation, bindings.FragmentIndex))
 }
 
-void GraphicsBackendOpenGL::BindTexture(TextureType type, GraphicsBackendTexture texture)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(OpenGLHelpers::ToTextureType(type), texture.Texture))
-}
-
 void GraphicsBackendOpenGL::BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glActiveTexture(OpenGLHelpers::ToTextureUnit(bindings.FragmentIndex)))
     CHECK_GRAPHICS_BACKEND_FUNC(glBindSampler(bindings.FragmentIndex, sampler.Sampler))
 }
 
-void GraphicsBackendOpenGL::GenerateMipmaps(TextureType type)
+void GraphicsBackendOpenGL::GenerateMipmaps(const GraphicsBackendTexture &texture)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenerateMipmap(OpenGLHelpers::ToTextureType(type)))
-}
-
-void GraphicsBackendOpenGL::SetTextureParameterInt(TextureType type, TextureParameter parameter, int value)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glTexParameteri(OpenGLHelpers::ToTextureType(type), Cast(parameter), value))
+    GLenum textureType = OpenGLHelpers::ToTextureType(texture.Type);
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(textureType, texture.Texture))
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenerateMipmap(textureType))
 }
 
 void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData)

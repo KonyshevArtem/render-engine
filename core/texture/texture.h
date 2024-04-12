@@ -6,7 +6,6 @@
 #include "enums/texture_filtering_mode.h"
 #include "enums/framebuffer_attachment.h"
 #include "enums/framebuffer_target.h"
-#include "enums/texture_target.h"
 #include "enums/texture_internal_format.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
@@ -20,7 +19,7 @@ public:
 
     void Bind(const GraphicsBackendResourceBindings &bindings, bool bindSampler, int uniformLocation) const;
     void Attach(FramebufferTarget target, FramebufferAttachment attachment, int level, int layer) const;
-    void SetBaseMipLevel(unsigned int baseMipLevel) const;
+    void SetMinMipLevel(int minMipLevel);
     void SetWrapMode(TextureWrapMode wrapMode);
     void SetBorderColor(const Vector4 &color);
 
@@ -51,6 +50,8 @@ protected:
     void UploadPixels(void *pixels, int size, int depth, int mipLevel, int slice) const;
 
 private:
+    void RecreateSampler(bool deleteOld);
+
     unsigned int m_Width = 0;
     unsigned int m_Height = 0;
     unsigned int m_Depth = 0;
@@ -62,6 +63,7 @@ private:
     TextureWrapMode m_WrapMode;
     TextureFilteringMode m_FilteringMode;
     Vector4 m_BorderColor;
+    int m_MinLod;
 };
 
 #endif //RENDER_ENGINE_TEXTURE_H

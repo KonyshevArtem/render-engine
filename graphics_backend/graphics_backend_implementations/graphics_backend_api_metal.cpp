@@ -53,7 +53,7 @@ void GraphicsBackendMetal::PlatformDependentSetup(void *commandBufferPtr, void *
     m_BackbufferDescriptor = reinterpret_cast<MTL::RenderPassDescriptor*>(backbufferDescriptor);
 }
 
-GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format)
+GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels)
 {
     auto descriptor = MTL::TextureDescriptor::alloc()->init();
     descriptor->setWidth(width);
@@ -62,6 +62,7 @@ GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height
     descriptor->setTextureType(MetalHelpers::ToTextureType(type));
     descriptor->setStorageMode(MTL::StorageModeManaged);
     descriptor->setUsage(MTL::ResourceUsageSample | MTL::ResourceUsageRead);
+    descriptor->setMipmapLevelCount(mipLevels);
 
     auto metalTexture = m_Device->newTexture(descriptor);
     descriptor->release();
@@ -73,7 +74,7 @@ GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor)
+GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod)
 {
     auto descriptor = MTL::SamplerDescriptor::alloc()->init();
 
@@ -91,6 +92,9 @@ GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapM
         auto border = MetalHelpers::ToTextureBorderColor(borderColor);
         descriptor->setBorderColor(border);
     }
+
+    descriptor->setLodMinClamp(minLod);
+    descriptor->setMipFilter(MTL::SamplerMipFilter::SamplerMipFilterNearest);
 
     auto metalSampler = m_Device->newSamplerState(descriptor);
     descriptor->release();
@@ -126,10 +130,6 @@ void GraphicsBackendMetal::BindTexture(const GraphicsBackendResourceBindings &bi
     }
 }
 
-void GraphicsBackendMetal::BindTexture(TextureType type, GraphicsBackendTexture texture)
-{
-}
-
 void GraphicsBackendMetal::BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler)
 {
     auto metalSampler = reinterpret_cast<MTL::SamplerState *>(sampler.Sampler);
@@ -144,11 +144,7 @@ void GraphicsBackendMetal::BindSampler(const GraphicsBackendResourceBindings &bi
     }
 }
 
-void GraphicsBackendMetal::GenerateMipmaps(TextureType type)
-{
-}
-
-void GraphicsBackendMetal::SetTextureParameterInt(TextureType type, TextureParameter parameter, int value)
+void GraphicsBackendMetal::GenerateMipmaps(const GraphicsBackendTexture &texture)
 {
 }
 

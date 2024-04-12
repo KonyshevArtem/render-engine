@@ -9,7 +9,6 @@
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
 #include "enums/vertex_attribute_data_type.h"
-#include "enums/texture_target.h"
 #include "enums/texture_wrap_mode.h"
 #include "enums/texture_filtering_mode.h"
 

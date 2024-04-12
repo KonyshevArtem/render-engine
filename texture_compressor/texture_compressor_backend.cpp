@@ -12,8 +12,6 @@
 #include "tga.h"
 #include "debug.h"
 #include "graphics_backend_api.h"
-#include "enums/texture_target.h"
-#include "enums/texture_parameter.h"
 #include "types/graphics_backend_texture.h"
 #include "helpers/opengl_helpers.h"
 
@@ -168,23 +166,15 @@ namespace TextureCompressorBackend
         return true;
     }
 
-    bool TryLoadImagesAndSendToGPU(const GraphicsBackendTexture &texture, const std::vector<std::string> &pathStrings, int &width, int &height,
-                                   unsigned int slices, int &colorType, std::vector<int> &originalSizes)
+    bool TryLoadImages(const std::vector<std::string> &pathStrings, int &width, int &height, unsigned int slices,
+                       int &colorType, std::vector<std::vector<uint8_t>> &images)
     {
-        originalSizes.resize(slices);
+        images.resize(slices);
 
-        std::vector<uint8_t> pixels;
         for (int i = 0; i < slices; i++)
         {
             auto path = std::filesystem::path(pathStrings[i]);
-            if (TryGetImagePixels(path, pixels, width, height, colorType))
-            {
-                GraphicsBackend::Current()->UploadImagePixels(texture, 0, i, width, height, 0, 0, pixels.data());
-
-                originalSizes[i] = pixels.size();
-                pixels.clear();
-            }
-            else
+            if (!TryGetImagePixels(path, images[i], width, height, colorType))
             {
                 return false;
             }
@@ -193,7 +183,16 @@ namespace TextureCompressorBackend
         return true;
     }
 
-    std::vector<unsigned int> ExtractCompressedSizes(const GraphicsBackendTexture &texture, const TextureHeader &header, const std::vector<int> &originalSizes)
+    void UploadImagesToGPU(const GraphicsBackendTexture &texture, int width, int height, const std::vector<std::vector<uint8_t>> &images)
+    {
+        for (int i = 0; i < images.size(); ++i)
+        {
+            GraphicsBackend::Current()->UploadImagePixels(texture, 0, i, width, height, 0, images[i].size(), images[i].data());
+        }
+    }
+
+    std::vector<unsigned int> ExtractCompressedSizes(const GraphicsBackendTexture &texture, const TextureHeader &header,
+                                                     const std::vector<std::vector<uint8_t>> &images)
     {
         std::vector<unsigned int> sizes(header.Depth * header.MipCount);
         for (int i = 0; i < header.Depth; ++i)
@@ -203,7 +202,7 @@ namespace TextureCompressorBackend
                 int compressedSize = GraphicsBackend::Current()->GetTextureSize(texture, j, i);
                 if (compressedSize == 0)
                 {
-                    compressedSize = originalSizes[i] / (1 << j);
+                    compressedSize = images[i].size() / std::pow(4, j);
                 }
                 sizes[i * header.MipCount + j] = compressedSize;
             }
@@ -240,20 +239,20 @@ namespace TextureCompressorBackend
         TextureHeader header{};
         header.Depth = typeInfo.Count;
 
-        GraphicsBackendTexture texture = GraphicsBackend::Current()->CreateTexture(0, 0, textureType, textureFormat);
-
-        std::vector<int> originalSizes;
-        if (!TryLoadImagesAndSendToGPU(texture, pathStrings, header.Width, header.Height, header.Depth, colorType, originalSizes))
+        std::vector<std::vector<uint8_t>> images;
+        if (!TryLoadImages(pathStrings, header.Width, header.Height, header.Depth, colorType, images))
         {
             return;
         }
 
         header.MipCount = GetMipsCount(generateMips, header.Width, header.Height);
-        GraphicsBackend::Current()->SetTextureParameterInt(textureType, TextureParameter::BASE_LEVEL, 0);
-        GraphicsBackend::Current()->SetTextureParameterInt(textureType, TextureParameter::MAX_LEVEL, header.MipCount - 1);
+
+        GraphicsBackendTexture texture = GraphicsBackend::Current()->CreateTexture(0, 0, textureType, textureFormat, header.MipCount);
+        UploadImagesToGPU(texture, header.Width, header.Height, images);
+
         if (generateMips)
         {
-            GraphicsBackend::Current()->GenerateMipmaps(textureType);
+            GraphicsBackend::Current()->GenerateMipmaps(texture);
         }
 
         header.TextureFormat = GraphicsBackend::Current()->GetTextureFormat(texture);
@@ -263,7 +262,7 @@ namespace TextureCompressorBackend
         fout.open(outputPath, std::ios::binary | std::ios::out);
         fout.write(reinterpret_cast<char*>(&header), headerSize);
 
-        std::vector<unsigned int> sizes = ExtractCompressedSizes(texture, header, originalSizes);
+        std::vector<unsigned int> sizes = ExtractCompressedSizes(texture, header, images);
         fout.write(reinterpret_cast<char*>(&sizes[0]), sizes.size() * sizeof(unsigned int));
 
         unsigned int totalCompressedSize;
@@ -271,9 +270,9 @@ namespace TextureCompressorBackend
         fout.close();
 
         unsigned int totalOriginalSize = 0;
-        for (int size: originalSizes)
+        for (auto &img: images)
         {
-            totalOriginalSize += size;
+            totalOriginalSize += img.size();
         }
 
         std::cout << "\tTexture successfully compressed: " << outputPath

@@ -23,18 +23,15 @@ public:
     GraphicsBackendName GetName() override;
     void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) override;
 
-    GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format) override;
-    GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor) override;
+    GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels) override;
+    GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod) override;
     void DeleteTexture(const GraphicsBackendTexture &texture) override;
     void DeleteSampler(const GraphicsBackendSampler &sampler) override;
 
     void BindTexture(const GraphicsBackendResourceBindings &bindings, int uniformLocation, const GraphicsBackendTexture &texture) override;
-    void BindTexture(TextureType type, GraphicsBackendTexture texture) override;
     void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) override;
 
-    void GenerateMipmaps(TextureType type) override;
-
-    void SetTextureParameterInt(TextureType type, TextureParameter parameter, int value) override;
+    void GenerateMipmaps(const GraphicsBackendTexture &texture) override;
 
     void UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData) override;
     void DownloadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, void *outPixels) override;

@@ -12,8 +12,6 @@
 
 #define FORWARD_DECLARE_ENUM(name) enum class name : GRAPHICS_BACKEND_TYPE_ENUM;
 enum class TextureType;
-FORWARD_DECLARE_ENUM(TextureParameter)
-FORWARD_DECLARE_ENUM(TextureTarget)
 enum class TextureInternalFormat;
 FORWARD_DECLARE_ENUM(FramebufferAttachment)
 FORWARD_DECLARE_ENUM(FramebufferTarget)
@@ -26,7 +24,6 @@ FORWARD_DECLARE_ENUM(BlendFactor)
 FORWARD_DECLARE_ENUM(CullFace)
 FORWARD_DECLARE_ENUM(DepthFunction)
 enum class ShaderType;
-FORWARD_DECLARE_ENUM(ShaderParameter)
 FORWARD_DECLARE_ENUM(UniformDataType)
 FORWARD_DECLARE_ENUM(ClearMask)
 FORWARD_DECLARE_ENUM(CullFaceOrientation)
@@ -61,18 +58,15 @@ public:
     virtual GraphicsBackendName GetName() = 0;
     virtual void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) = 0;
 
-    virtual GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format) = 0;
-    virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor) = 0;
+    virtual GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels) = 0;
+    virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod) = 0;
     virtual void DeleteTexture(const GraphicsBackendTexture &texture) = 0;
     virtual void DeleteSampler(const GraphicsBackendSampler &sampler) = 0;
 
     virtual void BindTexture(const GraphicsBackendResourceBindings &bindings, int uniformLocation, const GraphicsBackendTexture &texture) = 0;
-    virtual void BindTexture(TextureType type, GraphicsBackendTexture texture) = 0;
     virtual void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) = 0;
 
-    virtual void GenerateMipmaps(TextureType type) = 0;
-
-    virtual void SetTextureParameterInt(TextureType type, TextureParameter parameter, int value) = 0;
+    virtual void GenerateMipmaps(const GraphicsBackendTexture &texture) = 0;
 
     virtual void UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData) = 0;
     virtual void DownloadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, void *outPixels) = 0;

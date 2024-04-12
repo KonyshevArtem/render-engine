@@ -5,8 +5,6 @@ add_library(GraphicsBackend
         graphics_backend_api.cpp
         graphics_backend_api.h
         enums/texture_type.h
-        enums/texture_parameter.h
-        enums/texture_target.h
         enums/texture_internal_format.h
         enums/framebuffer_target.h
         enums/framebuffer_attachment.h
@@ -21,7 +19,6 @@ add_library(GraphicsBackend
         enums/cull_face.h
         enums/depth_function.h
         enums/shader_type.h
-        enums/shader_parameter.h
         enums/uniform_data_type.h
         enums/clear_mask.h
         enums/cull_face_orientation.h

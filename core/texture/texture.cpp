@@ -1,6 +1,5 @@
 #include "texture.h"
 #include "graphics_backend_api.h"
-#include "enums/texture_parameter.h"
 
 Texture::Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels) :
         m_TextureType(textureType),
@@ -10,13 +9,11 @@ Texture::Texture(TextureType textureType, TextureInternalFormat format, unsigned
         m_MipLevels(mipLevels),
         m_WrapMode(TextureWrapMode::REPEAT),
         m_FilteringMode(mipLevels > 1 ? TextureFilteringMode::LINEAR_MIPMAP_NEAREST : TextureFilteringMode::LINEAR),
-        m_BorderColor(Vector4::Zero())
+        m_BorderColor(Vector4::Zero()),
+        m_MinLod(0)
 {
-    m_Texture = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_TextureType, format);
-    m_Sampler = GraphicsBackend::Current()->CreateSampler(m_WrapMode, m_FilteringMode, &m_BorderColor.x);
-    GraphicsBackend::Current()->BindTexture(m_TextureType, m_Texture);
-    GraphicsBackend::Current()->SetTextureParameterInt(m_TextureType, TextureParameter::MAX_LEVEL, mipLevels - 1);
-    GraphicsBackend::Current()->BindTexture(m_TextureType, GraphicsBackendTexture::NONE);
+    m_Texture = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_TextureType, format, mipLevels);
+    RecreateSampler(false);
 }
 
 Texture::~Texture()
@@ -46,27 +43,22 @@ void Texture::Attach(FramebufferTarget target, FramebufferAttachment attachment,
     }
 }
 
-void Texture::SetBaseMipLevel(unsigned int baseMipLevel) const
+void Texture::SetMinMipLevel(int minMipLevel)
 {
-    GraphicsBackend::Current()->BindTexture(m_TextureType, m_Texture);
-    GraphicsBackend::Current()->SetTextureParameterInt(m_TextureType, TextureParameter::BASE_LEVEL, baseMipLevel);
-    GraphicsBackend::Current()->BindTexture(m_TextureType, GraphicsBackendTexture::NONE);
+    m_MinLod = minMipLevel;
+    RecreateSampler(true);
 }
 
 void Texture::SetWrapMode(TextureWrapMode wrapMode)
 {
-    GraphicsBackend::Current()->DeleteSampler(m_Sampler);
-
     m_WrapMode = wrapMode;
-    m_Sampler = GraphicsBackend::Current()->CreateSampler(m_WrapMode, m_FilteringMode, &m_BorderColor.x);
+    RecreateSampler(true);
 }
 
 void Texture::SetBorderColor(const Vector4 &color)
 {
-    GraphicsBackend::Current()->DeleteSampler(m_Sampler);
-
     m_BorderColor = color;
-    m_Sampler = GraphicsBackend::Current()->CreateSampler(m_WrapMode, m_FilteringMode, &m_BorderColor.x);
+    RecreateSampler(true);
 }
 
 void Texture::UploadPixels(void *pixels, int size, int depth, int mipLevel, int slice) const
@@ -76,4 +68,14 @@ void Texture::UploadPixels(void *pixels, int size, int depth, int mipLevel, int 
     unsigned int height = m_Height / sizeMultiplier;
 
     GraphicsBackend::Current()->UploadImagePixels(m_Texture, mipLevel, slice, width, height, depth, size, pixels);
+}
+
+void Texture::RecreateSampler(bool deleteOld)
+{
+    if (deleteOld)
+    {
+        GraphicsBackend::Current()->DeleteSampler(m_Sampler);
+    }
+
+    m_Sampler = GraphicsBackend::Current()->CreateSampler(m_WrapMode, m_FilteringMode, &m_BorderColor.x, m_MinLod);
 }

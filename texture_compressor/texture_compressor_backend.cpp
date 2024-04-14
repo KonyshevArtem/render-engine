@@ -187,7 +187,8 @@ namespace TextureCompressorBackend
     {
         for (int i = 0; i < images.size(); ++i)
         {
-            GraphicsBackend::Current()->UploadImagePixels(texture, 0, i, width, height, 0, images[i].size(), images[i].data());
+            // pass images size 0 so OpenGL uploads using glTexImage for automatic compression
+            GraphicsBackend::Current()->UploadImagePixels(texture, 0, i, width, height, 0, 0, images[i].data());
         }
     }
 

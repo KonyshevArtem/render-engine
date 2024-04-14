@@ -42,6 +42,8 @@ public:
 
     void SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data) override;
     void CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size) override;
+    uint64_t GetMaxConstantBufferSize() override;
+    int GetConstantBufferOffsetAlignment() override;
 
     GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;
     void DeleteGeometry(const GraphicsBackendGeometry &geometry) override;

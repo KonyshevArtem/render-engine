@@ -86,6 +86,8 @@ public:
 
     virtual void SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data) = 0;
     virtual void CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size) = 0;
+    virtual uint64_t GetMaxConstantBufferSize() = 0;
+    virtual int GetConstantBufferOffsetAlignment() = 0;
 
     virtual GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;
     virtual void DeleteGeometry(const GraphicsBackendGeometry &geometry) = 0;

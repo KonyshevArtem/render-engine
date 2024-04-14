@@ -16,9 +16,14 @@ GraphicsBuffer::~GraphicsBuffer()
     GraphicsBackend::Current()->DeleteBuffer(m_Buffer);
 }
 
-void GraphicsBuffer::Bind(GraphicsBackendResourceBindings binding) const
+void GraphicsBuffer::Bind(const GraphicsBackendResourceBindings &bindings) const
 {
-    GraphicsBackend::Current()->BindBufferRange(m_Buffer, binding, 0, m_Size);
+    Bind(bindings, 0, m_Size);
+}
+
+void GraphicsBuffer::Bind(const GraphicsBackendResourceBindings &bindings, int offset, int size) const
+{
+    GraphicsBackend::Current()->BindBufferRange(m_Buffer, bindings, offset, size);
 }
 
 void GraphicsBuffer::Bind(BufferBindTarget bindTarget) const

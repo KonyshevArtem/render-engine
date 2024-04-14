@@ -44,7 +44,11 @@ namespace Graphics
     std::shared_ptr<GraphicsBuffer> lightingDataBlock;
     std::shared_ptr<GraphicsBuffer> cameraDataBlock;
     std::shared_ptr<GraphicsBuffer> shadowsDataBlock;
-    std::shared_ptr<GraphicsBuffer> perDrawDataBlock;
+
+    int perDrawDataStride = 0;
+    int currentPerDrawOffset = 0;
+    uint64_t perDrawCapacity = 100;
+    std::vector<std::shared_ptr<GraphicsBuffer>> perDrawDataBuffers;
 
     std::unique_ptr<ShadowCasterPass> shadowCasterPass;
     std::unique_ptr<RenderPass>       opaqueRenderPass;
@@ -84,6 +88,28 @@ namespace Graphics
         GraphicsBackend::Current()->GenerateFramebuffers(1, &framebuffer);
     }
 
+    void AddPerDrawDataBuffer()
+    {
+        uint64_t maxSize = GraphicsBackend::Current()->GetMaxConstantBufferSize();
+        int alignment = GraphicsBackend::Current()->GetConstantBufferOffsetAlignment();
+
+        perDrawDataStride = sizeof(PerDrawData);
+        if (perDrawDataStride % alignment != 0)
+        {
+            perDrawDataStride = (perDrawDataStride / alignment + 1) * alignment;
+        }
+
+        uint64_t bufferSize = perDrawDataStride * perDrawCapacity;
+        if (bufferSize > maxSize)
+        {
+            perDrawCapacity = maxSize / perDrawDataStride;
+            bufferSize = perDrawDataStride * perDrawCapacity;
+        }
+
+        auto buffer = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, bufferSize, BufferUsageHint::DYNAMIC_DRAW);
+        perDrawDataBuffers.push_back(buffer);
+    }
+
     void InitUniformBlocks()
     {
         // C++ struct memory layout must match GPU side struct
@@ -95,7 +121,7 @@ namespace Graphics
         cameraDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
         lightingDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
         shadowsDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
-        perDrawDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(PerDrawData), BufferUsageHint::DYNAMIC_DRAW);
+        AddPerDrawDataBuffer();
     }
 
     void InitPasses()
@@ -244,6 +270,8 @@ namespace Graphics
 
     void Render(int width, int height)
     {
+        currentPerDrawOffset = 0;
+
         static std::shared_ptr<Texture2D> cameraColorTarget;
         static std::shared_ptr<Texture2D> cameraDepthTarget;
 
@@ -327,10 +355,16 @@ namespace Graphics
 
     void SetupMatrices(const Matrix4x4 &modelMatrix)
     {
+        ++currentPerDrawOffset;
+        if (currentPerDrawOffset > perDrawCapacity)
+        {
+            AddPerDrawDataBuffer();
+        }
+
         PerDrawData perDrawData{};
         perDrawData.ModelMatrix = modelMatrix;
         perDrawData.ModelNormalMatrix = modelMatrix.Invert().Transpose();
-        perDrawDataBlock->SetData(&perDrawData, 0, sizeof(perDrawData));
+        perDrawDataBuffers[currentPerDrawOffset / perDrawCapacity]->SetData(&perDrawData, perDrawDataStride * currentPerDrawOffset, sizeof(perDrawData));
     }
 
     void SetupMatrices(const std::vector<Matrix4x4> &matrices)
@@ -463,7 +497,7 @@ namespace Graphics
             SetUniform(uniforms, pair.first, &pair.second);
     }
 
-    void SetGraphicsBuffer(const std::string &name, const std::shared_ptr<GraphicsBuffer> &buffer, const ShaderPass &shaderPass)
+    void SetGraphicsBuffer(const std::string &name, const std::shared_ptr<GraphicsBuffer> &buffer, int offset, int size, const ShaderPass &shaderPass)
     {
         if (!buffer)
         {
@@ -475,7 +509,15 @@ namespace Graphics
         auto it = buffers.find(name);
         if (it != buffers.end())
         {
-            buffer->Bind(it->second->GetBinding());
+            buffer->Bind(it->second->GetBinding(), offset, size);
+        }
+    }
+
+    void SetGraphicsBuffer(const std::string &name, const std::shared_ptr<GraphicsBuffer> &buffer, const ShaderPass &shaderPass)
+    {
+        if (buffer)
+        {
+            SetGraphicsBuffer(name, buffer, 0, buffer->GetSize(), shaderPass);
         }
     }
 
@@ -518,7 +560,7 @@ namespace Graphics
         SetGraphicsBuffer(GlobalConstants::LightingBufferName, lightingDataBlock, shaderPass);
         SetGraphicsBuffer(GlobalConstants::CameraDataBufferName, cameraDataBlock, shaderPass);
         SetGraphicsBuffer(GlobalConstants::ShadowsBufferName, shadowsDataBlock, shaderPass);
-        SetGraphicsBuffer(GlobalConstants::PerDrawDataBufferName, perDrawDataBlock, shaderPass);
+        SetGraphicsBuffer(GlobalConstants::PerDrawDataBufferName, perDrawDataBuffers[currentPerDrawOffset / perDrawCapacity], perDrawDataStride * currentPerDrawOffset, sizeof(PerDrawData), shaderPass);
         SetGraphicsBuffer(GlobalConstants::PerMaterialDataBufferName, perMaterialDataBlock, shaderPass);
         SetGraphicsBuffer(GlobalConstants::PerInstanceDataBufferName, perInstanceDataBuffer, shaderPass);
         if (GraphicsBackend::Current()->SupportShaderStorageBuffer())

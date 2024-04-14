@@ -245,6 +245,24 @@ void GraphicsBackendMetal::CopyBufferSubData(BufferBindTarget sourceTarget, Buff
 {
 }
 
+uint64_t GraphicsBackendMetal::GetMaxConstantBufferSize()
+{
+    static uint64_t size = 0;
+
+    if (size == 0)
+    {
+        size = m_Device->maxBufferLength();
+    }
+
+    return size;
+}
+
+int GraphicsBackendMetal::GetConstantBufferOffsetAlignment()
+{
+    // https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf
+    return 4;
+}
+
 GraphicsBackendGeometry GraphicsBackendMetal::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
     GraphicsBackendGeometry geometry{};

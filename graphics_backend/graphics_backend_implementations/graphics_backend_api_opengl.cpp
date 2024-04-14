@@ -305,12 +305,41 @@ void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long of
         CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(bindTarget, buffer.Size, nullptr, OpenGLHelpers::ToBufferUsageHint(buffer.UsageHint)))
         buffer.IsDataInitialized = true;
     }
-    CHECK_GRAPHICS_BACKEND_FUNC(glBufferSubData(bindTarget, offset, size, data))
+
+    void *contents = CHECK_GRAPHICS_BACKEND_FUNC(glMapBufferRange(bindTarget, offset, size, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT))
+    memcpy(contents, data, size);
+    CHECK_GRAPHICS_BACKEND_FUNC(glUnmapBuffer(bindTarget))
 }
 
 void GraphicsBackendOpenGL::CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glCopyBufferSubData(OpenGLHelpers::ToBufferBindTarget(sourceTarget), OpenGLHelpers::ToBufferBindTarget(destinationTarget), sourceOffset, destinationOffset, size))
+}
+
+uint64_t GraphicsBackendOpenGL::GetMaxConstantBufferSize()
+{
+    static uint64_t size = 0;
+
+    if (size == 0)
+    {
+        int tempSize;
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &tempSize))
+        size = tempSize;
+    }
+
+    return size;
+}
+
+int GraphicsBackendOpenGL::GetConstantBufferOffsetAlignment()
+{
+    static int alignment = 0;
+
+    if (alignment == 0)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment))
+    }
+
+    return alignment;
 }
 
 GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
@@ -831,7 +860,7 @@ GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackendOpenGL::GetError()
 
 const char *GraphicsBackendOpenGL::GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error)
 {
-    return reinterpret_cast<const char *>(gluGetString(error));
+    return reinterpret_cast<const char *>(gluErrorString(error));
 }
 
 int GraphicsBackendOpenGL::GetNameBufferSize(GraphicsBackendProgram program)

@@ -83,11 +83,6 @@ namespace Graphics
         GraphicsBackend::Current()->SetDepthRange(0, 1);
     }
 
-    void InitFramebuffer()
-    {
-        GraphicsBackend::Current()->GenerateFramebuffers(1, &framebuffer);
-    }
-
     void AddPerDrawDataBuffer()
     {
         uint64_t maxSize = GraphicsBackend::Current()->GetMaxConstantBufferSize();
@@ -163,7 +158,6 @@ namespace Graphics
 
         InitCulling();
         InitDepth();
-        InitFramebuffer();
         InitUniformBlocks();
         InitPasses();
         InitInstancing();
@@ -172,7 +166,6 @@ namespace Graphics
 
     void Shutdown()
     {
-        GraphicsBackend::Current()->DeleteFramebuffers(1, &framebuffer);
     }
 
     void SetLightingData(const std::vector<Light *> &_lights)
@@ -280,8 +273,8 @@ namespace Graphics
 
         if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
         {
-            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGB16F);
-            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT);
+            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true);
+            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, true);
         }
 
         auto debugGroup = GraphicsBackendDebug::DebugGroup("Render Frame");

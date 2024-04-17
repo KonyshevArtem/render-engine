@@ -790,3 +790,48 @@ void OpenGLHelpers::ToTextureFilteringMode(TextureFilteringMode filteringMode, G
         }
     }
 }
+
+GLenum OpenGLHelpers::ToFramebufferAttachment(FramebufferAttachment attachment)
+{
+    switch (attachment)
+    {
+        case FramebufferAttachment::COLOR_ATTACHMENT0:
+            return GL_COLOR_ATTACHMENT0;
+        case FramebufferAttachment::COLOR_ATTACHMENT1:
+            return GL_COLOR_ATTACHMENT1;
+        case FramebufferAttachment::COLOR_ATTACHMENT2:
+            return GL_COLOR_ATTACHMENT2;
+        case FramebufferAttachment::COLOR_ATTACHMENT3:
+            return GL_COLOR_ATTACHMENT3;
+        case FramebufferAttachment::COLOR_ATTACHMENT4:
+            return GL_COLOR_ATTACHMENT4;
+        case FramebufferAttachment::COLOR_ATTACHMENT5:
+            return GL_COLOR_ATTACHMENT5;
+        case FramebufferAttachment::COLOR_ATTACHMENT6:
+            return GL_COLOR_ATTACHMENT6;
+        case FramebufferAttachment::COLOR_ATTACHMENT7:
+            return GL_COLOR_ATTACHMENT7;
+        case FramebufferAttachment::COLOR_ATTACHMENT8:
+            return GL_COLOR_ATTACHMENT8;
+        case FramebufferAttachment::COLOR_ATTACHMENT9:
+            return GL_COLOR_ATTACHMENT9;
+        case FramebufferAttachment::COLOR_ATTACHMENT10:
+            return GL_COLOR_ATTACHMENT10;
+        case FramebufferAttachment::COLOR_ATTACHMENT11:
+            return GL_COLOR_ATTACHMENT11;
+        case FramebufferAttachment::COLOR_ATTACHMENT12:
+            return GL_COLOR_ATTACHMENT12;
+        case FramebufferAttachment::COLOR_ATTACHMENT13:
+            return GL_COLOR_ATTACHMENT13;
+        case FramebufferAttachment::COLOR_ATTACHMENT14:
+            return GL_COLOR_ATTACHMENT14;
+        case FramebufferAttachment::COLOR_ATTACHMENT15:
+            return GL_COLOR_ATTACHMENT15;
+        case FramebufferAttachment::DEPTH_ATTACHMENT:
+            return GL_DEPTH_ATTACHMENT;
+        case FramebufferAttachment::STENCIL_ATTACHMENT:
+            return GL_STENCIL_ATTACHMENT;
+        case FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT:
+            return GL_DEPTH_STENCIL_ATTACHMENT;
+    }
+}

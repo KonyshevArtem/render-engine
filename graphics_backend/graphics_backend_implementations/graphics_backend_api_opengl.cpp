@@ -14,13 +14,10 @@
 #include "types/graphics_backend_buffer_info.h"
 #include "helpers/opengl_helpers.h"
 
-#include <set>
 #include <type_traits>
 
 GraphicsBackendTexture GraphicsBackendTexture::NONE = GraphicsBackendTexture();
 GraphicsBackendFramebuffer GraphicsBackendFramebuffer::NONE = GraphicsBackendFramebuffer();
-
-std::set<std::string> extensions;
 
 #ifdef RENDER_ENGINE_EDITOR
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \
@@ -59,8 +56,10 @@ void GraphicsBackendOpenGL::Init(void *device)
     for (int i = 0; i < extensionsCount; ++i)
     {
         const unsigned char *ext = CHECK_GRAPHICS_BACKEND_FUNC(glGetStringi(GL_EXTENSIONS, i))
-        extensions.insert(std::string(reinterpret_cast<const char *>(ext)));
+        m_Extensions.insert(std::string(reinterpret_cast<const char *>(ext)));
     }
+
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(1, &m_Framebuffer));
 }
 
 int GraphicsBackendOpenGL::GetMajorVersion()
@@ -94,7 +93,7 @@ void GraphicsBackendOpenGL::PlatformDependentSetup(void *commandBufferPtr, void 
 {
 }
 
-GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels)
+GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget)
 {
     GraphicsBackendTexture texture{};
     CHECK_GRAPHICS_BACKEND_FUNC(glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture)))
@@ -106,6 +105,15 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
 
     texture.Type = type;
     texture.Format = format;
+
+    if (isRenderTarget)
+    {
+        for (int i = 0; i < mipLevels; ++i)
+        {
+            UploadImagePixels(texture, i, 0, width / (i + 1), height / (i + 1), 0, 0, nullptr);
+        }
+    }
+
     return texture;
 }
 
@@ -242,29 +250,29 @@ int GraphicsBackendOpenGL::GetTextureSize(const GraphicsBackendTexture &texture,
     return size;
 }
 
-void GraphicsBackendOpenGL::GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(count, reinterpret_cast<GLuint *>(framebuffersPtr)))
-}
-
-void GraphicsBackendOpenGL::DeleteFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteFramebuffers(count, reinterpret_cast<GLuint *>(framebuffersPtr)))
-}
-
 void GraphicsBackendOpenGL::BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(Cast(target), framebuffer.Framebuffer))
 }
 
-void GraphicsBackendOpenGL::SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level)
+void GraphicsBackendOpenGL::AttachTexture(FramebufferAttachment attachment, const GraphicsBackendTexture &texture, int level, int layer)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTexture(Cast(target), Cast(attachment), texture.Texture, level))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer))
+
+    GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(attachment);
+    if (texture.Type == TextureType::TEXTURE_2D)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, glAttachment, texture.Texture, level))
+    }
+    else
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTextureLayer(GL_DRAW_FRAMEBUFFER, glAttachment, texture.Texture, level, layer))
+    }
 }
 
-void GraphicsBackendOpenGL::SetFramebufferTextureLayer(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level, int layer)
+void GraphicsBackendOpenGL::AttachBackbuffer()
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTextureLayer(Cast(target), Cast(attachment), texture.Texture, level, layer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
 }
 
 GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint)
@@ -461,7 +469,7 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
     return shaderObject;
 }
 
-GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount)
+GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat)
 {
     GraphicsBackendProgram program{};
     program.Program = CHECK_GRAPHICS_BACKEND_FUNC(glCreateProgram())
@@ -821,8 +829,8 @@ void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry 
 
 bool GraphicsBackendOpenGL::SupportShaderStorageBuffer()
 {
-    static bool result = extensions.contains("GL_ARB_shader_storage_buffer_object") &&
-                         extensions.contains("GL_ARB_program_interface_query"); // required to query info about SSBO in shaders
+    static bool result = m_Extensions.contains("GL_ARB_shader_storage_buffer_object") &&
+                         m_Extensions.contains("GL_ARB_program_interface_query"); // required to query info about SSBO in shaders
     return result;
 }
 
@@ -890,6 +898,12 @@ std::unordered_map<std::string, int> GraphicsBackendOpenGL::GetUniformBlockVaria
         int uniformNameLength;
         CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniform(program.Program, uniformsIndices[i], nameBuffer.size(), &uniformNameLength, nullptr, nullptr, &nameBuffer[0]))
         std::string uniformName(nameBuffer.begin(), nameBuffer.begin() + uniformNameLength);
+
+        size_t lastDotPos = uniformName.find_last_of('.');
+        if (lastDotPos != std::string::npos)
+        {
+            uniformName = uniformName.substr(lastDotPos + 1);
+        }
 
         int uniformOffset;
         CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformsiv(program.Program, 1, reinterpret_cast<unsigned int *>(&uniformsIndices[i]), GL_UNIFORM_OFFSET, &uniformOffset))

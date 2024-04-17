@@ -5,6 +5,7 @@
 #include "enums/uniform_data_type.h"
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
+#include "enums/framebuffer_attachment.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "types/graphics_backend_buffer.h"
@@ -24,6 +25,7 @@ NS::Error *s_Error;
 void GraphicsBackendMetal::Init(void *device)
 {
     m_Device = reinterpret_cast<MTL::Device*>(device);
+    m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 }
 
 int GraphicsBackendMetal::GetMajorVersion()
@@ -53,15 +55,23 @@ void GraphicsBackendMetal::PlatformDependentSetup(void *commandBufferPtr, void *
     m_BackbufferDescriptor = reinterpret_cast<MTL::RenderPassDescriptor*>(backbufferDescriptor);
 }
 
-GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels)
+GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget)
 {
+    auto storageMode = isRenderTarget ? MTL::StorageModePrivate : MTL::StorageModeManaged;
+
+    MTL::TextureUsage textureUsage = MTL::TextureUsageShaderRead;
+    if (isRenderTarget)
+    {
+        textureUsage |= MTL::TextureUsageRenderTarget;
+    }
+
     auto descriptor = MTL::TextureDescriptor::alloc()->init();
     descriptor->setWidth(width);
     descriptor->setHeight(height);
     descriptor->setPixelFormat(MetalHelpers::ToTextureInternalFormat(format));
     descriptor->setTextureType(MetalHelpers::ToTextureType(type));
-    descriptor->setStorageMode(MTL::StorageModeManaged);
-    descriptor->setUsage(MTL::ResourceUsageSample | MTL::ResourceUsageRead);
+    descriptor->setStorageMode(storageMode);
+    descriptor->setUsage(textureUsage);
     descriptor->setMipmapLevelCount(mipLevels);
 
     auto metalTexture = m_Device->newTexture(descriptor);
@@ -179,24 +189,48 @@ int GraphicsBackendMetal::GetTextureSize(const GraphicsBackendTexture &texture, 
     return 0;
 }
 
-void GraphicsBackendMetal::GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr)
-{
-}
-
-void GraphicsBackendMetal::DeleteFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr)
-{
-}
-
 void GraphicsBackendMetal::BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer)
 {
 }
 
-void GraphicsBackendMetal::SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level)
+void GraphicsBackendMetal::AttachTexture(FramebufferAttachment attachment, const GraphicsBackendTexture &texture, int level, int layer)
 {
+    auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
+
+    bool isDepth = attachment == FramebufferAttachment::DEPTH_ATTACHMENT || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+    bool isStencil = attachment == FramebufferAttachment::STENCIL_ATTACHMENT || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+
+    if (isDepth || isStencil)
+    {
+        if (isDepth)
+        {
+            auto desc = m_RenderPassDescriptor->depthAttachment();
+            desc->setTexture(metalTexture);
+            desc->setLevel(level);
+            desc->setSlice(layer);
+        }
+        if (isStencil)
+        {
+            auto desc = m_RenderPassDescriptor->stencilAttachment();
+            desc->setTexture(metalTexture);
+            desc->setLevel(level);
+            desc->setSlice(layer);
+        }
+    }
+    else
+    {
+        auto desc = m_RenderPassDescriptor->colorAttachments()->object(static_cast<int>(attachment));
+        desc->setTexture(metalTexture);
+        desc->setLevel(level);
+        desc->setSlice(layer);
+    }
 }
 
-void GraphicsBackendMetal::SetFramebufferTextureLayer(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level, int layer)
+void GraphicsBackendMetal::AttachBackbuffer()
 {
+    m_RenderPassDescriptor->colorAttachments()->setObject(m_BackbufferDescriptor->colorAttachments()->object(0), 0);
+    m_RenderPassDescriptor->setDepthAttachment(m_BackbufferDescriptor->depthAttachment());
+    m_RenderPassDescriptor->setStencilAttachment(m_BackbufferDescriptor->stencilAttachment());
 }
 
 GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint)
@@ -338,11 +372,15 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
     return shaderObject;
 }
 
-GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount)
+GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat)
 {
     MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
-    desc->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB);
-    desc->setDepthAttachmentPixelFormat(MTL::PixelFormat::PixelFormatDepth32Float);
+
+    MTL::PixelFormat metalColorFormat = GetPSOPixelFormat(colorFormat, true, 0);
+    MTL::PixelFormat metalDepthFormat = GetPSOPixelFormat(depthFormat, false, 0);
+
+    desc->colorAttachments()->object(0)->setPixelFormat(metalColorFormat);
+    desc->setDepthAttachmentPixelFormat(metalDepthFormat);
 
     auto shader = shaders[0];
     auto *library = reinterpret_cast<MTL::Library *>(shader.ShaderObject);
@@ -364,6 +402,11 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShader
     MTL::AutoreleasedRenderPipelineReflection reflection;
     MTL::PipelineOption options = MTL::PipelineOptionArgumentInfo | MTL::PipelineOptionBufferTypeInfo;
     auto *pso = m_Device->newRenderPipelineState(desc, options, &reflection, &s_Error);
+
+    if (s_Error != nullptr)
+    {
+        throw std::runtime_error(s_Error->localizedDescription()->utf8String());
+    }
 
     GraphicsBackendProgram program{};
     program.Program = reinterpret_cast<uint64_t>(pso);
@@ -539,7 +582,7 @@ void GraphicsBackendMetal::PopDebugGroup()
 void GraphicsBackendMetal::BeginRenderPass()
 {
     EndRenderPass();
-    m_CurrentCommandEncoder = m_CommandBuffer->renderCommandEncoder(m_BackbufferDescriptor);
+    m_CurrentCommandEncoder = m_CommandBuffer->renderCommandEncoder(m_RenderPassDescriptor);
 }
 
 void GraphicsBackendMetal::EndRenderPass()
@@ -559,6 +602,24 @@ GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackendMetal::GetError()
 const char *GraphicsBackendMetal::GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error)
 {
     return nullptr;
+}
+
+MTL::PixelFormat GraphicsBackendMetal::GetPSOPixelFormat(TextureInternalFormat textureFormat, bool isColor, int index)
+{
+    MTL::PixelFormat metalFormat = MetalHelpers::ToTextureInternalFormat(textureFormat);
+    if (metalFormat == MTL::PixelFormat::PixelFormatInvalid)
+    {
+        if (isColor)
+        {
+            metalFormat = m_BackbufferDescriptor->colorAttachments()->object(index)->texture()->pixelFormat();
+        }
+        else
+        {
+            metalFormat = m_BackbufferDescriptor->depthAttachment()->texture()->pixelFormat();
+        }
+    }
+
+    return metalFormat;
 }
 
 #endif

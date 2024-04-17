@@ -5,7 +5,6 @@
 #include "enums/texture_wrap_mode.h"
 #include "enums/texture_filtering_mode.h"
 #include "enums/framebuffer_attachment.h"
-#include "enums/framebuffer_target.h"
 #include "enums/texture_internal_format.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
@@ -18,7 +17,7 @@ public:
     virtual ~Texture();
 
     void Bind(const GraphicsBackendResourceBindings &bindings, bool bindSampler, int uniformLocation) const;
-    void Attach(FramebufferTarget target, FramebufferAttachment attachment, int level, int layer) const;
+    void Attach(FramebufferAttachment attachment, int level, int layer) const;
     void SetMinMipLevel(int minMipLevel);
     void SetWrapMode(TextureWrapMode wrapMode);
     void SetBorderColor(const Vector4 &color);
@@ -45,7 +44,7 @@ public:
     Texture &operator=(Texture &&) = delete;
 
 protected:
-    Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels);
+    Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isRenderTarget);
 
     void UploadPixels(void *pixels, int size, int depth, int mipLevel, int slice) const;
 

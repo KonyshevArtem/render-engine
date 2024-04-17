@@ -1,10 +1,13 @@
 layout(location = 0) in vec3 position;
-layout(location = 2) in vec2 texcoord;
 
-out vec2 uv;
+#include "final_blit_shared.h"
+
+out Varyings vars;
 
 void main()
 {
-    gl_Position = vec4(position.xyz, 1);
-    uv = texcoord;
+    Attributes attributes;
+    attributes.positionOS = position;
+
+    vars = vertexFunction(attributes, gl_VertexID);
 }

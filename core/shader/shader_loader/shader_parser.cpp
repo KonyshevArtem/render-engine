@@ -80,6 +80,18 @@ namespace ShaderParser
         return found;
     }
 
+    template<typename T>
+    bool TryGetValue(const boost::json::object &object, const std::string &key, T &value, T defaultValue)
+    {
+        bool found = TryGetValue(object, key, value);
+        if (!found)
+        {
+            value = defaultValue;
+        }
+
+        return found;
+    }
+
     BlendInfo ParseBlendInfo(const boost::json::object &passInfoObject)
     {
         BlendInfo info{};
@@ -158,6 +170,9 @@ namespace ShaderParser
         }
 
         TryGetValue(passInfoObject, "metal", info.MetalShaderSourcePath);
+
+        TryGetValue(passInfoObject, "colorFormat", reinterpret_cast<int&>(info.ColorFormat), -1);
+        TryGetValue(passInfoObject, "depthFormat", reinterpret_cast<int&>(info.DepthFormat), -1);
 
         return info;
     }

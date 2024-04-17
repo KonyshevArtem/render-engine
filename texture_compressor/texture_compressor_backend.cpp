@@ -248,7 +248,7 @@ namespace TextureCompressorBackend
 
         header.MipCount = GetMipsCount(generateMips, header.Width, header.Height);
 
-        GraphicsBackendTexture texture = GraphicsBackend::Current()->CreateTexture(0, 0, textureType, textureFormat, header.MipCount);
+        GraphicsBackendTexture texture = GraphicsBackend::Current()->CreateTexture(0, 0, textureType, textureFormat, header.MipCount, false);
         UploadImagesToGPU(texture, header.Width, header.Height, images);
 
         if (generateMips)

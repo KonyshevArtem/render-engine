@@ -1,7 +1,7 @@
 #include "texture.h"
 #include "graphics_backend_api.h"
 
-Texture::Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels) :
+Texture::Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isRenderTarget) :
         m_TextureType(textureType),
         m_Width(width),
         m_Height(height),
@@ -12,7 +12,7 @@ Texture::Texture(TextureType textureType, TextureInternalFormat format, unsigned
         m_BorderColor(Vector4::Zero()),
         m_MinLod(0)
 {
-    m_Texture = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_TextureType, format, mipLevels);
+    m_Texture = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_TextureType, format, mipLevels, isRenderTarget);
     RecreateSampler(false);
 }
 
@@ -31,16 +31,9 @@ void Texture::Bind(const GraphicsBackendResourceBindings &bindings, bool bindSam
     }
 }
 
-void Texture::Attach(FramebufferTarget target, FramebufferAttachment attachment, int level, int layer) const
+void Texture::Attach(FramebufferAttachment attachment, int level, int layer) const
 {
-    if (m_TextureType == TextureType::TEXTURE_2D)
-    {
-        GraphicsBackend::Current()->SetFramebufferTexture(target, attachment, m_Texture, level);
-    }
-    else
-    {
-        GraphicsBackend::Current()->SetFramebufferTextureLayer(target, attachment, m_Texture, level, layer);
-    }
+    GraphicsBackend::Current()->AttachTexture(attachment, m_Texture, level, layer);
 }
 
 void Texture::SetMinMipLevel(int minMipLevel)

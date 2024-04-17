@@ -5,7 +5,7 @@
 #include <vector>
 
 Cubemap::Cubemap(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int mipLevels) :
-        Texture(TextureType::TEXTURE_CUBEMAP, format, width, height, 0, mipLevels)
+        Texture(TextureType::TEXTURE_CUBEMAP, format, width, height, 0, mipLevels, false)
 {
 }
 

@@ -11,6 +11,7 @@
 #include "enums/vertex_attribute_data_type.h"
 #include "enums/texture_wrap_mode.h"
 #include "enums/texture_filtering_mode.h"
+#include "enums/framebuffer_attachment.h"
 
 #include <string>
 
@@ -46,6 +47,7 @@ namespace OpenGLHelpers
     GLint ToTextureWrapMode(TextureWrapMode wrapMode);
     GLenum ToTextureTarget(TextureType type, int slice);
     void ToTextureFilteringMode(TextureFilteringMode filteringMode, GLint &outMinFilter, GLint &outMagFilter);
+    GLenum ToFramebufferAttachment(FramebufferAttachment attachment);
 }
 
 #endif //RENDER_ENGINE_OPENGL_HELPERS_H

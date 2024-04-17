@@ -2,6 +2,7 @@
 #define RENDER_ENGINE_GRAPHICS_BACKEND_API_OPENGL_H
 
 #include "graphics_backend_api_base.h"
+#include <set>
 
 class GraphicsBackendOpenGL : public GraphicsBackendBase
 {
@@ -14,7 +15,7 @@ public:
     GraphicsBackendName GetName() override;
     void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) override;
 
-    GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels) override;
+    GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget) override;
     GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod) override;
     void DeleteTexture(const GraphicsBackendTexture &texture) override;
     void DeleteSampler(const GraphicsBackendSampler &sampler) override;
@@ -29,11 +30,9 @@ public:
     TextureInternalFormat GetTextureFormat(const GraphicsBackendTexture &texture) override;
     int GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice) override;
 
-    void GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr) override;
-    void DeleteFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr) override;
     void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer) override;
-    void SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level) override;
-    void SetFramebufferTextureLayer(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level, int layer) override;
+    void AttachTexture(FramebufferAttachment attachment, const GraphicsBackendTexture &texture, int level, int layer) override;
+    void AttachBackbuffer() override;
 
     GraphicsBackendBuffer CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
@@ -64,7 +63,7 @@ public:
     void SetViewport(int x, int y, int width, int height) override;
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
-    GraphicsBackendProgram CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount) override;
+    GraphicsBackendProgram CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat) override;
     void DeleteProgram(GraphicsBackendProgram program) override;
     void UseProgram(GraphicsBackendProgram program) override;
     void SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose = false) override;
@@ -93,6 +92,9 @@ public:
     const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) override;
 
 private:
+    GLuint m_Framebuffer;
+    std::set<std::string> m_Extensions;
+
     int GetNameBufferSize(GraphicsBackendProgram program);
     std::unordered_map<std::string, int> GetUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockIndex, std::vector<char> nameBuffer);
     std::unordered_map<std::string, int> GetShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboIndex);

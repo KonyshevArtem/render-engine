@@ -1,7 +1,7 @@
 #include "texture_2d_array.h"
 
 Texture2DArray::Texture2DArray(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels) :
-        Texture(TextureType::TEXTURE_2D_ARRAY, format, width, height, depth, mipLevels)
+        Texture(TextureType::TEXTURE_2D_ARRAY, format, width, height, depth, mipLevels, false)
 {
 }
 

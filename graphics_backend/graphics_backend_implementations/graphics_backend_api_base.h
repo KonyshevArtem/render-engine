@@ -13,7 +13,7 @@
 #define FORWARD_DECLARE_ENUM(name) enum class name : GRAPHICS_BACKEND_TYPE_ENUM;
 enum class TextureType;
 enum class TextureInternalFormat;
-FORWARD_DECLARE_ENUM(FramebufferAttachment)
+enum class FramebufferAttachment;
 FORWARD_DECLARE_ENUM(FramebufferTarget)
 enum class PrimitiveType;
 enum class BufferBindTarget;
@@ -58,7 +58,7 @@ public:
     virtual GraphicsBackendName GetName() = 0;
     virtual void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) = 0;
 
-    virtual GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels) = 0;
+    virtual GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget) = 0;
     virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod) = 0;
     virtual void DeleteTexture(const GraphicsBackendTexture &texture) = 0;
     virtual void DeleteSampler(const GraphicsBackendSampler &sampler) = 0;
@@ -73,11 +73,9 @@ public:
     virtual TextureInternalFormat GetTextureFormat(const GraphicsBackendTexture &texture) = 0;
     virtual int GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice) = 0;
 
-    virtual void GenerateFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr) = 0;
-    virtual void DeleteFramebuffers(int count, GraphicsBackendFramebuffer *framebuffersPtr) = 0;
     virtual void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer) = 0;
-    virtual void SetFramebufferTexture(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level) = 0;
-    virtual void SetFramebufferTextureLayer(FramebufferTarget target, FramebufferAttachment attachment, GraphicsBackendTexture texture, int level, int layer) = 0;
+    virtual void AttachTexture(FramebufferAttachment attachment, const GraphicsBackendTexture &texture, int level, int layer) = 0;
+    virtual void AttachBackbuffer() = 0;
 
     virtual GraphicsBackendBuffer CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint) = 0;
     virtual void DeleteBuffer(const GraphicsBackendBuffer &buffer) = 0;
@@ -108,7 +106,7 @@ public:
     virtual void SetViewport(int x, int y, int width, int height) = 0;
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) = 0;
-    virtual GraphicsBackendProgram CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount) = 0;
+    virtual GraphicsBackendProgram CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;
     virtual void SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose = false) = 0;

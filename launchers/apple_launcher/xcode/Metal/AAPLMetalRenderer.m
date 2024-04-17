@@ -3,7 +3,7 @@
 #import "ImGuiWrapper.h"
 
 static const MTLPixelFormat AAPLDepthFormat = MTLPixelFormatDepth32Float;
-static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm;
 
 /// Main class that performs the rendering.
 @implementation AAPLMetalRenderer

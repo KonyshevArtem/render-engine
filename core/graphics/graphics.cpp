@@ -720,28 +720,28 @@ namespace Graphics
     void SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, int colorLevel, int colorLayer,
                           const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer)
     {
-        constexpr FramebufferTarget target = FramebufferTarget::DRAW_FRAMEBUFFER;
-
         if (!_colorAttachment && !_depthAttachment)
         {
-            GraphicsBackend::Current()->BindFramebuffer(target, GraphicsBackendFramebuffer::NONE);
+            GraphicsBackend::Current()->AttachBackbuffer();
             return;
         }
 
-        GraphicsBackend::Current()->BindFramebuffer(target, framebuffer);
-
         if (_colorAttachment)
-            _colorAttachment->Attach(target, FramebufferAttachment::COLOR_ATTACHMENT0, colorLevel, colorLayer);
+        {
+            _colorAttachment->Attach(FramebufferAttachment::COLOR_ATTACHMENT0, colorLevel, colorLayer);
+        }
         else
         {
-            GraphicsBackend::Current()->SetFramebufferTexture(target, FramebufferAttachment::COLOR_ATTACHMENT0, GraphicsBackendTexture::NONE, 0);
+            GraphicsBackend::Current()->AttachTexture(FramebufferAttachment::COLOR_ATTACHMENT0, GraphicsBackendTexture::NONE, 0, 0);
         }
 
         if (_depthAttachment)
-            _depthAttachment->Attach(target, FramebufferAttachment::DEPTH_ATTACHMENT, depthLevel, depthLayer);
+        {
+            _depthAttachment->Attach(FramebufferAttachment::DEPTH_ATTACHMENT, depthLevel, depthLayer);
+        }
         else
         {
-            GraphicsBackend::Current()->SetFramebufferTexture(target, FramebufferAttachment::DEPTH_ATTACHMENT, GraphicsBackendTexture::NONE, 0);
+            GraphicsBackend::Current()->AttachTexture(FramebufferAttachment::DEPTH_ATTACHMENT, GraphicsBackendTexture::NONE, 0, 0);
         }
     }
 
@@ -794,7 +794,7 @@ namespace Graphics
         }
 
         GraphicsBackend::Current()->BindFramebuffer(FramebufferTarget::READ_FRAMEBUFFER, framebuffer);
-        source->Attach(FramebufferTarget::READ_FRAMEBUFFER, attachment, 0, 0);
+        source->Attach(attachment, 0, 0);
 
         GraphicsBackend::Current()->BindFramebuffer(FramebufferTarget::DRAW_FRAMEBUFFER, GraphicsBackendFramebuffer::NONE);
         GraphicsBackend::Current()->BlitFramebuffer(0, 0, source->GetWidth(), source->GetHeight(), 0, 0, screenWidth, screenHeight, mask, filter);

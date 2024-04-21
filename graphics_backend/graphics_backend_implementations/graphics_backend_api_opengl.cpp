@@ -469,7 +469,8 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
     return shaderObject;
 }
 
-GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat)
+GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
+                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
     GraphicsBackendProgram program{};
     program.Program = CHECK_GRAPHICS_BACKEND_FUNC(glCreateProgram())

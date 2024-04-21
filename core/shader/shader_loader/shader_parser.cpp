@@ -52,45 +52,63 @@ const std::unordered_map<std::string, CullFace> CULL_FACE_MAP
                 {"Both",  CullFace::FRONT_AND_BACK},
         };
 
+
+template<typename TEnum>
+TEnum StringToEnum(std::string name, std::unordered_map<std::string, TEnum> map)
+{
+    auto it = map.find(name);
+    if (it != map.end())
+    {
+        return it->second;
+    }
+
+    throw std::runtime_error("[ShaderLoader] Unsupported string value: " + name);
+}
+
+template<typename T>
+bool TryGetValue(const boost::json::object &object, const std::string &key, T &value)
+{
+    auto it = object.find(key);
+    bool found = it != object.end();
+    if (found)
+    {
+        value = boost::json::value_to<T>(it->value());
+    }
+
+    return found;
+}
+
+template<typename T>
+bool TryGetValue(const boost::json::object &object, const std::string &key, T &value, T defaultValue)
+{
+    bool found = TryGetValue(object, key, value);
+    if (!found)
+    {
+        value = defaultValue;
+    }
+
+    return found;
+}
+
+GraphicsBackendVertexAttributeDescriptor tag_invoke(const boost::json::value_to_tag<GraphicsBackendVertexAttributeDescriptor> &,
+                                                    boost::json::value const &vertexAttributeValue)
+{
+    auto &vertexAttributeObject = vertexAttributeValue.as_object();
+
+    GraphicsBackendVertexAttributeDescriptor vertexAttribute{};
+
+    TryGetValue(vertexAttributeObject, "index", vertexAttribute.Index);
+    TryGetValue(vertexAttributeObject, "dimensions", vertexAttribute.Dimensions);
+    TryGetValue(vertexAttributeObject, "dataType", reinterpret_cast<int&>(vertexAttribute.DataType));
+    TryGetValue(vertexAttributeObject, "isNormalized", reinterpret_cast<bool&>(vertexAttribute.IsNormalized));
+    TryGetValue(vertexAttributeObject, "stride", vertexAttribute.Stride);
+    TryGetValue(vertexAttributeObject, "offset", vertexAttribute.Offset);
+
+    return vertexAttribute;
+}
+
 namespace ShaderParser
 {
-
-    template<typename TEnum>
-    TEnum StringToEnum(std::string name, std::unordered_map<std::string, TEnum> map)
-    {
-        auto it = map.find(name);
-        if (it != map.end())
-        {
-            return it->second;
-        }
-
-        throw std::runtime_error("[ShaderLoader] Unsupported string value: " + name);
-    }
-
-    template<typename T>
-    bool TryGetValue(const boost::json::object &object, const std::string &key, T &value)
-    {
-        auto it = object.find(key);
-        bool found = it != object.end();
-        if (found)
-        {
-            value = boost::json::value_to<T>(it->value());
-        }
-
-        return found;
-    }
-
-    template<typename T>
-    bool TryGetValue(const boost::json::object &object, const std::string &key, T &value, T defaultValue)
-    {
-        bool found = TryGetValue(object, key, value);
-        if (!found)
-        {
-            value = defaultValue;
-        }
-
-        return found;
-    }
 
     BlendInfo ParseBlendInfo(const boost::json::object &passInfoObject)
     {
@@ -173,6 +191,8 @@ namespace ShaderParser
 
         TryGetValue(passInfoObject, "colorFormat", reinterpret_cast<int&>(info.ColorFormat), -1);
         TryGetValue(passInfoObject, "depthFormat", reinterpret_cast<int&>(info.DepthFormat), -1);
+
+        TryGetValue(passInfoObject, "vertexAttributes", info.VertexAttributes);
 
         return info;
     }

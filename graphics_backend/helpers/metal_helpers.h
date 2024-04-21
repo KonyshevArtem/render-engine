@@ -7,6 +7,7 @@
 #include "enums/texture_internal_format.h"
 #include "enums/texture_wrap_mode.h"
 #include "enums/texture_filtering_mode.h"
+#include "enums/vertex_attribute_data_type.h"
 
 #include <cstdint>
 
@@ -19,6 +20,7 @@ namespace MTL
     enum SamplerAddressMode : std::uintptr_t;
     enum SamplerMinMagFilter : std::uintptr_t;
     enum SamplerBorderColor : std::uintptr_t;
+    enum VertexFormat : std::uintptr_t;
 }
 
 namespace MetalHelpers
@@ -30,6 +32,7 @@ namespace MetalHelpers
     MTL::SamplerAddressMode ToTextureWrapMode(TextureWrapMode wrapMode);
     MTL::SamplerMinMagFilter ToTextureFilteringMode(TextureFilteringMode filteringMode);
     MTL::SamplerBorderColor ToTextureBorderColor(const float color[4]);
+    MTL::VertexFormat ToVertexFormat(VertexAttributeDataType dataType, int dimensions, bool normalized);
 }
 
 #endif //RENDER_ENGINE_METAL_HELPERS_H

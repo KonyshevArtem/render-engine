@@ -372,7 +372,8 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
     return shaderObject;
 }
 
-GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat)
+GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
+                                                           const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
     MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
 
@@ -389,13 +390,16 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShader
 
     auto *vertDesc = desc->vertexDescriptor();
 
-    auto *attrDesc = vertDesc->attributes()->object(0);
-    attrDesc->setFormat(MTL::VertexFormatFloat3);
-    attrDesc->setBufferIndex(0);
-    attrDesc->setOffset(0);
+    for (const auto & attr : vertexAttributes)
+    {
+        auto *attrDesc = vertDesc->attributes()->object(attr.Index);
+        attrDesc->setFormat(MetalHelpers::ToVertexFormat(attr.DataType, attr.Dimensions, attr.IsNormalized));
+        attrDesc->setBufferIndex(0);
+        attrDesc->setOffset(attr.Offset);
+    }
 
     auto *layoutDesc = vertDesc->layouts()->object(0);
-    layoutDesc->setStride(12);
+    layoutDesc->setStride(vertexAttributes[0].Stride);
     layoutDesc->setStepRate(1);
     layoutDesc->setStepFunction(MTL::VertexStepFunctionPerVertex);
 

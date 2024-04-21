@@ -77,7 +77,7 @@ namespace ShaderLoader
                     shaders[0] = CompileShader(ShaderType::VERTEX_SHADER, partPath, keywordsDirectives, "");
                 }
 
-                auto program = GraphicsBackend::Current()->CreateProgram(&shaders[0], shadersCount, passInfo.ColorFormat, passInfo.DepthFormat);
+                auto program = GraphicsBackend::Current()->CreateProgram(&shaders[0], shadersCount, passInfo.ColorFormat, passInfo.DepthFormat, passInfo.VertexAttributes);
                 auto passPtr = std::make_shared<ShaderPass>(program, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.Tags, properties);
                 passes.push_back(passPtr);
             }

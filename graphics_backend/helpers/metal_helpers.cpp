@@ -232,3 +232,128 @@ MTL::SamplerBorderColor MetalHelpers::ToTextureBorderColor(const float color[4])
     }
     return MTL::SamplerBorderColor::SamplerBorderColorTransparentBlack;
 }
+
+MTL::VertexFormat MetalHelpers::ToVertexFormat(VertexAttributeDataType dataType, int dimensions, bool normalized)
+{
+    switch (dataType)
+    {
+        case VertexAttributeDataType::BYTE:
+            switch (dimensions)
+            {
+                case 1:
+                    return normalized ? MTL::VertexFormat::VertexFormatCharNormalized : MTL::VertexFormat::VertexFormatChar;
+                case 2:
+                    return normalized ? MTL::VertexFormat::VertexFormatChar2Normalized : MTL::VertexFormat::VertexFormatChar2;
+                case 3:
+                    return normalized ? MTL::VertexFormat::VertexFormatChar3Normalized : MTL::VertexFormat::VertexFormatChar3;
+                case 4:
+                    return normalized ? MTL::VertexFormat::VertexFormatChar4Normalized : MTL::VertexFormat::VertexFormatChar4;
+                default:
+                    return MTL::VertexFormat::VertexFormatInvalid;
+            }
+        case VertexAttributeDataType::UNSIGNED_BYTE:
+            switch (dimensions)
+            {
+                case 1:
+                    return normalized ? MTL::VertexFormat::VertexFormatUCharNormalized : MTL::VertexFormat::VertexFormatUChar;
+                case 2:
+                    return normalized ? MTL::VertexFormat::VertexFormatUChar2Normalized : MTL::VertexFormat::VertexFormatUChar2;
+                case 3:
+                    return normalized ? MTL::VertexFormat::VertexFormatUChar3Normalized : MTL::VertexFormat::VertexFormatUChar3;
+                case 4:
+                    return normalized ? MTL::VertexFormat::VertexFormatUChar4Normalized : MTL::VertexFormat::VertexFormatUChar4;
+                default:
+                    return MTL::VertexFormat::VertexFormatInvalid;
+            }
+        case VertexAttributeDataType::SHORT:
+            switch (dimensions)
+            {
+                case 1:
+                    return normalized ? MTL::VertexFormat::VertexFormatShortNormalized : MTL::VertexFormat::VertexFormatShort;
+                case 2:
+                    return normalized ? MTL::VertexFormat::VertexFormatShort2Normalized : MTL::VertexFormat::VertexFormatShort2;
+                case 3:
+                    return normalized ? MTL::VertexFormat::VertexFormatShort3Normalized : MTL::VertexFormat::VertexFormatShort3;
+                case 4:
+                    return normalized ? MTL::VertexFormat::VertexFormatShort4Normalized : MTL::VertexFormat::VertexFormatShort4;
+                default:
+                    return MTL::VertexFormat::VertexFormatInvalid;
+            }
+        case VertexAttributeDataType::UNSIGNED_SHORT:
+            switch (dimensions)
+            {
+                case 1:
+                    return normalized ? MTL::VertexFormat::VertexFormatUShortNormalized : MTL::VertexFormat::VertexFormatUShort;
+                case 2:
+                    return normalized ? MTL::VertexFormat::VertexFormatUShort2Normalized : MTL::VertexFormat::VertexFormatUShort2;
+                case 3:
+                    return normalized ? MTL::VertexFormat::VertexFormatUShort3Normalized : MTL::VertexFormat::VertexFormatUShort3;
+                case 4:
+                    return normalized ? MTL::VertexFormat::VertexFormatUShort4Normalized : MTL::VertexFormat::VertexFormatUShort4;
+                default:
+                    return MTL::VertexFormat::VertexFormatInvalid;
+            }
+        case VertexAttributeDataType::INT:
+            switch (dimensions)
+            {
+                case 1:
+                    return MTL::VertexFormat::VertexFormatInt;
+                case 2:
+                    return MTL::VertexFormat::VertexFormatInt2;
+                case 3:
+                    return MTL::VertexFormat::VertexFormatInt3;
+                case 4:
+                    return MTL::VertexFormat::VertexFormatInt4;
+                default:
+                    return MTL::VertexFormat::VertexFormatInvalid;
+            }
+        case VertexAttributeDataType::UNSIGNED_INT:
+            switch (dimensions)
+            {
+                case 1:
+                    return MTL::VertexFormat::VertexFormatUInt;
+                case 2:
+                    return MTL::VertexFormat::VertexFormatUInt2;
+                case 3:
+                    return MTL::VertexFormat::VertexFormatUInt3;
+                case 4:
+                    return MTL::VertexFormat::VertexFormatUInt4;
+                default:
+                    return MTL::VertexFormat::VertexFormatInvalid;
+            }
+        case VertexAttributeDataType::HALF_FLOAT:
+            switch (dimensions)
+            {
+                case 1:
+                    return MTL::VertexFormat::VertexFormatHalf;
+                case 2:
+                    return MTL::VertexFormat::VertexFormatHalf2;
+                case 3:
+                    return MTL::VertexFormat::VertexFormatHalf3;
+                case 4:
+                    return MTL::VertexFormat::VertexFormatHalf4;
+                default:
+                    return MTL::VertexFormat::VertexFormatInvalid;
+            }
+        case VertexAttributeDataType::FLOAT:
+            switch (dimensions)
+            {
+                case 1:
+                    return MTL::VertexFormat::VertexFormatFloat;
+                case 2:
+                    return MTL::VertexFormat::VertexFormatFloat2;
+                case 3:
+                    return MTL::VertexFormat::VertexFormatFloat3;
+                case 4:
+                    return MTL::VertexFormat::VertexFormatFloat4;
+                default:
+                    return MTL::VertexFormat::VertexFormatInvalid;
+            }
+        case VertexAttributeDataType::INT_2_10_10_10_REV:
+            return MTL::VertexFormat::VertexFormatInt1010102Normalized;
+        case VertexAttributeDataType::UNSIGNED_INT_2_10_10_10_REV:
+            return MTL::VertexFormat::VertexFormatUInt1010102Normalized;
+        default:
+            return MTL::VertexFormatInvalid;
+    }
+}

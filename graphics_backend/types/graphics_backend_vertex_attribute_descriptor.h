@@ -5,12 +5,12 @@
 
 struct GraphicsBackendVertexAttributeDescriptor
 {
-    char Index;
-    char Dimensions;
+    uint8_t Index;
+    uint8_t Dimensions;
     VertexAttributeDataType DataType;
-    char IsNormalized;
-    int Stride;
-    int Offset;
+    uint8_t IsNormalized;
+    uint64_t Stride;
+    uint64_t Offset;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_VERTEX_ATTRIBUTE_DESCRIPTOR_H

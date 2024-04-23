@@ -55,7 +55,7 @@ namespace ShaderLoader
             std::vector<std::shared_ptr<ShaderPass>> passes;
             for (auto &passInfo: passesInfo)
             {
-                GraphicsBackendShaderObject shaders[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT];
+                std::vector<GraphicsBackendShaderObject> shaders;
                 int shadersCount = 0;
 
                 if (GraphicsBackend::Current()->GetName() == GraphicsBackendName::OPENGL)
@@ -68,17 +68,16 @@ namespace ShaderLoader
                             continue;
 
                         auto partPath = _path.parent_path() / relativePath;
-                        shaders[shadersCount++] = CompileShader(shaderType, partPath, keywordsDirectives, SHADER_DIRECTIVES[i]);
+                        shaders.push_back(CompileShader(shaderType, partPath, keywordsDirectives, SHADER_DIRECTIVES[i]));
                     }
                 }
                 else
                 {
                     auto partPath = _path.parent_path() / passInfo.MetalShaderSourcePath;
-                    shaders[0] = CompileShader(ShaderType::VERTEX_SHADER, partPath, keywordsDirectives, "");
+                    shaders.push_back(CompileShader(ShaderType::VERTEX_SHADER, partPath, keywordsDirectives, ""));
                 }
 
-                auto program = GraphicsBackend::Current()->CreateProgram(&shaders[0], shadersCount, passInfo.ColorFormat, passInfo.DepthFormat, passInfo.VertexAttributes);
-                auto passPtr = std::make_shared<ShaderPass>(program, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.Tags, properties);
+                auto passPtr = std::make_shared<ShaderPass>(shaders, passInfo.VertexAttributes, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.ColorFormat, passInfo.DepthFormat, passInfo.Tags, properties);
                 passes.push_back(passPtr);
             }
 

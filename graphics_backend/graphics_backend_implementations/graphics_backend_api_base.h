@@ -106,7 +106,7 @@ public:
     virtual void SetViewport(int x, int y, int width, int height) = 0;
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) = 0;
-    virtual GraphicsBackendProgram CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;
+    virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;
     virtual void SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose = false) = 0;

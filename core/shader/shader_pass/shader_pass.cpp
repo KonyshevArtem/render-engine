@@ -72,21 +72,44 @@ void FillDefaultValuesPropertyBlock(const std::unordered_map<std::string, std::s
     }
 }
 
-ShaderPass::ShaderPass(GraphicsBackendProgram program, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
+ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
+                       BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
                        std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues) :
-        m_Program(program),
+        m_Shaders(std::move(shaders)),
         m_BlendInfo(blendInfo),
         m_CullInfo(cullInfo),
         m_DepthInfo(depthInfo),
+        m_ColorFormat(colorFormat),
+        m_DepthFormat(depthFormat),
         m_Tags(std::move(tags))
 {
-    GraphicsBackend::Current()->IntrospectProgram(m_Program, m_Uniforms, m_Buffers);
+    auto program = GraphicsBackend::Current()->CreateProgram(m_Shaders, m_ColorFormat, m_DepthFormat, vertexAttributes);
+    m_Programs[VertexAttributes::GetHash(vertexAttributes)] = program;
+
+    GraphicsBackend::Current()->IntrospectProgram(program, m_Uniforms, m_Buffers);
     FillDefaultValuesPropertyBlock(defaultValues, m_Uniforms, m_DefaultValuesBlock);
 }
 
 ShaderPass::~ShaderPass()
 {
-    GraphicsBackend::Current()->DeleteProgram(m_Program);
+    for (auto &pair : m_Programs)
+    {
+        GraphicsBackend::Current()->DeleteProgram(pair.second);
+    }
+}
+
+const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &vertexAttributes)
+{
+    auto hash = vertexAttributes.GetHash();
+    auto it = m_Programs.find(hash);
+    if (it != m_Programs.end())
+    {
+        return it->second;
+    }
+
+    auto program = GraphicsBackend::Current()->CreateProgram(m_Shaders, m_ColorFormat, m_DepthFormat, vertexAttributes.GetAttributes());
+    m_Programs[hash] = program;
+    return m_Programs.at(hash);
 }
 
 std::string ShaderPass::GetTagValue(const std::string &tag) const

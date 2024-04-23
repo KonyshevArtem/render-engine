@@ -469,15 +469,14 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
     return shaderObject;
 }
 
-GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
+GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
                                                             const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
     GraphicsBackendProgram program{};
     program.Program = CHECK_GRAPHICS_BACKEND_FUNC(glCreateProgram())
 
-    for (int i = 0; i < shadersCount; ++i)
+    for (auto &shader : shaders)
     {
-        auto shader = *(shaders + i);
         bool isShader = CHECK_GRAPHICS_BACKEND_FUNC(glIsShader(shader.ShaderObject))
         if (isShader)
         {
@@ -487,9 +486,8 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(GraphicsBackendShade
 
     CHECK_GRAPHICS_BACKEND_FUNC(glLinkProgram(program.Program))
 
-    for (int i = 0; i < shadersCount; ++i)
+    for (auto &shader : shaders)
     {
-        auto shader = *(shaders + i);
         bool isShader = CHECK_GRAPHICS_BACKEND_FUNC(glIsShader(shader.ShaderObject))
         if (isShader)
         {

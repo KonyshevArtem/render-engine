@@ -372,7 +372,7 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
     return shaderObject;
 }
 
-GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(GraphicsBackendShaderObject *shaders, int shadersCount, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
+GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
     MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();

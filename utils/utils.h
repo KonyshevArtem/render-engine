@@ -12,6 +12,7 @@ namespace Utils
     bool                         ReadFileBytes(const std::filesystem::path &_relativePath, std::vector<uint8_t> &bytes);
     void                         WriteFile(const std::filesystem::path &_relativePath, const std::string &_content);
     const std::filesystem::path &GetExecutableDirectory();
+    size_t                       HashCombine(size_t hashA, size_t hashB);
 }; // namespace Utils
 
 #endif //RENDER_ENGINE_UTILS_H

@@ -28,19 +28,18 @@ Mesh::Mesh(const std::vector<Vector3> &_vertices,
     auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(vertexSize * vertexCount, BufferBindTarget::ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
     auto indexBuffer = GraphicsBackend::Current()->CreateBuffer(indexSize, BufferBindTarget::ELEMENT_ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
 
-    std::vector<GraphicsBackendVertexAttributeDescriptor> attributes;
-    attributes.push_back({0, 3, VertexAttributeDataType::FLOAT, false, vertexSize, 0});
+    m_VertexAttributes.Add({0, 3, VertexAttributeDataType::FLOAT, false, vertexSize, 0});
     if (hasNormals)
     {
-        attributes.push_back({1, 3, VertexAttributeDataType::FLOAT, false, vertexSize, posSize});
+        m_VertexAttributes.Add({1, 3, VertexAttributeDataType::FLOAT, false, vertexSize, posSize});
     }
     if (hasUV)
     {
-        attributes.push_back({2, 2, VertexAttributeDataType::FLOAT, false, vertexSize, posSize + normalsSize});
+        m_VertexAttributes.Add({2, 2, VertexAttributeDataType::FLOAT, false, vertexSize, posSize + normalsSize});
     }
     if (hasTangents)
     {
-        attributes.push_back({3, 3, VertexAttributeDataType::FLOAT, false, vertexSize, posSize + normalsSize + uvSize});
+        m_VertexAttributes.Add({3, 3, VertexAttributeDataType::FLOAT, false, vertexSize, posSize + normalsSize + uvSize});
     }
 
     auto vertexData = std::vector<uint8_t>(vertexSize * vertexCount);
@@ -70,7 +69,7 @@ Mesh::Mesh(const std::vector<Vector3> &_vertices,
         }
     }
 
-    m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, attributes);
+    m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, m_VertexAttributes.GetAttributes());
 
     GraphicsBackend::Current()->SetBufferData(indexBuffer, 0, indexSize, _indexes.data());
     GraphicsBackend::Current()->SetBufferData(vertexBuffer, 0, vertexSize * vertexCount, vertexDataPtr);

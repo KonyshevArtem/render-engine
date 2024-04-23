@@ -2,8 +2,11 @@
 #define RENDER_ENGINE_SHADER_PASS_H
 
 #include "types/graphics_backend_program.h"
+#include "types/graphics_backend_shader_object.h"
+#include "enums/texture_internal_format.h"
 #include "shader/shader_structs.h"
 #include "property_block/property_block.h"
+#include "drawable_geometry/vertex_attributes/vertex_attributes.h"
 
 #include <string>
 #include <unordered_map>
@@ -14,7 +17,8 @@ class GraphicsBackendBufferInfo;
 class ShaderPass
 {
 public:
-    ShaderPass(GraphicsBackendProgram program, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
+    ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
+               BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
                std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues);
 
     ~ShaderPass();
@@ -25,10 +29,7 @@ public:
     ShaderPass &operator=(const ShaderPass &) = delete;
     ShaderPass &operator=(ShaderPass &&) = delete;
 
-    inline GraphicsBackendProgram GetProgram() const
-    {
-        return m_Program;
-    }
+    const GraphicsBackendProgram &GetProgram(const VertexAttributes &vertexAttributes);
 
     inline const BlendInfo &GetBlendInfo() const
     {
@@ -63,12 +64,15 @@ public:
     std::string GetTagValue(const std::string &tag) const;
 
 private:
-    GraphicsBackendProgram m_Program;
+    std::vector<GraphicsBackendShaderObject> m_Shaders;
+    std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
     PropertyBlock m_DefaultValuesBlock;
 
     BlendInfo m_BlendInfo;
     CullInfo m_CullInfo;
     DepthInfo m_DepthInfo;
+    TextureInternalFormat m_ColorFormat;
+    TextureInternalFormat m_DepthFormat;
 
     std::unordered_map<std::string, std::string> m_Tags;
     std::unordered_map<std::string, GraphicsBackendUniformInfo> m_Uniforms;

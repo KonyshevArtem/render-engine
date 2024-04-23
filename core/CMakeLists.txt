@@ -91,7 +91,9 @@ add_library(
 	editor/selection_outline/selection_outline_pass.cpp
 	editor/selection_outline/selection_outline_pass.h
 	graphics/graphics_settings.cpp
-	graphics/graphics_settings.h)
+	graphics/graphics_settings.h
+	drawable_geometry/vertex_attributes/vertex_attributes.cpp
+	drawable_geometry/vertex_attributes/vertex_attributes.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

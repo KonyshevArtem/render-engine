@@ -5,7 +5,6 @@
 #include "drawable_geometry/drawable_geometry.h"
 
 #include <memory>
-#include <vector>
 
 struct Vector2;
 struct Vector3;

@@ -538,13 +538,13 @@ namespace Graphics
         }
     }
 
-    void SetupShaderPass(int shaderPassIndex, const Material &material, const std::shared_ptr<GraphicsBuffer> &perInstanceDataBuffer)
+    void SetupShaderPass(int shaderPassIndex, const Material &material, const std::shared_ptr<GraphicsBuffer> &perInstanceDataBuffer, const VertexAttributes &vertexAttributes)
     {
-        const auto &shaderPass = *material.GetShader()->GetPass(shaderPassIndex);
+        auto &shaderPass = *material.GetShader()->GetPass(shaderPassIndex);
         const auto &perMaterialDataBlock = material.GetPerMaterialDataBlock(shaderPassIndex);
         const auto &materialPropertyBlock = material.GetPropertyBlock();
 
-        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram());
+        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes));
 
         SetBlendState(shaderPass.GetBlendInfo());
         SetCullState(shaderPass.GetCullInfo());
@@ -643,7 +643,7 @@ namespace Graphics
     void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData)
     {
         SetupMatrices(modelMatrix);
-        SetupShaderPass(shaderPassIndex, material, perInstanceData);
+        SetupShaderPass(shaderPassIndex, material, perInstanceData, geometry.GetVertexAttributes());
 
         auto primitiveType = geometry.GetPrimitiveType();
         auto elementsCount = geometry.GetElementsCount();
@@ -662,7 +662,7 @@ namespace Graphics
     {
         SetupMatrices(modelMatrices);
         SetupInstancing(true);
-        SetupShaderPass(shaderPassIndex, material, perInstanceData);
+        SetupShaderPass(shaderPassIndex, material, perInstanceData, geometry.GetVertexAttributes());
 
         auto primitiveType = geometry.GetPrimitiveType();
         auto elementsCount = geometry.GetElementsCount();

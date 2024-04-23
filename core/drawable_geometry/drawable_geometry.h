@@ -4,6 +4,7 @@
 #include "enums/primitive_type.h"
 #include "types/graphics_backend_geometry.h"
 #include "types/graphics_backend_buffer.h"
+#include "drawable_geometry/vertex_attributes/vertex_attributes.h"
 
 class DrawableGeometry
 {
@@ -30,8 +31,14 @@ public:
         return m_GraphicsBackendGeometry;
     }
 
+    inline const VertexAttributes &GetVertexAttributes() const
+    {
+        return m_VertexAttributes;
+    }
+
 protected:
     GraphicsBackendGeometry m_GraphicsBackendGeometry{};
+    VertexAttributes m_VertexAttributes;
 
     DrawableGeometry(PrimitiveType primitiveType, int elementsCount, bool hasIndices);
 

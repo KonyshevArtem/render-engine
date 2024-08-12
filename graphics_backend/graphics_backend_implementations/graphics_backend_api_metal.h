@@ -66,9 +66,6 @@ public:
     void SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor) override;
     void SetCullFace(CullFace cullFace) override;
     void SetCullFaceOrientation(CullFaceOrientation orientation) override;
-    void SetDepthFunction(DepthFunction function) override;
-    void SetDepthWrite(bool enabled) override;
-    void SetDepthRange(double near, double far) override;
     void SetViewport(int x, int y, int width, int height) override;
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
@@ -97,6 +94,10 @@ public:
 
     void BeginRenderPass() override;
     void EndRenderPass() override;
+
+    GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction) override;
+    void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
+    void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
 
     GRAPHICS_BACKEND_TYPE_ENUM GetError() override;
     const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) override;

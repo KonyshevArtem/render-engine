@@ -78,7 +78,6 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, const 
         m_Shaders(std::move(shaders)),
         m_BlendInfo(blendInfo),
         m_CullInfo(cullInfo),
-        m_DepthInfo(depthInfo),
         m_ColorFormat(colorFormat),
         m_DepthFormat(depthFormat),
         m_Tags(std::move(tags))
@@ -88,6 +87,8 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, const 
 
     GraphicsBackend::Current()->IntrospectProgram(program, m_Uniforms, m_Buffers);
     FillDefaultValuesPropertyBlock(defaultValues, m_Uniforms, m_DefaultValuesBlock);
+
+    m_DepthStencilState = GraphicsBackend::Current()->CreateDepthStencilState(depthInfo.WriteDepth, depthInfo.DepthFunction);
 }
 
 ShaderPass::~ShaderPass()
@@ -101,6 +102,8 @@ ShaderPass::~ShaderPass()
     {
         GraphicsBackend::Current()->DeleteShader(shader);
     }
+
+    GraphicsBackend::Current()->DeleteDepthStencilState(m_DepthStencilState);
 }
 
 const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &vertexAttributes)

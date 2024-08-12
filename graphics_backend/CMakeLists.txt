@@ -47,7 +47,8 @@ add_library(GraphicsBackend
         helpers/metal_helpers.cpp
         enums/load_action.h
         enums/store_action.h
-        types/graphics_backend_render_target_descriptor.h)
+        types/graphics_backend_render_target_descriptor.h
+        types/graphics_backend_depth_stencil_state.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

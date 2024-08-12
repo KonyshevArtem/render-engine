@@ -16,6 +16,7 @@
 #include "types/graphics_backend_uniform_info.h"
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
+#include "types/graphics_backend_depth_stencil_state.h"
 #include "helpers/metal_helpers.h"
 #include "debug.h"
 
@@ -341,18 +342,6 @@ void GraphicsBackendMetal::SetCullFaceOrientation(CullFaceOrientation orientatio
 {
 }
 
-void GraphicsBackendMetal::SetDepthFunction(DepthFunction function)
-{
-}
-
-void GraphicsBackendMetal::SetDepthWrite(bool enabled)
-{
-}
-
-void GraphicsBackendMetal::SetDepthRange(double near, double far)
-{
-}
-
 void GraphicsBackendMetal::SetViewport(int x, int y, int width, int height)
 {
 }
@@ -603,6 +592,37 @@ void GraphicsBackendMetal::EndRenderPass()
     {
         m_CurrentCommandEncoder->endEncoding();
         m_CurrentCommandEncoder = nullptr;
+    }
+}
+
+GraphicsBackendDepthStencilState GraphicsBackendMetal::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction)
+{
+    auto descriptor = MTL::DepthStencilDescriptor::alloc()->init();
+    descriptor->setDepthWriteEnabled(depthWrite);
+    descriptor->setDepthCompareFunction(MetalHelpers::ToDepthCompareFunction(depthFunction));
+    auto metalState = m_Device->newDepthStencilState(descriptor);
+    descriptor->release();
+
+    GraphicsBackendDepthStencilState state;
+    state.m_State = reinterpret_cast<uint64_t>(metalState);
+    return state;
+}
+
+void GraphicsBackendMetal::DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state)
+{
+    auto metalState = reinterpret_cast<MTL::DepthStencilState*>(state.m_State);
+    if (metalState)
+    {
+        metalState->release();
+    }
+}
+
+void GraphicsBackendMetal::SetDepthStencilState(const GraphicsBackendDepthStencilState& state)
+{
+    auto metalState = reinterpret_cast<MTL::DepthStencilState*>(state.m_State);
+    if (metalState)
+    {
+        m_CurrentCommandEncoder->setDepthStencilState(metalState);
     }
 }
 

@@ -10,6 +10,7 @@
 #include "enums/vertex_attribute_data_type.h"
 #include "enums/load_action.h"
 #include "enums/store_action.h"
+#include "enums/depth_function.h"
 
 #include <cstdint>
 
@@ -25,6 +26,7 @@ namespace MTL
     enum VertexFormat : std::uintptr_t;
     enum LoadAction : std::uintptr_t;
     enum StoreAction : std::uintptr_t;
+    enum CompareFunction : std::uintptr_t;
 }
 
 namespace MetalHelpers
@@ -39,6 +41,7 @@ namespace MetalHelpers
     MTL::VertexFormat ToVertexFormat(VertexAttributeDataType dataType, int dimensions, bool normalized);
     MTL::LoadAction ToLoadAction(LoadAction loadAction);
     MTL::StoreAction ToStoreAction(StoreAction storeAction);
+    MTL::CompareFunction ToDepthCompareFunction(DepthFunction function);
 }
 
 #endif //RENDER_ENGINE_METAL_HELPERS_H

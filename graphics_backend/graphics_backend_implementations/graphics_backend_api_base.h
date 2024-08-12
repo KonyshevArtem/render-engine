@@ -22,7 +22,7 @@ enum class BufferUsageHint;
 FORWARD_DECLARE_ENUM(GraphicsBackendCapability)
 FORWARD_DECLARE_ENUM(BlendFactor)
 FORWARD_DECLARE_ENUM(CullFace)
-FORWARD_DECLARE_ENUM(DepthFunction)
+enum class DepthFunction;
 enum class ShaderType;
 FORWARD_DECLARE_ENUM(UniformDataType)
 FORWARD_DECLARE_ENUM(CullFaceOrientation)
@@ -45,6 +45,7 @@ class GraphicsBackendUniformInfo;
 class GraphicsBackendBufferInfo;
 struct GraphicsBackendResourceBindings;
 struct GraphicsBackendRenderTargetDescriptor;
+struct GraphicsBackendDepthStencilState;
 
 class GraphicsBackendBase
 {
@@ -99,9 +100,6 @@ public:
     virtual void SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor) = 0;
     virtual void SetCullFace(CullFace cullFace) = 0;
     virtual void SetCullFaceOrientation(CullFaceOrientation orientation) = 0;
-    virtual void SetDepthFunction(DepthFunction function) = 0;
-    virtual void SetDepthWrite(bool enabled) = 0;
-    virtual void SetDepthRange(double near, double far) = 0;
     virtual void SetViewport(int x, int y, int width, int height) = 0;
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) = 0;
@@ -130,6 +128,10 @@ public:
 
     virtual void BeginRenderPass() = 0;
     virtual void EndRenderPass() = 0;
+
+    virtual GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction) = 0;
+    virtual void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
+    virtual void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
 
     virtual GRAPHICS_BACKEND_TYPE_ENUM GetError() = 0;
     virtual const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) = 0;

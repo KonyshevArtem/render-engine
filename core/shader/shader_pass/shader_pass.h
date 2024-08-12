@@ -3,6 +3,7 @@
 
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
+#include "types/graphics_backend_depth_stencil_state.h"
 #include "enums/texture_internal_format.h"
 #include "shader/shader_structs.h"
 #include "property_block/property_block.h"
@@ -41,9 +42,9 @@ public:
         return m_CullInfo;
     }
 
-    inline const DepthInfo &GetDepthInfo() const
+    inline const GraphicsBackendDepthStencilState &GetDepthStencilState() const
     {
-        return m_DepthInfo;
+        return m_DepthStencilState;
     }
 
     inline const std::unordered_map<std::string, GraphicsBackendUniformInfo> &GetUniforms() const
@@ -70,7 +71,7 @@ private:
 
     BlendInfo m_BlendInfo;
     CullInfo m_CullInfo;
-    DepthInfo m_DepthInfo;
+    GraphicsBackendDepthStencilState m_DepthStencilState;
     TextureInternalFormat m_ColorFormat;
     TextureInternalFormat m_DepthFormat;
 

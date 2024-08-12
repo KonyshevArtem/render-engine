@@ -16,7 +16,5 @@ void RenderPass::Execute(const Context &_ctx)
 {
     auto debugGroup = GraphicsBackendDebug::DebugGroup("Render pass " + m_Name);
 
-    GraphicsBackend::Current()->SetDepthWrite(true);
-
     Graphics::DrawRenderers(_ctx.Renderers, m_RenderSettings);
 }

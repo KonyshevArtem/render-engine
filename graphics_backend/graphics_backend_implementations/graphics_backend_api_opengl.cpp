@@ -13,9 +13,16 @@
 #include "types/graphics_backend_uniform_info.h"
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
+#include "types/graphics_backend_depth_stencil_state.h"
 #include "helpers/opengl_helpers.h"
 
 #include <type_traits>
+
+struct DepthStencilState
+{
+    GLboolean DepthWrite;
+    GLenum DepthFunction;
+};
 
 GraphicsBackendTexture GraphicsBackendTexture::NONE = GraphicsBackendTexture();
 GraphicsBackendFramebuffer GraphicsBackendFramebuffer::NONE = GraphicsBackendFramebuffer();
@@ -71,7 +78,10 @@ void GraphicsBackendOpenGL::Init(void *device)
         m_Extensions.insert(std::string(reinterpret_cast<const char *>(ext)));
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(1, &m_Framebuffer));
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(1, &m_Framebuffer))
+
+    CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_DEPTH_TEST))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDepthRange(0, 1))
 
     ResetClearFlags();
 }
@@ -458,21 +468,6 @@ void GraphicsBackendOpenGL::SetCullFace(CullFace cullFace)
 void GraphicsBackendOpenGL::SetCullFaceOrientation(CullFaceOrientation orientation)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glFrontFace(Cast(orientation)))
-}
-
-void GraphicsBackendOpenGL::SetDepthFunction(DepthFunction function)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glDepthFunc(Cast(function)))
-}
-
-void GraphicsBackendOpenGL::SetDepthWrite(bool enabled)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glDepthMask(enabled ? GL_TRUE : GL_FALSE))
-}
-
-void GraphicsBackendOpenGL::SetDepthRange(double near, double far)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glDepthRange(near, far))
 }
 
 void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height)
@@ -905,7 +900,9 @@ void GraphicsBackendOpenGL::BeginRenderPass()
     if (clearFlag != 0)
     {
         if ((clearFlag & (GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)) != 0)
+        {
             CHECK_GRAPHICS_BACKEND_FUNC(glDepthMask(GL_TRUE))
+        }
         CHECK_GRAPHICS_BACKEND_FUNC(glClear(clearFlag))
     }
 }
@@ -913,6 +910,36 @@ void GraphicsBackendOpenGL::BeginRenderPass()
 void GraphicsBackendOpenGL::EndRenderPass()
 {
     ResetClearFlags();
+}
+
+GraphicsBackendDepthStencilState GraphicsBackendOpenGL::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction)
+{
+    auto glState = new DepthStencilState();
+    glState->DepthFunction = OpenGLHelpers::ToDepthCompareFunction(depthFunction);
+    glState->DepthWrite = depthWrite ? GL_TRUE : GL_FALSE;
+
+    GraphicsBackendDepthStencilState state;
+    state.m_State = reinterpret_cast<uint64_t>(glState);
+    return state;
+}
+
+void GraphicsBackendOpenGL::DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state)
+{
+    auto glState = reinterpret_cast<DepthStencilState*>(state.m_State);
+    if (glState)
+    {
+        delete glState;
+    }
+}
+
+void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStencilState& state)
+{
+    auto glState = reinterpret_cast<DepthStencilState*>(state.m_State);
+    if (glState)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glDepthFunc(glState->DepthFunction))
+        CHECK_GRAPHICS_BACKEND_FUNC(glDepthMask(glState->DepthWrite))
+    }
 }
 
 GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackendOpenGL::GetError()

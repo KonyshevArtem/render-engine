@@ -76,13 +76,6 @@ namespace Graphics
         GraphicsBackend::Current()->SetCullFaceOrientation(CullFaceOrientation::CLOCKWISE);
     }
 
-    void InitDepth()
-    {
-        GraphicsBackend::Current()->SetCapability(GraphicsBackendCapability::DEPTH_TEST, true);
-        GraphicsBackend::Current()->SetDepthWrite(true);
-        GraphicsBackend::Current()->SetDepthRange(0, 1);
-    }
-
     void AddPerDrawDataBuffer()
     {
         uint64_t maxSize = GraphicsBackend::Current()->GetMaxConstantBufferSize();
@@ -157,7 +150,6 @@ namespace Graphics
 #endif
 
         InitCulling();
-        InitDepth();
         InitUniformBlocks();
         InitPasses();
         InitInstancing();
@@ -441,12 +433,6 @@ namespace Graphics
         }
     }
 
-    void SetDepthState(const DepthInfo &depthInfo)
-    {
-        GraphicsBackend::Current()->SetDepthWrite(depthInfo.WriteDepth);
-        GraphicsBackend::Current()->SetDepthFunction(depthInfo.DepthFunction);
-    }
-
     void SetUniform(const std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, const std::string &name, const void *data)
     {
         auto it = uniforms.find(name);
@@ -547,7 +533,7 @@ namespace Graphics
 
         SetBlendState(shaderPass.GetBlendInfo());
         SetCullState(shaderPass.GetCullInfo());
-        SetDepthState(shaderPass.GetDepthInfo());
+        GraphicsBackend::Current()->SetDepthStencilState(shaderPass.GetDepthStencilState());
 
         SetGraphicsBuffer(GlobalConstants::LightingBufferName, lightingDataBlock, shaderPass);
         SetGraphicsBuffer(GlobalConstants::CameraDataBufferName, cameraDataBlock, shaderPass);

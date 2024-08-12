@@ -393,3 +393,26 @@ MTL::StoreAction MetalHelpers::ToStoreAction(StoreAction storeAction)
             return MTL::StoreAction::StoreActionStore;
     }
 }
+
+MTL::CompareFunction MetalHelpers::ToDepthCompareFunction(DepthFunction function)
+{
+    switch (function)
+    {
+        case DepthFunction::NEVER:
+            return MTL::CompareFunction::CompareFunctionNever;
+        case DepthFunction::LESS:
+            return MTL::CompareFunction::CompareFunctionLess;
+        case DepthFunction::EQUAL:
+            return MTL::CompareFunction::CompareFunctionEqual;
+        case DepthFunction::LEQUAL:
+            return MTL::CompareFunction::CompareFunctionLessEqual;
+        case DepthFunction::GREATER:
+            return MTL::CompareFunction::CompareFunctionGreater;
+        case DepthFunction::NOTEQUAL:
+            return MTL::CompareFunction::CompareFunctionNotEqual;
+        case DepthFunction::GEQUAL:
+            return MTL::CompareFunction::CompareFunctionGreaterEqual;
+        case DepthFunction::ALWAYS:
+            return MTL::CompareFunction::CompareFunctionAlways;
+    }
+}

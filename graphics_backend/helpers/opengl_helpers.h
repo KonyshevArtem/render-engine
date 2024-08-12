@@ -12,6 +12,7 @@
 #include "enums/texture_wrap_mode.h"
 #include "enums/texture_filtering_mode.h"
 #include "enums/framebuffer_attachment.h"
+#include "enums/depth_function.h"
 
 #include <string>
 
@@ -48,6 +49,7 @@ namespace OpenGLHelpers
     GLenum ToTextureTarget(TextureType type, int slice);
     void ToTextureFilteringMode(TextureFilteringMode filteringMode, GLint &outMinFilter, GLint &outMagFilter);
     GLenum ToFramebufferAttachment(FramebufferAttachment attachment);
+    GLenum ToDepthCompareFunction(DepthFunction function);
 }
 
 #endif //RENDER_ENGINE_OPENGL_HELPERS_H

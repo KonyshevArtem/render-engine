@@ -56,7 +56,7 @@ public:
     void SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor) override;
     void SetCullFace(CullFace cullFace) override;
     void SetCullFaceOrientation(CullFaceOrientation orientation) override;
-    void SetViewport(int x, int y, int width, int height) override;
+    void SetViewport(int x, int y, int width, int height, float near, float far) override;
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
     GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;

@@ -13,6 +13,8 @@
 #include "enums/texture_filtering_mode.h"
 #include "enums/framebuffer_attachment.h"
 #include "enums/depth_function.h"
+#include "enums/cull_face_orientation.h"
+#include "enums/cull_face.h"
 
 #include <string>
 
@@ -50,6 +52,8 @@ namespace OpenGLHelpers
     void ToTextureFilteringMode(TextureFilteringMode filteringMode, GLint &outMinFilter, GLint &outMagFilter);
     GLenum ToFramebufferAttachment(FramebufferAttachment attachment);
     GLenum ToDepthCompareFunction(DepthFunction function);
+    GLenum ToCullFaceOrientation(CullFaceOrientation orientation);
+    GLenum ToCullFace(CullFace face);
 }
 
 #endif //RENDER_ENGINE_OPENGL_HELPERS_H

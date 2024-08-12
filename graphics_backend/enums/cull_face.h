@@ -1,13 +1,11 @@
 #ifndef RENDER_ENGINE_CULL_FACE_H
 #define RENDER_ENGINE_CULL_FACE_H
 
-#include "graphics_backend.h"
-
-enum class CullFace : GRAPHICS_BACKEND_TYPE_ENUM
+enum class CullFace
 {
-    FRONT           = GRAPHICS_BACKEND_FRONT,
-    BACK            = GRAPHICS_BACKEND_BACK,
-    FRONT_AND_BACK  = GRAPHICS_BACKEND_FRONT_AND_BACK,
+    NONE,
+    FRONT,
+    BACK,
 };
 
 #endif //RENDER_ENGINE_CULL_FACE_H

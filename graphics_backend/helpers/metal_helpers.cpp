@@ -416,3 +416,21 @@ MTL::CompareFunction MetalHelpers::ToDepthCompareFunction(DepthFunction function
             return MTL::CompareFunction::CompareFunctionAlways;
     }
 }
+
+MTL::Winding MetalHelpers::ToCullFaceOrientation(CullFaceOrientation orientation)
+{
+    return orientation == CullFaceOrientation::CLOCKWISE ? MTL::Winding::WindingClockwise : MTL::Winding::WindingCounterClockwise;
+}
+
+MTL::CullMode MetalHelpers::ToCullFace(CullFace face)
+{
+    switch (face)
+    {
+        case CullFace::NONE:
+            return MTL::CullMode::CullModeNone;
+        case CullFace::FRONT:
+            return MTL::CullMode::CullModeFront;
+        case CullFace::BACK:
+            return MTL::CullMode::CullModeBack;
+    }
+}

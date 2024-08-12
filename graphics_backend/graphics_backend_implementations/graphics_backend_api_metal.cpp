@@ -336,14 +336,18 @@ void GraphicsBackendMetal::SetBlendFunction(BlendFactor sourceFactor, BlendFacto
 
 void GraphicsBackendMetal::SetCullFace(CullFace cullFace)
 {
+    m_CurrentCommandEncoder->setCullMode(MetalHelpers::ToCullFace(cullFace));
 }
 
 void GraphicsBackendMetal::SetCullFaceOrientation(CullFaceOrientation orientation)
 {
+    m_CurrentCommandEncoder->setFrontFacingWinding(MetalHelpers::ToCullFaceOrientation(orientation));
 }
 
-void GraphicsBackendMetal::SetViewport(int x, int y, int width, int height)
+void GraphicsBackendMetal::SetViewport(int x, int y, int width, int height, float near, float far)
 {
+    MTL::Viewport viewport {static_cast<double>(x), static_cast<double>(y), static_cast<double>(width), static_cast<double>(height), near, far} ;
+    m_CurrentCommandEncoder->setViewport(viewport);
 }
 
 GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shaderType, const std::string &source)

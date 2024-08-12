@@ -860,3 +860,21 @@ GLenum OpenGLHelpers::ToDepthCompareFunction(DepthFunction function)
             return GL_ALWAYS;
     }
 }
+
+GLenum OpenGLHelpers::ToCullFaceOrientation(CullFaceOrientation orientation)
+{
+    return orientation == CullFaceOrientation::CLOCKWISE ? GL_CW : GL_CCW;
+}
+
+GLenum OpenGLHelpers::ToCullFace(CullFace face)
+{
+    switch (face)
+    {
+        case CullFace::NONE:
+            return 0;
+        case CullFace::FRONT:
+            return GL_FRONT;
+        case CullFace::BACK:
+            return GL_BACK;
+    }
+}

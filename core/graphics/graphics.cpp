@@ -71,11 +71,6 @@ namespace Graphics
 
     PropertyBlock globalPropertyBlock;
 
-    void InitCulling()
-    {
-        GraphicsBackend::Current()->SetCullFaceOrientation(CullFaceOrientation::CLOCKWISE);
-    }
-
     void AddPerDrawDataBuffer()
     {
         uint64_t maxSize = GraphicsBackend::Current()->GetMaxConstantBufferSize();
@@ -138,22 +133,15 @@ namespace Graphics
         instancingDataBuffer = std::make_shared<GraphicsBuffer>(dataBufferTarget, 1, BufferUsageHint::DYNAMIC_DRAW);
     }
 
-    void InitSeamlessCubemap()
-    {
-        GraphicsBackend::Current()->SetCapability(GraphicsBackendCapability::TEXTURE_CUBE_MAP_SEAMLESS, true);
-    }
-
     void Init()
     {
 #if RENDER_ENGINE_EDITOR
         Gizmos::Init();
 #endif
 
-        InitCulling();
         InitUniformBlocks();
         InitPasses();
         InitInstancing();
-        InitSeamlessCubemap();
     }
 
     void Shutdown()
@@ -284,11 +272,12 @@ namespace Graphics
         if (shadowCasterPass)
             shadowCasterPass->Execute(ctx);
 
-        SetViewport({0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight)});
         SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix);
 
         SetRenderTarget(colorTargetDescriptor, cameraColorTarget);
         SetRenderTarget(depthTargetDescriptor, cameraDepthTarget);
+
+        SetViewport({0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight)});
 
         if (opaqueRenderPass)
             opaqueRenderPass->Execute(ctx);
@@ -425,12 +414,8 @@ namespace Graphics
 
     void SetCullState(const CullInfo &cullInfo)
     {
-        GraphicsBackend::Current()->SetCapability(GraphicsBackendCapability::CULL_FACE, cullInfo.Enabled);
-
-        if (cullInfo.Enabled)
-        {
-            GraphicsBackend::Current()->SetCullFace(cullInfo.Face);
-        }
+        GraphicsBackend::Current()->SetCullFace(cullInfo.Face);
+        GraphicsBackend::Current()->SetCullFaceOrientation(cullInfo.Orientation);
     }
 
     void SetUniform(const std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, const std::string &name, const void *data)
@@ -716,7 +701,7 @@ namespace Graphics
 
     void SetViewport(const Vector4 &viewport)
     {
-        GraphicsBackend::Current()->SetViewport(viewport.x, viewport.y, viewport.z, viewport.w);
+        GraphicsBackend::Current()->SetViewport(viewport.x, viewport.y, viewport.z, viewport.w, 0, 1);
     }
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture)

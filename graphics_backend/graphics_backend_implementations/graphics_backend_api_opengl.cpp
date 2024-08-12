@@ -80,8 +80,8 @@ void GraphicsBackendOpenGL::Init(void *device)
 
     CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(1, &m_Framebuffer))
 
+    CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS))
     CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_DEPTH_TEST))
-    CHECK_GRAPHICS_BACKEND_FUNC(glDepthRange(0, 1))
 
     ResetClearFlags();
 }
@@ -462,17 +462,26 @@ void GraphicsBackendOpenGL::SetBlendFunction(BlendFactor sourceFactor, BlendFact
 
 void GraphicsBackendOpenGL::SetCullFace(CullFace cullFace)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glCullFace(Cast(cullFace)))
+    if (cullFace == CullFace::NONE)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glDisable(GL_CULL_FACE))
+    }
+    else
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_CULL_FACE))
+        CHECK_GRAPHICS_BACKEND_FUNC(glCullFace(OpenGLHelpers::ToCullFace(cullFace)))
+    }
 }
 
 void GraphicsBackendOpenGL::SetCullFaceOrientation(CullFaceOrientation orientation)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glFrontFace(Cast(orientation)))
+    CHECK_GRAPHICS_BACKEND_FUNC(glFrontFace(OpenGLHelpers::ToCullFaceOrientation(orientation)))
 }
 
-void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height)
+void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, float near, float far)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glViewport(x, y, width, height))
+    CHECK_GRAPHICS_BACKEND_FUNC(glDepthRange(near, far))
 }
 
 GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string &source)
@@ -926,10 +935,7 @@ GraphicsBackendDepthStencilState GraphicsBackendOpenGL::CreateDepthStencilState(
 void GraphicsBackendOpenGL::DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state)
 {
     auto glState = reinterpret_cast<DepthStencilState*>(state.m_State);
-    if (glState)
-    {
-        delete glState;
-    }
+    delete glState;
 }
 
 void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStencilState& state)

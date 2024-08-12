@@ -21,11 +21,11 @@ enum class VertexAttributeDataType;
 enum class BufferUsageHint;
 FORWARD_DECLARE_ENUM(GraphicsBackendCapability)
 FORWARD_DECLARE_ENUM(BlendFactor)
-FORWARD_DECLARE_ENUM(CullFace)
+enum class CullFace;
 enum class DepthFunction;
 enum class ShaderType;
 FORWARD_DECLARE_ENUM(UniformDataType)
-FORWARD_DECLARE_ENUM(CullFaceOrientation)
+enum class CullFaceOrientation;
 enum class IndicesDataType;
 FORWARD_DECLARE_ENUM(ProgramResourceParameter)
 FORWARD_DECLARE_ENUM(BlitFramebufferMask)
@@ -100,7 +100,7 @@ public:
     virtual void SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor) = 0;
     virtual void SetCullFace(CullFace cullFace) = 0;
     virtual void SetCullFaceOrientation(CullFaceOrientation orientation) = 0;
-    virtual void SetViewport(int x, int y, int width, int height) = 0;
+    virtual void SetViewport(int x, int y, int width, int height, float near, float far) = 0;
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) = 0;
     virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;

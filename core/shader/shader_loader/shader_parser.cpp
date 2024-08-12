@@ -46,10 +46,15 @@ const std::unordered_map<std::string, DepthFunction> DEPTH_FUNCTION_MAP
 
 const std::unordered_map<std::string, CullFace> CULL_FACE_MAP
         {
-                {"None",  static_cast<CullFace>(0)},
+                {"None",  CullFace::NONE},
                 {"Front", CullFace::FRONT},
                 {"Back",  CullFace::BACK},
-                {"Both",  CullFace::FRONT_AND_BACK},
+        };
+
+const std::unordered_map<std::string, CullFaceOrientation> CULL_FACE_ORIENTATION_MAP
+        {
+                {"CW",  CullFaceOrientation::CLOCKWISE},
+                {"CCW", CullFaceOrientation::COUNTER_CLOCKWISE},
         };
 
 
@@ -135,13 +140,18 @@ namespace ShaderParser
 
     CullInfo ParseCullInfo(const boost::json::object &passInfoObject)
     {
-        CullInfo info{true, CullFace::BACK};
+        CullInfo info{CullFace::BACK, CullFaceOrientation::CLOCKWISE};
 
         std::string cullValue;
         if (TryGetValue(passInfoObject, "cull", cullValue))
         {
             info.Face = StringToEnum(cullValue, CULL_FACE_MAP);
-            info.Enabled = static_cast<int>(info.Face) != 0;
+        }
+
+        std::string cullOrientationValue;
+        if (TryGetValue(passInfoObject, "cullOrientation", cullOrientationValue))
+        {
+            info.Orientation = StringToEnum(cullOrientationValue, CULL_FACE_ORIENTATION_MAP);
         }
 
         return info;

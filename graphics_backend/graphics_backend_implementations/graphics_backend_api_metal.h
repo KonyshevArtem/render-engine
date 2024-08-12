@@ -74,10 +74,12 @@ public:
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
     GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;
+    void DeleteShader(GraphicsBackendShaderObject shader) override;
     void DeleteProgram(GraphicsBackendProgram program) override;
     void UseProgram(GraphicsBackendProgram program) override;
     void SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose = false) override;
     void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers) override;
+    bool RequireStrictPSODescriptor() override;
 
     void Clear(ClearMask mask) override;
     void SetClearColor(float r, float g, float b, float a) override;

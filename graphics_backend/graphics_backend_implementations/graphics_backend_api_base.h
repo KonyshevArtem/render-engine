@@ -107,10 +107,12 @@ public:
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) = 0;
     virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;
+    virtual void DeleteShader(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;
     virtual void SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose = false) = 0;
     virtual void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers) = 0;
+    virtual bool RequireStrictPSODescriptor() = 0;
 
     virtual void Clear(ClearMask mask) = 0;
     virtual void SetClearColor(float r, float g, float b, float a) = 0;

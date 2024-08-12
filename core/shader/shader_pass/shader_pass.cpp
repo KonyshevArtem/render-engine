@@ -96,10 +96,20 @@ ShaderPass::~ShaderPass()
     {
         GraphicsBackend::Current()->DeleteProgram(pair.second);
     }
+
+    for (auto &shader : m_Shaders)
+    {
+        GraphicsBackend::Current()->DeleteShader(shader);
+    }
 }
 
 const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &vertexAttributes)
 {
+    if (!GraphicsBackend::Current()->RequireStrictPSODescriptor() && !m_Programs.empty())
+    {
+        return m_Programs.begin()->second;
+    }
+
     auto hash = vertexAttributes.GetHash();
     auto it = m_Programs.find(hash);
     if (it != m_Programs.end())
@@ -109,7 +119,7 @@ const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &ver
 
     auto program = GraphicsBackend::Current()->CreateProgram(m_Shaders, m_ColorFormat, m_DepthFormat, vertexAttributes.GetAttributes());
     m_Programs[hash] = program;
-    return m_Programs.at(hash);
+    return program;
 }
 
 std::string ShaderPass::GetTagValue(const std::string &tag) const

@@ -25,14 +25,14 @@ void GraphicsBackendDebug::CheckError()
 {
     auto error = GraphicsBackend::Current()->GetError();
     if (error != 0)
-        GraphicsBackendDebug::LogError(error, "", 0);
+        GraphicsBackendDebug::LogError(error, "", "", 0);
 }
 
-void GraphicsBackendDebug::LogError(GRAPHICS_BACKEND_TYPE_ENUM errorCode, const std::string &file, int line)
+void GraphicsBackendDebug::LogError(GRAPHICS_BACKEND_TYPE_ENUM errorCode, const std::string& line, const std::string &file, int lineNumber)
 {
     auto *errorString = GraphicsBackend::Current()->GetErrorString(errorCode);
     if (errorString == nullptr)
-        Debug::LogErrorFormat("[Graphics Backend] Unknown error %1%\n%2%:%3%", {std::to_string(errorCode), file, std::to_string(line)});
+        Debug::LogErrorFormat("[Graphics Backend] Unknown error %1%\n%4%\n%2%:%3%", {std::to_string(errorCode), file, std::to_string(lineNumber), line});
     else
-        Debug::LogErrorFormat("[Graphics Backend] %1%\n%2%:%3%", {errorString, file, std::to_string(line)});
+        Debug::LogErrorFormat("[Graphics Backend] %1%\n%4%\n%2%:%3%", {errorString, file, std::to_string(lineNumber), line});
 }

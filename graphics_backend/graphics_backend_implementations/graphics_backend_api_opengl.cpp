@@ -492,7 +492,6 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<Gr
         if (isShader)
         {
             CHECK_GRAPHICS_BACKEND_FUNC(glDetachShader(program.Program, shader.ShaderObject))
-            CHECK_GRAPHICS_BACKEND_FUNC(glDeleteShader(shader.ShaderObject))
         }
     }
 
@@ -510,6 +509,11 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<Gr
     }
 
     return program;
+}
+
+void GraphicsBackendOpenGL::DeleteShader(GraphicsBackendShaderObject shader)
+{
+    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteShader(shader.ShaderObject))
 }
 
 void GraphicsBackendOpenGL::DeleteProgram(GraphicsBackendProgram program)
@@ -621,6 +625,11 @@ void GraphicsBackendOpenGL::IntrospectProgram(GraphicsBackendProgram program, st
         buffers[blockName] = buffer;
     }
 #endif
+}
+
+bool GraphicsBackendOpenGL::RequireStrictPSODescriptor()
+{
+    return false;
 }
 
 void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)

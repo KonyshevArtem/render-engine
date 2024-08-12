@@ -418,6 +418,11 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
     return program;
 }
 
+void GraphicsBackendMetal::DeleteShader(GraphicsBackendShaderObject shader)
+{
+    reinterpret_cast<MTL::Library*>(shader.ShaderObject)->release();
+}
+
 void GraphicsBackendMetal::DeleteProgram(GraphicsBackendProgram program)
 {
     reinterpret_cast<MTL::RenderPipelineState*>(program.Program)->release();
@@ -518,6 +523,11 @@ void GraphicsBackendMetal::IntrospectProgram(GraphicsBackendProgram program, std
     auto reflection = reinterpret_cast<MTL::AutoreleasedRenderPipelineReflection>(program.Reflection);
     ParseArguments(reflection->vertexArguments(), uniforms, buffers, true);
     ParseArguments(reflection->fragmentArguments(), uniforms, buffers, false);
+}
+
+bool GraphicsBackendMetal::RequireStrictPSODescriptor()
+{
+    return true;
 }
 
 void GraphicsBackendMetal::UseProgram(GraphicsBackendProgram program)

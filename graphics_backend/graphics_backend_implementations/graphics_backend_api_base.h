@@ -25,7 +25,6 @@ FORWARD_DECLARE_ENUM(CullFace)
 FORWARD_DECLARE_ENUM(DepthFunction)
 enum class ShaderType;
 FORWARD_DECLARE_ENUM(UniformDataType)
-FORWARD_DECLARE_ENUM(ClearMask)
 FORWARD_DECLARE_ENUM(CullFaceOrientation)
 enum class IndicesDataType;
 FORWARD_DECLARE_ENUM(ProgramResourceParameter)
@@ -45,6 +44,7 @@ class GraphicsBackendGeometry;
 class GraphicsBackendUniformInfo;
 class GraphicsBackendBufferInfo;
 struct GraphicsBackendResourceBindings;
+struct GraphicsBackendRenderTargetDescriptor;
 
 class GraphicsBackendBase
 {
@@ -74,8 +74,7 @@ public:
     virtual int GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice) = 0;
 
     virtual void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer) = 0;
-    virtual void AttachTexture(FramebufferAttachment attachment, const GraphicsBackendTexture &texture, int level, int layer) = 0;
-    virtual void AttachBackbuffer() = 0;
+    virtual void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) = 0;
 
     virtual GraphicsBackendBuffer CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint) = 0;
     virtual void DeleteBuffer(const GraphicsBackendBuffer &buffer) = 0;
@@ -114,7 +113,6 @@ public:
     virtual void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers) = 0;
     virtual bool RequireStrictPSODescriptor() = 0;
 
-    virtual void Clear(ClearMask mask) = 0;
     virtual void SetClearColor(float r, float g, float b, float a) = 0;
     virtual void SetClearDepth(double depth) = 0;
 

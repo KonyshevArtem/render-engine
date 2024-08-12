@@ -74,6 +74,7 @@ CGSize _viewSize;
     
     [EngineFrameworkWrapper TickMainLoop:(void*)commandBuffer backbufferDescriptor:(void*)renderPassDescriptor width:_viewSize.width height:_viewSize.height];
     
+    [[[renderPassDescriptor colorAttachments] objectAtIndexedSubscript:0] setLoadAction:MTLLoadActionLoad];
     id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
     [ImGuiWrapper Render_Metal:commandBuffer commandEncoder:commandEncoder];
     [commandEncoder endEncoding];

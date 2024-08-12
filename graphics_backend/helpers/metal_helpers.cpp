@@ -357,3 +357,39 @@ MTL::VertexFormat MetalHelpers::ToVertexFormat(VertexAttributeDataType dataType,
             return MTL::VertexFormatInvalid;
     }
 }
+
+MTL::LoadAction MetalHelpers::ToLoadAction(LoadAction loadAction)
+{
+    switch (loadAction)
+    {
+        case LoadAction::DONT_CARE:
+            return MTL::LoadAction::LoadActionDontCare;
+        case LoadAction::LOAD:
+            return MTL::LoadAction::LoadActionLoad;
+        case LoadAction::CLEAR:
+            return MTL::LoadAction::LoadActionClear;
+        default:
+            return MTL::LoadAction::LoadActionClear;
+    }
+}
+
+MTL::StoreAction MetalHelpers::ToStoreAction(StoreAction storeAction)
+{
+    switch (storeAction)
+    {
+        case StoreAction::DONT_CARE:
+            return MTL::StoreAction::StoreActionDontCare;
+        case StoreAction::STORE:
+            return MTL::StoreAction::StoreActionStore;
+        case StoreAction::MULTISAMPLE_RESOLVE:
+            return MTL::StoreAction::StoreActionMultisampleResolve;
+        case StoreAction::STORE_AND_MULTISAMPLE_RESOLVE:
+            return MTL::StoreAction::StoreActionStoreAndMultisampleResolve;
+        case StoreAction::UNKNOWN:
+            return MTL::StoreAction::StoreActionUnknown;
+        case StoreAction::CUSTOM_SAMPLE_DEPTH_STORE:
+            return MTL::StoreAction::StoreActionCustomSampleDepthStore;
+        default:
+            return MTL::StoreAction::StoreActionStore;
+    }
+}

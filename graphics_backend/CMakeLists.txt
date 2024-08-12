@@ -20,7 +20,6 @@ add_library(GraphicsBackend
         enums/depth_function.h
         enums/shader_type.h
         enums/uniform_data_type.h
-        enums/clear_mask.h
         enums/cull_face_orientation.h
         enums/indices_data_type.h
         types/graphics_backend_texture.h
@@ -45,7 +44,10 @@ add_library(GraphicsBackend
         helpers/opengl_helpers.h
         helpers/opengl_helpers.cpp
         helpers/metal_helpers.h
-        helpers/metal_helpers.cpp)
+        helpers/metal_helpers.cpp
+        enums/load_action.h
+        enums/store_action.h
+        types/graphics_backend_render_target_descriptor.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

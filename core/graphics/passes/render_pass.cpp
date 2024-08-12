@@ -6,10 +6,9 @@
 
 #include <utility>
 
-RenderPass::RenderPass(std::string _name, DrawCallSortMode _sorting, DrawCallFilter _filter, ClearMask _clearMask, const std::string &_lightModeTag) :
+RenderPass::RenderPass(std::string _name, DrawCallSortMode _sorting, DrawCallFilter _filter, const std::string &_lightModeTag) :
     m_Name(std::move(_name)),
-    m_ClearMask(_clearMask),
-    m_RenderSettings(RenderSettings {{{"LightMode", _lightModeTag}}, _sorting, _filter})
+    m_RenderSettings(RenderSettings {{{"LightMode", _lightModeTag}}, _sorting, std::move(_filter)})
 {
 }
 
@@ -18,7 +17,6 @@ void RenderPass::Execute(const Context &_ctx)
     auto debugGroup = GraphicsBackendDebug::DebugGroup("Render pass " + m_Name);
 
     GraphicsBackend::Current()->SetDepthWrite(true);
-    GraphicsBackend::Current()->Clear(m_ClearMask);
 
     Graphics::DrawRenderers(_ctx.Renderers, m_RenderSettings);
 }

@@ -31,8 +31,7 @@ public:
     int GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice) override;
 
     void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer) override;
-    void AttachTexture(FramebufferAttachment attachment, const GraphicsBackendTexture &texture, int level, int layer) override;
-    void AttachBackbuffer() override;
+    void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) override;
 
     GraphicsBackendBuffer CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
@@ -71,7 +70,6 @@ public:
     void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers) override;
     bool RequireStrictPSODescriptor() override;
 
-    void Clear(ClearMask mask) override;
     void SetClearColor(float r, float g, float b, float a) override;
     void SetClearDepth(double depth) override;
 

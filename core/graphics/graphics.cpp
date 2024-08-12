@@ -121,14 +121,14 @@ namespace Graphics
 
     void InitPasses()
     {
-        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque(), ClearMask::COLOR_DEPTH, "Forward");
-        transparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent(), ClearMask::NONE, "Forward");
+        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque(), "Forward");
+        transparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent(), "Forward");
         shadowCasterPass     = std::make_unique<ShadowCasterPass>(shadowsDataBlock);
         skyboxPass           = std::make_unique<SkyboxPass>();
         finalBlitPass        = std::make_unique<FinalBlitPass>();
 
 #if RENDER_ENGINE_EDITOR
-        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::All(), ClearMask::NONE, "Fallback");
+        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::All(), "Fallback");
         gizmosPass         = std::make_unique<GizmosPass>();
         selectionOutlinePass = std::make_unique<SelectionOutlinePass>();
 #endif
@@ -268,6 +268,9 @@ namespace Graphics
         static std::shared_ptr<Texture2D> cameraColorTarget;
         static std::shared_ptr<Texture2D> cameraDepthTarget;
 
+        static GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
+        static GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
+
         screenWidth  = width;
         screenHeight = height;
 
@@ -292,7 +295,8 @@ namespace Graphics
         SetViewport({0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight)});
         SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix);
 
-        SetRenderTargets(cameraColorTarget, 0, 0, cameraDepthTarget, 0, 0);
+        SetRenderTarget(colorTargetDescriptor, cameraColorTarget);
+        SetRenderTarget(depthTargetDescriptor, cameraDepthTarget);
 
         if (opaqueRenderPass)
             opaqueRenderPass->Execute(ctx);
@@ -309,7 +313,8 @@ namespace Graphics
         if (finalBlitPass)
             finalBlitPass->Execute(ctx, cameraColorTarget);
 
-        SetRenderTargets(nullptr, 0, 0, nullptr, 0, 0);
+        SetRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
+        SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
 
 #if RENDER_ENGINE_EDITOR
 
@@ -338,12 +343,6 @@ namespace Graphics
 #endif
 
         GraphicsBackendDebug::CheckError();
-    }
-
-    void SetupGeometry(const DrawableGeometry &geometry)
-    {
-        auto vao = geometry.GetVertexArrayObject();
-        GraphicsBackend::Current()->BindVertexArrayObject(vao);
     }
 
     void SetupMatrices(const Matrix4x4 &modelMatrix)
@@ -717,31 +716,15 @@ namespace Graphics
         return globalShaderDirectives;
     }
 
-    void SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, int colorLevel, int colorLayer,
-                          const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer)
+    void SetRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor, const std::shared_ptr<Texture> &target)
     {
-        if (!_colorAttachment && !_depthAttachment)
+        if (target)
         {
-            GraphicsBackend::Current()->AttachBackbuffer();
-            return;
-        }
-
-        if (_colorAttachment)
-        {
-            _colorAttachment->Attach(FramebufferAttachment::COLOR_ATTACHMENT0, colorLevel, colorLayer);
+            target->Attach(descriptor);
         }
         else
         {
-            GraphicsBackend::Current()->AttachTexture(FramebufferAttachment::COLOR_ATTACHMENT0, GraphicsBackendTexture::NONE, 0, 0);
-        }
-
-        if (_depthAttachment)
-        {
-            _depthAttachment->Attach(FramebufferAttachment::DEPTH_ATTACHMENT, depthLevel, depthLayer);
-        }
-        else
-        {
-            GraphicsBackend::Current()->AttachTexture(FramebufferAttachment::DEPTH_ATTACHMENT, GraphicsBackendTexture::NONE, 0, 0);
+            GraphicsBackend::Current()->AttachRenderTarget(descriptor);
         }
     }
 
@@ -767,13 +750,13 @@ namespace Graphics
         GraphicsBackend::Current()->CopyBufferSubData(BufferBindTarget::COPY_READ_BUFFER, BufferBindTarget::COPY_WRITE_BUFFER, sourceOffset, destinationOffset, size);
     }
 
-    void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, int destinationLevel, int destinationLayer, Material &material)
+    void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material)
     {
         static std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
 
         material.SetTexture("_BlitTexture", source);
 
-        SetRenderTargets(destination, destinationLevel, destinationLayer, nullptr, 0, 0);
+        SetRenderTarget(destinationDescriptor, destination);
         Draw(*fullscreenMesh, material, Matrix4x4::Identity(), 0);
     }
 

@@ -12,6 +12,7 @@
 #include "types/graphics_backend_geometry.h"
 #include "types/graphics_backend_uniform_info.h"
 #include "types/graphics_backend_buffer_info.h"
+#include "types/graphics_backend_render_target_descriptor.h"
 #include "helpers/opengl_helpers.h"
 
 #include <type_traits>
@@ -19,13 +20,15 @@
 GraphicsBackendTexture GraphicsBackendTexture::NONE = GraphicsBackendTexture();
 GraphicsBackendFramebuffer GraphicsBackendFramebuffer::NONE = GraphicsBackendFramebuffer();
 
+GLbitfield s_ClearFlags[static_cast<int>(FramebufferAttachment::MAX)];
+
 #ifdef RENDER_ENGINE_EDITOR
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \
     backendFunction;                                                   \
     {                                                                  \
         auto error = GraphicsBackendOpenGL::GetError();                \
         if (error != 0)                                                \
-            GraphicsBackendDebug::LogError(error, __FILE__, __LINE__); \
+            GraphicsBackendDebug::LogError(error, #backendFunction, __FILE__, __LINE__); \
     }
 #else
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction) backendFunction;
@@ -41,6 +44,15 @@ template<typename T>
 constexpr auto Cast(T *values) -> typename std::underlying_type<T>::type*
 {
     return reinterpret_cast<typename std::underlying_type<T>::type*>(values);
+}
+
+void ResetClearFlags()
+{
+    int max = static_cast<int>(FramebufferAttachment::MAX);
+    for (int i = 0; i < max; ++i)
+    {
+        s_ClearFlags[i] = 0;
+    }
 }
 
 void GraphicsBackendOpenGL::Init(void *device)
@@ -60,6 +72,8 @@ void GraphicsBackendOpenGL::Init(void *device)
     }
 
     CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(1, &m_Framebuffer));
+
+    ResetClearFlags();
 }
 
 int GraphicsBackendOpenGL::GetMajorVersion()
@@ -255,24 +269,46 @@ void GraphicsBackendOpenGL::BindFramebuffer(FramebufferTarget target, GraphicsBa
     CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(Cast(target), framebuffer.Framebuffer))
 }
 
-void GraphicsBackendOpenGL::AttachTexture(FramebufferAttachment attachment, const GraphicsBackendTexture &texture, int level, int layer)
+void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor)
 {
+    if (descriptor.IsBackbuffer)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
+        return;
+    }
+
     CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer))
 
-    GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(attachment);
-    if (texture.Type == TextureType::TEXTURE_2D)
+    GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(descriptor.Attachment);
+    if (descriptor.Texture.Type == TextureType::TEXTURE_2D)
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, glAttachment, texture.Texture, level))
+        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, glAttachment, descriptor.Texture.Texture, descriptor.Level))
     }
     else
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTextureLayer(GL_DRAW_FRAMEBUFFER, glAttachment, texture.Texture, level, layer))
+        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTextureLayer(GL_DRAW_FRAMEBUFFER, glAttachment, descriptor.Texture.Texture, descriptor.Level, descriptor.Layer))
     }
-}
 
-void GraphicsBackendOpenGL::AttachBackbuffer()
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
+    if (descriptor.LoadAction == LoadAction::CLEAR)
+    {
+        int attachmentIndex = static_cast<int>(descriptor.Attachment);
+        if (descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT)
+        {
+            s_ClearFlags[attachmentIndex] = GL_DEPTH_BUFFER_BIT;
+        }
+        else if (descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT)
+        {
+            s_ClearFlags[attachmentIndex] = GL_STENCIL_BUFFER_BIT;
+        }
+        else if (descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)
+        {
+            s_ClearFlags[attachmentIndex] = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+        }
+        else
+        {
+            s_ClearFlags[attachmentIndex] = GL_COLOR_BUFFER_BIT;
+        }
+    }
 }
 
 GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint)
@@ -796,11 +832,6 @@ void GraphicsBackendOpenGL::SetUniform(int location, UniformDataType dataType, i
     }
 }
 
-void GraphicsBackendOpenGL::Clear(ClearMask mask)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glClear(Cast(mask)))
-}
-
 void GraphicsBackendOpenGL::SetClearColor(float r, float g, float b, float a)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glClearColor(r, g, b, a))
@@ -863,10 +894,25 @@ void GraphicsBackendOpenGL::PopDebugGroup()
 
 void GraphicsBackendOpenGL::BeginRenderPass()
 {
+    GLbitfield clearFlag = 0;
+
+    int maxAttachments = static_cast<int>(FramebufferAttachment::MAX);
+    for (int i = 0; i < maxAttachments; ++i)
+    {
+        clearFlag |= s_ClearFlags[i];
+    }
+
+    if (clearFlag != 0)
+    {
+        if ((clearFlag & (GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)) != 0)
+            CHECK_GRAPHICS_BACKEND_FUNC(glDepthMask(GL_TRUE))
+        CHECK_GRAPHICS_BACKEND_FUNC(glClear(clearFlag))
+    }
 }
 
 void GraphicsBackendOpenGL::EndRenderPass()
 {
+    ResetClearFlags();
 }
 
 GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackendOpenGL::GetError()

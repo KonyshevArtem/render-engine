@@ -8,7 +8,6 @@
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug.h"
 #include "graphics/graphics.h"
-#include "enums/clear_mask.h"
 #include "renderer/renderer.h"
 #include "gameObject/gameObject.h"
 
@@ -30,6 +29,8 @@ void SelectionOutlinePass::Execute(Context &_context)
     static std::shared_ptr<Material>  outlineMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/outline/outlineBlit.shader", {}));
     static std::shared_ptr<Texture2D> outlineTexture  = nullptr;
     static Vector4                    outlineColor {1, 0.73f, 0, 1};
+    static GraphicsBackendRenderTargetDescriptor colorTarget { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
+    static GraphicsBackendRenderTargetDescriptor depthTarget { FramebufferAttachment::DEPTH_ATTACHMENT };
 
     auto selectedGameObjects = Hierarchy::GetSelectedGameObjects();
     if (selectedGameObjects.empty())
@@ -41,9 +42,8 @@ void SelectionOutlinePass::Execute(Context &_context)
 
     // render selected gameObjects
     {
-        Graphics::SetRenderTargets(outlineTexture, 0, 0, nullptr, 0, 0);
-
-        GraphicsBackend::Current()->Clear(ClearMask::COLOR_DEPTH);
+        Graphics::SetRenderTarget(colorTarget, outlineTexture);
+        Graphics::SetRenderTarget(depthTarget);
 
         for (const auto &go: selectedGameObjects)
         {
@@ -69,14 +69,15 @@ void SelectionOutlinePass::Execute(Context &_context)
             }
         }
 
-        Graphics::SetRenderTargets(nullptr, 0, 0, nullptr, 0, 0);
+        Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
+        Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
     }
 
     // blit to screen
     {
         outlineMaterial->SetVector("_Color", outlineColor);
 
-        Graphics::Blit(outlineTexture, nullptr, 0, 0, *outlineMaterial);
+        Graphics::Blit(outlineTexture, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *outlineMaterial);
     }
 }
 

@@ -9,6 +9,7 @@
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "types/graphics_backend_resource_bindings.h"
+#include "types/graphics_backend_render_target_descriptor.h"
 #include "vector4/vector4.h"
 
 class Texture
@@ -17,7 +18,7 @@ public:
     virtual ~Texture();
 
     void Bind(const GraphicsBackendResourceBindings &bindings, bool bindSampler, int uniformLocation) const;
-    void Attach(FramebufferAttachment attachment, int level, int layer) const;
+    void Attach(GraphicsBackendRenderTargetDescriptor descriptor) const;
     void SetMinMipLevel(int minMipLevel);
     void SetWrapMode(TextureWrapMode wrapMode);
     void SetBorderColor(const Vector4 &color);

@@ -22,6 +22,8 @@ enum class FramebufferAttachment
     DEPTH_ATTACHMENT = 16,
     STENCIL_ATTACHMENT = 17,
     DEPTH_STENCIL_ATTACHMENT = 18,
+
+    MAX
 };
 
 #endif //RENDER_ENGINE_FRAMEBUFFER_ATTACHMENT_H

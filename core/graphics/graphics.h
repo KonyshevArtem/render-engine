@@ -19,6 +19,7 @@ class Texture;
 class GraphicsBuffer;
 class DrawableGeometry;
 class Material;
+struct GraphicsBackendRenderTargetDescriptor;
 
 namespace Graphics
 {
@@ -32,11 +33,10 @@ namespace Graphics
     void                      SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix);
     int                       GetScreenWidth();
     int                       GetScreenHeight();
-    void                      SetRenderTargets(const std::shared_ptr<Texture> &_colorAttachment, int colorLevel, int colorLayer,
-                                               const std::shared_ptr<Texture> &_depthAttachment, int depthLevel, int depthLayer);
+    void                      SetRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor, const std::shared_ptr<Texture> &target = nullptr);
     void                      SetViewport(const Vector4& viewport);
     void                      CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size);
-    void                      Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, int destinationLevel, int destinationLayer, Material &material);
+    void                      Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material);
     void                      Blit(const std::shared_ptr<Texture> &source, BlitFramebufferMask mask, BlitFramebufferFilter filter);
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture);

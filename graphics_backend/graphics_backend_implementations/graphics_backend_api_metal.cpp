@@ -15,6 +15,7 @@
 #include "types/graphics_backend_geometry.h"
 #include "types/graphics_backend_uniform_info.h"
 #include "types/graphics_backend_buffer_info.h"
+#include "types/graphics_backend_render_target_descriptor.h"
 #include "helpers/metal_helpers.h"
 #include "debug.h"
 
@@ -193,44 +194,41 @@ void GraphicsBackendMetal::BindFramebuffer(FramebufferTarget target, GraphicsBac
 {
 }
 
-void GraphicsBackendMetal::AttachTexture(FramebufferAttachment attachment, const GraphicsBackendTexture &texture, int level, int layer)
+void GraphicsBackendMetal::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor)
 {
-    auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
+    auto metalTexture = descriptor.Texture.Texture != 0 ? reinterpret_cast<MTL::Texture*>(descriptor.Texture.Texture) : nullptr;
 
-    bool isDepth = attachment == FramebufferAttachment::DEPTH_ATTACHMENT || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
-    bool isStencil = attachment == FramebufferAttachment::STENCIL_ATTACHMENT || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+    bool isDepth = descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT || descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+    bool isStencil = descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT || descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+
+    auto configureDescriptor = [metalTexture, &descriptor](MTL::RenderPassAttachmentDescriptor* desc, MTL::Texture* backbufferTexture)
+    {
+        desc->setTexture(descriptor.IsBackbuffer ? backbufferTexture : metalTexture);
+        desc->setLevel(descriptor.Level);
+        desc->setSlice(descriptor.Layer);
+        desc->setLoadAction(MetalHelpers::ToLoadAction(descriptor.LoadAction));
+        desc->setStoreAction(MetalHelpers::ToStoreAction(descriptor.StoreAction));
+    };
 
     if (isDepth || isStencil)
     {
         if (isDepth)
         {
             auto desc = m_RenderPassDescriptor->depthAttachment();
-            desc->setTexture(metalTexture);
-            desc->setLevel(level);
-            desc->setSlice(layer);
+            configureDescriptor(desc, m_BackbufferDescriptor->depthAttachment()->texture());
         }
         if (isStencil)
         {
             auto desc = m_RenderPassDescriptor->stencilAttachment();
-            desc->setTexture(metalTexture);
-            desc->setLevel(level);
-            desc->setSlice(layer);
+            configureDescriptor(desc, m_BackbufferDescriptor->stencilAttachment()->texture());
         }
     }
     else
     {
-        auto desc = m_RenderPassDescriptor->colorAttachments()->object(static_cast<int>(attachment));
-        desc->setTexture(metalTexture);
-        desc->setLevel(level);
-        desc->setSlice(layer);
+        int index = static_cast<int>(descriptor.Attachment);
+        auto desc = m_RenderPassDescriptor->colorAttachments()->object(index);
+        configureDescriptor(desc, m_BackbufferDescriptor->colorAttachments()->object(index)->texture());
     }
-}
-
-void GraphicsBackendMetal::AttachBackbuffer()
-{
-    m_RenderPassDescriptor->colorAttachments()->setObject(m_BackbufferDescriptor->colorAttachments()->object(0), 0);
-    m_RenderPassDescriptor->setDepthAttachment(m_BackbufferDescriptor->depthAttachment());
-    m_RenderPassDescriptor->setStencilAttachment(m_BackbufferDescriptor->stencilAttachment());
 }
 
 GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint)
@@ -540,16 +538,16 @@ void GraphicsBackendMetal::SetUniform(int location, UniformDataType dataType, in
 {
 }
 
-void GraphicsBackendMetal::Clear(ClearMask mask)
-{
-}
-
 void GraphicsBackendMetal::SetClearColor(float r, float g, float b, float a)
 {
+    auto desc = m_RenderPassDescriptor->colorAttachments()->object(0);
+    desc->setClearColor(MTL::ClearColor::Make(r, g, b, a));
 }
 
 void GraphicsBackendMetal::SetClearDepth(double depth)
 {
+    auto desc = m_RenderPassDescriptor->depthAttachment();
+    desc->setClearDepth(depth);
 }
 
 void GraphicsBackendMetal::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)

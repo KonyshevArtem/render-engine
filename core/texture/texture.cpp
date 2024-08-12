@@ -31,9 +31,10 @@ void Texture::Bind(const GraphicsBackendResourceBindings &bindings, bool bindSam
     }
 }
 
-void Texture::Attach(FramebufferAttachment attachment, int level, int layer) const
+void Texture::Attach(GraphicsBackendRenderTargetDescriptor descriptor) const
 {
-    GraphicsBackend::Current()->AttachTexture(attachment, m_Texture, level, layer);
+    descriptor.Texture = m_Texture;
+    GraphicsBackend::Current()->AttachRenderTarget(descriptor);
 }
 
 void Texture::SetMinMipLevel(int minMipLevel)

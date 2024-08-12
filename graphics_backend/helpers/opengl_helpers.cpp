@@ -833,5 +833,7 @@ GLenum OpenGLHelpers::ToFramebufferAttachment(FramebufferAttachment attachment)
             return GL_STENCIL_ATTACHMENT;
         case FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT:
             return GL_DEPTH_STENCIL_ATTACHMENT;
+        case FramebufferAttachment::MAX:
+            return -1;
     }
 }

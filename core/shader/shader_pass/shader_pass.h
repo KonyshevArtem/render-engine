@@ -4,6 +4,7 @@
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_depth_stencil_state.h"
+#include "types/graphics_backend_color_attachment_descriptor.h"
 #include "enums/texture_internal_format.h"
 #include "shader/shader_structs.h"
 #include "property_block/property_block.h"
@@ -31,11 +32,6 @@ public:
     ShaderPass &operator=(ShaderPass &&) = delete;
 
     const GraphicsBackendProgram &GetProgram(const VertexAttributes &vertexAttributes);
-
-    inline const BlendInfo &GetBlendInfo() const
-    {
-        return m_BlendInfo;
-    }
 
     inline const CullInfo &GetCullInfo() const
     {
@@ -69,10 +65,9 @@ private:
     std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
     PropertyBlock m_DefaultValuesBlock;
 
-    BlendInfo m_BlendInfo;
     CullInfo m_CullInfo;
     GraphicsBackendDepthStencilState m_DepthStencilState;
-    TextureInternalFormat m_ColorFormat;
+    GraphicsBackendColorAttachmentDescriptor m_ColorAttachmentDescriptor;
     TextureInternalFormat m_DepthFormat;
 
     std::unordered_map<std::string, std::string> m_Tags;

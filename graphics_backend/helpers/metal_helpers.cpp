@@ -434,3 +434,48 @@ MTL::CullMode MetalHelpers::ToCullFace(CullFace face)
             return MTL::CullMode::CullModeBack;
     }
 }
+
+MTL::BlendFactor MetalHelpers::ToBlendFactor(BlendFactor factor)
+{
+    switch (factor)
+    {
+        case BlendFactor::ZERO:
+            return MTL::BlendFactor::BlendFactorZero;
+        case BlendFactor::ONE:
+            return MTL::BlendFactor::BlendFactorOne;
+        case BlendFactor::SRC_COLOR:
+            return MTL::BlendFactor::BlendFactorSourceColor;
+        case BlendFactor::ONE_MINUS_SRC_COLOR:
+            return MTL::BlendFactor::BlendFactorOneMinusSourceColor;
+        case BlendFactor::DST_COLOR:
+            return MTL::BlendFactor::BlendFactorDestinationColor;
+        case BlendFactor::ONE_MINUS_DST_COLOR:
+            return MTL::BlendFactor::BlendFactorOneMinusDestinationColor;
+        case BlendFactor::SRC_ALPHA:
+            return MTL::BlendFactor::BlendFactorSourceAlpha;
+        case BlendFactor::ONE_MINUS_SRC_ALPHA:
+            return MTL::BlendFactor::BlendFactorOneMinusSourceAlpha;
+        case BlendFactor::DST_ALPHA:
+            return MTL::BlendFactor::BlendFactorDestinationAlpha;
+        case BlendFactor::ONE_MINUS_DST_ALPHA:
+            return MTL::BlendFactor::BlendFactorOneMinusDestinationAlpha;
+        case BlendFactor::CONSTANT_COLOR:
+            return MTL::BlendFactor::BlendFactorBlendColor;
+        case BlendFactor::ONE_MINUS_CONSTANT_COLOR:
+            return MTL::BlendFactor::BlendFactorOneMinusBlendColor;
+        case BlendFactor::CONSTANT_ALPHA:
+            return MTL::BlendFactor::BlendFactorBlendAlpha;
+        case BlendFactor::ONE_MINUS_CONSTANT_ALPHA:
+            return MTL::BlendFactor::BlendFactorOneMinusBlendAlpha;
+        case BlendFactor::SRC_ALPHA_SATURATE:
+            return MTL::BlendFactor::BlendFactorSourceAlphaSaturated;
+        case BlendFactor::SRC1_COLOR:
+            return MTL::BlendFactor::BlendFactorSource1Color;
+        case BlendFactor::ONE_MINUS_SRC1_COLOR:
+            return MTL::BlendFactor::BlendFactorOneMinusSource1Color;
+        case BlendFactor::SRC1_ALPHA:
+            return MTL::BlendFactor::BlendFactorSource1Alpha;
+        case BlendFactor::ONE_MINUS_SRC1_ALPHA:
+            return MTL::BlendFactor::BlendFactorOneMinusSource1Alpha;
+    }
+}

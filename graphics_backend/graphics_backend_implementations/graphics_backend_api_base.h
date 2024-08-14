@@ -19,8 +19,7 @@ enum class PrimitiveType;
 enum class BufferBindTarget;
 enum class VertexAttributeDataType;
 enum class BufferUsageHint;
-FORWARD_DECLARE_ENUM(GraphicsBackendCapability)
-FORWARD_DECLARE_ENUM(BlendFactor)
+enum class BlendFactor;
 enum class CullFace;
 enum class DepthFunction;
 enum class ShaderType;
@@ -46,6 +45,7 @@ class GraphicsBackendBufferInfo;
 struct GraphicsBackendResourceBindings;
 struct GraphicsBackendRenderTargetDescriptor;
 struct GraphicsBackendDepthStencilState;
+struct GraphicsBackendColorAttachmentDescriptor;
 
 class GraphicsBackendBase
 {
@@ -95,15 +95,12 @@ public:
     virtual void SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer) = 0;
     virtual void SetVertexAttributeDivisor(int index, int divisor) = 0;
 
-    virtual void SetCapability(GraphicsBackendCapability capability, bool enabled) = 0;
-
-    virtual void SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor) = 0;
     virtual void SetCullFace(CullFace cullFace) = 0;
     virtual void SetCullFaceOrientation(CullFaceOrientation orientation) = 0;
     virtual void SetViewport(int x, int y, int width, int height, float near, float far) = 0;
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) = 0;
-    virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;
+    virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;
     virtual void DeleteShader(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;

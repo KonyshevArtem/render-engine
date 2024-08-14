@@ -15,8 +15,6 @@
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug.h"
 #include "enums/cull_face_orientation.h"
-#include "enums/graphics_backend_capability.h"
-#include "enums/vertex_attribute_data_type.h"
 #include "enums/indices_data_type.h"
 #include "enums/framebuffer_target.h"
 #include "types/graphics_backend_framebuffer.h"
@@ -402,16 +400,6 @@ namespace Graphics
         }
     }
 
-    void SetBlendState(const BlendInfo& blendInfo)
-    {
-        GraphicsBackend::Current()->SetCapability(GraphicsBackendCapability::BLEND, blendInfo.Enabled);
-
-        if (blendInfo.Enabled)
-        {
-            GraphicsBackend::Current()->SetBlendFunction(blendInfo.SourceFactor, blendInfo.DestinationFactor);
-        }
-    }
-
     void SetCullState(const CullInfo &cullInfo)
     {
         GraphicsBackend::Current()->SetCullFace(cullInfo.Face);
@@ -516,7 +504,6 @@ namespace Graphics
 
         GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes));
 
-        SetBlendState(shaderPass.GetBlendInfo());
         SetCullState(shaderPass.GetCullInfo());
         GraphicsBackend::Current()->SetDepthStencilState(shaderPass.GetDepthStencilState());
 

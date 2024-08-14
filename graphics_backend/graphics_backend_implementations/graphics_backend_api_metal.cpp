@@ -17,6 +17,7 @@
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "types/graphics_backend_depth_stencil_state.h"
+#include "types/graphics_backend_color_attachment_descriptor.h"
 #include "helpers/metal_helpers.h"
 #include "debug.h"
 
@@ -326,14 +327,6 @@ void GraphicsBackendMetal::SetVertexAttributeDivisor(int index, int divisor)
 {
 }
 
-void GraphicsBackendMetal::SetCapability(GraphicsBackendCapability capability, bool enabled)
-{
-}
-
-void GraphicsBackendMetal::SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor)
-{
-}
-
 void GraphicsBackendMetal::SetCullFace(CullFace cullFace)
 {
     m_CurrentCommandEncoder->setCullMode(MetalHelpers::ToCullFace(cullFace));
@@ -363,15 +356,20 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
     return shaderObject;
 }
 
-GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
+GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
     MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
 
-    MTL::PixelFormat metalColorFormat = GetPSOPixelFormat(colorFormat, true, 0);
+    MTL::PixelFormat metalColorFormat = GetPSOPixelFormat(colorAttachmentDescriptor.Format, true, 0);
     MTL::PixelFormat metalDepthFormat = GetPSOPixelFormat(depthFormat, false, 0);
 
-    desc->colorAttachments()->object(0)->setPixelFormat(metalColorFormat);
+    auto attachmentDesc = desc->colorAttachments()->object(0);
+    attachmentDesc->setPixelFormat(metalColorFormat);
+    attachmentDesc->setBlendingEnabled(colorAttachmentDescriptor.BlendingEnabled);
+    attachmentDesc->setSourceRGBBlendFactor(MetalHelpers::ToBlendFactor(colorAttachmentDescriptor.SourceFactor));
+    attachmentDesc->setDestinationRGBBlendFactor(MetalHelpers::ToBlendFactor(colorAttachmentDescriptor.DestinationFactor));
+
     desc->setDepthAttachmentPixelFormat(metalDepthFormat);
 
     auto shader = shaders[0];

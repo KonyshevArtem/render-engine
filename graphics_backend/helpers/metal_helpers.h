@@ -13,6 +13,7 @@
 #include "enums/depth_function.h"
 #include "enums/cull_face_orientation.h"
 #include "enums/cull_face.h"
+#include "enums/blend_factor.h"
 
 #include <cstdint>
 
@@ -31,6 +32,7 @@ namespace MTL
     enum CompareFunction : std::uintptr_t;
     enum Winding : std::uintptr_t;
     enum CullMode : std::uintptr_t;
+    enum BlendFactor : std::uintptr_t;
 }
 
 namespace MetalHelpers
@@ -48,6 +50,7 @@ namespace MetalHelpers
     MTL::CompareFunction ToDepthCompareFunction(DepthFunction function);
     MTL::Winding ToCullFaceOrientation(CullFaceOrientation orientation);
     MTL::CullMode ToCullFace(CullFace face);
+    MTL::BlendFactor ToBlendFactor(BlendFactor factor);
 }
 
 #endif //RENDER_ENGINE_METAL_HELPERS_H

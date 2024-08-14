@@ -15,6 +15,7 @@
 #include "enums/depth_function.h"
 #include "enums/cull_face_orientation.h"
 #include "enums/cull_face.h"
+#include "enums/blend_factor.h"
 
 #include <string>
 
@@ -54,6 +55,7 @@ namespace OpenGLHelpers
     GLenum ToDepthCompareFunction(DepthFunction function);
     GLenum ToCullFaceOrientation(CullFaceOrientation orientation);
     GLenum ToCullFace(CullFace face);
+    GLenum ToBlendFactor(BlendFactor factor);
 }
 
 #endif //RENDER_ENGINE_OPENGL_HELPERS_H

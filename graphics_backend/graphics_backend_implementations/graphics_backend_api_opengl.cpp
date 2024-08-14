@@ -14,6 +14,7 @@
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "types/graphics_backend_depth_stencil_state.h"
+#include "types/graphics_backend_color_attachment_descriptor.h"
 #include "helpers/opengl_helpers.h"
 
 #include <type_traits>
@@ -22,6 +23,13 @@ struct DepthStencilState
 {
     GLboolean DepthWrite;
     GLenum DepthFunction;
+};
+
+struct BlendState
+{
+    GLenum SourceFactor;
+    GLenum DestinationFactor;
+    bool Enabled;
 };
 
 GraphicsBackendTexture GraphicsBackendTexture::NONE = GraphicsBackendTexture();
@@ -443,23 +451,6 @@ void GraphicsBackendOpenGL::SetVertexAttributeDivisor(int index, int divisor)
     CHECK_GRAPHICS_BACKEND_FUNC(glVertexAttribDivisor(index, divisor))
 }
 
-void GraphicsBackendOpenGL::SetCapability(GraphicsBackendCapability capability, bool enabled)
-{
-    if (enabled)
-    {
-        CHECK_GRAPHICS_BACKEND_FUNC(glEnable(Cast(capability)))
-    }
-    else
-    {
-        CHECK_GRAPHICS_BACKEND_FUNC(glDisable(Cast(capability)))
-    }
-}
-
-void GraphicsBackendOpenGL::SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glBlendFunc(Cast(sourceFactor), Cast(destinationFactor)))
-}
-
 void GraphicsBackendOpenGL::SetCullFace(CullFace cullFace)
 {
     if (cullFace == CullFace::NONE)
@@ -509,7 +500,7 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
     return shaderObject;
 }
 
-GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
+GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
                                                             const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
     GraphicsBackendProgram program{};
@@ -548,6 +539,12 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<Gr
         throw std::runtime_error("Link failed with error:\n" + logMsg);
     }
 
+    auto blendState = new BlendState();
+    blendState->SourceFactor = OpenGLHelpers::ToBlendFactor(colorAttachmentDescriptor.SourceFactor);
+    blendState->DestinationFactor = OpenGLHelpers::ToBlendFactor(colorAttachmentDescriptor.DestinationFactor);
+    blendState->Enabled = colorAttachmentDescriptor.BlendingEnabled;
+    program.BlendState = reinterpret_cast<uint64_t>(blendState);
+
     return program;
 }
 
@@ -559,6 +556,9 @@ void GraphicsBackendOpenGL::DeleteShader(GraphicsBackendShaderObject shader)
 void GraphicsBackendOpenGL::DeleteProgram(GraphicsBackendProgram program)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glDeleteProgram(program.Program))
+
+    auto blendState = reinterpret_cast<BlendState*>(program.BlendState);
+    delete blendState;
 }
 
 void GraphicsBackendOpenGL::IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers)
@@ -675,6 +675,20 @@ bool GraphicsBackendOpenGL::RequireStrictPSODescriptor()
 void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glUseProgram(program.Program))
+
+    auto blendState = reinterpret_cast<BlendState*>(program.BlendState);
+    if (blendState)
+    {
+        if (blendState->Enabled)
+        {
+            CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_BLEND))
+            CHECK_GRAPHICS_BACKEND_FUNC(glBlendFunc(blendState->SourceFactor, blendState->DestinationFactor))
+        }
+        else
+        {
+            CHECK_GRAPHICS_BACKEND_FUNC(glDisable(GL_BLEND))
+        }
+    }
 }
 
 void GraphicsBackendOpenGL::SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose)

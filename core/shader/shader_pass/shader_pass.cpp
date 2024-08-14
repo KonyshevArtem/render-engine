@@ -76,13 +76,16 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, const 
                        BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
                        std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues) :
         m_Shaders(std::move(shaders)),
-        m_BlendInfo(blendInfo),
         m_CullInfo(cullInfo),
-        m_ColorFormat(colorFormat),
         m_DepthFormat(depthFormat),
         m_Tags(std::move(tags))
 {
-    auto program = GraphicsBackend::Current()->CreateProgram(m_Shaders, m_ColorFormat, m_DepthFormat, vertexAttributes);
+    m_ColorAttachmentDescriptor.Format = colorFormat;
+    m_ColorAttachmentDescriptor.SourceFactor = blendInfo.SourceFactor;
+    m_ColorAttachmentDescriptor.DestinationFactor = blendInfo.DestinationFactor;
+    m_ColorAttachmentDescriptor.BlendingEnabled = blendInfo.Enabled;
+
+    auto program = GraphicsBackend::Current()->CreateProgram(m_Shaders, m_ColorAttachmentDescriptor, m_DepthFormat, vertexAttributes);
     m_Programs[VertexAttributes::GetHash(vertexAttributes)] = program;
 
     GraphicsBackend::Current()->IntrospectProgram(program, m_Uniforms, m_Buffers);
@@ -120,9 +123,9 @@ const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &ver
         return it->second;
     }
 
-    auto program = GraphicsBackend::Current()->CreateProgram(m_Shaders, m_ColorFormat, m_DepthFormat, vertexAttributes.GetAttributes());
+    auto program = GraphicsBackend::Current()->CreateProgram(m_Shaders, m_ColorAttachmentDescriptor, m_DepthFormat, vertexAttributes.GetAttributes());
     m_Programs[hash] = program;
-    return program;
+    return m_Programs[hash];
 }
 
 std::string ShaderPass::GetTagValue(const std::string &tag) const

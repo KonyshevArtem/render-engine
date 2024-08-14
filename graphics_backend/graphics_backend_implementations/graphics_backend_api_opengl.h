@@ -51,15 +51,12 @@ public:
     void SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer) override;
     void SetVertexAttributeDivisor(int index, int divisor) override;
 
-    void SetCapability(GraphicsBackendCapability capability, bool enabled) override;
-
-    void SetBlendFunction(BlendFactor sourceFactor, BlendFactor destinationFactor) override;
     void SetCullFace(CullFace cullFace) override;
     void SetCullFaceOrientation(CullFaceOrientation orientation) override;
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
-    GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;
+    GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;
     void DeleteShader(GraphicsBackendShaderObject shader) override;
     void DeleteProgram(GraphicsBackendProgram program) override;
     void UseProgram(GraphicsBackendProgram program) override;

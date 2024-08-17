@@ -4,7 +4,6 @@
 #include "shader/shader_structs.h"
 #include "shader_loader_utils.h"
 #include "enums/texture_internal_format.h"
-#include "types/graphics_backend_vertex_attribute_descriptor.h"
 
 #include <string>
 #include <vector>
@@ -17,11 +16,8 @@ namespace ShaderParser
         BlendInfo BlendInfo;
         CullInfo CullInfo;
         DepthInfo DepthInfo;
-        TextureInternalFormat ColorFormat;
-        TextureInternalFormat DepthFormat;
 
         std::unordered_map<std::string, std::string> Tags;
-        std::vector<GraphicsBackendVertexAttributeDescriptor> VertexAttributes;
 
         std::string OpenGLShaderSourcePaths[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT];
         std::string MetalShaderSourcePath;

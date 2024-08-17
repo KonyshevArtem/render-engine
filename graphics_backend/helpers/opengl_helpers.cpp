@@ -358,6 +358,9 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format)
             return GL_RGBA32I;
         case TextureInternalFormat::RGBA32UI:
             return GL_RGBA32UI;
+        case TextureInternalFormat::BGRA8:
+        case TextureInternalFormat::BGRA8_SNORM:
+            return GL_BGRA;
 #if GL_EXT_texture_compression_s3tc
         case TextureInternalFormat::COMPRESSED_RGB_S3TC_DXT1_EXT:
             return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
@@ -549,6 +552,8 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format)
             return TextureInternalFormat::RGBA32I;
         case GL_RGBA32UI:
             return TextureInternalFormat::RGBA32UI;
+        case GL_BGRA:
+            return TextureInternalFormat::BGRA8;
 #if GL_EXT_texture_compression_s3tc
         case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
             return TextureInternalFormat::COMPRESSED_RGB_S3TC_DXT1_EXT;

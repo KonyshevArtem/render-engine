@@ -4,7 +4,9 @@
 #include "cubemap/cubemap.h"
 #include "types/graphics_backend_uniform_info.h"
 #include "types/graphics_backend_buffer_info.h"
+#include "types/graphics_backend_color_attachment_descriptor.h"
 #include "global_constants.h"
+#include "utils.h"
 
 #include <vector>
 
@@ -72,23 +74,30 @@ void FillDefaultValuesPropertyBlock(const std::unordered_map<std::string, std::s
     }
 }
 
-ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                       BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
+size_t GetPSOHash(size_t vertexAttributesHash, TextureInternalFormat colorTargetFormat, TextureInternalFormat depthTargetFormat)
+{
+    size_t targetsHash = Utils::HashCombine(std::hash<TextureInternalFormat>{}(colorTargetFormat), std::hash<TextureInternalFormat>{}(depthTargetFormat));
+    return Utils::HashCombine(targetsHash, vertexAttributesHash);
+}
+
+ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
                        std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues) :
         m_Shaders(std::move(shaders)),
         m_CullInfo(cullInfo),
-        m_DepthFormat(depthFormat),
+        m_BlendInfo(blendInfo),
         m_Tags(std::move(tags))
 {
-    m_ColorAttachmentDescriptor.Format = colorFormat;
-    m_ColorAttachmentDescriptor.SourceFactor = blendInfo.SourceFactor;
-    m_ColorAttachmentDescriptor.DestinationFactor = blendInfo.DestinationFactor;
-    m_ColorAttachmentDescriptor.BlendingEnabled = blendInfo.Enabled;
+    const TextureInternalFormat k_DefaultColorFormat = TextureInternalFormat::RGBA16F;
+    const TextureInternalFormat k_DefaultDepthFormat = TextureInternalFormat::DEPTH_COMPONENT;
 
-    auto program = GraphicsBackend::Current()->CreateProgram(m_Shaders, m_ColorAttachmentDescriptor, m_DepthFormat, vertexAttributes);
-    m_Programs[VertexAttributes::GetHash(vertexAttributes)] = program;
+    static std::vector<GraphicsBackendVertexAttributeDescriptor> s_DefaultVertexAttributes;
+    if (s_DefaultVertexAttributes.empty())
+    {
+        s_DefaultVertexAttributes.push_back({0, 3, VertexAttributeDataType::FLOAT, 0, 12, 0});
+    }
 
-    GraphicsBackend::Current()->IntrospectProgram(program, m_Uniforms, m_Buffers);
+    CreatePSO(m_Shaders, m_BlendInfo, k_DefaultColorFormat, k_DefaultDepthFormat, s_DefaultVertexAttributes, &m_Uniforms, &m_Buffers);
+
     FillDefaultValuesPropertyBlock(defaultValues, m_Uniforms, m_DefaultValuesBlock);
 
     m_DepthStencilState = GraphicsBackend::Current()->CreateDepthStencilState(depthInfo.WriteDepth, depthInfo.DepthFunction);
@@ -109,27 +118,44 @@ ShaderPass::~ShaderPass()
     GraphicsBackend::Current()->DeleteDepthStencilState(m_DepthStencilState);
 }
 
-const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &vertexAttributes)
+const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, TextureInternalFormat depthTargetFormat)
 {
     if (!GraphicsBackend::Current()->RequireStrictPSODescriptor() && !m_Programs.empty())
     {
         return m_Programs.begin()->second;
     }
 
-    auto hash = vertexAttributes.GetHash();
+    auto hash = GetPSOHash(vertexAttributes.GetHash(), colorTargetFormat, depthTargetFormat);
+
     auto it = m_Programs.find(hash);
     if (it != m_Programs.end())
     {
         return it->second;
     }
 
-    auto program = GraphicsBackend::Current()->CreateProgram(m_Shaders, m_ColorAttachmentDescriptor, m_DepthFormat, vertexAttributes.GetAttributes());
-    m_Programs[hash] = program;
-    return m_Programs[hash];
+    return CreatePSO(m_Shaders, m_BlendInfo, colorTargetFormat, depthTargetFormat, vertexAttributes.GetAttributes(), nullptr, nullptr);
 }
 
 std::string ShaderPass::GetTagValue(const std::string &tag) const
 {
     auto it = m_Tags.find(tag);
     return it != m_Tags.end() ? it->second : "";
+}
+
+const GraphicsBackendProgram &ShaderPass::CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat,
+                                                    TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
+                                                    std::unordered_map<std::string, GraphicsBackendUniformInfo> *uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> *buffers)
+{
+    GraphicsBackendColorAttachmentDescriptor colorAttachmentDescriptor{};
+    colorAttachmentDescriptor.Format = colorFormat;
+    colorAttachmentDescriptor.SourceFactor = blendInfo.SourceFactor;
+    colorAttachmentDescriptor.DestinationFactor = blendInfo.DestinationFactor;
+    colorAttachmentDescriptor.BlendingEnabled = blendInfo.Enabled;
+
+    auto program = GraphicsBackend::Current()->CreateProgram(shaders, colorAttachmentDescriptor, depthFormat, vertexAttributes, uniforms, buffers);
+
+    size_t hash = GetPSOHash(VertexAttributes::GetHash(vertexAttributes), colorFormat, depthFormat);
+    m_Programs[hash] = program;
+
+    return m_Programs[hash];
 }

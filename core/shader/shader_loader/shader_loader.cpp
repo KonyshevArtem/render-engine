@@ -77,7 +77,7 @@ namespace ShaderLoader
                     shaders.push_back(CompileShader(ShaderType::VERTEX_SHADER, partPath, keywordsDirectives, ""));
                 }
 
-                auto passPtr = std::make_shared<ShaderPass>(shaders, passInfo.VertexAttributes, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.ColorFormat, passInfo.DepthFormat, passInfo.Tags, properties);
+                auto passPtr = std::make_shared<ShaderPass>(shaders, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.Tags, properties);
                 passes.push_back(passPtr);
             }
 

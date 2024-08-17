@@ -11,6 +11,7 @@ namespace MTL
     class CommandBuffer;
     class RenderPassDescriptor;
     class RenderCommandEncoder;
+    class RenderPipelineReflection;
 
     enum PixelFormat : std::uintptr_t;
 }
@@ -42,6 +43,7 @@ public:
 
     void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer) override;
     void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) override;
+    TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment) override;
 
     GraphicsBackendBuffer CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
@@ -66,12 +68,12 @@ public:
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
-    GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;
+    GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
+                                         std::unordered_map<std::string, GraphicsBackendUniformInfo>* uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers) override;
     void DeleteShader(GraphicsBackendShaderObject shader) override;
     void DeleteProgram(GraphicsBackendProgram program) override;
     void UseProgram(GraphicsBackendProgram program) override;
     void SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose = false) override;
-    void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers) override;
     bool RequireStrictPSODescriptor() override;
 
     void SetClearColor(float r, float g, float b, float a) override;
@@ -107,6 +109,8 @@ private:
     MTL::RenderCommandEncoder *m_CurrentCommandEncoder = nullptr;
 
     MTL::PixelFormat GetPSOPixelFormat(TextureInternalFormat textureFormat, bool isColor, int index);
+
+    void IntrospectProgram(MTL::RenderPipelineReflection* reflection, std::unordered_map<std::string, GraphicsBackendUniformInfo>* uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers);
 };
 
 

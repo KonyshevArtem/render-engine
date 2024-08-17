@@ -95,23 +95,6 @@ bool TryGetValue(const boost::json::object &object, const std::string &key, T &v
     return found;
 }
 
-GraphicsBackendVertexAttributeDescriptor tag_invoke(const boost::json::value_to_tag<GraphicsBackendVertexAttributeDescriptor> &,
-                                                    boost::json::value const &vertexAttributeValue)
-{
-    auto &vertexAttributeObject = vertexAttributeValue.as_object();
-
-    GraphicsBackendVertexAttributeDescriptor vertexAttribute{};
-
-    TryGetValue(vertexAttributeObject, "index", vertexAttribute.Index);
-    TryGetValue(vertexAttributeObject, "dimensions", vertexAttribute.Dimensions);
-    TryGetValue(vertexAttributeObject, "dataType", reinterpret_cast<int&>(vertexAttribute.DataType));
-    TryGetValue(vertexAttributeObject, "isNormalized", reinterpret_cast<bool&>(vertexAttribute.IsNormalized));
-    TryGetValue(vertexAttributeObject, "stride", vertexAttribute.Stride);
-    TryGetValue(vertexAttributeObject, "offset", vertexAttribute.Offset);
-
-    return vertexAttribute;
-}
-
 namespace ShaderParser
 {
 
@@ -198,11 +181,6 @@ namespace ShaderParser
         }
 
         TryGetValue(passInfoObject, "metal", info.MetalShaderSourcePath);
-
-        TryGetValue(passInfoObject, "colorFormat", reinterpret_cast<int&>(info.ColorFormat), -1);
-        TryGetValue(passInfoObject, "depthFormat", reinterpret_cast<int&>(info.DepthFormat), -1);
-
-        TryGetValue(passInfoObject, "vertexAttributes", info.VertexAttributes);
 
         return info;
     }

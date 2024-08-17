@@ -502,7 +502,9 @@ namespace Graphics
         const auto &perMaterialDataBlock = material.GetPerMaterialDataBlock(shaderPassIndex);
         const auto &materialPropertyBlock = material.GetPropertyBlock();
 
-        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes));
+        TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0);
+        TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_ATTACHMENT);
+        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, depthTargetFormat));
 
         SetCullState(shaderPass.GetCullInfo());
         GraphicsBackend::Current()->SetDepthStencilState(shaderPass.GetDepthStencilState());

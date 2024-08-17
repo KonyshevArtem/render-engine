@@ -41,6 +41,7 @@ namespace MetalHelpers
     MTL::IndexType ToIndicesDataType(IndicesDataType dataType);
     MTL::TextureType ToTextureType(TextureType textureType);
     MTL::PixelFormat ToTextureInternalFormat(TextureInternalFormat format);
+    TextureInternalFormat FromTextureInternalFormat(MTL::PixelFormat format);
     MTL::SamplerAddressMode ToTextureWrapMode(TextureWrapMode wrapMode);
     MTL::SamplerMinMagFilter ToTextureFilteringMode(TextureFilteringMode filteringMode);
     MTL::SamplerBorderColor ToTextureBorderColor(const float color[4]);

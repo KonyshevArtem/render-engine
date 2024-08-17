@@ -4,7 +4,6 @@
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_depth_stencil_state.h"
-#include "types/graphics_backend_color_attachment_descriptor.h"
 #include "enums/texture_internal_format.h"
 #include "shader/shader_structs.h"
 #include "property_block/property_block.h"
@@ -19,8 +18,7 @@ class GraphicsBackendBufferInfo;
 class ShaderPass
 {
 public:
-    ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-               BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, TextureInternalFormat colorFormat, TextureInternalFormat depthFormat,
+    ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
                std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues);
 
     ~ShaderPass();
@@ -31,7 +29,7 @@ public:
     ShaderPass &operator=(const ShaderPass &) = delete;
     ShaderPass &operator=(ShaderPass &&) = delete;
 
-    const GraphicsBackendProgram &GetProgram(const VertexAttributes &vertexAttributes);
+    const GraphicsBackendProgram &GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, TextureInternalFormat depthTargetFormat);
 
     inline const CullInfo &GetCullInfo() const
     {
@@ -67,12 +65,15 @@ private:
 
     CullInfo m_CullInfo;
     GraphicsBackendDepthStencilState m_DepthStencilState;
-    GraphicsBackendColorAttachmentDescriptor m_ColorAttachmentDescriptor;
-    TextureInternalFormat m_DepthFormat;
+    BlendInfo m_BlendInfo;
 
     std::unordered_map<std::string, std::string> m_Tags;
     std::unordered_map<std::string, GraphicsBackendUniformInfo> m_Uniforms;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
+
+    const GraphicsBackendProgram &CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat,
+                                            TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
+                                            std::unordered_map<std::string, GraphicsBackendUniformInfo> *uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> *buffers);
 };
 
 

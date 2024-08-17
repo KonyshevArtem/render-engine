@@ -169,6 +169,10 @@ MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat for
             return MTL::PixelFormat::PixelFormatRGBA32Sint;
         case TextureInternalFormat::RGBA32UI:
             return MTL::PixelFormat::PixelFormatRGBA32Uint;
+        case TextureInternalFormat::BGRA8:
+            return MTL::PixelFormat::PixelFormatBGRA8Unorm;
+        case TextureInternalFormat::BGRA8_SNORM:
+            return MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB;
         case TextureInternalFormat::DEPTH_COMPONENT:
             return MTL::PixelFormat::PixelFormatDepth32Float;
         case TextureInternalFormat::DEPTH_STENCIL:
@@ -187,6 +191,128 @@ MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat for
             return MTL::PixelFormat::PixelFormatBC3_RGBA_sRGB;
         default:
             return MTL::PixelFormat::PixelFormatInvalid;
+    }
+}
+
+TextureInternalFormat MetalHelpers::FromTextureInternalFormat(MTL::PixelFormat format)
+{
+    switch (format)
+    {
+        case MTL::PixelFormat::PixelFormatETC2_RGB8:
+            return TextureInternalFormat::COMPRESSED_RGB;
+        case MTL::PixelFormat::PixelFormatBC7_RGBAUnorm:
+            return TextureInternalFormat::COMPRESSED_RGBA;
+        case MTL::PixelFormat::PixelFormatETC2_RGB8_sRGB:
+            return TextureInternalFormat::COMPRESSED_SRGB;
+        case MTL::PixelFormat::PixelFormatBC7_RGBAUnorm_sRGB:
+            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA;
+        case MTL::PixelFormat::PixelFormatBC4_RUnorm:
+            return TextureInternalFormat::COMPRESSED_RED;
+        case MTL::PixelFormat::PixelFormatBC5_RGUnorm:
+            return TextureInternalFormat::COMPRESSED_RG;
+
+        case MTL::PixelFormat::PixelFormatR8Unorm:
+            return TextureInternalFormat::R8;
+        case MTL::PixelFormat::PixelFormatR8Snorm:
+            return TextureInternalFormat::R8_SNORM;
+        case MTL::PixelFormat::PixelFormatR16Unorm:
+            return TextureInternalFormat::R16;
+        case MTL::PixelFormat::PixelFormatR16Snorm:
+            return TextureInternalFormat::R16_SNORM;
+        case MTL::PixelFormat::PixelFormatRG8Unorm:
+            return TextureInternalFormat::RG8;
+        case MTL::PixelFormat::PixelFormatRG8Snorm:
+            return TextureInternalFormat::RG8_SNORM;
+        case MTL::PixelFormat::PixelFormatRG16Unorm:
+            return TextureInternalFormat::RG16;
+        case MTL::PixelFormat::PixelFormatRG16Snorm:
+            return TextureInternalFormat::RG16_SNORM;
+        case MTL::PixelFormat::PixelFormatRGBA8Unorm:
+            return TextureInternalFormat::RGBA8;
+        case MTL::PixelFormat::PixelFormatRGBA8Snorm:
+            return TextureInternalFormat::RGBA8_SNORM;
+        case MTL::PixelFormat::PixelFormatRGB10A2Unorm:
+            return TextureInternalFormat::RGB10_A2;
+        case MTL::PixelFormat::PixelFormatRGB10A2Uint:
+            return TextureInternalFormat::RGB10_A2UI;
+        case MTL::PixelFormat::PixelFormatRGBA16Unorm:
+            return TextureInternalFormat::RGBA16;
+        case MTL::PixelFormat::PixelFormatRGBA8Unorm_sRGB:
+            return TextureInternalFormat::SRGB8_ALPHA8;
+        case MTL::PixelFormat::PixelFormatR16Float:
+            return TextureInternalFormat::R16F;
+        case MTL::PixelFormat::PixelFormatRG16Float:
+            return TextureInternalFormat::RG16F;
+        case MTL::PixelFormat::PixelFormatRGBA16Float:
+            return TextureInternalFormat::RGBA16F;
+        case MTL::PixelFormat::PixelFormatR32Float:
+            return TextureInternalFormat::R32F;
+        case MTL::PixelFormat::PixelFormatRG32Float:
+            return TextureInternalFormat::RG32F;
+        case MTL::PixelFormat::PixelFormatRGBA32Float:
+            return TextureInternalFormat::RGBA32F;
+        case MTL::PixelFormat::PixelFormatRG11B10Float:
+            return TextureInternalFormat::R11F_G11F_B10F;
+        case MTL::PixelFormat::PixelFormatRGB9E5Float:
+            return TextureInternalFormat::RGB9_E5;
+        case MTL::PixelFormat::PixelFormatR8Sint:
+            return TextureInternalFormat::R8I;
+        case MTL::PixelFormat::PixelFormatR8Uint:
+            return TextureInternalFormat::R8UI;
+        case MTL::PixelFormat::PixelFormatR16Sint:
+            return TextureInternalFormat::R16I;
+        case MTL::PixelFormat::PixelFormatR16Uint:
+            return TextureInternalFormat::R16UI;
+        case MTL::PixelFormat::PixelFormatR32Sint:
+            return TextureInternalFormat::R32I;
+        case MTL::PixelFormat::PixelFormatR32Uint:
+            return TextureInternalFormat::R32UI;
+        case MTL::PixelFormat::PixelFormatRG8Sint:
+            return TextureInternalFormat::RG8I;
+        case MTL::PixelFormat::PixelFormatRG8Uint:
+            return TextureInternalFormat::RG8UI;
+        case MTL::PixelFormat::PixelFormatRG16Sint:
+            return TextureInternalFormat::RG16I;
+        case MTL::PixelFormat::PixelFormatRG16Uint:
+            return TextureInternalFormat::RG16UI;
+        case MTL::PixelFormat::PixelFormatRG32Sint:
+            return TextureInternalFormat::RG32I;
+        case MTL::PixelFormat::PixelFormatRG32Uint:
+            return TextureInternalFormat::RG32UI;
+        case MTL::PixelFormat::PixelFormatRGBA8Sint:
+            return TextureInternalFormat::RGBA8I;
+        case MTL::PixelFormat::PixelFormatRGBA8Uint:
+            return TextureInternalFormat::RGBA8UI;
+        case MTL::PixelFormat::PixelFormatRGBA16Sint:
+            return TextureInternalFormat::RGBA16I;
+        case MTL::PixelFormat::PixelFormatRGBA16Uint:
+            return TextureInternalFormat::RGBA16UI;
+        case MTL::PixelFormat::PixelFormatRGBA32Sint:
+            return TextureInternalFormat::RGBA32I;
+        case MTL::PixelFormat::PixelFormatRGBA32Uint:
+            return TextureInternalFormat::RGBA32UI;
+        case MTL::PixelFormat::PixelFormatBGRA8Unorm:
+            return TextureInternalFormat::BGRA8;
+        case MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB:
+            return TextureInternalFormat::BGRA8_SNORM;
+        case MTL::PixelFormat::PixelFormatDepth32Float:
+            return TextureInternalFormat::DEPTH_COMPONENT;
+        case MTL::PixelFormat::PixelFormatDepth32Float_Stencil8:
+            return TextureInternalFormat::DEPTH_STENCIL;
+        case MTL::PixelFormat::PixelFormatBC1_RGBA:
+            return TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT1_EXT;
+        case MTL::PixelFormat::PixelFormatBC2_RGBA:
+            return TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT3_EXT;
+        case MTL::PixelFormat::PixelFormatBC3_RGBA:
+            return TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT5_EXT;
+        case MTL::PixelFormat::PixelFormatBC1_RGBA_sRGB:
+            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
+        case MTL::PixelFormat::PixelFormatBC2_RGBA_sRGB:
+            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
+        case MTL::PixelFormat::PixelFormatBC3_RGBA_sRGB:
+            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+        default:
+            return TextureInternalFormat::RGBA8;
     }
 }
 

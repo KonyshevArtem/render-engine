@@ -233,6 +233,26 @@ void GraphicsBackendMetal::AttachRenderTarget(const GraphicsBackendRenderTargetD
     }
 }
 
+TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAttachment attachment)
+{
+    bool isDepth = attachment == FramebufferAttachment::DEPTH_ATTACHMENT || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+    bool isStencil = attachment == FramebufferAttachment::STENCIL_ATTACHMENT || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+
+    if (isDepth)
+    {
+        return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->depthAttachment()->texture()->pixelFormat());
+    }
+    else if (isStencil)
+    {
+        return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->stencilAttachment()->texture()->pixelFormat());
+    }
+    else
+    {
+        int index = static_cast<int>(attachment);
+        return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->colorAttachments()->object(index)->texture()->pixelFormat());
+    }
+}
+
 GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint)
 {
     auto metalBuffer = m_Device->newBuffer(size, MTL::ResourceStorageModeManaged);
@@ -357,7 +377,8 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
 }
 
 GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
-                                                           const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
+                                                           const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
+                                                           std::unordered_map<std::string, GraphicsBackendUniformInfo>* uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers)
 {
     MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
 
@@ -393,7 +414,7 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
     layoutDesc->setStepFunction(MTL::VertexStepFunctionPerVertex);
 
     MTL::AutoreleasedRenderPipelineReflection reflection;
-    MTL::PipelineOption options = MTL::PipelineOptionArgumentInfo | MTL::PipelineOptionBufferTypeInfo;
+    MTL::PipelineOption options = uniforms && buffers ? MTL::PipelineOptionArgumentInfo | MTL::PipelineOptionBufferTypeInfo : MTL::PipelineOptionNone;
     auto *pso = m_Device->newRenderPipelineState(desc, options, &reflection, &s_Error);
 
     if (s_Error != nullptr)
@@ -401,9 +422,10 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
         throw std::runtime_error(s_Error->localizedDescription()->utf8String());
     }
 
+    IntrospectProgram(reflection, uniforms, buffers);
+
     GraphicsBackendProgram program{};
     program.Program = reinterpret_cast<uint64_t>(pso);
-    program.Reflection = reinterpret_cast<uint64_t>(reflection);
     return program;
 }
 
@@ -507,11 +529,13 @@ void ParseArguments(NS::Array *arguments, std::unordered_map<std::string, Graphi
     }
 }
 
-void GraphicsBackendMetal::IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers)
+void GraphicsBackendMetal::IntrospectProgram(MTL::RenderPipelineReflection* reflection, std::unordered_map<std::string, GraphicsBackendUniformInfo>* uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers)
 {
-    auto reflection = reinterpret_cast<MTL::AutoreleasedRenderPipelineReflection>(program.Reflection);
-    ParseArguments(reflection->vertexArguments(), uniforms, buffers, true);
-    ParseArguments(reflection->fragmentArguments(), uniforms, buffers, false);
+    if (reflection && uniforms && buffers)
+    {
+        ParseArguments(reflection->vertexArguments(), *uniforms, *buffers, true);
+        ParseArguments(reflection->fragmentArguments(), *uniforms, *buffers, false);
+    }
 }
 
 bool GraphicsBackendMetal::RequireStrictPSODescriptor()

@@ -10,15 +10,12 @@
       "tags": {
         "LightMode": "Forward"
       },
-      "vertex": "standard.vs",
-      "fragment": "standard.fs"
-    },
-    {
-      "tags": {
-        "LightMode": "ShadowCaster"
+      "opengl":
+      {
+        "vertex": "standard.vs",
+        "fragment": "standard.fs"
       },
-      "vertex": "../shadowCaster/shadowCaster.vs",
-      "fragment": "../shadowCaster/shadowCaster.fs"
+      "metal": "standard.metal"
     }
   ]
 }

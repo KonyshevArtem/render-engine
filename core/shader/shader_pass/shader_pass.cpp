@@ -93,7 +93,10 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendI
     static std::vector<GraphicsBackendVertexAttributeDescriptor> s_DefaultVertexAttributes;
     if (s_DefaultVertexAttributes.empty())
     {
-        s_DefaultVertexAttributes.push_back({0, 3, VertexAttributeDataType::FLOAT, 0, 12, 0});
+        s_DefaultVertexAttributes.push_back({0, 3, VertexAttributeDataType::FLOAT, 0, 44, 0});
+        s_DefaultVertexAttributes.push_back({1, 3, VertexAttributeDataType::FLOAT, 0, 44, 12});
+        s_DefaultVertexAttributes.push_back({2, 2, VertexAttributeDataType::FLOAT, 0, 44, 24});
+        s_DefaultVertexAttributes.push_back({3, 3, VertexAttributeDataType::FLOAT, 0, 44, 32});
     }
 
     CreatePSO(m_Shaders, m_BlendInfo, k_DefaultColorFormat, k_DefaultDepthFormat, s_DefaultVertexAttributes, &m_Uniforms, &m_Buffers);

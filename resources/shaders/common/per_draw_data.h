@@ -19,7 +19,7 @@
     #define TRANSFER_INSTANCE_ID_VARYING(vars)  vars.instanceID = gl_InstanceID;
 
     #if defined(VERTEX_PROGRAM)
-        #define SETUP_INSTANCE_ID                   _InstanceID = gl_InstanceID;
+        #define SETUP_INSTANCE_ID(vars)             _InstanceID = gl_InstanceID;
     #elif defined(FRAGMENT_PROGRAM)
         #define SETUP_INSTANCE_ID(vars)             _InstanceID = vars.instanceID;
     #endif
@@ -28,12 +28,7 @@
     #define GET_PER_INSTANCE_VALUE(name)        PerInstance[0].name
     #define DECLARE_INSTANCE_ID_VARYING
     #define TRANSFER_INSTANCE_ID_VARYING(vars)
-
-    #if defined(VERTEX_PROGRAM)
-        #define SETUP_INSTANCE_ID
-    #elif defined(FRAGMENT_PROGRAM)
-        #define SETUP_INSTANCE_ID(vars)
-    #endif
+    #define SETUP_INSTANCE_ID(vars)
 #endif
 
 #ifdef _INSTANCING

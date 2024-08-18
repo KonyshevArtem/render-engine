@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <set>
 #if __has_include("libloaderapi.h")
     #include <libloaderapi.h>
 #elif __has_include("mach-o/dyld.h")
@@ -43,22 +44,40 @@ namespace Utils
         return content;
     }
 
-    std::string ReadFileWithIncludes(const std::filesystem::path &_relativePath) // NOLINT(misc-no-recursion)
+    std::string ReadFileWithIncludes_Internal(const std::filesystem::path& relativePath, const std::regex& includeRegex, std::set<std::string>& includedFiles)
     {
-        auto file = ReadFile(_relativePath);
+        auto file = ReadFile(relativePath);
 
-        std::regex  expression(R"(\s*#include\s+\"(.*)\"\s*\n)");
         std::smatch match;
-        while (std::regex_search(file.cbegin(), file.cend(), match, expression))
+        while (std::regex_search(file.cbegin(), file.cend(), match, includeRegex))
         {
-            auto includedFile = ReadFileWithIncludes(_relativePath.parent_path() / match[1].str());
-            includedFile = "\n" + includedFile + "\n";
-            auto matchStart   = match.position();
-            matchStart        = matchStart == 0 ? 0 : matchStart + 1;
-            file              = file.replace(matchStart, match.length() - 2, includedFile);
+            auto matchStart = match.position();
+            matchStart = matchStart == 0 ? 0 : matchStart + 1;
+
+            auto pathToInclude = relativePath.parent_path() / match[1].str();
+            if (!includedFiles.contains(pathToInclude.string()))
+            {
+                includedFiles.insert(pathToInclude);
+
+                auto includedFile = ReadFileWithIncludes_Internal(pathToInclude, includeRegex, includedFiles);
+                includedFile = "\n" + includedFile + "\n";
+                file = file.replace(matchStart, match.length() - 2, includedFile);
+            }
+            else
+            {
+                file = file.replace(matchStart, match.length() - 2, "");
+            }
         }
 
         return file;
+    }
+
+    std::string ReadFileWithIncludes(const std::filesystem::path &_relativePath) // NOLINT(misc-no-recursion)
+    {
+        std::set<std::string> includedFiles;
+        std::regex expression(R"(\s*#include\s+\"(.*)\"\s*\n)");
+
+        return ReadFileWithIncludes_Internal(_relativePath, expression, includedFiles);
     }
 
     bool ReadFileBytes(const std::filesystem::path &_relativePath, std::vector<uint8_t> &bytes)

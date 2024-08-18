@@ -10,6 +10,7 @@
     #define half_type       mediump float
 
     #define float4x4        mat4
+    #define float3x3        mat3
     #define half3x3         mat3
 
     #define float4          vec4
@@ -37,8 +38,12 @@
     #define SAMPLE_TEXTURE_LOD(textureName, samplerName, uv, lod) textureLod(textureName, uv, lod)
     #define TEXTURE2D_HALF_PARAMETER(texName, samplerName) in sampler2D texName
     #define CUBEMAP_HALF_PARAMETER(cubeName, samplerName) in samplerCube cubeName
+    #define PASS_TEXTURE_PARAMETER(texName, samplerName) texName
 
     #define SCREEN_UV_UPSIDE_DOWN 0
+
+    #define constant const
+    #define OUT(type) out type
 
 #elif defined(METAL_SHADER)
 
@@ -56,8 +61,11 @@
     #define SAMPLE_TEXTURE_LOD(textureName, samplerName, uv, lod) textureName.sample(samplerName, uv, level(lod))
     #define TEXTURE2D_HALF_PARAMETER(texName, samplerName) texture2d<half> texName, sampler samplerName
     #define CUBEMAP_HALF_PARAMETER(cubeName, samplerName) texturecube<half> cubeName, sampler samplerName
+    #define PASS_TEXTURE_PARAMETER(texName, samplerName) texName, samplerName
 
     #define SCREEN_UV_UPSIDE_DOWN 1
+
+    #define OUT(type) thread type&
 
 #endif
 

@@ -36,7 +36,7 @@ float getShadowTerm(float fragZ, float shadowMapDepth, float lightAngleCos)
 }
 #endif
 
-float getDirLightShadowTerm(vec3 posWS, float lightAngleCos)
+float getDirLightShadowTerm(float3 posWS, float lightAngleCos)
 {
     #ifdef _RECEIVE_SHADOWS
     vec4 shadowCoord = _DirLightShadow.LightViewProjMatrix * vec4(posWS, 1);
@@ -47,7 +47,7 @@ float getDirLightShadowTerm(vec3 posWS, float lightAngleCos)
     #endif
 }
 
-float getSpotLightShadowTerm(int index, vec3 posWS, float lightAngleCos)
+float getSpotLightShadowTerm(int index, float3 posWS, float lightAngleCos)
 {
     #ifdef _RECEIVE_SHADOWS
     vec4 shadowCoord = _SpotLightShadows[index].LightViewProjMatrix * vec4(posWS, 1);
@@ -59,7 +59,7 @@ float getSpotLightShadowTerm(int index, vec3 posWS, float lightAngleCos)
     #endif
 }
 
-int getPointLightShadowMapSlice(vec3 lightToFrag)
+int getPointLightShadowMapSlice(float3 lightToFrag)
 {
     if (abs(lightToFrag.x) > abs(lightToFrag.y) && abs(lightToFrag.x) > abs(lightToFrag.z))
     {
@@ -74,7 +74,7 @@ int getPointLightShadowMapSlice(vec3 lightToFrag)
     return lightToFrag.z > 0 ? 4 : 5;
 }
 
-float getPointLightShadowTerm(int index, vec3 posWS, float lightAngleCos)
+float getPointLightShadowTerm(int index, float3 posWS, float lightAngleCos)
 {
     #ifdef _RECEIVE_SHADOWS
     vec3 lightToFrag = posWS - _PointLightShadows[index].LightPosWS.xyz;

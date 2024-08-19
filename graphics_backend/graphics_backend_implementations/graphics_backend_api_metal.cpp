@@ -502,6 +502,7 @@ void ParseArguments(NS::Array *arguments, std::unordered_map<std::string, Graphi
             {
                 GraphicsBackendUniformInfo uniformInfo;
                 uniformInfo.IsTexture = true;
+                uniformInfo.Type = MetalHelpers::FromTextureDataType(argument->textureDataType(), argument->textureType());
                 SetBindingIndex(uniformInfo.TextureBindings, index, isVertexShader);
 
                 uniforms[name] = uniformInfo;

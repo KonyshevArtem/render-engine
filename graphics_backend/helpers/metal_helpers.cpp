@@ -605,3 +605,127 @@ MTL::BlendFactor MetalHelpers::ToBlendFactor(BlendFactor factor)
             return MTL::BlendFactor::BlendFactorOneMinusSource1Alpha;
     }
 }
+
+UniformDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::TextureType textureType)
+{
+    switch (textureType)
+    {
+        case MTL::TextureType::TextureType1D:
+        {
+            switch (dataType)
+            {
+                case MTL::DataType::DataTypeInt:
+                    return UniformDataType::INT_SAMPLER_1D;
+                case MTL::DataType::DataTypeUInt:
+                    return UniformDataType::UNSIGNED_INT_SAMPLER_1D;
+                case MTL::DataType::DataTypeFloat:
+                case MTL::DataType::DataTypeHalf:
+                    return UniformDataType::SAMPLER_1D;
+            }
+        }
+        case MTL::TextureType::TextureType1DArray:
+        {
+            switch (dataType)
+            {
+                case MTL::DataType::DataTypeInt:
+                    return UniformDataType::INT_SAMPLER_1D_ARRAY;
+                case MTL::DataType::DataTypeUInt:
+                    return UniformDataType::UNSIGNED_INT_SAMPLER_1D_ARRAY;
+                case MTL::DataType::DataTypeFloat:
+                case MTL::DataType::DataTypeHalf:
+                    return UniformDataType::SAMPLER_1D_ARRAY;
+            }
+        }
+        case MTL::TextureType::TextureType2D:
+        {
+            switch (dataType)
+            {
+                case MTL::DataType::DataTypeInt:
+                    return UniformDataType::INT_SAMPLER_2D;
+                case MTL::DataType::DataTypeUInt:
+                    return UniformDataType::UNSIGNED_INT_SAMPLER_2D;
+                case MTL::DataType::DataTypeFloat:
+                case MTL::DataType::DataTypeHalf:
+                    return UniformDataType::SAMPLER_2D;
+            }
+        }
+        case MTL::TextureType::TextureType2DMultisample:
+        {
+            switch (dataType)
+            {
+                case MTL::DataType::DataTypeInt:
+                    return UniformDataType::INT_SAMPLER_2D_MULTISAMPLE;
+                case MTL::DataType::DataTypeUInt:
+                    return UniformDataType::UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
+                case MTL::DataType::DataTypeFloat:
+                case MTL::DataType::DataTypeHalf:
+                    return UniformDataType::SAMPLER_2D_MULTISAMPLE;
+            }
+        }
+        case MTL::TextureType::TextureType2DArray:
+        {
+            switch (dataType)
+            {
+                case MTL::DataType::DataTypeInt:
+                    return UniformDataType::INT_SAMPLER_2D_ARRAY;
+                case MTL::DataType::DataTypeUInt:
+                    return UniformDataType::UNSIGNED_INT_SAMPLER_2D_ARRAY;
+                case MTL::DataType::DataTypeFloat:
+                case MTL::DataType::DataTypeHalf:
+                    return UniformDataType::SAMPLER_2D_ARRAY;
+            }
+        }
+        case MTL::TextureType::TextureType2DMultisampleArray:
+        {
+            switch (dataType)
+            {
+                case MTL::DataType::DataTypeInt:
+                    return UniformDataType::INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+                case MTL::DataType::DataTypeUInt:
+                    return UniformDataType::UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+                case MTL::DataType::DataTypeFloat:
+                case MTL::DataType::DataTypeHalf:
+                    return UniformDataType::SAMPLER_2D_MULTISAMPLE_ARRAY;
+            }
+        }
+        case MTL::TextureType::TextureType3D:
+        {
+            switch (dataType)
+            {
+                case MTL::DataType::DataTypeInt:
+                    return UniformDataType::INT_SAMPLER_3D;
+                case MTL::DataType::DataTypeUInt:
+                    return UniformDataType::UNSIGNED_INT_SAMPLER_3D;
+                case MTL::DataType::DataTypeFloat:
+                case MTL::DataType::DataTypeHalf:
+                    return UniformDataType::SAMPLER_3D;
+            }
+        }
+        case MTL::TextureType::TextureTypeCube:
+        {
+            switch (dataType)
+            {
+                case MTL::DataType::DataTypeInt:
+                    return UniformDataType::INT_SAMPLER_CUBE;
+                case MTL::DataType::DataTypeUInt:
+                    return UniformDataType::UNSIGNED_INT_SAMPLER_CUBE;
+                case MTL::DataType::DataTypeFloat:
+                case MTL::DataType::DataTypeHalf:
+                    return UniformDataType::SAMPLER_CUBE;
+            }
+        }
+        case MTL::TextureType::TextureTypeTextureBuffer:
+        {
+            switch (dataType)
+            {
+                case MTL::DataType::DataTypeInt:
+                    return UniformDataType::INT_SAMPLER_BUFFER;
+                case MTL::DataType::DataTypeUInt:
+                    return UniformDataType::UNSIGNED_INT_SAMPLER_BUFFER;
+                case MTL::DataType::DataTypeFloat:
+                case MTL::DataType::DataTypeHalf:
+                    return UniformDataType::SAMPLER_BUFFER;
+            }
+        }
+    }
+}

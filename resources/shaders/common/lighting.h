@@ -12,6 +12,7 @@ constant float PI = 3.14159265359;
 struct PointLight
 {
     packed_float3 PositionWS;
+    float Padding0;
     packed_float3 Intensity;
     float Attenuation;
 };
@@ -19,6 +20,7 @@ struct PointLight
 struct SpotLight
 {
     packed_float3 PositionWS;
+    float Padding0;
     packed_float3 DirectionWS;
     float Attenuation;
     packed_float3 Intensity;
@@ -80,7 +82,7 @@ float3 getSpecularTermBlinnPhong(float4 specular, float smoothness, float3 light
     float3 halfAngle = normalize(lightDirWS + viewDirWS);
     float blinnTerm = clamp(dot(normalWS, halfAngle), 0.0, 1.0);
     blinnTerm = pow(blinnTerm, smoothness) * specular.a;
-    return specular.rgb * max(blinnTerm, 0);
+    return specular.rgb * max(blinnTerm, 0.0);
     #else
     return float3(0);
     #endif

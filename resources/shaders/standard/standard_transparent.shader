@@ -15,8 +15,12 @@
         "SrcFactor": "SrcAlpha",
         "DstFactor": "OneMinusSrcAlpha"
       },
-      "vertex": "standard.vs",
-      "fragment": "standard.fs"
+      "opengl":
+      {
+        "vertex": "standard.vs",
+        "fragment": "standard.fs"
+      },
+      "metal": "standard.metal"
     }
   ]
 }

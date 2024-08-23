@@ -34,6 +34,8 @@ ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsUnifor
 
 void ShadowCasterPass::Execute(const Context &_ctx)
 {
+    static const GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::DONT_CARE, .StoreAction = StoreAction::DONT_CARE };
+
     static const Matrix4x4 biasMatrix = Matrix4x4::TRS(Vector3{0.5f, 0.5f, 0.5f}, Quaternion(), Vector3{0.5f, 0.5f, 0.5f});
 
     static Matrix4x4 pointLightViewMatrices[6]{
@@ -50,7 +52,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
     auto debugGroup = GraphicsBackendDebug::DebugGroup("Shadow pass");
 
-    GraphicsBackendRenderTargetDescriptor targetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
+    GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
 
     int spotLightsCount = 0;
     int pointLightsCount = 0;
@@ -61,10 +63,11 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
         if (light->Type == LightType::SPOT)
         {
-            targetDescriptor.Layer = spotLightsCount;
+            depthTargetDescriptor.Layer = spotLightsCount;
 
             Graphics::SetViewport({0, 0, SPOT_LIGHT_SHADOW_MAP_SIZE, SPOT_LIGHT_SHADOW_MAP_SIZE});
-            Graphics::SetRenderTarget(targetDescriptor, m_SpotLightShadowMapArray);
+            Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
+            Graphics::SetRenderTarget(depthTargetDescriptor, m_SpotLightShadowMapArray);
 
             auto view = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
             auto proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, _ctx.ShadowDistance);
@@ -82,9 +85,10 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             auto proj = Matrix4x4::Perspective(90, 1, 0.01f, _ctx.ShadowDistance);
             for (int i = 0; i < 6; ++i)
             {
-                targetDescriptor.Layer = pointLightsCount * 6 + i;
+                depthTargetDescriptor.Layer = pointLightsCount * 6 + i;
 
-                Graphics::SetRenderTarget(targetDescriptor, m_PointLightShadowMap);
+                Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
+                Graphics::SetRenderTarget(depthTargetDescriptor, m_PointLightShadowMap);
 
                 auto view = pointLightViewMatrices[i] * Matrix4x4::Translation(-light->Position);
                 m_ShadowsData.PointLightShadows[pointLightsCount].ViewProjMatrices[i] = biasMatrix * proj * view;
@@ -99,15 +103,16 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         }
         else if (light->Type == LightType::DIRECTIONAL)
         {
-            targetDescriptor.Layer = 0;
+            depthTargetDescriptor.Layer = 0;
 
             Graphics::SetViewport({0, 0, DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE});
-            Graphics::SetRenderTarget(targetDescriptor, m_DirectionLightShadowMap);
+            Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
+            Graphics::SetRenderTarget(depthTargetDescriptor, m_DirectionLightShadowMap);
 
             auto &bounds = _ctx.ShadowCasterBounds;
 
-            auto extentsWorldSpace   = bounds.GetExtents();
-            auto maxExtentWorldSpace = std::max({extentsWorldSpace.x, extentsWorldSpace.y, extentsWorldSpace.z});
+            auto sizeWorldSpace   = bounds.GetSize();
+            auto maxExtentWorldSpace = std::max({sizeWorldSpace.x, sizeWorldSpace.y, sizeWorldSpace.z});
             auto lightDir            = light->Rotation * Vector3 {0, 0, 1};
             auto viewPos             = bounds.GetCenter() - lightDir * maxExtentWorldSpace;
             auto viewMatrix          = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-viewPos);

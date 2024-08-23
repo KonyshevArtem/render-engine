@@ -12,11 +12,18 @@ uniform sampler2D _NormalMap;
 uniform samplerCube _ReflectionCube;
 #endif
 
+#ifdef _RECEIVE_SHADOWS
+uniform sampler2D _DirLightShadowMap;
+uniform sampler2DArray _SpotLightShadowMapArray;
+uniform sampler2DArray _PointLightShadowMapArray;
+#endif
+
 #include "standard_shared.h"
 
 DECLARE_UBO(CameraData);
 DECLARE_UBO(PerMaterialData);
 DECLARE_UBO(Lighting);
+DECLARE_UBO(Shadows);
 
 in Varyings vars;
 out vec4 outColor;
@@ -31,6 +38,12 @@ void main(){
 #endif
 #ifdef _REFLECTION
         _ReflectionCube,
+#endif
+#ifdef _RECEIVE_SHADOWS
+        ShadowsVar,
+        _DirLightShadowMap,
+        _SpotLightShadowMapArray,
+        _PointLightShadowMapArray,
 #endif
         _Albedo);
 }

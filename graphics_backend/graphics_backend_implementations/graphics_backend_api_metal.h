@@ -108,8 +108,6 @@ private:
     MTL::RenderPassDescriptor *m_RenderPassDescriptor = nullptr;
     MTL::RenderCommandEncoder *m_CurrentCommandEncoder = nullptr;
 
-    MTL::PixelFormat GetPSOPixelFormat(TextureInternalFormat textureFormat, bool isColor, int index);
-
     void IntrospectProgram(MTL::RenderPipelineReflection* reflection, std::unordered_map<std::string, GraphicsBackendUniformInfo>* uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers);
 };
 

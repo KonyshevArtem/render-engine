@@ -382,8 +382,8 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
 {
     MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
 
-    MTL::PixelFormat metalColorFormat = GetPSOPixelFormat(colorAttachmentDescriptor.Format, true, 0);
-    MTL::PixelFormat metalDepthFormat = GetPSOPixelFormat(depthFormat, false, 0);
+    MTL::PixelFormat metalColorFormat = MetalHelpers::ToTextureInternalFormat(colorAttachmentDescriptor.Format);
+    MTL::PixelFormat metalDepthFormat = MetalHelpers::ToTextureInternalFormat(depthFormat);
 
     auto attachmentDesc = desc->colorAttachments()->object(0);
     attachmentDesc->setPixelFormat(metalColorFormat);
@@ -661,24 +661,6 @@ GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackendMetal::GetError()
 const char *GraphicsBackendMetal::GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error)
 {
     return nullptr;
-}
-
-MTL::PixelFormat GraphicsBackendMetal::GetPSOPixelFormat(TextureInternalFormat textureFormat, bool isColor, int index)
-{
-    MTL::PixelFormat metalFormat = MetalHelpers::ToTextureInternalFormat(textureFormat);
-    if (metalFormat == MTL::PixelFormat::PixelFormatInvalid)
-    {
-        if (isColor)
-        {
-            metalFormat = m_BackbufferDescriptor->colorAttachments()->object(index)->texture()->pixelFormat();
-        }
-        else
-        {
-            metalFormat = m_BackbufferDescriptor->depthAttachment()->texture()->pixelFormat();
-        }
-    }
-
-    return metalFormat;
 }
 
 #endif

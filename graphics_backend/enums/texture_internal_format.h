@@ -99,6 +99,8 @@ enum class TextureInternalFormat
 
     BGRA8,
     BGRA8_SNORM,
+
+    INVALID,
 };
 
 #endif //RENDER_ENGINE_TEXTURE_INTERNAL_FORMAT_H

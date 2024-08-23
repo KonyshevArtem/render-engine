@@ -1,8 +1,14 @@
 layout(location = 0) in vec3 vertPositionOS;
 
-#include "../common/per_draw_data.cg"
-#include "../common/camera_data.cg"
+#include "shadowCaster_shared.h"
 
-void main(){
-    gl_Position = _VPMatrix * _ModelMatrix * vec4(vertPositionOS, 1);
+DECLARE_UBO(CameraData);
+DECLARE_UBO(PerDrawData);
+
+void main()
+{
+    Attributes attributes;
+    attributes.PositionOS = vertPositionOS;
+
+    gl_Position = vertexFunction(attributes, CameraDataVar, PerDrawDataVar);
 }

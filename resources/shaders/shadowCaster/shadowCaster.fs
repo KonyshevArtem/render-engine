@@ -1,5 +1,7 @@
+#include "shadowCaster_shared.h"
+
 out vec4 outColor;
 
 void main(){
-    outColor = vec4(1);
+    outColor = fragmentFunction();
 }

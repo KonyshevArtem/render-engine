@@ -84,6 +84,12 @@ half4_type fragmentFunction(Varyings vars, CameraDataStruct cameraData, PerMater
 #ifdef _REFLECTION
                             CUBEMAP_HALF_PARAMETER(reflectionCube, reflectionCubeSampler),
 #endif
+#ifdef _RECEIVE_SHADOWS
+                            ShadowsStruct shadowsData,
+                            TEXTURE2D_FLOAT_PARAMETER(dirLightShadowMap, dirLightShadowMapSampler),
+                            TEXTURE2D_ARRAY_FLOAT_PARAMETER(spotLightShadowMap, spotLightShadowMapSampler),
+                            TEXTURE2D_ARRAY_FLOAT_PARAMETER(pointLightShadowMap, pointLightShadowMapSampler),
+#endif
                             TEXTURE2D_HALF_PARAMETER(albedoMap, albedoMapSampler))
 {
     SETUP_INSTANCE_ID(vars)
@@ -115,6 +121,13 @@ half4_type fragmentFunction(Varyings vars, CameraDataStruct cameraData, PerMater
     half3 reflection = half3(0);
 #endif
 
-    half3 finalColor = half3(getLightPBR(vars.PositionWS.xyz, normalWS, albedo.rgb, roughness, metallness, reflection, cameraData._CameraPosWS, lightingData));
+    half3 finalColor = half3(getLightPBR(vars.PositionWS.xyz, normalWS, albedo.rgb, roughness, metallness, reflection, cameraData._CameraPosWS, lightingData
+#ifdef _RECEIVE_SHADOWS
+                                        ,shadowsData
+                                        ,PASS_TEXTURE_PARAMETER(dirLightShadowMap, dirLightShadowMapSampler)
+                                        ,PASS_TEXTURE_PARAMETER(spotLightShadowMap, spotLightShadowMapSampler)
+                                        ,PASS_TEXTURE_PARAMETER(pointLightShadowMap, pointLightShadowMapSampler)
+#endif
+                                         ));
     return half4(finalColor.rgb, albedo.a);
 }

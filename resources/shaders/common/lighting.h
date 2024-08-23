@@ -88,7 +88,14 @@ float3 getSpecularTermBlinnPhong(float4 specular, float smoothness, float3 light
     #endif
 }
 
-float3 getLightBlinnPhong(float3 posWS, float3 normalWS, float3 albedo, float4 specular, float roughness, float3 cameraPosWS, LightingStruct lightingData)
+float3 getLightBlinnPhong(float3 posWS, float3 normalWS, float3 albedo, float4 specular, float roughness, float3 cameraPosWS, LightingStruct lightingData
+#ifdef _RECEIVE_SHADOWS
+                            ,ShadowsStruct shadowsData
+                            ,TEXTURE2D_FLOAT_PARAMETER(dirLightShadowMap, dirLightShadowMapSampler)
+                            ,TEXTURE2D_ARRAY_FLOAT_PARAMETER(spotLightShadowMap, spotLightShadowMapSampler)
+                            ,TEXTURE2D_ARRAY_FLOAT_PARAMETER(pointLightShadowMap, pointLightShadowMapSampler)
+#endif
+                          )
 {
     float3 viewDirWS = normalize(cameraPosWS - posWS);
     float smoothness = 1 - roughness;
@@ -97,7 +104,12 @@ float3 getLightBlinnPhong(float3 posWS, float3 normalWS, float3 albedo, float4 s
     if (lightingData._HasDirectionalLight > 0){
         float3 lightDirWS = normalize(-lightingData._DirLightDirectionWS);
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
-        float shadowTerm = getDirLightShadowTerm(posWS, lightAngleCos);
+
+#ifdef _RECEIVE_SHADOWS
+        float shadowTerm = getDirLightShadowTerm(PASS_TEXTURE_PARAMETER(dirLightShadowMap, dirLightShadowMapSampler), shadowsData, posWS, lightAngleCos);
+#else
+        float shadowTerm = 1;
+#endif
 
         directLighting += albedo * lightingData._DirLightIntensity * lightAngleCos * shadowTerm;
         directLighting += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS);
@@ -124,7 +136,11 @@ float3 getLightBlinnPhong(float3 posWS, float3 normalWS, float3 albedo, float4 s
         attenuationTerm *= clamp((cutOffCos - lightingData._SpotLights[i].CutOffCos) / (1 - lightingData._SpotLights[i].CutOffCos), 0.0, 1.0);
         attenuationTerm *= step(lightingData._SpotLights[i].CutOffCos, cutOffCos);
 
-        float shadowTerm = getSpotLightShadowTerm(i, posWS, lightAngleCos);
+#ifdef _RECEIVE_SHADOWS
+        float shadowTerm = getSpotLightShadowTerm(PASS_TEXTURE_PARAMETER(spotLightShadowMap, spotLightShadowMapSampler), shadowsData, i, posWS, lightAngleCos);
+#else
+        float shadowTerm = 1;
+#endif
 
         directLighting += albedo * lightingData._SpotLights[i].Intensity * lightAngleCos * attenuationTerm * shadowTerm;
         directLighting += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
@@ -196,7 +212,14 @@ void getLightSourcePBR(float3 normalWS, float3 viewDirWS, float3 lightDirWS, flo
     diffuse = kD / PI;
 }
 
-float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, half3 reflectionIrradiance, float3 cameraPosWS, LightingStruct lightingData)
+float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, half3 reflectionIrradiance, float3 cameraPosWS, LightingStruct lightingData
+#ifdef _RECEIVE_SHADOWS
+                            ,ShadowsStruct shadowsData
+                            ,TEXTURE2D_FLOAT_PARAMETER(dirLightShadowMap, dirLightShadowMapSampler)
+                            ,TEXTURE2D_ARRAY_FLOAT_PARAMETER(spotLightShadowMap, spotLightShadowMapSampler)
+                            ,TEXTURE2D_ARRAY_FLOAT_PARAMETER(pointLightShadowMap, pointLightShadowMapSampler)
+#endif
+                   )
 {
     float3 viewDirWS = normalize(cameraPosWS - posWS);
     float3 F0 = mix(float3(0.04), albedo, metallness);
@@ -209,7 +232,11 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
         float3 lightDirWS = normalize(-lightingData._DirLightDirectionWS);
         
         float NdotL = max(dot(normalWS, lightDirWS), 0.0);
-        float shadowTerm = getDirLightShadowTerm(posWS, NdotL);
+#ifdef _RECEIVE_SHADOWS
+        float shadowTerm = getDirLightShadowTerm(PASS_TEXTURE_PARAMETER(dirLightShadowMap, dirLightShadowMapSampler), shadowsData, posWS, NdotL);
+#else
+        float shadowTerm = 1;
+#endif
         float3 radiance = lightingData._DirLightIntensity * NdotL * shadowTerm;
 
         getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness, diffuse, specular);
@@ -223,7 +250,11 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
         float dist = distance(lightingData._PointLights[i].PositionWS, posWS);
         float attenuationTerm = 1 / (1 + lightingData._PointLights[i].Attenuation * dist * dist);
 
-        float shadowTerm = getPointLightShadowTerm(i, posWS, NdotL);
+#ifdef _RECEIVE_SHADOWS
+        float shadowTerm = getPointLightShadowTerm(PASS_TEXTURE_PARAMETER(pointLightShadowMap, pointLightShadowMapSampler), shadowsData, i, posWS, NdotL);
+#else
+        float shadowTerm = 1;
+#endif
         float3 radiance = lightingData._PointLights[i].Intensity * NdotL * attenuationTerm * shadowTerm;
 
         getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness, diffuse, specular);
@@ -239,8 +270,12 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
         float attenuationTerm = 1 / (1 + lightingData._SpotLights[i].Attenuation * dist * dist);
         attenuationTerm *= clamp((cutOffCos - lightingData._SpotLights[i].CutOffCos) / (1 - lightingData._SpotLights[i].CutOffCos), 0.0, 1.0);
         attenuationTerm *= step(lightingData._SpotLights[i].CutOffCos, cutOffCos);
-    
-        float shadowTerm = getSpotLightShadowTerm(i, posWS, NdotL);
+
+#ifdef _RECEIVE_SHADOWS
+        float shadowTerm = getSpotLightShadowTerm(PASS_TEXTURE_PARAMETER(spotLightShadowMap, spotLightShadowMapSampler), shadowsData, i, posWS, NdotL);
+#else
+        float shadowTerm = 1;
+#endif
         float3 radiance = lightingData._SpotLights[i].Intensity * NdotL * attenuationTerm * shadowTerm;
 
         getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness, diffuse, specular);

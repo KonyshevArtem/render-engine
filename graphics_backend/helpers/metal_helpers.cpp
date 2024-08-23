@@ -189,6 +189,7 @@ MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat for
             return MTL::PixelFormat::PixelFormatBC2_RGBA_sRGB;
         case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
             return MTL::PixelFormat::PixelFormatBC3_RGBA_sRGB;
+        case TextureInternalFormat::INVALID:
         default:
             return MTL::PixelFormat::PixelFormatInvalid;
     }
@@ -311,6 +312,8 @@ TextureInternalFormat MetalHelpers::FromTextureInternalFormat(MTL::PixelFormat f
             return TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
         case MTL::PixelFormat::PixelFormatBC3_RGBA_sRGB:
             return TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+        case MTL::PixelFormat::PixelFormatInvalid:
+            return TextureInternalFormat::INVALID;
         default:
             return TextureInternalFormat::RGBA8;
     }

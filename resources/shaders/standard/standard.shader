@@ -16,6 +16,17 @@
         "fragment": "standard.fs"
       },
       "metal": "standard.metal"
+    },
+    {
+      "tags": {
+        "LightMode": "ShadowCaster"
+      },
+      "opengl":
+      {
+        "vertex": "../shadowCaster/shadowCaster.vs",
+        "fragment": "../shadowCaster/shadowCaster.fs"
+      },
+      "metal": "../shadowCaster/shadowCaster.metal"
     }
   ]
 }

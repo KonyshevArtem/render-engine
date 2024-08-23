@@ -93,7 +93,9 @@ add_library(
 	graphics/graphics_settings.cpp
 	graphics/graphics_settings.h
 	drawable_geometry/vertex_attributes/vertex_attributes.cpp
-	drawable_geometry/vertex_attributes/vertex_attributes.h)
+	drawable_geometry/vertex_attributes/vertex_attributes.h
+	graphics_buffer/ring_buffer.cpp
+	graphics_buffer/ring_buffer.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

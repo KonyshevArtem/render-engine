@@ -26,6 +26,17 @@ half4 fragment fragmentMain(Varyings input [[stage_in]],
                             ,texturecube<half> _ReflectionCube [[texture (3)]]
                             ,sampler _ReflectionCubeSampler [[sampler (3)]]
 #endif
+#ifdef _RECEIVE_SHADOWS
+                            ,constant ShadowsStruct & Shadows [[buffer (4)]]
+                            ,texture2d<float> _DirLightShadowMap [[texture (4)]]
+                            ,sampler _DirLightShadowMapSampler [[sampler (4)]]
+
+                            ,texture2d_array<float> _SpotLightShadowMapArray [[texture (5)]]
+                            ,sampler _SpotLightShadowMapArraySampler [[sampler (5)]]
+
+                            ,texture2d_array<float> _PointLightShadowMapArray [[texture (6)]]
+                            ,sampler _PointLightShadowMapArraySampler [[sampler (6)]]
+#endif
 )
 {
     return fragmentFunction(input, CameraData, PerMaterialData, Lighting,
@@ -37,6 +48,12 @@ half4 fragment fragmentMain(Varyings input [[stage_in]],
 #endif
 #ifdef _REFLECTION
         _ReflectionCube, _ReflectionCubeSampler,
+#endif
+#ifdef _RECEIVE_SHADOWS
+        Shadows,
+        _DirLightShadowMap, _DirLightShadowMapSampler,
+        _SpotLightShadowMapArray, _SpotLightShadowMapArraySampler,
+        _PointLightShadowMapArray, _PointLightShadowMapArraySampler,
 #endif
         _Albedo, _AlbedoSampler);
 }

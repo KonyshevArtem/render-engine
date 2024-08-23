@@ -1,28 +1,26 @@
 #ifndef SHADOWS
 #define SHADOWS
 
+#include "graphics_backend_macros.h"
+
 #ifdef _RECEIVE_SHADOWS
 struct ShadowData
 {
-    mat4x4 LightViewProjMatrix;
+    float4x4 LightViewProjMatrix;
 };
 
 struct PointLightShadowData
 {
-    mat4x4 LightViewProjMatrices[6];
-    vec4 LightPosWS;
+    float4x4 LightViewProjMatrices[6];
+    float4 LightPosWS;
 };
 
-layout(std140) uniform Shadows
+struct ShadowsStruct
 {
     ShadowData _DirLightShadow;
     ShadowData _SpotLightShadows[MAX_SPOT_LIGHT_SOURCES];
     PointLightShadowData _PointLightShadows[MAX_POINT_LIGHT_SOURCES];
 };
-
-uniform sampler2D _DirLightShadowMap;
-uniform sampler2DArray _SpotLightShadowMapArray;
-uniform sampler2DArray _PointLightShadowMapArray;
 
 bool isFragVisible(float fragZ)
 {
@@ -36,23 +34,29 @@ float getShadowTerm(float fragZ, float shadowMapDepth, float lightAngleCos)
 }
 #endif
 
-float getDirLightShadowTerm(float3 posWS, float lightAngleCos)
+float getDirLightShadowTerm(TEXTURE2D_FLOAT_PARAMETER(shadowMap, shadowMapSampler), ShadowsStruct data, float3 posWS, float lightAngleCos)
 {
     #ifdef _RECEIVE_SHADOWS
-    vec4 shadowCoord = _DirLightShadow.LightViewProjMatrix * vec4(posWS, 1);
-    float depth = texture(_DirLightShadowMap, shadowCoord.xy).x;
+    float4 shadowCoord = data._DirLightShadow.LightViewProjMatrix * float4(posWS, 1);
+    #if SCREEN_UV_UPSIDE_DOWN
+    shadowCoord.y = 1 - shadowCoord.y;
+    #endif
+    float depth = SAMPLE_TEXTURE(shadowMap, shadowMapSampler, shadowCoord.xy).x;
     return isFragVisible(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos) : 1;
     #else
     return 1;
     #endif
 }
 
-float getSpotLightShadowTerm(int index, float3 posWS, float lightAngleCos)
+float getSpotLightShadowTerm(TEXTURE2D_ARRAY_FLOAT_PARAMETER(shadowMap, shadowMapSampler), ShadowsStruct data, int index, float3 posWS, float lightAngleCos)
 {
     #ifdef _RECEIVE_SHADOWS
-    vec4 shadowCoord = _SpotLightShadows[index].LightViewProjMatrix * vec4(posWS, 1);
+    float4 shadowCoord = data._SpotLightShadows[index].LightViewProjMatrix * float4(posWS, 1);
+    #if SCREEN_UV_UPSIDE_DOWN
+    shadowCoord.y = 1 - shadowCoord.y;
+    #endif
     shadowCoord = shadowCoord / shadowCoord.w;
-    float depth = texture(_SpotLightShadowMapArray, vec3(shadowCoord.xy, index)).x;
+    float depth = SAMPLE_TEXTURE_ARRAY(shadowMap, shadowMapSampler, shadowCoord.xy, index).x;
     return isFragVisible(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos) : 1;
     #else
     return 1;
@@ -74,15 +78,18 @@ int getPointLightShadowMapSlice(float3 lightToFrag)
     return lightToFrag.z > 0 ? 4 : 5;
 }
 
-float getPointLightShadowTerm(int index, float3 posWS, float lightAngleCos)
+float getPointLightShadowTerm(TEXTURE2D_ARRAY_FLOAT_PARAMETER(shadowMap, shadowMapSampler), ShadowsStruct data, int index, float3 posWS, float lightAngleCos)
 {
     #ifdef _RECEIVE_SHADOWS
-    vec3 lightToFrag = posWS - _PointLightShadows[index].LightPosWS.xyz;
+    float3 lightToFrag = posWS - data._PointLightShadows[index].LightPosWS.xyz;
     int slice = getPointLightShadowMapSlice(lightToFrag);
 
-    vec4 shadowCoord = _PointLightShadows[index].LightViewProjMatrices[slice] * vec4(posWS, 1);
+    float4 shadowCoord = data._PointLightShadows[index].LightViewProjMatrices[slice] * float4(posWS, 1);
+    #if SCREEN_UV_UPSIDE_DOWN
+    shadowCoord.y = 1 - shadowCoord.y;
+    #endif
     shadowCoord = shadowCoord / shadowCoord.w;
-    float depth = texture(_PointLightShadowMapArray, vec3(shadowCoord.xy, index * 6 + slice)).x;
+    float depth = SAMPLE_TEXTURE_ARRAY(shadowMap, shadowMapSampler, shadowCoord.xy, index * 6 + slice).x;
     return isFragVisible(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos) : 1;
     #else
     return 1;

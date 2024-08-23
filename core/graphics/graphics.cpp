@@ -31,6 +31,7 @@
 #include "passes/final_blit_pass.h"
 #include "editor/selection_outline/selection_outline_pass.h"
 #include "graphics_settings.h"
+#include "graphics_buffer/ring_buffer.h"
 
 #include <cassert>
 #include <boost/functional/hash/hash.hpp>
@@ -40,13 +41,10 @@ namespace Graphics
     std::shared_ptr<GraphicsBuffer> instancingMatricesBuffer;
     std::shared_ptr<GraphicsBuffer> instancingDataBuffer;
     std::shared_ptr<GraphicsBuffer> lightingDataBlock;
-    std::shared_ptr<GraphicsBuffer> cameraDataBlock;
     std::shared_ptr<GraphicsBuffer> shadowsDataBlock;
 
-    int perDrawDataStride = 0;
-    int currentPerDrawOffset = 0;
-    uint64_t perDrawCapacity = 100;
-    std::vector<std::shared_ptr<GraphicsBuffer>> perDrawDataBuffers;
+    std::shared_ptr<RingBuffer> perDrawDataBuffer;
+    std::shared_ptr<RingBuffer> cameraDataBuffer;
 
     std::unique_ptr<ShadowCasterPass> shadowCasterPass;
     std::unique_ptr<RenderPass>       opaqueRenderPass;
@@ -69,28 +67,6 @@ namespace Graphics
 
     PropertyBlock globalPropertyBlock;
 
-    void AddPerDrawDataBuffer()
-    {
-        uint64_t maxSize = GraphicsBackend::Current()->GetMaxConstantBufferSize();
-        int alignment = GraphicsBackend::Current()->GetConstantBufferOffsetAlignment();
-
-        perDrawDataStride = sizeof(PerDrawData);
-        if (perDrawDataStride % alignment != 0)
-        {
-            perDrawDataStride = (perDrawDataStride / alignment + 1) * alignment;
-        }
-
-        uint64_t bufferSize = perDrawDataStride * perDrawCapacity;
-        if (bufferSize > maxSize)
-        {
-            perDrawCapacity = maxSize / perDrawDataStride;
-            bufferSize = perDrawDataStride * perDrawCapacity;
-        }
-
-        auto buffer = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, bufferSize, BufferUsageHint::DYNAMIC_DRAW);
-        perDrawDataBuffers.push_back(buffer);
-    }
-
     void InitUniformBlocks()
     {
         // C++ struct memory layout must match GPU side struct
@@ -99,10 +75,10 @@ namespace Graphics
         assert(sizeof(ShadowsData) == 1456);
         assert(sizeof(PerDrawData) == 128);
 
-        cameraDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
+        cameraDataBuffer = std::make_shared<RingBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
         lightingDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
         shadowsDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
-        AddPerDrawDataBuffer();
+        perDrawDataBuffer = std::make_shared<RingBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(PerDrawData), BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void InitPasses()
@@ -241,7 +217,8 @@ namespace Graphics
 
     void Render(int width, int height)
     {
-        currentPerDrawOffset = 0;
+        perDrawDataBuffer->Reset();
+        cameraDataBuffer->Reset();
 
         static std::shared_ptr<Texture2D> cameraColorTarget;
         static std::shared_ptr<Texture2D> cameraDepthTarget;
@@ -326,16 +303,10 @@ namespace Graphics
 
     void SetupMatrices(const Matrix4x4 &modelMatrix)
     {
-        ++currentPerDrawOffset;
-        if (currentPerDrawOffset > perDrawCapacity)
-        {
-            AddPerDrawDataBuffer();
-        }
-
         PerDrawData perDrawData{};
         perDrawData.ModelMatrix = modelMatrix;
         perDrawData.ModelNormalMatrix = modelMatrix.Invert().Transpose();
-        perDrawDataBuffers[currentPerDrawOffset / perDrawCapacity]->SetData(&perDrawData, perDrawDataStride * currentPerDrawOffset, sizeof(perDrawData));
+        perDrawDataBuffer->SetData(&perDrawData, 0, sizeof(perDrawData));
     }
 
     void SetupMatrices(const std::vector<Matrix4x4> &matrices)
@@ -448,27 +419,35 @@ namespace Graphics
             SetUniform(uniforms, pair.first, &pair.second);
     }
 
-    void SetGraphicsBuffer(const std::string &name, const std::shared_ptr<GraphicsBuffer> &buffer, int offset, int size, const ShaderPass &shaderPass)
+    bool TryFindBufferBindings(const std::string &name, const ShaderPass &shaderPass, GraphicsBackendResourceBindings& outBindings)
     {
-        if (!buffer)
-        {
-            return;
-        }
-
         const auto &buffers = shaderPass.GetBuffers();
 
         auto it = buffers.find(name);
-        if (it != buffers.end())
+        bool found = it != buffers.end();
+        if (found)
         {
-            buffer->Bind(it->second->GetBinding(), offset, size);
+            outBindings = it->second->GetBinding();
         }
+
+        return found;
     }
 
     void SetGraphicsBuffer(const std::string &name, const std::shared_ptr<GraphicsBuffer> &buffer, const ShaderPass &shaderPass)
     {
-        if (buffer)
+        GraphicsBackendResourceBindings bindings;
+        if (buffer && TryFindBufferBindings(name, shaderPass, bindings))
         {
-            SetGraphicsBuffer(name, buffer, 0, buffer->GetSize(), shaderPass);
+            buffer->Bind(bindings, 0, buffer->GetSize());
+        }
+    }
+
+    void SetGraphicsBuffer(const std::string &name, const std::shared_ptr<RingBuffer> &buffer, const ShaderPass &shaderPass)
+    {
+        GraphicsBackendResourceBindings bindings;
+        if (buffer && TryFindBufferBindings(name, shaderPass, bindings))
+        {
+            buffer->Bind(bindings, 0, buffer->GetSize());
         }
     }
 
@@ -510,9 +489,9 @@ namespace Graphics
         GraphicsBackend::Current()->SetDepthStencilState(shaderPass.GetDepthStencilState());
 
         SetGraphicsBuffer(GlobalConstants::LightingBufferName, lightingDataBlock, shaderPass);
-        SetGraphicsBuffer(GlobalConstants::CameraDataBufferName, cameraDataBlock, shaderPass);
+        SetGraphicsBuffer(GlobalConstants::CameraDataBufferName, cameraDataBuffer, shaderPass);
         SetGraphicsBuffer(GlobalConstants::ShadowsBufferName, shadowsDataBlock, shaderPass);
-        SetGraphicsBuffer(GlobalConstants::PerDrawDataBufferName, perDrawDataBuffers[currentPerDrawOffset / perDrawCapacity], perDrawDataStride * currentPerDrawOffset, sizeof(PerDrawData), shaderPass);
+        SetGraphicsBuffer(GlobalConstants::PerDrawDataBufferName, perDrawDataBuffer, shaderPass);
         SetGraphicsBuffer(GlobalConstants::PerMaterialDataBufferName, perMaterialDataBlock, shaderPass);
         SetGraphicsBuffer(GlobalConstants::PerInstanceDataBufferName, perInstanceDataBuffer, shaderPass);
         if (GraphicsBackend::Current()->SupportShaderStorageBuffer())
@@ -649,8 +628,17 @@ namespace Graphics
         return screenHeight;
     }
 
-    void SetCameraData(const Matrix4x4 &_viewMatrix, const Matrix4x4 &_projectionMatrix)
+    void SetCameraData(const Matrix4x4 &_viewMatrix, Matrix4x4 _projectionMatrix)
     {
+        if (GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL)
+        {
+            // Projection matrix has OpenGL depth range [-1, 1]. Remap it to [0, 1] for Metal
+            Matrix4x4 depthRemap = Matrix4x4::Identity();
+            depthRemap.m22 = 0.5f;
+            depthRemap.m32 = 0.5f;
+            _projectionMatrix = depthRemap * _projectionMatrix;
+        }
+
         CameraData cameraData{};
         cameraData.CameraPosition = _viewMatrix.Invert().GetPosition();
         cameraData.NearClipPlane = Camera::Current->GetNearClipPlane();
@@ -658,7 +646,7 @@ namespace Graphics
         cameraData.ViewProjectionMatrix = _projectionMatrix * _viewMatrix;
         cameraData.CameraDirection = Camera::Current->GetRotation() * Vector3{0, 0, 1};
 
-        cameraDataBlock->SetData(&cameraData, 0, sizeof(cameraData));
+        cameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
 
         lastCameraPosition = cameraData.CameraPosition;
     }

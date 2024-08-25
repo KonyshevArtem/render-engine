@@ -14,7 +14,6 @@
 enum class TextureType;
 enum class TextureInternalFormat;
 enum class FramebufferAttachment;
-FORWARD_DECLARE_ENUM(FramebufferTarget)
 enum class PrimitiveType;
 enum class BufferBindTarget;
 enum class VertexAttributeDataType;
@@ -27,8 +26,6 @@ FORWARD_DECLARE_ENUM(UniformDataType)
 enum class CullFaceOrientation;
 enum class IndicesDataType;
 FORWARD_DECLARE_ENUM(ProgramResourceParameter)
-FORWARD_DECLARE_ENUM(BlitFramebufferMask)
-FORWARD_DECLARE_ENUM(BlitFramebufferFilter)
 enum class TextureWrapMode;
 enum class TextureFilteringMode;
 #undef FORWARD_DECLARE_ENUM
@@ -74,13 +71,11 @@ public:
     virtual TextureInternalFormat GetTextureFormat(const GraphicsBackendTexture &texture) = 0;
     virtual int GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice) = 0;
 
-    virtual void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer) = 0;
     virtual void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) = 0;
     virtual TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment) = 0;
 
     virtual GraphicsBackendBuffer CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint) = 0;
     virtual void DeleteBuffer(const GraphicsBackendBuffer &buffer) = 0;
-    virtual void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer) = 0;
     virtual void BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;
 
     virtual void SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data) = 0;
@@ -119,7 +114,7 @@ public:
 
     virtual bool SupportShaderStorageBuffer() = 0;
 
-    virtual void BlitFramebuffer(int srcMinX, int srcMinY, int srcMaxX, int srcMaxY, int dstMinX, int dstMinY, int dstMaxX, int dstMaxY, BlitFramebufferMask mask, BlitFramebufferFilter filter) = 0;
+    virtual void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) = 0;
 
     virtual void PushDebugGroup(const std::string& name, int id) = 0;
     virtual void PopDebugGroup() = 0;

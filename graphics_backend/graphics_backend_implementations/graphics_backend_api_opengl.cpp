@@ -86,7 +86,7 @@ void GraphicsBackendOpenGL::Init(void *device)
         m_Extensions.insert(std::string(reinterpret_cast<const char *>(ext)));
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(1, &m_Framebuffer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(2, &m_Framebuffers[0]))
 
     CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS))
     CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_DEPTH_TEST))
@@ -282,11 +282,6 @@ int GraphicsBackendOpenGL::GetTextureSize(const GraphicsBackendTexture &texture,
     return size;
 }
 
-void GraphicsBackendOpenGL::BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(Cast(target), framebuffer.Framebuffer))
-}
-
 void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor)
 {
     if (descriptor.IsBackbuffer)
@@ -295,17 +290,10 @@ void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTarget
         return;
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffers[0]))
 
     GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(descriptor.Attachment);
-    if (descriptor.Texture.Type == TextureType::TEXTURE_2D)
-    {
-        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTexture(GL_DRAW_FRAMEBUFFER, glAttachment, descriptor.Texture.Texture, descriptor.Level))
-    }
-    else
-    {
-        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTextureLayer(GL_DRAW_FRAMEBUFFER, glAttachment, descriptor.Texture.Texture, descriptor.Level, descriptor.Layer))
-    }
+    AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, descriptor.Texture, descriptor.Level, descriptor.Layer);
 
     if (descriptor.LoadAction == LoadAction::CLEAR)
     {
@@ -350,11 +338,6 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferBindTa
 void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glDeleteBuffers(1, reinterpret_cast<const GLuint *>(&buffer.Buffer)))
-}
-
-void GraphicsBackendOpenGL::BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(OpenGLHelpers::ToBufferBindTarget(target), buffer.Buffer))
 }
 
 void GraphicsBackendOpenGL::BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
@@ -906,9 +889,44 @@ bool GraphicsBackendOpenGL::SupportShaderStorageBuffer()
     return result;
 }
 
-void GraphicsBackendOpenGL::BlitFramebuffer(int srcMinX, int srcMinY, int srcMaxX, int srcMaxY, int dstMinX, int dstMinY, int dstMaxX, int dstMaxY, BlitFramebufferMask mask, BlitFramebufferFilter filter)
+void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBlitFramebuffer(srcMinX, srcMinY, srcMaxX, srcMaxY, dstMinX, dstMinY, dstMaxX, dstMaxY, Cast(mask), Cast(filter)))
+    if (destinationDescriptor.Texture.Texture == 0 && !destinationDescriptor.IsBackbuffer)
+        return;
+
+    GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(destinationDescriptor.Attachment);
+
+    bool isDepth = glAttachment == GL_DEPTH_ATTACHMENT || glAttachment == GL_DEPTH_STENCIL_ATTACHMENT;
+    bool isStencil = glAttachment == GL_STENCIL_ATTACHMENT || glAttachment == GL_DEPTH_STENCIL_ATTACHMENT;
+
+    GLenum mask = 0;
+    if (isDepth || isStencil)
+    {
+        if (isDepth)
+        {
+            mask |= GL_DEPTH_BUFFER_BIT;
+        }
+        if (isStencil)
+        {
+            mask |= GL_STENCIL_BUFFER_BIT;
+        }
+    }
+    else
+    {
+        mask |= GL_COLOR_BUFFER_BIT;
+    }
+
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_Framebuffers[0]))
+    AttachTextureToFramebuffer(GL_READ_FRAMEBUFFER, glAttachment, source, 0, 0);
+
+    GLuint destinationFramebuffer = destinationDescriptor.IsBackbuffer ? 0 : m_Framebuffers[1];
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destinationFramebuffer))
+    if (!destinationDescriptor.IsBackbuffer)
+    {
+        AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, destinationDescriptor.Texture, 0, 0);
+    }
+
+    CHECK_GRAPHICS_BACKEND_FUNC(glBlitFramebuffer(sourceX, sourceX, sourceX + width, sourceY + height, destinationX, destinationY, destinationX + width, destinationY + height, mask, GL_NEAREST))
 }
 
 void GraphicsBackendOpenGL::PushDebugGroup(const std::string &name, int id)
@@ -1061,4 +1079,16 @@ std::unordered_map<std::string, int> GraphicsBackendOpenGL::GetShaderStorageBloc
 #else
     return {};
 #endif
+}
+
+void GraphicsBackendOpenGL::AttachTextureToFramebuffer(GLenum framebuffer, GLenum attachment, const GraphicsBackendTexture& texture, int level, int layer)
+{
+    if (texture.Type == TextureType::TEXTURE_2D)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTexture(framebuffer, attachment, texture.Texture, level))
+    }
+    else
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTextureLayer(framebuffer, attachment, texture.Texture, level, layer))
+    }
 }

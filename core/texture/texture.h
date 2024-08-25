@@ -18,10 +18,14 @@ public:
     virtual ~Texture();
 
     void Bind(const GraphicsBackendResourceBindings &bindings, bool bindSampler, int uniformLocation) const;
-    void Attach(GraphicsBackendRenderTargetDescriptor descriptor) const;
     void SetMinMipLevel(int minMipLevel);
     void SetWrapMode(TextureWrapMode wrapMode);
     void SetBorderColor(const Vector4 &color);
+
+    inline GraphicsBackendTexture GetBackendTexture() const
+    {
+        return m_Texture;
+    }
 
     inline unsigned int GetWidth() const
     {

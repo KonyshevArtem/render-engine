@@ -4,8 +4,6 @@
 #include "enums/depth_function.h"
 #include "enums/blend_factor.h"
 #include "enums/cull_face.h"
-#include "enums/blit_framebuffer_mask.h"
-#include "enums/blit_framebuffer_filter.h"
 
 #include <memory>
 #include <string>
@@ -33,11 +31,11 @@ namespace Graphics
     void                      SetCameraData(const Matrix4x4 &_viewMatrix, Matrix4x4 _projectionMatrix);
     int                       GetScreenWidth();
     int                       GetScreenHeight();
-    void                      SetRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor, const std::shared_ptr<Texture> &target = nullptr);
+    void                      SetRenderTarget(GraphicsBackendRenderTargetDescriptor descriptor, const std::shared_ptr<Texture> &target = nullptr);
     void                      SetViewport(const Vector4& viewport);
     void                      CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size);
     void                      Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material);
-    void                      Blit(const std::shared_ptr<Texture> &source, BlitFramebufferMask mask, BlitFramebufferFilter filter);
+    void                      CopyTextureToTexture(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, GraphicsBackendRenderTargetDescriptor destinationDescriptor);
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture);
 

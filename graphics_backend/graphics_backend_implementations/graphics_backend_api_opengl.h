@@ -30,13 +30,11 @@ public:
     TextureInternalFormat GetTextureFormat(const GraphicsBackendTexture &texture) override;
     int GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice) override;
 
-    void BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer) override;
     void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) override;
     TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment) override;
 
     GraphicsBackendBuffer CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
-    void BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer) override;
     void BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
 
     void SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data) override;
@@ -75,7 +73,7 @@ public:
 
     bool SupportShaderStorageBuffer() override;
 
-    void BlitFramebuffer(int srcMinX, int srcMinY, int srcMaxX, int srcMaxY, int dstMinX, int dstMinY, int dstMaxX, int dstMaxY, BlitFramebufferMask mask, BlitFramebufferFilter filter) override;
+    void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) override;
 
     void PushDebugGroup(const std::string& name, int id) override;
     void PopDebugGroup() override;
@@ -91,13 +89,15 @@ public:
     const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) override;
 
 private:
-    GLuint m_Framebuffer;
+    GLuint m_Framebuffers[2];
     std::set<std::string> m_Extensions;
 
     void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo>* uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers);
     int GetNameBufferSize(GraphicsBackendProgram program);
     std::unordered_map<std::string, int> GetUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockIndex, std::vector<char> nameBuffer);
     std::unordered_map<std::string, int> GetShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboIndex);
+
+    void AttachTextureToFramebuffer(GLenum framebuffer, GLenum attachment, const GraphicsBackendTexture& texture, int level, int layer);
 };
 
 

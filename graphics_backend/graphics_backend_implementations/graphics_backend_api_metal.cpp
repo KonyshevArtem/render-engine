@@ -192,44 +192,31 @@ int GraphicsBackendMetal::GetTextureSize(const GraphicsBackendTexture &texture, 
     return 0;
 }
 
-void GraphicsBackendMetal::BindFramebuffer(FramebufferTarget target, GraphicsBackendFramebuffer framebuffer)
-{
-}
-
 void GraphicsBackendMetal::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor)
 {
-    auto metalTexture = descriptor.Texture.Texture != 0 ? reinterpret_cast<MTL::Texture*>(descriptor.Texture.Texture) : nullptr;
+    auto metalTexture = GetTextureFromDescriptor(descriptor);
 
-    bool isDepth = descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT || descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
-    bool isStencil = descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT || descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
-
-    auto configureDescriptor = [metalTexture, &descriptor](MTL::RenderPassAttachmentDescriptor* desc, MTL::Texture* backbufferTexture)
+    auto configureDescriptor = [metalTexture, &descriptor](MTL::RenderPassAttachmentDescriptor* desc)
     {
-        desc->setTexture(descriptor.IsBackbuffer ? backbufferTexture : metalTexture);
+        desc->setTexture(metalTexture);
         desc->setLevel(descriptor.Level);
         desc->setSlice(descriptor.Layer);
         desc->setLoadAction(MetalHelpers::ToLoadAction(descriptor.LoadAction));
         desc->setStoreAction(MetalHelpers::ToStoreAction(descriptor.StoreAction));
     };
 
-    if (isDepth || isStencil)
+    if (descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT || descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)
     {
-        if (isDepth)
-        {
-            auto desc = m_RenderPassDescriptor->depthAttachment();
-            configureDescriptor(desc, m_BackbufferDescriptor->depthAttachment()->texture());
-        }
-        if (isStencil)
-        {
-            auto desc = m_RenderPassDescriptor->stencilAttachment();
-            configureDescriptor(desc, m_BackbufferDescriptor->stencilAttachment()->texture());
-        }
+        configureDescriptor(m_RenderPassDescriptor->depthAttachment());
+    }
+    else if (descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT)
+    {
+        configureDescriptor(m_RenderPassDescriptor->stencilAttachment());
     }
     else
     {
         int index = static_cast<int>(descriptor.Attachment);
-        auto desc = m_RenderPassDescriptor->colorAttachments()->object(index);
-        configureDescriptor(desc, m_BackbufferDescriptor->colorAttachments()->object(index)->texture());
+        configureDescriptor(m_RenderPassDescriptor->colorAttachments()->object(index));
     }
 }
 
@@ -268,10 +255,6 @@ void GraphicsBackendMetal::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
     auto *metalBuffer = reinterpret_cast<MTL::Buffer*>(buffer.Buffer);
     metalBuffer->release();
-}
-
-void GraphicsBackendMetal::BindBuffer(BufferBindTarget target, GraphicsBackendBuffer buffer)
-{
 }
 
 void GraphicsBackendMetal::BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
@@ -595,8 +578,21 @@ bool GraphicsBackendMetal::SupportShaderStorageBuffer()
     return true;
 }
 
-void GraphicsBackendMetal::BlitFramebuffer(int srcMinX, int srcMinY, int srcMaxX, int srcMaxY, int dstMinX, int dstMinY, int dstMaxX, int dstMaxY, BlitFramebufferMask mask, BlitFramebufferFilter filter)
+void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
 {
+    auto metalSource = reinterpret_cast<MTL::Texture*>(source.Texture);
+    auto metalDestination = GetTextureFromDescriptor(destinationDescriptor);
+
+    if (!metalSource || !metalDestination)
+        return;
+
+    MTL::Origin sourceOrigin(sourceX, sourceY, 0);
+    MTL::Origin destinationOrigin(destinationX, destinationY, 0);
+    MTL::Size size(width, height, 1);
+
+    auto encoder = m_CommandBuffer->blitCommandEncoder();
+    encoder->copyFromTexture(metalSource, 0, 0, sourceOrigin, size, metalDestination, 0, 0, destinationOrigin);
+    encoder->endEncoding();
 }
 
 void GraphicsBackendMetal::PushDebugGroup(const std::string &name, int id)
@@ -619,6 +615,15 @@ void GraphicsBackendMetal::EndRenderPass()
     {
         m_CurrentCommandEncoder->endEncoding();
         m_CurrentCommandEncoder = nullptr;
+
+        auto colorTargetCount = m_RenderPassDescriptor->colorAttachments()->retainCount();
+        for (int i = 0; i < colorTargetCount; ++i)
+        {
+            m_RenderPassDescriptor->colorAttachments()->setObject(m_BackbufferDescriptor->colorAttachments()->object(i), i);
+        }
+
+        m_RenderPassDescriptor->setDepthAttachment(m_BackbufferDescriptor->depthAttachment());
+        m_RenderPassDescriptor->setStencilAttachment(m_BackbufferDescriptor->stencilAttachment());
     }
 }
 
@@ -651,6 +656,22 @@ void GraphicsBackendMetal::SetDepthStencilState(const GraphicsBackendDepthStenci
     {
         m_CurrentCommandEncoder->setDepthStencilState(metalState);
     }
+}
+
+MTL::Texture* GraphicsBackendMetal::GetTextureFromDescriptor(const GraphicsBackendRenderTargetDescriptor& descriptor)
+{
+    auto metalTexture = descriptor.Texture.Texture != 0 ? reinterpret_cast<MTL::Texture*>(descriptor.Texture.Texture) : nullptr;
+    if (!descriptor.IsBackbuffer)
+        return metalTexture;
+
+    if (descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT || descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)
+        return m_BackbufferDescriptor->depthAttachment()->texture();
+
+    if (descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT)
+        return m_BackbufferDescriptor->stencilAttachment()->texture();
+
+    int index = static_cast<int>(descriptor.Attachment);
+    return m_BackbufferDescriptor->colorAttachments()->object(index)->texture();
 }
 
 GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackendMetal::GetError()

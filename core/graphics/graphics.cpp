@@ -16,7 +16,6 @@
 #include "graphics_backend_debug.h"
 #include "enums/cull_face_orientation.h"
 #include "enums/indices_data_type.h"
-#include "enums/framebuffer_target.h"
 #include "types/graphics_backend_framebuffer.h"
 #include "shader/shader.h"
 #include "shader/shader_pass/shader_pass.h"
@@ -276,7 +275,7 @@ namespace Graphics
 
         {
             auto copyDepthDebugGroup = GraphicsBackendDebug::DebugGroup("Copy Depth to BackBuffer");
-            Blit(cameraDepthTarget, BlitFramebufferMask::DEPTH, BlitFramebufferFilter::NEAREST);
+            CopyTextureToTexture(cameraDepthTarget, nullptr, GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
         }
 
         if (gizmosPass)
@@ -664,16 +663,14 @@ namespace Graphics
         return globalShaderDirectives;
     }
 
-    void SetRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor, const std::shared_ptr<Texture> &target)
+    void SetRenderTarget(GraphicsBackendRenderTargetDescriptor descriptor, const std::shared_ptr<Texture> &target)
     {
         if (target)
         {
-            target->Attach(descriptor);
+            descriptor.Texture = target->GetBackendTexture();
         }
-        else
-        {
-            GraphicsBackend::Current()->AttachRenderTarget(descriptor);
-        }
+
+        GraphicsBackend::Current()->AttachRenderTarget(descriptor);
     }
 
     void SetViewport(const Vector4 &viewport)
@@ -708,26 +705,16 @@ namespace Graphics
         Draw(*fullscreenMesh, material, Matrix4x4::Identity(), 0);
     }
 
-    void Blit(const std::shared_ptr<Texture> &source, BlitFramebufferMask mask, BlitFramebufferFilter filter)
+    void CopyTextureToTexture(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, GraphicsBackendRenderTargetDescriptor destinationDescriptor)
     {
-        FramebufferAttachment attachment = FramebufferAttachment::COLOR_ATTACHMENT0;
-        if (mask == BlitFramebufferMask::DEPTH)
+        if (!source)
+            return;
+
+        if (destination)
         {
-            attachment = FramebufferAttachment::DEPTH_ATTACHMENT;
-        }
-        else if (mask == BlitFramebufferMask::STENCIL)
-        {
-            attachment = FramebufferAttachment::STENCIL_ATTACHMENT;
-        }
-        else if (mask == BlitFramebufferMask::DEPTH_STENCIL)
-        {
-            attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+            destinationDescriptor.Texture = destination->GetBackendTexture();
         }
 
-        GraphicsBackend::Current()->BindFramebuffer(FramebufferTarget::READ_FRAMEBUFFER, framebuffer);
-        source->Attach(attachment, 0, 0);
-
-        GraphicsBackend::Current()->BindFramebuffer(FramebufferTarget::DRAW_FRAMEBUFFER, GraphicsBackendFramebuffer::NONE);
-        GraphicsBackend::Current()->BlitFramebuffer(0, 0, source->GetWidth(), source->GetHeight(), 0, 0, screenWidth, screenHeight, mask, filter);
+        GraphicsBackend::Current()->CopyTextureToTexture(source->GetBackendTexture(), destinationDescriptor, 0, 0, 0, 0, source->GetWidth(), source->GetHeight());
     }
 } // namespace Graphics

@@ -31,12 +31,6 @@ void Texture::Bind(const GraphicsBackendResourceBindings &bindings, bool bindSam
     }
 }
 
-void Texture::Attach(GraphicsBackendRenderTargetDescriptor descriptor) const
-{
-    descriptor.Texture = m_Texture;
-    GraphicsBackend::Current()->AttachRenderTarget(descriptor);
-}
-
 void Texture::SetMinMipLevel(int minMipLevel)
 {
     m_MinLod = minMipLevel;

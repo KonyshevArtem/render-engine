@@ -6,7 +6,6 @@ add_library(GraphicsBackend
         graphics_backend_api.h
         enums/texture_type.h
         enums/texture_internal_format.h
-        enums/framebuffer_target.h
         enums/framebuffer_attachment.h
         enums/texture_wrap_mode.h
         enums/texture_filtering_mode.h
@@ -29,8 +28,6 @@ add_library(GraphicsBackend
         types/graphics_backend_shader_object.h
         types/graphics_backend_framebuffer.h
         enums/program_resource_parameter.h
-        enums/blit_framebuffer_mask.h
-        enums/blit_framebuffer_filter.h
         enums/graphics_backend_name.h
         graphics_backend_implementations/graphics_backend_api_base.cpp
         graphics_backend_implementations/graphics_backend_api_base.h

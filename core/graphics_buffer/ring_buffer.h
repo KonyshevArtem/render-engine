@@ -19,7 +19,6 @@ public:
 
     void Bind(const GraphicsBackendResourceBindings &binding) const;
     void Bind(const GraphicsBackendResourceBindings &binding, int offset, int size) const;
-    void Bind(BufferBindTarget bindTarget) const;
     void SetData(const void *data, uint64_t offset, uint64_t size);
     void Reset();
 

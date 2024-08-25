@@ -26,11 +26,6 @@ void GraphicsBuffer::Bind(const GraphicsBackendResourceBindings &bindings, int o
     GraphicsBackend::Current()->BindBufferRange(m_Buffer, bindings, offset, size);
 }
 
-void GraphicsBuffer::Bind(BufferBindTarget bindTarget) const
-{
-    GraphicsBackend::Current()->BindBuffer(bindTarget, m_Buffer);
-}
-
 void GraphicsBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
 {
     offset = std::min(offset, m_Size);

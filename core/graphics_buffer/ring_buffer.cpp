@@ -55,11 +55,6 @@ void RingBuffer::Bind(const GraphicsBackendResourceBindings &binding, int offset
     m_Buffers[m_CurrentOffset / m_Capacity]->Bind(binding, m_Size * m_CurrentOffset + offset, size);
 }
 
-void RingBuffer::Bind(BufferBindTarget bindTarget) const
-{
-    m_Buffers[m_CurrentOffset / m_Capacity]->Bind(bindTarget);
-}
-
 void RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
 {
     ++m_CurrentOffset;

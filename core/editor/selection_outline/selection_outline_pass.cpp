@@ -64,7 +64,7 @@ void SelectionOutlinePass::Execute(Context &_context)
                 }
                 else
                 {
-                    Graphics::Draw(*geometry, *material, renderer->GetModelMatrix(), 0);
+                    Graphics::Draw(*geometry, *outlineMaterial, renderer->GetModelMatrix(), 1);
                 }
             }
         }

@@ -28,8 +28,10 @@
     #define DECLARE_CLIP_POS(type, name)
     #ifdef VERTEX_PROGRAM
         #define OUTPUT_CLIP_POS(name, value)    gl_Position = value;
+        #define DISCARD(condition)
     #else
         #define OUTPUT_CLIP_POS(name, value)
+        #define DISCARD(condition) if (condition) discard;
     #endif
 
     #define DECLARE_UBO(name) layout(std140) uniform name { name##Struct name##Var; }
@@ -53,6 +55,7 @@
     #define ATTRIBUTE(index)                [[attribute(index)]]
     #define DECLARE_CLIP_POS(type, name)    type name [[position]];
     #define OUTPUT_CLIP_POS(name, value)    name = value;
+    #define DISCARD(condition)              if (condition) discard_fragment();
 
     #define half3x3_type    half3x3
     #define half4_type      half4

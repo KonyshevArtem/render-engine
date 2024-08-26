@@ -7,9 +7,6 @@
 
 class GraphicsBackendTexture
 {
-public:
-    static GraphicsBackendTexture NONE;
-
 private:
     uint64_t Texture;
     TextureType Type;

@@ -9,7 +9,6 @@
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "types/graphics_backend_buffer.h"
-#include "types/graphics_backend_framebuffer.h"
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_geometry.h"

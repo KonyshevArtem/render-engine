@@ -25,7 +25,6 @@ enum class ShaderType;
 FORWARD_DECLARE_ENUM(UniformDataType)
 enum class CullFaceOrientation;
 enum class IndicesDataType;
-FORWARD_DECLARE_ENUM(ProgramResourceParameter)
 enum class TextureWrapMode;
 enum class TextureFilteringMode;
 #undef FORWARD_DECLARE_ENUM
@@ -33,7 +32,6 @@ enum class TextureFilteringMode;
 class GraphicsBackendTexture;
 class GraphicsBackendSampler;
 class GraphicsBackendBuffer;
-class GraphicsBackendFramebuffer;
 class GraphicsBackendProgram;
 class GraphicsBackendShaderObject;
 class GraphicsBackendGeometry;

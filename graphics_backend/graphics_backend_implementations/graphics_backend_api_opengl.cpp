@@ -6,7 +6,6 @@
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "types/graphics_backend_buffer.h"
-#include "types/graphics_backend_framebuffer.h"
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_geometry.h"
@@ -31,9 +30,6 @@ struct BlendState
     GLenum DestinationFactor;
     bool Enabled;
 };
-
-GraphicsBackendTexture GraphicsBackendTexture::NONE = GraphicsBackendTexture();
-GraphicsBackendFramebuffer GraphicsBackendFramebuffer::NONE = GraphicsBackendFramebuffer();
 
 GLbitfield s_ClearFlags[static_cast<int>(FramebufferAttachment::MAX)];
 

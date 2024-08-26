@@ -16,7 +16,6 @@
 #include "graphics_backend_debug.h"
 #include "enums/cull_face_orientation.h"
 #include "enums/indices_data_type.h"
-#include "types/graphics_backend_framebuffer.h"
 #include "shader/shader.h"
 #include "shader/shader_pass/shader_pass.h"
 #include "data_structs/camera_data.h"
@@ -61,8 +60,6 @@ namespace Graphics
     int screenHeight = 0;
 
     Vector3 lastCameraPosition;
-
-    GraphicsBackendFramebuffer framebuffer;
 
     PropertyBlock globalPropertyBlock;
 

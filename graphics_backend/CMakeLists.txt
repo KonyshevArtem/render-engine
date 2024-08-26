@@ -26,8 +26,6 @@ add_library(GraphicsBackend
         types/graphics_backend_buffer.h
         types/graphics_backend_program.h
         types/graphics_backend_shader_object.h
-        types/graphics_backend_framebuffer.h
-        enums/program_resource_parameter.h
         enums/graphics_backend_name.h
         graphics_backend_implementations/graphics_backend_api_base.cpp
         graphics_backend_implementations/graphics_backend_api_base.h

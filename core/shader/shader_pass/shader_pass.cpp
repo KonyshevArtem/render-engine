@@ -2,7 +2,7 @@
 #include "graphics_backend_api.h"
 #include "texture_2d/texture_2d.h"
 #include "cubemap/cubemap.h"
-#include "types/graphics_backend_uniform_info.h"
+#include "types/graphics_backend_texture_info.h"
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "global_constants.h"
@@ -10,15 +10,15 @@
 
 #include <vector>
 
-std::shared_ptr<Texture> GetTextureByLiteralAndType(const std::string &literal, UniformDataType dataType)
+std::shared_ptr<Texture> GetTextureByLiteralAndType(const std::string &literal, TextureDataType dataType)
 {
     if (literal == "white")
     {
         switch (dataType)
         {
-            case UniformDataType::SAMPLER_2D:
+            case TextureDataType::SAMPLER_2D:
                 return Texture2D::White();
-            case UniformDataType::SAMPLER_CUBE:
+            case TextureDataType::SAMPLER_CUBE:
                 return Cubemap::White();
         }
     }
@@ -27,7 +27,7 @@ std::shared_ptr<Texture> GetTextureByLiteralAndType(const std::string &literal, 
     {
         switch (dataType)
         {
-            case UniformDataType::SAMPLER_CUBE:
+            case TextureDataType::SAMPLER_CUBE:
                 return Cubemap::Black();
         }
     }
@@ -36,7 +36,7 @@ std::shared_ptr<Texture> GetTextureByLiteralAndType(const std::string &literal, 
     {
         switch (dataType)
         {
-            case UniformDataType::SAMPLER_2D:
+            case TextureDataType::SAMPLER_2D:
                 return Texture2D::Normal();
         }
     }
@@ -44,32 +44,25 @@ std::shared_ptr<Texture> GetTextureByLiteralAndType(const std::string &literal, 
     return nullptr;
 }
 
-void FillDefaultValuesPropertyBlock(const std::unordered_map<std::string, std::string> &defaultValues,
-                                    const std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms,
-                                    PropertyBlock &propertyBlock)
+void FillDefaultTextures(const std::unordered_map<std::string, std::string> &defaultValues,
+                         const std::unordered_map<std::string, GraphicsBackendTextureInfo> &shaderTextures,
+                         std::unordered_map<std::string, std::shared_ptr<Texture>> &defaultTextures)
 {
     for (const auto &pair: defaultValues)
     {
-        auto &uniformName = pair.first;
+        auto &textureName = pair.first;
 
-        auto it = uniforms.find(uniformName);
-        if (it == uniforms.end())
+        auto it = shaderTextures.find(textureName);
+        if (it == shaderTextures.end())
             continue;
 
         auto &defaultValueLiteral = pair.second;
-        auto uniformDataType = it->second.Type;
+        auto textureDataType = it->second.Type;
 
-        if (UniformDataTypeUtils::IsTexture(uniformDataType))
+        auto texture = GetTextureByLiteralAndType(defaultValueLiteral, textureDataType);
+        if (texture != nullptr)
         {
-            auto texture = GetTextureByLiteralAndType(defaultValueLiteral, uniformDataType);
-            if (texture != nullptr)
-            {
-                propertyBlock.SetTexture(uniformName, texture);
-            }
-        }
-        else
-        {
-            // TODO: add support for default values for other types
+            defaultTextures[textureName] = texture;
         }
     }
 }
@@ -99,9 +92,9 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendI
         s_DefaultVertexAttributes.push_back({3, 3, VertexAttributeDataType::FLOAT, 0, 44, 32});
     }
 
-    CreatePSO(m_Shaders, m_BlendInfo, k_DefaultColorFormat, k_DefaultDepthFormat, s_DefaultVertexAttributes, &m_Uniforms, &m_Buffers);
+    CreatePSO(m_Shaders, m_BlendInfo, k_DefaultColorFormat, k_DefaultDepthFormat, s_DefaultVertexAttributes, &m_Textures, &m_Buffers);
 
-    FillDefaultValuesPropertyBlock(defaultValues, m_Uniforms, m_DefaultValuesBlock);
+    FillDefaultTextures(defaultValues, m_Textures, m_DefaultTextures);
 
     m_DepthStencilState = GraphicsBackend::Current()->CreateDepthStencilState(depthInfo.WriteDepth, depthInfo.DepthFunction);
 }
@@ -147,7 +140,7 @@ std::string ShaderPass::GetTagValue(const std::string &tag) const
 
 const GraphicsBackendProgram &ShaderPass::CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat,
                                                     TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                                                    std::unordered_map<std::string, GraphicsBackendUniformInfo> *uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> *buffers)
+                                                    std::unordered_map<std::string, GraphicsBackendTextureInfo> *textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> *buffers)
 {
     GraphicsBackendColorAttachmentDescriptor colorAttachmentDescriptor{};
     colorAttachmentDescriptor.Format = colorFormat;
@@ -155,7 +148,7 @@ const GraphicsBackendProgram &ShaderPass::CreatePSO(std::vector<GraphicsBackendS
     colorAttachmentDescriptor.DestinationFactor = blendInfo.DestinationFactor;
     colorAttachmentDescriptor.BlendingEnabled = blendInfo.Enabled;
 
-    auto program = GraphicsBackend::Current()->CreateProgram(shaders, colorAttachmentDescriptor, depthFormat, vertexAttributes, uniforms, buffers);
+    auto program = GraphicsBackend::Current()->CreateProgram(shaders, colorAttachmentDescriptor, depthFormat, vertexAttributes, textures, buffers);
 
     size_t hash = GetPSOHash(VertexAttributes::GetHash(vertexAttributes), colorFormat, depthFormat);
     m_Programs[hash] = program;

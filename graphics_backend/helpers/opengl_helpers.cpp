@@ -928,3 +928,122 @@ GLenum OpenGLHelpers::ToBlendFactor(BlendFactor factor)
             return GL_ONE_MINUS_SRC1_ALPHA;
     }
 }
+
+bool OpenGLHelpers::IsTexture(GLenum uniformType)
+{
+    return uniformType == GL_SAMPLER_1D ||
+           uniformType == GL_SAMPLER_2D ||
+           uniformType == GL_SAMPLER_3D ||
+           uniformType == GL_SAMPLER_CUBE ||
+           uniformType == GL_SAMPLER_1D_SHADOW ||
+           uniformType == GL_SAMPLER_2D_SHADOW ||
+           uniformType == GL_SAMPLER_1D_ARRAY ||
+           uniformType == GL_SAMPLER_2D_ARRAY ||
+           uniformType == GL_SAMPLER_1D_ARRAY_SHADOW ||
+           uniformType == GL_SAMPLER_2D_ARRAY_SHADOW ||
+           uniformType == GL_SAMPLER_2D_MULTISAMPLE ||
+           uniformType == GL_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+           uniformType == GL_SAMPLER_CUBE_SHADOW ||
+           uniformType == GL_SAMPLER_BUFFER ||
+           uniformType == GL_SAMPLER_2D_RECT ||
+           uniformType == GL_SAMPLER_2D_RECT_SHADOW ||
+           uniformType == GL_INT_SAMPLER_1D ||
+           uniformType == GL_INT_SAMPLER_2D ||
+           uniformType == GL_INT_SAMPLER_3D ||
+           uniformType == GL_INT_SAMPLER_CUBE ||
+           uniformType == GL_INT_SAMPLER_1D_ARRAY ||
+           uniformType == GL_INT_SAMPLER_2D_ARRAY ||
+           uniformType == GL_INT_SAMPLER_2D_MULTISAMPLE ||
+           uniformType == GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+           uniformType == GL_INT_SAMPLER_BUFFER ||
+           uniformType == GL_INT_SAMPLER_2D_RECT ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_1D ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_2D ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_3D ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_CUBE ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_1D_ARRAY ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_2D_ARRAY ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_BUFFER ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_2D_RECT;
+}
+
+TextureDataType OpenGLHelpers::FromTextureDataType(GLenum textureDataType)
+{
+    switch (textureDataType)
+    {
+        case GL_SAMPLER_1D:
+            return TextureDataType::SAMPLER_1D;
+        case GL_SAMPLER_2D:
+            return TextureDataType::SAMPLER_2D;
+        case GL_SAMPLER_3D:
+            return TextureDataType::SAMPLER_3D;
+        case GL_SAMPLER_CUBE:
+            return TextureDataType::SAMPLER_CUBE;
+        case GL_SAMPLER_1D_SHADOW:
+            return TextureDataType::SAMPLER_1D_SHADOW;
+        case GL_SAMPLER_2D_SHADOW:
+            return TextureDataType::SAMPLER_2D_SHADOW;
+        case GL_SAMPLER_1D_ARRAY:
+            return TextureDataType::SAMPLER_1D_ARRAY;
+        case GL_SAMPLER_2D_ARRAY:
+            return TextureDataType::SAMPLER_2D_ARRAY;
+        case GL_SAMPLER_1D_ARRAY_SHADOW:
+            return TextureDataType::SAMPLER_1D_ARRAY_SHADOW;
+        case GL_SAMPLER_2D_ARRAY_SHADOW:
+            return TextureDataType::SAMPLER_2D_ARRAY_SHADOW;
+        case GL_SAMPLER_2D_MULTISAMPLE:
+            return TextureDataType::SAMPLER_2D_MULTISAMPLE;
+        case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            return TextureDataType::SAMPLER_2D_MULTISAMPLE_ARRAY;
+        case GL_SAMPLER_CUBE_SHADOW:
+            return TextureDataType::SAMPLER_CUBE_SHADOW;
+        case GL_SAMPLER_BUFFER:
+            return TextureDataType::SAMPLER_BUFFER;
+        case GL_SAMPLER_2D_RECT:
+            return TextureDataType::SAMPLER_2D_RECT;
+        case GL_SAMPLER_2D_RECT_SHADOW:
+            return TextureDataType::SAMPLER_2D_RECT_SHADOW;
+        case GL_INT_SAMPLER_1D:
+            return TextureDataType::INT_SAMPLER_1D;
+        case GL_INT_SAMPLER_2D:
+            return TextureDataType::INT_SAMPLER_2D;
+        case GL_INT_SAMPLER_3D:
+            return TextureDataType::INT_SAMPLER_3D;
+        case GL_INT_SAMPLER_CUBE:
+            return TextureDataType::INT_SAMPLER_CUBE;
+        case GL_INT_SAMPLER_1D_ARRAY:
+            return TextureDataType::INT_SAMPLER_1D_ARRAY;
+        case GL_INT_SAMPLER_2D_ARRAY:
+            return TextureDataType::INT_SAMPLER_2D_ARRAY;
+        case GL_INT_SAMPLER_2D_MULTISAMPLE:
+            return TextureDataType::INT_SAMPLER_2D_MULTISAMPLE;
+        case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            return TextureDataType::INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+        case GL_INT_SAMPLER_BUFFER:
+            return TextureDataType::INT_SAMPLER_BUFFER;
+        case GL_INT_SAMPLER_2D_RECT:
+            return TextureDataType::INT_SAMPLER_2D_RECT;
+        case GL_UNSIGNED_INT_SAMPLER_1D:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_1D;
+        case GL_UNSIGNED_INT_SAMPLER_2D:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_2D;
+        case GL_UNSIGNED_INT_SAMPLER_3D:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_3D;
+        case GL_UNSIGNED_INT_SAMPLER_CUBE:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_CUBE;
+        case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_1D_ARRAY;
+        case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_2D_ARRAY;
+        case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
+        case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+        case GL_UNSIGNED_INT_SAMPLER_BUFFER:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_BUFFER;
+        case GL_UNSIGNED_INT_SAMPLER_2D_RECT:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_2D_RECT;
+    }
+}

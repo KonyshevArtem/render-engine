@@ -17,7 +17,7 @@ add_library(GraphicsBackend
         enums/cull_face.h
         enums/depth_function.h
         enums/shader_type.h
-        enums/uniform_data_type.h
+        enums/texture_data_type.h
         enums/cull_face_orientation.h
         enums/indices_data_type.h
         types/graphics_backend_texture.h
@@ -43,7 +43,8 @@ add_library(GraphicsBackend
         enums/store_action.h
         types/graphics_backend_render_target_descriptor.h
         types/graphics_backend_depth_stencil_state.h
-        types/graphics_backend_color_attachment_descriptor.h)
+        types/graphics_backend_color_attachment_descriptor.h
+        types/graphics_backend_texture_info.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

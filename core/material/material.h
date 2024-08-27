@@ -4,7 +4,7 @@
 #include "matrix4x4/matrix4x4.h"
 #include "property_block/property_block.h"
 #include "vector4/vector4.h"
-#include "types/graphics_backend_uniform_info.h"
+#include "types/graphics_backend_texture_info.h"
 
 #include <vector>
 #include <unordered_map>
@@ -31,46 +31,19 @@ public:
     std::shared_ptr<GraphicsBuffer> GetPerMaterialDataBlock(int pass) const;
 
     void SetTexture(const std::string &name, std::shared_ptr<Texture> texture);
-    inline const std::shared_ptr<Texture> GetTexture(const std::string &_name) const
-    {
-        return m_PropertyBlock.GetTexture(_name);
-    }
-
-
     void SetVector(const std::string &_name, const Vector4 &_value);
-    inline Vector4 GetVector(const std::string &_name) const
-    {
-        return m_PropertyBlock.GetVector(_name);
-    }
-
-
     void SetFloat(const std::string &_name, float _value);
-    inline float GetFloat(const std::string &_name) const
-    {
-        return m_PropertyBlock.GetFloat(_name);
-    }
-
-
     void SetMatrix(const std::string &_name, const Matrix4x4 &_value);
-    inline Matrix4x4 GetMatrix(const std::string &_name) const
-    {
-        return m_PropertyBlock.GetMatrix(_name);
-    }
-
     void SetInt(const std::string &name, int value);
-    inline int GetInt(const std::string &name) const
-    {
-        return m_PropertyBlock.GetInt(name);
-    }
 
     inline const std::shared_ptr<Shader> &GetShader() const
     {
         return m_Shader;
     }
 
-    inline const PropertyBlock &GetPropertyBlock() const
+    inline const std::unordered_map<std::string, std::shared_ptr<Texture>> &GetTextures() const
     {
-        return m_PropertyBlock;
+        return m_Textures;
     }
 
 
@@ -89,7 +62,7 @@ private:
 
     std::shared_ptr<GraphicsBufferWrapper> m_PerMaterialDataBufferWrapper;
     std::shared_ptr<Shader> m_Shader;
-    PropertyBlock m_PropertyBlock;
+    std::unordered_map<std::string, std::shared_ptr<Texture>> m_Textures;
     int m_RenderQueue = 2000;
 };
 

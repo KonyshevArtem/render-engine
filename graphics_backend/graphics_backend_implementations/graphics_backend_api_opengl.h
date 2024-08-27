@@ -20,7 +20,7 @@ public:
     void DeleteTexture(const GraphicsBackendTexture &texture) override;
     void DeleteSampler(const GraphicsBackendSampler &sampler) override;
 
-    void BindTexture(const GraphicsBackendResourceBindings &bindings, int uniformLocation, const GraphicsBackendTexture &texture) override;
+    void BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture) override;
     void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) override;
 
     void GenerateMipmaps(const GraphicsBackendTexture &texture) override;
@@ -56,11 +56,10 @@ public:
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
     GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                                         std::unordered_map<std::string, GraphicsBackendUniformInfo>* uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers) override;
+                                         std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers) override;
     void DeleteShader(GraphicsBackendShaderObject shader) override;
     void DeleteProgram(GraphicsBackendProgram program) override;
     void UseProgram(GraphicsBackendProgram program) override;
-    void SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose = false) override;
     bool RequireStrictPSODescriptor() override;
 
     void SetClearColor(float r, float g, float b, float a) override;
@@ -92,7 +91,7 @@ private:
     GLuint m_Framebuffers[2];
     std::set<std::string> m_Extensions;
 
-    void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendUniformInfo>* uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers);
+    void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers);
     int GetNameBufferSize(GraphicsBackendProgram program);
     std::unordered_map<std::string, int> GetUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockIndex, std::vector<char> nameBuffer);
     std::unordered_map<std::string, int> GetShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboIndex);

@@ -22,9 +22,9 @@ Texture::~Texture()
     GraphicsBackend::Current()->DeleteSampler(m_Sampler);
 }
 
-void Texture::Bind(const GraphicsBackendResourceBindings &bindings, bool bindSampler, int uniformLocation) const
+void Texture::Bind(const GraphicsBackendResourceBindings &bindings, bool bindSampler) const
 {
-    GraphicsBackend::Current()->BindTexture(bindings, uniformLocation, m_Texture);
+    GraphicsBackend::Current()->BindTexture(bindings, m_Texture);
     if (bindSampler)
     {
         GraphicsBackend::Current()->BindSampler(bindings, m_Sampler);

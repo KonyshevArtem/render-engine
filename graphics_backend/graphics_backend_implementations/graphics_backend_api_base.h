@@ -10,7 +10,6 @@
 #include <unordered_map>
 #include <memory>
 
-#define FORWARD_DECLARE_ENUM(name) enum class name : GRAPHICS_BACKEND_TYPE_ENUM;
 enum class TextureType;
 enum class TextureInternalFormat;
 enum class FramebufferAttachment;
@@ -22,12 +21,11 @@ enum class BlendFactor;
 enum class CullFace;
 enum class DepthFunction;
 enum class ShaderType;
-FORWARD_DECLARE_ENUM(UniformDataType)
+enum class TextureDataType;
 enum class CullFaceOrientation;
 enum class IndicesDataType;
 enum class TextureWrapMode;
 enum class TextureFilteringMode;
-#undef FORWARD_DECLARE_ENUM
 
 class GraphicsBackendTexture;
 class GraphicsBackendSampler;
@@ -35,7 +33,7 @@ class GraphicsBackendBuffer;
 class GraphicsBackendProgram;
 class GraphicsBackendShaderObject;
 class GraphicsBackendGeometry;
-class GraphicsBackendUniformInfo;
+class GraphicsBackendTextureInfo;
 class GraphicsBackendBufferInfo;
 struct GraphicsBackendResourceBindings;
 struct GraphicsBackendRenderTargetDescriptor;
@@ -59,7 +57,7 @@ public:
     virtual void DeleteTexture(const GraphicsBackendTexture &texture) = 0;
     virtual void DeleteSampler(const GraphicsBackendSampler &sampler) = 0;
 
-    virtual void BindTexture(const GraphicsBackendResourceBindings &bindings, int uniformLocation, const GraphicsBackendTexture &texture) = 0;
+    virtual void BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture) = 0;
     virtual void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) = 0;
 
     virtual void GenerateMipmaps(const GraphicsBackendTexture &texture) = 0;
@@ -95,11 +93,10 @@ public:
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) = 0;
     virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                                                 std::unordered_map<std::string, GraphicsBackendUniformInfo>* uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers) = 0;
+                                                 std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers) = 0;
     virtual void DeleteShader(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;
-    virtual void SetUniform(int location, UniformDataType dataType, int count, const void *data, bool transpose = false) = 0;
     virtual bool RequireStrictPSODescriptor() = 0;
 
     virtual void SetClearColor(float r, float g, float b, float a) = 0;

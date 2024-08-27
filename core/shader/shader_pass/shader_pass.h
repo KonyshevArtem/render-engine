@@ -12,7 +12,7 @@
 #include <string>
 #include <unordered_map>
 
-struct GraphicsBackendUniformInfo;
+struct GraphicsBackendTextureInfo;
 class GraphicsBackendBufferInfo;
 
 class ShaderPass
@@ -41,9 +41,9 @@ public:
         return m_DepthStencilState;
     }
 
-    inline const std::unordered_map<std::string, GraphicsBackendUniformInfo> &GetUniforms() const
+    inline const std::unordered_map<std::string, GraphicsBackendTextureInfo> &GetTextures() const
     {
-        return m_Uniforms;
+        return m_Textures;
     }
 
     inline const std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &GetBuffers() const
@@ -51,9 +51,9 @@ public:
         return m_Buffers;
     }
 
-    inline const PropertyBlock &GetDefaultValuesBlock() const
+    inline const std::unordered_map<std::string, std::shared_ptr<Texture>> &GetDefaultTextures() const
     {
-        return m_DefaultValuesBlock;
+        return m_DefaultTextures;
     }
 
     std::string GetTagValue(const std::string &tag) const;
@@ -61,19 +61,19 @@ public:
 private:
     std::vector<GraphicsBackendShaderObject> m_Shaders;
     std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
-    PropertyBlock m_DefaultValuesBlock;
+    std::unordered_map<std::string, std::shared_ptr<Texture>> m_DefaultTextures;
 
     CullInfo m_CullInfo;
     GraphicsBackendDepthStencilState m_DepthStencilState;
     BlendInfo m_BlendInfo;
 
     std::unordered_map<std::string, std::string> m_Tags;
-    std::unordered_map<std::string, GraphicsBackendUniformInfo> m_Uniforms;
+    std::unordered_map<std::string, GraphicsBackendTextureInfo> m_Textures;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
 
     const GraphicsBackendProgram &CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat,
                                             TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                                            std::unordered_map<std::string, GraphicsBackendUniformInfo> *uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> *buffers);
+                                            std::unordered_map<std::string, GraphicsBackendTextureInfo> *uniforms, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> *buffers);
 };
 
 

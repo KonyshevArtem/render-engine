@@ -16,6 +16,7 @@
 #include "enums/cull_face_orientation.h"
 #include "enums/cull_face.h"
 #include "enums/blend_factor.h"
+#include "enums/texture_data_type.h"
 
 #include <string>
 
@@ -56,6 +57,8 @@ namespace OpenGLHelpers
     GLenum ToCullFaceOrientation(CullFaceOrientation orientation);
     GLenum ToCullFace(CullFace face);
     GLenum ToBlendFactor(BlendFactor factor);
+    bool IsTexture(GLenum uniformType);
+    TextureDataType FromTextureDataType(GLenum textureDataType);
 }
 
 #endif //RENDER_ENGINE_OPENGL_HELPERS_H

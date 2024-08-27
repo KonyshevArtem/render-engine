@@ -61,7 +61,7 @@ namespace Graphics
 
     Vector3 lastCameraPosition;
 
-    PropertyBlock globalPropertyBlock;
+    std::unordered_map<std::string, std::shared_ptr<Texture>> globalTextures;
 
     void InitUniformBlocks()
     {
@@ -373,46 +373,22 @@ namespace Graphics
         GraphicsBackend::Current()->SetCullFaceOrientation(cullInfo.Orientation);
     }
 
-    void SetUniform(const std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, const std::string &name, const void *data)
+    void SetTextures(const std::unordered_map<std::string, std::shared_ptr<Texture>> &textures, const ShaderPass &shaderPass)
     {
-        auto it = uniforms.find(name);
-        if (it != uniforms.end())
+        const auto &shaderTextures = shaderPass.GetTextures();
+
+        for (const auto &pair: textures)
         {
-            auto &uniformInfo = it->second;
-            GraphicsBackend::Current()->SetUniform(uniformInfo.Location, uniformInfo.Type, 1, data);
+            if (!pair.second)
+                continue;
+
+            auto it = shaderTextures.find(pair.first);
+            if (it == shaderTextures.end())
+                continue;
+
+            const auto& textureInfo = it->second;
+            pair.second->Bind(textureInfo.TextureBindings, textureInfo.HasSampler);
         }
-    }
-
-    void SetTextureUniform(const std::unordered_map<std::string, GraphicsBackendUniformInfo> &uniforms, const std::string &name, const Texture &texture)
-    {
-        auto it = uniforms.find(name);
-        if (it == uniforms.end())
-            return;
-
-        const auto& uniformInfo = it->second;
-        if (uniformInfo.IsTexture)
-        {
-            texture.Bind(uniformInfo.TextureBindings, uniformInfo.HasSampler, uniformInfo.Location);
-        }
-    }
-
-    void SetPropertyBlock(const PropertyBlock &propertyBlock, const ShaderPass &shaderPass)
-    {
-        const auto &uniforms = shaderPass.GetUniforms();
-
-        for (const auto &pair: propertyBlock.GetTextures())
-        {
-            if (pair.second != nullptr)
-                SetTextureUniform(uniforms, pair.first, *pair.second);
-        }
-        for (const auto &pair: propertyBlock.GetVectors())
-            SetUniform(uniforms, pair.first, &pair.second);
-        for (const auto &pair: propertyBlock.GetFloats())
-            SetUniform(uniforms, pair.first, &pair.second);
-        for (const auto &pair: propertyBlock.GetMatrices())
-            SetUniform(uniforms, pair.first, &pair.second);
-        for (const auto &pair: propertyBlock.GetInts())
-            SetUniform(uniforms, pair.first, &pair.second);
     }
 
     bool TryFindBufferBindings(const std::string &name, const ShaderPass &shaderPass, GraphicsBackendResourceBindings& outBindings)
@@ -475,7 +451,6 @@ namespace Graphics
     {
         auto &shaderPass = *material.GetShader()->GetPass(shaderPassIndex);
         const auto &perMaterialDataBlock = material.GetPerMaterialDataBlock(shaderPassIndex);
-        const auto &materialPropertyBlock = material.GetPropertyBlock();
 
         TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0);
         TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_ATTACHMENT);
@@ -495,9 +470,9 @@ namespace Graphics
             SetGraphicsBuffer(GlobalConstants::InstanceMatricesBufferName, instancingMatricesBuffer, shaderPass);
         }
 
-        SetPropertyBlock(shaderPass.GetDefaultValuesBlock(), shaderPass);
-        SetPropertyBlock(globalPropertyBlock, shaderPass);
-        SetPropertyBlock(materialPropertyBlock, shaderPass);
+        SetTextures(shaderPass.GetDefaultTextures(), shaderPass);
+        SetTextures(globalTextures, shaderPass);
+        SetTextures(material.GetTextures(), shaderPass);
     }
 
     void SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>> &renderers, std::vector<DrawCallInfo> &drawCalls)
@@ -677,7 +652,7 @@ namespace Graphics
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture)
     {
-        globalPropertyBlock.SetTexture(name, texture);
+        globalTextures[name] = texture;
     }
 
     void CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size)

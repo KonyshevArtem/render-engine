@@ -14,17 +14,13 @@ Material::Material(std::shared_ptr<Shader> _shader) :
 
 void Material::SetTexture(const std::string &name, std::shared_ptr<Texture> texture)
 {
-    m_PropertyBlock.SetTexture(name, texture);
+    m_Textures[name] = texture;
     if (texture == nullptr)
     {
         return;
     }
 
-    auto scaleTransformPropName = name + "_ST";
-    if (!m_PropertyBlock.HasProperty(scaleTransformPropName))
-    {
-        SetVector(scaleTransformPropName, {0, 0, 1, 1});
-    }
+    SetVector(name + "_ST", {0, 0, 1, 1});
 
     int width = texture->GetWidth();
     int height = texture->GetHeight();
@@ -33,25 +29,21 @@ void Material::SetTexture(const std::string &name, std::shared_ptr<Texture> text
 
 void Material::SetVector(const std::string &name, const Vector4 &value)
 {
-    m_PropertyBlock.SetVector(name, value);
     SetDataToUniformBlocks(name, &value, sizeof(Vector4));
 }
 
 void Material::SetFloat(const std::string &name, float value)
 {
-    m_PropertyBlock.SetFloat(name, value);
     SetDataToUniformBlocks(name, &value, sizeof(float));
 }
 
 void Material::SetMatrix(const std::string &name, const Matrix4x4 &value)
 {
-    m_PropertyBlock.SetMatrix(name, value);
     SetDataToUniformBlocks(name, &value, sizeof(Matrix4x4));
 }
 
 void Material::SetInt(const std::string &name, int value)
 {
-    m_PropertyBlock.SetInt(name, value);
     SetDataToUniformBlocks(name, &value, sizeof(int));
 }
 

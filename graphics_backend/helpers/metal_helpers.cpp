@@ -609,7 +609,7 @@ MTL::BlendFactor MetalHelpers::ToBlendFactor(BlendFactor factor)
     }
 }
 
-UniformDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::TextureType textureType)
+TextureDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::TextureType textureType)
 {
     switch (textureType)
     {
@@ -618,12 +618,12 @@ UniformDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::T
             switch (dataType)
             {
                 case MTL::DataType::DataTypeInt:
-                    return UniformDataType::INT_SAMPLER_1D;
+                    return TextureDataType::INT_SAMPLER_1D;
                 case MTL::DataType::DataTypeUInt:
-                    return UniformDataType::UNSIGNED_INT_SAMPLER_1D;
+                    return TextureDataType::UNSIGNED_INT_SAMPLER_1D;
                 case MTL::DataType::DataTypeFloat:
                 case MTL::DataType::DataTypeHalf:
-                    return UniformDataType::SAMPLER_1D;
+                    return TextureDataType::SAMPLER_1D;
             }
         }
         case MTL::TextureType::TextureType1DArray:
@@ -631,12 +631,12 @@ UniformDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::T
             switch (dataType)
             {
                 case MTL::DataType::DataTypeInt:
-                    return UniformDataType::INT_SAMPLER_1D_ARRAY;
+                    return TextureDataType::INT_SAMPLER_1D_ARRAY;
                 case MTL::DataType::DataTypeUInt:
-                    return UniformDataType::UNSIGNED_INT_SAMPLER_1D_ARRAY;
+                    return TextureDataType::UNSIGNED_INT_SAMPLER_1D_ARRAY;
                 case MTL::DataType::DataTypeFloat:
                 case MTL::DataType::DataTypeHalf:
-                    return UniformDataType::SAMPLER_1D_ARRAY;
+                    return TextureDataType::SAMPLER_1D_ARRAY;
             }
         }
         case MTL::TextureType::TextureType2D:
@@ -644,12 +644,12 @@ UniformDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::T
             switch (dataType)
             {
                 case MTL::DataType::DataTypeInt:
-                    return UniformDataType::INT_SAMPLER_2D;
+                    return TextureDataType::INT_SAMPLER_2D;
                 case MTL::DataType::DataTypeUInt:
-                    return UniformDataType::UNSIGNED_INT_SAMPLER_2D;
+                    return TextureDataType::UNSIGNED_INT_SAMPLER_2D;
                 case MTL::DataType::DataTypeFloat:
                 case MTL::DataType::DataTypeHalf:
-                    return UniformDataType::SAMPLER_2D;
+                    return TextureDataType::SAMPLER_2D;
             }
         }
         case MTL::TextureType::TextureType2DMultisample:
@@ -657,12 +657,12 @@ UniformDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::T
             switch (dataType)
             {
                 case MTL::DataType::DataTypeInt:
-                    return UniformDataType::INT_SAMPLER_2D_MULTISAMPLE;
+                    return TextureDataType::INT_SAMPLER_2D_MULTISAMPLE;
                 case MTL::DataType::DataTypeUInt:
-                    return UniformDataType::UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
+                    return TextureDataType::UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
                 case MTL::DataType::DataTypeFloat:
                 case MTL::DataType::DataTypeHalf:
-                    return UniformDataType::SAMPLER_2D_MULTISAMPLE;
+                    return TextureDataType::SAMPLER_2D_MULTISAMPLE;
             }
         }
         case MTL::TextureType::TextureType2DArray:
@@ -670,12 +670,12 @@ UniformDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::T
             switch (dataType)
             {
                 case MTL::DataType::DataTypeInt:
-                    return UniformDataType::INT_SAMPLER_2D_ARRAY;
+                    return TextureDataType::INT_SAMPLER_2D_ARRAY;
                 case MTL::DataType::DataTypeUInt:
-                    return UniformDataType::UNSIGNED_INT_SAMPLER_2D_ARRAY;
+                    return TextureDataType::UNSIGNED_INT_SAMPLER_2D_ARRAY;
                 case MTL::DataType::DataTypeFloat:
                 case MTL::DataType::DataTypeHalf:
-                    return UniformDataType::SAMPLER_2D_ARRAY;
+                    return TextureDataType::SAMPLER_2D_ARRAY;
             }
         }
         case MTL::TextureType::TextureType2DMultisampleArray:
@@ -683,12 +683,12 @@ UniformDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::T
             switch (dataType)
             {
                 case MTL::DataType::DataTypeInt:
-                    return UniformDataType::INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+                    return TextureDataType::INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
                 case MTL::DataType::DataTypeUInt:
-                    return UniformDataType::UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+                    return TextureDataType::UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
                 case MTL::DataType::DataTypeFloat:
                 case MTL::DataType::DataTypeHalf:
-                    return UniformDataType::SAMPLER_2D_MULTISAMPLE_ARRAY;
+                    return TextureDataType::SAMPLER_2D_MULTISAMPLE_ARRAY;
             }
         }
         case MTL::TextureType::TextureType3D:
@@ -696,12 +696,12 @@ UniformDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::T
             switch (dataType)
             {
                 case MTL::DataType::DataTypeInt:
-                    return UniformDataType::INT_SAMPLER_3D;
+                    return TextureDataType::INT_SAMPLER_3D;
                 case MTL::DataType::DataTypeUInt:
-                    return UniformDataType::UNSIGNED_INT_SAMPLER_3D;
+                    return TextureDataType::UNSIGNED_INT_SAMPLER_3D;
                 case MTL::DataType::DataTypeFloat:
                 case MTL::DataType::DataTypeHalf:
-                    return UniformDataType::SAMPLER_3D;
+                    return TextureDataType::SAMPLER_3D;
             }
         }
         case MTL::TextureType::TextureTypeCube:
@@ -709,12 +709,12 @@ UniformDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::T
             switch (dataType)
             {
                 case MTL::DataType::DataTypeInt:
-                    return UniformDataType::INT_SAMPLER_CUBE;
+                    return TextureDataType::INT_SAMPLER_CUBE;
                 case MTL::DataType::DataTypeUInt:
-                    return UniformDataType::UNSIGNED_INT_SAMPLER_CUBE;
+                    return TextureDataType::UNSIGNED_INT_SAMPLER_CUBE;
                 case MTL::DataType::DataTypeFloat:
                 case MTL::DataType::DataTypeHalf:
-                    return UniformDataType::SAMPLER_CUBE;
+                    return TextureDataType::SAMPLER_CUBE;
             }
         }
         case MTL::TextureType::TextureTypeTextureBuffer:
@@ -722,12 +722,12 @@ UniformDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::T
             switch (dataType)
             {
                 case MTL::DataType::DataTypeInt:
-                    return UniformDataType::INT_SAMPLER_BUFFER;
+                    return TextureDataType::INT_SAMPLER_BUFFER;
                 case MTL::DataType::DataTypeUInt:
-                    return UniformDataType::UNSIGNED_INT_SAMPLER_BUFFER;
+                    return TextureDataType::UNSIGNED_INT_SAMPLER_BUFFER;
                 case MTL::DataType::DataTypeFloat:
                 case MTL::DataType::DataTypeHalf:
-                    return UniformDataType::SAMPLER_BUFFER;
+                    return TextureDataType::SAMPLER_BUFFER;
             }
         }
     }

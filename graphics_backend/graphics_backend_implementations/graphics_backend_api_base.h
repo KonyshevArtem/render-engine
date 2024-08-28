@@ -1,7 +1,6 @@
 #ifndef RENDER_ENGINE_GRAPHICS_BACKEND_BASE_H
 #define RENDER_ENGINE_GRAPHICS_BACKEND_BASE_H
 
-#include "graphics_backend.h"
 #include "enums/graphics_backend_name.h"
 #include "types/graphics_backend_vertex_attribute_descriptor.h"
 
@@ -46,8 +45,6 @@ public:
     static GraphicsBackendBase *Create(const std::string &backend);
 
     virtual void Init(void *device) = 0;
-    virtual int GetMajorVersion() = 0;
-    virtual int GetMinorVersion() = 0;
     virtual const std::string &GetShadingLanguageDirective() = 0;
     virtual GraphicsBackendName GetName() = 0;
     virtual void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) = 0;
@@ -120,9 +117,6 @@ public:
     virtual GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction) = 0;
     virtual void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
     virtual void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
-
-    virtual GRAPHICS_BACKEND_TYPE_ENUM GetError() = 0;
-    virtual const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) = 0;
 
     bool IsCompressedTextureFormat(TextureInternalFormat format);
     int GetBlockSize(TextureInternalFormat format);

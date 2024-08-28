@@ -293,8 +293,6 @@ namespace Graphics
 
         Gizmos::ClearGizmos();
 #endif
-
-        GraphicsBackendDebug::CheckError();
     }
 
     void SetupMatrices(const Matrix4x4 &modelMatrix)

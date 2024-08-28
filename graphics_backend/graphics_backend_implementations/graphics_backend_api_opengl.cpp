@@ -1,5 +1,4 @@
 #include "graphics_backend_api_opengl.h"
-#include "graphics_backend_debug.h"
 #include "enums/texture_data_type.h"
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
@@ -15,6 +14,7 @@
 #include "types/graphics_backend_depth_stencil_state.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "helpers/opengl_helpers.h"
+#include "debug.h"
 
 #include <type_traits>
 
@@ -31,15 +31,25 @@ struct BlendState
     bool Enabled;
 };
 
+GLuint s_Framebuffers[2];
 GLbitfield s_ClearFlags[static_cast<int>(FramebufferAttachment::MAX)];
 
+void LogError(GLenum errorCode, const std::string& line, const std::string &file, int lineNumber)
+{
+    auto *errorString = reinterpret_cast<const char *>(gluErrorString(errorCode));
+    if (errorString == nullptr)
+        Debug::LogErrorFormat("[Graphics Backend] Unknown error %1%\n%4%\n%2%:%3%", {std::to_string(errorCode), file, std::to_string(lineNumber), line});
+    else
+        Debug::LogErrorFormat("[Graphics Backend] %1%\n%4%\n%2%:%3%", {errorString, file, std::to_string(lineNumber), line});
+}
+
 #ifdef RENDER_ENGINE_EDITOR
-#define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)                   \
-    backendFunction;                                                   \
-    {                                                                  \
-        auto error = GraphicsBackendOpenGL::GetError();                \
-        if (error != 0)                                                \
-            GraphicsBackendDebug::LogError(error, #backendFunction, __FILE__, __LINE__); \
+#define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)               \
+    backendFunction;                                               \
+    {                                                              \
+        auto error = glGetError();                                 \
+        if (error != 0)                                            \
+            LogError(error, #backendFunction, __FILE__, __LINE__); \
     }
 #else
 #define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction) backendFunction;
@@ -82,7 +92,7 @@ void GraphicsBackendOpenGL::Init(void *device)
         m_Extensions.insert(std::string(reinterpret_cast<const char *>(ext)));
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(2, &m_Framebuffers[0]))
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(2, &s_Framebuffers[0]))
 
     CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS))
     CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_DEPTH_TEST))
@@ -90,19 +100,9 @@ void GraphicsBackendOpenGL::Init(void *device)
     ResetClearFlags();
 }
 
-int GraphicsBackendOpenGL::GetMajorVersion()
-{
-    return OPENGL_MAJOR_VERSION;
-}
-
-int GraphicsBackendOpenGL::GetMinorVersion()
-{
-    return OPENGL_MINOR_VERSION;
-}
-
 const std::string &GraphicsBackendOpenGL::GetGLSLVersionString()
 {
-    static std::string glslVersion = "#version " + std::to_string(GetMajorVersion() * 100 + GetMinorVersion() * 10);
+    static std::string glslVersion = "#version " + std::to_string(OPENGL_MAJOR_VERSION * 100 + OPENGL_MINOR_VERSION * 10);
     return glslVersion;
 }
 
@@ -278,6 +278,18 @@ int GraphicsBackendOpenGL::GetTextureSize(const GraphicsBackendTexture &texture,
     return size;
 }
 
+void AttachTextureToFramebuffer(GLenum framebuffer, GLenum attachment, TextureType type, GLuint texture, int level, int layer)
+{
+    if (type == TextureType::TEXTURE_2D)
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTexture(framebuffer, attachment, texture, level))
+    }
+    else
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTextureLayer(framebuffer, attachment, texture, level, layer))
+    }
+}
+
 void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor)
 {
     if (descriptor.IsBackbuffer)
@@ -286,10 +298,10 @@ void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTarget
         return;
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_Framebuffers[0]))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[0]))
 
     GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(descriptor.Attachment);
-    AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, descriptor.Texture, descriptor.Level, descriptor.Layer);
+    AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, descriptor.Texture.Type, descriptor.Texture.Texture, descriptor.Level, descriptor.Layer);
 
     if (descriptor.LoadAction == LoadAction::CLEAR)
     {
@@ -752,14 +764,14 @@ void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &s
         mask |= GL_COLOR_BUFFER_BIT;
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_Framebuffers[0]))
-    AttachTextureToFramebuffer(GL_READ_FRAMEBUFFER, glAttachment, source, 0, 0);
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Framebuffers[0]))
+    AttachTextureToFramebuffer(GL_READ_FRAMEBUFFER, glAttachment, source.Type, source.Texture, 0, 0);
 
-    GLuint destinationFramebuffer = destinationDescriptor.IsBackbuffer ? 0 : m_Framebuffers[1];
+    GLuint destinationFramebuffer = destinationDescriptor.IsBackbuffer ? 0 : s_Framebuffers[1];
     CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destinationFramebuffer))
     if (!destinationDescriptor.IsBackbuffer)
     {
-        AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, destinationDescriptor.Texture, 0, 0);
+        AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, destinationDescriptor.Texture.Type, destinationDescriptor.Texture.Texture, 0, 0);
     }
 
     CHECK_GRAPHICS_BACKEND_FUNC(glBlitFramebuffer(sourceX, sourceX, sourceX + width, sourceY + height, destinationX, destinationY, destinationX + width, destinationY + height, mask, GL_NEAREST))
@@ -829,16 +841,6 @@ void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStenc
         CHECK_GRAPHICS_BACKEND_FUNC(glDepthFunc(glState->DepthFunction))
         CHECK_GRAPHICS_BACKEND_FUNC(glDepthMask(glState->DepthWrite))
     }
-}
-
-GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackendOpenGL::GetError()
-{
-    return glGetError();
-}
-
-const char *GraphicsBackendOpenGL::GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error)
-{
-    return reinterpret_cast<const char *>(gluErrorString(error));
 }
 
 int GraphicsBackendOpenGL::GetNameBufferSize(GraphicsBackendProgram program)
@@ -915,16 +917,4 @@ std::unordered_map<std::string, int> GraphicsBackendOpenGL::GetShaderStorageBloc
 #else
     return {};
 #endif
-}
-
-void GraphicsBackendOpenGL::AttachTextureToFramebuffer(GLenum framebuffer, GLenum attachment, const GraphicsBackendTexture& texture, int level, int layer)
-{
-    if (texture.Type == TextureType::TEXTURE_2D)
-    {
-        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTexture(framebuffer, attachment, texture.Texture, level))
-    }
-    else
-    {
-        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTextureLayer(framebuffer, attachment, texture.Texture, level, layer))
-    }
 }

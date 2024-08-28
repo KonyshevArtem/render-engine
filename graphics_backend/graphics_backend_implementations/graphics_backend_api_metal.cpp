@@ -1,7 +1,6 @@
 #if RENDER_ENGINE_APPLE
 
 #include "graphics_backend_api_metal.h"
-#include "graphics_backend_debug.h"
 #include "enums/texture_data_type.h"
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
@@ -28,16 +27,6 @@ void GraphicsBackendMetal::Init(void *device)
 {
     m_Device = reinterpret_cast<MTL::Device*>(device);
     m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
-}
-
-int GraphicsBackendMetal::GetMajorVersion()
-{
-    return 0;
-}
-
-int GraphicsBackendMetal::GetMinorVersion()
-{
-    return 0;
 }
 
 const std::string &GraphicsBackendMetal::GetShadingLanguageDirective()
@@ -666,16 +655,6 @@ MTL::Texture* GraphicsBackendMetal::GetTextureFromDescriptor(const GraphicsBacke
 
     int index = static_cast<int>(descriptor.Attachment);
     return m_BackbufferDescriptor->colorAttachments()->object(index)->texture();
-}
-
-GRAPHICS_BACKEND_TYPE_ENUM GraphicsBackendMetal::GetError()
-{
-    return 0;
-}
-
-const char *GraphicsBackendMetal::GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error)
-{
-    return nullptr;
 }
 
 #endif

@@ -8,8 +8,7 @@ class GraphicsBackendOpenGL : public GraphicsBackendBase
 {
 public:
     void Init(void *device) override;
-    int GetMajorVersion() override;
-    int GetMinorVersion() override;
+
     const std::string &GetGLSLVersionString();
     const std::string &GetShadingLanguageDirective() override;
     GraphicsBackendName GetName() override;
@@ -84,19 +83,13 @@ public:
     void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
     void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
 
-    GRAPHICS_BACKEND_TYPE_ENUM GetError() override;
-    const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) override;
-
 private:
-    GLuint m_Framebuffers[2];
     std::set<std::string> m_Extensions;
 
     void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers);
     int GetNameBufferSize(GraphicsBackendProgram program);
     std::unordered_map<std::string, int> GetUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockIndex, std::vector<char> nameBuffer);
     std::unordered_map<std::string, int> GetShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboIndex);
-
-    void AttachTextureToFramebuffer(GLenum framebuffer, GLenum attachment, const GraphicsBackendTexture& texture, int level, int layer);
 };
 
 

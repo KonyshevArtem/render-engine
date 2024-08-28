@@ -1,5 +1,4 @@
 add_library(GraphicsBackend
-        graphics_backend.h
         graphics_backend_debug.cpp
         graphics_backend_debug.h
         graphics_backend_api.cpp

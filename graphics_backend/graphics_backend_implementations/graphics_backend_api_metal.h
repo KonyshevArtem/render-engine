@@ -21,8 +21,6 @@ class GraphicsBackendMetal : public GraphicsBackendBase
 {
 public:
     void Init(void *device) override;
-    int GetMajorVersion() override;
-    int GetMinorVersion() override;
     const std::string &GetShadingLanguageDirective() override;
     GraphicsBackendName GetName() override;
     void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) override;
@@ -95,9 +93,6 @@ public:
     GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction) override;
     void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
     void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
-
-    GRAPHICS_BACKEND_TYPE_ENUM GetError() override;
-    const char *GetErrorString(GRAPHICS_BACKEND_TYPE_ENUM error) override;
 
 private:
     MTL::Device *m_Device = nullptr;

@@ -4,7 +4,7 @@
 #include "gizmos.h"
 #include "graphics/context.h"
 #include "graphics/graphics.h"
-#include "graphics_backend_debug.h"
+#include "graphics_backend_debug_group.h"
 #include "shader/shader.h"
 #include "global_constants.h"
 
@@ -14,7 +14,7 @@ void GizmosPass::Execute(Context &_context)
 {
     static auto gizmosMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/gizmos/gizmos.shader", {"_INSTANCING"}));
 
-    auto debugGroup = GraphicsBackendDebug::DebugGroup("Gizmos pass");
+    auto debugGroup = GraphicsBackendDebugGroup("Gizmos pass");
 
     const auto &gizmos = Gizmos::GetGizmosToDraw();
     for (const auto &pair : gizmos)

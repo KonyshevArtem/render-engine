@@ -1,8 +1,7 @@
 #include "render_pass.h"
 #include "graphics/context.h"
 #include "graphics/graphics.h"
-#include "graphics_backend_api.h"
-#include "graphics_backend_debug.h"
+#include "graphics_backend_debug_group.h"
 
 #include <utility>
 
@@ -14,7 +13,7 @@ RenderPass::RenderPass(std::string _name, DrawCallSortMode _sorting, DrawCallFil
 
 void RenderPass::Execute(const Context &_ctx)
 {
-    auto debugGroup = GraphicsBackendDebug::DebugGroup("Render pass " + m_Name);
+    auto debugGroup = GraphicsBackendDebugGroup(m_Name);
 
     Graphics::DrawRenderers(_ctx.Renderers, m_RenderSettings);
 }

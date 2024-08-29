@@ -8,7 +8,7 @@
 #include "texture_2d/texture_2d.h"
 #include "texture_2d_array/texture_2d_array.h"
 #include "graphics_backend_api.h"
-#include "graphics_backend_debug.h"
+#include "graphics_backend_debug_group.h"
 
 #include <utility>
 
@@ -50,8 +50,6 @@ void ShadowCasterPass::Execute(const Context &_ctx)
     if (_ctx.ShadowCastersCount == 0)
         return;
 
-    auto debugGroup = GraphicsBackendDebug::DebugGroup("Shadow pass");
-
     GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
 
     int spotLightsCount = 0;
@@ -65,7 +63,6 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         {
             depthTargetDescriptor.Layer = spotLightsCount;
 
-            Graphics::SetViewport({0, 0, SPOT_LIGHT_SHADOW_MAP_SIZE, SPOT_LIGHT_SHADOW_MAP_SIZE});
             Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
             Graphics::SetRenderTarget(depthTargetDescriptor, m_SpotLightShadowMapArray);
 
@@ -74,14 +71,12 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
             Graphics::SetCameraData(view, proj);
             m_ShadowsData.SpotLightsViewProjMatrices[spotLightsCount] = biasMatrix * proj * view;
-            Render(_ctx.Renderers);
+            Render(_ctx.Renderers, {0, 0, SPOT_LIGHT_SHADOW_MAP_SIZE, SPOT_LIGHT_SHADOW_MAP_SIZE});
 
             ++spotLightsCount;
         }
         if (light->Type == LightType::POINT)
         {
-            Graphics::SetViewport({0, 0, POINT_LIGHT_SHADOW_MAP_FACE_SIZE, POINT_LIGHT_SHADOW_MAP_FACE_SIZE});
-
             auto proj = Matrix4x4::Perspective(90, 1, 0.01f, _ctx.ShadowDistance);
             for (int i = 0; i < 6; ++i)
             {
@@ -94,7 +89,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
                 m_ShadowsData.PointLightShadows[pointLightsCount].ViewProjMatrices[i] = biasMatrix * proj * view;
 
                 Graphics::SetCameraData(view, proj);
-                Render(_ctx.Renderers);
+                Render(_ctx.Renderers, {0, 0, POINT_LIGHT_SHADOW_MAP_FACE_SIZE, POINT_LIGHT_SHADOW_MAP_FACE_SIZE});
             }
 
             m_ShadowsData.PointLightShadows[pointLightsCount].Position = light->Position.ToVector4(0);
@@ -105,7 +100,6 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         {
             depthTargetDescriptor.Layer = 0;
 
-            Graphics::SetViewport({0, 0, DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE});
             Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
             Graphics::SetRenderTarget(depthTargetDescriptor, m_DirectionLightShadowMap);
 
@@ -126,18 +120,23 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
             m_ShadowsData.DirectionalLightViewProjMatrix = biasMatrix * projMatrix * viewMatrix;
 
-            Render(_ctx.Renderers);
+            Render(_ctx.Renderers, {0, 0, DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE});
         }
     }
 
     m_ShadowsUniformBlock->SetData(&m_ShadowsData, 0, sizeof(ShadowsData));
 }
 
-void ShadowCasterPass::Render(const std::vector<std::shared_ptr<Renderer>> &_renderers)
+void ShadowCasterPass::Render(const std::vector<std::shared_ptr<Renderer>> &_renderers, const Vector4& viewport)
 {
     static RenderSettings renderSettings {{{"LightMode", "ShadowCaster"}}, DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters()};
 
-    auto debugGroup = GraphicsBackendDebug::DebugGroup("Render shadow map");
+    GraphicsBackend::Current()->BeginRenderPass();
+    {
+        auto debugGroup = GraphicsBackendDebugGroup("Render shadow map");
 
-    Graphics::DrawRenderers(_renderers, renderSettings);
+        Graphics::SetViewport(viewport);
+        Graphics::DrawRenderers(_renderers, renderSettings);
+    }
+    GraphicsBackend::Current()->EndRenderPass();
 }

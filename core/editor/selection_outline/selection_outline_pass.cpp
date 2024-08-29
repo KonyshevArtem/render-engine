@@ -6,7 +6,7 @@
 #include "editor/hierarchy.h"
 #include "texture_2d/texture_2d.h"
 #include "graphics_backend_api.h"
-#include "graphics_backend_debug.h"
+#include "graphics_backend_debug_group.h"
 #include "graphics/graphics.h"
 #include "renderer/renderer.h"
 #include "gameObject/gameObject.h"
@@ -36,8 +36,6 @@ void SelectionOutlinePass::Execute(Context &_context)
     if (selectedGameObjects.empty())
         return;
 
-    auto debugGroup = GraphicsBackendDebug::DebugGroup("Selected outline pass");
-
     CheckTexture(outlineTexture);
 
     // render selected gameObjects
@@ -45,29 +43,35 @@ void SelectionOutlinePass::Execute(Context &_context)
         Graphics::SetRenderTarget(colorTarget, outlineTexture);
         Graphics::SetRenderTarget(depthTarget);
 
-        for (const auto &go: selectedGameObjects)
+        GraphicsBackend::Current()->BeginRenderPass();
         {
-            if (!go || !go->Renderer)
-            {
-                continue;
-            }
+            auto debugGroup = GraphicsBackendDebugGroup("Selected outline pass");
 
-            const auto &renderer = go->Renderer;
-            const auto &geometry = renderer->GetGeometry();
-            const auto &material = renderer->GetMaterial();
-
-            if (geometry && material)
+            for (const auto &go: selectedGameObjects)
             {
-                if (material->GetShader()->SupportInstancing())
+                if (!go || !go->Renderer)
                 {
-                    Graphics::DrawInstanced(*geometry,*material, {renderer->GetModelMatrix()}, 0);
+                    continue;
                 }
-                else
+
+                const auto &renderer = go->Renderer;
+                const auto &geometry = renderer->GetGeometry();
+                const auto &material = renderer->GetMaterial();
+
+                if (geometry && material)
                 {
-                    Graphics::Draw(*geometry, *outlineMaterial, renderer->GetModelMatrix(), 1);
+                    if (material->GetShader()->SupportInstancing())
+                    {
+                        Graphics::DrawInstanced(*geometry, *material, {renderer->GetModelMatrix()}, 0);
+                    }
+                    else
+                    {
+                        Graphics::Draw(*geometry, *outlineMaterial, renderer->GetModelMatrix(), 1);
+                    }
                 }
             }
         }
+        GraphicsBackend::Current()->EndRenderPass();
 
         Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
         Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());

@@ -13,7 +13,7 @@
 #include "texture/texture.h"
 #include "graphics_buffer/graphics_buffer.h"
 #include "graphics_backend_api.h"
-#include "graphics_backend_debug.h"
+#include "graphics_backend_debug_group.h"
 #include "enums/cull_face_orientation.h"
 #include "enums/indices_data_type.h"
 #include "shader/shader.h"
@@ -231,8 +231,6 @@ namespace Graphics
             cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, true);
         }
 
-        auto debugGroup = GraphicsBackendDebug::DebugGroup("Render Frame");
-
         GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
         GraphicsBackend::Current()->SetClearDepth(1);
 
@@ -247,6 +245,7 @@ namespace Graphics
 
         SetRenderTarget(colorTargetDescriptor, cameraColorTarget);
         SetRenderTarget(depthTargetDescriptor, cameraDepthTarget);
+        GraphicsBackend::Current()->BeginRenderPass();
 
         SetViewport({0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight)});
 
@@ -262,6 +261,9 @@ namespace Graphics
             skyboxPass->Execute(ctx);
         if (transparentRenderPass)
             transparentRenderPass->Execute(ctx);
+
+        GraphicsBackend::Current()->EndRenderPass();
+
         if (finalBlitPass)
             finalBlitPass->Execute(ctx, cameraColorTarget);
 
@@ -270,10 +272,7 @@ namespace Graphics
 
 #if RENDER_ENGINE_EDITOR
 
-        {
-            auto copyDepthDebugGroup = GraphicsBackendDebug::DebugGroup("Copy Depth to BackBuffer");
-            CopyTextureToTexture(cameraDepthTarget, nullptr, GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
-        }
+        CopyTextureToTexture(cameraDepthTarget, nullptr, GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
 
         if (gizmosPass)
         {
@@ -423,7 +422,7 @@ namespace Graphics
 
     void SetupPerInstanceData(const std::vector<GraphicsBufferWrapper*> &instancesDataBuffers, int shaderPass)
     {
-        auto debugGroup = GraphicsBackendDebug::DebugGroup("Setup PerInstanceData");
+        auto debugGroup = GraphicsBackendDebugGroup("Setup PerInstanceData");
 
         int instancesCount = instancesDataBuffers.size();
         for (int i = 0; i < instancesCount; ++i)
@@ -672,7 +671,10 @@ namespace Graphics
         material.SetTexture("_BlitTexture", source);
 
         SetRenderTarget(destinationDescriptor, destination);
+
+        GraphicsBackend::Current()->BeginRenderPass();
         Draw(*fullscreenMesh, material, Matrix4x4::Identity(), 0);
+        GraphicsBackend::Current()->EndRenderPass();
     }
 
     void CopyTextureToTexture(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, GraphicsBackendRenderTargetDescriptor destinationDescriptor)

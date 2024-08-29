@@ -3,13 +3,10 @@
 
 #include <string>
 
-namespace GraphicsBackendDebug
+struct GraphicsBackendDebugGroup
 {
-    struct DebugGroup
-    {
-        explicit DebugGroup(const std::string &_name);
-        ~DebugGroup();
-    };
-}
+    explicit GraphicsBackendDebugGroup(const std::string &_name);
+    ~GraphicsBackendDebugGroup();
+};
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_DEBUG_H

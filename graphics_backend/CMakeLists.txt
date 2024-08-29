@@ -1,6 +1,6 @@
 add_library(GraphicsBackend
-        graphics_backend_debug.cpp
-        graphics_backend_debug.h
+        graphics_backend_debug_group.cpp
+        graphics_backend_debug_group.h
         graphics_backend_api.cpp
         graphics_backend_api.h
         enums/texture_type.h

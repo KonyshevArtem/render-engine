@@ -5,7 +5,7 @@
 #include "graphics/graphics.h"
 #include "graphics/render_settings/render_settings.h"
 #include "mesh/mesh.h"
-#include "graphics_backend_debug.h"
+#include "graphics_backend_debug_group.h"
 #include "shader/shader.h"
 
 void SkyboxPass::Execute(const Context &_ctx)
@@ -16,7 +16,7 @@ void SkyboxPass::Execute(const Context &_ctx)
     if (mesh == nullptr || _ctx.Skybox == nullptr)
         return;
 
-    auto debugGroup = GraphicsBackendDebug::DebugGroup("Skybox pass");
+    auto debugGroup = GraphicsBackendDebugGroup("Skybox pass");
 
     Matrix4x4 modelMatrix = Matrix4x4::Translation(_ctx.ViewMatrix.Invert().GetPosition());
     material->SetTexture("_Skybox", _ctx.Skybox);

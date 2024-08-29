@@ -38,7 +38,7 @@ private:
 
     ShadowsData m_ShadowsData{};
 
-    static void Render(const std::vector<std::shared_ptr<Renderer>> &renderers);
+    static void Render(const std::vector<std::shared_ptr<Renderer>> &renderers, const Vector4& viewport);
 };
 
 #endif //RENDER_ENGINE_SHADOW_CASTER_PASS_H

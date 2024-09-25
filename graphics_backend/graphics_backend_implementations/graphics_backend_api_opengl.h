@@ -54,6 +54,7 @@ public:
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
+    GraphicsBackendShaderObject CompileShader2(ShaderType shaderType, const std::vector<uint8_t>& binary) override;
     GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
                                          std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers) override;
     void DeleteShader(GraphicsBackendShaderObject shader) override;

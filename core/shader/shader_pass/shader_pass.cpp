@@ -92,11 +92,23 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendI
         s_DefaultVertexAttributes.push_back({3, 3, VertexAttributeDataType::FLOAT, 0, 44, 32});
     }
 
+    std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;
+    std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers;
     CreatePSO(m_Shaders, m_BlendInfo, k_DefaultColorFormat, k_DefaultDepthFormat, s_DefaultVertexAttributes, &m_Textures, &m_Buffers);
 
     FillDefaultTextures(defaultValues, m_Textures, m_DefaultTextures);
 
     m_DepthStencilState = GraphicsBackend::Current()->CreateDepthStencilState(depthInfo.WriteDepth, depthInfo.DepthFunction);
+}
+
+ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
+                       std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues,
+                       std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
+                       std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers)
+                       : ShaderPass(shaders, blendInfo, cullInfo, depthInfo, tags, defaultValues)
+{
+    m_Textures = std::move(textures);
+    m_Buffers = std::move(buffers);
 }
 
 ShaderPass::~ShaderPass()

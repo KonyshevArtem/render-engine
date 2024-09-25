@@ -11,6 +11,7 @@ class Shader
 {
 public:
     static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords);
+    static std::shared_ptr<Shader> Load2(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords);
 
     Shader(std::vector<std::shared_ptr<ShaderPass>> _passes, bool _supportInstancing);
     ~Shader() = default;

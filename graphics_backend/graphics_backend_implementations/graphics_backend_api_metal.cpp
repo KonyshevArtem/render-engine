@@ -23,10 +23,28 @@
 
 NS::Error *s_Error;
 
+MTL::Buffer* argumentBuffer;
+MTL::Buffer* argumentBuffer2;
+MTL::ArgumentEncoder* encoder;
+MTL::Buffer* buffer3;
+
+struct IRDescriptorTableEntry
+{
+    uint64_t gpuVA;
+    uint64_t textureViewID;
+    uint64_t metadata;
+};
+
 void GraphicsBackendMetal::Init(void *device)
 {
     m_Device = reinterpret_cast<MTL::Device*>(device);
     m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
+
+    MTL::ArgumentBuffersTier tier = m_Device->argumentBuffersSupport();
+    Debug::LogErrorFormat("%1%", {std::to_string(static_cast<int>(tier))});
+
+    argumentBuffer = m_Device->newBuffer(sizeof(IRDescriptorTableEntry) * 2, MTL::ResourceStorageModeManaged);
+    argumentBuffer2 = m_Device->newBuffer(sizeof(uint64_t) * 2, MTL::ResourceStorageModeShared);
 }
 
 const std::string &GraphicsBackendMetal::GetShadingLanguageDirective()
@@ -262,6 +280,23 @@ void GraphicsBackendMetal::BindBufferRange(const GraphicsBackendBuffer &buffer, 
     {
         m_CurrentCommandEncoder->setFragmentBuffer(metalBuffer, offset, bindings.FragmentIndex);
     }
+
+    //encoder->setBuffer(metalBuffer, 0, bindings.VertexIndex);
+    m_CurrentCommandEncoder->useResource(metalBuffer, MTL::ResourceUsageRead, MTL::RenderStageVertex);
+
+//    auto content = reinterpret_cast<IRDescriptorTableEntry*>(argumentBuffer->contents()) + bindings.VertexIndex;
+//    content->gpuVA = metalBuffer->gpuAddress();
+//    content->textureViewID = 0;
+//    content->metadata = 0;
+//    argumentBuffer->didModifyRange(NS::Range::Make(0, sizeof(IRDescriptorTableEntry) * 2));
+
+    auto content2 = reinterpret_cast<uint64_t *>(argumentBuffer2->contents()) + bindings.VertexIndex;
+    uint64_t test = metalBuffer->gpuAddress();
+    Debug::LogErrorFormat("%1%", {std::to_string(test)});
+    *content2 = metalBuffer->gpuAddress();
+    //argumentBuffer2->didModifyRange(NS::Range::Make(0, sizeof(uint64_t ) * 2));
+
+    //encoder->setBuffer(metalBuffer, 0, bindings.VertexIndex);
 }
 
 void GraphicsBackendMetal::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
@@ -357,6 +392,20 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
     return shaderObject;
 }
 
+GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader2(ShaderType shaderType, const std::vector<uint8_t>& binary)
+{
+    dispatch_data_t data = dispatch_data_create(binary.data(), binary.size(), dispatch_get_main_queue(), nullptr);
+    auto library = m_Device->newLibrary(data, &s_Error);
+    if (!library)
+    {
+        throw std::runtime_error(s_Error->localizedDescription()->utf8String());
+    }
+
+    GraphicsBackendShaderObject shaderObject{};
+    shaderObject.ShaderObject = reinterpret_cast<uint64_t>(library);
+    return shaderObject;
+}
+
 GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
                                                            std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers)
@@ -374,16 +423,35 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
 
     desc->setDepthAttachmentPixelFormat(metalDepthFormat);
 
+    if (shaders.size() == 1)
+    {
     auto shader = shaders[0];
     auto *library = reinterpret_cast<MTL::Library *>(shader.ShaderObject);
     desc->setVertexFunction(library->newFunction(NS::String::string("vertexMain", NS::UTF8StringEncoding)));
     desc->setFragmentFunction(library->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding)));
+    }
+    else
+    {
+        auto shader1 = shaders[0];
+        auto shader2 = shaders[1];
+        auto *library1 = reinterpret_cast<MTL::Library *>(shader1.ShaderObject);
+        auto *library2 = reinterpret_cast<MTL::Library *>(shader2.ShaderObject);
+        auto vertexFunction = library1->newFunction(NS::String::string("vertexMain", NS::UTF8StringEncoding));
+        auto fragmentFunction = library2->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding));
+        desc->setVertexFunction(vertexFunction);
+        desc->setFragmentFunction(fragmentFunction);
+
+//        encoder = vertexFunction->newArgumentEncoder(2);
+//        buffer3 = m_Device->newBuffer(encoder->encodedLength(), 0);
+//        encoder->setArgumentBuffer(buffer3, 0);
+    }
 
     auto *vertDesc = desc->vertexDescriptor();
 
     for (const auto & attr : vertexAttributes)
     {
-        auto *attrDesc = vertDesc->attributes()->object(attr.Index);
+        auto *attrDesc = vertDesc->attributes()->object(attr.Index + (shaders.size() > 1 ? 11 : 0));
+        //auto *attrDesc = vertDesc->attributes()->object(attr.Index);
         attrDesc->setFormat(MetalHelpers::ToVertexFormat(attr.DataType, attr.Dimensions, attr.IsNormalized));
         attrDesc->setBufferIndex(0);
         attrDesc->setOffset(attr.Offset);
@@ -530,6 +598,8 @@ void GraphicsBackendMetal::UseProgram(GraphicsBackendProgram program)
 
     auto pso = reinterpret_cast<MTL::RenderPipelineState*>(program.Program);
     m_CurrentCommandEncoder->setRenderPipelineState(pso);
+    m_CurrentCommandEncoder->setVertexBuffer(argumentBuffer2, 0, 2);
+    //m_CurrentCommandEncoder->setVertexBuffer(buffer3, 0, 2);
 }
 
 void GraphicsBackendMetal::SetClearColor(float r, float g, float b, float a)

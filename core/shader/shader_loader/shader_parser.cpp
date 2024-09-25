@@ -95,6 +95,33 @@ bool TryGetValue(const boost::json::object &object, const std::string &key, T &v
     return found;
 }
 
+GraphicsBackendResourceBindings tag_invoke(boost::json::value_to_tag<GraphicsBackendResourceBindings>, const boost::json::value& jv)
+{
+    GraphicsBackendResourceBindings bindings;
+    bindings.VertexIndex = boost::json::value_to<int>(jv.at("Vertex"));
+    bindings.FragmentIndex = boost::json::value_to<int>(jv.at("Fragment"));
+    return bindings;
+}
+
+GraphicsBackendTextureInfo tag_invoke(boost::json::value_to_tag<GraphicsBackendTextureInfo>, const boost::json::value& jv)
+{
+    GraphicsBackendTextureInfo info{};
+    info.TextureBindings = boost::json::value_to<GraphicsBackendResourceBindings>(jv.at("Bindings"));
+    info.HasSampler = boost::json::value_to<bool>(jv.at("HasSampler"));
+    return info;
+}
+
+std::shared_ptr<GraphicsBackendBufferInfo> tag_invoke(boost::json::value_to_tag<std::shared_ptr<GraphicsBackendBufferInfo>>, const boost::json::value& jv)
+{
+    auto bindings = boost::json::value_to<GraphicsBackendResourceBindings>(jv.at("Bindings"));
+    int size = boost::json::value_to<int>(jv.at("Size"));
+    auto variables = boost::json::value_to<std::unordered_map<std::string, int>>(jv.at("Variables"));
+
+    auto info = std::make_shared<GraphicsBackendBufferInfo>(GraphicsBackendBufferInfo::BufferType::UNIFORM, size, variables);
+    info->SetBindings(bindings);
+    return info;
+}
+
 namespace ShaderParser
 {
 
@@ -190,5 +217,12 @@ namespace ShaderParser
         auto shaderInfoObject = boost::json::parse(shaderSource).as_object();
         TryGetValue(shaderInfoObject, "passes", passes);
         TryGetValue(shaderInfoObject, "properties", properties);
+    }
+
+    void ParseReflection(const std::string& reflectionJson, std::unordered_map<std::string, GraphicsBackendTextureInfo>& textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& buffers)
+    {
+        auto reflectionObject = boost::json::parse(reflectionJson).as_object();
+        buffers = std::move(boost::json::value_to<std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>>(reflectionObject["Buffers"]));
+        textures = std::move(boost::json::value_to<std::unordered_map<std::string, GraphicsBackendTextureInfo>>(reflectionObject["Textures"]));
     }
 }

@@ -497,6 +497,11 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
     return shaderObject;
 }
 
+GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader2(ShaderType shaderType, const std::vector<uint8_t>& binary)
+{
+    return {};
+}
+
 GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
                                                             const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
                                                             std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers)

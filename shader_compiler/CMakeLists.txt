@@ -3,5 +3,5 @@ project(ShaderCompiler)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(ShaderCompiler main.cpp reflection.h serialization.h)
-target_link_libraries(ShaderCompiler DXC Boost::json)
+add_executable(ShaderCompiler main.cpp reflection.h serialization.h graphics_backend.h)
+target_link_libraries(ShaderCompiler DXC spirv-cross-msl spirv-cross-glsl Boost::json)

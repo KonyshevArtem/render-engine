@@ -1,16 +1,15 @@
 #include "reflection.h"
 #include "serialization.h"
+#include "graphics_backend.h"
 
-CComPtr<IDxcResult> CompileShader(const std::filesystem::path &hlslPath, const CComPtr<IDxcUtils>& pUtils, const CComPtr<IDxcCompiler3>& pCompiler,
-                   const CComPtr<IDxcIncludeHandler>& pIncludeHandler, bool isVertexShader)
+CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CComPtr<IDxcUtils>& pUtils, const CComPtr<IDxcCompiler3>& pCompiler,
+                               const CComPtr<IDxcIncludeHandler>& pIncludeHandler, bool isVertexShader)
 {
     LPCWSTR vszArgs[] =
             {
+                    L"-spirv",
                     L"-E", (isVertexShader ? L"vertexMain" : L"fragmentMain"),
                     L"-T", (isVertexShader ? L"vs_6_0" : L"ps_6_0"),
-                    //L"-Qstrip_reflect",
-                    //L"-Zi",
-                    //L"-Qembed_debug"
             };
 
     CComPtr<IDxcBlobEncoding> pSource = nullptr;
@@ -39,13 +38,48 @@ CComPtr<IDxcResult> CompileShader(const std::filesystem::path &hlslPath, const C
     return pResults;
 }
 
-void WriteShaderBinary(const std::filesystem::path &hlslPath, const CComPtr<IDxcResult>& results, bool isVertexShader)
+spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, GraphicsBackend backend)
+{
+    CComPtr<IDxcBlob> pShader = nullptr;
+    dxcResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), nullptr);
+
+    auto sourceBuffer = static_cast<uint32_t*>(pShader->GetBufferPointer());
+    size_t sourceSize = pShader->GetBufferSize() * sizeof(uint8_t) / sizeof(uint32_t);
+
+    if (backend == GRAPHICS_BACKEND_OPENGL)
+    {
+        auto glsl = new spirv_cross::CompilerGLSL(sourceBuffer, sourceSize);
+        glsl->build_combined_image_samplers();
+
+        spirv_cross::CompilerGLSL::Options options;
+        options.version = 410;
+        options.es = false;
+        glsl->set_common_options(options);
+
+        return glsl;
+    }
+
+    if (backend == GRAPHICS_BACKEND_METAL)
+    {
+        auto msl = new spirv_cross::CompilerMSL(sourceBuffer, sourceSize);
+
+        spirv_cross::CompilerMSL::Options options;
+        options.platform = spirv_cross::CompilerMSL::Options::macOS;
+        msl->set_msl_options(options);
+
+        return msl;
+    }
+
+    return nullptr;
+}
+
+void WriteShaderBinary(const std::filesystem::path &hlslPath, GraphicsBackend backend, const CComPtr<IDxcResult>& results, bool isVertexShader)
 {
     CComPtr<IDxcBlob> pShader = nullptr;
     results->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), nullptr);
     if (pShader != nullptr)
     {
-        std::filesystem::path outputPath = hlslPath.parent_path() / "output" / (isVertexShader ? "vs.bin" : "ps.bin");
+        std::filesystem::path outputPath = hlslPath.parent_path() / "output" / GetBackendLiteral(backend) / (isVertexShader ? "vs.bin" : "ps.bin");
         std::filesystem::create_directory(outputPath.parent_path());
 
         FILE *fp = fopen(outputPath.c_str(), "wb");
@@ -54,15 +88,44 @@ void WriteShaderBinary(const std::filesystem::path &hlslPath, const CComPtr<IDxc
     }
 }
 
+void WriteShaderSource(const std::filesystem::path& hlslPath, GraphicsBackend backend, spirv_cross::Compiler* compiler, bool isVertexShader)
+{
+    if (!compiler)
+        return;
+
+    std::string extension = GetBackendExtension(backend, isVertexShader);
+
+    std::filesystem::path outputPath = hlslPath.parent_path() / "output" / GetBackendLiteral(backend) / ((isVertexShader ? "vs" : "ps") + extension);
+    std::filesystem::create_directory(outputPath.parent_path());
+
+    std::string shaderSource = compiler->compile();
+
+    FILE *fp = fopen(outputPath.c_str(), "w");
+    fwrite(shaderSource.c_str(), shaderSource.size(), 1, fp);
+    fclose(fp);
+}
+
 int main(int argc, char **argv)
 {
-    if (argc < 2)
+    if (argc < 3)
     {
-        std::cout << "No HLSL path specified" << std::endl;
+        std::cout << "No HLSL path or no target backend are specified" << std::endl;
         return 1;
     }
 
-    std::filesystem::path hlslPath = std::filesystem::absolute(std::filesystem::path(argv[1]));
+    GraphicsBackend backend;
+    if (!TryGetBackend(argv[1], backend))
+    {
+        std::cout << "Unknown target backend. Supported options:";
+        for (int i = 0; i < GRAPHICS_BACKEND_MAX; ++i)
+        {
+            std::cout << "\n\t- " << GetBackendLiteral(static_cast<GraphicsBackend>(i));
+        }
+        std::cout << std::endl;
+        return 1;
+    }
+
+    std::filesystem::path hlslPath = std::filesystem::absolute(std::filesystem::path(argv[2]));
     std::cout << "Compiling shader at path: " << hlslPath << std::endl;
 
     CComPtr<IDxcUtils> pUtils;
@@ -73,16 +136,19 @@ int main(int argc, char **argv)
     CComPtr<IDxcIncludeHandler> pIncludeHandler;
     pUtils->CreateDefaultIncludeHandler(&pIncludeHandler);
 
-    CComPtr<IDxcResult> vertexResults = CompileShader(hlslPath, pUtils, pCompiler, pIncludeHandler, true);
-    CComPtr<IDxcResult> fragmentResults = CompileShader(hlslPath, pUtils, pCompiler, pIncludeHandler, false);
+    CComPtr<IDxcResult> vertexDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, true);
+    CComPtr<IDxcResult> fragmentDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, false);
 
-    WriteShaderBinary(hlslPath, vertexResults, true);
-    WriteShaderBinary(hlslPath, fragmentResults, false);
+    spirv_cross::Compiler* vertexSPIRV = CompileSPIRV(vertexDXC, backend);
+    spirv_cross::Compiler* fragmentSPIRV = CompileSPIRV(fragmentDXC, backend);
+
+    WriteShaderSource(hlslPath, backend, vertexSPIRV, true);
+    WriteShaderSource(hlslPath, backend, fragmentSPIRV, false);
 
     Reflection reflection;
-    ExtractReflection(vertexResults, pUtils, true, reflection);
-    ExtractReflection(fragmentResults, pUtils, false, reflection);
-    WriteReflection(hlslPath, reflection);
+    ExtractReflectionFromSPIRV(vertexSPIRV, true, reflection);
+    ExtractReflectionFromSPIRV(fragmentSPIRV, false, reflection);
+    WriteReflection(hlslPath, backend, reflection);
 
     return 0;
 }

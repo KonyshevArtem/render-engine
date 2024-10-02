@@ -99,6 +99,16 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendI
     m_DepthStencilState = GraphicsBackend::Current()->CreateDepthStencilState(depthInfo.WriteDepth, depthInfo.DepthFunction);
 }
 
+ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
+                       std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues,
+                       std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
+                       std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers)
+                       : ShaderPass(shaders, blendInfo, cullInfo, depthInfo, tags, defaultValues)
+{
+    m_Textures = std::move(textures);
+    m_Buffers = std::move(buffers);
+}
+
 ShaderPass::~ShaderPass()
 {
     for (auto &pair : m_Programs)

@@ -22,6 +22,7 @@
 #include "Metal/Metal.hpp"
 
 NS::Error *s_Error;
+const int s_MaxBuffers = 31;
 
 void GraphicsBackendMetal::Init(void *device)
 {
@@ -374,10 +375,24 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
 
     desc->setDepthAttachmentPixelFormat(metalDepthFormat);
 
-    auto shader = shaders[0];
-    auto *library = reinterpret_cast<MTL::Library *>(shader.ShaderObject);
-    desc->setVertexFunction(library->newFunction(NS::String::string("vertexMain", NS::UTF8StringEncoding)));
-    desc->setFragmentFunction(library->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding)));
+    if (shaders.size() == 1)
+    {
+        auto shader = shaders[0];
+        auto *library = reinterpret_cast<MTL::Library *>(shader.ShaderObject);
+        desc->setVertexFunction(library->newFunction(NS::String::string("vertexMain", NS::UTF8StringEncoding)));
+        desc->setFragmentFunction(library->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding)));
+    }
+    else
+    {
+        auto shader1 = shaders[0];
+        auto shader2 = shaders[1];
+        auto *library1 = reinterpret_cast<MTL::Library *>(shader1.ShaderObject);
+        auto *library2 = reinterpret_cast<MTL::Library *>(shader2.ShaderObject);
+        auto vertexFunction = library1->newFunction(NS::String::string("vertexMain", NS::UTF8StringEncoding));
+        auto fragmentFunction = library2->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding));
+        desc->setVertexFunction(vertexFunction);
+        desc->setFragmentFunction(fragmentFunction);
+    }
 
     auto *vertDesc = desc->vertexDescriptor();
 
@@ -385,11 +400,11 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
     {
         auto *attrDesc = vertDesc->attributes()->object(attr.Index);
         attrDesc->setFormat(MetalHelpers::ToVertexFormat(attr.DataType, attr.Dimensions, attr.IsNormalized));
-        attrDesc->setBufferIndex(0);
+        attrDesc->setBufferIndex(s_MaxBuffers - 1);
         attrDesc->setOffset(attr.Offset);
     }
 
-    auto *layoutDesc = vertDesc->layouts()->object(0);
+    auto *layoutDesc = vertDesc->layouts()->object(s_MaxBuffers - 1);
     layoutDesc->setStride(vertexAttributes[0].Stride);
     layoutDesc->setStepRate(1);
     layoutDesc->setStepFunction(MTL::VertexStepFunctionPerVertex);
@@ -548,7 +563,7 @@ void GraphicsBackendMetal::DrawArrays(const GraphicsBackendGeometry &geometry, P
 {
     assert(m_CurrentCommandEncoder != nullptr);
 
-    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
+    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
     m_CurrentCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
 }
 
@@ -556,7 +571,7 @@ void GraphicsBackendMetal::DrawArraysInstanced(const GraphicsBackendGeometry &ge
 {
     assert(m_CurrentCommandEncoder != nullptr);
 
-    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
+    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
     m_CurrentCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, indicesCount);
 }
 
@@ -564,7 +579,7 @@ void GraphicsBackendMetal::DrawElements(const GraphicsBackendGeometry &geometry,
 {
     assert(m_CurrentCommandEncoder != nullptr);
 
-    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
+    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
     m_CurrentCommandEncoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0);
 }
 
@@ -572,7 +587,7 @@ void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &
 {
     assert(m_CurrentCommandEncoder != nullptr);
 
-    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, 0);
+    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
     m_CurrentCommandEncoder->drawIndexedPrimitives(MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0, instanceCount);
 }
 

@@ -26,6 +26,25 @@ namespace ShaderLoader
             "#define GEOMETRY_PROGRAM\n",
             "#define FRAGMENT_PROGRAM\n"};
 
+    const std::string SHADER_SOURCE_FILE_NAME[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT]{
+            "vs",
+            "gs",
+            "ps"
+    };
+
+    std::string GetBackendLiteral(GraphicsBackendName backendName)
+    {
+        switch (backendName)
+        {
+            case GraphicsBackendName::OPENGL:
+                return "opengl";
+            case GraphicsBackendName::METAL:
+                return "metal";
+            default:
+                return "";
+        }
+    }
+
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::filesystem::path &partPath, const std::string &keywordDirectives, const std::string &shaderPartDirective)
     {
         auto source = Utils::ReadFileWithIncludes(partPath);
@@ -90,6 +109,51 @@ namespace ShaderLoader
         }
     }
 
-#pragma endregion
+    std::shared_ptr<Shader> Load2(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
+        BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, std::unordered_map<std::string, std::string> tags)
+    {
+        bool supportInstancing = false;
+        std::string keywordsDirectives;
+        for (const auto &keyword: _keywords)
+        {
+            keywordsDirectives += "#define " + keyword + "\n";
+            supportInstancing |= keyword == INSTANCING_KEYWORD;
+        }
 
+        try
+        {
+            std::string backendLiteral = GetBackendLiteral(GraphicsBackend::Current()->GetName());
+            std::filesystem::path backendPath = Utils::GetExecutableDirectory() / _path.parent_path() / "output" / backendLiteral;
+
+            auto reflectionJson = Utils::ReadFile(backendPath / "reflection.json");
+            std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;
+            std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers;
+            ShaderParser::ParseReflection(reflectionJson, textures, buffers);
+
+            std::vector<GraphicsBackendShaderObject> shaders;
+            for (int i = 0; i < ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT; ++i)
+            {
+                std::filesystem::path sourcePath = backendPath / SHADER_SOURCE_FILE_NAME[i];
+                if (!std::filesystem::exists(sourcePath))
+                    continue;
+
+                std::string shaderSource = Utils::ReadFile(sourcePath);
+                auto shader = GraphicsBackend::Current()->CompileShader(SHADER_TYPES[i], shaderSource);
+                shaders.push_back(shader);
+            }
+
+            std::unordered_map<std::string, std::string> properties;
+            auto passPtr = std::make_shared<ShaderPass>(shaders, blendInfo, cullInfo, depthInfo, tags, properties, textures, buffers);
+
+            std::vector<std::shared_ptr<ShaderPass>> passes;
+            passes.push_back(passPtr);
+
+            return std::make_shared<Shader>(passes, supportInstancing);
+        }
+        catch (const std::exception &_exception)
+        {
+            Debug::LogErrorFormat("[ShaderLoader] Can't load shader %1%\n%2%", {_path.string(), _exception.what()});
+            return nullptr;
+        }
+    }
 } // namespace ShaderLoader

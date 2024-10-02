@@ -5,11 +5,13 @@
 CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CComPtr<IDxcUtils>& pUtils, const CComPtr<IDxcCompiler3>& pCompiler,
                                const CComPtr<IDxcIncludeHandler>& pIncludeHandler, bool isVertexShader)
 {
+    std::wstring pathWString = hlslPath.parent_path().wstring();
     LPCWSTR vszArgs[] =
             {
                     L"-spirv",
                     L"-E", (isVertexShader ? L"vertexMain" : L"fragmentMain"),
                     L"-T", (isVertexShader ? L"vs_6_0" : L"ps_6_0"),
+                    L"-I", pathWString.c_str()
             };
 
     CComPtr<IDxcBlobEncoding> pSource = nullptr;
@@ -54,6 +56,7 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
         spirv_cross::CompilerGLSL::Options options;
         options.version = 410;
         options.es = false;
+        options.enable_420pack_extension = false;
         glsl->set_common_options(options);
 
         return glsl;
@@ -93,9 +96,7 @@ void WriteShaderSource(const std::filesystem::path& hlslPath, GraphicsBackend ba
     if (!compiler)
         return;
 
-    std::string extension = GetBackendExtension(backend, isVertexShader);
-
-    std::filesystem::path outputPath = hlslPath.parent_path() / "output" / GetBackendLiteral(backend) / ((isVertexShader ? "vs" : "ps") + extension);
+    std::filesystem::path outputPath = hlslPath.parent_path() / "output" / GetBackendLiteral(backend) / (isVertexShader ? "vs" : "ps");
     std::filesystem::create_directory(outputPath.parent_path());
 
     std::string shaderSource = compiler->compile();

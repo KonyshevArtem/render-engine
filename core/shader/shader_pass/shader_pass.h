@@ -21,6 +21,11 @@ public:
     ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
                std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues);
 
+    ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
+               std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues,
+               std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
+               std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers);
+
     ~ShaderPass();
 
     ShaderPass(const ShaderPass &) = delete;

@@ -20,6 +20,24 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const s
     return shader;
 }
 
+std::shared_ptr<Shader> Shader::Load2(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
+    BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, std::unordered_map<std::string, std::string> tags)
+{
+    auto shader = ShaderLoader::Load2(_path, _keywords, blendInfo, cullInfo, depthInfo, tags);
+
+    if (!shader)
+    {
+        auto fallback = ShaderLoader::Load2("resources/shaders/fallback/fallback", _keywords, {}, {}, {}, {{"LightMode", "Fallback"}});
+
+        if (!fallback)
+            exit(1);
+
+        return fallback;
+    }
+
+    return shader;
+}
+
 Shader::Shader(std::vector<std::shared_ptr<ShaderPass>> _passes, bool _supportInstancing) :
     m_Passes(std::move(_passes)),
     m_SupportInstancing(_supportInstancing)

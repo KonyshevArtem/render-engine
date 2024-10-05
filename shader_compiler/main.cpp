@@ -157,8 +157,8 @@ int main(int argc, char **argv)
     WriteShaderSource(hlslPath, backend, fragmentSPIRV, false);
 
     Reflection reflection;
-    ExtractReflectionFromSPIRV(vertexSPIRV, true, reflection);
-    ExtractReflectionFromSPIRV(fragmentSPIRV, false, reflection);
+    ExtractReflectionFromSPIRV(vertexSPIRV, true, reflection, backend);
+    ExtractReflectionFromSPIRV(fragmentSPIRV, false, reflection, backend);
     WriteReflection(hlslPath, backend, reflection);
 
     return 0;

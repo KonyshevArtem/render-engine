@@ -4,8 +4,8 @@
 #include "cubemap/cubemap.h"
 #include "types/graphics_backend_texture_info.h"
 #include "types/graphics_backend_buffer_info.h"
+#include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
-#include "global_constants.h"
 #include "utils.h"
 
 #include <vector>
@@ -102,11 +102,13 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendI
 ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
                        std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues,
                        std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
-                       std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers)
+                       std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
+                       std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers)
                        : ShaderPass(shaders, blendInfo, cullInfo, depthInfo, tags, defaultValues)
 {
     m_Textures = std::move(textures);
     m_Buffers = std::move(buffers);
+    m_Samplers = std::move(samplers);
 }
 
 ShaderPass::~ShaderPass()

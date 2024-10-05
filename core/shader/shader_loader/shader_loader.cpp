@@ -127,8 +127,9 @@ namespace ShaderLoader
 
             auto reflectionJson = Utils::ReadFile(backendPath / "reflection.json");
             std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;
+            std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers;
             std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers;
-            ShaderParser::ParseReflection(reflectionJson, textures, buffers);
+            ShaderParser::ParseReflection(reflectionJson, textures, buffers, samplers);
 
             std::vector<GraphicsBackendShaderObject> shaders;
             for (int i = 0; i < ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT; ++i)
@@ -143,7 +144,7 @@ namespace ShaderLoader
             }
 
             std::unordered_map<std::string, std::string> properties;
-            auto passPtr = std::make_shared<ShaderPass>(shaders, blendInfo, cullInfo, depthInfo, tags, properties, textures, buffers);
+            auto passPtr = std::make_shared<ShaderPass>(shaders, blendInfo, cullInfo, depthInfo, tags, properties, textures, buffers, samplers);
 
             std::vector<std::shared_ptr<ShaderPass>> passes;
             passes.push_back(passPtr);

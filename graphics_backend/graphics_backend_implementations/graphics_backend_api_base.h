@@ -32,7 +32,7 @@ class GraphicsBackendBuffer;
 class GraphicsBackendProgram;
 class GraphicsBackendShaderObject;
 class GraphicsBackendGeometry;
-class GraphicsBackendTextureInfo;
+struct GraphicsBackendTextureInfo;
 class GraphicsBackendBufferInfo;
 struct GraphicsBackendResourceBindings;
 struct GraphicsBackendRenderTargetDescriptor;

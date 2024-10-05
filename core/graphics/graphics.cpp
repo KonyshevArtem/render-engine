@@ -14,7 +14,6 @@
 #include "graphics_buffer/graphics_buffer.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug_group.h"
-#include "enums/cull_face_orientation.h"
 #include "enums/indices_data_type.h"
 #include "shader/shader.h"
 #include "shader/shader_pass/shader_pass.h"
@@ -30,6 +29,7 @@
 #include "editor/selection_outline/selection_outline_pass.h"
 #include "graphics_settings.h"
 #include "graphics_buffer/ring_buffer.h"
+#include "types/graphics_backend_sampler_info.h"
 
 #include <cassert>
 #include <boost/functional/hash/hash.hpp>
@@ -376,15 +376,24 @@ namespace Graphics
 
         for (const auto &pair: textures)
         {
-            if (!pair.second)
+            const auto &texName = pair.first;
+            const auto &texture = pair.second;
+
+            if (!texture)
                 continue;
 
-            auto it = shaderTextures.find(pair.first);
-            if (it == shaderTextures.end())
+            auto texInfoIt = shaderTextures.find(texName);
+            if (texInfoIt == shaderTextures.end())
                 continue;
 
-            const auto& textureInfo = it->second;
-            pair.second->Bind(textureInfo.TextureBindings, textureInfo.HasSampler);
+            const auto& textureInfo = texInfoIt->second;
+            const auto samplerName = "sampler" + texName;
+
+            auto samplerInfoIt = shaderSamplers.find(samplerName);
+            if (samplerInfoIt == shaderSamplers.end())
+                texture->Bind(textureInfo.TextureBindings, textureInfo.HasSampler);
+            else
+                texture->Bind(textureInfo.TextureBindings, &samplerInfoIt->second.Bindings);
         }
     }
 

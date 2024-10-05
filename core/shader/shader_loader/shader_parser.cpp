@@ -110,6 +110,13 @@ GraphicsBackendTextureInfo tag_invoke(boost::json::value_to_tag<GraphicsBackendT
     return info;
 }
 
+GraphicsBackendSamplerInfo tag_invoke(boost::json::value_to_tag<GraphicsBackendSamplerInfo>, const boost::json::value& jv)
+{
+    GraphicsBackendSamplerInfo info{};
+    info.Bindings = boost::json::value_to<GraphicsBackendResourceBindings>(jv.at("Bindings"));
+    return info;
+}
+
 std::shared_ptr<GraphicsBackendBufferInfo> tag_invoke(boost::json::value_to_tag<std::shared_ptr<GraphicsBackendBufferInfo>>, const boost::json::value& jv)
 {
     auto bindings = boost::json::value_to<GraphicsBackendResourceBindings>(jv.at("Bindings"));
@@ -218,10 +225,14 @@ namespace ShaderParser
         TryGetValue(shaderInfoObject, "properties", properties);
     }
 
-    void ParseReflection(const std::string& reflectionJson, std::unordered_map<std::string, GraphicsBackendTextureInfo>& textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& buffers)
+    void ParseReflection(const std::string& reflectionJson,
+        std::unordered_map<std::string, GraphicsBackendTextureInfo>& textures,
+        std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& buffers,
+        std::unordered_map<std::string, GraphicsBackendSamplerInfo>& samplers)
     {
         auto reflectionObject = boost::json::parse(reflectionJson).as_object();
         buffers = std::move(boost::json::value_to<std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>>(reflectionObject["Buffers"]));
         textures = std::move(boost::json::value_to<std::unordered_map<std::string, GraphicsBackendTextureInfo>>(reflectionObject["Textures"]));
+        samplers = std::move(boost::json::value_to<std::unordered_map<std::string, GraphicsBackendSamplerInfo>>(reflectionObject["Samplers"]));
     }
 }

@@ -43,7 +43,8 @@ add_library(GraphicsBackend
         types/graphics_backend_render_target_descriptor.h
         types/graphics_backend_depth_stencil_state.h
         types/graphics_backend_color_attachment_descriptor.h
-        types/graphics_backend_texture_info.h)
+        types/graphics_backend_texture_info.h
+        types/graphics_backend_sampler_info.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

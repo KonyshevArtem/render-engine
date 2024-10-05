@@ -13,6 +13,7 @@
 #include <unordered_map>
 
 struct GraphicsBackendTextureInfo;
+struct GraphicsBackendSamplerInfo;
 class GraphicsBackendBufferInfo;
 
 class ShaderPass
@@ -24,7 +25,8 @@ public:
     ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
                std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues,
                std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
-               std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers);
+               std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
+               std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers);
 
     ~ShaderPass();
 
@@ -51,6 +53,11 @@ public:
         return m_Textures;
     }
 
+    inline const std::unordered_map<std::string, GraphicsBackendSamplerInfo> &GetSamplers() const
+    {
+        return m_Samplers;
+    }
+
     inline const std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &GetBuffers() const
     {
         return m_Buffers;
@@ -74,6 +81,7 @@ private:
 
     std::unordered_map<std::string, std::string> m_Tags;
     std::unordered_map<std::string, GraphicsBackendTextureInfo> m_Textures;
+    std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
 
     const GraphicsBackendProgram &CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat,

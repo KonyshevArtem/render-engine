@@ -40,7 +40,7 @@ CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CCom
     return pResults;
 }
 
-spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, GraphicsBackend backend)
+spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, GraphicsBackend backend, bool isVertexShader)
 {
     CComPtr<IDxcBlob> pShader = nullptr;
     dxcResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), nullptr);
@@ -59,6 +59,15 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
         options.enable_420pack_extension = false;
         glsl->set_common_options(options);
 
+        // Apple OpenGL can't compile if vertex outputs name don't match corresponding fragment inputs name, even if location matches
+        // So, they must be renamed manually to match.
+        // SPIRV-Cross naming is "in.var.TEXCOORD0" and "out.var.TEXCOORD0", so we just remove "in" and "out"
+        auto resources = glsl->get_shader_resources();
+        for (const auto& resource: isVertexShader ? resources.stage_outputs : resources.stage_inputs)
+        {
+            glsl->set_name(resource.id, resource.name.substr(isVertexShader ? 4 : 3));
+        }
+
         return glsl;
     }
 
@@ -68,6 +77,7 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
 
         spirv_cross::CompilerMSL::Options options;
         options.platform = spirv_cross::CompilerMSL::Options::macOS;
+        options.msl_version = spirv_cross::CompilerMSL::Options::make_msl_version(3);
         msl->set_msl_options(options);
 
         return msl;
@@ -83,7 +93,7 @@ void WriteShaderBinary(const std::filesystem::path &hlslPath, GraphicsBackend ba
     if (pShader != nullptr)
     {
         std::filesystem::path outputPath = hlslPath.parent_path() / "output" / GetBackendLiteral(backend) / (isVertexShader ? "vs.bin" : "ps.bin");
-        std::filesystem::create_directory(outputPath.parent_path());
+        std::filesystem::create_directories(outputPath.parent_path());
 
         FILE *fp = fopen(outputPath.c_str(), "wb");
         fwrite(pShader->GetBufferPointer(), pShader->GetBufferSize(), 1, fp);
@@ -97,7 +107,7 @@ void WriteShaderSource(const std::filesystem::path& hlslPath, GraphicsBackend ba
         return;
 
     std::filesystem::path outputPath = hlslPath.parent_path() / "output" / GetBackendLiteral(backend) / (isVertexShader ? "vs" : "ps");
-    std::filesystem::create_directory(outputPath.parent_path());
+    std::filesystem::create_directories(outputPath.parent_path());
 
     std::string shaderSource = compiler->compile();
 
@@ -140,8 +150,8 @@ int main(int argc, char **argv)
     CComPtr<IDxcResult> vertexDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, true);
     CComPtr<IDxcResult> fragmentDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, false);
 
-    spirv_cross::Compiler* vertexSPIRV = CompileSPIRV(vertexDXC, backend);
-    spirv_cross::Compiler* fragmentSPIRV = CompileSPIRV(fragmentDXC, backend);
+    spirv_cross::Compiler* vertexSPIRV = CompileSPIRV(vertexDXC, backend, true);
+    spirv_cross::Compiler* fragmentSPIRV = CompileSPIRV(fragmentDXC, backend, false);
 
     WriteShaderSource(hlslPath, backend, vertexSPIRV, true);
     WriteShaderSource(hlslPath, backend, fragmentSPIRV, false);

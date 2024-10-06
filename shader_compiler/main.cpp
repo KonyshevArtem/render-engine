@@ -68,6 +68,11 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
             glsl->set_name(resource.id, resource.name.substr(isVertexShader ? 4 : 3));
         }
 
+        for (const auto &remap : glsl->get_combined_image_samplers())
+        {
+            glsl->set_name(remap.combined_id, glsl->get_name(remap.image_id));
+        }
+
         return glsl;
     }
 

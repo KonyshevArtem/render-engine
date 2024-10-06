@@ -182,15 +182,17 @@ void GraphicsBackendOpenGL::DeleteSampler(const GraphicsBackendSampler &sampler)
 
 void GraphicsBackendOpenGL::BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glActiveTexture(OpenGLHelpers::ToTextureUnit(bindings.FragmentIndex)))
+    auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
+    CHECK_GRAPHICS_BACKEND_FUNC(glActiveTexture(OpenGLHelpers::ToTextureUnit(binding)))
     CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(OpenGLHelpers::ToTextureType(texture.Type), texture.Texture))
-    CHECK_GRAPHICS_BACKEND_FUNC(glUniform1i(bindings.VertexIndex, bindings.FragmentIndex))
+    CHECK_GRAPHICS_BACKEND_FUNC(glUniform1i(binding, binding))
 }
 
 void GraphicsBackendOpenGL::BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glActiveTexture(OpenGLHelpers::ToTextureUnit(bindings.FragmentIndex)))
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindSampler(bindings.FragmentIndex, sampler.Sampler))
+    auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
+    CHECK_GRAPHICS_BACKEND_FUNC(glActiveTexture(OpenGLHelpers::ToTextureUnit(binding)))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindSampler(binding, sampler.Sampler))
 }
 
 void GraphicsBackendOpenGL::GenerateMipmaps(const GraphicsBackendTexture &texture)
@@ -350,9 +352,10 @@ void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 
 void GraphicsBackendOpenGL::BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
+    auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
     auto bindTarget = OpenGLHelpers::ToBufferBindTarget(buffer.BindTarget);
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(bindTarget, buffer.Buffer))
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBufferRange(bindTarget, bindings.VertexIndex, buffer.Buffer, offset, size))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBufferRange(bindTarget, binding, buffer.Buffer, offset, size))
 }
 
 void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)

@@ -63,7 +63,7 @@ bool TrySetBinding(std::unordered_map<std::string, T>& descriptions, const std::
     return false;
 }
 
-int32_t ExtractBindingSPIRV(spirv_cross::Compiler* compiler, spirv_cross::ID resourceID, GraphicsBackend backend)
+int32_t ExtractBindingSPIRV(spirv_cross::Compiler* compiler, spirv_cross::ID resourceID, int index, GraphicsBackend backend)
 {
     if (backend == GRAPHICS_BACKEND_METAL)
     {
@@ -71,7 +71,16 @@ int32_t ExtractBindingSPIRV(spirv_cross::Compiler* compiler, spirv_cross::ID res
         return msl->get_automatic_msl_resource_binding(resourceID);
     }
 
-    return compiler->get_decoration(resourceID, spv::DecorationBinding);
+    if (compiler->has_decoration(resourceID, spv::DecorationBinding))
+        return compiler->get_decoration(resourceID, spv::DecorationBinding);
+
+    return index;
+}
+
+void GetSPIRVResourceInfo(spirv_cross::Compiler* compiler, const spirv_cross::Resource& resource, int index, GraphicsBackend backend, std::string& outResourceName, int32_t& outBindPoint)
+{
+    outResourceName = compiler->get_name(resource.id);
+    outBindPoint = ExtractBindingSPIRV(compiler, resource.id, index, backend);
 }
 
 void HandleConstantBufferReflection(const _D3D12_SHADER_INPUT_BIND_DESC& inputDesc, const CComPtr<ID3D12ShaderReflection>& reflection,
@@ -101,10 +110,11 @@ void HandleConstantBufferReflection(const _D3D12_SHADER_INPUT_BIND_DESC& inputDe
     }
 }
 
-void HandleConstantBufferReflection(spirv_cross::Compiler* compiler, const spirv_cross::Resource& resource, std::unordered_map<std::string, BufferDesc>& buffers, bool isVertexShader, GraphicsBackend backend)
+void HandleConstantBufferReflection(spirv_cross::Compiler* compiler, const spirv_cross::Resource& resource, int index, std::unordered_map<std::string, BufferDesc>& buffers, bool isVertexShader, GraphicsBackend backend)
 {
-    const std::string& bufferName = compiler->get_name(resource.id);
-    int32_t bindPoint = ExtractBindingSPIRV(compiler, resource.id, backend);
+    int32_t bindPoint;
+    std::string bufferName;
+    GetSPIRVResourceInfo(compiler, resource, index, backend, bufferName, bindPoint);
 
     if (!TrySetBinding(buffers, bufferName, bindPoint, isVertexShader))
     {
@@ -137,11 +147,8 @@ void HandleGenericReflection(const _D3D12_SHADER_INPUT_BIND_DESC &inputDesc, std
     }
 }
 
-void HandleGenericReflection(spirv_cross::Compiler* compiler, const spirv_cross::Resource& resource, std::unordered_map<std::string, GenericDesc> &resources, bool isVertexShader, GraphicsBackend backend)
+void HandleGenericReflection(const std::string& resourceName, int32_t bindPoint, std::unordered_map<std::string, GenericDesc> &resources, bool isVertexShader)
 {
-    const std::string& resourceName = compiler->get_name(resource.id);
-    int32_t bindPoint = ExtractBindingSPIRV(compiler, resource.id, backend);
-
     if (!TrySetBinding(resources, resourceName, bindPoint, isVertexShader))
     {
         GenericDesc desc;
@@ -149,6 +156,25 @@ void HandleGenericReflection(spirv_cross::Compiler* compiler, const spirv_cross:
 
         resources[resourceName] = desc;
     }
+}
+
+void HandleGenericReflection(spirv_cross::Compiler* compiler, const spirv_cross::Resource& resource, int index, std::unordered_map<std::string, GenericDesc> &resources, bool isVertexShader, GraphicsBackend backend)
+{
+    int32_t bindPoint;
+    std::string resourceName;
+    GetSPIRVResourceInfo(compiler, resource, index, backend, resourceName, bindPoint);
+
+    HandleGenericReflection(resourceName, bindPoint, resources, isVertexShader);
+}
+
+void HandleCombinedImageSamplerReflection(spirv_cross::Compiler* compiler, const spirv_cross::Resource& resource, int index, std::unordered_map<std::string, GenericDesc> &textures, std::unordered_map<std::string, GenericDesc> &samplers, bool isVertexShader, GraphicsBackend backend)
+{
+    int32_t bindPoint;
+    std::string textureName;
+    GetSPIRVResourceInfo(compiler, resource, index, backend, textureName, bindPoint);
+
+    HandleGenericReflection(textureName, bindPoint, textures, isVertexShader);
+    HandleGenericReflection("sampler" + textureName, bindPoint, samplers, isVertexShader);
 }
 
 void ExtractReflectionFromDXC(const CComPtr<IDxcResult> &results, const CComPtr<IDxcUtils> &utils, bool isVertexShader, Reflection& reflection)
@@ -190,19 +216,29 @@ void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, bool isVertexSh
 {
     spirv_cross::ShaderResources resources = compiler->get_shader_resources();
 
-    for (auto& resource : resources.uniform_buffers)
+    for (int i = 0; i < resources.uniform_buffers.size(); ++i)
     {
-        HandleConstantBufferReflection(compiler, resource, reflection.Buffers, isVertexShader, backend);
+        HandleConstantBufferReflection(compiler, resources.uniform_buffers[i], i, reflection.Buffers, isVertexShader, backend);
     }
 
-    for (auto& resource: resources.separate_images)
+    if (resources.sampled_images.empty())
     {
-        HandleGenericReflection(compiler, resource, reflection.Textures, isVertexShader, backend);
-    }
+        for (int i = 0; i < resources.separate_images.size(); ++i)
+        {
+            HandleGenericReflection(compiler, resources.separate_images[i], i, reflection.Textures, isVertexShader, backend);
+        }
 
-    for (auto& resource: resources.separate_samplers)
+        for (int i = 0; i < resources.separate_samplers.size(); ++i)
+        {
+            HandleGenericReflection(compiler, resources.separate_samplers[i], i, reflection.Samplers, isVertexShader, backend);
+        }
+    }
+    else
     {
-        HandleGenericReflection(compiler, resource, reflection.Samplers, isVertexShader, backend);
+        for (int i = 0; i < resources.sampled_images.size(); ++i)
+        {
+            HandleCombinedImageSamplerReflection(compiler, resources.sampled_images[i], i, reflection.Textures, reflection.Samplers, isVertexShader, backend);
+        }
     }
 }
 

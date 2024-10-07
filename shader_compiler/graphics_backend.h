@@ -24,6 +24,19 @@ std::string GetBackendLiteral(GraphicsBackend backend)
     }
 }
 
+std::wstring GetBackendDefine(GraphicsBackend backend)
+{
+    switch (backend)
+    {
+        case GRAPHICS_BACKEND_OPENGL:
+            return L"OPENGL_SHADER";
+        case GRAPHICS_BACKEND_METAL:
+            return L"METAL_SHADER";
+        default:
+            return L"";
+    }
+}
+
 bool TryGetBackend(const std::string& backendString, GraphicsBackend& outBackend)
 {
     for (int i = 0; i < GRAPHICS_BACKEND_MAX; ++i)

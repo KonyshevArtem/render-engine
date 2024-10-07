@@ -3,15 +3,17 @@
 #include "graphics_backend.h"
 
 CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CComPtr<IDxcUtils>& pUtils, const CComPtr<IDxcCompiler3>& pCompiler,
-                               const CComPtr<IDxcIncludeHandler>& pIncludeHandler, bool isVertexShader)
+                               const CComPtr<IDxcIncludeHandler>& pIncludeHandler, GraphicsBackend backend, bool isVertexShader)
 {
     std::wstring pathWString = hlslPath.parent_path().wstring();
+    std::wstring backendDefine = GetBackendDefine(backend);
     LPCWSTR vszArgs[] =
             {
                     L"-spirv",
                     L"-E", (isVertexShader ? L"vertexMain" : L"fragmentMain"),
                     L"-T", (isVertexShader ? L"vs_6_0" : L"ps_6_0"),
-                    L"-I", pathWString.c_str()
+                    L"-D", backendDefine.c_str(),
+                    L"-I", pathWString.c_str(),
             };
 
     CComPtr<IDxcBlobEncoding> pSource = nullptr;
@@ -152,8 +154,8 @@ int main(int argc, char **argv)
     CComPtr<IDxcIncludeHandler> pIncludeHandler;
     pUtils->CreateDefaultIncludeHandler(&pIncludeHandler);
 
-    CComPtr<IDxcResult> vertexDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, true);
-    CComPtr<IDxcResult> fragmentDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, false);
+    CComPtr<IDxcResult> vertexDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, true);
+    CComPtr<IDxcResult> fragmentDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, false);
 
     spirv_cross::Compiler* vertexSPIRV = CompileSPIRV(vertexDXC, backend, true);
     spirv_cross::Compiler* fragmentSPIRV = CompileSPIRV(fragmentDXC, backend, false);

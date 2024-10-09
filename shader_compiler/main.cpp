@@ -3,18 +3,28 @@
 #include "graphics_backend.h"
 
 CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CComPtr<IDxcUtils>& pUtils, const CComPtr<IDxcCompiler3>& pCompiler,
-                               const CComPtr<IDxcIncludeHandler>& pIncludeHandler, GraphicsBackend backend, bool isVertexShader)
+                               const CComPtr<IDxcIncludeHandler>& pIncludeHandler, GraphicsBackend backend,
+                               const std::vector<std::wstring>& defines, bool isVertexShader)
 {
     std::wstring pathWString = hlslPath.parent_path().wstring();
     std::wstring backendDefine = GetBackendDefine(backend);
-    LPCWSTR vszArgs[] =
-            {
-                    L"-spirv",
-                    L"-E", (isVertexShader ? L"vertexMain" : L"fragmentMain"),
-                    L"-T", (isVertexShader ? L"vs_6_0" : L"ps_6_0"),
-                    L"-D", backendDefine.c_str(),
-                    L"-I", pathWString.c_str(),
-            };
+
+    std::vector<LPCWSTR> vszArgs;
+    vszArgs.push_back(L"-spirv");
+    vszArgs.push_back(L"-E");
+    vszArgs.push_back(isVertexShader ? L"vertexMain" : L"fragmentMain");
+    vszArgs.push_back(L"-T");
+    vszArgs.push_back(isVertexShader ? L"vs_6_0" : L"ps_6_0");
+    vszArgs.push_back(L"-D");
+    vszArgs.push_back(backendDefine.c_str());
+    vszArgs.push_back(L"-I");
+    vszArgs.push_back(pathWString.c_str());
+
+    for (const auto& define : defines)
+    {
+        vszArgs.push_back(L"-D");
+        vszArgs.push_back(define.c_str());
+    }
 
     CComPtr<IDxcBlobEncoding> pSource = nullptr;
     std::wstring hlslPathString = hlslPath.wstring();
@@ -22,7 +32,7 @@ CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CCom
     DxcBuffer Source{pSource->GetBufferPointer(), pSource->GetBufferSize(), DXC_CP_ACP};
 
     CComPtr<IDxcResult> pResults;
-    pCompiler->Compile(&Source, vszArgs, _countof(vszArgs), pIncludeHandler, IID_PPV_ARGS(&pResults));
+    pCompiler->Compile(&Source, vszArgs.data(), vszArgs.size(), pIncludeHandler, IID_PPV_ARGS(&pResults));
 
     CComPtr<IDxcBlobUtf8> pErrors = nullptr;
     pResults->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&pErrors), nullptr);
@@ -93,13 +103,13 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
     return nullptr;
 }
 
-void WriteShaderBinary(const std::filesystem::path &hlslPath, GraphicsBackend backend, const CComPtr<IDxcResult>& results, bool isVertexShader)
+void WriteShaderBinary(const std::filesystem::path &outputDirPath, const CComPtr<IDxcResult>& results, bool isVertexShader)
 {
     CComPtr<IDxcBlob> pShader = nullptr;
     results->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), nullptr);
     if (pShader != nullptr)
     {
-        std::filesystem::path outputPath = hlslPath.parent_path() / "output" / GetBackendLiteral(backend) / (isVertexShader ? "vs.bin" : "ps.bin");
+        std::filesystem::path outputPath = outputDirPath / (isVertexShader ? "vs.bin" : "ps.bin");
         std::filesystem::create_directories(outputPath.parent_path());
 
         FILE *fp = fopen(outputPath.c_str(), "wb");
@@ -108,12 +118,12 @@ void WriteShaderBinary(const std::filesystem::path &hlslPath, GraphicsBackend ba
     }
 }
 
-void WriteShaderSource(const std::filesystem::path& hlslPath, GraphicsBackend backend, spirv_cross::Compiler* compiler, bool isVertexShader)
+void WriteShaderSource(const std::filesystem::path& outputDirPath, spirv_cross::Compiler* compiler, bool isVertexShader)
 {
     if (!compiler)
         return;
 
-    std::filesystem::path outputPath = hlslPath.parent_path() / "output" / GetBackendLiteral(backend) / (isVertexShader ? "vs" : "ps");
+    std::filesystem::path outputPath = outputDirPath / (isVertexShader ? "vs" : "ps");
     std::filesystem::create_directories(outputPath.parent_path());
 
     std::string shaderSource = compiler->compile();
@@ -121,6 +131,31 @@ void WriteShaderSource(const std::filesystem::path& hlslPath, GraphicsBackend ba
     FILE *fp = fopen(outputPath.c_str(), "w");
     fwrite(shaderSource.c_str(), shaderSource.size(), 1, fp);
     fclose(fp);
+}
+
+std::vector<std::wstring> GetDefines(int argc, char** argv)
+{
+    std::vector<std::wstring> defines;
+    for (int i = 3; i < argc; ++i)
+    {
+        std::wstring define(argv[i], argv[i] + strlen(argv[i]));
+        defines.emplace_back(std::move(define));
+    }
+    return defines;
+}
+
+std::string GetDefinesHash(std::vector<std::wstring> defines)
+{
+    std::sort(defines.begin(), defines.end());
+
+    std::string combinedDefines;
+    for (const auto& define : defines)
+    {
+        std::string d(define.begin(), define.end());
+        combinedDefines += d + ",";
+    }
+
+    return std::to_string(std::hash<std::string>{}(combinedDefines));
 }
 
 int main(int argc, char **argv)
@@ -146,6 +181,8 @@ int main(int argc, char **argv)
     std::filesystem::path hlslPath = std::filesystem::absolute(std::filesystem::path(argv[2]));
     std::cout << "Compiling shader at path: " << hlslPath << std::endl;
 
+    std::vector<std::wstring> defines = GetDefines(argc, argv);
+
     CComPtr<IDxcUtils> pUtils;
     CComPtr<IDxcCompiler3> pCompiler;
     DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&pUtils));
@@ -154,19 +191,22 @@ int main(int argc, char **argv)
     CComPtr<IDxcIncludeHandler> pIncludeHandler;
     pUtils->CreateDefaultIncludeHandler(&pIncludeHandler);
 
-    CComPtr<IDxcResult> vertexDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, true);
-    CComPtr<IDxcResult> fragmentDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, false);
+    CComPtr<IDxcResult> vertexDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, defines, true);
+    CComPtr<IDxcResult> fragmentDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, defines, false);
 
     spirv_cross::Compiler* vertexSPIRV = CompileSPIRV(vertexDXC, backend, true);
     spirv_cross::Compiler* fragmentSPIRV = CompileSPIRV(fragmentDXC, backend, false);
 
-    WriteShaderSource(hlslPath, backend, vertexSPIRV, true);
-    WriteShaderSource(hlslPath, backend, fragmentSPIRV, false);
+    std::string definesHash = GetDefinesHash(defines);
+    std::filesystem::path outputDirPath = hlslPath.parent_path() / "output" / GetBackendLiteral(backend) / definesHash;
+
+    WriteShaderSource(outputDirPath, vertexSPIRV, true);
+    WriteShaderSource(outputDirPath, fragmentSPIRV, false);
 
     Reflection reflection;
     ExtractReflectionFromSPIRV(vertexSPIRV, true, reflection, backend);
     ExtractReflectionFromSPIRV(fragmentSPIRV, false, reflection, backend);
-    WriteReflection(hlslPath, backend, reflection);
+    WriteReflection(outputDirPath, reflection);
 
     return 0;
 }

@@ -45,6 +45,21 @@ namespace ShaderLoader
         }
     }
 
+    std::string GetKeywordsHash(std::vector<std::string> keywords, bool& outSupportInstancing)
+    {
+        outSupportInstancing = false;
+
+        std::string keywordsDirectives;
+        std::sort(keywords.begin(), keywords.end());
+        for (const auto &keyword: keywords)
+        {
+            keywordsDirectives += keyword + ",";
+            outSupportInstancing |= keyword == INSTANCING_KEYWORD;
+        }
+
+        return std::to_string(std::hash<std::string>{}(keywordsDirectives));
+    }
+
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::filesystem::path &partPath, const std::string &keywordDirectives, const std::string &shaderPartDirective)
     {
         auto source = Utils::ReadFileWithIncludes(partPath);
@@ -113,17 +128,12 @@ namespace ShaderLoader
         BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, std::unordered_map<std::string, std::string> tags)
     {
         bool supportInstancing = false;
-        std::string keywordsDirectives;
-        for (const auto &keyword: _keywords)
-        {
-            keywordsDirectives += "#define " + keyword + "\n";
-            supportInstancing |= keyword == INSTANCING_KEYWORD;
-        }
+        std::string keywordHash = GetKeywordsHash(_keywords, supportInstancing);
 
         try
         {
             std::string backendLiteral = GetBackendLiteral(GraphicsBackend::Current()->GetName());
-            std::filesystem::path backendPath = Utils::GetExecutableDirectory() / _path.parent_path() / "output" / backendLiteral;
+            std::filesystem::path backendPath = Utils::GetExecutableDirectory() / _path.parent_path() / "output" / backendLiteral / keywordHash;
 
             auto reflectionJson = Utils::ReadFile(backendPath / "reflection.json");
             std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;

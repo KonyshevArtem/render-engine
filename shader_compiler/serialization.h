@@ -40,11 +40,11 @@ void tag_invoke(boost::json::value_from_tag, boost::json::value &jv, const Refle
     };
 }
 
-void WriteReflection(const std::filesystem::path &hlslPath, GraphicsBackend backend, const Reflection &reflection)
+void WriteReflection(const std::filesystem::path &outputDirPath, const Reflection &reflection)
 {
     std::string json = boost::json::serialize(boost::json::value_from(reflection));
 
-    std::filesystem::path outputPath = hlslPath.parent_path() / "output" / GetBackendLiteral(backend) / "reflection.json";
+    std::filesystem::path outputPath = outputDirPath / "reflection.json";
     std::filesystem::create_directory(outputPath.parent_path());
 
     FILE *fp = fopen(outputPath.c_str(), "w");

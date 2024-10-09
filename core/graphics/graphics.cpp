@@ -373,6 +373,7 @@ namespace Graphics
     void SetTextures(const std::unordered_map<std::string, std::shared_ptr<Texture>> &textures, const ShaderPass &shaderPass)
     {
         const auto &shaderTextures = shaderPass.GetTextures();
+        const auto &shaderSamplers = shaderPass.GetSamplers();
 
         for (const auto &pair: textures)
         {

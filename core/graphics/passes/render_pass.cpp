@@ -7,7 +7,7 @@
 
 RenderPass::RenderPass(std::string _name, DrawCallSortMode _sorting, DrawCallFilter _filter, const std::string &_lightModeTag) :
     m_Name(std::move(_name)),
-    m_RenderSettings(RenderSettings {{{"LightMode", _lightModeTag}}, _sorting, std::move(_filter)})
+    m_RenderSettings(RenderSettings {_sorting, std::move(_filter), nullptr})
 {
 }
 

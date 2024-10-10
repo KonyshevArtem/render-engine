@@ -4,18 +4,13 @@
 #include "draw_call_comparer.h"
 #include "draw_call_filter.h"
 
-#include <string>
-#include <unordered_map>
-
-class ShaderPass;
+class Material;
 
 struct RenderSettings
 {
-    std::unordered_map<std::string, std::string> Tags;
     DrawCallSortMode Sorting = DrawCallSortMode::NO_SORTING;
     DrawCallFilter Filter = DrawCallFilter::All();
-
-    bool TagsMatch(const ShaderPass &_shaderPass) const;
+    std::shared_ptr<Material> OverrideMaterial;
 };
 
 #endif

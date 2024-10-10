@@ -74,11 +74,10 @@ size_t GetPSOHash(size_t vertexAttributesHash, TextureInternalFormat colorTarget
 }
 
 ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
-                       std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues) :
+                       const std::unordered_map<std::string, std::string> &defaultValues) :
         m_Shaders(std::move(shaders)),
         m_CullInfo(cullInfo),
-        m_BlendInfo(blendInfo),
-        m_Tags(std::move(tags))
+        m_BlendInfo(blendInfo)
 {
     const TextureInternalFormat k_DefaultColorFormat = TextureInternalFormat::RGBA16F;
     const TextureInternalFormat k_DefaultDepthFormat = TextureInternalFormat::DEPTH_COMPONENT;
@@ -100,11 +99,11 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendI
 }
 
 ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
-                       std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues,
+                       const std::unordered_map<std::string, std::string> &defaultValues,
                        std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
                        std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
                        std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers)
-                       : ShaderPass(shaders, blendInfo, cullInfo, depthInfo, tags, defaultValues)
+                       : ShaderPass(shaders, blendInfo, cullInfo, depthInfo, defaultValues)
 {
     m_Textures = std::move(textures);
     m_Buffers = std::move(buffers);
@@ -142,12 +141,6 @@ const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &ver
     }
 
     return CreatePSO(m_Shaders, m_BlendInfo, colorTargetFormat, depthTargetFormat, vertexAttributes.GetAttributes(), nullptr, nullptr);
-}
-
-std::string ShaderPass::GetTagValue(const std::string &tag) const
-{
-    auto it = m_Tags.find(tag);
-    return it != m_Tags.end() ? it->second : "";
 }
 
 const GraphicsBackendProgram &ShaderPass::CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat,

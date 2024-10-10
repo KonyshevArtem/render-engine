@@ -535,22 +535,19 @@ namespace Graphics
 
         for (const auto &drawCall: filteredSortedDrawCalls)
         {
-            const auto &shader = drawCall.Material->GetShader();
+            const auto &shader = settings.OverrideMaterial ? settings.OverrideMaterial->GetShader() : drawCall.Material->GetShader();
             for (int i = 0; i < shader->PassesCount(); ++i)
             {
                 auto pass = shader->GetPass(i);
-                if (settings.TagsMatch(*pass))
+                if (drawCall.Instanced)
                 {
-                    if (drawCall.Instanced)
-                    {
-                        SetupPerInstanceData(instancedDataBuffers[drawCall.InstancesDataIndex], i);
-                        DrawInstanced(*drawCall.Geometry, *drawCall.Material, instancedMatrices[drawCall.InstancesDataIndex], i, instancingDataBuffer);
-                    }
-                    else
-                    {
-                        auto &instanceDataBuffer = drawCall.InstanceDataBuffer ? drawCall.InstanceDataBuffer->GetBuffer(i) : nullptr;
-                        Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrix, i, instanceDataBuffer);
-                    }
+                    SetupPerInstanceData(instancedDataBuffers[drawCall.InstancesDataIndex], i);
+                    DrawInstanced(*drawCall.Geometry, *drawCall.Material, instancedMatrices[drawCall.InstancesDataIndex], i, instancingDataBuffer);
+                }
+                else
+                {
+                    auto &instanceDataBuffer = drawCall.InstanceDataBuffer ? drawCall.InstanceDataBuffer->GetBuffer(i) : nullptr;
+                    Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrix, i, instanceDataBuffer);
                 }
             }
         }

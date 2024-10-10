@@ -20,10 +20,10 @@ class ShaderPass
 {
 public:
     ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
-               std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues);
+               const std::unordered_map<std::string, std::string> &defaultValues);
 
     ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
-               std::unordered_map<std::string, std::string> &tags, const std::unordered_map<std::string, std::string> &defaultValues,
+               const std::unordered_map<std::string, std::string> &defaultValues,
                std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
                std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
                std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers);
@@ -68,8 +68,6 @@ public:
         return m_DefaultTextures;
     }
 
-    std::string GetTagValue(const std::string &tag) const;
-
 private:
     std::vector<GraphicsBackendShaderObject> m_Shaders;
     std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
@@ -79,7 +77,6 @@ private:
     GraphicsBackendDepthStencilState m_DepthStencilState;
     BlendInfo m_BlendInfo;
 
-    std::unordered_map<std::string, std::string> m_Tags;
     std::unordered_map<std::string, GraphicsBackendTextureInfo> m_Textures;
     std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;

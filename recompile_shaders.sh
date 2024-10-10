@@ -23,3 +23,6 @@
 ./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard/standard.hlsl _DATA_MAP _REFLECTION
 ./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard/standard.hlsl _DATA_MAP _NORMAL_MAP
 ./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION
+
+./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/shadowCaster/shadowCaster.hlsl
+./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/shadowCaster/shadowCaster.hlsl

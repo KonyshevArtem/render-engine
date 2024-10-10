@@ -190,7 +190,6 @@ namespace ShaderParser
     PassInfo ParsePassInfo(const boost::json::object &passInfoObject)
     {
         PassInfo info;
-        TryGetValue(passInfoObject, "tags", info.Tags);
 
         info.DepthInfo = ParseDepthInfo(passInfoObject);
         info.BlendInfo = ParseBlendInfo(passInfoObject);

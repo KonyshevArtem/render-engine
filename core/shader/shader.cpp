@@ -21,13 +21,13 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const s
 }
 
 std::shared_ptr<Shader> Shader::Load2(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
-    BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, std::unordered_map<std::string, std::string> tags)
+    BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo)
 {
-    auto shader = ShaderLoader::Load2(_path, _keywords, blendInfo, cullInfo, depthInfo, tags);
+    auto shader = ShaderLoader::Load2(_path, _keywords, blendInfo, cullInfo, depthInfo);
 
     if (!shader)
     {
-        auto fallback = ShaderLoader::Load2("resources/shaders/fallback/fallback", {}, {}, {}, {}, {{"LightMode", "Fallback"}});
+        auto fallback = ShaderLoader::Load2("resources/shaders/fallback/fallback", {}, {}, {}, {});
 
         if (!fallback)
             exit(1);

@@ -19,8 +19,6 @@ namespace ShaderParser
         CullInfo CullInfo;
         DepthInfo DepthInfo;
 
-        std::unordered_map<std::string, std::string> Tags;
-
         std::string OpenGLShaderSourcePaths[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT];
         std::string MetalShaderSourcePath;
     };

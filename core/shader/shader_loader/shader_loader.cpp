@@ -111,7 +111,7 @@ namespace ShaderLoader
                     shaders.push_back(CompileShader(ShaderType::VERTEX_SHADER, partPath, keywordsDirectives, ""));
                 }
 
-                auto passPtr = std::make_shared<ShaderPass>(shaders, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.Tags, properties);
+                auto passPtr = std::make_shared<ShaderPass>(shaders, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, properties);
                 passes.push_back(passPtr);
             }
 
@@ -125,7 +125,7 @@ namespace ShaderLoader
     }
 
     std::shared_ptr<Shader> Load2(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
-        BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, std::unordered_map<std::string, std::string> tags)
+        BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo)
     {
         bool supportInstancing = false;
         std::string keywordHash = GetKeywordsHash(_keywords, supportInstancing);
@@ -154,7 +154,7 @@ namespace ShaderLoader
             }
 
             std::unordered_map<std::string, std::string> properties;
-            auto passPtr = std::make_shared<ShaderPass>(shaders, blendInfo, cullInfo, depthInfo, tags, properties, textures, buffers, samplers);
+            auto passPtr = std::make_shared<ShaderPass>(shaders, blendInfo, cullInfo, depthInfo, properties, textures, buffers, samplers);
 
             std::vector<std::shared_ptr<ShaderPass>> passes;
             passes.push_back(passPtr);

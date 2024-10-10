@@ -27,7 +27,7 @@ std::shared_ptr<Shader> Shader::Load2(const std::filesystem::path &_path, const 
 
     if (!shader)
     {
-        auto fallback = ShaderLoader::Load2("resources/shaders/fallback/fallback", _keywords, {}, {}, {}, {{"LightMode", "Fallback"}});
+        auto fallback = ShaderLoader::Load2("resources/shaders/fallback/fallback", {}, {}, {}, {}, {{"LightMode", "Fallback"}});
 
         if (!fallback)
             exit(1);

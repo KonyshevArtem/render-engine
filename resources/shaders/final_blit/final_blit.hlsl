@@ -104,10 +104,10 @@ half3 ACESTonemapping(half3 color, float oneOverGamma){
             -0.53108, 1.10813, -0.07276,
             -0.07367, -0.00605, 1.07602
     );
-    half3 v = mul(m1, color);
+    half3 v = mul(color, m1);
     half3 a = v * (v + 0.0245786) - 0.000090537;
     half3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
-    color = clamp(mul(m2, (a / b)), 0.0, 1.0);
+    color = clamp(mul((a / b), m2), 0.0, 1.0);
     return GammaCorrection(color, oneOverGamma);
 }
 

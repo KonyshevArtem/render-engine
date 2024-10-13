@@ -83,3 +83,6 @@
 
 ./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/billboard/billboard.hlsl
 ./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/billboard/billboard.hlsl
+
+./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/gizmos/gizmos.hlsl _INSTANCING
+./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/gizmos/gizmos.hlsl _INSTANCING

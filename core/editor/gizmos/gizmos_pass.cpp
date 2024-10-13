@@ -7,6 +7,7 @@
 #include "graphics_backend_debug_group.h"
 #include "shader/shader.h"
 #include "global_constants.h"
+#include "graphics_backend_api.h"
 
 #include <cmath>
 
@@ -14,23 +15,28 @@ void GizmosPass::Execute(Context &_context)
 {
     static auto gizmosMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/gizmos/gizmos", {"_INSTANCING"}, {}, {}, {}));
 
-    auto debugGroup = GraphicsBackendDebugGroup("Gizmos pass");
-
-    const auto &gizmos = Gizmos::GetGizmosToDraw();
-    for (const auto &pair : gizmos)
+    GraphicsBackend::Current()->BeginRenderPass();
     {
-        auto &matrices = pair.second;
-        auto begin = matrices.begin();
-        int totalCount = matrices.size();
-        while (totalCount > 0)
-        {
-            std::vector<Matrix4x4> matricesSlice(begin, begin + std::min(GlobalConstants::MaxInstancingCount, totalCount));
-            Graphics::DrawInstanced(*pair.first, *gizmosMaterial, matricesSlice, 0);
+        auto debugGroup = GraphicsBackendDebugGroup("Gizmos pass");
 
-            begin += GlobalConstants::MaxInstancingCount;
-            totalCount -= GlobalConstants::MaxInstancingCount;
+        const auto &gizmos = Gizmos::GetGizmosToDraw();
+        for (const auto &pair : gizmos)
+        {
+            auto &matrices = pair.second;
+            auto begin = matrices.begin();
+            int totalCount = matrices.size();
+            while (totalCount > 0)
+            {
+                std::vector<Matrix4x4> matricesSlice(begin, begin + std::min(GlobalConstants::MaxInstancingCount, totalCount));
+                Graphics::DrawInstanced(*pair.first, *gizmosMaterial, matricesSlice, 0);
+
+                begin += GlobalConstants::MaxInstancingCount;
+                totalCount -= GlobalConstants::MaxInstancingCount;
+            }
         }
     }
+
+    GraphicsBackend::Current()->EndRenderPass();
 }
 
 #endif

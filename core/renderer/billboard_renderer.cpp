@@ -8,7 +8,7 @@
 BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, const std::shared_ptr<Texture2D> &_texture) :
     Renderer(_gameObject, nullptr), m_Point(std::make_shared<Point>())
 {
-    static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard/billboard.shader", {});
+    static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard/billboard", {}, {}, {}, {});
 
     m_Material = std::make_shared<Material>(shader);
     m_Material->SetTexture("_Texture", _texture);

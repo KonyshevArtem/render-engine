@@ -1,6 +1,7 @@
 #include "reflection.h"
 #include "serialization.h"
 #include "graphics_backend.h"
+#include "defines.h"
 
 CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CComPtr<IDxcUtils>& pUtils, const CComPtr<IDxcCompiler3>& pCompiler,
                                const CComPtr<IDxcIncludeHandler>& pIncludeHandler, GraphicsBackend backend,
@@ -133,31 +134,6 @@ void WriteShaderSource(const std::filesystem::path& outputDirPath, spirv_cross::
     fclose(fp);
 }
 
-std::vector<std::wstring> GetDefines(int argc, char** argv)
-{
-    std::vector<std::wstring> defines;
-    for (int i = 3; i < argc; ++i)
-    {
-        std::wstring define(argv[i], argv[i] + strlen(argv[i]));
-        defines.emplace_back(std::move(define));
-    }
-    return defines;
-}
-
-std::string GetDefinesHash(std::vector<std::wstring> defines)
-{
-    std::sort(defines.begin(), defines.end());
-
-    std::string combinedDefines;
-    for (const auto& define : defines)
-    {
-        std::string d(define.begin(), define.end());
-        combinedDefines += d + ",";
-    }
-
-    return std::to_string(std::hash<std::string>{}(combinedDefines));
-}
-
 int main(int argc, char **argv)
 {
     if (argc < 3)
@@ -182,6 +158,7 @@ int main(int argc, char **argv)
     std::cout << "Compiling shader at path: " << hlslPath << std::endl;
 
     std::vector<std::wstring> defines = GetDefines(argc, argv);
+    PrintDefines(defines);
 
     CComPtr<IDxcUtils> pUtils;
     CComPtr<IDxcCompiler3> pCompiler;
@@ -198,7 +175,8 @@ int main(int argc, char **argv)
     spirv_cross::Compiler* fragmentSPIRV = CompileSPIRV(fragmentDXC, backend, false);
 
     std::string definesHash = GetDefinesHash(defines);
-    std::filesystem::path outputDirPath = hlslPath.parent_path() / "output" / GetBackendLiteral(backend) / definesHash;
+    std::string shaderName = hlslPath.filename().replace_extension("");
+    std::filesystem::path outputDirPath = hlslPath.parent_path() / "output" / shaderName / GetBackendLiteral(backend) / definesHash;
 
     WriteShaderSource(outputDirPath, vertexSPIRV, true);
     WriteShaderSource(outputDirPath, fragmentSPIRV, false);

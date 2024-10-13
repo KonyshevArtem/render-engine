@@ -1,6 +1,6 @@
-#include "../common/camera_data2.h"
-#include "../common/per_draw_data2.h"
-#include "../common/lighting2.h"
+#include "../common/camera_data.h"
+#include "../common/per_draw_data.h"
+#include "../common/lighting.h"
 
 //#ifdef _PER_INSTANCE_DATA
 //    BEGIN_PER_INSTANCE_DATA

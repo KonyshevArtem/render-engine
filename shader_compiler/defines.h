@@ -29,8 +29,10 @@ std::string GetDefinesHash(std::vector<std::wstring> defines)
     return std::to_string(std::hash<std::string>{}(combinedDefines));
 }
 
-void PrintDefines(const std::vector<std::wstring>& defines)
+void PrintDefines(const std::vector<std::wstring>& defines, const std::string& definesHash)
 {
+    std::cout << "Hash: " << definesHash << std::endl;
+
     if (defines.empty())
     {
         std::cout << "<No defines>";

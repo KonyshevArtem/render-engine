@@ -14,7 +14,6 @@ namespace GlobalConstants
     constexpr const char *InstanceMatricesBufferName = "InstanceMatricesBuffer";
 
     constexpr int MaxInstancingCount = 256;
-    constexpr int InstancingBaseVertexAttribute = 4;
 
     constexpr int MaxSpotLightSources = 3;
     constexpr int MaxPointLightSources = 3;

@@ -158,7 +158,8 @@ int main(int argc, char **argv)
     std::cout << "Compiling shader at path: " << hlslPath << std::endl;
 
     std::vector<std::wstring> defines = GetDefines(argc, argv);
-    PrintDefines(defines);
+    std::string definesHash = GetDefinesHash(defines);
+    PrintDefines(defines, definesHash);
 
     CComPtr<IDxcUtils> pUtils;
     CComPtr<IDxcCompiler3> pCompiler;
@@ -174,7 +175,6 @@ int main(int argc, char **argv)
     spirv_cross::Compiler* vertexSPIRV = CompileSPIRV(vertexDXC, backend, true);
     spirv_cross::Compiler* fragmentSPIRV = CompileSPIRV(fragmentDXC, backend, false);
 
-    std::string definesHash = GetDefinesHash(defines);
     std::string shaderName = hlslPath.filename().replace_extension("");
     std::filesystem::path outputDirPath = hlslPath.parent_path() / "output" / shaderName / GetBackendLiteral(backend) / definesHash;
 

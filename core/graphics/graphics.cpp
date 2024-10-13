@@ -36,7 +36,7 @@
 
 namespace Graphics
 {
-    std::shared_ptr<GraphicsBuffer> instancingMatricesBuffer;
+    std::shared_ptr<RingBuffer> instancingMatricesBuffer;
     std::shared_ptr<GraphicsBuffer> instancingDataBuffer;
     std::shared_ptr<GraphicsBuffer> lightingDataBlock;
     std::shared_ptr<GraphicsBuffer> shadowsDataBlock;
@@ -94,13 +94,10 @@ namespace Graphics
 
     void InitInstancing()
     {
-        auto supportSSBO = GraphicsBackend::Current()->SupportShaderStorageBuffer();
-        auto matricesBufferTarget = supportSSBO ? BufferBindTarget::SHADER_STORAGE_BUFFER : BufferBindTarget::ARRAY_BUFFER;
-        auto dataBufferTarget = supportSSBO ? BufferBindTarget::SHADER_STORAGE_BUFFER : BufferBindTarget::UNIFORM_BUFFER;
         auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
 
-        instancingMatricesBuffer = std::make_shared<GraphicsBuffer>(matricesBufferTarget, matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW);
-        instancingDataBuffer = std::make_shared<GraphicsBuffer>(dataBufferTarget, 1, BufferUsageHint::DYNAMIC_DRAW);
+        instancingMatricesBuffer = std::make_shared<RingBuffer>(BufferBindTarget::SHADER_STORAGE_BUFFER, matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW);
+        instancingDataBuffer = std::make_shared<GraphicsBuffer>(BufferBindTarget::SHADER_STORAGE_BUFFER, 1, BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void Init()
@@ -213,6 +210,7 @@ namespace Graphics
 
     void Render(int width, int height)
     {
+        instancingMatricesBuffer->Reset();
         perDrawDataBuffer->Reset();
         cameraDataBuffer->Reset();
 
@@ -317,51 +315,6 @@ namespace Graphics
 
         auto matricesSize = sizeof(Matrix4x4) * matricesBuffer.size() * 2;
         instancingMatricesBuffer->SetData(matricesBuffer.data(), 0, matricesSize);
-    }
-
-    void SetupInstancing(bool _enabled)
-    {
-        if (GraphicsBackend::Current()->SupportShaderStorageBuffer())
-        {
-            // matrices are supplied in SSBO if it is supported
-            return;
-        }
-
-        int baseAttribute = GlobalConstants::InstancingBaseVertexAttribute;
-
-        // make sure VAO is bound before calling this function
-        if (_enabled)
-        {
-            // matrix4x4 requires 4 vertex attributes
-            for (int i = 0; i < 8; ++i)
-            {
-                GraphicsBackend::Current()->EnableVertexAttributeArray(baseAttribute + i);
-                GraphicsBackend::Current()->SetVertexAttributeDivisor(baseAttribute + i, 1);
-            }
-
-            auto vec4Size = sizeof(Vector4);
-
-            // model matrix
-            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 0, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(0));
-            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 1, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(1 * vec4Size));
-            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 2, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(2 * vec4Size));
-            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 3, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(3 * vec4Size));
-
-            // normal matrix
-            auto offset = sizeof(Matrix4x4);
-            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 4, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset));
-            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 5, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 1 * vec4Size));
-            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 6, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 2 * vec4Size));
-            GraphicsBackend::Current()->SetVertexAttributePointer(baseAttribute + 7, 4, VertexAttributeDataType::FLOAT, false, 8 * vec4Size, reinterpret_cast<void *>(offset + 3 * vec4Size));
-        }
-        else
-        {
-            for (int i = 0; i < 8; ++i)
-            {
-                GraphicsBackend::Current()->DisableVertexAttributeArray(baseAttribute + i);
-                GraphicsBackend::Current()->SetVertexAttributeDivisor(baseAttribute + i, 0);
-            }
-        }
     }
 
     void SetCullState(const CullInfo &cullInfo)
@@ -472,10 +425,7 @@ namespace Graphics
         SetGraphicsBuffer(GlobalConstants::PerDrawDataBufferName, perDrawDataBuffer, shaderPass);
         SetGraphicsBuffer(GlobalConstants::PerMaterialDataBufferName, perMaterialDataBlock, shaderPass);
         SetGraphicsBuffer(GlobalConstants::PerInstanceDataBufferName, perInstanceDataBuffer, shaderPass);
-        if (GraphicsBackend::Current()->SupportShaderStorageBuffer())
-        {
-            SetGraphicsBuffer(GlobalConstants::InstanceMatricesBufferName, instancingMatricesBuffer, shaderPass);
-        }
+        SetGraphicsBuffer(GlobalConstants::InstanceMatricesBufferName, instancingMatricesBuffer, shaderPass);
 
         SetTextures(globalTextures, shaderPass);
         SetTextures(material.GetTextures(), shaderPass);
@@ -573,7 +523,6 @@ namespace Graphics
     void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData)
     {
         SetupMatrices(modelMatrices);
-        SetupInstancing(true);
         SetupShaderPass(shaderPassIndex, material, perInstanceData, geometry.GetVertexAttributes());
 
         auto primitiveType = geometry.GetPrimitiveType();
@@ -588,8 +537,6 @@ namespace Graphics
         {
             GraphicsBackend::Current()->DrawArraysInstanced(geometry.GetGraphicsBackendGeometry(), primitiveType, 0, elementsCount, instanceCount);
         }
-
-        SetupInstancing(false);
     }
 
     int GetScreenWidth()

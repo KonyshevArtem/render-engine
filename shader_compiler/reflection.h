@@ -136,6 +136,20 @@ void HandleConstantBufferReflection(spirv_cross::Compiler* compiler, const spirv
     }
 }
 
+void HandleBufferReflection(spirv_cross::Compiler* compiler, const spirv_cross::Resource& resource, int index, std::unordered_map<std::string, BufferDesc>& buffers, bool isVertexShader, GraphicsBackend backend)
+{
+    int32_t bindPoint;
+    std::string bufferName;
+    GetSPIRVResourceInfo(compiler, resource, index, backend, bufferName, bindPoint);
+
+    if (!TrySetBinding(buffers, bufferName, bindPoint, isVertexShader))
+    {
+        BufferDesc bufferDesc{};
+        SetBinding(bufferDesc.Bindings, bindPoint, isVertexShader);
+        buffers[bufferName] = std::move(bufferDesc);
+    }
+}
+
 void HandleGenericReflection(const _D3D12_SHADER_INPUT_BIND_DESC &inputDesc, std::unordered_map<std::string, GenericDesc> &resources, bool isVertexShader)
 {
     if (!TrySetBinding(resources, inputDesc.Name, inputDesc.BindPoint, isVertexShader))
@@ -219,6 +233,11 @@ void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, bool isVertexSh
     for (int i = 0; i < resources.uniform_buffers.size(); ++i)
     {
         HandleConstantBufferReflection(compiler, resources.uniform_buffers[i], i, reflection.Buffers, isVertexShader, backend);
+    }
+
+    for (int i = 0; i < resources.storage_buffers.size(); ++i)
+    {
+        HandleBufferReflection(compiler, resources.storage_buffers[i], i, reflection.Buffers, isVertexShader, backend);
     }
 
     if (resources.sampled_images.empty())

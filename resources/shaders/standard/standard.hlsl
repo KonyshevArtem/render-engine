@@ -48,12 +48,12 @@ SamplerState sampler_NormalMap;
 Texture2D _Data;
 SamplerState sampler_Data;
 
-Varyings vertexMain(Attributes attributes)
+Varyings vertexMain(Attributes attributes, uint instanceID : SV_InstanceID)
 {
     Varyings vars;
 
 //    TRANSFER_INSTANCE_ID_VARYING(vars)
-//    SETUP_INSTANCE_ID(vars)
+    SETUP_INSTANCE_ID(instanceID)
 
     float3 vertPos = attributes.vertPositionOS;
 //#ifdef _PER_INSTANCE_DATA

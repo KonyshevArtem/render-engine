@@ -4,8 +4,6 @@
 #include "bounds/bounds.h"
 #include "drawable_geometry/drawable_geometry.h"
 
-#include <memory>
-
 struct Vector2;
 struct Vector3;
 class Material;
@@ -13,6 +11,7 @@ class Material;
 class Mesh: public DrawableGeometry
 {
 public:
+    Mesh(const std::vector<Vector3>& vertices, const std::vector<int>& indices);
     Mesh(const std::vector<Vector3> &_vertices,
          const std::vector<Vector3> &_normals,
          const std::vector<int>     &_indexes,

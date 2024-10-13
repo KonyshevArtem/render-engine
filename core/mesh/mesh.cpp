@@ -4,6 +4,11 @@
 
 #include <span>
 
+Mesh::Mesh(const std::vector<Vector3>& vertices, const std::vector<int>& indices)
+    : Mesh(vertices, std::vector<Vector3>(), indices, std::vector<Vector2>(), std::vector<Vector3>())
+{
+}
+
 Mesh::Mesh(const std::vector<Vector3> &_vertices,
            const std::vector<Vector3> &_normals,
            const std::vector<int>     &_indexes,

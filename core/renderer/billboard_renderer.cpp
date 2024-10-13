@@ -1,14 +1,17 @@
 #include "billboard_renderer.h"
 #include "material/material.h"
-#include "point/point.h"
+#include "mesh/mesh.h"
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
-#include <vector>
 
 BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, const std::shared_ptr<Texture2D> &_texture) :
-    Renderer(_gameObject, nullptr), m_Point(std::make_shared<Point>())
+    Renderer(_gameObject, nullptr)
 {
-    static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard/billboard", {}, {}, {}, {});
+    static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard/billboard", {}, {}, {CullFace::NONE}, {});
+    static std::vector<Vector3> points(4);
+    static std::vector<int> indices{0, 1, 2, 1, 2, 3};
+
+    m_Mesh = std::make_shared<Mesh>(points, indices);
 
     m_Material = std::make_shared<Material>(shader);
     m_Material->SetTexture("_Texture", _texture);
@@ -23,7 +26,7 @@ Bounds BillboardRenderer::GetAABB() const
 
 std::shared_ptr<DrawableGeometry> BillboardRenderer::GetGeometry() const
 {
-    return m_Point;
+    return m_Mesh;
 }
 
 void BillboardRenderer::SetSize(float _size)

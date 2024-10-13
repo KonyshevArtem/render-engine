@@ -1,4 +1,4 @@
-#include "../common/graphics_backend_macros2.h"
+#include "../common/global_defines.h"
 
 #define NONE                                    0
 #define REINHARD_SIMPLE                         1

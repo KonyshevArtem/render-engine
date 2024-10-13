@@ -1,12 +1,8 @@
 #ifndef LIGHTING
 #define LIGHTING
 
-//#include "shadows.h"
-
-#define MAX_POINT_LIGHT_SOURCES    3
-#define MAX_SPOT_LIGHT_SOURCES     3
-
-#define PI 3.14159265359
+#include "global_defines.h"
+#include "shadows2.h"
 
 
 /// Data ///
@@ -101,12 +97,7 @@ float3 getLightBlinnPhong(float3 posWS, float3 normalWS, float3 albedo, float4 s
     {
         float3 lightDirWS = normalize(-_DirLightDirectionWS);
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
-
-#ifdef _RECEIVE_SHADOWS
-        float shadowTerm = getDirLightShadowTerm(PASS_TEXTURE_PARAMETER(dirLightShadowMap, dirLightShadowMapSampler), shadowsData, posWS, lightAngleCos);
-#else
-        float shadowTerm = 1;
-#endif
+        float shadowTerm = getDirLightShadowTerm(posWS, lightAngleCos);
 
         directLighting += albedo * _DirLightIntensity * lightAngleCos * shadowTerm;
         directLighting += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS);
@@ -134,11 +125,7 @@ float3 getLightBlinnPhong(float3 posWS, float3 normalWS, float3 albedo, float4 s
         attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0.0, 1.0);
         attenuationTerm *= step(_SpotLights[i].CutOffCos, cutOffCos);
 
-#ifdef _RECEIVE_SHADOWS
-        float shadowTerm = getSpotLightShadowTerm(PASS_TEXTURE_PARAMETER(spotLightShadowMap, spotLightShadowMapSampler), shadowsData, i, posWS, lightAngleCos);
-#else
-        float shadowTerm = 1;
-#endif
+        float shadowTerm = getSpotLightShadowTerm(i, posWS, lightAngleCos);
 
         directLighting += albedo * _SpotLights[i].Intensity * lightAngleCos * attenuationTerm * shadowTerm;
         directLighting += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
@@ -224,11 +211,7 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
         float3 lightDirWS = normalize(-_DirLightDirectionWS);
         
         float NdotL = max(dot(normalWS, lightDirWS), 0.0);
-#ifdef _RECEIVE_SHADOWS
-        float shadowTerm = getDirLightShadowTerm(PASS_TEXTURE_PARAMETER(dirLightShadowMap, dirLightShadowMapSampler), shadowsData, posWS, NdotL);
-#else
-        float shadowTerm = 1;
-#endif
+        float shadowTerm = getDirLightShadowTerm(posWS, NdotL);
         float3 radiance = _DirLightIntensity * NdotL * shadowTerm;
 
         getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness, diffuse, specular);
@@ -241,12 +224,7 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
         float NdotL = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
         float dist = distance(_PointLights[i].PositionWS, posWS);
         float attenuationTerm = 1 / (1 + _PointLights[i].Attenuation * dist * dist);
-
-#ifdef _RECEIVE_SHADOWS
-        float shadowTerm = getPointLightShadowTerm(PASS_TEXTURE_PARAMETER(pointLightShadowMap, pointLightShadowMapSampler), shadowsData, i, posWS, NdotL);
-#else
-        float shadowTerm = 1;
-#endif
+        float shadowTerm = getPointLightShadowTerm(i, posWS, NdotL);
         float3 radiance = _PointLights[i].Intensity * NdotL * attenuationTerm * shadowTerm;
 
         getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness, diffuse, specular);
@@ -263,12 +241,7 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
         float attenuationTerm = 1 / (1 + _SpotLights[i].Attenuation * dist * dist);
         attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0.0, 1.0);
         attenuationTerm *= step(_SpotLights[i].CutOffCos, cutOffCos);
-
-#ifdef _RECEIVE_SHADOWS
-        float shadowTerm = getSpotLightShadowTerm(PASS_TEXTURE_PARAMETER(spotLightShadowMap, spotLightShadowMapSampler), shadowsData, i, posWS, NdotL);
-#else
-        float shadowTerm = 1;
-#endif
+        float shadowTerm = getSpotLightShadowTerm(i, posWS, NdotL);
         float3 radiance = _SpotLights[i].Intensity * NdotL * attenuationTerm * shadowTerm;
 
         getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness, diffuse, specular);

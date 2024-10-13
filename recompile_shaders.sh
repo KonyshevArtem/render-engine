@@ -42,3 +42,9 @@
 
 ./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/shadowCaster/shadowCaster.hlsl
 ./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/shadowCaster/shadowCaster.hlsl
+
+./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/outline/outlineBlit.hlsl
+./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/outline/outlineBlit.hlsl
+
+./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/outline/silhouette.hlsl
+./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/outline/silhouette.hlsl

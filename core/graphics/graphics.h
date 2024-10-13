@@ -27,7 +27,6 @@ namespace Graphics
     void                      DrawRenderers(const std::vector<std::shared_ptr<Renderer>> &renderers, const RenderSettings &settings);
     void                      Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr);
     void                      DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr);
-    const std::string        &GetGlobalShaderDirectives();
     void                      SetCameraData(const Matrix4x4 &_viewMatrix, Matrix4x4 _projectionMatrix);
     int                       GetScreenWidth();
     int                       GetScreenHeight();

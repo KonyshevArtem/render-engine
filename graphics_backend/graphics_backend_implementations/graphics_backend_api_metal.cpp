@@ -1,7 +1,6 @@
 #if RENDER_ENGINE_APPLE
 
 #include "graphics_backend_api_metal.h"
-#include "enums/texture_data_type.h"
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
 #include "enums/framebuffer_attachment.h"
@@ -11,13 +10,11 @@
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_geometry.h"
-#include "types/graphics_backend_texture_info.h"
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "types/graphics_backend_depth_stencil_state.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "helpers/metal_helpers.h"
-#include "debug.h"
 
 #include "Metal/Metal.hpp"
 
@@ -28,12 +25,6 @@ void GraphicsBackendMetal::Init(void *device)
 {
     m_Device = reinterpret_cast<MTL::Device*>(device);
     m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
-}
-
-const std::string &GraphicsBackendMetal::GetShadingLanguageDirective()
-{
-    static const std::string directives = "#include <metal_stdlib>\nusing namespace metal;\n#define METAL_SHADER\n";
-    return directives;
 }
 
 GraphicsBackendName GraphicsBackendMetal::GetName()
@@ -359,8 +350,7 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
 }
 
 GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
-                                                           const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                                                           std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers)
+                                                           const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
     MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
 
@@ -409,16 +399,13 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
     layoutDesc->setStepRate(1);
     layoutDesc->setStepFunction(MTL::VertexStepFunctionPerVertex);
 
-    MTL::AutoreleasedRenderPipelineReflection reflection;
-    MTL::PipelineOption options = textures && buffers ? MTL::PipelineOptionArgumentInfo | MTL::PipelineOptionBufferTypeInfo : MTL::PipelineOptionNone;
-    auto *pso = m_Device->newRenderPipelineState(desc, options, &reflection, &s_Error);
+    MTL::PipelineOption options = MTL::PipelineOptionNone;
+    auto *pso = m_Device->newRenderPipelineState(desc, options, nullptr, &s_Error);
 
     if (s_Error != nullptr)
     {
         throw std::runtime_error(s_Error->localizedDescription()->utf8String());
     }
-
-    IntrospectProgram(reflection, textures, buffers);
 
     GraphicsBackendProgram program{};
     program.Program = reinterpret_cast<uint64_t>(pso);
@@ -433,105 +420,6 @@ void GraphicsBackendMetal::DeleteShader(GraphicsBackendShaderObject shader)
 void GraphicsBackendMetal::DeleteProgram(GraphicsBackendProgram program)
 {
     reinterpret_cast<MTL::RenderPipelineState*>(program.Program)->release();
-}
-
-void SetBindingIndex(GraphicsBackendResourceBindings &bindings, int index, bool isVertexShader)
-{
-    if (isVertexShader)
-    {
-        bindings.VertexIndex = index;
-    }
-    else
-    {
-        bindings.FragmentIndex = index;
-    }
-}
-
-void ParseArguments(NS::Array *arguments, std::unordered_map<std::string, GraphicsBackendTextureInfo> &textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> &buffers, bool isVertexShader)
-{
-    for (int i = 0; i < arguments->count(); ++i)
-    {
-        auto argument = reinterpret_cast<MTL::Argument*>(arguments->object(i));
-
-        auto type = argument->type();
-        auto name = argument->name()->utf8String();
-        auto index = argument->index();
-
-        if (type == MTL::ArgumentType::ArgumentTypeBuffer)
-        {
-            auto it = buffers.find(name);
-            if (it != buffers.end())
-            {
-                auto bindings = it->second->GetBinding();
-                SetBindingIndex(bindings, index, isVertexShader);
-                it->second->SetBindings(bindings);
-            }
-            else
-            {
-                std::unordered_map<std::string, int> variables;
-
-                auto members = argument->bufferStructType()->members();
-                for (int j = 0; j < members->count(); ++j)
-                {
-                    auto member = reinterpret_cast<MTL::StructMember*>(members->object(j));
-                    variables[member->name()->utf8String()] = member->offset();
-                }
-
-                auto bufferSize = argument->bufferDataSize();
-                auto buffer = std::make_shared<GraphicsBackendBufferInfo>(GraphicsBackendBufferInfo::BufferType::SHADER_STORAGE, bufferSize, variables);
-
-                GraphicsBackendResourceBindings bindings;
-                SetBindingIndex(bindings, index, isVertexShader);
-                buffer->SetBindings(bindings);
-
-                buffers[name] = buffer;
-            }
-        }
-        else if (type == MTL::ArgumentType::ArgumentTypeTexture)
-        {
-            auto it = textures.find(name);
-            if (it != textures.end())
-            {
-                SetBindingIndex(it->second.TextureBindings, index, isVertexShader);
-            }
-            else
-            {
-                GraphicsBackendTextureInfo textureInfo;
-                textureInfo.Type = MetalHelpers::FromTextureDataType(argument->textureDataType(), argument->textureType());
-                SetBindingIndex(textureInfo.TextureBindings, index, isVertexShader);
-
-                textures[name] = textureInfo;
-            }
-        }
-        else if (type == MTL::ArgumentType::ArgumentTypeSampler)
-        {
-            bool textureFound = false;
-            for (auto &it : textures)
-            {
-                auto &info = it.second;
-                if (isVertexShader && info.TextureBindings.VertexIndex == index ||
-                    !isVertexShader && info.TextureBindings.FragmentIndex == index)
-                {
-                    info.HasSampler = true;
-                    textureFound = true;
-                }
-            }
-
-            if (!textureFound)
-            {
-                Debug::LogErrorFormat("Sampler %1% on index %2% is declared before or without a texture", {name, std::to_string(index)});
-            }
-        }
-    }
-}
-
-void GraphicsBackendMetal::IntrospectProgram(MTL::RenderPipelineReflection* reflection, std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers)
-{
-    if (reflection && textures && buffers)
-    {
-        ParseArguments(reflection->vertexArguments(), *textures, *buffers, true);
-        ParseArguments(reflection->fragmentArguments(), *textures, *buffers, false);
-    }
 }
 
 bool GraphicsBackendMetal::RequireStrictPSODescriptor()

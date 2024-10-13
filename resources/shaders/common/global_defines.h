@@ -1,6 +1,8 @@
 #ifndef GLOBAL_DEFINES_H
 #define GLOBAL_DEFINES_H
 
+// Keep in-sync with core/global_constants.h
+
 #define MAX_POINT_LIGHT_SOURCES    3
 #define MAX_SPOT_LIGHT_SOURCES     3
 

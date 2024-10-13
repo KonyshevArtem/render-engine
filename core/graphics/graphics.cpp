@@ -477,7 +477,6 @@ namespace Graphics
             SetGraphicsBuffer(GlobalConstants::InstanceMatricesBufferName, instancingMatricesBuffer, shaderPass);
         }
 
-        SetTextures(shaderPass.GetDefaultTextures(), shaderPass);
         SetTextures(globalTextures, shaderPass);
         SetTextures(material.GetTextures(), shaderPass);
     }
@@ -624,19 +623,6 @@ namespace Graphics
         cameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
 
         lastCameraPosition = cameraData.CameraPosition;
-    }
-
-    const std::string &GetGlobalShaderDirectives()
-    {
-        // clang-format off
-        static std::string globalShaderDirectives = GraphicsBackend::Current()->GetShadingLanguageDirective() + "\n"
-                                                    "#define MAX_POINT_LIGHT_SOURCES " + std::to_string(GlobalConstants::MaxPointLightSources) + "\n"
-                                                    "#define MAX_SPOT_LIGHT_SOURCES " + std::to_string(GlobalConstants::MaxSpotLightSources) + "\n"
-                                                    "#define MAX_INSTANCING_COUNT " + std::to_string(GlobalConstants::MaxInstancingCount) + "\n"
-                                                    "#define SUPPORT_SSBO " + std::to_string(GraphicsBackend::Current()->SupportShaderStorageBuffer() ? 1 : 0) + "\n";
-        // clang-format on
-
-        return globalShaderDirectives;
     }
 
     void SetRenderTarget(GraphicsBackendRenderTargetDescriptor descriptor, const std::shared_ptr<Texture> &target)

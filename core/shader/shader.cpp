@@ -2,32 +2,14 @@
 #include "shader_pass/shader_pass.h"
 #include "shader_loader/shader_loader.h"
 
-
-std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords)
-{
-    auto shader = ShaderLoader::Load(_path, _keywords);
-
-    if (!shader)
-    {
-        auto fallback = ShaderLoader::Load("resources/shaders/fallback/fallback.shader", _keywords);
-
-        if (!fallback)
-            exit(1);
-
-        return fallback;
-    }
-
-    return shader;
-}
-
-std::shared_ptr<Shader> Shader::Load2(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
+std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
     BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo)
 {
-    auto shader = ShaderLoader::Load2(_path, _keywords, blendInfo, cullInfo, depthInfo);
+    auto shader = ShaderLoader::Load(_path, _keywords, blendInfo, cullInfo, depthInfo);
 
     if (!shader)
     {
-        auto fallback = ShaderLoader::Load2("resources/shaders/fallback/fallback", {}, {}, {}, {});
+        auto fallback = ShaderLoader::Load("resources/shaders/fallback/fallback", {}, {}, {}, {});
 
         if (!fallback)
             exit(1);

@@ -9,7 +9,7 @@
 #include "texture_2d_array/texture_2d_array.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug_group.h"
-#include "shader/shader_loader/shader_loader.h"
+#include "shader/shader.h"
 
 ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsUniformBlock) :
     m_ShadowsUniformBlock(std::move(shadowsUniformBlock)),
@@ -128,7 +128,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
 void ShadowCasterPass::Render(const std::vector<std::shared_ptr<Renderer>> &_renderers, const Vector4& viewport)
 {
-    static std::shared_ptr<Material> material = std::make_shared<Material>(ShaderLoader::Load2("resources/shaders/shadowCaster/shadowCaster", {}, {}, {}, {}));
+    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("resources/shaders/shadowCaster/shadowCaster", {}, {}, {}, {}));
     static RenderSettings renderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material};
 
     GraphicsBackend::Current()->BeginRenderPass();

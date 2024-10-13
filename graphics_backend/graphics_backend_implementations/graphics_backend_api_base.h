@@ -45,7 +45,6 @@ public:
     static GraphicsBackendBase *Create(const std::string &backend);
 
     virtual void Init(void *device) = 0;
-    virtual const std::string &GetShadingLanguageDirective() = 0;
     virtual GraphicsBackendName GetName() = 0;
     virtual void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) = 0;
 
@@ -89,8 +88,7 @@ public:
     virtual void SetViewport(int x, int y, int width, int height, float near, float far) = 0;
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) = 0;
-    virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                                                 std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers) = 0;
+    virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;
     virtual void DeleteShader(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;

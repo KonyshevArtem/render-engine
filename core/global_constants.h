@@ -1,8 +1,7 @@
 #ifndef RENDER_ENGINE_GLOBAL_CONSTANTS_H
 #define RENDER_ENGINE_GLOBAL_CONSTANTS_H
 
-#include <string>
-
+// Keep in-sync with shaders/common/global_defines.h
 namespace GlobalConstants
 {
     constexpr const char *ShadowsBufferName = "Shadows";

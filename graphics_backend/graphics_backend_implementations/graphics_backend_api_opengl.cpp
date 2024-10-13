@@ -106,12 +106,6 @@ const std::string &GraphicsBackendOpenGL::GetGLSLVersionString()
     return glslVersion;
 }
 
-const std::string &GraphicsBackendOpenGL::GetShadingLanguageDirective()
-{
-    static std::string languageDirective = GetGLSLVersionString() + "\n#define OPENGL_SHADER\n";
-    return languageDirective;
-}
-
 GraphicsBackendName GraphicsBackendOpenGL::GetName()
 {
     return GraphicsBackendName::OPENGL;
@@ -501,8 +495,7 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
 }
 
 GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
-                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                                                            std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers)
+                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
     GraphicsBackendProgram program{};
     program.Program = CHECK_GRAPHICS_BACKEND_FUNC(glCreateProgram())
@@ -546,8 +539,6 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<Gr
     blendState->Enabled = colorAttachmentDescriptor.BlendingEnabled;
     program.BlendState = reinterpret_cast<uint64_t>(blendState);
 
-    IntrospectProgram(program, textures, buffers);
-
     return program;
 }
 
@@ -562,117 +553,6 @@ void GraphicsBackendOpenGL::DeleteProgram(GraphicsBackendProgram program)
 
     auto blendState = reinterpret_cast<BlendState*>(program.BlendState);
     delete blendState;
-}
-
-void GraphicsBackendOpenGL::IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers)
-{
-    static const std::string perInstanceStructName = "PerInstance[1]";
-    static const std::string perInstanceDataBufferName = "PerInstanceData";
-
-    std::vector<char> nameBuffer(GetNameBufferSize(program));
-
-    // Uniforms
-
-    if (textures)
-    {
-        int uniformCount;
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_ACTIVE_UNIFORMS, &uniformCount))
-
-        int binding = 0;
-        for (unsigned int i = 0; i < uniformCount; ++i)
-        {
-            int blockIndex;
-            CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformsiv(program.Program, 1, &i, GL_UNIFORM_BLOCK_INDEX, &blockIndex))
-            if (blockIndex >= 0)
-            {
-                continue;
-            }
-
-            GraphicsBackendTextureInfo textureInfo{};
-
-            GLenum uniformType;
-            int uniformNameLength;
-            CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniform(program.Program, i, nameBuffer.size(), &uniformNameLength, nullptr, &uniformType, &nameBuffer[0]))
-
-            if (OpenGLHelpers::IsTexture(uniformType))
-            {
-                std::string textureName(nameBuffer.begin(), nameBuffer.begin() + uniformNameLength);
-
-                GLint location = CHECK_GRAPHICS_BACKEND_FUNC(glGetUniformLocation(program.Program, &textureName[0]))
-                textureInfo.HasSampler = true;
-                textureInfo.TextureBindings = GraphicsBackendResourceBindings{binding, location};
-                textureInfo.Type = OpenGLHelpers::FromTextureDataType(uniformType);
-                ++binding;
-
-                (*textures)[textureName] = textureInfo;
-            }
-        }
-    }
-
-    // UBO
-
-    if (buffers)
-    {
-        int uniformBlocksCount;
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_ACTIVE_UNIFORM_BLOCKS, &uniformBlocksCount))
-
-        for (int i = 0; i < uniformBlocksCount; ++i)
-        {
-            CHECK_GRAPHICS_BACKEND_FUNC(glUniformBlockBinding(program.Program, i, i))
-
-            int nameSize;
-            CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockName(program.Program, i, nameBuffer.size(), &nameSize, &nameBuffer[0]))
-            std::string uniformBlockName(nameBuffer.begin(), nameBuffer.begin() + nameSize);
-
-            int blockSize;
-            CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockiv(program.Program, i, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize))
-
-            auto variables = GetUniformBlockVariables(program, i, nameBuffer);
-
-            // special hack for PerInstanceData buffer when SSBO is not supported
-            // replace real block size with array stride so each renderer allocates buffer to store only 1 element
-            // for SSBO this happens by default, when it has an array without size - returned block size is equal to the size of 1 element
-            if (uniformBlockName == perInstanceDataBufferName)
-            {
-                for (const auto &pair: variables)
-                {
-                    if (pair.first.find(perInstanceStructName) != std::string::npos)
-                    {
-                        blockSize = std::min(blockSize, pair.second);
-                    }
-                }
-            }
-
-            auto buffer = std::make_shared<GraphicsBackendBufferInfo>(GraphicsBackendBufferInfo::BufferType::UNIFORM, blockSize, variables);
-            buffer->SetBindings({i, i});
-            (*buffers)[uniformBlockName] = buffer;
-        }
-
-        // SSBO
-
-#ifdef GL_ARB_program_interface_query
-        int blocksCount;
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInterfaceiv(program.Program, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &blocksCount))
-
-        for (int i = 0; i < blocksCount; ++i)
-        {
-            CHECK_GRAPHICS_BACKEND_FUNC(glShaderStorageBlockBinding(program.Program, i, i))
-
-            int nameSize;
-            CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceName(program.Program, GL_SHADER_STORAGE_BLOCK, i, nameBuffer.size(), &nameSize, nameBuffer.data()))
-            std::string blockName(nameBuffer.begin(), nameBuffer.begin() + nameSize);
-
-            int blockSize;
-            auto blockSizeParameter = GL_BUFFER_DATA_SIZE;
-            CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, GL_SHADER_STORAGE_BLOCK, i, 1, &blockSizeParameter, 1, nullptr, &blockSize))
-
-            auto variables = GetShaderStorageBlockVariables(program, i);
-            auto buffer = std::make_shared<GraphicsBackendBufferInfo>(GraphicsBackendBufferInfo::BufferType::SHADER_STORAGE, blockSize, variables);
-            buffer->SetBindings({i, i});
-            (*buffers)[blockName] = buffer;
-        }
-#endif
-    }
 }
 
 bool GraphicsBackendOpenGL::RequireStrictPSODescriptor()
@@ -844,80 +724,4 @@ void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStenc
         CHECK_GRAPHICS_BACKEND_FUNC(glDepthFunc(glState->DepthFunction))
         CHECK_GRAPHICS_BACKEND_FUNC(glDepthMask(glState->DepthWrite))
     }
-}
-
-int GraphicsBackendOpenGL::GetNameBufferSize(GraphicsBackendProgram program)
-{
-    int uniformNameLength = 0;
-    int uniformBlockNameLength = 0;
-    int shaderStorageBlockNameLength = 0;
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &uniformNameLength))
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &uniformBlockNameLength))
-#ifdef GL_ARB_program_interface_query
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInterfaceiv(program.Program, GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &shaderStorageBlockNameLength))
-#endif
-    return std::max(uniformNameLength, std::max(uniformBlockNameLength, shaderStorageBlockNameLength));
-}
-
-std::unordered_map<std::string, int> GraphicsBackendOpenGL::GetUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockIndex, std::vector<char> nameBuffer)
-{
-    int uniformsCount;
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockiv(program.Program, uniformBlockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniformsCount))
-
-    std::vector<int> uniformsIndices(uniformsCount);
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformBlockiv(program.Program, uniformBlockIndex, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &uniformsIndices[0]))
-
-    std::unordered_map<std::string, int> variables;
-    for (unsigned int i = 0; i < uniformsCount; ++i)
-    {
-        int uniformNameLength;
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniform(program.Program, uniformsIndices[i], nameBuffer.size(), &uniformNameLength, nullptr, nullptr, &nameBuffer[0]))
-        std::string uniformName(nameBuffer.begin(), nameBuffer.begin() + uniformNameLength);
-
-        size_t lastDotPos = uniformName.find_last_of('.');
-        if (lastDotPos != std::string::npos)
-        {
-            uniformName = uniformName.substr(lastDotPos + 1);
-        }
-
-        int uniformOffset;
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetActiveUniformsiv(program.Program, 1, reinterpret_cast<unsigned int *>(&uniformsIndices[i]), GL_UNIFORM_OFFSET, &uniformOffset))
-
-        variables[uniformName] = uniformOffset;
-    }
-
-    return variables;
-}
-
-std::unordered_map<std::string, int> GraphicsBackendOpenGL::GetShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboIndex)
-{
-#ifdef GL_ARB_program_interface_query
-    int variablesCount;
-    auto variablesCountParameter = GL_NUM_ACTIVE_VARIABLES;
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, GL_SHADER_STORAGE_BLOCK, ssboIndex, 1, &variablesCountParameter, 1, nullptr, &variablesCount))
-
-    std::vector<int> variablesIndices(variablesCount);
-    auto variablesIndicesParameter = GL_ACTIVE_VARIABLES;
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, GL_SHADER_STORAGE_BLOCK, ssboIndex, 1, &variablesIndicesParameter, variablesCount, nullptr, &variablesIndices[0]))
-
-    constexpr int variableParametersCount = 2;
-    GLenum variableParameters[variableParametersCount] = {GL_NAME_LENGTH, GL_OFFSET};
-
-    std::unordered_map<std::string, int> variables;
-    for(int i = 0; i < variablesCount; ++i)
-    {
-        int values[variableParametersCount];
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceiv(program.Program, GL_BUFFER_VARIABLE, variablesIndices[i], variableParametersCount, &variableParameters[0], variableParametersCount, nullptr, &values[0]))
-
-        std::vector<char> nameData(values[0]);
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramResourceName(program.Program, GL_BUFFER_VARIABLE, variablesIndices[i], nameData.size(), nullptr, &nameData[0]))
-        std::string name(nameData.begin(), nameData.end() - 1);
-
-        variables[name] = values[1];
-    }
-
-    return variables;
-#else
-    return {};
-#endif
 }

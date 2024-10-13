@@ -1,5 +1,5 @@
-#include "../common/per_draw_data.h"
-#include "../common/camera_data.h"
+#include "common/per_draw_data.h"
+#include "common/camera_data.h"
 
 struct Attributes
 {
@@ -13,5 +13,5 @@ float4 vertexMain(Attributes attributes) : SV_Position
 
 half4 fragmentMain() : SV_Target
 {
-    return (half4) 1.0h;
+    return (half4) 0.0h;
 }

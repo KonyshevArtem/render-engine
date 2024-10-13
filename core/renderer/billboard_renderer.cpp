@@ -7,7 +7,7 @@
 BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, const std::shared_ptr<Texture2D> &_texture) :
     Renderer(_gameObject, nullptr)
 {
-    static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard/billboard", {}, {}, {CullFace::NONE}, {});
+    static std::shared_ptr<Shader> shader = Shader::Load("resources/shaders/billboard", {}, {}, {CullFace::NONE}, {});
     static std::vector<Vector3> points(4);
     static std::vector<int> indices{0, 1, 2, 1, 2, 3};
 

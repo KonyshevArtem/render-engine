@@ -1,4 +1,4 @@
-#include "../common/global_defines.h"
+#include "common/global_defines.h"
 
 cbuffer PerMaterialData
 {

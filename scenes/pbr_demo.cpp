@@ -29,7 +29,7 @@ void PBRDemo::Init()
     auto sphereMesh  = sphereAsset->GetMesh(0);
 
     //init shader
-    auto shader = Shader::Load("resources/shaders/standard/standard", {"_SPECULAR", "_REFLECTION", "_NORMAL_MAP"}, {}, {}, {});
+    auto shader = Shader::Load("resources/shaders/standard", {"_SPECULAR", "_REFLECTION", "_NORMAL_MAP"}, {}, {}, {});
 
     //init skybox
     Skybox = Cubemap::Load("resources/textures/skybox/skybox");

@@ -1,5 +1,5 @@
-#include "../common/camera_data.h"
-#include "../common/per_draw_data.h"
+#include "common/camera_data.h"
+#include "common/per_draw_data.h"
 
 struct Attributes
 {

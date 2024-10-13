@@ -128,7 +128,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
 void ShadowCasterPass::Render(const std::vector<std::shared_ptr<Renderer>> &_renderers, const Vector4& viewport)
 {
-    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("resources/shaders/shadowCaster/shadowCaster", {}, {}, {}, {}));
+    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("resources/shaders/shadowCaster", {}, {}, {}, {}));
     static RenderSettings renderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material};
 
     GraphicsBackend::Current()->BeginRenderPass();

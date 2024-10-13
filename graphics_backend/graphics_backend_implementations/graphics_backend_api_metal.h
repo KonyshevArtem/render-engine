@@ -21,7 +21,6 @@ class GraphicsBackendMetal : public GraphicsBackendBase
 {
 public:
     void Init(void *device) override;
-    const std::string &GetShadingLanguageDirective() override;
     GraphicsBackendName GetName() override;
     void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) override;
 
@@ -65,8 +64,7 @@ public:
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
-    GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                                         std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers) override;
+    GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;
     void DeleteShader(GraphicsBackendShaderObject shader) override;
     void DeleteProgram(GraphicsBackendProgram program) override;
     void UseProgram(GraphicsBackendProgram program) override;
@@ -101,7 +99,6 @@ private:
     MTL::RenderPassDescriptor *m_RenderPassDescriptor = nullptr;
     MTL::RenderCommandEncoder *m_CurrentCommandEncoder = nullptr;
 
-    void IntrospectProgram(MTL::RenderPipelineReflection* reflection, std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers);
     MTL::Texture* GetTextureFromDescriptor(const GraphicsBackendRenderTargetDescriptor& descriptor);
 };
 

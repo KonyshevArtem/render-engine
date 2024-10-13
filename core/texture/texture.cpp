@@ -31,6 +31,15 @@ void Texture::Bind(const GraphicsBackendResourceBindings &bindings, bool bindSam
     }
 }
 
+void Texture::Bind(const GraphicsBackendResourceBindings &textureBindings, const GraphicsBackendResourceBindings *samplerBindingsPtr) const
+{
+    GraphicsBackend::Current()->BindTexture(textureBindings, m_Texture);
+    if (samplerBindingsPtr)
+    {
+        GraphicsBackend::Current()->BindSampler(*samplerBindingsPtr, m_Sampler);
+    }
+}
+
 void Texture::SetMinMipLevel(int minMipLevel)
 {
     m_MinLod = minMipLevel;

@@ -10,7 +10,6 @@ public:
     void Init(void *device) override;
 
     const std::string &GetGLSLVersionString();
-    const std::string &GetShadingLanguageDirective() override;
     GraphicsBackendName GetName() override;
     void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) override;
 
@@ -54,8 +53,7 @@ public:
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
-    GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                                         std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers) override;
+    GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;
     void DeleteShader(GraphicsBackendShaderObject shader) override;
     void DeleteProgram(GraphicsBackendProgram program) override;
     void UseProgram(GraphicsBackendProgram program) override;
@@ -85,11 +83,6 @@ public:
 
 private:
     std::set<std::string> m_Extensions;
-
-    void IntrospectProgram(GraphicsBackendProgram program, std::unordered_map<std::string, GraphicsBackendTextureInfo>* textures, std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* buffers);
-    int GetNameBufferSize(GraphicsBackendProgram program);
-    std::unordered_map<std::string, int> GetUniformBlockVariables(GraphicsBackendProgram program, int uniformBlockIndex, std::vector<char> nameBuffer);
-    std::unordered_map<std::string, int> GetShaderStorageBlockVariables(GraphicsBackendProgram program, int ssboIndex);
 };
 
 

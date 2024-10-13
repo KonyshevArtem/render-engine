@@ -22,7 +22,7 @@ void ShadowsDemo::Init()
     Camera::Init(60, 0.5f, 100, 100);
 
     // init shaders
-    auto standardOpaqueShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
+    auto standardOpaqueShader = Shader::Load("resources/shaders/standard/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
 
     // init meshes
     auto cubeMesh = FBXAsset::Load("resources/models/cube.fbx")->GetMesh(0);

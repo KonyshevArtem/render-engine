@@ -26,7 +26,8 @@ void CheckTexture(std::shared_ptr<Texture2D> &_texture)
 
 void SelectionOutlinePass::Execute(Context &_context)
 {
-    static std::shared_ptr<Material>  outlineMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/outline/outlineBlit.shader", {}));
+    static std::shared_ptr<Material>  blitMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/outline/outlineBlit", {}, {}, {}, {false, DepthFunction::ALWAYS}));
+    static std::shared_ptr<Material>  outlineMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/outline/silhouette", {}, {}, {}, {false, DepthFunction::ALWAYS}));
     static std::shared_ptr<Texture2D> outlineTexture  = nullptr;
     static Vector4                    outlineColor {1, 0.73f, 0, 1};
     static GraphicsBackendRenderTargetDescriptor colorTarget { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
@@ -66,7 +67,7 @@ void SelectionOutlinePass::Execute(Context &_context)
                     }
                     else
                     {
-                        Graphics::Draw(*geometry, *outlineMaterial, renderer->GetModelMatrix(), 1);
+                        Graphics::Draw(*geometry, *outlineMaterial, renderer->GetModelMatrix(), 0);
                     }
                 }
             }
@@ -79,9 +80,9 @@ void SelectionOutlinePass::Execute(Context &_context)
 
     // blit to screen
     {
-        outlineMaterial->SetVector("_Color", outlineColor);
+        blitMaterial->SetVector("_Color", outlineColor);
 
-        Graphics::Blit(outlineTexture, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *outlineMaterial);
+        Graphics::Blit(outlineTexture, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *blitMaterial);
     }
 }
 

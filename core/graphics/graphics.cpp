@@ -14,7 +14,6 @@
 #include "graphics_buffer/graphics_buffer.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug_group.h"
-#include "enums/cull_face_orientation.h"
 #include "enums/indices_data_type.h"
 #include "shader/shader.h"
 #include "shader/shader_pass/shader_pass.h"
@@ -30,6 +29,7 @@
 #include "editor/selection_outline/selection_outline_pass.h"
 #include "graphics_settings.h"
 #include "graphics_buffer/ring_buffer.h"
+#include "types/graphics_backend_sampler_info.h"
 
 #include <cassert>
 #include <boost/functional/hash/hash.hpp>
@@ -373,18 +373,28 @@ namespace Graphics
     void SetTextures(const std::unordered_map<std::string, std::shared_ptr<Texture>> &textures, const ShaderPass &shaderPass)
     {
         const auto &shaderTextures = shaderPass.GetTextures();
+        const auto &shaderSamplers = shaderPass.GetSamplers();
 
         for (const auto &pair: textures)
         {
-            if (!pair.second)
+            const auto &texName = pair.first;
+            const auto &texture = pair.second;
+
+            if (!texture)
                 continue;
 
-            auto it = shaderTextures.find(pair.first);
-            if (it == shaderTextures.end())
+            auto texInfoIt = shaderTextures.find(texName);
+            if (texInfoIt == shaderTextures.end())
                 continue;
 
-            const auto& textureInfo = it->second;
-            pair.second->Bind(textureInfo.TextureBindings, textureInfo.HasSampler);
+            const auto& textureInfo = texInfoIt->second;
+            const auto samplerName = "sampler" + texName;
+
+            auto samplerInfoIt = shaderSamplers.find(samplerName);
+            if (samplerInfoIt == shaderSamplers.end())
+                texture->Bind(textureInfo.TextureBindings, textureInfo.HasSampler);
+            else
+                texture->Bind(textureInfo.TextureBindings, &samplerInfoIt->second.Bindings);
         }
     }
 
@@ -467,7 +477,6 @@ namespace Graphics
             SetGraphicsBuffer(GlobalConstants::InstanceMatricesBufferName, instancingMatricesBuffer, shaderPass);
         }
 
-        SetTextures(shaderPass.GetDefaultTextures(), shaderPass);
         SetTextures(globalTextures, shaderPass);
         SetTextures(material.GetTextures(), shaderPass);
     }
@@ -525,22 +534,19 @@ namespace Graphics
 
         for (const auto &drawCall: filteredSortedDrawCalls)
         {
-            const auto &shader = drawCall.Material->GetShader();
+            const auto &shader = settings.OverrideMaterial ? settings.OverrideMaterial->GetShader() : drawCall.Material->GetShader();
             for (int i = 0; i < shader->PassesCount(); ++i)
             {
                 auto pass = shader->GetPass(i);
-                if (settings.TagsMatch(*pass))
+                if (drawCall.Instanced)
                 {
-                    if (drawCall.Instanced)
-                    {
-                        SetupPerInstanceData(instancedDataBuffers[drawCall.InstancesDataIndex], i);
-                        DrawInstanced(*drawCall.Geometry, *drawCall.Material, instancedMatrices[drawCall.InstancesDataIndex], i, instancingDataBuffer);
-                    }
-                    else
-                    {
-                        auto &instanceDataBuffer = drawCall.InstanceDataBuffer ? drawCall.InstanceDataBuffer->GetBuffer(i) : nullptr;
-                        Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrix, i, instanceDataBuffer);
-                    }
+                    SetupPerInstanceData(instancedDataBuffers[drawCall.InstancesDataIndex], i);
+                    DrawInstanced(*drawCall.Geometry, *drawCall.Material, instancedMatrices[drawCall.InstancesDataIndex], i, instancingDataBuffer);
+                }
+                else
+                {
+                    auto &instanceDataBuffer = drawCall.InstanceDataBuffer ? drawCall.InstanceDataBuffer->GetBuffer(i) : nullptr;
+                    Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrix, i, instanceDataBuffer);
                 }
             }
         }
@@ -617,19 +623,6 @@ namespace Graphics
         cameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
 
         lastCameraPosition = cameraData.CameraPosition;
-    }
-
-    const std::string &GetGlobalShaderDirectives()
-    {
-        // clang-format off
-        static std::string globalShaderDirectives = GraphicsBackend::Current()->GetShadingLanguageDirective() + "\n"
-                                                    "#define MAX_POINT_LIGHT_SOURCES " + std::to_string(GlobalConstants::MaxPointLightSources) + "\n"
-                                                    "#define MAX_SPOT_LIGHT_SOURCES " + std::to_string(GlobalConstants::MaxSpotLightSources) + "\n"
-                                                    "#define MAX_INSTANCING_COUNT " + std::to_string(GlobalConstants::MaxInstancingCount) + "\n"
-                                                    "#define SUPPORT_SSBO " + std::to_string(GraphicsBackend::Current()->SupportShaderStorageBuffer() ? 1 : 0) + "\n";
-        // clang-format on
-
-        return globalShaderDirectives;
     }
 
     void SetRenderTarget(GraphicsBackendRenderTargetDescriptor descriptor, const std::shared_ptr<Texture> &target)

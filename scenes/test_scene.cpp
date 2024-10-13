@@ -63,10 +63,10 @@ void TestScene::Init()
     Skybox = Cubemap::Load("resources/textures/skybox/skybox");
 
     // init shaders
-    auto standardOpaqueShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
-    auto standardOpaqueDataMapShader = Shader::Load("resources/shaders/standard/standard.shader", {"_DATA_MAP", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
-    auto standardTransparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", {"_RECEIVE_SHADOWS"});
-    auto standardInstancingShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_PER_INSTANCE_DATA", "_INSTANCING"});
+    auto standardOpaqueShader = Shader::Load("resources/shaders/standard/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
+    auto standardOpaqueDataMapShader = Shader::Load("resources/shaders/standard/standard", {"_DATA_MAP", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
+    auto standardTransparentShader = Shader::Load("resources/shaders/standard/standard", {"_RECEIVE_SHADOWS"}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA}, {}, {});
+    auto standardInstancingShader = Shader::Load("resources/shaders/standard/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_PER_INSTANCE_DATA", "_INSTANCING"}, {}, {}, {});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");

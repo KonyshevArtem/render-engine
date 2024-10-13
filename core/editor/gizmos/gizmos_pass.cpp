@@ -12,7 +12,7 @@
 
 void GizmosPass::Execute(Context &_context)
 {
-    static auto gizmosMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/gizmos/gizmos.shader", {"_INSTANCING"}));
+    static auto gizmosMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/gizmos/gizmos", {"_INSTANCING"}, {}, {}, {}));
 
     auto debugGroup = GraphicsBackendDebugGroup("Gizmos pass");
 

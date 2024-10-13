@@ -18,6 +18,7 @@ public:
     virtual ~Texture();
 
     void Bind(const GraphicsBackendResourceBindings &bindings, bool bindSampler) const;
+    void Bind(const GraphicsBackendResourceBindings &textureBindings, const GraphicsBackendResourceBindings *samplerBindingsPtr) const;
     void SetMinMipLevel(int minMipLevel);
     void SetWrapMode(TextureWrapMode wrapMode);
     void SetBorderColor(const Vector4 &color);

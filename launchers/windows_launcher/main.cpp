@@ -2,6 +2,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "graphics_backend_api.h"
+#include "graphics_backend_implementations/graphics_backend_api_opengl.h"
 
 #include <GLFW/glfw3.h>
 
@@ -49,7 +50,9 @@ int main(int argc, char **argv)
     EngineFramework::Initialize(nullptr, "OpenGL");
 
     ImGui_ImplGlfw_InitForOpenGL(s_Window, true);
-    ImGui_ImplOpenGL3_Init(GraphicsBackend::Current()->GetShadingLanguageDirective().c_str());
+
+    GraphicsBackendOpenGL* openGL = reinterpret_cast<GraphicsBackendOpenGL*>(GraphicsBackend::Current());
+    ImGui_ImplOpenGL3_Init(openGL->GetGLSLVersionString().c_str());
 
     while (!glfwWindowShouldClose(s_Window))
     {

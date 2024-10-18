@@ -21,9 +21,23 @@
 NS::Error *s_Error;
 const int s_MaxBuffers = 31;
 
-void GraphicsBackendMetal::Init(void *device)
+struct InitData
 {
-    m_Device = reinterpret_cast<MTL::Device*>(device);
+    MTL::Device* Device;
+    MTL::CommandBuffer* CommandBuffer;
+};
+
+struct NewFrameData
+{
+    MTL::CommandBuffer* CommandBuffer;
+    MTL::RenderPassDescriptor* BackbufferDescriptor;
+};
+
+void GraphicsBackendMetal::Init(void *data)
+{
+    auto metalData = reinterpret_cast<InitData*>(data);
+    m_Device = metalData->Device;
+    m_CommandBuffer = metalData->CommandBuffer;
     m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 }
 
@@ -32,10 +46,11 @@ GraphicsBackendName GraphicsBackendMetal::GetName()
     return GraphicsBackendName::METAL;
 }
 
-void GraphicsBackendMetal::PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor)
+void GraphicsBackendMetal::InitNewFrame(void *data)
 {
-    m_CommandBuffer = reinterpret_cast<MTL::CommandBuffer*>(commandBufferPtr);
-    m_BackbufferDescriptor = reinterpret_cast<MTL::RenderPassDescriptor*>(backbufferDescriptor);
+    auto metalData = reinterpret_cast<NewFrameData*>(data);
+    m_CommandBuffer = metalData->CommandBuffer;
+    m_BackbufferDescriptor = metalData->BackbufferDescriptor;
 }
 
 GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget)
@@ -486,6 +501,8 @@ bool GraphicsBackendMetal::SupportShaderStorageBuffer()
 
 void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
 {
+    assert(m_CommandBuffer != nullptr);
+
     auto metalSource = reinterpret_cast<MTL::Texture*>(source.Texture);
     auto metalDestination = GetTextureFromDescriptor(destinationDescriptor);
 
@@ -515,6 +532,7 @@ void GraphicsBackendMetal::PopDebugGroup()
 
 void GraphicsBackendMetal::BeginRenderPass()
 {
+    assert(m_CommandBuffer != nullptr);
     assert(m_CurrentCommandEncoder == nullptr);
     m_CurrentCommandEncoder = m_CommandBuffer->renderCommandEncoder(m_RenderPassDescriptor);
 }

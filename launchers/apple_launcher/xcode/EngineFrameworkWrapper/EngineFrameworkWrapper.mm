@@ -1,16 +1,36 @@
 #import "EngineFrameworkWrapper.h"
 #import "EngineFramework.h"
 
+struct InitData
+{
+    void* Device;
+    void* CommandBuffer;
+};
+
+struct NewFrameData
+{
+    void* CommandBuffer;
+    void* BackbufferDescriptor;
+};
+
 @implementation EngineFrameworkWrapper
 
-+ (void) Initialize:(void*)graphicsDevice graphicsBackend:(NSString*)graphicsBackend
++ (void) Initialize:(id<MTLDevice>)device commandBuffer:(id<MTLCommandBuffer>)commandBuffer
 {
-    EngineFramework::Initialize(graphicsDevice, [graphicsBackend UTF8String]);
+    InitData* data = new InitData();
+    data->Device = (__bridge void*)device;
+    data->CommandBuffer = (__bridge void*)commandBuffer;
+    EngineFramework::Initialize((void*)data, "Metal");
+    delete data;
 }
 
-+ (void) TickMainLoop:(void*)commandBufferPtr backbufferDescriptor:(void*)backbufferDescriptor width:(int)width height:(int)height
++ (void) TickMainLoop:(id<MTLCommandBuffer>)commandBuffer backbufferDescriptor:(MTLRenderPassDescriptor*)backbufferDescriptor width:(int)width height:(int)height
 {
-    EngineFramework::TickMainLoop(commandBufferPtr, backbufferDescriptor, width, height);
+    NewFrameData* data = new NewFrameData();
+    data->CommandBuffer = (__bridge void*)commandBuffer;
+    data->BackbufferDescriptor = (__bridge void*)backbufferDescriptor;
+    EngineFramework::TickMainLoop(data, width, height);
+    delete data;
 }
 
 + (void) Shutdown

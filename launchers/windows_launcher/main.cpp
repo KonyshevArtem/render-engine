@@ -67,7 +67,7 @@ int main(int argc, char **argv)
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
 
-        EngineFramework::TickMainLoop(nullptr, nullptr, width, height);
+        EngineFramework::TickMainLoop(nullptr, width, height);
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

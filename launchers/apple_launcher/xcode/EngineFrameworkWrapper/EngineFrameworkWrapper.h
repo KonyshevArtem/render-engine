@@ -1,9 +1,11 @@
+#import <Metal/MTLDevice.h>
+#import <Metal/MTLCommandBuffer.h>
 #import <Foundation/Foundation.h>
 
 @interface EngineFrameworkWrapper : NSObject
 
-+ (void) Initialize:(void*)graphicsDevice graphicsBackend:(NSString*)graphicsBackend;
-+ (void) TickMainLoop:(void*)commandBufferPtr backbufferDescriptor:(void*)backbufferDescriptor width:(int)widht height:(int)height;
++ (void) Initialize:(id<MTLDevice>)device commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
++ (void) TickMainLoop:(id<MTLCommandBuffer>)commandBuffer backbufferDescriptor:(MTLRenderPassDescriptor*)backbufferDescriptor width:(int)widht height:(int)height;
 + (void) Shutdown;
 + (bool) ShouldCloseWindow;
 

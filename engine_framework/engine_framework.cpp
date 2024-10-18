@@ -22,9 +22,9 @@ void display(int width, int height)
     Input::CleanUp();
 }
 
-void EngineFramework::Initialize(void *graphicsDevice, const char *graphicsBackend)
+void EngineFramework::Initialize(void *graphicsBackendData, const char *graphicsBackend)
 {
-    GraphicsBackend::Init(graphicsDevice, graphicsBackend);
+    GraphicsBackend::Init(graphicsBackendData, graphicsBackend);
 
     window = GameWindow::Create(display, Input::HandleKeyboardInput, Input::HandleMouseMove);
 
@@ -37,11 +37,11 @@ void EngineFramework::Initialize(void *graphicsDevice, const char *graphicsBacke
     EmptyScene::Load();
 }
 
-void EngineFramework::TickMainLoop(void *commandBufferPtr, void *backbufferDescriptor, int width, int height)
+void EngineFramework::TickMainLoop(void *graphicsBackendData, int width, int height)
 {
     if (window)
     {
-        GraphicsBackend::Current()->PlatformDependentSetup(commandBufferPtr, backbufferDescriptor);
+        GraphicsBackend::Current()->InitNewFrame(graphicsBackendData);
         window->TickMainLoop(width, height);
     }
 }

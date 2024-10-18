@@ -36,9 +36,13 @@ CGSize _viewSize;
             _depthState = [_device newDepthStencilStateWithDescriptor:depthStencilDesc];
         }
         
-        [EngineFrameworkWrapper Initialize:(void*)_device graphicsBackend:@"Metal"];
+        id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+        
+        [EngineFrameworkWrapper Initialize:_device commandBuffer:commandBuffer];
         [ImGuiWrapper Init_OSX:mtkView];
         [ImGuiWrapper Init_Metal:_device];
+        
+        [commandBuffer commit];
     }
 
     return self;
@@ -72,7 +76,7 @@ CGSize _viewSize;
     [ImGuiWrapper NewFrame_Metal:renderPassDescriptor];
     [ImGuiWrapper NewFrame_OSX:view];
     
-    [EngineFrameworkWrapper TickMainLoop:(void*)commandBuffer backbufferDescriptor:(void*)renderPassDescriptor width:_viewSize.width height:_viewSize.height];
+    [EngineFrameworkWrapper TickMainLoop:commandBuffer backbufferDescriptor:renderPassDescriptor width:_viewSize.width height:_viewSize.height];
     
     [[[renderPassDescriptor colorAttachments] objectAtIndexedSubscript:0] setLoadAction:MTLLoadActionLoad];
     id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];

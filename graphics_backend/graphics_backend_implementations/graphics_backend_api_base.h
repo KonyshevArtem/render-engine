@@ -44,9 +44,9 @@ class GraphicsBackendBase
 public:
     static GraphicsBackendBase *Create(const std::string &backend);
 
-    virtual void Init(void *device) = 0;
+    virtual void Init(void *data) = 0;
     virtual GraphicsBackendName GetName() = 0;
-    virtual void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) = 0;
+    virtual void InitNewFrame(void *data) = 0;
 
     virtual GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget) = 0;
     virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod) = 0;

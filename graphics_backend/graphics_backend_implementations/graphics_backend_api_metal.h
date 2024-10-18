@@ -20,9 +20,9 @@ namespace MTL
 class GraphicsBackendMetal : public GraphicsBackendBase
 {
 public:
-    void Init(void *device) override;
+    void Init(void *data) override;
     GraphicsBackendName GetName() override;
-    void PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor) override;
+    void InitNewFrame(void *data) override;
 
     GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget) override;
     GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod) override;

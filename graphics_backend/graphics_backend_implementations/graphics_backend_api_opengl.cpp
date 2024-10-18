@@ -76,7 +76,7 @@ void ResetClearFlags()
     }
 }
 
-void GraphicsBackendOpenGL::Init(void *device)
+void GraphicsBackendOpenGL::Init(void *data)
 {
 #ifdef REQUIRE_GLEW_INIT
     auto result = glewInit();
@@ -111,7 +111,7 @@ GraphicsBackendName GraphicsBackendOpenGL::GetName()
     return GraphicsBackendName::OPENGL;
 }
 
-void GraphicsBackendOpenGL::PlatformDependentSetup(void *commandBufferPtr, void *backbufferDescriptor)
+void GraphicsBackendOpenGL::InitNewFrame(void *data)
 {
 }
 

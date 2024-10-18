@@ -6,7 +6,7 @@
 class GraphicsBackend
 {
 public:
-    static void Init(void *device, const std::string &backend);
+    static void Init(void *data, const std::string &backend);
     static GraphicsBackendBase* Current();
 };
 

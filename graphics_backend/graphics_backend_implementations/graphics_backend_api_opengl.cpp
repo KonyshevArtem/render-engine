@@ -367,9 +367,11 @@ void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long of
     CHECK_GRAPHICS_BACKEND_FUNC(glUnmapBuffer(bindTarget))
 }
 
-void GraphicsBackendOpenGL::CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size)
+void GraphicsBackendOpenGL::CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glCopyBufferSubData(OpenGLHelpers::ToBufferBindTarget(sourceTarget), OpenGLHelpers::ToBufferBindTarget(destinationTarget), sourceOffset, destinationOffset, size))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_COPY_READ_BUFFER, source.Buffer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_COPY_WRITE_BUFFER, destination.Buffer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, sourceOffset, destinationOffset, size))
 }
 
 uint64_t GraphicsBackendOpenGL::GetMaxConstantBufferSize()

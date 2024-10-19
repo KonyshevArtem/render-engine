@@ -594,14 +594,10 @@ namespace Graphics
 
     void CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size)
     {
-        if (!source || !destination)
+        if (source && destination)
         {
-            return;
+            GraphicsBackend::Current()->CopyBufferSubData(source->GetBackendBuffer(), destination->GetBackendBuffer(), sourceOffset, destinationOffset, size);
         }
-
-        source->Bind(BufferBindTarget::COPY_READ_BUFFER);
-        destination->Bind(BufferBindTarget::COPY_WRITE_BUFFER);
-        GraphicsBackend::Current()->CopyBufferSubData(BufferBindTarget::COPY_READ_BUFFER, BufferBindTarget::COPY_WRITE_BUFFER, sourceOffset, destinationOffset, size);
     }
 
     void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material)

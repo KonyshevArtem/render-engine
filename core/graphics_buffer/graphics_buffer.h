@@ -22,6 +22,11 @@ public:
         return m_Size;
     }
 
+    inline GraphicsBackendBuffer GetBackendBuffer() const
+    {
+        return m_Buffer;
+    }
+
     GraphicsBuffer(const GraphicsBuffer &) = delete;
     GraphicsBuffer(GraphicsBuffer &&)      = delete;
 

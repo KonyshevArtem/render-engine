@@ -279,8 +279,16 @@ void GraphicsBackendMetal::SetBufferData(GraphicsBackendBuffer &buffer, long off
     metalBuffer->didModifyRange(NS::Range::Make(offset, size));
 }
 
-void GraphicsBackendMetal::CopyBufferSubData(BufferBindTarget sourceTarget, BufferBindTarget destinationTarget, int sourceOffset, int destinationOffset, int size)
+void GraphicsBackendMetal::CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size)
 {
+    assert(m_CommandBuffer != nullptr);
+
+    auto metalSource = reinterpret_cast<MTL::Buffer*>(source.Buffer);
+    auto metalDestination = reinterpret_cast<MTL::Buffer*>(destination.Buffer);
+
+    auto encoder = m_CommandBuffer->blitCommandEncoder();
+    encoder->copyFromBuffer(metalSource, sourceOffset, metalDestination, destinationOffset, size);
+    encoder->endEncoding();
 }
 
 uint64_t GraphicsBackendMetal::GetMaxConstantBufferSize()

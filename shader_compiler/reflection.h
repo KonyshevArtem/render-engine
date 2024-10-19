@@ -118,16 +118,16 @@ void HandleConstantBufferReflection(spirv_cross::Compiler* compiler, const spirv
 
     if (!TrySetBinding(buffers, bufferName, bindPoint, isVertexShader))
     {
-        auto& buffer_type = compiler->get_type(resource.base_type_id);
-        auto size = static_cast<uint32_t>(compiler->get_declared_struct_size(buffer_type));
+        const spirv_cross::SPIRType &bufferType = compiler->get_type(resource.base_type_id);
+        uint32_t size = static_cast<uint32_t>(compiler->get_declared_struct_size(bufferType));
 
         BufferDesc bufferDesc{size};
         SetBinding(bufferDesc.Bindings, bindPoint, isVertexShader);
 
-        for (uint32_t i = 0; i < buffer_type.member_types.size(); ++i)
+        for (uint32_t i = 0; i < bufferType.member_types.size(); ++i)
         {
             const std::string& varName = compiler->get_member_name(resource.base_type_id, i);
-            uint32_t varOffset = compiler->type_struct_member_offset(buffer_type, i);
+            uint32_t varOffset = compiler->type_struct_member_offset(bufferType, i);
 
             bufferDesc.Variables[varName] = varOffset;
         }
@@ -136,7 +136,7 @@ void HandleConstantBufferReflection(spirv_cross::Compiler* compiler, const spirv
     }
 }
 
-void HandleBufferReflection(spirv_cross::Compiler* compiler, const spirv_cross::Resource& resource, int index, std::unordered_map<std::string, BufferDesc>& buffers, bool isVertexShader, GraphicsBackend backend)
+void HandleStructuredBufferReflection(spirv_cross::Compiler* compiler, const spirv_cross::Resource& resource, int index, std::unordered_map<std::string, BufferDesc>& buffers, bool isVertexShader, GraphicsBackend backend)
 {
     int32_t bindPoint;
     std::string bufferName;
@@ -144,8 +144,21 @@ void HandleBufferReflection(spirv_cross::Compiler* compiler, const spirv_cross::
 
     if (!TrySetBinding(buffers, bufferName, bindPoint, isVertexShader))
     {
-        BufferDesc bufferDesc{};
+        const spirv_cross::SPIRType &bufferType = compiler->get_type(resource.base_type_id);
+        const spirv_cross::SPIRType &structType = compiler->get_type(bufferType.member_types[0]);
+        uint32_t size = static_cast<uint32_t>(compiler->get_declared_struct_size(structType));
+
+        BufferDesc bufferDesc{size};
         SetBinding(bufferDesc.Bindings, bindPoint, isVertexShader);
+
+        for (uint32_t i = 0; i < structType.member_types.size(); ++i)
+        {
+            const std::string& varName = compiler->get_member_name(structType.self, i);
+            uint32_t varOffset = compiler->type_struct_member_offset(structType, i);
+
+            bufferDesc.Variables[varName] = varOffset;
+        }
+
         buffers[bufferName] = std::move(bufferDesc);
     }
 }
@@ -237,7 +250,7 @@ void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, bool isVertexSh
 
     for (int i = 0; i < resources.storage_buffers.size(); ++i)
     {
-        HandleBufferReflection(compiler, resources.storage_buffers[i], i, reflection.Buffers, isVertexShader, backend);
+        HandleStructuredBufferReflection(compiler, resources.storage_buffers[i], i, reflection.Buffers, isVertexShader, backend);
     }
 
     if (resources.sampled_images.empty())

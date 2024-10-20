@@ -41,7 +41,7 @@ void PrintDefines(const std::vector<std::wstring>& defines, const std::string& d
     {
         for (auto& define: defines)
         {
-            std::wcout << define;
+            std::wcout << define << " ";
         }
     }
     std::cout << std::endl;

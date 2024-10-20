@@ -146,7 +146,7 @@ void HandleStructuredBufferReflection(spirv_cross::Compiler* compiler, const spi
     {
         const spirv_cross::SPIRType &bufferType = compiler->get_type(resource.base_type_id);
         const spirv_cross::SPIRType &structType = compiler->get_type(bufferType.member_types[0]);
-        uint32_t size = static_cast<uint32_t>(compiler->get_declared_struct_size(structType));
+        uint32_t size = structType.basetype == spirv_cross::SPIRType::Struct ? static_cast<uint32_t>(compiler->get_declared_struct_size(structType)) : 0;
 
         BufferDesc bufferDesc{size};
         SetBinding(bufferDesc.Bindings, bindPoint, isVertexShader);

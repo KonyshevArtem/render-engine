@@ -29,25 +29,25 @@ void Material::SetTexture(const std::string &name, std::shared_ptr<Texture> text
 
 void Material::SetVector(const std::string &name, const Vector4 &value)
 {
-    SetDataToUniformBlocks(name, &value, sizeof(Vector4));
+    SetDataToConstantBuffer(name, &value, sizeof(Vector4));
 }
 
 void Material::SetFloat(const std::string &name, float value)
 {
-    SetDataToUniformBlocks(name, &value, sizeof(float));
+    SetDataToConstantBuffer(name, &value, sizeof(float));
 }
 
 void Material::SetMatrix(const std::string &name, const Matrix4x4 &value)
 {
-    SetDataToUniformBlocks(name, &value, sizeof(Matrix4x4));
+    SetDataToConstantBuffer(name, &value, sizeof(Matrix4x4));
 }
 
 void Material::SetInt(const std::string &name, int value)
 {
-    SetDataToUniformBlocks(name, &value, sizeof(int));
+    SetDataToConstantBuffer(name, &value, sizeof(int));
 }
 
-void Material::SetDataToUniformBlocks(const std::string &name, const void *data, uint64_t size)
+void Material::SetDataToConstantBuffer(const std::string &name, const void *data, uint64_t size)
 {
     int passesCount = m_Shader->PassesCount();
     for (int i = 0; i < passesCount; ++i)
@@ -56,7 +56,7 @@ void Material::SetDataToUniformBlocks(const std::string &name, const void *data,
     }
 }
 
-std::shared_ptr<GraphicsBuffer> Material::GetPerMaterialDataBlock(int pass) const
+std::shared_ptr<GraphicsBuffer> Material::GetPerMaterialDataBuffer(int pass) const
 {
     return m_PerMaterialDataBufferWrapper->GetBuffer(pass);
 }

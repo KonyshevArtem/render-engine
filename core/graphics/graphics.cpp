@@ -38,35 +38,35 @@
 
 namespace Graphics
 {
-    std::shared_ptr<RingBuffer> instancingMatricesBuffer;
+    std::shared_ptr<RingBuffer> s_InstancingMatricesBuffer;
     std::shared_ptr<GraphicsBuffer> s_PerInstanceIndicesBuffer;
-    std::shared_ptr<GraphicsBuffer> lightingDataBlock;
-    std::shared_ptr<GraphicsBuffer> shadowsDataBlock;
+    std::shared_ptr<GraphicsBuffer> s_LightingDataBuffer;
+    std::shared_ptr<GraphicsBuffer> s_ShadowsDataBuffer;
 
-    std::shared_ptr<RingBuffer> perDrawDataBuffer;
-    std::shared_ptr<RingBuffer> cameraDataBuffer;
+    std::shared_ptr<RingBuffer> s_PerDrawDataBuffer;
+    std::shared_ptr<RingBuffer> s_CameraDataBuffer;
 
-    std::unique_ptr<ShadowCasterPass> shadowCasterPass;
-    std::unique_ptr<RenderPass>       opaqueRenderPass;
-    std::unique_ptr<RenderPass>       transparentRenderPass;
-    std::unique_ptr<SkyboxPass>       skyboxPass;
-    std::unique_ptr<FinalBlitPass>    finalBlitPass;
+    std::unique_ptr<ShadowCasterPass> s_ShadowCasterPass;
+    std::unique_ptr<RenderPass>       s_OpaqueRenderPass;
+    std::unique_ptr<RenderPass>       s_TransparentRenderPass;
+    std::unique_ptr<SkyboxPass>       s_SkyboxPass;
+    std::unique_ptr<FinalBlitPass>    s_FinalBlitPass;
 
 #if RENDER_ENGINE_EDITOR
-    std::unique_ptr<RenderPass> fallbackRenderPass;
-    std::unique_ptr<GizmosPass> gizmosPass;
-    std::unique_ptr<SelectionOutlinePass> selectionOutlinePass;
+    std::unique_ptr<RenderPass> s_FallbackRenderPass;
+    std::unique_ptr<GizmosPass> s_GizmosPass;
+    std::unique_ptr<SelectionOutlinePass> s_SelectionOutlinePass;
 #endif
 
-    int screenWidth  = 0;
-    int screenHeight = 0;
+    int s_ScreenWidth  = 0;
+    int s_ScreenHeight = 0;
 
-    Vector3 lastCameraPosition;
+    Vector3 s_LastCameraPosition;
     uint64_t s_PerInstanceIndicesOffset;
 
-    std::unordered_map<std::string, std::shared_ptr<Texture>> globalTextures;
+    std::unordered_map<std::string, std::shared_ptr<Texture>> s_GlobalTextures;
 
-    void InitUniformBlocks()
+    void InitConstantBuffers()
     {
         // C++ struct memory layout must match GPU side struct
         assert(sizeof(CameraData) == 96);
@@ -74,24 +74,24 @@ namespace Graphics
         assert(sizeof(ShadowsData) == 1456);
         assert(sizeof(PerDrawData) == 128);
 
-        cameraDataBuffer = std::make_shared<RingBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
-        lightingDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
-        shadowsDataBlock = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
-        perDrawDataBuffer = std::make_shared<RingBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(PerDrawData), BufferUsageHint::DYNAMIC_DRAW);
+        s_CameraDataBuffer = std::make_shared<RingBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
+        s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
+        s_ShadowsDataBuffer = std::make_shared<GraphicsBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
+        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(BufferBindTarget::UNIFORM_BUFFER, sizeof(PerDrawData), BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void InitPasses()
     {
-        opaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque(), "Forward");
-        transparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent(), "Forward");
-        shadowCasterPass     = std::make_unique<ShadowCasterPass>(shadowsDataBlock);
-        skyboxPass           = std::make_unique<SkyboxPass>();
-        finalBlitPass        = std::make_unique<FinalBlitPass>();
+        s_OpaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque(), "Forward");
+        s_TransparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent(), "Forward");
+        s_ShadowCasterPass     = std::make_unique<ShadowCasterPass>(s_ShadowsDataBuffer);
+        s_SkyboxPass           = std::make_unique<SkyboxPass>();
+        s_FinalBlitPass        = std::make_unique<FinalBlitPass>();
 
 #if RENDER_ENGINE_EDITOR
-        fallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::All(), "Fallback");
-        gizmosPass         = std::make_unique<GizmosPass>();
-        selectionOutlinePass = std::make_unique<SelectionOutlinePass>();
+        s_FallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::All(), "Fallback");
+        s_GizmosPass         = std::make_unique<GizmosPass>();
+        s_SelectionOutlinePass = std::make_unique<SelectionOutlinePass>();
 #endif
     }
 
@@ -99,7 +99,7 @@ namespace Graphics
     {
         auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
 
-        instancingMatricesBuffer = std::make_shared<RingBuffer>(BufferBindTarget::SHADER_STORAGE_BUFFER, matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW);
+        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(BufferBindTarget::SHADER_STORAGE_BUFFER, matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW);
         s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(BufferBindTarget::SHADER_STORAGE_BUFFER, 1024, BufferUsageHint::DYNAMIC_DRAW);
     }
 
@@ -109,7 +109,7 @@ namespace Graphics
         Gizmos::Init();
 #endif
 
-        InitUniformBlocks();
+        InitConstantBuffers();
         InitPasses();
         InitInstancing();
     }
@@ -155,7 +155,7 @@ namespace Graphics
             }
         }
 
-        lightingDataBlock->SetData(&lightingData, 0, sizeof(lightingData));
+        s_LightingDataBuffer->SetData(&lightingData, 0, sizeof(lightingData));
     }
 
     std::size_t GetDrawCallInstancingHash(const DrawCallInfo &drawCallInfo)
@@ -214,9 +214,9 @@ namespace Graphics
     void Render(int width, int height)
     {
         s_PerInstanceIndicesOffset = 0;
-        instancingMatricesBuffer->Reset();
-        perDrawDataBuffer->Reset();
-        cameraDataBuffer->Reset();
+        s_InstancingMatricesBuffer->Reset();
+        s_PerDrawDataBuffer->Reset();
+        s_CameraDataBuffer->Reset();
 
         static std::shared_ptr<Texture2D> cameraColorTarget;
         static std::shared_ptr<Texture2D> cameraDepthTarget;
@@ -224,8 +224,8 @@ namespace Graphics
         static GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
         static GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
 
-        screenWidth  = width;
-        screenHeight = height;
+        s_ScreenWidth  = width;
+        s_ScreenHeight = height;
 
         if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
         {
@@ -240,8 +240,8 @@ namespace Graphics
 
         SetLightingData(ctx.Lights);
 
-        if (shadowCasterPass)
-            shadowCasterPass->Execute(ctx);
+        if (s_ShadowCasterPass)
+            s_ShadowCasterPass->Execute(ctx);
 
         SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix);
 
@@ -249,25 +249,25 @@ namespace Graphics
         SetRenderTarget(depthTargetDescriptor, cameraDepthTarget);
         GraphicsBackend::Current()->BeginRenderPass();
 
-        SetViewport({0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight)});
+        SetViewport({0, 0, static_cast<float>(s_ScreenWidth), static_cast<float>(s_ScreenHeight)});
 
-        if (opaqueRenderPass)
-            opaqueRenderPass->Execute(ctx);
+        if (s_OpaqueRenderPass)
+            s_OpaqueRenderPass->Execute(ctx);
 
 #if RENDER_ENGINE_EDITOR
-        if (fallbackRenderPass)
-            fallbackRenderPass->Execute(ctx);
+        if (s_FallbackRenderPass)
+            s_FallbackRenderPass->Execute(ctx);
 #endif
 
-        if (skyboxPass)
-            skyboxPass->Execute(ctx);
-        if (transparentRenderPass)
-            transparentRenderPass->Execute(ctx);
+        if (s_SkyboxPass)
+            s_SkyboxPass->Execute(ctx);
+        if (s_TransparentRenderPass)
+            s_TransparentRenderPass->Execute(ctx);
 
         GraphicsBackend::Current()->EndRenderPass();
 
-        if (finalBlitPass)
-            finalBlitPass->Execute(ctx, cameraColorTarget);
+        if (s_FinalBlitPass)
+            s_FinalBlitPass->Execute(ctx, cameraColorTarget);
 
         SetRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
         SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
@@ -276,7 +276,7 @@ namespace Graphics
 
         CopyTextureToTexture(cameraDepthTarget, nullptr, GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
 
-        if (gizmosPass)
+        if (s_GizmosPass)
         {
             for (const auto &renderer : ctx.Renderers)
             {
@@ -286,11 +286,11 @@ namespace Graphics
                     Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
                 }
             }
-            gizmosPass->Execute(ctx);
+            s_GizmosPass->Execute(ctx);
         }
 
-        if (selectionOutlinePass)
-            selectionOutlinePass->Execute(ctx);
+        if (s_SelectionOutlinePass)
+            s_SelectionOutlinePass->Execute(ctx);
 
         Gizmos::ClearGizmos();
 #endif
@@ -301,7 +301,7 @@ namespace Graphics
         PerDrawData perDrawData{};
         perDrawData.ModelMatrix = modelMatrix;
         perDrawData.ModelNormalMatrix = modelMatrix.Invert().Transpose();
-        perDrawDataBuffer->SetData(&perDrawData, 0, sizeof(perDrawData));
+        s_PerDrawDataBuffer->SetData(&perDrawData, 0, sizeof(perDrawData));
     }
 
     void SetupMatrices(const std::vector<Matrix4x4> &matrices)
@@ -318,7 +318,7 @@ namespace Graphics
         }
 
         auto matricesSize = sizeof(Matrix4x4) * matricesBuffer.size() * 2;
-        instancingMatricesBuffer->SetData(matricesBuffer.data(), 0, matricesSize);
+        s_InstancingMatricesBuffer->SetData(matricesBuffer.data(), 0, matricesSize);
     }
 
     void SetCullState(const CullInfo &cullInfo)
@@ -406,7 +406,7 @@ namespace Graphics
                          const std::shared_ptr<GraphicsBuffer> &perInstanceIndices = nullptr, uint64_t perInstanceIndicesOffset = 0)
     {
         auto &shaderPass = *material.GetShader()->GetPass(shaderPassIndex);
-        const auto &perMaterialDataBlock = material.GetPerMaterialDataBlock(shaderPassIndex);
+        const auto &perMaterialDataBuffer = material.GetPerMaterialDataBuffer(shaderPassIndex);
 
         TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0);
         TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_ATTACHMENT);
@@ -415,16 +415,16 @@ namespace Graphics
         SetCullState(shaderPass.GetCullInfo());
         GraphicsBackend::Current()->SetDepthStencilState(shaderPass.GetDepthStencilState());
 
-        SetGraphicsBuffer(GlobalConstants::LightingBufferName, lightingDataBlock, shaderPass);
-        SetGraphicsBuffer(GlobalConstants::CameraDataBufferName, cameraDataBuffer, shaderPass);
-        SetGraphicsBuffer(GlobalConstants::ShadowsBufferName, shadowsDataBlock, shaderPass);
-        SetGraphicsBuffer(GlobalConstants::PerDrawDataBufferName, perDrawDataBuffer, shaderPass);
-        SetGraphicsBuffer(GlobalConstants::PerMaterialDataBufferName, perMaterialDataBlock, shaderPass);
+        SetGraphicsBuffer(GlobalConstants::LightingBufferName, s_LightingDataBuffer, shaderPass);
+        SetGraphicsBuffer(GlobalConstants::CameraDataBufferName, s_CameraDataBuffer, shaderPass);
+        SetGraphicsBuffer(GlobalConstants::ShadowsBufferName, s_ShadowsDataBuffer, shaderPass);
+        SetGraphicsBuffer(GlobalConstants::PerDrawDataBufferName, s_PerDrawDataBuffer, shaderPass);
+        SetGraphicsBuffer(GlobalConstants::PerMaterialDataBufferName, perMaterialDataBuffer, shaderPass);
         SetGraphicsBuffer(GlobalConstants::PerInstanceDataBufferName, perInstanceData, shaderPass, perInstanceDataOffset);
         SetGraphicsBuffer(GlobalConstants::PerInstanceIndicesBufferName, perInstanceIndices, shaderPass, perInstanceIndicesOffset);
-        SetGraphicsBuffer(GlobalConstants::InstanceMatricesBufferName, instancingMatricesBuffer, shaderPass);
+        SetGraphicsBuffer(GlobalConstants::InstanceMatricesBufferName, s_InstancingMatricesBuffer, shaderPass);
 
-        SetTextures(globalTextures, shaderPass);
+        SetTextures(s_GlobalTextures, shaderPass);
         SetTextures(material.GetTextures(), shaderPass);
     }
 
@@ -465,7 +465,7 @@ namespace Graphics
     void SortDrawCalls(std::vector<DrawCallInfo> &drawCalls, DrawCallSortMode sortMode)
     {
         if (sortMode != DrawCallSortMode::NO_SORTING)
-            std::sort(drawCalls.begin(), drawCalls.end(), DrawCallComparer {sortMode, lastCameraPosition});
+            std::sort(drawCalls.begin(), drawCalls.end(), DrawCallComparer {sortMode, s_LastCameraPosition});
     }
 
     void DrawRenderers(const std::vector<std::shared_ptr<Renderer>> &renderers, const RenderSettings &settings)
@@ -545,12 +545,12 @@ namespace Graphics
 
     int GetScreenWidth()
     {
-        return screenWidth;
+        return s_ScreenWidth;
     }
 
     int GetScreenHeight()
     {
-        return screenHeight;
+        return s_ScreenHeight;
     }
 
     void SetCameraData(const Matrix4x4 &_viewMatrix, Matrix4x4 _projectionMatrix)
@@ -571,9 +571,9 @@ namespace Graphics
         cameraData.ViewProjectionMatrix = _projectionMatrix * _viewMatrix;
         cameraData.CameraDirection = Camera::Current->GetRotation() * Vector3{0, 0, 1};
 
-        cameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
+        s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
 
-        lastCameraPosition = cameraData.CameraPosition;
+        s_LastCameraPosition = cameraData.CameraPosition;
     }
 
     void SetRenderTarget(GraphicsBackendRenderTargetDescriptor descriptor, const std::shared_ptr<Texture> &target)
@@ -593,7 +593,7 @@ namespace Graphics
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture)
     {
-        globalTextures[name] = texture;
+        s_GlobalTextures[name] = texture;
     }
 
     void CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size)

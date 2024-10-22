@@ -2,7 +2,6 @@
 #define RENDER_ENGINE_MATERIAL_H
 
 #include "matrix4x4/matrix4x4.h"
-#include "property_block/property_block.h"
 #include "vector4/vector4.h"
 #include "types/graphics_backend_texture_info.h"
 
@@ -28,7 +27,7 @@ public:
     Material &operator=(const Material &) = delete;
     Material &operator=(Material &&) = delete;
 
-    std::shared_ptr<GraphicsBuffer> GetPerMaterialDataBlock(int pass) const;
+    std::shared_ptr<GraphicsBuffer> GetPerMaterialDataBuffer(int pass) const;
 
     void SetTexture(const std::string &name, std::shared_ptr<Texture> texture);
     void SetVector(const std::string &_name, const Vector4 &_value);
@@ -58,7 +57,7 @@ public:
     }
 
 private:
-    void SetDataToUniformBlocks(const std::string &name, const void *data, uint64_t size);
+    void SetDataToConstantBuffer(const std::string &name, const void *data, uint64_t size);
 
     std::shared_ptr<GraphicsBufferWrapper> m_PerMaterialDataBufferWrapper;
     std::shared_ptr<Shader> m_Shader;

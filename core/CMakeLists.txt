@@ -56,8 +56,6 @@ add_library(
 	editor/gizmos/gizmos.cpp
 	editor/hierarchy.h
 	editor/hierarchy.cpp
-	property_block/property_block.h
-	property_block/property_block.cpp
 	graphics/render_settings/render_settings.h
 	graphics/draw_call_info.h
 	point/point.h

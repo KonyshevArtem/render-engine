@@ -15,8 +15,8 @@
 #include "shader/shader.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 
-ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsUniformBlock) :
-    m_ShadowsUniformBlock(std::move(shadowsUniformBlock)),
+ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer) :
+    m_ShadowsConstantBuffer(std::move(shadowsConstantBuffer)),
     m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SPOT_LIGHT_SHADOW_MAP_SIZE, GlobalConstants::MaxSpotLightSources)),
     m_DirectionLightShadowMap(Texture2D::Create(DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE, TextureInternalFormat::DEPTH_COMPONENT, true)),
     m_PointLightShadowMap(Texture2DArray::ShadowMapArray(POINT_LIGHT_SHADOW_MAP_FACE_SIZE, GlobalConstants::MaxPointLightSources * 6))
@@ -127,7 +127,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
         }
     }
 
-    m_ShadowsUniformBlock->SetData(&m_ShadowsData, 0, sizeof(ShadowsData));
+    m_ShadowsConstantBuffer->SetData(&m_ShadowsData, 0, sizeof(ShadowsData));
 }
 
 void ShadowCasterPass::Render(const std::vector<std::shared_ptr<Renderer>> &_renderers, const Vector4& viewport)

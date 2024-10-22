@@ -4,12 +4,10 @@
 #include "enums/texture_type.h"
 #include "enums/texture_wrap_mode.h"
 #include "enums/texture_filtering_mode.h"
-#include "enums/framebuffer_attachment.h"
 #include "enums/texture_internal_format.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "types/graphics_backend_resource_bindings.h"
-#include "types/graphics_backend_render_target_descriptor.h"
 #include "vector4/vector4.h"
 
 class Texture

@@ -3,9 +3,9 @@
 #include "cubemap/cubemap.h"
 #include "fbx_asset/fbx_asset.h"
 #include "graphics/graphics.h"
-#include "graphics/render_settings/render_settings.h"
 #include "mesh/mesh.h"
 #include "graphics_backend_debug_group.h"
+#include "material/material.h"
 #include "shader/shader.h"
 
 void SkyboxPass::Execute(const Context &_ctx)

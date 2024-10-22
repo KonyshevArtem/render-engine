@@ -8,6 +8,7 @@
 #include "shader/shader.h"
 #include "global_constants.h"
 #include "graphics_backend_api.h"
+#include "material/material.h"
 
 #include <cmath>
 

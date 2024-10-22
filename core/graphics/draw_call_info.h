@@ -2,10 +2,10 @@
 #define RENDER_ENGINE_DRAW_CALL_INFO
 
 #include "bounds/bounds.h"
-#include "drawable_geometry/drawable_geometry.h"
-#include "material/material.h"
 #include "matrix4x4/matrix4x4.h"
-#include "graphics_buffer/graphics_buffer_wrapper.h"
+
+class DrawableGeometry;
+class Material;
 
 struct DrawCallInfo
 {
@@ -13,10 +13,11 @@ struct DrawCallInfo
     Material *Material;
     Matrix4x4 ModelMatrix;
     Bounds AABB;
-    GraphicsBufferWrapper *InstanceDataBuffer;
+    uint32_t PerInstanceDataIndex;
+    uint32_t PerInstanceDataOffset;
     bool CastShadows;
     bool Instanced;
-    int InstancesDataIndex;
+    size_t InstancesDataIndex;
 };
 
 #endif

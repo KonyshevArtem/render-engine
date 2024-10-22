@@ -10,8 +10,9 @@
 #include "graphics/graphics.h"
 #include "renderer/renderer.h"
 #include "gameObject/gameObject.h"
-
-#include <memory>
+#include "enums/framebuffer_attachment.h"
+#include "enums/load_action.h"
+#include "types/graphics_backend_render_target_descriptor.h"
 
 void CheckTexture(std::shared_ptr<Texture2D> &_texture)
 {

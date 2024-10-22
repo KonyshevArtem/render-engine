@@ -1,10 +1,6 @@
 #ifndef RENDER_ENGINE_GRAPHICS_H
 #define RENDER_ENGINE_GRAPHICS_H
 
-#include "enums/depth_function.h"
-#include "enums/blend_factor.h"
-#include "enums/cull_face.h"
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -25,8 +21,8 @@ namespace Graphics
     void                      Shutdown();
     void                      Render(int width, int height);
     void                      DrawRenderers(const std::vector<std::shared_ptr<Renderer>> &renderers, const RenderSettings &settings);
-    void                      Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr);
-    void                      DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr);
+    void                      Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr, uint64_t perInstanceOffset = 0);
+    void                      DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr, uint64_t perInstanceDataOffset = 0, const std::shared_ptr<GraphicsBuffer> &perInstanceIndices = nullptr, uint64_t perInstanceIndicesOffset = 0);
     void                      SetCameraData(const Matrix4x4 &_viewMatrix, Matrix4x4 _projectionMatrix);
     int                       GetScreenWidth();
     int                       GetScreenHeight();

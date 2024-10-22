@@ -4,6 +4,7 @@
 #include "shader/shader.h"
 #include "graphics/graphics.h"
 #include "graphics/graphics_settings.h"
+#include "types/graphics_backend_render_target_descriptor.h"
 
 void FinalBlitPass::Execute(Context &context, const std::shared_ptr<Texture2D> &source)
 {

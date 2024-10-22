@@ -8,9 +8,9 @@ namespace GlobalConstants
     constexpr const char *LightingBufferName = "Lighting";
     constexpr const char *CameraDataBufferName = "CameraData";
     constexpr const char *PerDrawDataBufferName = "PerDrawData";
-    constexpr const char *PerInstanceStructName = "PerInstance";
     constexpr const char *PerMaterialDataBufferName = "PerMaterialData";
     constexpr const char *PerInstanceDataBufferName = "PerInstanceData";
+    constexpr const char *PerInstanceIndicesBufferName = "PerInstanceIndices";
     constexpr const char *InstanceMatricesBufferName = "InstanceMatricesBuffer";
 
     constexpr int MaxInstancingCount = 256;

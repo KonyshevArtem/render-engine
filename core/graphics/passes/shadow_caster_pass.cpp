@@ -9,7 +9,11 @@
 #include "texture_2d_array/texture_2d_array.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug_group.h"
+#include "enums/framebuffer_attachment.h"
+#include "enums/load_action.h"
+#include "material/material.h"
 #include "shader/shader.h"
+#include "types/graphics_backend_render_target_descriptor.h"
 
 ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsUniformBlock) :
     m_ShadowsUniformBlock(std::move(shadowsUniformBlock)),

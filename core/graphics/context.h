@@ -1,14 +1,9 @@
 #ifndef RENDER_ENGINE_CONTEXT_H
 #define RENDER_ENGINE_CONTEXT_H
 
-#include "draw_call_info.h"
 #include "matrix4x4/matrix4x4.h"
-#include "vector3/vector3.h"
 #include "bounds/bounds.h"
 
-#include <memory>
-#include <string>
-#include <unordered_map>
 #include <vector>
 
 class Renderer;

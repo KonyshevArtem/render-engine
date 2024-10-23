@@ -29,7 +29,7 @@ std::shared_ptr<GraphicsBackendBufferInfo> tag_invoke(boost::json::value_to_tag<
     int size = boost::json::value_to<int>(jv.at("Size"));
     auto variables = boost::json::value_to<std::unordered_map<std::string, int>>(jv.at("Variables"));
 
-    auto info = std::make_shared<GraphicsBackendBufferInfo>(GraphicsBackendBufferInfo::BufferType::UNIFORM, size, variables);
+    auto info = std::make_shared<GraphicsBackendBufferInfo>(size, variables);
     info->SetBindings(bindings);
     return info;
 }

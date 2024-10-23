@@ -239,7 +239,7 @@ TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAtt
     }
 }
 
-GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint)
+GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferUsageHint usageHint)
 {
     auto metalBuffer = m_Device->newBuffer(size, MTL::ResourceStorageModeManaged);
     GraphicsBackendBuffer buffer{};
@@ -256,7 +256,7 @@ void GraphicsBackendMetal::DeleteBuffer(const GraphicsBackendBuffer &buffer)
     metalBuffer->release();
 }
 
-void GraphicsBackendMetal::BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
+void GraphicsBackendMetal::BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
     assert(m_CurrentCommandEncoder != nullptr);
 
@@ -269,6 +269,11 @@ void GraphicsBackendMetal::BindBufferRange(const GraphicsBackendBuffer &buffer, 
     {
         m_CurrentCommandEncoder->setFragmentBuffer(metalBuffer, offset, bindings.FragmentIndex);
     }
+}
+
+void GraphicsBackendMetal::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
+{
+    BindBuffer(buffer, bindings, offset, size);
 }
 
 void GraphicsBackendMetal::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
@@ -500,11 +505,6 @@ void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &
 
     m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
     m_CurrentCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0, instanceCount);
-}
-
-bool GraphicsBackendMetal::SupportShaderStorageBuffer()
-{
-    return true;
 }
 
 void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)

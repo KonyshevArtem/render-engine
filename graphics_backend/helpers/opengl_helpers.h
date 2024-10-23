@@ -4,7 +4,6 @@
 #include "enums/shader_type.h"
 #include "enums/texture_type.h"
 #include "enums/texture_internal_format.h"
-#include "enums/buffer_bind_target.h"
 #include "enums/buffer_usage_hint.h"
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
@@ -38,7 +37,6 @@ namespace OpenGLHelpers
 {
     std::string GetShaderTypeName(ShaderType shaderType);
     GLuint ToShaderType(ShaderType shaderType);
-    GLenum ToBufferBindTarget(BufferBindTarget bindTarget);
     GLenum ToBufferUsageHint(BufferUsageHint usageHint);
     GLenum ToPrimitiveType(PrimitiveType primitiveType);
     GLenum ToIndicesDataType(IndicesDataType dataType);

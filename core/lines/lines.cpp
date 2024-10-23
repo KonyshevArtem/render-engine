@@ -10,8 +10,8 @@ Lines::Lines(const std::vector<Vector3> &points, const std::vector<int> &indices
 
     m_VertexAttributes.Add({0, 3, VertexAttributeDataType::FLOAT, false, sizeof(Vector3), 0});
 
-    auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(pointsSize, BufferBindTarget::ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
-    auto indexBuffer = GraphicsBackend::Current()->CreateBuffer(indicesSize, BufferBindTarget::ELEMENT_ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
+    auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(pointsSize, BufferUsageHint::STATIC_DRAW);
+    auto indexBuffer = GraphicsBackend::Current()->CreateBuffer(indicesSize, BufferUsageHint::STATIC_DRAW);
     m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, m_VertexAttributes.GetAttributes());
 
     GraphicsBackend::Current()->SetBufferData(vertexBuffer, 0, pointsSize, points.data());

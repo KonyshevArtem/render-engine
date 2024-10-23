@@ -32,47 +32,6 @@ GLuint OpenGLHelpers::ToShaderType(ShaderType shaderType)
     }
 }
 
-GLenum OpenGLHelpers::ToBufferBindTarget(BufferBindTarget bindTarget)
-{
-    switch (bindTarget)
-    {
-        case BufferBindTarget::ARRAY_BUFFER:
-            return GL_ARRAY_BUFFER;
-        case BufferBindTarget::COPY_READ_BUFFER:
-            return GL_COPY_READ_BUFFER;
-        case BufferBindTarget::COPY_WRITE_BUFFER:
-            return GL_COPY_WRITE_BUFFER;
-        case BufferBindTarget::DRAW_INDIRECT_BUFFER:
-            return GL_DRAW_INDIRECT_BUFFER;
-        case BufferBindTarget::ELEMENT_ARRAY_BUFFER:
-            return GL_ELEMENT_ARRAY_BUFFER;
-        case BufferBindTarget::PIXEL_PACK_BUFFER:
-            return GL_PIXEL_PACK_BUFFER;
-        case BufferBindTarget::PIXEL_UNPACK_BUFFER:
-            return GL_PIXEL_UNPACK_BUFFER;
-        case BufferBindTarget::TEXTURE_BUFFER:
-            return GL_TEXTURE_BUFFER;
-        case BufferBindTarget::TRANSFORM_FEEDBACK_BUFFER:
-            return GL_TRANSFORM_FEEDBACK_BUFFER;
-        case BufferBindTarget::UNIFORM_BUFFER:
-            return GL_UNIFORM_BUFFER;
-#ifdef GL_ARB_compute_shader
-            case BufferBindTarget::DISPATCH_INDIRECT_BUFFER:
-                return GL_DISPATCH_INDIRECT_BUFFER;
-#endif
-#ifdef GL_ARB_query_buffer_object
-            case BufferBindTarget::QUERY_BUFFER:
-                return GL_QUERY_BUFFER;
-#endif
-#ifdef GL_ARB_shader_storage_buffer_object
-            case BufferBindTarget::SHADER_STORAGE_BUFFER:
-                return GL_SHADER_STORAGE_BUFFER;
-#endif
-        default:
-            return 0;
-    }
-}
-
 GLenum OpenGLHelpers::ToBufferUsageHint(BufferUsageHint usageHint)
 {
     switch (usageHint)

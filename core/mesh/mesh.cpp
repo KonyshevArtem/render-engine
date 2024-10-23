@@ -30,8 +30,8 @@ Mesh::Mesh(const std::vector<Vector3> &_vertices,
     uint64_t indexSize = sizeof(int) * _indexes.size();
     uint64_t vertexSize = posSize + uvSize + normalsSize + tangentsSize;
 
-    auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(vertexSize * vertexCount, BufferBindTarget::ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
-    auto indexBuffer = GraphicsBackend::Current()->CreateBuffer(indexSize, BufferBindTarget::ELEMENT_ARRAY_BUFFER, BufferUsageHint::STATIC_DRAW);
+    auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(vertexSize * vertexCount, BufferUsageHint::STATIC_DRAW);
+    auto indexBuffer = GraphicsBackend::Current()->CreateBuffer(indexSize, BufferUsageHint::STATIC_DRAW);
 
     m_VertexAttributes.Add({0, 3, VertexAttributeDataType::FLOAT, false, vertexSize, 0});
     if (hasNormals)

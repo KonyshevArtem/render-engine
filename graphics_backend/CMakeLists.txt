@@ -9,7 +9,6 @@ add_library(GraphicsBackend
         enums/texture_wrap_mode.h
         enums/texture_filtering_mode.h
         enums/primitive_type.h
-        enums/buffer_bind_target.h
         enums/vertex_attribute_data_type.h
         enums/buffer_usage_hint.h
         enums/blend_factor.h

@@ -9,19 +9,8 @@
 class GraphicsBackendBufferInfo
 {
 public:
-    enum class BufferType
-    {
-        UNIFORM,
-        SHADER_STORAGE
-    };
-
-    GraphicsBackendBufferInfo(BufferType bufferType, int size, std::unordered_map<std::string, int> variables) : m_BufferType(bufferType), m_Size(size), m_Variables(std::move(variables)) {}
+    GraphicsBackendBufferInfo(int size, std::unordered_map<std::string, int> variables) : m_Size(size), m_Variables(std::move(variables)) {}
     ~GraphicsBackendBufferInfo() = default;
-
-    inline BufferType GetBufferType() const
-    {
-        return m_BufferType;
-    }
 
     inline GraphicsBackendResourceBindings GetBinding() const
     {
@@ -50,7 +39,6 @@ public:
     GraphicsBackendBufferInfo &operator()(GraphicsBackendBufferInfo &&) = delete;
 
 private:
-    BufferType m_BufferType;
     GraphicsBackendResourceBindings m_Binding;
     int m_Size;
 

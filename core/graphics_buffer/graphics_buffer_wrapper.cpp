@@ -19,8 +19,7 @@ GraphicsBufferWrapper::GraphicsBufferWrapper(const std::shared_ptr<Shader> &shad
         if (it != buffers.end())
         {
             const auto &bufferInfo = it->second;
-            auto bufferTarget = bufferInfo->GetBufferType() == GraphicsBackendBufferInfo::BufferType::SHADER_STORAGE ? BufferBindTarget::SHADER_STORAGE_BUFFER : BufferBindTarget::UNIFORM_BUFFER;
-            m_PassBuffers[i] = std::make_shared<GraphicsBuffer>(bufferTarget, bufferInfo->GetSize(), BufferUsageHint::DYNAMIC_DRAW);
+            m_PassBuffers[i] = std::make_shared<GraphicsBuffer>(bufferInfo->GetSize(), BufferUsageHint::DYNAMIC_DRAW);
             m_PassBuffersInfo[i] = bufferInfo;
         }
         else

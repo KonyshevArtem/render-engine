@@ -327,12 +327,11 @@ TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAt
     return TextureInternalFormat::RGBA8;
 }
 
-GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferBindTarget bindTarget, BufferUsageHint usageHint)
+GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferUsageHint usageHint)
 {
     GraphicsBackendBuffer buffer{};
     CHECK_GRAPHICS_BACKEND_FUNC(glGenBuffers(1, reinterpret_cast<GLuint*>(&buffer.Buffer)))
 
-    buffer.BindTarget = bindTarget;
     buffer.UsageHint = usageHint;
     buffer.IsDataInitialized = false;
     buffer.Size = size;
@@ -344,27 +343,37 @@ void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
     CHECK_GRAPHICS_BACKEND_FUNC(glDeleteBuffers(1, reinterpret_cast<const GLuint *>(&buffer.Buffer)))
 }
 
-void GraphicsBackendOpenGL::BindBufferRange(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
+void BindBuffer_Internal(GLenum bindTarget, const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
     auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
-    auto bindTarget = OpenGLHelpers::ToBufferBindTarget(buffer.BindTarget);
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(bindTarget, buffer.Buffer))
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBufferRange(bindTarget, binding, buffer.Buffer, offset, size))
 }
 
+void GraphicsBackendOpenGL::BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
+{
+#if GL_ARB_shader_storage_buffer_object
+    BindBuffer_Internal(GL_SHADER_STORAGE_BUFFER, buffer, bindings, offset, size);
+#endif
+}
+
+void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
+{
+    BindBuffer_Internal(GL_UNIFORM_BUFFER, buffer, bindings, offset, size);
+}
+
 void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
 {
-    GLenum bindTarget = OpenGLHelpers::ToBufferBindTarget(buffer.BindTarget);
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(bindTarget, buffer.Buffer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_UNIFORM_BUFFER, buffer.Buffer))
     if (!buffer.IsDataInitialized)
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(bindTarget, buffer.Size, nullptr, OpenGLHelpers::ToBufferUsageHint(buffer.UsageHint)))
+        CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(GL_UNIFORM_BUFFER, buffer.Size, nullptr, OpenGLHelpers::ToBufferUsageHint(buffer.UsageHint)))
         buffer.IsDataInitialized = true;
     }
 
-    void *contents = CHECK_GRAPHICS_BACKEND_FUNC(glMapBufferRange(bindTarget, offset, size, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT))
+    void *contents = CHECK_GRAPHICS_BACKEND_FUNC(glMapBufferRange(GL_UNIFORM_BUFFER, offset, size, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT))
     memcpy(contents, data, size);
-    CHECK_GRAPHICS_BACKEND_FUNC(glUnmapBuffer(bindTarget))
+    CHECK_GRAPHICS_BACKEND_FUNC(glUnmapBuffer(GL_UNIFORM_BUFFER))
 }
 
 void GraphicsBackendOpenGL::CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size)
@@ -613,13 +622,6 @@ void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry 
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
     CHECK_GRAPHICS_BACKEND_FUNC(glDrawElementsInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr, instanceCount))
-}
-
-bool GraphicsBackendOpenGL::SupportShaderStorageBuffer()
-{
-    static bool result = m_Extensions.contains("GL_ARB_shader_storage_buffer_object") &&
-                         m_Extensions.contains("GL_ARB_program_interface_query"); // required to query info about SSBO in shaders
-    return result;
 }
 
 void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)

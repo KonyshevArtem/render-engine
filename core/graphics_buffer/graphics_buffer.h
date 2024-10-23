@@ -4,15 +4,13 @@
 #include "types/graphics_backend_buffer.h"
 #include "types/graphics_backend_resource_bindings.h"
 #include "enums/buffer_usage_hint.h"
-#include "enums/buffer_bind_target.h"
 
 class GraphicsBuffer
 {
 public:
-    GraphicsBuffer(BufferBindTarget bindTarget, uint64_t size, BufferUsageHint usageHint);
+    GraphicsBuffer(uint64_t size, BufferUsageHint usageHint);
     ~GraphicsBuffer();
 
-    void Bind(const GraphicsBackendResourceBindings &binding) const;
     void Bind(const GraphicsBackendResourceBindings &binding, int offset, int size) const;
     void SetData(const void *data, uint64_t offset, uint64_t size);
     void Resize(uint64_t size);
@@ -22,7 +20,7 @@ public:
         return m_Size;
     }
 
-    inline GraphicsBackendBuffer GetBackendBuffer() const
+    inline const GraphicsBackendBuffer& GetBackendBuffer() const
     {
         return m_Buffer;
     }
@@ -35,7 +33,6 @@ public:
 
 private:
     GraphicsBackendBuffer m_Buffer{};
-    BufferBindTarget m_BindTarget;
     BufferUsageHint m_UsageHint;
     uint64_t m_Size;
 };

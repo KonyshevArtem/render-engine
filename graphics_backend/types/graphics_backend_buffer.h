@@ -2,7 +2,6 @@
 #define RENDER_ENGINE_GRAPHICS_BACKEND_BUFFER_H
 
 #include <cstdint>
-#include "enums/buffer_bind_target.h"
 #include "enums/buffer_usage_hint.h"
 
 class GraphicsBackendBuffer
@@ -10,7 +9,6 @@ class GraphicsBackendBuffer
 public:
     uint64_t Buffer;
 
-    BufferBindTarget BindTarget;
     BufferUsageHint UsageHint;
     int Size;
     bool IsDataInitialized;

@@ -158,6 +158,15 @@ void GraphicsBackendMetal::BindSampler(const GraphicsBackendResourceBindings &bi
 
 void GraphicsBackendMetal::GenerateMipmaps(const GraphicsBackendTexture &texture)
 {
+    assert(m_CurrentCommandEncoder == nullptr);
+
+    auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
+    if (!metalTexture)
+        return;
+
+    MTL::BlitCommandEncoder* encoder = m_CommandBuffer->blitCommandEncoder();
+    encoder->generateMipmaps(metalTexture);
+    encoder->endEncoding();
 }
 
 void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData)
@@ -228,15 +237,13 @@ TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAtt
     {
         return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->depthAttachment()->texture()->pixelFormat());
     }
-    else if (isStencil)
+    if (isStencil)
     {
         return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->stencilAttachment()->texture()->pixelFormat());
     }
-    else
-    {
-        int index = static_cast<int>(attachment);
-        return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->colorAttachments()->object(index)->texture()->pixelFormat());
-    }
+
+    int index = static_cast<int>(attachment);
+    return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->colorAttachments()->object(index)->texture()->pixelFormat());
 }
 
 GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferUsageHint usageHint)
@@ -380,6 +387,8 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
 GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
 {
+    assert(shaders.size() == 2);
+
     MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
 
     MTL::PixelFormat metalColorFormat = MetalHelpers::ToTextureInternalFormat(colorAttachmentDescriptor.Format);
@@ -393,24 +402,12 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
 
     desc->setDepthAttachmentPixelFormat(metalDepthFormat);
 
-    if (shaders.size() == 1)
-    {
-        auto shader = shaders[0];
-        auto *library = reinterpret_cast<MTL::Library *>(shader.ShaderObject);
-        desc->setVertexFunction(library->newFunction(NS::String::string("vertexMain", NS::UTF8StringEncoding)));
-        desc->setFragmentFunction(library->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding)));
-    }
-    else
-    {
-        auto shader1 = shaders[0];
-        auto shader2 = shaders[1];
-        auto *library1 = reinterpret_cast<MTL::Library *>(shader1.ShaderObject);
-        auto *library2 = reinterpret_cast<MTL::Library *>(shader2.ShaderObject);
-        auto vertexFunction = library1->newFunction(NS::String::string("vertexMain", NS::UTF8StringEncoding));
-        auto fragmentFunction = library2->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding));
-        desc->setVertexFunction(vertexFunction);
-        desc->setFragmentFunction(fragmentFunction);
-    }
+    auto *vertexLib = reinterpret_cast<MTL::Library*>(shaders[0].ShaderObject);
+    auto *fragmentLib = reinterpret_cast<MTL::Library*>(shaders[1].ShaderObject);
+    const MTL::Function* vertexFunction = vertexLib->newFunction(NS::String::string("vertexMain", NS::UTF8StringEncoding));
+    const MTL::Function* fragmentFunction = fragmentLib->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding));
+    desc->setVertexFunction(vertexFunction);
+    desc->setFragmentFunction(fragmentFunction);
 
     auto *vertDesc = desc->vertexDescriptor();
 
@@ -570,7 +567,7 @@ GraphicsBackendDepthStencilState GraphicsBackendMetal::CreateDepthStencilState(b
     auto metalState = m_Device->newDepthStencilState(descriptor);
     descriptor->release();
 
-    GraphicsBackendDepthStencilState state;
+    GraphicsBackendDepthStencilState state{};
     state.m_State = reinterpret_cast<uint64_t>(metalState);
     return state;
 }

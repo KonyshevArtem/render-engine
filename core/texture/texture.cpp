@@ -22,24 +22,6 @@ Texture::~Texture()
     GraphicsBackend::Current()->DeleteSampler(m_Sampler);
 }
 
-void Texture::Bind(const GraphicsBackendResourceBindings &bindings, bool bindSampler) const
-{
-    GraphicsBackend::Current()->BindTexture(bindings, m_Texture);
-    if (bindSampler)
-    {
-        GraphicsBackend::Current()->BindSampler(bindings, m_Sampler);
-    }
-}
-
-void Texture::Bind(const GraphicsBackendResourceBindings &textureBindings, const GraphicsBackendResourceBindings *samplerBindingsPtr) const
-{
-    GraphicsBackend::Current()->BindTexture(textureBindings, m_Texture);
-    if (samplerBindingsPtr)
-    {
-        GraphicsBackend::Current()->BindSampler(*samplerBindingsPtr, m_Sampler);
-    }
-}
-
 void Texture::SetMinMipLevel(int minMipLevel)
 {
     m_MinLod = minMipLevel;

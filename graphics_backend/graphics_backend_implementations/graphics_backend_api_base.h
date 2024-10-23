@@ -13,7 +13,6 @@ enum class TextureType;
 enum class TextureInternalFormat;
 enum class FramebufferAttachment;
 enum class PrimitiveType;
-enum class BufferBindTarget;
 enum class VertexAttributeDataType;
 enum class BufferUsageHint;
 enum class BlendFactor;

@@ -7,7 +7,6 @@
 #include "enums/texture_internal_format.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
-#include "types/graphics_backend_resource_bindings.h"
 #include "vector4/vector4.h"
 
 class Texture
@@ -15,15 +14,18 @@ class Texture
 public:
     virtual ~Texture();
 
-    void Bind(const GraphicsBackendResourceBindings &bindings, bool bindSampler) const;
-    void Bind(const GraphicsBackendResourceBindings &textureBindings, const GraphicsBackendResourceBindings *samplerBindingsPtr) const;
     void SetMinMipLevel(int minMipLevel);
     void SetWrapMode(TextureWrapMode wrapMode);
     void SetBorderColor(const Vector4 &color);
 
-    inline GraphicsBackendTexture GetBackendTexture() const
+    inline const GraphicsBackendTexture& GetBackendTexture() const
     {
         return m_Texture;
+    }
+
+    inline const GraphicsBackendSampler& GetBackendSampler() const
+    {
+        return m_Sampler;
     }
 
     inline unsigned int GetWidth() const

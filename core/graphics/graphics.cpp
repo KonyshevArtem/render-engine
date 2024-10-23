@@ -334,8 +334,8 @@ namespace Graphics
 
         for (const auto &pair: textures)
         {
-            const auto &texName = pair.first;
-            const auto &texture = pair.second;
+            const std::string &texName = pair.first;
+            const std::shared_ptr<Texture> &texture = pair.second;
 
             if (!texture)
                 continue;
@@ -344,14 +344,14 @@ namespace Graphics
             if (texInfoIt == shaderTextures.end())
                 continue;
 
-            const auto& textureInfo = texInfoIt->second;
-            const auto samplerName = "sampler" + texName;
+            const GraphicsBackendTextureInfo &textureInfo = texInfoIt->second;
+            const std::string samplerName = "sampler" + texName;
+
+            GraphicsBackend::Current()->BindTexture(textureInfo.TextureBindings, texture->GetBackendTexture());
 
             auto samplerInfoIt = shaderSamplers.find(samplerName);
-            if (samplerInfoIt == shaderSamplers.end())
-                texture->Bind(textureInfo.TextureBindings, textureInfo.HasSampler);
-            else
-                texture->Bind(textureInfo.TextureBindings, &samplerInfoIt->second.Bindings);
+            if (samplerInfoIt != shaderSamplers.end())
+                GraphicsBackend::Current()->BindSampler(samplerInfoIt->second.Bindings, texture->GetBackendSampler());
         }
     }
 

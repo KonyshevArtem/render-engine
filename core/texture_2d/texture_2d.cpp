@@ -13,10 +13,12 @@ std::shared_ptr<Texture2D> Texture2D::Create(int _width, int _height, TextureInt
     return Create_Internal(nullptr, _width, _height, textureFormat, isLinear, isRenderTarget);
 }
 
-std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path)
+std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path& path)
 {
+    std::filesystem::path fixedPath = path.parent_path() / "output" / path.filename();
+
     TextureBinaryReader reader;
-    if (!reader.ReadTexture(_path))
+    if (!reader.ReadTexture(fixedPath))
     {
         return nullptr;
     }

@@ -203,8 +203,10 @@ namespace TextureCompressorBackend
         uint32_t totalCompressedSize;
         std::vector<uint32_t> compressedSizes = ExtractSizes(texture, header, isCubemap, totalCompressedSize);
 
+        std::filesystem::path outputPath = std::filesystem::path(paths[0]).parent_path() / "output" / outputName;
+        std::filesystem::create_directory(outputPath.parent_path());
+
         std::ofstream fout;
-        auto outputPath = std::filesystem::path(paths[0]).parent_path().append(outputName);
         fout.open(outputPath, std::ios::binary | std::ios::out);
         fout.write(reinterpret_cast<char*>(&header), headerSize);
         fout.write(reinterpret_cast<char*>(&compressedSizes[0]), compressedSizes.size() * sizeof(uint32_t));

@@ -5,3 +5,6 @@
 [submodule "external/SPIRV-Cross"]
 	path = external/SPIRV-Cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross
+[submodule "external/Cuttlefish"]
+	path = external/Cuttlefish
+	url = https://github.com/akb825/Cuttlefish

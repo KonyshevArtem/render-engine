@@ -3,6 +3,9 @@ project(TextureCompressor)
 
 set(CMAKE_CXX_STANDARD 20)
 
+set(CUTTLEFISH_BUILD_TESTS OFF)
+set(CUTTLEFISH_BUILD_TOOL OFF)
+
 set(
     TEXTURE_COMPRESSOR_SOURCES
     texture_compressor.cpp
@@ -14,4 +17,5 @@ set(
 )
 
 add_executable(TextureCompressor ${TEXTURE_COMPRESSOR_SOURCES})
-target_link_libraries(TextureCompressor LodePNG tga-lib GraphicsBackend ImGuiGLFW ImGuiOpenGL)
+target_link_libraries(TextureCompressor GraphicsBackend Cuttlefish::lib)
+target_include_directories(TextureCompressor PUBLIC ${Cuttlefish_INCLUDE_DIRS})

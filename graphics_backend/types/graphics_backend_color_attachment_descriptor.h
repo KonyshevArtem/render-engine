@@ -10,6 +10,7 @@ struct GraphicsBackendColorAttachmentDescriptor
     BlendFactor SourceFactor;
     BlendFactor DestinationFactor;
     bool BlendingEnabled;
+    bool IsLinear;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_COLOR_ATTACHMENT_DESCRIPTOR_H

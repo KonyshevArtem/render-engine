@@ -2,10 +2,8 @@
 #include "debug.h"
 #include "texture/texture_binary_reader.h"
 
-#include <vector>
-
-Cubemap::Cubemap(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int mipLevels) :
-        Texture(TextureType::TEXTURE_CUBEMAP, format, width, height, 0, mipLevels, false)
+Cubemap::Cubemap(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int mipLevels, bool isLinear) :
+        Texture(TextureType::TEXTURE_CUBEMAP, format, width, height, 0, mipLevels, isLinear, false)
 {
 }
 
@@ -20,11 +18,11 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path &path)
     const auto &header = reader.GetHeader();
     if (header.Depth != SIDES_COUNT)
     {
-        Debug::LogErrorFormat("Number of slices in texture file is not %1%", {std::to_string(SIDES_COUNT)});
+        Debug::LogErrorFormat("Number of slices in texture file is %1%, expected %2%", {std::to_string(header.Depth), std::to_string(SIDES_COUNT)});
         return nullptr;
     }
 
-    std::shared_ptr<Cubemap> cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.TextureFormat, header.Width, header.Height, header.MipCount));
+    std::shared_ptr<Cubemap> cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.TextureFormat, header.Width, header.Height, header.MipCount, header.IsLinear));
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
         for (int j = 0; j < header.MipCount; ++j)
@@ -65,7 +63,7 @@ std::shared_ptr<Cubemap> &Cubemap::Black()
 
 std::shared_ptr<Cubemap> Cubemap::CreateDefaultCubemap(unsigned char *pixels)
 {
-    auto cubemap = std::shared_ptr<Cubemap>(new Cubemap(TextureInternalFormat::SRGB_ALPHA, 1, 1, 1));
+    auto cubemap = std::shared_ptr<Cubemap>(new Cubemap(TextureInternalFormat::RGBA8, 1, 1, 1, false));
     for (int i = 0; i < SIDES_COUNT; ++i)
     {
         cubemap->UploadPixels(pixels, 0, 0, 0, 0);

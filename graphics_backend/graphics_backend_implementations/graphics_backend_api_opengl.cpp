@@ -115,7 +115,7 @@ void GraphicsBackendOpenGL::InitNewFrame(void *data)
 {
 }
 
-GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget)
+GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget)
 {
     GraphicsBackendTexture texture{};
     CHECK_GRAPHICS_BACKEND_FUNC(glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture)))
@@ -127,6 +127,7 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
 
     texture.Type = type;
     texture.Format = format;
+    texture.IsLinear = isLinear;
 
     if (isRenderTarget)
     {
@@ -200,7 +201,7 @@ void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &text
 {
     GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
     GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, slice);
-    GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(texture.Format);
+    GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(texture.Format, texture.IsLinear);
     bool isImage3D = texture.Type == TextureType::TEXTURE_2D_ARRAY;
 
     CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
@@ -256,7 +257,9 @@ TextureInternalFormat GraphicsBackendOpenGL::GetTextureFormat(const GraphicsBack
     GLint internalFormat;
     CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
     CHECK_GRAPHICS_BACKEND_FUNC(glGetTexLevelParameteriv(target, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat))
-    return OpenGLHelpers::FromTextureInternalFormat(internalFormat);
+
+    bool isLinear;
+    return OpenGLHelpers::FromTextureInternalFormat(internalFormat, isLinear);
 }
 
 int GraphicsBackendOpenGL::GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice)
@@ -321,7 +324,7 @@ void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTarget
     }
 }
 
-TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAttachment attachment)
+TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear)
 {
     // Not implemented. Currently used only for compiling PSO, but OpenGL does not require render target format
     return TextureInternalFormat::RGBA8;

@@ -50,7 +50,7 @@ public:
     Texture &operator=(Texture &&) = delete;
 
 protected:
-    Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isRenderTarget);
+    Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isLinear, bool isRenderTarget);
 
     void UploadPixels(void *pixels, int size, int depth, int mipLevel, int slice) const;
 

@@ -24,7 +24,7 @@ public:
     GraphicsBackendName GetName() override;
     void InitNewFrame(void *data) override;
 
-    GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget) override;
+    GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget) override;
     GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod) override;
     void DeleteTexture(const GraphicsBackendTexture &texture) override;
     void DeleteSampler(const GraphicsBackendSampler &sampler) override;
@@ -40,7 +40,7 @@ public:
     int GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice) override;
 
     void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) override;
-    TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment) override;
+    TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear) override;
 
     GraphicsBackendBuffer CreateBuffer(int size, BufferUsageHint usageHint) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;

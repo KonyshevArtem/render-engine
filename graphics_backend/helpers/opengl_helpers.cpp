@@ -165,36 +165,10 @@ GLenum OpenGLHelpers::ToTextureType(TextureType textureType)
     }
 }
 
-GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format)
+GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool isLinear)
 {
     switch (format)
     {
-        case TextureInternalFormat::RED:
-            return GL_RED;
-        case TextureInternalFormat::RG:
-            return GL_RG;
-        case TextureInternalFormat::RGB:
-            return GL_RGB;
-        case TextureInternalFormat::RGBA:
-            return GL_RGBA;
-        case TextureInternalFormat::SRGB:
-            return GL_SRGB;
-        case TextureInternalFormat::SRGB_ALPHA:
-            return GL_SRGB_ALPHA;
-        case TextureInternalFormat::COMPRESSED_RGB:
-            return GL_COMPRESSED_RGB;
-        case TextureInternalFormat::COMPRESSED_RGBA:
-            return GL_COMPRESSED_RGBA;
-        case TextureInternalFormat::COMPRESSED_SRGB:
-            return GL_COMPRESSED_SRGB;
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA:
-            return GL_COMPRESSED_SRGB_ALPHA;
-#if GL_ARB_texture_rg
-        case TextureInternalFormat::COMPRESSED_RED:
-            return GL_COMPRESSED_RED;
-        case TextureInternalFormat::COMPRESSED_RG:
-            return GL_COMPRESSED_RG;
-#endif
         case TextureInternalFormat::R8:
             return GL_R8;
         case TextureInternalFormat::R8_SNORM:
@@ -218,7 +192,7 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format)
         case TextureInternalFormat::RGB5:
             return GL_RGB5;
         case TextureInternalFormat::RGB8:
-            return GL_RGB8;
+            return isLinear ? GL_RGB8 : GL_SRGB8;
         case TextureInternalFormat::RGB8_SNORM:
             return GL_RGB8_SNORM;
         case TextureInternalFormat::RGB10:
@@ -234,7 +208,7 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format)
         case TextureInternalFormat::RGB5_A1:
             return GL_RGB5_A1;
         case TextureInternalFormat::RGBA8:
-            return GL_RGBA8;
+            return isLinear ? GL_RGBA8 : GL_SRGB8_ALPHA8;
         case TextureInternalFormat::RGBA8_SNORM:
             return GL_RGBA8_SNORM;
         case TextureInternalFormat::RGB10_A2:
@@ -245,10 +219,6 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format)
             return GL_RGBA12;
         case TextureInternalFormat::RGBA16:
             return GL_RGBA16;
-        case TextureInternalFormat::SRGB8:
-            return GL_SRGB8;
-        case TextureInternalFormat::SRGB8_ALPHA8:
-            return GL_SRGB8_ALPHA8;
         case TextureInternalFormat::R16F:
             return GL_R16F;
         case TextureInternalFormat::RG16F:
@@ -320,36 +290,22 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format)
         case TextureInternalFormat::BGRA8:
         case TextureInternalFormat::BGRA8_SNORM:
             return GL_BGRA;
-#if GL_EXT_texture_compression_s3tc
-        case TextureInternalFormat::COMPRESSED_RGB_S3TC_DXT1_EXT:
-            return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT1_EXT:
-            return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT3_EXT:
-            return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT5_EXT:
-            return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+#if GL_EXT_texture_compression_s3tc && GL_EXT_texture_sRGB
+        case TextureInternalFormat::BC1_RGB:
+            return isLinear ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT : GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
+        case TextureInternalFormat::BC1_RGBA:
+            return isLinear ? GL_COMPRESSED_RGBA_S3TC_DXT1_EXT : GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
+        case TextureInternalFormat::BC2:
+            return isLinear ? GL_COMPRESSED_RGBA_S3TC_DXT3_EXT : GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
+        case TextureInternalFormat::BC3:
+            return isLinear ? GL_COMPRESSED_RGBA_S3TC_DXT5_EXT : GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
 #endif
-#if GL_EXT_texture_sRGB
-        case TextureInternalFormat::COMPRESSED_SRGB_S3TC_DXT1_EXT:
-            return GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-            return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-            return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-            return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
-#endif
-#if GL_ARB_texture_compression_rgtc
-        case TextureInternalFormat::COMPRESSED_RED_RGTC1:
-            return GL_COMPRESSED_RED_RGTC1;
-        case TextureInternalFormat::COMPRESSED_SIGNED_RED_RGTC1:
-            return GL_COMPRESSED_SIGNED_RED_RGTC1;
-        case TextureInternalFormat::COMPRESSED_RG_RGTC2:
-            return GL_COMPRESSED_RG_RGTC2;
-        case TextureInternalFormat::COMPRESSED_SIGNED_RG_RGTC2:
-            return GL_COMPRESSED_SIGNED_RG_RGTC2;
-#endif
+        case TextureInternalFormat::BC4:
+        case TextureInternalFormat::BC5:
+        case TextureInternalFormat::BC6H:
+        case TextureInternalFormat::BC7:
+            // TODO not implemented
+            return 0;
         case TextureInternalFormat::DEPTH_COMPONENT:
             return GL_DEPTH_COMPONENT;
         case TextureInternalFormat::DEPTH_STENCIL:
@@ -359,36 +315,17 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format)
     }
 }
 
-TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format)
+TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bool& outIsLinear)
 {
+    outIsLinear = !(format == GL_SRGB8 |
+                    format == GL_SRGB8_ALPHA8 |
+                    format == GL_COMPRESSED_SRGB_S3TC_DXT1_EXT |
+                    format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT |
+                    format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT |
+                    format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT);
+
     switch (format)
     {
-        case GL_RED:
-            return TextureInternalFormat::RED;
-        case GL_RG:
-            return TextureInternalFormat::RG;
-        case GL_RGB:
-            return TextureInternalFormat::RGB;
-        case GL_RGBA:
-            return TextureInternalFormat::RGBA;
-        case GL_SRGB:
-            return TextureInternalFormat::SRGB;
-        case GL_SRGB_ALPHA:
-            return TextureInternalFormat::SRGB_ALPHA;
-        case GL_COMPRESSED_RGB:
-            return TextureInternalFormat::COMPRESSED_RGB;
-        case GL_COMPRESSED_RGBA:
-            return TextureInternalFormat::COMPRESSED_RGBA;
-        case GL_COMPRESSED_SRGB:
-            return TextureInternalFormat::COMPRESSED_SRGB;
-        case GL_COMPRESSED_SRGB_ALPHA:
-            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA;
-#if GL_ARB_texture_rg
-        case GL_COMPRESSED_RED:
-            return TextureInternalFormat::COMPRESSED_RED;
-        case GL_COMPRESSED_RG:
-            return TextureInternalFormat::COMPRESSED_RG;
-#endif
         case GL_R8:
             return TextureInternalFormat::R8;
         case GL_R8_SNORM:
@@ -412,6 +349,7 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format)
         case GL_RGB5:
             return TextureInternalFormat::RGB5;
         case GL_RGB8:
+        case GL_SRGB8:
             return TextureInternalFormat::RGB8;
         case GL_RGB8_SNORM:
             return TextureInternalFormat::RGB8_SNORM;
@@ -428,6 +366,7 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format)
         case GL_RGB5_A1:
             return TextureInternalFormat::RGB5_A1;
         case GL_RGBA8:
+        case GL_SRGB8_ALPHA8:
             return TextureInternalFormat::RGBA8;
         case GL_RGBA8_SNORM:
             return TextureInternalFormat::RGBA8_SNORM;
@@ -439,10 +378,6 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format)
             return TextureInternalFormat::RGBA12;
         case GL_RGBA16:
             return TextureInternalFormat::RGBA16;
-        case GL_SRGB8:
-            return TextureInternalFormat::SRGB8;
-        case GL_SRGB8_ALPHA8:
-            return TextureInternalFormat::SRGB8_ALPHA8;
         case GL_R16F:
             return TextureInternalFormat::R16F;
         case GL_RG16F:
@@ -513,35 +448,19 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format)
             return TextureInternalFormat::RGBA32UI;
         case GL_BGRA:
             return TextureInternalFormat::BGRA8;
-#if GL_EXT_texture_compression_s3tc
+#if GL_EXT_texture_compression_s3tc && GL_EXT_texture_sRGB
         case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-            return TextureInternalFormat::COMPRESSED_RGB_S3TC_DXT1_EXT;
-        case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-            return TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT1_EXT;
-        case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-            return TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT3_EXT;
-        case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-            return TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT5_EXT;
-#endif
-#if GL_EXT_texture_sRGB
         case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
-            return TextureInternalFormat::COMPRESSED_SRGB_S3TC_DXT1_EXT;
+            return TextureInternalFormat::BC1_RGB;
+        case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
+            return TextureInternalFormat::BC1_RGBA;
+        case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
+            return TextureInternalFormat::BC2;
+        case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
-#endif
-#if GL_ARB_texture_compression_rgtc
-        case GL_COMPRESSED_RED_RGTC1:
-            return TextureInternalFormat::COMPRESSED_RED_RGTC1;
-        case GL_COMPRESSED_SIGNED_RED_RGTC1:
-            return TextureInternalFormat::COMPRESSED_SIGNED_RED_RGTC1;
-        case GL_COMPRESSED_RG_RGTC2:
-            return TextureInternalFormat::COMPRESSED_RG_RGTC2;
-        case GL_COMPRESSED_SIGNED_RG_RGTC2:
-            return TextureInternalFormat::COMPRESSED_SIGNED_RG_RGTC2;
+            return TextureInternalFormat::BC3;
 #endif
         case GL_DEPTH_COMPONENT:
             return TextureInternalFormat::DEPTH_COMPONENT;
@@ -556,9 +475,6 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
 {
     switch (format)
     {
-        case TextureInternalFormat::RED:
-        case TextureInternalFormat::COMPRESSED_RED:
-        case TextureInternalFormat::COMPRESSED_RG:
         case TextureInternalFormat::R8:
         case TextureInternalFormat::R8_SNORM:
         case TextureInternalFormat::R16:
@@ -571,10 +487,7 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::R16UI:
         case TextureInternalFormat::R32I:
         case TextureInternalFormat::R32UI:
-        case TextureInternalFormat::COMPRESSED_RED_RGTC1:
-        case TextureInternalFormat::COMPRESSED_SIGNED_RED_RGTC1:
             return GL_RED;
-        case TextureInternalFormat::RG:
         case TextureInternalFormat::RG8:
         case TextureInternalFormat::RG8_SNORM:
         case TextureInternalFormat::RG16:
@@ -587,13 +500,7 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::RG16UI:
         case TextureInternalFormat::RG32I:
         case TextureInternalFormat::RG32UI:
-        case TextureInternalFormat::COMPRESSED_RG_RGTC2:
-        case TextureInternalFormat::COMPRESSED_SIGNED_RG_RGTC2:
             return GL_RG;
-        case TextureInternalFormat::RGB:
-        case TextureInternalFormat::SRGB:
-        case TextureInternalFormat::COMPRESSED_RGB:
-        case TextureInternalFormat::COMPRESSED_SRGB:
         case TextureInternalFormat::R3_G3_B2:
         case TextureInternalFormat::RGB4:
         case TextureInternalFormat::RGB5:
@@ -602,7 +509,6 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::RGB10:
         case TextureInternalFormat::RGB12:
         case TextureInternalFormat::RGB16:
-        case TextureInternalFormat::SRGB8:
         case TextureInternalFormat::RGB16F:
         case TextureInternalFormat::RGB32F:
         case TextureInternalFormat::R11F_G11F_B10F:
@@ -612,19 +518,13 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::RGB16UI:
         case TextureInternalFormat::RGB32I:
         case TextureInternalFormat::RGB32UI:
-        case TextureInternalFormat::COMPRESSED_RGB_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_S3TC_DXT1_EXT:
+        case TextureInternalFormat::BC1_RGB:
             return GL_RGB;
-        case TextureInternalFormat::RGBA:
-        case TextureInternalFormat::SRGB_ALPHA:
-        case TextureInternalFormat::COMPRESSED_RGBA:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA:
         case TextureInternalFormat::RGBA2:
         case TextureInternalFormat::RGBA4:
         case TextureInternalFormat::RGB5_A1:
         case TextureInternalFormat::RGBA8:
         case TextureInternalFormat::RGBA8_SNORM:
-        case TextureInternalFormat::SRGB8_ALPHA8:
         case TextureInternalFormat::RGB10_A2:
         case TextureInternalFormat::RGB10_A2UI:
         case TextureInternalFormat::RGBA12:
@@ -638,12 +538,9 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::RGBA16UI:
         case TextureInternalFormat::RGBA32I:
         case TextureInternalFormat::RGBA32UI:
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT3_EXT:
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT5_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+        case TextureInternalFormat::BC1_RGBA:
+        case TextureInternalFormat::BC2:
+        case TextureInternalFormat::BC3:
             return GL_RGBA;
         case TextureInternalFormat::DEPTH_COMPONENT:
         case TextureInternalFormat::DEPTH_STENCIL:

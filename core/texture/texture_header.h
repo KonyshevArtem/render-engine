@@ -5,12 +5,12 @@
 
 struct TextureHeader
 {
-public:
-    int Width;
-    int Height;
-    int Depth;
+    uint16_t Width;
+    uint16_t Height;
+    uint16_t Depth;
     TextureInternalFormat TextureFormat;
-    unsigned int MipCount;
+    uint8_t MipCount;
+    uint8_t IsLinear : 1;
 };
 
 #endif

@@ -42,8 +42,8 @@ namespace OpenGLHelpers
     GLenum ToIndicesDataType(IndicesDataType dataType);
     GLenum ToVertexAttributeDataType(VertexAttributeDataType dataType);
     GLenum ToTextureType(TextureType textureType);
-    GLenum ToTextureInternalFormat(TextureInternalFormat format);
-    TextureInternalFormat FromTextureInternalFormat(GLenum format);
+    GLenum ToTextureInternalFormat(TextureInternalFormat format, bool isLinear);
+    TextureInternalFormat FromTextureInternalFormat(GLenum format, bool& outIsLinear);
     GLenum ToTextureFormat(TextureInternalFormat format);
     GLenum ToTextureDataType(TextureInternalFormat format);
     GLenum ToTextureUnit(int binding);

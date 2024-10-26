@@ -24,12 +24,6 @@ bool GraphicsBackendBase::IsCompressedTextureFormat(TextureInternalFormat format
 {
     switch (format)
     {
-        case TextureInternalFormat::RED:
-        case TextureInternalFormat::RG:
-        case TextureInternalFormat::RGB:
-        case TextureInternalFormat::RGBA:
-        case TextureInternalFormat::SRGB:
-        case TextureInternalFormat::SRGB_ALPHA:
         case TextureInternalFormat::R8:
         case TextureInternalFormat::R8_SNORM:
         case TextureInternalFormat::R16:
@@ -55,8 +49,6 @@ bool GraphicsBackendBase::IsCompressedTextureFormat(TextureInternalFormat format
         case TextureInternalFormat::RGB10_A2UI:
         case TextureInternalFormat::RGBA12:
         case TextureInternalFormat::RGBA16:
-        case TextureInternalFormat::SRGB8:
-        case TextureInternalFormat::SRGB8_ALPHA8:
         case TextureInternalFormat::R16F:
         case TextureInternalFormat::RG16F:
         case TextureInternalFormat::RGB16F:
@@ -94,24 +86,14 @@ bool GraphicsBackendBase::IsCompressedTextureFormat(TextureInternalFormat format
         case TextureInternalFormat::DEPTH_COMPONENT:
         case TextureInternalFormat::DEPTH_STENCIL:
             return false;
-        case TextureInternalFormat::COMPRESSED_RGB:
-        case TextureInternalFormat::COMPRESSED_RGBA:
-        case TextureInternalFormat::COMPRESSED_SRGB:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA:
-        case TextureInternalFormat::COMPRESSED_RED:
-        case TextureInternalFormat::COMPRESSED_RG:
-        case TextureInternalFormat::COMPRESSED_RGB_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT3_EXT:
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT5_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-        case TextureInternalFormat::COMPRESSED_RED_RGTC1:
-        case TextureInternalFormat::COMPRESSED_SIGNED_RED_RGTC1:
-        case TextureInternalFormat::COMPRESSED_RG_RGTC2:
-        case TextureInternalFormat::COMPRESSED_SIGNED_RG_RGTC2:
+        case TextureInternalFormat::BC1_RGB:
+        case TextureInternalFormat::BC1_RGBA:
+        case TextureInternalFormat::BC2:
+        case TextureInternalFormat::BC3:
+        case TextureInternalFormat::BC4:
+        case TextureInternalFormat::BC5:
+        case TextureInternalFormat::BC6H:
+        case TextureInternalFormat::BC7:
             return true;
     }
 }
@@ -120,14 +102,14 @@ int GraphicsBackendBase::GetBlockSize(TextureInternalFormat format)
 {
     switch (format)
     {
-        case TextureInternalFormat::COMPRESSED_RGB_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT3_EXT:
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT5_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+        case TextureInternalFormat::BC1_RGB:
+        case TextureInternalFormat::BC1_RGBA:
+        case TextureInternalFormat::BC2:
+        case TextureInternalFormat::BC3:
+        case TextureInternalFormat::BC4:
+        case TextureInternalFormat::BC5:
+        case TextureInternalFormat::BC6H:
+        case TextureInternalFormat::BC7:
             return 4;
         default:
             return 0;
@@ -138,15 +120,15 @@ int GraphicsBackendBase::GetBlockBytes(TextureInternalFormat format)
 {
     switch (format)
     {
-        case TextureInternalFormat::COMPRESSED_RGB_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_S3TC_DXT1_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+        case TextureInternalFormat::BC1_RGB:
+        case TextureInternalFormat::BC1_RGBA:
+        case TextureInternalFormat::BC4:
             return 8;
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT3_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT5_EXT:
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+        case TextureInternalFormat::BC2:
+        case TextureInternalFormat::BC3:
+        case TextureInternalFormat::BC5:
+        case TextureInternalFormat::BC6H:
+        case TextureInternalFormat::BC7:
             return 16;
         default:
             return 0;

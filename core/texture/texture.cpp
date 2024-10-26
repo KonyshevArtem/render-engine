@@ -1,7 +1,7 @@
 #include "texture.h"
 #include "graphics_backend_api.h"
 
-Texture::Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isRenderTarget) :
+Texture::Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isLinear, bool isRenderTarget) :
         m_TextureType(textureType),
         m_Width(width),
         m_Height(height),
@@ -12,7 +12,7 @@ Texture::Texture(TextureType textureType, TextureInternalFormat format, unsigned
         m_BorderColor(Vector4::Zero()),
         m_MinLod(0)
 {
-    m_Texture = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_TextureType, format, mipLevels, isRenderTarget);
+    m_Texture = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_TextureType, format, mipLevels, isLinear, isRenderTarget);
     RecreateSampler(false);
 }
 

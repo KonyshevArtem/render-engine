@@ -10,7 +10,7 @@
 #include <memory>
 
 enum class TextureType;
-enum class TextureInternalFormat;
+enum class TextureInternalFormat : uint16_t;
 enum class FramebufferAttachment;
 enum class PrimitiveType;
 enum class VertexAttributeDataType;
@@ -47,7 +47,7 @@ public:
     virtual GraphicsBackendName GetName() = 0;
     virtual void InitNewFrame(void *data) = 0;
 
-    virtual GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget) = 0;
+    virtual GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget) = 0;
     virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod) = 0;
     virtual void DeleteTexture(const GraphicsBackendTexture &texture) = 0;
     virtual void DeleteSampler(const GraphicsBackendSampler &sampler) = 0;
@@ -63,7 +63,7 @@ public:
     virtual int GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice) = 0;
 
     virtual void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) = 0;
-    virtual TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment) = 0;
+    virtual TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool *outIsLinear) = 0;
 
     virtual GraphicsBackendBuffer CreateBuffer(int size, BufferUsageHint usageHint) = 0;
     virtual void DeleteBuffer(const GraphicsBackendBuffer &buffer) = 0;

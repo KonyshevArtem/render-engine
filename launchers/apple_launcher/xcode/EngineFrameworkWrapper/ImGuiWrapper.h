@@ -7,11 +7,6 @@
 
 @interface ImGuiWrapper : NSObject
 
-+ (bool) Init_OpenGL;
-+ (void) Shutdown_OpenGL;
-+ (void) NewFrame_OpenGL;
-+ (void) Render_OpenGL;
-
 + (bool) Init_Metal:(id<MTLDevice>_Nonnull)device;
 + (void) Shutdown_Metal;
 + (void) NewFrame_Metal:(MTLRenderPassDescriptor*_Nonnull)renderPassDescriptor;

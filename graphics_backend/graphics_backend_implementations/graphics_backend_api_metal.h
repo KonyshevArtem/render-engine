@@ -1,7 +1,7 @@
-#if RENDER_ENGINE_APPLE
-
 #ifndef RENDER_ENGINE_GRAPHICS_BACKEND_API_METAL_H
 #define RENDER_ENGINE_GRAPHICS_BACKEND_API_METAL_H
+
+#ifdef RENDER_BACKEND_METAL
 
 #include "graphics_backend_api_base.h"
 
@@ -98,6 +98,5 @@ private:
 };
 
 
+#endif // RENDER_BACKEND_METAL
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_API_METAL_H
-
-#endif

@@ -5,12 +5,14 @@
 
 GraphicsBackendBase *GraphicsBackendBase::Create(const std::string &backend)
 {
+#ifdef RENDER_BACKEND_OPENGL
     if (backend == "OpenGL")
     {
         return new GraphicsBackendOpenGL();
     }
+#endif
 
-#if RENDER_ENGINE_APPLE
+#ifdef RENDER_BACKEND_METAL
     if (backend == "Metal")
     {
         return new GraphicsBackendMetal();

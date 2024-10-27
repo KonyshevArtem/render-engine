@@ -1,11 +1,6 @@
 #ifndef RENDER_ENGINE_IMGUI_WRAPPER_APPLE_H
 #define RENDER_ENGINE_IMGUI_WRAPPER_APPLE_H
 
-bool ImGui_OpenGL3_Init();
-void ImGui_OpenGL3_Shutdown();
-void ImGui_OpenGL3_NewFrame();
-void ImGui_OpenGL3_Render();
-
 @class MTLRenderPassDescriptor;
 @protocol MTLDevice, MTLCommandBuffer, MTLRenderCommandEncoder;
 

@@ -1,3 +1,5 @@
+#ifdef RENDER_BACKEND_OPENGL
+
 #include "graphics_backend_api_opengl.h"
 #include "enums/texture_data_type.h"
 #include "enums/primitive_type.h"
@@ -686,3 +688,5 @@ void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStenc
         CHECK_GRAPHICS_BACKEND_FUNC(glDepthMask(glState->DepthWrite))
     }
 }
+
+#endif // RENDER_BACKEND_OPENGL

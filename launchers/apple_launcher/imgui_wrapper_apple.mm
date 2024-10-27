@@ -3,32 +3,9 @@
 #endif
 
 #include "imgui_wrapper_apple.h"
-#include "imgui_impl_opengl3.h"
 #include "imgui_impl_metal.h"
 #include "imgui_impl_osx.h"
 #include "graphics_backend_api.h"
-#include "graphics_backend_implementations/graphics_backend_api_opengl.h"
-
-bool ImGui_OpenGL3_Init()
-{
-    auto backend = reinterpret_cast<GraphicsBackendOpenGL*>(GraphicsBackend::Current());
-    return ImGui_ImplOpenGL3_Init(backend->GetGLSLVersionString().c_str());
-}
-
-void ImGui_OpenGL3_Shutdown()
-{
-    ImGui_ImplOpenGL3_Shutdown();
-}
-
-void ImGui_OpenGL3_NewFrame()
-{
-    ImGui_ImplOpenGL3_NewFrame();
-}
-
-void ImGui_OpenGL3_Render()
-{
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
 
 bool ImGui_Metal_Init(id<MTLDevice> device)
 {

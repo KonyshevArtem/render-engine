@@ -1,6 +1,8 @@
 #ifndef RENDER_ENGINE_GRAPHICS_BACKEND_API_OPENGL_H
 #define RENDER_ENGINE_GRAPHICS_BACKEND_API_OPENGL_H
 
+#ifdef RENDER_BACKEND_OPENGL
+
 #include "graphics_backend_api_base.h"
 #include <set>
 
@@ -80,5 +82,5 @@ private:
     std::set<std::string> m_Extensions;
 };
 
-
+#endif // RENDER_BACKEND_OPENGL
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_API_OPENGL_H

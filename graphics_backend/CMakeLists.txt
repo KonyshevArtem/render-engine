@@ -48,35 +48,21 @@ add_library(GraphicsBackend
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 
-    set(MINOR_VERSION 6)
-
     # glew for windows
     find_package(GLEW REQUIRED)
-    set(INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
+    target_include_directories(GraphicsBackend PUBLIC ${GLEW_INCLUDE_DIRS})
     target_link_libraries(GraphicsBackend ${GLEW_LIBRARIES} glu32.lib opengl32.lib)
 
+    target_compile_definitions(GraphicsBackend PUBLIC RENDER_BACKEND_OPENGL OPENGL_MAJOR_VERSION=4 OPENGL_MINOR_VERSION=6)
+
 elseif (${RENDER_ENGINE_APPLE_PLATFORM})
-
-    set(MINOR_VERSION 1)
-
-    # opengl for macos
-    find_package(OpenGL REQUIRED)
-    set(INCLUDE_DIRS ${OPENGL_INCLUDE_DIRS})
-    target_link_libraries(GraphicsBackend ${OPENGL_LIBRARIES})
 
     # metal for macos
     target_link_libraries(GraphicsBackend metal-cpp)
 
+    target_compile_definitions(GraphicsBackend PUBLIC RENDER_BACKEND_METAL)
+
 endif()
 
-include_directories(${INCLUDE_DIRS})
-
-target_compile_definitions(GraphicsBackend PUBLIC
-        GL_SILENCE_DEPRECATION
-        ${PLATFORM_DEFINE}
-        GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
-        OPENGL_MAJOR_VERSION=4
-        OPENGL_MINOR_VERSION=${MINOR_VERSION})
-
-target_include_directories(GraphicsBackend PUBLIC . ${INCLUDE_DIRS})
+target_include_directories(GraphicsBackend PUBLIC .)
 target_link_libraries(GraphicsBackend DebugUtil)

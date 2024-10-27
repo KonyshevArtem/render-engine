@@ -3,26 +3,6 @@
 
 @implementation ImGuiWrapper : NSObject
 
-+ (bool) Init_OpenGL
-{
-    return ImGui_OpenGL3_Init();
-}
-
-+ (void) Shutdown_OpenGL
-{
-    ImGui_OpenGL3_Shutdown();
-}
-
-+ (void) NewFrame_OpenGL
-{
-    ImGui_OpenGL3_NewFrame();
-}
-
-+ (void) Render_OpenGL
-{
-    ImGui_OpenGL3_Render();
-}
-
 + (bool) Init_Metal:(id<MTLDevice>)device
 {
     return ImGui_Metal_Init(device);

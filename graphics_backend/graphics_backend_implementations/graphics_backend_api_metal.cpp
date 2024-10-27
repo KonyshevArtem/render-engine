@@ -1,4 +1,4 @@
-#if RENDER_ENGINE_APPLE
+#ifdef RENDER_BACKEND_METAL
 
 #include "graphics_backend_api_metal.h"
 #include "enums/primitive_type.h"
@@ -613,4 +613,4 @@ MTL::Texture* GraphicsBackendMetal::GetTextureFromDescriptor(const GraphicsBacke
     return m_BackbufferDescriptor->colorAttachments()->object(index)->texture();
 }
 
-#endif
+#endif // RENDER_BACKEND_METAL

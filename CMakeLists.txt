@@ -49,12 +49,10 @@ add_subdirectory(launchers/apple_launcher)
 
 # engine source code
 add_subdirectory(graphics_backend)
-add_subdirectory(external/lodepng)
 add_subdirectory(external/glfw)
 add_subdirectory(external/metal-cpp)
 add_subdirectory(external/OpenFBX)
 add_subdirectory(external/imgui)
-add_subdirectory(external/tga)
 add_subdirectory(external/dxc)
 add_subdirectory(external/SPIRV-Cross)
 add_subdirectory(external/Cuttlefish)

@@ -53,7 +53,7 @@ void GraphicsBackendMetal::InitNewFrame(void *data)
     m_BackbufferDescriptor = metalData->BackbufferDescriptor;
 }
 
-GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget)
+GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget)
 {
     auto storageMode = isRenderTarget ? MTL::StorageModePrivate : MTL::StorageModeManaged;
 
@@ -71,6 +71,20 @@ GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height
     descriptor->setStorageMode(storageMode);
     descriptor->setUsage(textureUsage);
     descriptor->setMipmapLevelCount(mipLevels);
+
+    bool isTextureArray = type == TextureType::TEXTURE_1D_ARRAY ||
+                          type == TextureType::TEXTURE_2D_ARRAY ||
+                          type == TextureType::TEXTURE_2D_MULTISAMPLE_ARRAY ||
+                          type == TextureType::TEXTURE_CUBEMAP_ARRAY;
+
+    if (type == TextureType::TEXTURE_3D)
+    {
+        descriptor->setDepth(depth);
+    }
+    else if (isTextureArray)
+    {
+        descriptor->setArrayLength(depth);
+    }
 
     auto metalTexture = m_Device->newTexture(descriptor);
     descriptor->release();
@@ -170,7 +184,7 @@ void GraphicsBackendMetal::GenerateMipmaps(const GraphicsBackendTexture &texture
     encoder->endEncoding();
 }
 
-void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData)
+void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData)
 {
     auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
     int bytesPerRow;
@@ -184,21 +198,7 @@ void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &textu
     {
         bytesPerRow = imageSize / height;
     }
-    metalTexture->replaceRegion(MTL::Region::Make3D(0, 0, depth, width, height, 1), level, slice, pixelsData, bytesPerRow, 0);
-}
-
-void GraphicsBackendMetal::DownloadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, void *outPixels)
-{
-}
-
-TextureInternalFormat GraphicsBackendMetal::GetTextureFormat(const GraphicsBackendTexture &texture)
-{
-    return TextureInternalFormat::RGBA8;
-}
-
-int GraphicsBackendMetal::GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice)
-{
-    return 0;
+    metalTexture->replaceRegion(MTL::Region::Make3D(0, 0, depth, width, height, 1), level, static_cast<NS::UInteger>(cubemapFace), pixelsData, bytesPerRow, 0);
 }
 
 void GraphicsBackendMetal::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor)

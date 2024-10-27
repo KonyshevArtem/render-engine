@@ -26,10 +26,10 @@ std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path& path)
     const auto &header = reader.GetHeader();
 
     auto t = std::shared_ptr<Texture2D>(new Texture2D(header.TextureFormat, header.Width, header.Height, header.MipCount, header.IsLinear, false));
-    for (int j = 0; j < header.MipCount; ++j)
+    for (int mip = 0; mip < header.MipCount; ++mip)
     {
-        auto pixels = reader.GetPixels(0, j);
-        t->UploadPixels(pixels.data(), pixels.size(), 0, j, 0);
+        auto pixels = reader.GetPixels(0, mip);
+        t->UploadPixels(pixels.data(), pixels.size(), 0, mip);
     }
 
     return t;
@@ -72,7 +72,7 @@ std::shared_ptr<Texture2D> Texture2D::Create_Internal(uint8_t *pixels, int width
     auto texture = std::shared_ptr<Texture2D>(new Texture2D(textureFormat, width, height, 1, isLinear, isRenderTarget));
     if (!isRenderTarget)
     {
-        texture->UploadPixels(pixels, 0, 0, 0, 0);
+        texture->UploadPixels(pixels, 0, 0, 0);
     }
     return texture;
 }

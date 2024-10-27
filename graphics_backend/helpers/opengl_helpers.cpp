@@ -579,7 +579,7 @@ GLint OpenGLHelpers::ToTextureWrapMode(TextureWrapMode wrapMode)
     }
 }
 
-GLenum OpenGLHelpers::ToTextureTarget(TextureType type, int slice)
+GLenum OpenGLHelpers::ToTextureTarget(TextureType type, CubemapFace cubemapFace)
 {
     switch (type)
     {
@@ -599,7 +599,7 @@ GLenum OpenGLHelpers::ToTextureTarget(TextureType type, int slice)
             return GL_TEXTURE_3D;
         case TextureType::TEXTURE_CUBEMAP:
         case TextureType::TEXTURE_CUBEMAP_ARRAY:
-            return GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice;
+            return GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<int>(cubemapFace);
         case TextureType::TEXTURE_RECTANGLE:
             return GL_TEXTURE_RECTANGLE;
         case TextureType::TEXTURE_BUFFER:

@@ -18,19 +18,21 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path& path)
     }
 
     const auto &header = reader.GetHeader();
-    if (header.Depth != SIDES_COUNT)
+
+    constexpr int facesCount = static_cast<int>(CubemapFace::MAX);
+    if (header.Depth != facesCount)
     {
-        Debug::LogErrorFormat("Number of slices in texture file is %1%, expected %2%", {std::to_string(header.Depth), std::to_string(SIDES_COUNT)});
+        Debug::LogErrorFormat("Number of slices in texture file is %1%, expected %2%", {std::to_string(header.Depth), std::to_string(facesCount)});
         return nullptr;
     }
 
     std::shared_ptr<Cubemap> cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.TextureFormat, header.Width, header.Height, header.MipCount, header.IsLinear));
-    for (int i = 0; i < SIDES_COUNT; ++i)
+    for (int face = 0; face < facesCount; ++face)
     {
-        for (int j = 0; j < header.MipCount; ++j)
+        for (int mip = 0; mip < header.MipCount; ++mip)
         {
-            auto pixels = reader.GetPixels(i, j);
-            cubemap->UploadPixels(pixels.data(), pixels.size(), 0, j, i);
+            auto pixels = reader.GetPixels(face, mip);
+            cubemap->UploadPixels(pixels.data(), pixels.size(), 0, mip, static_cast<CubemapFace>(face));
         }
     }
 
@@ -66,9 +68,9 @@ std::shared_ptr<Cubemap> &Cubemap::Black()
 std::shared_ptr<Cubemap> Cubemap::CreateDefaultCubemap(unsigned char *pixels)
 {
     auto cubemap = std::shared_ptr<Cubemap>(new Cubemap(TextureInternalFormat::RGBA8, 1, 1, 1, false));
-    for (int i = 0; i < SIDES_COUNT; ++i)
+    for (int face = 0; face < static_cast<int>(CubemapFace::MAX); ++face)
     {
-        cubemap->UploadPixels(pixels, 0, 0, 0, 0);
+        cubemap->UploadPixels(pixels, 0, 0, 0, static_cast<CubemapFace>(face));
     }
     return cubemap;
 }

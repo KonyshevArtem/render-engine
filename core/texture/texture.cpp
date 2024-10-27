@@ -12,7 +12,7 @@ Texture::Texture(TextureType textureType, TextureInternalFormat format, unsigned
         m_BorderColor(Vector4::Zero()),
         m_MinLod(0)
 {
-    m_Texture = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_TextureType, format, mipLevels, isLinear, isRenderTarget);
+    m_Texture = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_Depth, m_TextureType, format, mipLevels, isLinear, isRenderTarget);
     RecreateSampler(false);
 }
 
@@ -40,13 +40,13 @@ void Texture::SetBorderColor(const Vector4 &color)
     RecreateSampler(true);
 }
 
-void Texture::UploadPixels(void *pixels, int size, int depth, int mipLevel, int slice) const
+void Texture::UploadPixels(void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace) const
 {
     int sizeMultiplier = 1 << mipLevel;
     unsigned int width = m_Width / sizeMultiplier;
     unsigned int height = m_Height / sizeMultiplier;
 
-    GraphicsBackend::Current()->UploadImagePixels(m_Texture, mipLevel, slice, width, height, depth, size, pixels);
+    GraphicsBackend::Current()->UploadImagePixels(m_Texture, mipLevel, cubemapFace, width, height, depth, size, pixels);
 }
 
 void Texture::RecreateSampler(bool deleteOld)

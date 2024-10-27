@@ -83,8 +83,12 @@ void TestScene::Init()
 
     // init materials
     auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader);
+    standardOpaqueMaterial->SetTexture("_NormalMap", Texture2D::Normal());
+    standardOpaqueMaterial->SetFloat("_NormalIntensity", 1);
     standardOpaqueMaterial->SetFloat("_Roughness", 0.5f);
     standardOpaqueMaterial->SetFloat("_Metallness", 1);
+    standardOpaqueMaterial->SetTexture("_ReflectionCube", Skybox);
+    standardOpaqueMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
 
     auto brickMaterial = std::make_shared<Material>(standardOpaqueShader);
     brickMaterial->SetTexture("_Albedo", brickTexture);
@@ -92,6 +96,8 @@ void TestScene::Init()
     brickMaterial->SetFloat("_Roughness", 0.5f);
     brickMaterial->SetFloat("_Metallness", 0);
     brickMaterial->SetFloat("_NormalIntensity", 3);
+    brickMaterial->SetTexture("_ReflectionCube", Skybox);
+    brickMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
 
     m_WaterMaterial = std::make_shared<Material>(standardOpaqueShader);
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
@@ -117,6 +123,11 @@ void TestScene::Init()
     carMaterial->SetFloat("_NormalIntensity", 1);
 
     auto sphereMaterial = std::make_shared<Material>(standardInstancingShader);
+    sphereMaterial->SetTexture("_Albedo", Texture2D::White());
+    sphereMaterial->SetTexture("_NormalMap", Texture2D::Normal());
+    sphereMaterial->SetFloat("_NormalIntensity", 1);
+    sphereMaterial->SetTexture("_ReflectionCube", Skybox);
+    sphereMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
 
     // init gameObjects
     auto rotatingCube      = GameObject::Create("Rotating Cube");

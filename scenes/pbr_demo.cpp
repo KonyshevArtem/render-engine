@@ -8,6 +8,7 @@
 #include "shader/shader.h"
 #include "time/time.h"
 #include "cubemap/cubemap.h"
+#include "texture_2d/texture_2d.h"
 #include <memory>
 
 void PBRDemo::Load()
@@ -29,7 +30,7 @@ void PBRDemo::Init()
     auto sphereMesh  = sphereAsset->GetMesh(0);
 
     //init shader
-    auto shader = Shader::Load("resources/shaders/standard", {"_SPECULAR", "_REFLECTION", "_NORMAL_MAP"}, {}, {}, {});
+    auto shader = Shader::Load("resources/shaders/standard", {"_REFLECTION"}, {}, {}, {});
 
     //init skybox
     Skybox = Cubemap::Load("resources/textures/skybox/skybox");
@@ -40,6 +41,7 @@ void PBRDemo::Init()
         {
             //init material
             auto material = std::make_shared<Material>(shader);
+            material->SetTexture("_Albedo", Texture2D::White());
             material->SetFloat("_Roughness", 1 - j / 5);
             material->SetFloat("_Metallness", i / 5);
             material->SetTexture("_ReflectionCube", Skybox);

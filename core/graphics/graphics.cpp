@@ -100,7 +100,7 @@ namespace Graphics
         auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
 
         s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW);
-        s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(1024, BufferUsageHint::DYNAMIC_DRAW);
+        s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(4096, BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void Init()

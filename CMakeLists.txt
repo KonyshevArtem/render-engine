@@ -49,21 +49,18 @@ add_subdirectory(launchers/apple_launcher)
 
 # engine source code
 add_subdirectory(graphics_backend)
-add_subdirectory(external/lodepng)
 add_subdirectory(external/glfw)
 add_subdirectory(external/metal-cpp)
 add_subdirectory(external/OpenFBX)
 add_subdirectory(external/imgui)
-add_subdirectory(external/tga)
 add_subdirectory(external/dxc)
 add_subdirectory(external/SPIRV-Cross)
+add_subdirectory(external/Cuttlefish)
 add_subdirectory(core)
 add_subdirectory(math)
 add_subdirectory(utils)
 add_subdirectory(debug_util)
 add_subdirectory(game_window)
 add_subdirectory(shader_compiler)
-target_link_libraries(RenderEngine Core GameWindow)
-
-# texture compressor utility
 add_subdirectory(texture_compressor)
+target_link_libraries(RenderEngine Core GameWindow)

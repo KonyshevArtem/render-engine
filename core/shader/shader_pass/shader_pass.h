@@ -31,7 +31,7 @@ public:
     ShaderPass &operator=(const ShaderPass &) = delete;
     ShaderPass &operator=(ShaderPass &&) = delete;
 
-    const GraphicsBackendProgram &GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, TextureInternalFormat depthTargetFormat);
+    const GraphicsBackendProgram &GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat);
 
     inline const CullInfo &GetCullInfo() const
     {
@@ -70,7 +70,7 @@ private:
     std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
 
-    const GraphicsBackendProgram &CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat,
+    const GraphicsBackendProgram &CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat, bool isLinear,
                                             TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes);
 };
 

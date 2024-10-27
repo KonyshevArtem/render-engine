@@ -115,7 +115,7 @@ void GraphicsBackendOpenGL::InitNewFrame(void *data)
 {
 }
 
-GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget)
+GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget)
 {
     GraphicsBackendTexture texture{};
     CHECK_GRAPHICS_BACKEND_FUNC(glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture)))
@@ -127,12 +127,13 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
 
     texture.Type = type;
     texture.Format = format;
+    texture.IsLinear = isLinear;
 
     if (isRenderTarget)
     {
         for (int i = 0; i < mipLevels; ++i)
         {
-            UploadImagePixels(texture, i, 0, width / (i + 1), height / (i + 1), 0, 0, nullptr);
+            UploadImagePixels(texture, i, CubemapFace::POSITIVE_X, width / (i + 1), height / (i + 1), 0, 0, nullptr);
         }
     }
 
@@ -196,11 +197,11 @@ void GraphicsBackendOpenGL::GenerateMipmaps(const GraphicsBackendTexture &textur
     CHECK_GRAPHICS_BACKEND_FUNC(glGenerateMipmap(textureType))
 }
 
-void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData)
+void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData)
 {
     GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
-    GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, slice);
-    GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(texture.Format);
+    GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, cubemapFace);
+    GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(texture.Format, texture.IsLinear);
     bool isImage3D = texture.Type == TextureType::TEXTURE_2D_ARRAY;
 
     CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
@@ -228,50 +229,6 @@ void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &text
             CHECK_GRAPHICS_BACKEND_FUNC(glTexImage2D(target, level, internalFormat, width, height, 0, pixelFormat, dataType, pixelsData))
         }
     }
-}
-
-void GraphicsBackendOpenGL::DownloadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, void *outPixels)
-{
-    GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
-    GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, slice);
-
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
-    if (IsCompressedTextureFormat(texture.Format))
-    {
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetCompressedTexImage(target, level, outPixels))
-    }
-    else
-    {
-        GLenum pixelFormat = OpenGLHelpers::ToTextureFormat(texture.Format);
-        GLenum dataType = OpenGLHelpers::ToTextureDataType(texture.Format);
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetTexImage(target, level, pixelFormat, dataType, outPixels))
-    }
-}
-
-TextureInternalFormat GraphicsBackendOpenGL::GetTextureFormat(const GraphicsBackendTexture &texture)
-{
-    GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
-    GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, 0);
-
-    GLint internalFormat;
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetTexLevelParameteriv(target, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat))
-    return OpenGLHelpers::FromTextureInternalFormat(internalFormat);
-}
-
-int GraphicsBackendOpenGL::GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice)
-{
-    GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
-    GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, 0);
-
-    int size = 0;
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
-    if (IsCompressedTextureFormat(texture.Format))
-    {
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetTexLevelParameteriv(target, level, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size))
-    }
-
-    return size;
 }
 
 void AttachTextureToFramebuffer(GLenum framebuffer, GLenum attachment, TextureType type, GLuint texture, int level, int layer)
@@ -321,7 +278,7 @@ void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTarget
     }
 }
 
-TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAttachment attachment)
+TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear)
 {
     // Not implemented. Currently used only for compiling PSO, but OpenGL does not require render target format
     return TextureInternalFormat::RGBA8;

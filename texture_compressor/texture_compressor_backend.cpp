@@ -1,4 +1,6 @@
 #include "texture_compressor_backend.h"
+#include "texture_compressor_formats.h"
+
 #include <iostream>
 #include <vector>
 #include <filesystem>
@@ -6,18 +8,15 @@
 #include <sstream>
 #include <cmath>
 
+#include "cuttlefish/Image.h"
+#include "cuttlefish/Texture.h"
+
 #include "../core/texture/texture_header.h"
-#include "texture_compressor_formats.h"
-#include "lodepng.h"
-#include "tga.h"
 #include "debug.h"
-#include "graphics_backend_api.h"
-#include "types/graphics_backend_texture.h"
-#include "helpers/opengl_helpers.h"
 
 namespace TextureCompressorBackend
 {
-    std::string GetReadableSize(unsigned int bytes)
+    std::string GetReadableSize(uint32_t bytes)
     {
         std::stringstream stream;
 
@@ -33,104 +32,7 @@ namespace TextureCompressorBackend
         return stream.str();
     }
 
-    bool GetImagePixelsPNG(const std::filesystem::path &path, std::vector<uint8_t> &pixels, int &width, int &height, int &colorType)
-    {
-        unsigned int unsignedWidth;
-        unsigned int unsignedHeight;
-        bool success = lodepng::decode(pixels, unsignedWidth, unsignedHeight, path.string(), static_cast<LodePNGColorType>(colorType)) == 0;
-        if (!success)
-        {
-            Debug::LogError("Error while decoding PNG");
-        }
-
-        width = unsignedWidth;
-        height = unsignedHeight;
-        return success;
-    }
-
-    bool GetImagePixelsTGA(const std::filesystem::path &path, std::vector<uint8_t> &pixels, int &width, int &height, int &colorType)
-    {
-        FILE* f = std::fopen(path.string().c_str(), "rb");
-        tga::StdioFileInterface file(f);
-        tga::Decoder decoder(&file);
-        tga::Header tgaHeader;
-        if (!decoder.readHeader(tgaHeader))
-        {
-            Debug::LogError("Error while reading TGA header");
-            return false;
-        }
-
-        tga::Image image{};
-        image.bytesPerPixel = tgaHeader.bytesPerPixel();
-        image.rowstride = tgaHeader.width * tgaHeader.bytesPerPixel();
-
-        auto tgaPixels = std::vector<uint8_t>(image.rowstride * tgaHeader.height);
-        image.pixels = &tgaPixels[0];
-
-        if (!decoder.readImage(tgaHeader, image, nullptr))
-        {
-            Debug::LogError("Error while reading TGA pixels");
-            return false;
-        }
-
-        decoder.postProcessImage(tgaHeader, image);
-
-        width = tgaHeader.width;
-        height = tgaHeader.height;
-
-        if (tgaHeader.isGray())
-        {
-            colorType = decoder.hasAlpha() ? LCT_GREY_ALPHA : LCT_GREY;
-            pixels = std::move(tgaPixels);
-        }
-        else if (tgaHeader.isRgb())
-        {
-            colorType = decoder.hasAlpha() ? LCT_RGBA : LCT_RGB;
-
-            if (tgaHeader.bitsPerPixel == 32)
-            {
-                pixels = std::move(tgaPixels);
-            }
-            else
-            {
-                int bitsPerPixel = std::max(tgaHeader.bitsPerPixel, static_cast<uint8_t>(16));
-                int bytesPerPixel = bitsPerPixel / 8;
-
-                pixels = std::vector<uint8_t>(tgaHeader.width * tgaHeader.height * bytesPerPixel);
-                size_t src = 0;
-                size_t dst = 0;
-                size_t size = tgaPixels.size();
-                while (src < size)
-                {
-                    memcpy(&pixels[0] + dst, &tgaPixels[0] + src, bytesPerPixel);
-                    src += 4;
-                    dst += bytesPerPixel;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    bool TryGetImagePixels(const std::filesystem::path &path, std::vector<uint8_t> &pixels, int &width, int &height, int &colorType)
-    {
-        auto extension = path.extension();
-
-        if (extension == ".png")
-        {
-            return GetImagePixelsPNG(path, pixels, width, height, colorType);
-        }
-
-        if (extension == ".tga")
-        {
-            return GetImagePixelsTGA(path, pixels, width, height, colorType);
-        }
-
-        Debug::LogErrorFormat("%1% file extension is not supported", {extension.string()});
-        return false;
-    }
-
-    int GetMipsCount(bool generateMips, unsigned int width, unsigned int height)
+    int GetMipsCount(bool generateMips, uint32_t width, uint32_t height)
     {
         if (!generateMips)
         {
@@ -147,12 +49,12 @@ namespace TextureCompressorBackend
                         static_cast<int>(std::log2(height))) + 1;
     }
 
-    bool TryGetTextureTypeInfo(TextureType textureType, int inputTextureCount, TextureTypeInfo &typeInfo)
+    bool TryGetTextureTypeInfo(const std::string& textureType, int inputTextureCount, TextureTypeInfo &typeInfo)
     {
         typeInfo = TextureCompressorFormats::GetTextureTypeInfo(textureType);
         if (typeInfo.Count < 0)
         {
-            Debug::LogErrorFormat("Texture type %1% is not supported", {std::to_string(static_cast<int>(textureType))});
+            Debug::LogErrorFormat("Texture type %1% is not supported", {textureType});
             return false;
         }
 
@@ -166,123 +68,162 @@ namespace TextureCompressorBackend
         return true;
     }
 
-    bool TryLoadImages(const std::vector<std::string> &pathStrings, int &width, int &height, unsigned int slices,
-                       int &colorType, std::vector<std::vector<uint8_t>> &images)
+    bool TryGetTextureFormatInfo(const std::string& textureFormat, TextureFormatInfo& outFormatInfo)
     {
-        images.resize(slices);
-
-        for (int i = 0; i < slices; i++)
+        outFormatInfo = TextureCompressorFormats::GetTextureFormatInfo(textureFormat);
+        if (outFormatInfo.Format == TextureInternalFormat::INVALID)
         {
-            auto path = std::filesystem::path(pathStrings[i]);
-            if (!TryGetImagePixels(path, images[i], width, height, colorType))
-            {
-                return false;
-            }
+            Debug::LogErrorFormat("Texture format %1% is not supported", {textureFormat});
+            return false;
         }
 
         return true;
     }
 
-    void UploadImagesToGPU(const GraphicsBackendTexture &texture, int width, int height, const std::vector<std::vector<uint8_t>> &images)
+    bool TryLoadImages(const std::vector<std::string>& pathStrings, bool isLinear, uint32_t slices, std::vector<cuttlefish::Image*> &images)
     {
-        for (int i = 0; i < images.size(); ++i)
+        images.resize(slices);
+
+        cuttlefish::ColorSpace colorSpace = isLinear ? cuttlefish::ColorSpace::Linear : cuttlefish::ColorSpace::sRGB;
+        for (int i = 0; i < slices; i++)
         {
-            // pass images size 0 so OpenGL uploads using glTexImage for automatic compression
-            GraphicsBackend::Current()->UploadImagePixels(texture, 0, i, width, height, 0, 0, images[i].data());
+            images[i] = new cuttlefish::Image();
+            if (!images[i]->load(pathStrings[i].c_str(), colorSpace))
+                return false;
         }
+
+        return true;
     }
 
-    std::vector<unsigned int> ExtractCompressedSizes(const GraphicsBackendTexture &texture, const TextureHeader &header,
-                                                     const std::vector<std::vector<uint8_t>> &images)
+    std::vector<uint32_t> ExtractSizes(const cuttlefish::Texture* texture, const TextureHeader& header, bool isCubemap, uint32_t& outTotalSize)
     {
-        std::vector<unsigned int> sizes(header.Depth * header.MipCount);
+        outTotalSize = 0;
+        std::vector<uint32_t> sizes(header.Depth * header.MipCount);
         for (int i = 0; i < header.Depth; ++i)
         {
             for (int j = 0; j < header.MipCount; ++j)
             {
-                int compressedSize = GraphicsBackend::Current()->GetTextureSize(texture, j, i);
-                if (compressedSize == 0)
+                uint32_t size;
+                if (isCubemap)
                 {
-                    compressedSize = images[i].size() / std::pow(4, j);
+                    auto face = static_cast<cuttlefish::Texture::CubeFace>(i);
+                    size = texture->dataSize(face, j, 0);
                 }
-                sizes[i * header.MipCount + j] = compressedSize;
+                else
+                    size = texture->dataSize(j, 0);
+
+                sizes[i * header.MipCount + j] = size;
+                outTotalSize += size;
             }
         }
         return sizes;
     }
 
-    void ExtractPixelsAndWriteToFile(const GraphicsBackendTexture &texture, const std::vector<unsigned int> &sizes, const TextureHeader &header, unsigned int &totalSize, std::ofstream &fout)
+    void ExtractPixelsAndWriteToFile(const cuttlefish::Texture* texture, const std::vector<uint32_t>& sizes, const TextureHeader& header, bool isCubemap, std::ofstream& fout)
     {
-        std::vector<uint8_t> compressedPixels(sizes[0]);
         for (int i = 0; i < header.Depth; ++i)
         {
             for (int j = 0; j < header.MipCount; ++j)
             {
-                GraphicsBackend::Current()->DownloadImagePixels(texture, j, i, &compressedPixels[0]);
+                const void* data;
+                if (isCubemap)
+                {
+                    auto face = static_cast<cuttlefish::Texture::CubeFace>(i);
+                    data = texture->data(face, j, 0);
+                }
+                else
+                {
+                    data = texture->data(j, 0);
+                }
 
                 int size = sizes[i * header.MipCount + j];
-                fout.write(reinterpret_cast<char *>(&compressedPixels[0]), size);
-                totalSize += size;
+                fout.write(static_cast<const char *>(data), size);
             }
         }
     }
 
-    void CompressTexture(const std::vector<std::string> &pathStrings, TextureType textureType, int colorType, TextureInternalFormat textureFormat, bool generateMips)
+    cuttlefish::Texture *CreateTexture(const TextureTypeInfo& typeInfo, const TextureFormatInfo& formatInfo, const TextureHeader& header,
+                                       const std::vector<cuttlefish::Image *>& images, bool generateMips, bool isCubemap)
     {
-        constexpr unsigned int headerSize = sizeof(TextureHeader);
+        cuttlefish::Texture* texture = new cuttlefish::Texture(typeInfo.CuttlefishDimensions, header.Width, header.Height, 0,
+    header.MipCount, images[0]->colorSpace());
+
+        for (int i = 0; i < header.Depth; ++i)
+        {
+            if (isCubemap)
+            {
+                auto face = static_cast<cuttlefish::Texture::CubeFace>(i);
+                texture->setImage(*images[i], face);
+            }
+            else
+            {
+                texture->setImage(*images[i]);
+            }
+        }
+
+        if (generateMips)
+        {
+            texture->generateMipmaps();
+        }
+
+        texture->convert(formatInfo.CuttlefishFormat, formatInfo.CuttlefishType);
+
+        return texture;
+    }
+
+    void CompressTexture(const std::vector<std::string>& paths, const std::string& textureType, const std::string& textureFormat,
+                        bool isLinear, bool generateMips, const std::string& outputName)
+    {
+        constexpr uint32_t headerSize = sizeof(TextureHeader);
 
         TextureTypeInfo typeInfo;
-        if (!TryGetTextureTypeInfo(textureType, pathStrings.size(), typeInfo))
+        TextureFormatInfo formatInfo;
+        if (!TryGetTextureFormatInfo(textureFormat, formatInfo) ||
+            !TryGetTextureTypeInfo(textureType, paths.size(), typeInfo))
+        {
+            return;
+        }
+
+        std::vector<cuttlefish::Image*> images;
+        if (!TryLoadImages(paths, isLinear, typeInfo.Count, images))
         {
             return;
         }
 
         TextureHeader header{};
         header.Depth = typeInfo.Count;
-
-        std::vector<std::vector<uint8_t>> images;
-        if (!TryLoadImages(pathStrings, header.Width, header.Height, header.Depth, colorType, images))
-        {
-            return;
-        }
-
+        header.Width = images[0]->width();
+        header.Height = images[0]->height();
         header.MipCount = GetMipsCount(generateMips, header.Width, header.Height);
+        header.TextureFormat = formatInfo.Format;
 
-        GraphicsBackendTexture texture = GraphicsBackend::Current()->CreateTexture(0, 0, textureType, textureFormat, header.MipCount, false);
-        UploadImagesToGPU(texture, header.Width, header.Height, images);
+        bool isCubemap = typeInfo.CuttlefishDimensions == cuttlefish::Texture::Dimension::Cube;
+        cuttlefish::Texture* texture = CreateTexture(typeInfo, formatInfo, header, images, generateMips, isCubemap);
 
-        if (generateMips)
-        {
-            GraphicsBackend::Current()->GenerateMipmaps(texture);
-        }
+        uint32_t totalCompressedSize;
+        std::vector<uint32_t> compressedSizes = ExtractSizes(texture, header, isCubemap, totalCompressedSize);
 
-        header.TextureFormat = GraphicsBackend::Current()->GetTextureFormat(texture);
+        std::filesystem::path outputPath = std::filesystem::path(paths[0]).parent_path() / "output" / outputName;
+        std::filesystem::create_directory(outputPath.parent_path());
 
         std::ofstream fout;
-        auto outputPath = std::filesystem::path(pathStrings[0]).replace_extension("");
         fout.open(outputPath, std::ios::binary | std::ios::out);
         fout.write(reinterpret_cast<char*>(&header), headerSize);
+        fout.write(reinterpret_cast<char*>(&compressedSizes[0]), compressedSizes.size() * sizeof(uint32_t));
 
-        std::vector<unsigned int> sizes = ExtractCompressedSizes(texture, header, images);
-        fout.write(reinterpret_cast<char*>(&sizes[0]), sizes.size() * sizeof(unsigned int));
-
-        unsigned int totalCompressedSize;
-        ExtractPixelsAndWriteToFile(texture, sizes, header, totalCompressedSize, fout);
+        ExtractPixelsAndWriteToFile(texture, compressedSizes, header, isCubemap, fout);
         fout.close();
 
-        unsigned int totalOriginalSize = 0;
-        for (auto &img: images)
-        {
-            totalOriginalSize += img.size();
-        }
-
         std::cout << "\tTexture successfully compressed: " << outputPath
-                  << "\n\tFormat: " << TextureCompressorFormats::GetTextureFormatName(header.TextureFormat) << " (" << static_cast<int>(header.TextureFormat) << ")"
-                  << "\n\tOriginal Size: " << GetReadableSize(totalOriginalSize)
+                  << "\n\tFormat: " << formatInfo.Name << " (" << static_cast<int>(header.TextureFormat) << ")"
                   << "\n\tCompressed Size: " << GetReadableSize(headerSize + totalCompressedSize)
-                  << "\n\tMipmaps: " << header.MipCount
+                  << "\n\tMipmaps: " << static_cast<int>(header.MipCount)
                   << "\n" << std::endl;
 
-        GraphicsBackend::Current()->DeleteTexture(texture);
+        delete texture;
+        for (int i = 0; i < images.size(); ++i)
+        {
+            delete images[i];
+        }
     }
 }

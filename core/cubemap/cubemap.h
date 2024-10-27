@@ -21,11 +21,9 @@ public:
     Cubemap &operator=(Cubemap &&) = delete;
 
 private:
-    Cubemap(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int mipLevels);
+    Cubemap(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int mipLevels, bool isLinear);
 
     static std::shared_ptr<Cubemap> CreateDefaultCubemap(unsigned char *pixels);
-
-    static constexpr unsigned int SIDES_COUNT = 6;
 };
 
 #endif

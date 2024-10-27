@@ -18,7 +18,7 @@
 ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer) :
     m_ShadowsConstantBuffer(std::move(shadowsConstantBuffer)),
     m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SPOT_LIGHT_SHADOW_MAP_SIZE, GlobalConstants::MaxSpotLightSources)),
-    m_DirectionLightShadowMap(Texture2D::Create(DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE, TextureInternalFormat::DEPTH_COMPONENT, true)),
+    m_DirectionLightShadowMap(Texture2D::Create(DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE, TextureInternalFormat::DEPTH_COMPONENT, true, true)),
     m_PointLightShadowMap(Texture2DArray::ShadowMapArray(POINT_LIGHT_SHADOW_MAP_FACE_SIZE, GlobalConstants::MaxPointLightSources * 6))
 {
     Graphics::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);

@@ -11,6 +11,7 @@ private:
     uint64_t Texture;
     TextureType Type;
     TextureInternalFormat Format;
+    bool IsLinear;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;

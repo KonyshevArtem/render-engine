@@ -100,7 +100,7 @@ namespace Graphics
         auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
 
         s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW);
-        s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(1024, BufferUsageHint::DYNAMIC_DRAW);
+        s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(4096, BufferUsageHint::DYNAMIC_DRAW);
     }
 
     void Init()
@@ -229,8 +229,8 @@ namespace Graphics
 
         if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
         {
-            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true);
-            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, true);
+            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true);
+            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, true, true);
         }
 
         GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
@@ -418,9 +418,10 @@ namespace Graphics
         auto &shaderPass = *material.GetShader()->GetPass(shaderPassIndex);
         const auto &perMaterialDataBuffer = material.GetPerMaterialDataBuffer(shaderPassIndex);
 
-        TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0);
-        TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_ATTACHMENT);
-        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, depthTargetFormat));
+        bool isLinear;
+        TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
+        TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_ATTACHMENT, nullptr);
+        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, isLinear, depthTargetFormat));
 
         SetCullState(shaderPass.GetCullInfo());
         GraphicsBackend::Current()->SetDepthStencilState(shaderPass.GetDepthStencilState());

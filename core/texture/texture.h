@@ -5,6 +5,7 @@
 #include "enums/texture_wrap_mode.h"
 #include "enums/texture_filtering_mode.h"
 #include "enums/texture_internal_format.h"
+#include "enums/cubemap_face.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "vector4/vector4.h"
@@ -50,9 +51,9 @@ public:
     Texture &operator=(Texture &&) = delete;
 
 protected:
-    Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isRenderTarget);
+    Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isLinear, bool isRenderTarget);
 
-    void UploadPixels(void *pixels, int size, int depth, int mipLevel, int slice) const;
+    void UploadPixels(void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace = CubemapFace::POSITIVE_X) const;
 
 private:
     void RecreateSampler(bool deleteOld);

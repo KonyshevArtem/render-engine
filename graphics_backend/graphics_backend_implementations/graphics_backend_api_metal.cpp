@@ -53,7 +53,7 @@ void GraphicsBackendMetal::InitNewFrame(void *data)
     m_BackbufferDescriptor = metalData->BackbufferDescriptor;
 }
 
-GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget)
+GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget)
 {
     auto storageMode = isRenderTarget ? MTL::StorageModePrivate : MTL::StorageModeManaged;
 
@@ -66,11 +66,25 @@ GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height
     auto descriptor = MTL::TextureDescriptor::alloc()->init();
     descriptor->setWidth(width);
     descriptor->setHeight(height);
-    descriptor->setPixelFormat(MetalHelpers::ToTextureInternalFormat(format));
+    descriptor->setPixelFormat(MetalHelpers::ToTextureInternalFormat(format, isLinear));
     descriptor->setTextureType(MetalHelpers::ToTextureType(type));
     descriptor->setStorageMode(storageMode);
     descriptor->setUsage(textureUsage);
     descriptor->setMipmapLevelCount(mipLevels);
+
+    bool isTextureArray = type == TextureType::TEXTURE_1D_ARRAY ||
+                          type == TextureType::TEXTURE_2D_ARRAY ||
+                          type == TextureType::TEXTURE_2D_MULTISAMPLE_ARRAY ||
+                          type == TextureType::TEXTURE_CUBEMAP_ARRAY;
+
+    if (type == TextureType::TEXTURE_3D)
+    {
+        descriptor->setDepth(depth);
+    }
+    else if (isTextureArray)
+    {
+        descriptor->setArrayLength(depth);
+    }
 
     auto metalTexture = m_Device->newTexture(descriptor);
     descriptor->release();
@@ -79,6 +93,7 @@ GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height
     texture.Texture = reinterpret_cast<uint64_t>(metalTexture);
     texture.Type = type;
     texture.Format = format;
+    texture.IsLinear = isLinear;
     return texture;
 }
 
@@ -169,7 +184,7 @@ void GraphicsBackendMetal::GenerateMipmaps(const GraphicsBackendTexture &texture
     encoder->endEncoding();
 }
 
-void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData)
+void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData)
 {
     auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
     int bytesPerRow;
@@ -183,21 +198,7 @@ void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &textu
     {
         bytesPerRow = imageSize / height;
     }
-    metalTexture->replaceRegion(MTL::Region::Make3D(0, 0, depth, width, height, 1), level, slice, pixelsData, bytesPerRow, 0);
-}
-
-void GraphicsBackendMetal::DownloadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, void *outPixels)
-{
-}
-
-TextureInternalFormat GraphicsBackendMetal::GetTextureFormat(const GraphicsBackendTexture &texture)
-{
-    return TextureInternalFormat::SRGB_ALPHA;
-}
-
-int GraphicsBackendMetal::GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice)
-{
-    return 0;
+    metalTexture->replaceRegion(MTL::Region::Make3D(0, 0, depth, width, height, 1), level, static_cast<NS::UInteger>(cubemapFace), pixelsData, bytesPerRow, 0);
 }
 
 void GraphicsBackendMetal::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor)
@@ -228,22 +229,26 @@ void GraphicsBackendMetal::AttachRenderTarget(const GraphicsBackendRenderTargetD
     }
 }
 
-TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAttachment attachment)
+TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear)
 {
     bool isDepth = attachment == FramebufferAttachment::DEPTH_ATTACHMENT || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
     bool isStencil = attachment == FramebufferAttachment::STENCIL_ATTACHMENT || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
 
+    bool isLinear;
     if (isDepth)
     {
-        return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->depthAttachment()->texture()->pixelFormat());
+        return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->depthAttachment()->texture()->pixelFormat(), isLinear);
     }
     if (isStencil)
     {
-        return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->stencilAttachment()->texture()->pixelFormat());
+        return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->stencilAttachment()->texture()->pixelFormat(), isLinear);
     }
 
     int index = static_cast<int>(attachment);
-    return MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->colorAttachments()->object(index)->texture()->pixelFormat());
+    TextureInternalFormat format = MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->colorAttachments()->object(index)->texture()->pixelFormat(), isLinear);
+    if (outIsLinear)
+        *outIsLinear = isLinear;
+    return format;
 }
 
 GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferUsageHint usageHint)
@@ -391,8 +396,8 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
 
     MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
 
-    MTL::PixelFormat metalColorFormat = MetalHelpers::ToTextureInternalFormat(colorAttachmentDescriptor.Format);
-    MTL::PixelFormat metalDepthFormat = MetalHelpers::ToTextureInternalFormat(depthFormat);
+    MTL::PixelFormat metalColorFormat = MetalHelpers::ToTextureInternalFormat(colorAttachmentDescriptor.Format, colorAttachmentDescriptor.IsLinear);
+    MTL::PixelFormat metalDepthFormat = MetalHelpers::ToTextureInternalFormat(depthFormat, false);
 
     auto attachmentDesc = desc->colorAttachments()->object(0);
     attachmentDesc->setPixelFormat(metalColorFormat);

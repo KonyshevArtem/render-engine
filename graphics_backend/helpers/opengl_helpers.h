@@ -16,6 +16,7 @@
 #include "enums/cull_face.h"
 #include "enums/blend_factor.h"
 #include "enums/texture_data_type.h"
+#include "enums/cubemap_face.h"
 
 #include <string>
 
@@ -42,13 +43,13 @@ namespace OpenGLHelpers
     GLenum ToIndicesDataType(IndicesDataType dataType);
     GLenum ToVertexAttributeDataType(VertexAttributeDataType dataType);
     GLenum ToTextureType(TextureType textureType);
-    GLenum ToTextureInternalFormat(TextureInternalFormat format);
-    TextureInternalFormat FromTextureInternalFormat(GLenum format);
+    GLenum ToTextureInternalFormat(TextureInternalFormat format, bool isLinear);
+    TextureInternalFormat FromTextureInternalFormat(GLenum format, bool& outIsLinear);
     GLenum ToTextureFormat(TextureInternalFormat format);
     GLenum ToTextureDataType(TextureInternalFormat format);
     GLenum ToTextureUnit(int binding);
     GLint ToTextureWrapMode(TextureWrapMode wrapMode);
-    GLenum ToTextureTarget(TextureType type, int slice);
+    GLenum ToTextureTarget(TextureType type, CubemapFace cubemapFace);
     void ToTextureFilteringMode(TextureFilteringMode filteringMode, GLint &outMinFilter, GLint &outMagFilter);
     GLenum ToFramebufferAttachment(FramebufferAttachment attachment);
     GLenum ToDepthCompareFunction(DepthFunction function);

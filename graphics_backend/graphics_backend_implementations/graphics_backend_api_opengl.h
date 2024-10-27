@@ -13,7 +13,7 @@ public:
     GraphicsBackendName GetName() override;
     void InitNewFrame(void *data) override;
 
-    GraphicsBackendTexture CreateTexture(int width, int height, TextureType type, TextureInternalFormat format, int mipLevels, bool isRenderTarget) override;
+    GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget) override;
     GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod) override;
     void DeleteTexture(const GraphicsBackendTexture &texture) override;
     void DeleteSampler(const GraphicsBackendSampler &sampler) override;
@@ -22,14 +22,10 @@ public:
     void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) override;
 
     void GenerateMipmaps(const GraphicsBackendTexture &texture) override;
-
-    void UploadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, int width, int height, int depth, int imageSize, const void *pixelsData) override;
-    void DownloadImagePixels(const GraphicsBackendTexture &texture, int level, int slice, void *outPixels) override;
-    TextureInternalFormat GetTextureFormat(const GraphicsBackendTexture &texture) override;
-    int GetTextureSize(const GraphicsBackendTexture &texture, int level, int slice) override;
+    void UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData) override;
 
     void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) override;
-    TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment) override;
+    TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear) override;
 
     GraphicsBackendBuffer CreateBuffer(int size, BufferUsageHint usageHint) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;

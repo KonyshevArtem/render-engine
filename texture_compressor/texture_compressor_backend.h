@@ -3,12 +3,11 @@
 
 #include <string>
 #include <vector>
-#include "enums/texture_type.h"
-#include "enums/texture_internal_format.h"
 
 namespace TextureCompressorBackend
 {
-    void CompressTexture(const std::vector<std::string> &paths, TextureType textureType, int colorType, TextureInternalFormat textureFormat, bool generateMips);
+    void CompressTexture(const std::vector<std::string>& paths, const std::string& textureType, const std::string& textureFormat,
+                        bool isLinear, bool generateMips, const std::string& outputName);
 }
 
 #endif

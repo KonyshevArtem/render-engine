@@ -47,12 +47,12 @@ RingBuffer::RingBuffer(uint64_t size, BufferUsageHint usageHint) :
 void RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
 {
     ++m_CurrentOffset;
-    if (m_CurrentOffset > m_Capacity)
+    if (m_CurrentOffset >= m_Capacity)
     {
         AddBuffer(m_Buffers, m_Size * m_Capacity, m_UsageHint);
     }
 
-    m_Buffers[m_CurrentOffset / m_Capacity]->SetData(data, m_Size * m_CurrentOffset + offset, size);
+    m_Buffers[m_CurrentOffset / m_Capacity]->SetData(data, m_Size * (m_CurrentOffset % m_Capacity) + offset, size);
 }
 
 const GraphicsBackendBuffer& RingBuffer::GetBackendBuffer() const

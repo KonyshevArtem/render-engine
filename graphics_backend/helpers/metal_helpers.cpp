@@ -64,34 +64,12 @@ MTL::TextureType MetalHelpers::ToTextureType(TextureType textureType)
     }
 }
 
-MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat format)
+MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool isLinear)
 {
     switch (format)
     {
-        case TextureInternalFormat::RED:
-            return MTL::PixelFormat::PixelFormatR8Unorm;
-        case TextureInternalFormat::RG:
-            return MTL::PixelFormat::PixelFormatRG16Unorm;
-        case TextureInternalFormat::RGBA:
-            return MTL::PixelFormat::PixelFormatRGBA8Unorm;
-        case TextureInternalFormat::SRGB_ALPHA:
-            return MTL::PixelFormat::PixelFormatRGBA8Unorm_sRGB;
-
-        case TextureInternalFormat::COMPRESSED_RGB:
-            return MTL::PixelFormat::PixelFormatETC2_RGB8;
-        case TextureInternalFormat::COMPRESSED_RGBA:
-            return MTL::PixelFormat::PixelFormatBC7_RGBAUnorm;
-        case TextureInternalFormat::COMPRESSED_SRGB:
-            return MTL::PixelFormat::PixelFormatETC2_RGB8_sRGB;
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA:
-            return MTL::PixelFormat::PixelFormatBC7_RGBAUnorm_sRGB;
-        case TextureInternalFormat::COMPRESSED_RED:
-            return MTL::PixelFormat::PixelFormatBC4_RUnorm;
-        case TextureInternalFormat::COMPRESSED_RG:
-            return MTL::PixelFormat::PixelFormatBC5_RGUnorm;
-
         case TextureInternalFormat::R8:
-            return MTL::PixelFormat::PixelFormatR8Unorm;
+            return isLinear ? MTL::PixelFormat::PixelFormatR8Unorm : MTL::PixelFormat::PixelFormatR8Unorm_sRGB;
         case TextureInternalFormat::R8_SNORM:
             return MTL::PixelFormat::PixelFormatR8Snorm;
         case TextureInternalFormat::R16:
@@ -99,7 +77,7 @@ MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat for
         case TextureInternalFormat::R16_SNORM:
             return MTL::PixelFormat::PixelFormatR16Snorm;
         case TextureInternalFormat::RG8:
-            return MTL::PixelFormat::PixelFormatRG8Unorm;
+            return isLinear ? MTL::PixelFormat::PixelFormatRG8Unorm : MTL::PixelFormat::PixelFormatRG8Unorm_sRGB;
         case TextureInternalFormat::RG8_SNORM:
             return MTL::PixelFormat::PixelFormatRG8Snorm;
         case TextureInternalFormat::RG16:
@@ -107,7 +85,7 @@ MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat for
         case TextureInternalFormat::RG16_SNORM:
             return MTL::PixelFormat::PixelFormatRG16Snorm;
         case TextureInternalFormat::RGBA8:
-            return MTL::PixelFormat::PixelFormatRGBA8Unorm;
+            return isLinear ? MTL::PixelFormat::PixelFormatRGBA8Unorm : MTL::PixelFormat::PixelFormatRGBA8Unorm_sRGB;
         case TextureInternalFormat::RGBA8_SNORM:
             return MTL::PixelFormat::PixelFormatRGBA8Snorm;
         case TextureInternalFormat::RGB10_A2:
@@ -116,8 +94,6 @@ MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat for
             return MTL::PixelFormat::PixelFormatRGB10A2Uint;
         case TextureInternalFormat::RGBA16:
             return MTL::PixelFormat::PixelFormatRGBA16Unorm;
-        case TextureInternalFormat::SRGB8_ALPHA8:
-            return MTL::PixelFormat::PixelFormatRGBA8Unorm_sRGB;
         case TextureInternalFormat::R16F:
             return MTL::PixelFormat::PixelFormatR16Float;
         case TextureInternalFormat::RG16F:
@@ -178,41 +154,39 @@ MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat for
             return MTL::PixelFormat::PixelFormatDepth32Float;
         case TextureInternalFormat::DEPTH_STENCIL:
             return MTL::PixelFormat::PixelFormatDepth32Float_Stencil8;
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT1_EXT:
-            return MTL::PixelFormat::PixelFormatBC1_RGBA;
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT3_EXT:
-            return MTL::PixelFormat::PixelFormatBC2_RGBA;
-        case TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT5_EXT:
-            return MTL::PixelFormat::PixelFormatBC3_RGBA;
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-            return MTL::PixelFormat::PixelFormatBC1_RGBA_sRGB;
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-            return MTL::PixelFormat::PixelFormatBC2_RGBA_sRGB;
-        case TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-            return MTL::PixelFormat::PixelFormatBC3_RGBA_sRGB;
+        case TextureInternalFormat::BC1_RGBA:
+            return isLinear ? MTL::PixelFormat::PixelFormatBC1_RGBA : MTL::PixelFormat::PixelFormatBC1_RGBA_sRGB;
+        case TextureInternalFormat::BC2:
+            return isLinear ? MTL::PixelFormat::PixelFormatBC2_RGBA : MTL::PixelFormat::PixelFormatBC2_RGBA_sRGB;
+        case TextureInternalFormat::BC3:
+            return isLinear ? MTL::PixelFormat::PixelFormatBC3_RGBA : MTL::PixelFormat::PixelFormatBC3_RGBA_sRGB;
+        case TextureInternalFormat::BC4:
+            return MTL::PixelFormat::PixelFormatBC4_RUnorm;
+        case TextureInternalFormat::BC5:
+            return MTL::PixelFormat::PixelFormatBC5_RGUnorm;
+        case TextureInternalFormat::BC6H:
+            return MTL::PixelFormat::PixelFormatBC6H_RGBFloat;
+        case TextureInternalFormat::BC7:
+            return isLinear ? MTL::PixelFormat::PixelFormatBC7_RGBAUnorm : MTL::PixelFormat::PixelFormatBC7_RGBAUnorm_sRGB;
         case TextureInternalFormat::INVALID:
         default:
             return MTL::PixelFormat::PixelFormatInvalid;
     }
 }
 
-TextureInternalFormat MetalHelpers::FromTextureInternalFormat(MTL::PixelFormat format)
+TextureInternalFormat MetalHelpers::FromTextureInternalFormat(MTL::PixelFormat format, bool& outIsLinear)
 {
+    outIsLinear = !(format == MTL::PixelFormat::PixelFormatR8Unorm_sRGB |
+                    format == MTL::PixelFormat::PixelFormatRG8Unorm_sRGB |
+                    format == MTL::PixelFormat::PixelFormatRGBA8Unorm_sRGB |
+                    format == MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB |
+                    format == MTL::PixelFormat::PixelFormatBC1_RGBA_sRGB |
+                    format == MTL::PixelFormat::PixelFormatBC2_RGBA_sRGB |
+                    format == MTL::PixelFormat::PixelFormatBC3_RGBA_sRGB |
+                    format == MTL::PixelFormat::PixelFormatBC7_RGBAUnorm_sRGB);
+
     switch (format)
     {
-        case MTL::PixelFormat::PixelFormatETC2_RGB8:
-            return TextureInternalFormat::COMPRESSED_RGB;
-        case MTL::PixelFormat::PixelFormatBC7_RGBAUnorm:
-            return TextureInternalFormat::COMPRESSED_RGBA;
-        case MTL::PixelFormat::PixelFormatETC2_RGB8_sRGB:
-            return TextureInternalFormat::COMPRESSED_SRGB;
-        case MTL::PixelFormat::PixelFormatBC7_RGBAUnorm_sRGB:
-            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA;
-        case MTL::PixelFormat::PixelFormatBC4_RUnorm:
-            return TextureInternalFormat::COMPRESSED_RED;
-        case MTL::PixelFormat::PixelFormatBC5_RGUnorm:
-            return TextureInternalFormat::COMPRESSED_RG;
-
         case MTL::PixelFormat::PixelFormatR8Unorm:
             return TextureInternalFormat::R8;
         case MTL::PixelFormat::PixelFormatR8Snorm:
@@ -240,7 +214,7 @@ TextureInternalFormat MetalHelpers::FromTextureInternalFormat(MTL::PixelFormat f
         case MTL::PixelFormat::PixelFormatRGBA16Unorm:
             return TextureInternalFormat::RGBA16;
         case MTL::PixelFormat::PixelFormatRGBA8Unorm_sRGB:
-            return TextureInternalFormat::SRGB8_ALPHA8;
+            return TextureInternalFormat::RGBA8;
         case MTL::PixelFormat::PixelFormatR16Float:
             return TextureInternalFormat::R16F;
         case MTL::PixelFormat::PixelFormatRG16Float:
@@ -302,17 +276,26 @@ TextureInternalFormat MetalHelpers::FromTextureInternalFormat(MTL::PixelFormat f
         case MTL::PixelFormat::PixelFormatDepth32Float_Stencil8:
             return TextureInternalFormat::DEPTH_STENCIL;
         case MTL::PixelFormat::PixelFormatBC1_RGBA:
-            return TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT1_EXT;
-        case MTL::PixelFormat::PixelFormatBC2_RGBA:
-            return TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT3_EXT;
-        case MTL::PixelFormat::PixelFormatBC3_RGBA:
-            return TextureInternalFormat::COMPRESSED_RGBA_S3TC_DXT5_EXT;
         case MTL::PixelFormat::PixelFormatBC1_RGBA_sRGB:
-            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
+            return TextureInternalFormat::BC1_RGBA;
+        case MTL::PixelFormat::PixelFormatBC2_RGBA:
         case MTL::PixelFormat::PixelFormatBC2_RGBA_sRGB:
-            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
+            return TextureInternalFormat::BC2;
+        case MTL::PixelFormat::PixelFormatBC3_RGBA:
         case MTL::PixelFormat::PixelFormatBC3_RGBA_sRGB:
-            return TextureInternalFormat::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+            return TextureInternalFormat::BC3;
+        case MTL::PixelFormat::PixelFormatBC4_RUnorm:
+        case MTL::PixelFormat::PixelFormatBC4_RSnorm:
+            return TextureInternalFormat::BC4;
+        case MTL::PixelFormat::PixelFormatBC5_RGUnorm:
+        case MTL::PixelFormat::PixelFormatBC5_RGSnorm:
+            return TextureInternalFormat::BC5;
+        case MTL::PixelFormat::PixelFormatBC6H_RGBFloat:
+        case MTL::PixelFormat::PixelFormatBC6H_RGBUfloat:
+            return TextureInternalFormat::BC6H;
+        case MTL::PixelFormat::PixelFormatBC7_RGBAUnorm:
+        case MTL::PixelFormat::PixelFormatBC7_RGBAUnorm_sRGB:
+            return TextureInternalFormat::BC7;
         case MTL::PixelFormat::PixelFormatInvalid:
             return TextureInternalFormat::INVALID;
         default:

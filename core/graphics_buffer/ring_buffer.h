@@ -23,7 +23,7 @@ public:
 
     inline uint64_t GetOffset() const
     {
-        return m_Size * m_CurrentOffset;
+        return m_Size * (m_CurrentOffset % m_Capacity);
     }
 
     inline uint64_t GetSize() const

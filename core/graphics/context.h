@@ -5,6 +5,7 @@
 #include "bounds/bounds.h"
 
 #include <vector>
+#include <memory>
 
 class Renderer;
 class Light;

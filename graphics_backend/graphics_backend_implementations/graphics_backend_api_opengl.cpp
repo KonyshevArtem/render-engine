@@ -19,6 +19,7 @@
 #include "debug.h"
 
 #include <type_traits>
+#include <stdexcept>
 
 struct DepthStencilState
 {

@@ -5,7 +5,6 @@
 #include "../scenes/test_scene.h"
 #include "../scenes/pbr_demo.h"
 #include "../scenes/shadows_demo.h"
-#include "../scenes/empty_scene.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "graphics_backend_api.h"
 
@@ -31,10 +30,9 @@ void EngineFramework::Initialize(void *graphicsBackendData, const char *graphics
     Graphics::Init();
     Time::Init();
 
-//    TestScene::Load();
+    TestScene::Load();
     //PBRDemo::Load();
     //ShadowsDemo::Load();
-    EmptyScene::Load();
 }
 
 void EngineFramework::TickMainLoop(void *graphicsBackendData, int width, int height)

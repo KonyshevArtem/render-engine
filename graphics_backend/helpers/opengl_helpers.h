@@ -1,6 +1,8 @@
 #ifndef RENDER_ENGINE_OPENGL_HELPERS_H
 #define RENDER_ENGINE_OPENGL_HELPERS_H
 
+#ifdef RENDER_BACKEND_OPENGL
+
 #include "enums/shader_type.h"
 #include "enums/texture_type.h"
 #include "enums/texture_internal_format.h"
@@ -60,4 +62,5 @@ namespace OpenGLHelpers
     TextureDataType FromTextureDataType(GLenum textureDataType);
 }
 
+#endif //RENDER_BACKEND_OPENGL
 #endif //RENDER_ENGINE_OPENGL_HELPERS_H

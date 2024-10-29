@@ -4,6 +4,8 @@
 #include "bounds/bounds.h"
 #include "matrix4x4/matrix4x4.h"
 
+#include <cstdint>
+
 class DrawableGeometry;
 class Material;
 

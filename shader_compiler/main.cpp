@@ -113,7 +113,7 @@ void WriteShaderBinary(const std::filesystem::path &outputDirPath, const CComPtr
         std::filesystem::path outputPath = outputDirPath / (isVertexShader ? "vs.bin" : "ps.bin");
         std::filesystem::create_directories(outputPath.parent_path());
 
-        FILE *fp = fopen(outputPath.c_str(), "wb");
+        FILE *fp = fopen(outputPath.string().c_str(), "wb");
         fwrite(pShader->GetBufferPointer(), pShader->GetBufferSize(), 1, fp);
         fclose(fp);
     }
@@ -129,7 +129,7 @@ void WriteShaderSource(const std::filesystem::path& outputDirPath, spirv_cross::
 
     std::string shaderSource = compiler->compile();
 
-    FILE *fp = fopen(outputPath.c_str(), "w");
+    FILE *fp = fopen(outputPath.string().c_str(), "w");
     fwrite(shaderSource.c_str(), shaderSource.size(), 1, fp);
     fclose(fp);
 }
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
     spirv_cross::Compiler* vertexSPIRV = CompileSPIRV(vertexDXC, backend, true);
     spirv_cross::Compiler* fragmentSPIRV = CompileSPIRV(fragmentDXC, backend, false);
 
-    std::string shaderName = hlslPath.filename().replace_extension("");
+    std::string shaderName = hlslPath.filename().replace_extension("").string();
     std::filesystem::path outputDirPath = hlslPath.parent_path() / "output" / shaderName / GetBackendLiteral(backend) / definesHash;
 
     WriteShaderSource(outputDirPath, vertexSPIRV, true);

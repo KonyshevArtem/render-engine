@@ -13,6 +13,10 @@
 #include <iostream>
 #include <unordered_map>
 
+#if __has_include("atlbase.h")
+    #include <atlbase.h>
+#endif
+
 struct Bindings
 {
     int32_t Vertex = -1;

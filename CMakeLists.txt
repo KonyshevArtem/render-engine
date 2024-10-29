@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
-	add_compile_definitions(RENDER_ENGINE_WINDOWS=1 RENDER_ENGINE_APPLE=0)
+	add_compile_definitions(RENDER_ENGINE_WINDOWS=1 RENDER_ENGINE_APPLE=0 _USE_MATH_DEFINES)
 	set(RENDER_ENGINE_WINDOWS_PLATFORM 1)
 
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -29,14 +29,13 @@ add_library(
     scenes/shadows_demo.h
     scripts/camera_fly_controller/camera_fly_controller.cpp
 	scripts/camera_fly_controller/camera_fly_controller.h
-	scenes/empty_scene.cpp
-	scenes/empty_scene.h
 )
 
 # boost
 # set(Boost_DEBUG ON)
 # set(Boost_ARCHITECTURE -x64) # might be required on windows, based on how boost was compiled
 set(Boost_USE_STATIC_LIBS ON)
+set(Boost_NO_WARN_NEW_VERSIONS 1)
 find_package(Boost REQUIRED COMPONENTS json)
 include_directories(${Boost_INCLUDE_DIRS})
 

@@ -2,6 +2,7 @@
 #define RENDER_ENGINE_RENDERER_H
 
 #include <memory>
+#include <string>
 
 class GraphicsBackendBufferInfo;
 class GameObject;

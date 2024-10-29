@@ -1,3 +1,5 @@
+#ifdef RENDER_BACKEND_OPENGL
+
 #include "opengl_helpers.h"
 
 std::string OpenGLHelpers::GetShaderTypeName(ShaderType shaderType)
@@ -903,3 +905,5 @@ TextureDataType OpenGLHelpers::FromTextureDataType(GLenum textureDataType)
             return TextureDataType::UNSIGNED_INT_SAMPLER_2D_RECT;
     }
 }
+
+#endif //RENDER_BACKEND_OPENGL

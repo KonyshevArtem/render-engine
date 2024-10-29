@@ -4,6 +4,8 @@
 #include "draw_call_comparer.h"
 #include "draw_call_filter.h"
 
+#include <memory>
+
 class Material;
 
 struct RenderSettings

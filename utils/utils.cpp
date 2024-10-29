@@ -4,7 +4,7 @@
 #include <fstream>
 #include <set>
 #if __has_include("libloaderapi.h")
-    #include <libloaderapi.h>
+    #include <windows.h>
 #elif __has_include("mach-o/dyld.h")
     #include <mach-o/dyld.h>
 #endif
@@ -54,10 +54,10 @@ namespace Utils
             auto matchStart = match.position();
             matchStart = matchStart == 0 ? 0 : matchStart + 1;
 
-            auto pathToInclude = relativePath.parent_path() / match[1].str();
+            std::filesystem::path pathToInclude = relativePath.parent_path() / match[1].str();
             if (!includedFiles.contains(pathToInclude.string()))
             {
-                includedFiles.insert(pathToInclude);
+                includedFiles.insert(pathToInclude.string());
 
                 auto includedFile = ReadFileWithIncludes_Internal(pathToInclude, includeRegex, includedFiles);
                 includedFile = "\n" + includedFile + "\n";

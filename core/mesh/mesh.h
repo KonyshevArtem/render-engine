@@ -3,6 +3,7 @@
 
 #include "bounds/bounds.h"
 #include "drawable_geometry/drawable_geometry.h"
+#include <memory>
 
 struct Vector2;
 struct Vector3;

@@ -4,6 +4,7 @@
 #include "reflection.h"
 #include "graphics_backend.h"
 
+#include <filesystem>
 #include <boost/json/value_from.hpp>
 #include <boost/json/serialize.hpp>
 
@@ -47,7 +48,7 @@ void WriteReflection(const std::filesystem::path &outputDirPath, const Reflectio
     std::filesystem::path outputPath = outputDirPath / "reflection.json";
     std::filesystem::create_directory(outputPath.parent_path());
 
-    FILE *fp = fopen(outputPath.c_str(), "w");
+    FILE *fp = fopen(outputPath.string().c_str(), "w");
     fwrite(json.c_str(), json.size(), 1, fp);
     fclose(fp);
 }

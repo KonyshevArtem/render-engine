@@ -1,3 +1,5 @@
+#ifdef RENDER_BACKEND_METAL
+
 #include "metal_helpers.h"
 
 #define NS_PRIVATE_IMPLEMENTATION
@@ -716,3 +718,5 @@ TextureDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::T
         }
     }
 }
+
+#endif // RENDER_BACKEND_METAL

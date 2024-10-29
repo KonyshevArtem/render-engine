@@ -1,6 +1,8 @@
 #ifndef RENDER_ENGINE_METAL_HELPERS_H
 #define RENDER_ENGINE_METAL_HELPERS_H
 
+#ifdef RENDER_BACKEND_METAL
+
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
 #include "enums/texture_type.h"
@@ -57,4 +59,5 @@ namespace MetalHelpers
     TextureDataType FromTextureDataType(MTL::DataType dataType, MTL::TextureType textureType);
 }
 
+#endif //RENDER_BACKEND_METAL
 #endif //RENDER_ENGINE_METAL_HELPERS_H

@@ -65,7 +65,7 @@ namespace ShaderLoader
         try
         {
             std::string backendLiteral = GetBackendLiteral(GraphicsBackend::Current()->GetName());
-            std::string shaderName = _path.filename().replace_extension("");
+            std::string shaderName = _path.filename().replace_extension("").string();
             std::filesystem::path backendPath = Utils::GetExecutableDirectory() / _path.parent_path() / "output" / shaderName / backendLiteral / keywordHash;
 
             auto reflectionJson = Utils::ReadFile(backendPath / "reflection.json");

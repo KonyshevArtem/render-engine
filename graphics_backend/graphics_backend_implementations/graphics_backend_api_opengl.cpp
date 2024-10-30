@@ -39,11 +39,33 @@ GLbitfield s_ClearFlags[static_cast<int>(FramebufferAttachment::MAX)];
 
 void LogError(GLenum errorCode, const std::string& line, const std::string &file, int lineNumber)
 {
-    auto *errorString = reinterpret_cast<const char *>(gluErrorString(errorCode));
-    if (errorString == nullptr)
-        Debug::LogErrorFormat("[Graphics Backend] Unknown error %1%\n%4%\n%2%:%3%", {std::to_string(errorCode), file, std::to_string(lineNumber), line});
-    else
-        Debug::LogErrorFormat("[Graphics Backend] %1%\n%4%\n%2%:%3%", {errorString, file, std::to_string(lineNumber), line});
+    std::string errorString = "Unknown error";
+    switch (errorCode)
+    {
+        case GL_INVALID_ENUM:
+            errorString = "GL_INVALID_ENUM";
+            break;
+        case GL_INVALID_VALUE:
+            errorString = "GL_INVALID_VALUE";
+            break;
+        case GL_INVALID_OPERATION:
+            errorString = "GL_INVALID_OPERATION";
+            break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            errorString = "GL_INVALID_FRAMEBUFFER_OPERATION";
+            break;
+        case GL_OUT_OF_MEMORY:
+            errorString = "GL_OUT_OF_MEMORY";
+            break;
+        case GL_STACK_UNDERFLOW:
+            errorString = "GL_STACK_UNDERFLOW";
+            break;
+        case GL_STACK_OVERFLOW:
+            errorString = "GL_STACK_OVERFLOW";
+            break;
+    }
+
+    Debug::LogErrorFormat("[Graphics Backend] %1%\n%4%\n%2%:%3%", {errorString, file, std::to_string(lineNumber), line});
 }
 
 #ifdef RENDER_ENGINE_EDITOR
@@ -51,7 +73,7 @@ void LogError(GLenum errorCode, const std::string& line, const std::string &file
     backendFunction;                                               \
     {                                                              \
         auto error = glGetError();                                 \
-        if (error != 0)                                            \
+        if (error != GL_NO_ERROR)                                            \
             LogError(error, #backendFunction, __FILE__, __LINE__); \
     }
 #else

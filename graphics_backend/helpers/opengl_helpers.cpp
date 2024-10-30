@@ -303,11 +303,13 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool
             return isLinear ? GL_COMPRESSED_RGBA_S3TC_DXT5_EXT : GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
 #endif
         case TextureInternalFormat::BC4:
+            return GL_COMPRESSED_RED_RGTC1;
         case TextureInternalFormat::BC5:
+            return GL_COMPRESSED_RG_RGTC2;
         case TextureInternalFormat::BC6H:
+            return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
         case TextureInternalFormat::BC7:
-            // TODO not implemented
-            return 0;
+            return isLinear ? GL_COMPRESSED_RGBA_BPTC_UNORM : GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
         case TextureInternalFormat::DEPTH_COMPONENT:
             return GL_DEPTH_COMPONENT;
         case TextureInternalFormat::DEPTH_STENCIL:
@@ -324,7 +326,8 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bo
                     format == GL_COMPRESSED_SRGB_S3TC_DXT1_EXT |
                     format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT |
                     format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT |
-                    format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT);
+                    format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT |
+                    format == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM);
 
     switch (format)
     {
@@ -464,6 +467,15 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bo
         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
             return TextureInternalFormat::BC3;
 #endif
+        case GL_COMPRESSED_RED_RGTC1:
+            return TextureInternalFormat::BC4;
+        case GL_COMPRESSED_RG_RGTC2:
+            return TextureInternalFormat::BC5;
+        case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT:
+            return TextureInternalFormat::BC6H;
+        case GL_COMPRESSED_RGBA_BPTC_UNORM:
+        case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
+            return TextureInternalFormat::BC7;
         case GL_DEPTH_COMPONENT:
             return TextureInternalFormat::DEPTH_COMPONENT;
         case GL_DEPTH_STENCIL:
@@ -489,6 +501,7 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::R16UI:
         case TextureInternalFormat::R32I:
         case TextureInternalFormat::R32UI:
+        case TextureInternalFormat::BC4:
             return GL_RED;
         case TextureInternalFormat::RG8:
         case TextureInternalFormat::RG8_SNORM:
@@ -502,6 +515,7 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::RG16UI:
         case TextureInternalFormat::RG32I:
         case TextureInternalFormat::RG32UI:
+        case TextureInternalFormat::BC5:
             return GL_RG;
         case TextureInternalFormat::R3_G3_B2:
         case TextureInternalFormat::RGB4:
@@ -521,6 +535,7 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::RGB32I:
         case TextureInternalFormat::RGB32UI:
         case TextureInternalFormat::BC1_RGB:
+        case TextureInternalFormat::BC6H:
             return GL_RGB;
         case TextureInternalFormat::RGBA2:
         case TextureInternalFormat::RGBA4:
@@ -543,6 +558,7 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::BC1_RGBA:
         case TextureInternalFormat::BC2:
         case TextureInternalFormat::BC3:
+        case TextureInternalFormat::BC7:
             return GL_RGBA;
         case TextureInternalFormat::DEPTH_COMPONENT:
         case TextureInternalFormat::DEPTH_STENCIL:

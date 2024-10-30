@@ -136,7 +136,7 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
     {
         for (int i = 0; i < mipLevels; ++i)
         {
-            UploadImagePixels(texture, i, CubemapFace::POSITIVE_X, width / (i + 1), height / (i + 1), 0, 0, nullptr);
+            UploadImagePixels(texture, i, CubemapFace::POSITIVE_X, width / (i + 1), height / (i + 1), depth, 0, nullptr);
         }
     }
 

@@ -393,7 +393,7 @@ namespace Graphics
     {
         if (buffer)
         {
-            BindBuffer(name, buffer->GetBackendBuffer(), isConstant, shaderPass, buffer->GetOffset() + offset, buffer->GetSize());
+            BindBuffer(name, buffer->GetBackendBuffer(), isConstant, shaderPass, buffer->GetCurrentElementOffset() + offset, buffer->GetElementSize());
         }
     }
 

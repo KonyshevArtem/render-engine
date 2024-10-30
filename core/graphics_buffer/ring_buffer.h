@@ -1,12 +1,11 @@
 #ifndef RENDER_ENGINE_RING_BUFFER_H
 #define RENDER_ENGINE_RING_BUFFER_H
 
+#include "graphics_buffer.h"
 #include "enums/buffer_usage_hint.h"
-#include "types/graphics_backend_resource_bindings.h"
 
 #include <cstdint>
 #include <memory>
-#include <vector>
 
 class GraphicsBuffer;
 class GraphicsBackendBuffer;
@@ -14,21 +13,25 @@ class GraphicsBackendBuffer;
 class RingBuffer
 {
 public:
-    RingBuffer(uint64_t size, BufferUsageHint usageHint);
+    RingBuffer(uint64_t elementSize, BufferUsageHint usageHint);
     ~RingBuffer() = default;
 
-    const GraphicsBackendBuffer& GetBackendBuffer() const;
+    const GraphicsBackendBuffer& GetBackendBuffer() const
+    {
+        return m_Buffer->GetBackendBuffer();
+    }
+
     void SetData(const void *data, uint64_t offset, uint64_t size);
     void Reset();
 
-    inline uint64_t GetOffset() const
+    inline uint64_t GetCurrentElementOffset() const
     {
-        return m_Size * (m_CurrentOffset % m_Capacity);
+        return m_ElementSize * m_CurrentOffset;
     }
 
-    inline uint64_t GetSize() const
+    inline uint64_t GetElementSize() const
     {
-        return m_Size;
+        return m_ElementSize;
     }
 
     RingBuffer(const RingBuffer &) = delete;
@@ -38,10 +41,10 @@ public:
     RingBuffer &operator()(RingBuffer &&)      = delete;
 
 private:
-    std::vector<std::shared_ptr<GraphicsBuffer>> m_Buffers;
+    std::shared_ptr<GraphicsBuffer> m_Buffer;
 
     BufferUsageHint m_UsageHint;
-    uint64_t m_Size;
+    uint64_t m_ElementSize;
     int m_Capacity;
 
     int m_CurrentOffset = -1;

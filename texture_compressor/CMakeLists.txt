@@ -3,9 +3,6 @@ project(TextureCompressor)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(CUTTLEFISH_BUILD_TESTS OFF)
-set(CUTTLEFISH_BUILD_TOOL OFF)
-
 set(
     TEXTURE_COMPRESSOR_SOURCES
     texture_compressor.cpp

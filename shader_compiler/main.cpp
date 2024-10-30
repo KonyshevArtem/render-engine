@@ -67,23 +67,16 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
         glsl->build_combined_image_samplers();
 
         spirv_cross::CompilerGLSL::Options options;
-        options.version = 410;
+        options.version = 460;
         options.es = false;
-        options.enable_420pack_extension = false;
         glsl->set_common_options(options);
 
-        // Apple OpenGL can't compile if vertex outputs name don't match corresponding fragment inputs name, even if location matches
-        // So, they must be renamed manually to match.
-        // SPIRV-Cross naming is "in.var.TEXCOORD0" and "out.var.TEXCOORD0", so we just remove "in" and "out"
-        auto resources = glsl->get_shader_resources();
-        for (const auto& resource: isVertexShader ? resources.stage_outputs : resources.stage_inputs)
+        const auto& combinedImageSamplers = glsl->get_combined_image_samplers();
+        for (int i = 0; i < combinedImageSamplers.size(); i++)
         {
-            glsl->set_name(resource.id, resource.name.substr(isVertexShader ? 4 : 3));
-        }
-
-        for (const auto &remap : glsl->get_combined_image_samplers())
-        {
-            glsl->set_name(remap.combined_id, glsl->get_name(remap.image_id));
+            const auto& sampler = combinedImageSamplers[i];
+            glsl->set_name(sampler.combined_id, glsl->get_name(sampler.image_id));
+            glsl->set_decoration(sampler.combined_id, spv::DecorationLocation, i);
         }
 
         return glsl;

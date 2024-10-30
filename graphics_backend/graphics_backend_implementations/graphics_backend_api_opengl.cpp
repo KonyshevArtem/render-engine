@@ -311,11 +311,13 @@ TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAt
 
 GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferUsageHint usageHint)
 {
-    GraphicsBackendBuffer buffer{};
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenBuffers(1, reinterpret_cast<GLuint*>(&buffer.Buffer)))
+    GLuint glBuffer;
+    CHECK_GRAPHICS_BACKEND_FUNC(glGenBuffers(1, &glBuffer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer))
+    CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(GL_SHADER_STORAGE_BUFFER, size, nullptr, OpenGLHelpers::ToBufferUsageHint(usageHint)))
 
-    buffer.UsageHint = usageHint;
-    buffer.IsDataInitialized = false;
+    GraphicsBackendBuffer buffer{};
+    buffer.Buffer = static_cast<uint64_t>(glBuffer);
     buffer.Size = size;
     return buffer;
 }
@@ -347,12 +349,6 @@ void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buff
 void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
 {
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_UNIFORM_BUFFER, buffer.Buffer))
-    if (!buffer.IsDataInitialized)
-    {
-        CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(GL_UNIFORM_BUFFER, buffer.Size, nullptr, OpenGLHelpers::ToBufferUsageHint(buffer.UsageHint)))
-        buffer.IsDataInitialized = true;
-    }
-
     void *contents = CHECK_GRAPHICS_BACKEND_FUNC(glMapBufferRange(GL_UNIFORM_BUFFER, offset, size, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT))
     memcpy(contents, data, size);
     CHECK_GRAPHICS_BACKEND_FUNC(glUnmapBuffer(GL_UNIFORM_BUFFER))

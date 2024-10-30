@@ -8,10 +8,7 @@ class GraphicsBackendBuffer
 {
 public:
     uint64_t Buffer;
-
-    BufferUsageHint UsageHint;
     int Size;
-    bool IsDataInitialized;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;

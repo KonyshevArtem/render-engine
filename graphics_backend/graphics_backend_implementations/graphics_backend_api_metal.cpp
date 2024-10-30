@@ -256,8 +256,6 @@ GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferUsageHi
     auto metalBuffer = m_Device->newBuffer(size, MTL::ResourceStorageModeManaged);
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(metalBuffer);
-    buffer.IsDataInitialized = true;
-    buffer.UsageHint = usageHint;
     buffer.Size = size;
     return buffer;
 }

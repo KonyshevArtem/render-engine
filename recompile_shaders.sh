@@ -1,152 +1,89 @@
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/final_blit.hlsl
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/final_blit.hlsl
+OS=$(uname)
+if [ "$OS" = "Darwin" ]; then
+    EXECUTABLE="./cmake-build-debug/shader_compiler/ShaderCompiler"
+    BACKEND="metal"
+else
+    EXECUTABLE="./cmake-build-debug-visual-studio/shader_compiler/ShaderCompiler.exe"
+    BACKEND="opengl"
+fi
 
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/fallback.hlsl
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/fallback.hlsl
+$EXECUTABLE $BACKEND resources/shaders/final_blit.hlsl
 
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/skybox.hlsl
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/skybox.hlsl
+$EXECUTABLE $BACKEND resources/shaders/fallback.hlsl
 
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _REFLECTION
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _REFLECTION _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _REFLECTION _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _REFLECTION _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _REFLECTION
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _REFLECTION
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _REFLECTION _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _REFLECTION _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _REFLECTION _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _REFLECTION
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _INSTANCING _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/skybox.hlsl
 
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/shadowCaster.hlsl
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/shadowCaster.hlsl
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _RECEIVE_SHADOWS
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _RECEIVE_SHADOWS _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _RECEIVE_SHADOWS _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _REFLECTION
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _REFLECTION _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _REFLECTION _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _REFLECTION _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _REFLECTION
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _INSTANCING _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _PER_INSTANCE_DATA
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/standard.hlsl _DATA_MAP _NORMAL_MAP _REFLECTION _RECEIVE_SHADOWS _INSTANCING _PER_INSTANCE_DATA
 
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/outlineBlit.hlsl
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/outlineBlit.hlsl
+$EXECUTABLE $BACKEND resources/shaders/shadowCaster.hlsl
 
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/silhouette.hlsl
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/silhouette.hlsl
+$EXECUTABLE $BACKEND resources/shaders/outlineBlit.hlsl
 
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/billboard.hlsl
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/billboard.hlsl
+$EXECUTABLE $BACKEND resources/shaders/silhouette.hlsl
 
-./cmake-build-debug/shader_compiler/ShaderCompiler opengl resources/shaders/gizmos.hlsl _INSTANCING
-./cmake-build-debug/shader_compiler/ShaderCompiler metal resources/shaders/gizmos.hlsl _INSTANCING
+$EXECUTABLE $BACKEND resources/shaders/billboard.hlsl
+
+$EXECUTABLE $BACKEND resources/shaders/gizmos.hlsl _INSTANCING

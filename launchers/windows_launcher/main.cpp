@@ -79,8 +79,10 @@ int main(int argc, char **argv)
 
     EngineFramework::Shutdown();
 
-    glfwDestroyWindow(s_Window);
-    glfwTerminate();
+    // Don't call those to keep OpenGL context, so objects can be destroyed
+    // TODO: refactor when resources are properly managed
+    //glfwDestroyWindow(s_Window);
+    //glfwTerminate();
 
     return 0;
 }

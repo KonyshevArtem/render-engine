@@ -83,6 +83,7 @@ void TestScene::Init()
 
     // init materials
     auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader);
+    standardOpaqueMaterial->SetTexture("_Albedo", Texture2D::White());
     standardOpaqueMaterial->SetTexture("_NormalMap", Texture2D::Normal());
     standardOpaqueMaterial->SetFloat("_NormalIntensity", 1);
     standardOpaqueMaterial->SetFloat("_Roughness", 0.5f);

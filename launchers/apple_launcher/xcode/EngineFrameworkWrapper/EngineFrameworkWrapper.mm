@@ -4,30 +4,34 @@
 struct InitData
 {
     void* Device;
-    void* CommandBuffer;
+    void* RenderCommandBuffer;
+    void* CopyCommandBuffer;
 };
 
 struct NewFrameData
 {
-    void* CommandBuffer;
+    void* RenderCommandBuffer;
+    void* CopyCommandBuffer;
     void* BackbufferDescriptor;
 };
 
 @implementation EngineFrameworkWrapper
 
-+ (void) Initialize:(id<MTLDevice>)device commandBuffer:(id<MTLCommandBuffer>)commandBuffer
++ (void) Initialize:(id<MTLDevice>)device renderCommandBuffer:(id<MTLCommandBuffer>)renderCommandBuffer copyCommandBuffer:(id<MTLCommandBuffer>)copyCommandBuffer
 {
     InitData* data = new InitData();
     data->Device = (__bridge void*)device;
-    data->CommandBuffer = (__bridge void*)commandBuffer;
+    data->RenderCommandBuffer = (__bridge void*)renderCommandBuffer;
+    data->CopyCommandBuffer = (__bridge void*)copyCommandBuffer;
     EngineFramework::Initialize((void*)data, "Metal");
     delete data;
 }
 
-+ (void) TickMainLoop:(id<MTLCommandBuffer>)commandBuffer backbufferDescriptor:(MTLRenderPassDescriptor*)backbufferDescriptor width:(int)width height:(int)height
++ (void) TickMainLoop:(id<MTLCommandBuffer>)renderCommandBuffer copyCommandBuffer:(id<MTLCommandBuffer>)copyCommandBuffer backbufferDescriptor:(MTLRenderPassDescriptor *)backbufferDescriptor width:(int)width height:(int)height
 {
     NewFrameData* data = new NewFrameData();
-    data->CommandBuffer = (__bridge void*)commandBuffer;
+    data->RenderCommandBuffer = (__bridge void*)renderCommandBuffer;
+    data->CopyCommandBuffer = (__bridge void*)copyCommandBuffer;
     data->BackbufferDescriptor = (__bridge void*)backbufferDescriptor;
     EngineFramework::TickMainLoop(data, width, height);
     delete data;

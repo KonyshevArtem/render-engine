@@ -36,7 +36,9 @@ void RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
 
         if (oldBuffer)
         {
+            GraphicsBackend::Current()->BeginCopyPass();
             Graphics::CopyBufferData(oldBuffer, m_Buffer, 0, 0, oldBuffer->GetSize());
+            GraphicsBackend::Current()->EndCopyPass();
         }
     }
 

@@ -106,6 +106,8 @@ public:
 
     virtual void BeginRenderPass() = 0;
     virtual void EndRenderPass() = 0;
+    virtual void BeginCopyPass() = 0;
+    virtual void EndCopyPass() = 0;
 
     virtual GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction) = 0;
     virtual void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;

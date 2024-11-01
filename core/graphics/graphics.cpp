@@ -274,7 +274,9 @@ namespace Graphics
 
 #if RENDER_ENGINE_EDITOR
 
+        GraphicsBackend::Current()->BeginCopyPass();
         CopyTextureToTexture(cameraDepthTarget, nullptr, GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
+        GraphicsBackend::Current()->EndCopyPass();
 
         if (s_GizmosPass)
         {

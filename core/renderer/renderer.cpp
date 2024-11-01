@@ -5,6 +5,7 @@
 #include "material/material.h"
 #include "shader/shader.h"
 #include "global_constants.h"
+#include "graphics_backend_api.h"
 #include "shader/shader_pass/shader_pass.h"
 #include "types/graphics_backend_buffer_info.h"
 
@@ -105,7 +106,9 @@ void Renderer::SetDataToBuffers(const std::string &name, const void *data, uint6
 
         if (oldBuffer)
         {
+            GraphicsBackend::Current()->BeginCopyPass();
             Graphics::CopyBufferData(oldBuffer, s_InstanceDataBuffer, 0, 0, oldBuffer->GetSize());
+            GraphicsBackend::Current()->EndCopyPass();
         }
     }
 

@@ -24,12 +24,14 @@ const int s_MaxBuffers = 31;
 struct InitData
 {
     MTL::Device* Device;
-    MTL::CommandBuffer* CommandBuffer;
+    MTL::CommandBuffer* RenderCommandBuffer;
+    MTL::CommandBuffer* CopyCommandBuffer;
 };
 
 struct NewFrameData
 {
-    MTL::CommandBuffer* CommandBuffer;
+    MTL::CommandBuffer* RenderCommandBuffer;
+    MTL::CommandBuffer* CopyCommandBuffer;
     MTL::RenderPassDescriptor* BackbufferDescriptor;
 };
 
@@ -37,7 +39,8 @@ void GraphicsBackendMetal::Init(void *data)
 {
     auto metalData = reinterpret_cast<InitData*>(data);
     m_Device = metalData->Device;
-    m_CommandBuffer = metalData->CommandBuffer;
+    m_RenderCommandBuffer = metalData->RenderCommandBuffer;
+    m_CopyCommandBuffer = metalData->CopyCommandBuffer;
     m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 }
 
@@ -49,7 +52,8 @@ GraphicsBackendName GraphicsBackendMetal::GetName()
 void GraphicsBackendMetal::InitNewFrame(void *data)
 {
     auto metalData = reinterpret_cast<NewFrameData*>(data);
-    m_CommandBuffer = metalData->CommandBuffer;
+    m_RenderCommandBuffer = metalData->RenderCommandBuffer;
+    m_CopyCommandBuffer = metalData->CopyCommandBuffer;
     m_BackbufferDescriptor = metalData->BackbufferDescriptor;
 }
 
@@ -141,47 +145,45 @@ void GraphicsBackendMetal::DeleteSampler(const GraphicsBackendSampler &sampler)
 
 void GraphicsBackendMetal::BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
+    assert(m_RenderCommandEncoder != nullptr);
 
     auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
 
     if (bindings.VertexIndex >= 0)
     {
-        m_CurrentCommandEncoder->setVertexTexture(metalTexture, bindings.VertexIndex);
+        m_RenderCommandEncoder->setVertexTexture(metalTexture, bindings.VertexIndex);
     }
     if (bindings.FragmentIndex >= 0)
     {
-        m_CurrentCommandEncoder->setFragmentTexture(metalTexture, bindings.FragmentIndex);
+        m_RenderCommandEncoder->setFragmentTexture(metalTexture, bindings.FragmentIndex);
     }
 }
 
 void GraphicsBackendMetal::BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
+    assert(m_RenderCommandEncoder != nullptr);
 
     auto metalSampler = reinterpret_cast<MTL::SamplerState *>(sampler.Sampler);
 
     if (bindings.VertexIndex >= 0)
     {
-        m_CurrentCommandEncoder->setVertexSamplerState(metalSampler, bindings.VertexIndex);
+        m_RenderCommandEncoder->setVertexSamplerState(metalSampler, bindings.VertexIndex);
     }
     if (bindings.FragmentIndex >= 0)
     {
-        m_CurrentCommandEncoder->setFragmentSamplerState(metalSampler, bindings.FragmentIndex);
+        m_RenderCommandEncoder->setFragmentSamplerState(metalSampler, bindings.FragmentIndex);
     }
 }
 
 void GraphicsBackendMetal::GenerateMipmaps(const GraphicsBackendTexture &texture)
 {
-    assert(m_CurrentCommandEncoder == nullptr);
+    assert(m_BlitCommandEncoder != nullptr);
 
     auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
     if (!metalTexture)
         return;
 
-    MTL::BlitCommandEncoder* encoder = m_CommandBuffer->blitCommandEncoder();
-    encoder->generateMipmaps(metalTexture);
-    encoder->endEncoding();
+    m_BlitCommandEncoder->generateMipmaps(metalTexture);
 }
 
 void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData)
@@ -268,16 +270,16 @@ void GraphicsBackendMetal::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 
 void GraphicsBackendMetal::BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
+    assert(m_RenderCommandEncoder != nullptr);
 
     auto *metalBuffer = reinterpret_cast<MTL::Buffer*>(buffer.Buffer);
     if (bindings.VertexIndex >= 0)
     {
-        m_CurrentCommandEncoder->setVertexBuffer(metalBuffer, offset, bindings.VertexIndex);
+        m_RenderCommandEncoder->setVertexBuffer(metalBuffer, offset, bindings.VertexIndex);
     }
     if (bindings.FragmentIndex >= 0)
     {
-        m_CurrentCommandEncoder->setFragmentBuffer(metalBuffer, offset, bindings.FragmentIndex);
+        m_RenderCommandEncoder->setFragmentBuffer(metalBuffer, offset, bindings.FragmentIndex);
     }
 }
 
@@ -296,14 +298,11 @@ void GraphicsBackendMetal::SetBufferData(GraphicsBackendBuffer &buffer, long off
 
 void GraphicsBackendMetal::CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size)
 {
-    assert(m_CommandBuffer != nullptr);
+    assert(m_BlitCommandEncoder != nullptr);
 
     auto metalSource = reinterpret_cast<MTL::Buffer*>(source.Buffer);
     auto metalDestination = reinterpret_cast<MTL::Buffer*>(destination.Buffer);
-
-    auto encoder = m_CommandBuffer->blitCommandEncoder();
-    encoder->copyFromBuffer(metalSource, sourceOffset, metalDestination, destinationOffset, size);
-    encoder->endEncoding();
+    m_BlitCommandEncoder->copyFromBuffer(metalSource, sourceOffset, metalDestination, destinationOffset, size);
 }
 
 uint64_t GraphicsBackendMetal::GetMaxConstantBufferSize()
@@ -356,22 +355,22 @@ void GraphicsBackendMetal::SetVertexAttributeDivisor(int index, int divisor)
 
 void GraphicsBackendMetal::SetCullFace(CullFace cullFace)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
-    m_CurrentCommandEncoder->setCullMode(MetalHelpers::ToCullFace(cullFace));
+    assert(m_RenderCommandEncoder != nullptr);
+    m_RenderCommandEncoder->setCullMode(MetalHelpers::ToCullFace(cullFace));
 }
 
 void GraphicsBackendMetal::SetCullFaceOrientation(CullFaceOrientation orientation)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
-    m_CurrentCommandEncoder->setFrontFacingWinding(MetalHelpers::ToCullFaceOrientation(orientation));
+    assert(m_RenderCommandEncoder != nullptr);
+    m_RenderCommandEncoder->setFrontFacingWinding(MetalHelpers::ToCullFaceOrientation(orientation));
 }
 
 void GraphicsBackendMetal::SetViewport(int x, int y, int width, int height, float near, float far)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
+    assert(m_RenderCommandEncoder != nullptr);
 
     MTL::Viewport viewport {static_cast<double>(x), static_cast<double>(y), static_cast<double>(width), static_cast<double>(height), near, far} ;
-    m_CurrentCommandEncoder->setViewport(viewport);
+    m_RenderCommandEncoder->setViewport(viewport);
 }
 
 GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shaderType, const std::string &source)
@@ -457,10 +456,10 @@ bool GraphicsBackendMetal::RequireStrictPSODescriptor()
 
 void GraphicsBackendMetal::UseProgram(GraphicsBackendProgram program)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
+    assert(m_RenderCommandEncoder != nullptr);
 
     auto pso = reinterpret_cast<MTL::RenderPipelineState*>(program.Program);
-    m_CurrentCommandEncoder->setRenderPipelineState(pso);
+    m_RenderCommandEncoder->setRenderPipelineState(pso);
 }
 
 void GraphicsBackendMetal::SetClearColor(float r, float g, float b, float a)
@@ -477,39 +476,39 @@ void GraphicsBackendMetal::SetClearDepth(double depth)
 
 void GraphicsBackendMetal::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
+    assert(m_RenderCommandEncoder != nullptr);
 
-    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
-    m_CurrentCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
+    m_RenderCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
+    m_RenderCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
 }
 
 void GraphicsBackendMetal::DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
+    assert(m_RenderCommandEncoder != nullptr);
 
-    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
-    m_CurrentCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, indicesCount);
+    m_RenderCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
+    m_RenderCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, indicesCount);
 }
 
 void GraphicsBackendMetal::DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
+    assert(m_RenderCommandEncoder != nullptr);
 
-    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
-    m_CurrentCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0);
+    m_RenderCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
+    m_RenderCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0);
 }
 
 void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
+    assert(m_RenderCommandEncoder != nullptr);
 
-    m_CurrentCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
-    m_CurrentCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0, instanceCount);
+    m_RenderCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
+    m_RenderCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0, instanceCount);
 }
 
 void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
 {
-    assert(m_CommandBuffer != nullptr);
+    assert(m_BlitCommandEncoder != nullptr);
 
     auto metalSource = reinterpret_cast<MTL::Texture*>(source.Texture);
     auto metalDestination = GetTextureFromDescriptor(destinationDescriptor);
@@ -520,37 +519,34 @@ void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &so
     MTL::Origin sourceOrigin(sourceX, sourceY, 0);
     MTL::Origin destinationOrigin(destinationX, destinationY, 0);
     MTL::Size size(width, height, 1);
-
-    auto encoder = m_CommandBuffer->blitCommandEncoder();
-    encoder->copyFromTexture(metalSource, 0, 0, sourceOrigin, size, metalDestination, 0, 0, destinationOrigin);
-    encoder->endEncoding();
+    m_BlitCommandEncoder->copyFromTexture(metalSource, 0, 0, sourceOrigin, size, metalDestination, 0, 0, destinationOrigin);
 }
 
 void GraphicsBackendMetal::PushDebugGroup(const std::string &name, int id)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
-    m_CurrentCommandEncoder->pushDebugGroup(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+    assert(m_RenderCommandEncoder != nullptr);
+    m_RenderCommandEncoder->pushDebugGroup(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
 }
 
 void GraphicsBackendMetal::PopDebugGroup()
 {
-    assert(m_CurrentCommandEncoder != nullptr);
-    m_CurrentCommandEncoder->popDebugGroup();
+    assert(m_RenderCommandEncoder != nullptr);
+    m_RenderCommandEncoder->popDebugGroup();
 }
 
 void GraphicsBackendMetal::BeginRenderPass()
 {
-    assert(m_CommandBuffer != nullptr);
-    assert(m_CurrentCommandEncoder == nullptr);
-    m_CurrentCommandEncoder = m_CommandBuffer->renderCommandEncoder(m_RenderPassDescriptor);
+    assert(m_RenderCommandBuffer != nullptr);
+    assert(m_RenderCommandEncoder == nullptr);
+    m_RenderCommandEncoder = m_RenderCommandBuffer->renderCommandEncoder(m_RenderPassDescriptor);
 }
 
 void GraphicsBackendMetal::EndRenderPass()
 {
-    assert(m_CurrentCommandEncoder != nullptr);
+    assert(m_RenderCommandEncoder != nullptr);
 
-    m_CurrentCommandEncoder->endEncoding();
-    m_CurrentCommandEncoder = nullptr;
+    m_RenderCommandEncoder->endEncoding();
+    m_RenderCommandEncoder = nullptr;
 
     auto colorTargetCount = m_RenderPassDescriptor->colorAttachments()->retainCount();
     for (int i = 0; i < colorTargetCount; ++i)
@@ -560,6 +556,20 @@ void GraphicsBackendMetal::EndRenderPass()
 
     m_RenderPassDescriptor->setDepthAttachment(m_BackbufferDescriptor->depthAttachment());
     m_RenderPassDescriptor->setStencilAttachment(m_BackbufferDescriptor->stencilAttachment());
+}
+
+void GraphicsBackendMetal::BeginCopyPass()
+{
+    assert(m_CopyCommandBuffer != nullptr);
+    assert(m_BlitCommandEncoder == nullptr);
+    m_BlitCommandEncoder = m_CopyCommandBuffer->blitCommandEncoder();
+}
+
+void GraphicsBackendMetal::EndCopyPass()
+{
+    assert(m_BlitCommandEncoder != nullptr);
+    m_BlitCommandEncoder->endEncoding();
+    m_BlitCommandEncoder = nullptr;
 }
 
 GraphicsBackendDepthStencilState GraphicsBackendMetal::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction)
@@ -586,12 +596,12 @@ void GraphicsBackendMetal::DeleteDepthStencilState(const GraphicsBackendDepthSte
 
 void GraphicsBackendMetal::SetDepthStencilState(const GraphicsBackendDepthStencilState& state)
 {
-    assert(m_CurrentCommandEncoder != nullptr);
+    assert(m_RenderCommandEncoder != nullptr);
 
     auto metalState = reinterpret_cast<MTL::DepthStencilState*>(state.m_State);
     if (metalState)
     {
-        m_CurrentCommandEncoder->setDepthStencilState(metalState);
+        m_RenderCommandEncoder->setDepthStencilState(metalState);
     }
 }
 

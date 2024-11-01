@@ -73,6 +73,8 @@ public:
 
     void BeginRenderPass() override;
     void EndRenderPass() override;
+    void BeginCopyPass() override;
+    void EndCopyPass() override;
 
     GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction) override;
     void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) override;

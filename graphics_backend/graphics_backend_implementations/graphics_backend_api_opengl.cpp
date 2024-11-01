@@ -681,6 +681,14 @@ void GraphicsBackendOpenGL::EndRenderPass()
     ResetClearFlags();
 }
 
+void GraphicsBackendOpenGL::BeginCopyPass()
+{
+}
+
+void GraphicsBackendOpenGL::EndCopyPass()
+{
+}
+
 GraphicsBackendDepthStencilState GraphicsBackendOpenGL::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction)
 {
     auto glState = new DepthStencilState();

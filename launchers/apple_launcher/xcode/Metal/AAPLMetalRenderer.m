@@ -36,13 +36,15 @@ CGSize _viewSize;
             _depthState = [_device newDepthStencilStateWithDescriptor:depthStencilDesc];
         }
         
-        id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+        id<MTLCommandBuffer> renderCommandBuffer = [_commandQueue commandBuffer];
+        id<MTLCommandBuffer> copyCommandBuffer = [_commandQueue commandBuffer];
         
-        [EngineFrameworkWrapper Initialize:_device commandBuffer:commandBuffer];
+        [EngineFrameworkWrapper Initialize:_device renderCommandBuffer:renderCommandBuffer copyCommandBuffer:copyCommandBuffer];
         [ImGuiWrapper Init_OSX:mtkView];
         [ImGuiWrapper Init_Metal:_device];
         
-        [commandBuffer commit];
+        [copyCommandBuffer commit];
+        [renderCommandBuffer commit];
     }
 
     return self;
@@ -71,20 +73,22 @@ CGSize _viewSize;
     }
     
     MTLRenderPassDescriptor* renderPassDescriptor = [view currentRenderPassDescriptor];
-    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+    id<MTLCommandBuffer> renderCommandBuffer = [_commandQueue commandBuffer];
+    id<MTLCommandBuffer> copyCommandBuffer = [_commandQueue commandBuffer];
     
     [ImGuiWrapper NewFrame_Metal:renderPassDescriptor];
     [ImGuiWrapper NewFrame_OSX:view];
     
-    [EngineFrameworkWrapper TickMainLoop:commandBuffer backbufferDescriptor:renderPassDescriptor width:_viewSize.width height:_viewSize.height];
+    [EngineFrameworkWrapper TickMainLoop:renderCommandBuffer copyCommandBuffer:copyCommandBuffer backbufferDescriptor:renderPassDescriptor width:_viewSize.width height:_viewSize.height];
     
     [[[renderPassDescriptor colorAttachments] objectAtIndexedSubscript:0] setLoadAction:MTLLoadActionLoad];
-    id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-    [ImGuiWrapper Render_Metal:commandBuffer commandEncoder:commandEncoder];
+    id<MTLRenderCommandEncoder> commandEncoder = [renderCommandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+    [ImGuiWrapper Render_Metal:renderCommandBuffer commandEncoder:commandEncoder];
     [commandEncoder endEncoding];
     
-    [commandBuffer presentDrawable:view.currentDrawable];
-    [commandBuffer commit];
+    [copyCommandBuffer commit];
+    [renderCommandBuffer presentDrawable:view.currentDrawable];
+    [renderCommandBuffer commit];
 }
 
 - (CGSize) getViewSize

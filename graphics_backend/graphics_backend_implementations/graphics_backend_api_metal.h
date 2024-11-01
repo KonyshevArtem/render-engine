@@ -11,6 +11,7 @@ namespace MTL
     class CommandBuffer;
     class RenderPassDescriptor;
     class RenderCommandEncoder;
+    class BlitCommandEncoder;
     class RenderPipelineReflection;
     class Texture;
 
@@ -82,17 +83,21 @@ public:
 
     void BeginRenderPass() override;
     void EndRenderPass() override;
+    void BeginCopyPass() override;
+    void EndCopyPass() override;
 
     GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction) override;
     void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
     void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
 
 private:
-    MTL::Device *m_Device = nullptr;
-    MTL::CommandBuffer *m_CommandBuffer = nullptr;
-    MTL::RenderPassDescriptor *m_BackbufferDescriptor = nullptr;
-    MTL::RenderPassDescriptor *m_RenderPassDescriptor = nullptr;
-    MTL::RenderCommandEncoder *m_CurrentCommandEncoder = nullptr;
+    MTL::Device* m_Device = nullptr;
+    MTL::CommandBuffer* m_RenderCommandBuffer = nullptr;
+    MTL::CommandBuffer* m_CopyCommandBuffer = nullptr;
+    MTL::RenderPassDescriptor* m_BackbufferDescriptor = nullptr;
+    MTL::RenderPassDescriptor* m_RenderPassDescriptor = nullptr;
+    MTL::RenderCommandEncoder* m_RenderCommandEncoder = nullptr;
+    MTL::BlitCommandEncoder* m_BlitCommandEncoder = nullptr;
 
     MTL::Texture* GetTextureFromDescriptor(const GraphicsBackendRenderTargetDescriptor& descriptor);
 };

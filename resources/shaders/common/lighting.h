@@ -67,8 +67,10 @@ float3 unpackNormal(float3 normalTS, float3 normalWS, float3 tangentWS, float no
     normalTS = normalTS * 2.0 - 1.0;
     normalTS *= float3(normalIntensity, normalIntensity, 1);
     normalTS = normalize(normalTS);
-    float3x3 TBN = float3x3(tangentWS, bitangentWS, normalWS);
-    normalWS = normalize(mul(normalTS, TBN));
+    float3x3 TBN = float3x3(tangentWS.x, bitangentWS.x, normalWS.x,
+                            tangentWS.y, bitangentWS.y, normalWS.y,
+                            tangentWS.z, bitangentWS.z, normalWS.z);
+    normalWS = normalize(mul(TBN, normalTS));
     return normalWS;
 }
 

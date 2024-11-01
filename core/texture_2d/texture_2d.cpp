@@ -55,7 +55,7 @@ const std::shared_ptr<Texture2D> &Texture2D::Normal()
     if (normal == nullptr)
     {
         unsigned char pixels[4] {125, 125, 255, 255};
-        normal = Create_Internal(&pixels[0], 1, 1, TextureInternalFormat::RGBA8, false, false);
+        normal = Create_Internal(&pixels[0], 1, 1, TextureInternalFormat::RGBA8, true, false);
     }
 
     return normal;

@@ -196,6 +196,7 @@ namespace TextureCompressorBackend
         header.Height = images[0]->height();
         header.MipCount = GetMipsCount(generateMips, header.Width, header.Height);
         header.TextureFormat = formatInfo.Format;
+        header.IsLinear = isLinear;
 
         bool isCubemap = typeInfo.CuttlefishDimensions == cuttlefish::Texture::Dimension::Cube;
         cuttlefish::Texture* texture = CreateTexture(typeInfo, formatInfo, header, images, generateMips, isCubemap);

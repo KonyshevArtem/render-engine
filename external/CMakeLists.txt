@@ -15,3 +15,6 @@ set(CUTTLEFISH_BUILD_DOCS OFF)
 set(CUTTLEFISH_BUILD_TOOL OFF)
 set(CUTTLEFISH_BUILD_PVRTC OFF)
 add_subdirectory(Cuttlefish)
+
+set(JSON_BuildTests OFF)
+add_subdirectory(json)

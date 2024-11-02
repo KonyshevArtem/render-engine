@@ -28,10 +28,11 @@ void GizmosPass::Execute(Context &_context)
             int totalCount = matrices.size();
             while (totalCount > 0)
             {
-                std::vector<Matrix4x4> matricesSlice(begin, begin + std::min(GlobalConstants::MaxInstancingCount, totalCount));
+                auto end = begin + std::min(GlobalConstants::MaxInstancingCount, totalCount);
+                std::vector<Matrix4x4> matricesSlice(begin, end);
                 Graphics::DrawInstanced(*pair.first, *gizmosMaterial, matricesSlice, 0);
 
-                begin += GlobalConstants::MaxInstancingCount;
+                begin = end;
                 totalCount -= GlobalConstants::MaxInstancingCount;
             }
         }

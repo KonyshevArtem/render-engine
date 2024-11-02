@@ -59,10 +59,10 @@ float getSpotLightShadowTerm(int index, float3 posWS, float lightAngleCos)
 {
     #ifdef _RECEIVE_SHADOWS
     float4 shadowCoord = mul(_SpotLightShadows[index].LightViewProjMatrix, float4(posWS, 1));
+    shadowCoord = shadowCoord / shadowCoord.w;
     #if SCREEN_UV_UPSIDE_DOWN
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
-    shadowCoord = shadowCoord / shadowCoord.w;
     float depth = _SpotLightShadowMapArray.Sample(sampler_SpotLightShadowMapArray, float3(shadowCoord.xy, index)).x;
     return isFragVisible(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos) : 1;
     #else
@@ -92,10 +92,10 @@ float getPointLightShadowTerm(int index, float3 posWS, float lightAngleCos)
     int slice = getPointLightShadowMapSlice(lightToFrag);
 
     float4 shadowCoord = mul(_PointLightShadows[index].LightViewProjMatrices[slice], float4(posWS, 1));
+    shadowCoord = shadowCoord / shadowCoord.w;
     #if SCREEN_UV_UPSIDE_DOWN
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
-    shadowCoord = shadowCoord / shadowCoord.w;
     float depth = _PointLightShadowMapArray.Sample(sampler_PointLightShadowMapArray, float3(shadowCoord.xy, index * 6 + slice)).x;
     return isFragVisible(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos) : 1;
     #else

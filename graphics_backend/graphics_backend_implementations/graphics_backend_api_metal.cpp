@@ -337,22 +337,6 @@ void GraphicsBackendMetal::DeleteGeometry(const GraphicsBackendGeometry &geometr
     DeleteBuffer(geometry.IndexBuffer);
 }
 
-void GraphicsBackendMetal::EnableVertexAttributeArray(int index)
-{
-}
-
-void GraphicsBackendMetal::DisableVertexAttributeArray(int index)
-{
-}
-
-void GraphicsBackendMetal::SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer)
-{
-}
-
-void GraphicsBackendMetal::SetVertexAttributeDivisor(int index, int divisor)
-{
-}
-
 void GraphicsBackendMetal::SetCullFace(CullFace cullFace)
 {
     assert(m_RenderCommandEncoder != nullptr);

@@ -414,26 +414,6 @@ void GraphicsBackendOpenGL::DeleteGeometry(const GraphicsBackendGeometry &geomet
     DeleteBuffer(geometry.IndexBuffer);
 }
 
-void GraphicsBackendOpenGL::EnableVertexAttributeArray(int index)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glEnableVertexAttribArray(index))
-}
-
-void GraphicsBackendOpenGL::DisableVertexAttributeArray(int index)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glDisableVertexAttribArray(index))
-}
-
-void GraphicsBackendOpenGL::SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glVertexAttribPointer(index, size, Cast(dataType), normalized ? GL_TRUE : GL_FALSE, stride, pointer))
-}
-
-void GraphicsBackendOpenGL::SetVertexAttributeDivisor(int index, int divisor)
-{
-    CHECK_GRAPHICS_BACKEND_FUNC(glVertexAttribDivisor(index, divisor))
-}
-
 void GraphicsBackendOpenGL::SetCullFace(CullFace cullFace)
 {
     if (cullFace == CullFace::NONE)

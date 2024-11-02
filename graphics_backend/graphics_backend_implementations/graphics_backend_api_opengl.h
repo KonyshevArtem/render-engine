@@ -42,11 +42,6 @@ public:
     GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;
     void DeleteGeometry(const GraphicsBackendGeometry &geometry) override;
 
-    void EnableVertexAttributeArray(int index) override;
-    void DisableVertexAttributeArray(int index) override;
-    void SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer) override;
-    void SetVertexAttributeDivisor(int index, int divisor) override;
-
     void SetCullFace(CullFace cullFace) override;
     void SetCullFaceOrientation(CullFaceOrientation orientation) override;
     void SetViewport(int x, int y, int width, int height, float near, float far) override;

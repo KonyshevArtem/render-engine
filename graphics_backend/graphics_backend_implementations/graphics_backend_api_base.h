@@ -75,11 +75,6 @@ public:
     virtual GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;
     virtual void DeleteGeometry(const GraphicsBackendGeometry &geometry) = 0;
 
-    virtual void EnableVertexAttributeArray(int index) = 0;
-    virtual void DisableVertexAttributeArray(int index) = 0;
-    virtual void SetVertexAttributePointer(int index, int size, VertexAttributeDataType dataType, bool normalized, int stride, const void *pointer) = 0;
-    virtual void SetVertexAttributeDivisor(int index, int divisor) = 0;
-
     virtual void SetCullFace(CullFace cullFace) = 0;
     virtual void SetCullFaceOrientation(CullFaceOrientation orientation) = 0;
     virtual void SetViewport(int x, int y, int width, int height, float near, float far) = 0;

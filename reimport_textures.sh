@@ -1,8 +1,8 @@
 OS=$(uname)
 if [ "$OS" = "Darwin" ]; then
-    EXECUTABLE="./cmake-build-debug/texture_compressor/TextureCompressor"
+    EXECUTABLE="./cmake-build-release/texture_compressor/TextureCompressor"
 else
-    EXECUTABLE="./cmake-build-debug-visual-studio/texture_compressor/TextureCompressor.exe"
+    EXECUTABLE="./cmake-build-release-visual-studio/texture_compressor/TextureCompressor.exe"
 fi
 
 $EXECUTABLE Texture2D BC7 0 1 car_albedo   resources/textures/car/car_albedo.tga

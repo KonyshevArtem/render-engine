@@ -1,9 +1,9 @@
 OS=$(uname)
 if [ "$OS" = "Darwin" ]; then
-    EXECUTABLE="./cmake-build-debug/shader_compiler/ShaderCompiler"
+    EXECUTABLE="./cmake-build-release/shader_compiler/ShaderCompiler"
     BACKEND="metal"
 else
-    EXECUTABLE="./cmake-build-debug-visual-studio/shader_compiler/ShaderCompiler.exe"
+    EXECUTABLE="./cmake-build-release-visual-studio/shader_compiler/ShaderCompiler.exe"
     BACKEND="opengl"
 fi
 

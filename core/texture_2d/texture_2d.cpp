@@ -1,40 +1,35 @@
 #include "texture_2d.h"
 #include "texture/texture_binary_reader.h"
-#include "enums/texture_target.h"
-#include "enums/texture_data_type.h"
 
 #include <vector>
 
-Texture2D::Texture2D(unsigned int width, unsigned int height, unsigned int mipLevels) :
-        Texture(TextureType::TEXTURE_2D, width, height, 0, mipLevels)
+Texture2D::Texture2D(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int mipLevels, bool isLinear, bool isRenderTarget) :
+        Texture(TextureType::TEXTURE_2D, format, width, height, 0, mipLevels, isLinear, isRenderTarget)
 {
 }
 
-std::shared_ptr<Texture2D> Texture2D::Create(int _width, int _height, TextureInternalFormat textureFormat, TexturePixelFormat pixelFormat, TextureDataType dataType)
+std::shared_ptr<Texture2D> Texture2D::Create(int _width, int _height, TextureInternalFormat textureFormat, bool isLinear, bool isRenderTarget)
 {
-    return Create_Internal(nullptr, _width, _height, textureFormat, pixelFormat, dataType);
+    return Create_Internal(nullptr, _width, _height, textureFormat, isLinear, isRenderTarget);
 }
 
-std::shared_ptr<Texture2D> Texture2D::CreateShadowMap(int _width, int _height)
+std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path& path)
 {
-    return Create_Internal(nullptr, _width, _height, TextureInternalFormat::DEPTH_COMPONENT, TexturePixelFormat::DEPTH_COMPONENT, TextureDataType::UNSIGNED_BYTE);
-}
+    std::filesystem::path fixedPath = path.parent_path() / "output" / path.filename();
 
-std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path &_path)
-{
     TextureBinaryReader reader;
-    if (!reader.ReadTexture(_path))
+    if (!reader.ReadTexture(fixedPath))
     {
         return nullptr;
     }
 
     const auto &header = reader.GetHeader();
 
-    auto t = std::shared_ptr<Texture2D>(new Texture2D(header.Width, header.Height, header.MipCount));
-    for (int j = 0; j < header.MipCount; ++j)
+    auto t = std::shared_ptr<Texture2D>(new Texture2D(header.TextureFormat, header.Width, header.Height, header.MipCount, header.IsLinear, false));
+    for (int mip = 0; mip < header.MipCount; ++mip)
     {
-        auto pixels = reader.GetPixels(0, j);
-        t->UploadPixels(pixels.data(), TextureTarget::TEXTURE_2D, header.TextureFormat, header.PixelFormat, TextureDataType::UNSIGNED_BYTE, pixels.size(), j, header.IsCompressed);
+        auto pixels = reader.GetPixels(0, mip);
+        t->UploadPixels(pixels.data(), pixels.size(), 0, mip);
     }
 
     return t;
@@ -46,8 +41,8 @@ const std::shared_ptr<Texture2D> &Texture2D::White()
 
     if (white == nullptr)
     {
-        unsigned char pixels[3] {255, 255, 255};
-        white = Create_Internal(&pixels[0], 1, 1, TextureInternalFormat::SRGB, TexturePixelFormat::RGB, TextureDataType::UNSIGNED_BYTE);
+        unsigned char pixels[4] {255, 255, 255, 255};
+        white = Create_Internal(&pixels[0], 1, 1, TextureInternalFormat::RGBA8, false, false);
     }
 
     return white;
@@ -59,8 +54,8 @@ const std::shared_ptr<Texture2D> &Texture2D::Normal()
 
     if (normal == nullptr)
     {
-        unsigned char pixels[3] {125, 125, 255};
-        normal = Create_Internal(&pixels[0], 1, 1, TextureInternalFormat::RGB, TexturePixelFormat::RGB, TextureDataType::UNSIGNED_BYTE);
+        unsigned char pixels[4] {125, 125, 255, 255};
+        normal = Create_Internal(&pixels[0], 1, 1, TextureInternalFormat::RGBA8, true, false);
     }
 
     return normal;
@@ -72,9 +67,12 @@ const std::shared_ptr<Texture2D> &Texture2D::Null()
     return null;
 }
 
-std::shared_ptr<Texture2D> Texture2D::Create_Internal(uint8_t *pixels, int width, int height, TextureInternalFormat textureFormat, TexturePixelFormat pixelFormat, TextureDataType dataType)
+std::shared_ptr<Texture2D> Texture2D::Create_Internal(uint8_t *pixels, int width, int height, TextureInternalFormat textureFormat, bool isLinear, bool isRenderTarget)
 {
-    auto texture = std::shared_ptr<Texture2D>(new Texture2D(width, height, 1));
-    texture->UploadPixels(pixels, TextureTarget::TEXTURE_2D, textureFormat, pixelFormat, dataType, 0, 0, false);
+    auto texture = std::shared_ptr<Texture2D>(new Texture2D(textureFormat, width, height, 1, isLinear, isRenderTarget));
+    if (!isRenderTarget)
+    {
+        texture->UploadPixels(pixels, 0, 0, 0);
+    }
     return texture;
 }

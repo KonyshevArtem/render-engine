@@ -3,14 +3,18 @@
 
 #include <filesystem>
 #include <string>
+#include <unordered_map>
 #include <vector>
+
+#include "shader_structs.h"
 
 class ShaderPass;
 
 class Shader
 {
 public:
-    static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords);
+    static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
+        BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo);
 
     Shader(std::vector<std::shared_ptr<ShaderPass>> _passes, bool _supportInstancing);
     ~Shader() = default;

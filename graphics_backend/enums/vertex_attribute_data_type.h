@@ -1,23 +1,21 @@
 #ifndef RENDER_ENGINE_VERTEX_ATTRIBUTE_DATA_TYPE_H
 #define RENDER_ENGINE_VERTEX_ATTRIBUTE_DATA_TYPE_H
 
-#include "graphics_backend.h"
-
-enum class VertexAttributeDataType : GRAPHICS_BACKEND_TYPE_ENUM
+enum class VertexAttributeDataType
 {
-    BYTE                            = GRAPHICS_BACKEND_BYTE,
-    UNSIGNED_BYTE                   = GRAPHICS_BACKEND_UNSIGNED_BYTE,
-    SHORT                           = GRAPHICS_BACKEND_SHORT,
-    UNSIGNED_SHORT                  = GRAPHICS_BACKEND_UNSIGNED_SHORT,
-    INT                             = GRAPHICS_BACKEND_INT,
-    UNSIGNED_INT                    = GRAPHICS_BACKEND_UNSIGNED_INT,
-    HALF_FLOAT                      = GRAPHICS_BACKEND_HALF_FLOAT,
-    FLOAT                           = GRAPHICS_BACKEND_FLOAT,
-    DOUBLE                          = GRAPHICS_BACKEND_DOUBLE,
-    FIXED                           = GRAPHICS_BACKEND_FIXED,
-    INT_2_10_10_10_REV              = GRAPHICS_BACKEND_INT_2_10_10_10_REV,
-    UNSIGNED_INT_2_10_10_10_REV     = GRAPHICS_BACKEND_UNSIGNED_INT_2_10_10_10_REV,
-    UNSIGNED_INT_10F_11F_11F_REV    = GRAPHICS_BACKEND_UNSIGNED_INT_10F_11F_11F_REV,
+    BYTE,
+    UNSIGNED_BYTE,
+    SHORT,
+    UNSIGNED_SHORT,
+    INT,
+    UNSIGNED_INT,
+    HALF_FLOAT,
+    FLOAT,
+    DOUBLE,
+    FIXED,
+    INT_2_10_10_10_REV,
+    UNSIGNED_INT_2_10_10_10_REV,
+    UNSIGNED_INT_10F_11F_11F_REV,
 };
 
 #endif //RENDER_ENGINE_VERTEX_ATTRIBUTE_DATA_TYPE_H

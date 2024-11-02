@@ -2,12 +2,11 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <set>
 #if __has_include("libloaderapi.h")
-    #include <libloaderapi.h>
-    #define EXECUTABLE_DIR_WIN
+    #include <windows.h>
 #elif __has_include("mach-o/dyld.h")
     #include <mach-o/dyld.h>
-    #define EXECUTABLE_DIR_MAC
 #endif
 #include <regex>
 #include <string>
@@ -45,22 +44,40 @@ namespace Utils
         return content;
     }
 
-    std::string ReadFileWithIncludes(const std::filesystem::path &_relativePath) // NOLINT(misc-no-recursion)
+    std::string ReadFileWithIncludes_Internal(const std::filesystem::path& relativePath, const std::regex& includeRegex, std::set<std::string>& includedFiles)
     {
-        auto file = ReadFile(_relativePath);
+        auto file = ReadFile(relativePath);
 
-        std::regex  expression(R"(\s*#include\s+\"(.*)\"\s*\n)");
         std::smatch match;
-        while (std::regex_search(file.cbegin(), file.cend(), match, expression))
+        while (std::regex_search(file.cbegin(), file.cend(), match, includeRegex))
         {
-            auto includedFile = ReadFileWithIncludes(_relativePath.parent_path() / match[1].str());
-            includedFile = "\n" + includedFile + "\n";
-            auto matchStart   = match.position();
-            matchStart        = matchStart == 0 ? 0 : matchStart + 1;
-            file              = file.replace(matchStart, match.length() - 2, includedFile);
+            auto matchStart = match.position();
+            matchStart = matchStart == 0 ? 0 : matchStart + 1;
+
+            std::filesystem::path pathToInclude = relativePath.parent_path() / match[1].str();
+            if (!includedFiles.contains(pathToInclude.string()))
+            {
+                includedFiles.insert(pathToInclude.string());
+
+                auto includedFile = ReadFileWithIncludes_Internal(pathToInclude, includeRegex, includedFiles);
+                includedFile = "\n" + includedFile + "\n";
+                file = file.replace(matchStart, match.length() - 2, includedFile);
+            }
+            else
+            {
+                file = file.replace(matchStart, match.length() - 2, "");
+            }
         }
 
         return file;
+    }
+
+    std::string ReadFileWithIncludes(const std::filesystem::path &_relativePath) // NOLINT(misc-no-recursion)
+    {
+        std::set<std::string> includedFiles;
+        std::regex expression(R"(\s*#include\s+\"(.*)\"\s*\n)");
+
+        return ReadFileWithIncludes_Internal(_relativePath, expression, includedFiles);
     }
 
     bool ReadFileBytes(const std::filesystem::path &_relativePath, std::vector<uint8_t> &bytes)
@@ -100,12 +117,12 @@ namespace Utils
         if (!executableDir.empty())
             return executableDir;
 
-#if defined(EXECUTABLE_DIR_WIN)
+#if RENDER_ENGINE_WINDOWS
 		char path[MAX_PATH];
 
 		GetModuleFileNameA(NULL, path, MAX_PATH);
 		executableDir = std::filesystem::path(path).parent_path();
-#elif defined(EXECUTABLE_DIR_MAC)
+#elif RENDER_ENGINE_APPLE
         char     path[100];
         uint32_t size = 100;
 
@@ -117,8 +134,16 @@ namespace Utils
         }
         else
             executableDir = std::filesystem::path(path).parent_path();
+
+        executableDir = executableDir.append("..").append("Resources");
 #endif
 
         return executableDir;
+    }
+
+    size_t HashCombine(size_t hashA, size_t hashB)
+    {
+        // boost::hashCombine
+        return hashA ^ (hashB + 0x9e3779b9 + (hashA << 6) + (hashA >> 2));
     }
 } // namespace Utils

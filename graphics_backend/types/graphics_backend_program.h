@@ -1,14 +1,16 @@
 #ifndef RENDER_ENGINE_GRAPHICS_BACKEND_PROGRAM_H
 #define RENDER_ENGINE_GRAPHICS_BACKEND_PROGRAM_H
 
-#include "graphics_backend.h"
+#include <cstdint>
 
 class GraphicsBackendProgram
 {
 private:
-    GRAPHICS_BACKEND_TYPE_UINT Program;
+    uint64_t Program;
+    uint64_t BlendState;
 
-    friend class GraphicsBackend;
+    friend class GraphicsBackendOpenGL;
+    friend class GraphicsBackendMetal;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_PROGRAM_H

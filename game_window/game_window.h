@@ -1,5 +1,5 @@
-#ifndef RENDER_ENGINE_WINDOW
-#define RENDER_ENGINE_WINDOW
+#ifndef RENDER_ENGINE_GAME_WINDOW_H
+#define RENDER_ENGINE_GAME_WINDOW_H
 
 #include <functional>
 
@@ -7,25 +7,31 @@ typedef std::function<void(int, int)> RenderHandler;
 typedef std::function<void(unsigned char, bool)> KeyboardInputHandlerDelegate;
 typedef std::function<void(double, double)> MouseMoveHandlerDelegate;
 
-struct GLFWwindow;
-
 class GameWindow
 {
 public:
-    GameWindow(int width,
-               int height,
-               RenderHandler renderHandler,
-               KeyboardInputHandlerDelegate keyboardInputHandler,
-               MouseMoveHandlerDelegate mouseMoveHandler);
+    static GameWindow* Create(RenderHandler renderHandler,
+                              KeyboardInputHandlerDelegate keyboardInputHandler,
+                              MouseMoveHandlerDelegate mouseMoveHandler);
 
-    virtual ~GameWindow();
+    virtual ~GameWindow() = default;
 
-    void BeginMainLoop();
+    virtual void TickMainLoop(int width, int height) = 0;
+
+    void ProcessMouseMove(float x, float y);
+    void ProcessKeyPress(char key, bool pressed);
+
+    bool ShouldCloseWindow() const;
+
+protected:
+    void DrawInternal(int width, int height);
 
 private:
-    GLFWwindow* m_WindowPtr;
+    bool m_CloseFlag = false;
 
-    void SetCloseFlag();
+    RenderHandler m_RenderHandler;
+    KeyboardInputHandlerDelegate m_KeyboardInputHandler;
+    MouseMoveHandlerDelegate  m_MouseMoveHandler;
 };
 
 #endif

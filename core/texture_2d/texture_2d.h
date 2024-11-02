@@ -7,8 +7,7 @@
 class Texture2D: public Texture
 {
 public:
-    static std::shared_ptr<Texture2D>        Create(int _width, int _height, TextureInternalFormat textureFormat, TexturePixelFormat pixelFormat, TextureDataType dataType);
-    static std::shared_ptr<Texture2D>        CreateShadowMap(int _width, int _height);
+    static std::shared_ptr<Texture2D>        Create(int _width, int _height, TextureInternalFormat textureFormat, bool isLinear, bool isRenderTarget);
     static std::shared_ptr<Texture2D>        Load(const std::filesystem::path &_path);
     static const std::shared_ptr<Texture2D> &White();
     static const std::shared_ptr<Texture2D> &Normal();
@@ -23,9 +22,9 @@ public:
     Texture2D &operator=(Texture2D &&) = delete;
 
 private:
-    Texture2D(unsigned int width, unsigned int height, unsigned int mipLevels);
+    Texture2D(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int mipLevels, bool isLinear, bool isRenderTarget);
 
-    static std::shared_ptr<Texture2D> Create_Internal(uint8_t *pixels, int width, int height, TextureInternalFormat textureFormat, TexturePixelFormat pixelFormat, TextureDataType dataType);
+    static std::shared_ptr<Texture2D> Create_Internal(uint8_t *pixels, int width, int height, TextureInternalFormat textureFormat, bool isLinear, bool isRenderTarget);
 };
 
 #endif //RENDER_ENGINE_TEXTURE_2D_H

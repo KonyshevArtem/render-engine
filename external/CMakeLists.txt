@@ -1,0 +1,17 @@
+add_subdirectory(glfw)
+add_subdirectory(metal-cpp)
+add_subdirectory(OpenFBX)
+add_subdirectory(imgui)
+add_subdirectory(dxc)
+
+set(SPIRV_CROSS_CLI OFF)
+set(SPIRV_CROSS_ENABLE_TESTS OFF)
+set(SPIRV_CROSS_ENABLE_CPP OFF)
+set(SPIRV_CROSS_ENABLE_C_API OFF)
+add_subdirectory(SPIRV-Cross)
+
+set(CUTTLEFISH_BUILD_TESTS OFF)
+set(CUTTLEFISH_BUILD_DOCS OFF)
+set(CUTTLEFISH_BUILD_TOOL OFF)
+set(CUTTLEFISH_BUILD_PVRTC OFF)
+add_subdirectory(Cuttlefish)

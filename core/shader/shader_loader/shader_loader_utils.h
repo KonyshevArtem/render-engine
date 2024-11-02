@@ -1,9 +1,0 @@
-#ifndef RENDER_ENGINE_SHADER_LOADER_UTILS_H
-#define RENDER_ENGINE_SHADER_LOADER_UTILS_H
-
-namespace ShaderLoaderUtils
-{
-    constexpr int SUPPORTED_SHADERS_COUNT = 3;
-}
-
-#endif //RENDER_ENGINE_SHADER_LOADER_UTILS_H

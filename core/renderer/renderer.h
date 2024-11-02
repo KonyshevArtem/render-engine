@@ -2,11 +2,13 @@
 #define RENDER_ENGINE_RENDERER_H
 
 #include <memory>
+#include <string>
 
+class GraphicsBackendBufferInfo;
 class GameObject;
 class Shader;
 class Material;
-class GraphicsBufferWrapper;
+class GraphicsBuffer;
 struct Vector4;
 struct Matrix4x4;
 struct Bounds;
@@ -28,10 +30,10 @@ public:
     void SetMatrix(const std::string &name, const Matrix4x4 &value);
     void SetInt(const std::string &name, int value);
 
-    inline const std::shared_ptr<GraphicsBufferWrapper> &GetInstanceDataBufferWrapper() const
-    {
-        return m_PerInstanceDataBufferWrapper;
-    }
+    uint32_t GetInstanceDataIndex() const;
+    uint32_t GetInstanceDataOffset() const;
+
+    static const std::shared_ptr<GraphicsBuffer> &GetInstanceDataBuffer();
 
     bool CastShadows = true;
 
@@ -44,7 +46,8 @@ private:
     void SetDataToBuffers(const std::string &name, const void *data, uint64_t size);
 
     std::weak_ptr<GameObject> m_GameObject;
-    std::shared_ptr<GraphicsBufferWrapper> m_PerInstanceDataBufferWrapper;
+    std::shared_ptr<GraphicsBackendBufferInfo> m_InstanceDataBufferInfo;
+    int64_t m_InstanceDataBufferOffset;
 };
 
 #endif //RENDER_ENGINE_RENDERER_H

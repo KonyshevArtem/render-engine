@@ -4,154 +4,92 @@
 #include "graphics/graphics.h"
 #include "utils.h"
 #include "enums/shader_type.h"
-#include "enums/shader_parameter.h"
-#include "enums/program_parameter.h"
 #include "types/graphics_backend_shader_object.h"
 #include "graphics_backend_api.h"
 #include "shader_parser.h"
-#include "shader_loader_utils.h"
 #include "shader/shader_pass/shader_pass.h"
 
 #include <span>
 
 namespace ShaderLoader
 {
+    const int SUPPORTED_SHADERS_COUNT = 3;
+
     const std::string INSTANCING_KEYWORD = "_INSTANCING";
 
-    const ShaderType SHADER_TYPES[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT]{
+    const ShaderType SHADER_TYPES[SUPPORTED_SHADERS_COUNT]{
             ShaderType::VERTEX_SHADER,
             ShaderType::GEOMETRY_SHADER,
             ShaderType::FRAGMENT_SHADER};
 
-    const std::string SHADER_DIRECTIVES[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT]{
-            "#define VERTEX_PROGRAM\n",
-            "#define GEOMETRY_PROGRAM\n",
-            "#define FRAGMENT_PROGRAM\n"};
+    const std::string SHADER_SOURCE_FILE_NAME[SUPPORTED_SHADERS_COUNT]{
+            "vs",
+            "gs",
+            "ps"
+    };
 
-    std::string GetShaderTypeName(ShaderType shaderType)
+    std::string GetBackendLiteral(GraphicsBackendName backendName)
     {
-        switch (shaderType)
+        switch (backendName)
         {
-            case ShaderType::VERTEX_SHADER:
-                return "Vertex";
-            case ShaderType::FRAGMENT_SHADER:
-                return "Fragment";
-            case ShaderType::GEOMETRY_SHADER:
-                return "Geometry";
+            case GraphicsBackendName::OPENGL:
+                return "opengl";
+            case GraphicsBackendName::METAL:
+                return "metal";
             default:
-                return "Unknown";
+                return "";
         }
     }
 
-    GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string &keywordDirectives, const std::string &shaderPartDirective)
+    std::string GetKeywordsHash(std::vector<std::string> keywords, bool& outSupportInstancing)
     {
-        constexpr int sourcesCount = 4;
+        outSupportInstancing = false;
 
-        const auto &globalDirectives = Graphics::GetGlobalShaderDirectives();
-        const char *sources[sourcesCount]{
-                globalDirectives.c_str(),
-                keywordDirectives.c_str(),
-                shaderPartDirective.c_str(),
-                source.c_str()};
-
-        auto shader = GraphicsBackend::CreateShader(shaderType);
-        GraphicsBackend::SetShaderSources(shader, sourcesCount, sources, nullptr);
-
-        GraphicsBackend::CompileShader(shader);
-
-        int isCompiled;
-        GraphicsBackend::GetShaderParameter(shader, ShaderParameter::COMPILE_STATUS, &isCompiled);
-        if (!isCompiled)
+        std::string keywordsDirectives;
+        std::sort(keywords.begin(), keywords.end());
+        for (const auto &keyword: keywords)
         {
-            int infoLogLength;
-            GraphicsBackend::GetShaderParameter(shader, ShaderParameter::INFO_LOG_LENGTH, &infoLogLength);
-
-            std::string logMsg(infoLogLength + 1, ' ');
-            GraphicsBackend::GetShaderInfoLog(shader, infoLogLength, nullptr, &logMsg[0]);
-
-            throw std::runtime_error(GetShaderTypeName(shaderType) + " shader compilation failed with errors:\n" + logMsg);
+            keywordsDirectives += keyword + ",";
+            outSupportInstancing |= keyword == INSTANCING_KEYWORD;
         }
 
-        return shader;
+        return std::to_string(std::hash<std::string>{}(keywordsDirectives));
     }
 
-    GraphicsBackendProgram LinkProgram(const std::span<GraphicsBackendShaderObject> &shaders)
-    {
-        auto program = GraphicsBackend::CreateProgram();
-
-        for (const auto &shader: shaders)
-        {
-            if (GraphicsBackend::IsShader(shader))
-                GraphicsBackend::AttachShader(program, shader);
-        }
-
-        GraphicsBackend::LinkProgram(program);
-
-        for (const auto &shader: shaders)
-        {
-            if (GraphicsBackend::IsShader(shader))
-            {
-                GraphicsBackend::DetachShader(program, shader);
-                GraphicsBackend::DeleteShader(shader);
-            }
-        }
-
-        int isLinked;
-        GraphicsBackend::GetProgramParameter(program, ProgramParameter::LINK_STATUS, &isLinked);
-        if (!isLinked)
-        {
-            int infoLogLength;
-            GraphicsBackend::GetProgramParameter(program, ProgramParameter::INFO_LOG_LENGTH, &infoLogLength);
-
-            std::string logMsg(infoLogLength + 1, ' ');
-            GraphicsBackend::GetProgramInfoLog(program, infoLogLength, nullptr, &logMsg[0]);
-
-            throw std::runtime_error("Link failed with error:\n" + logMsg);
-        }
-
-        return program;
-    }
-
-    std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords)
+    std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
+        BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo)
     {
         bool supportInstancing = false;
-        std::string keywordsDirectives;
-        for (const auto &keyword: _keywords)
-        {
-            keywordsDirectives += "#define " + keyword + "\n";
-            supportInstancing |= keyword == INSTANCING_KEYWORD;
-        }
+        std::string keywordHash = GetKeywordsHash(_keywords, supportInstancing);
 
         try
         {
-            auto shaderSource = Utils::ReadFileWithIncludes(_path);
+            std::string backendLiteral = GetBackendLiteral(GraphicsBackend::Current()->GetName());
+            std::string shaderName = _path.filename().replace_extension("").string();
+            std::filesystem::path backendPath = Utils::GetExecutableDirectory() / _path.parent_path() / "output" / shaderName / backendLiteral / keywordHash;
 
-            std::vector<ShaderParser::PassInfo> passesInfo;
-            std::unordered_map<std::string, std::string> properties;
-            ShaderParser::Parse(shaderSource, passesInfo, properties);
+            auto reflectionJson = Utils::ReadFile(backendPath / "reflection.json");
+            std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;
+            std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers;
+            std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers;
+            ShaderParser::ParseReflection(reflectionJson, textures, buffers, samplers);
+
+            std::vector<GraphicsBackendShaderObject> shaders;
+            for (int i = 0; i < SUPPORTED_SHADERS_COUNT; ++i)
+            {
+                std::filesystem::path sourcePath = backendPath / SHADER_SOURCE_FILE_NAME[i];
+                if (!std::filesystem::exists(sourcePath))
+                    continue;
+
+                std::string shaderSource = Utils::ReadFile(sourcePath);
+                auto shader = GraphicsBackend::Current()->CompileShader(SHADER_TYPES[i], shaderSource);
+                shaders.push_back(shader);
+            }
+
+            auto passPtr = std::make_shared<ShaderPass>(shaders, blendInfo, cullInfo, depthInfo, textures, buffers, samplers);
 
             std::vector<std::shared_ptr<ShaderPass>> passes;
-            for (auto &passInfo: passesInfo)
-            {
-                GraphicsBackendShaderObject shaders[ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT];
-                size_t shadersCount = 0;
-
-                for (int i = 0; i < ShaderLoaderUtils::SUPPORTED_SHADERS_COUNT; ++i)
-                {
-                    auto shaderType = SHADER_TYPES[i];
-                    auto &relativePath = passInfo.ShaderPaths[i];
-                    if (relativePath.empty())
-                        continue;
-
-                    auto partPath = _path.parent_path() / relativePath;
-                    auto partSource = Utils::ReadFileWithIncludes(partPath);
-                    shaders[shadersCount++] = CompileShader(shaderType, partSource, keywordsDirectives, SHADER_DIRECTIVES[i]);
-                }
-
-                auto program = LinkProgram(std::span<GraphicsBackendShaderObject>{shaders, shadersCount});
-                auto passPtr = std::make_shared<ShaderPass>(program, passInfo.BlendInfo, passInfo.CullInfo, passInfo.DepthInfo, passInfo.Tags, properties);
-                passes.push_back(passPtr);
-            }
+            passes.push_back(passPtr);
 
             return std::make_shared<Shader>(passes, supportInstancing);
         }
@@ -161,7 +99,4 @@ namespace ShaderLoader
             return nullptr;
         }
     }
-
-#pragma endregion
-
 } // namespace ShaderLoader

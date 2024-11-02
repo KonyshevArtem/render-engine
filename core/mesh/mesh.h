@@ -3,9 +3,7 @@
 
 #include "bounds/bounds.h"
 #include "drawable_geometry/drawable_geometry.h"
-
 #include <memory>
-#include <vector>
 
 struct Vector2;
 struct Vector3;
@@ -14,12 +12,13 @@ class Material;
 class Mesh: public DrawableGeometry
 {
 public:
+    Mesh(const std::vector<Vector3>& vertices, const std::vector<int>& indices);
     Mesh(const std::vector<Vector3> &_vertices,
          const std::vector<Vector3> &_normals,
          const std::vector<int>     &_indexes,
          const std::vector<Vector2> &_uvs,
          const std::vector<Vector3> &_tangents);
-    ~Mesh() override;
+    ~Mesh() override = default;
 
     inline Bounds GetBounds() const
     {
@@ -35,8 +34,6 @@ public:
     Mesh &operator=(Mesh &&) = delete;
 
 private:
-    GraphicsBackendBuffer m_IndexBuffer{};
-
     Bounds m_Bounds;
 };
 

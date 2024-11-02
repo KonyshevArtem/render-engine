@@ -1,17 +1,20 @@
 #ifndef RENDER_ENGINE_GRAPHICS_BACKEND_TEXTURE_H
 #define RENDER_ENGINE_GRAPHICS_BACKEND_TEXTURE_H
 
-#include "graphics_backend.h"
+#include "enums/texture_type.h"
+#include "enums/texture_internal_format.h"
+#include <cstdint>
 
 class GraphicsBackendTexture
 {
-public:
-    static GraphicsBackendTexture NONE;
-
 private:
-    GRAPHICS_BACKEND_TYPE_UINT Texture;
+    uint64_t Texture;
+    TextureType Type;
+    TextureInternalFormat Format;
+    bool IsLinear;
 
-    friend class GraphicsBackend;
+    friend class GraphicsBackendOpenGL;
+    friend class GraphicsBackendMetal;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_TEXTURE_H

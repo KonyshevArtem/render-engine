@@ -2,7 +2,7 @@
 #include "graphics_buffer.h"
 #include "shader/shader.h"
 #include "shader/shader_pass/shader_pass.h"
-#include "shader/uniform_info/buffer_info.h"
+#include "types/graphics_backend_buffer_info.h"
 
 GraphicsBufferWrapper::GraphicsBufferWrapper(const std::shared_ptr<Shader> &shader, const std::string &bufferName)
 {
@@ -19,8 +19,7 @@ GraphicsBufferWrapper::GraphicsBufferWrapper(const std::shared_ptr<Shader> &shad
         if (it != buffers.end())
         {
             const auto &bufferInfo = it->second;
-            auto bufferTarget = bufferInfo->GetBufferType() == BufferInfo::BufferType::SHADER_STORAGE ? BufferBindTarget::SHADER_STORAGE_BUFFER : BufferBindTarget::UNIFORM_BUFFER;
-            m_PassBuffers[i] = std::make_shared<GraphicsBuffer>(bufferTarget, bufferInfo->GetSize(), BufferUsageHint::DYNAMIC_DRAW);
+            m_PassBuffers[i] = std::make_shared<GraphicsBuffer>(bufferInfo->GetSize(), BufferUsageHint::DYNAMIC_DRAW);
             m_PassBuffersInfo[i] = bufferInfo;
         }
         else

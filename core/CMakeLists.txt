@@ -42,7 +42,6 @@ add_library(
 	texture/texture_header.h
 	shader/shader_loader/shader_loader.cpp
 	shader/shader_loader/shader_loader.h
-	shader/uniform_info/uniform_info.h
 	renderer/renderer.cpp
 	renderer/renderer.h
 	renderer/mesh_renderer.cpp
@@ -57,10 +56,7 @@ add_library(
 	editor/gizmos/gizmos.cpp
 	editor/hierarchy.h
 	editor/hierarchy.cpp
-	property_block/property_block.h
-	property_block/property_block.cpp
 	graphics/render_settings/render_settings.h
-	graphics/render_settings/render_settings.cpp
 	graphics/draw_call_info.h
 	point/point.h
 	point/point.cpp 
@@ -70,7 +66,6 @@ add_library(
 	texture/texture_binary_reader.cpp
 	shader/shader_loader/shader_parser.cpp
 	shader/shader_loader/shader_parser.h
-	shader/shader_loader/shader_loader_utils.h
 	shader/shader_structs.h
 	shader/shader_pass/shader_pass.cpp
 	shader/shader_pass/shader_pass.h
@@ -80,7 +75,6 @@ add_library(
 	graphics/data_structs/lighting_data.h
 	graphics/data_structs/camera_data.h
 	graphics/data_structs/per_draw_data.h
-	shader/uniform_info/buffer_info.h
 	graphics_buffer/graphics_buffer_wrapper.h
 	graphics_buffer/graphics_buffer_wrapper.cpp
 	graphics/render_settings/draw_call_comparer.h
@@ -93,7 +87,11 @@ add_library(
 	editor/selection_outline/selection_outline_pass.cpp
 	editor/selection_outline/selection_outline_pass.h
 	graphics/graphics_settings.cpp
-	graphics/graphics_settings.h)
+	graphics/graphics_settings.h
+	drawable_geometry/vertex_attributes/vertex_attributes.cpp
+	drawable_geometry/vertex_attributes/vertex_attributes.h
+	graphics_buffer/ring_buffer.cpp
+	graphics_buffer/ring_buffer.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)

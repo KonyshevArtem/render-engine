@@ -63,10 +63,10 @@ void TestScene::Init()
     Skybox = Cubemap::Load("resources/textures/skybox/skybox");
 
     // init shaders
-    auto standardOpaqueShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
-    auto standardOpaqueDataMapShader = Shader::Load("resources/shaders/standard/standard.shader", {"_DATA_MAP", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"});
-    auto standardTransparentShader = Shader::Load("resources/shaders/standard/standard_transparent.shader", {"_RECEIVE_SHADOWS"});
-    auto standardInstancingShader = Shader::Load("resources/shaders/standard/standard.shader", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_PER_INSTANCE_DATA", "_INSTANCING"});
+    auto standardOpaqueShader = Shader::Load("resources/shaders/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
+    auto standardOpaqueDataMapShader = Shader::Load("resources/shaders/standard", {"_DATA_MAP", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
+    auto standardTransparentShader = Shader::Load("resources/shaders/standard", {"_RECEIVE_SHADOWS"}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA}, {}, {});
+    auto standardInstancingShader = Shader::Load("resources/shaders/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_PER_INSTANCE_DATA", "_INSTANCING"}, {}, {}, {});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");
@@ -83,8 +83,13 @@ void TestScene::Init()
 
     // init materials
     auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader);
+    standardOpaqueMaterial->SetTexture("_Albedo", Texture2D::White());
+    standardOpaqueMaterial->SetTexture("_NormalMap", Texture2D::Normal());
+    standardOpaqueMaterial->SetFloat("_NormalIntensity", 1);
     standardOpaqueMaterial->SetFloat("_Roughness", 0.5f);
     standardOpaqueMaterial->SetFloat("_Metallness", 1);
+    standardOpaqueMaterial->SetTexture("_ReflectionCube", Skybox);
+    standardOpaqueMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
 
     auto brickMaterial = std::make_shared<Material>(standardOpaqueShader);
     brickMaterial->SetTexture("_Albedo", brickTexture);
@@ -92,6 +97,8 @@ void TestScene::Init()
     brickMaterial->SetFloat("_Roughness", 0.5f);
     brickMaterial->SetFloat("_Metallness", 0);
     brickMaterial->SetFloat("_NormalIntensity", 3);
+    brickMaterial->SetTexture("_ReflectionCube", Skybox);
+    brickMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
 
     m_WaterMaterial = std::make_shared<Material>(standardOpaqueShader);
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
@@ -117,6 +124,11 @@ void TestScene::Init()
     carMaterial->SetFloat("_NormalIntensity", 1);
 
     auto sphereMaterial = std::make_shared<Material>(standardInstancingShader);
+    sphereMaterial->SetTexture("_Albedo", Texture2D::White());
+    sphereMaterial->SetTexture("_NormalMap", Texture2D::Normal());
+    sphereMaterial->SetFloat("_NormalIntensity", 1);
+    sphereMaterial->SetTexture("_ReflectionCube", Skybox);
+    sphereMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
 
     // init gameObjects
     auto rotatingCube      = GameObject::Create("Rotating Cube");
@@ -297,10 +309,10 @@ void TestScene::UpdateInternal()
     {
         debugBaseMipLevel = baseMipLevel;
 
-        Skybox->SetBaseMipLevel(debugBaseMipLevel);
+        Skybox->SetMinMipLevel(debugBaseMipLevel);
         for (const auto& t: textures)
         {
-            t->SetBaseMipLevel(debugBaseMipLevel);
+            t->SetMinMipLevel(debugBaseMipLevel);
         }
     }
 #endif

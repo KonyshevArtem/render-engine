@@ -4,6 +4,7 @@
 #include "enums/depth_function.h"
 #include "enums/blend_factor.h"
 #include "enums/cull_face.h"
+#include "enums/cull_face_orientation.h"
 
 struct BlendInfo
 {
@@ -14,8 +15,8 @@ struct BlendInfo
 
 struct CullInfo
 {
-    bool Enabled = true;
     CullFace Face = CullFace::BACK;
+    CullFaceOrientation Orientation = CullFaceOrientation::CLOCKWISE;
 };
 
 struct DepthInfo

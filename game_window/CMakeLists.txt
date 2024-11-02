@@ -1,5 +1,6 @@
 add_library(
         GameWindow
+        STATIC
         game_window.cpp
         game_window.h
         top_menu_bar.cpp
@@ -15,7 +16,12 @@ add_library(
         window_manager.cpp
         window_manager.h
         windows/graphics_settings_window.cpp
-        windows/graphics_settings_window.h)
+        windows/graphics_settings_window.h
+        game_window_implementations/game_window_platform_windows.cpp
+        game_window_implementations/game_window_platform_windows.h
+        game_window_implementations/game_window_platform_apple.cpp
+        game_window_implementations/game_window_platform_apple.h
+)
 
 add_compile_definitions(GL_SILENCE_DEPRECATION)
 target_include_directories(GameWindow PUBLIC .)

@@ -2,18 +2,15 @@
 #define RENDER_ENGINE_TEXTURE_HEADER_H
 
 #include "enums/texture_internal_format.h"
-#include "enums/texture_pixel_format.h"
 
 struct TextureHeader
 {
-public:
-    int Width;
-    int Height;
-    int Depth;
+    uint16_t Width;
+    uint16_t Height;
+    uint16_t Depth;
     TextureInternalFormat TextureFormat;
-    TexturePixelFormat PixelFormat;
-    int IsCompressed;
-    unsigned int MipCount;
+    uint8_t MipCount;
+    uint8_t IsLinear : 1;
 };
 
 #endif

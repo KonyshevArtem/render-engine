@@ -1,5 +1,0 @@
-layout(std140) uniform PerMaterialData
-{
-    vec4 _Color;
-    vec4 _BlitTexture_TexelSize;
-};

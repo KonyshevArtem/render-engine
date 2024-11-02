@@ -14,4 +14,5 @@ set(
 )
 
 add_executable(TextureCompressor ${TEXTURE_COMPRESSOR_SOURCES})
-target_link_libraries(TextureCompressor LodePNG tga-lib GameWindow GraphicsBackend)
+target_link_libraries(TextureCompressor GraphicsBackend Cuttlefish::lib)
+target_include_directories(TextureCompressor PUBLIC ${Cuttlefish_INCLUDE_DIRS})

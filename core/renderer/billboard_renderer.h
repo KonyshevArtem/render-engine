@@ -3,10 +3,9 @@
 
 #include "bounds/bounds.h"
 #include "renderer.h"
-#include <memory>
 
 class Texture2D;
-class Point;
+class Mesh;
 
 class BillboardRenderer: public Renderer
 {
@@ -26,7 +25,7 @@ public:
     BillboardRenderer &operator=(BillboardRenderer &&) = delete;
 
 private:
-    std::shared_ptr<Point> m_Point;
+    std::shared_ptr<Mesh> m_Mesh;
     float                  m_Aspect;
     Bounds                 m_Bounds;
 };

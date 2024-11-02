@@ -18,7 +18,7 @@ public:
     Texture2DArray &operator=(Texture2DArray &&)      = delete;
 
 private:
-    Texture2DArray(unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels);
+    Texture2DArray(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isLinear);
 };
 
 #endif //RENDER_ENGINE_TEXTURE_2D_ARRAY_H

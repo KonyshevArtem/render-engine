@@ -6,13 +6,13 @@
 #include "editor/hierarchy.h"
 #include "texture_2d/texture_2d.h"
 #include "graphics_backend_api.h"
-#include "graphics_backend_debug.h"
+#include "graphics_backend_debug_group.h"
 #include "graphics/graphics.h"
-#include "enums/clear_mask.h"
 #include "renderer/renderer.h"
 #include "gameObject/gameObject.h"
-
-#include <memory>
+#include "enums/framebuffer_attachment.h"
+#include "enums/load_action.h"
+#include "types/graphics_backend_render_target_descriptor.h"
 
 void CheckTexture(std::shared_ptr<Texture2D> &_texture)
 {
@@ -20,63 +20,70 @@ void CheckTexture(std::shared_ptr<Texture2D> &_texture)
     int height = Graphics::GetScreenHeight();
     if (!_texture || _texture->GetWidth() != width || _texture->GetHeight() != height)
     {
-        _texture = Texture2D::Create(width, height, TextureInternalFormat::SRGB_ALPHA, TexturePixelFormat::RGBA, TextureDataType::UNSIGNED_BYTE);
+        _texture = Texture2D::Create(width, height, TextureInternalFormat::RGBA8, false, true);
         _texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
     }
 }
 
 void SelectionOutlinePass::Execute(Context &_context)
 {
-    static std::shared_ptr<Material>  outlineMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/outline/outlineBlit.shader", {}));
+    static std::shared_ptr<Material>  blitMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/outlineBlit", {}, {}, {}, {false, DepthFunction::ALWAYS}));
+    static std::shared_ptr<Material>  outlineMaterial = std::make_shared<Material>(Shader::Load("resources/shaders/silhouette", {}, {}, {}, {false, DepthFunction::ALWAYS}));
     static std::shared_ptr<Texture2D> outlineTexture  = nullptr;
     static Vector4                    outlineColor {1, 0.73f, 0, 1};
+    static GraphicsBackendRenderTargetDescriptor colorTarget { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
+    static GraphicsBackendRenderTargetDescriptor depthTarget { FramebufferAttachment::DEPTH_ATTACHMENT };
 
     auto selectedGameObjects = Hierarchy::GetSelectedGameObjects();
     if (selectedGameObjects.empty())
         return;
 
-    auto debugGroup = GraphicsBackendDebug::DebugGroup("Selected outline pass");
-
     CheckTexture(outlineTexture);
 
     // render selected gameObjects
     {
-        Graphics::SetRenderTargets(outlineTexture, 0, 0, nullptr, 0, 0);
+        Graphics::SetRenderTarget(colorTarget, outlineTexture);
+        Graphics::SetRenderTarget(depthTarget);
 
-        GraphicsBackend::Clear(ClearMask::COLOR_DEPTH);
-
-        for (const auto &go: selectedGameObjects)
+        GraphicsBackend::Current()->BeginRenderPass();
         {
-            if (!go || !go->Renderer)
-            {
-                continue;
-            }
+            auto debugGroup = GraphicsBackendDebugGroup("Selected outline pass");
 
-            const auto &renderer = go->Renderer;
-            const auto &geometry = renderer->GetGeometry();
-            const auto &material = renderer->GetMaterial();
-
-            if (geometry && material)
+            for (const auto &go: selectedGameObjects)
             {
-                if (material->GetShader()->SupportInstancing())
+                if (!go || !go->Renderer)
                 {
-                    Graphics::DrawInstanced(*geometry,*material, {renderer->GetModelMatrix()}, 0);
+                    continue;
                 }
-                else
+
+                const auto &renderer = go->Renderer;
+                const auto &geometry = renderer->GetGeometry();
+                const auto &material = renderer->GetMaterial();
+
+                if (geometry && material)
                 {
-                    Graphics::Draw(*geometry, *material, renderer->GetModelMatrix(), 0);
+                    if (material->GetShader()->SupportInstancing())
+                    {
+                        Graphics::DrawInstanced(*geometry, *material, {renderer->GetModelMatrix()}, 0);
+                    }
+                    else
+                    {
+                        Graphics::Draw(*geometry, *outlineMaterial, renderer->GetModelMatrix(), 0);
+                    }
                 }
             }
         }
+        GraphicsBackend::Current()->EndRenderPass();
 
-        Graphics::SetRenderTargets(nullptr, 0, 0, nullptr, 0, 0);
+        Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
+        Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
     }
 
     // blit to screen
     {
-        outlineMaterial->SetVector("_Color", outlineColor);
+        blitMaterial->SetVector("_Color", outlineColor);
 
-        Graphics::Blit(outlineTexture, nullptr, 0, 0, *outlineMaterial);
+        Graphics::Blit(outlineTexture, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *blitMaterial);
     }
 }
 

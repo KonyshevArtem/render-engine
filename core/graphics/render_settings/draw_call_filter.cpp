@@ -1,6 +1,7 @@
 #include "draw_call_filter.h"
 #include "graphics/draw_call_info.h"
 #include "global_constants.h"
+#include "material/material.h"
 
 DrawCallFilter DrawCallFilter::Opaque()
 {

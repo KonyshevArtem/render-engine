@@ -15,7 +15,7 @@ class Renderer;
 class ShadowCasterPass
 {
 public:
-    explicit ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsUniformBlock);
+    explicit ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer);
     ~ShadowCasterPass() = default;
 
     void Execute(const Context &_ctx);
@@ -31,14 +31,14 @@ private:
     static constexpr int DIR_LIGHT_SHADOW_MAP_SIZE  = 2048;
     static constexpr int POINT_LIGHT_SHADOW_MAP_FACE_SIZE = 512;
 
-    std::shared_ptr<GraphicsBuffer> m_ShadowsUniformBlock;
+    std::shared_ptr<GraphicsBuffer> m_ShadowsConstantBuffer;
     std::shared_ptr<Texture2DArray> m_SpotLightShadowMapArray;
     std::shared_ptr<Texture2D>      m_DirectionLightShadowMap;
     std::shared_ptr<Texture2DArray> m_PointLightShadowMap;
 
     ShadowsData m_ShadowsData{};
 
-    static void Render(const std::vector<std::shared_ptr<Renderer>> &renderers);
+    static void Render(const std::vector<std::shared_ptr<Renderer>> &renderers, const Vector4& viewport);
 };
 
 #endif //RENDER_ENGINE_SHADOW_CASTER_PASS_H

@@ -1,29 +1,19 @@
 #include "lines.h"
 #include "graphics_backend_api.h"
-#include "enums/buffer_bind_target.h"
-#include "enums/vertex_attribute_data_type.h"
-#include "enums/buffer_usage_hint.h"
 
 Lines::Lines(const std::vector<Vector3> &points, const std::vector<int> &indices) :
         DrawableGeometry(PrimitiveType::LINES, indices.size(), true),
         m_Bounds(Bounds::FromPoints(points))
 {
-    GraphicsBackend::GenerateBuffers(1, &m_IndexBuffer);
-    GraphicsBackend::BindBuffer(BufferBindTarget::ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
+    int pointsSize = sizeof(Vector3) * points.size();
+    int indicesSize = sizeof(int) * indices.size();
 
-    long pointsSize = sizeof(Vector3) * points.size();
-    long indicesSize = sizeof(int) * indices.size();
+    m_VertexAttributes.Add({0, 3, VertexAttributeDataType::FLOAT, false, sizeof(Vector3), 0});
 
-    GraphicsBackend::EnableVertexAttributeArray(0);
-    GraphicsBackend::SetVertexAttributePointer(0, 3, VertexAttributeDataType::FLOAT, false, 0, nullptr);
+    auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(pointsSize, BufferUsageHint::STATIC_DRAW);
+    auto indexBuffer = GraphicsBackend::Current()->CreateBuffer(indicesSize, BufferUsageHint::STATIC_DRAW);
+    m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, m_VertexAttributes.GetAttributes());
 
-    GraphicsBackend::SetBufferData(BufferBindTarget::ARRAY_BUFFER, pointsSize, points.data(), BufferUsageHint::STATIC_DRAW);
-    GraphicsBackend::SetBufferData(BufferBindTarget::ELEMENT_ARRAY_BUFFER, indicesSize, indices.data(), BufferUsageHint::STATIC_DRAW);
-
-    GraphicsBackend::BindVertexArrayObject(GraphicsBackendVAO::NONE);
-}
-
-Lines::~Lines()
-{
-    GraphicsBackend::DeleteBuffers(1, &m_IndexBuffer);
+    GraphicsBackend::Current()->SetBufferData(vertexBuffer, 0, pointsSize, points.data());
+    GraphicsBackend::Current()->SetBufferData(indexBuffer, 0, indicesSize, indices.data());
 }

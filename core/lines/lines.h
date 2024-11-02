@@ -12,7 +12,7 @@ class Lines : public DrawableGeometry
 {
 public:
     Lines(const std::vector<Vector3> &points, const std::vector<int> &indices);
-    ~Lines() override;
+    ~Lines() override = default;
 
     inline Bounds GetBounds() const
     {
@@ -26,8 +26,6 @@ public:
     Lines &operator=(Lines &&) = delete;
 
 private:
-    GraphicsBackendBuffer m_IndexBuffer{};
-
     Bounds m_Bounds;
 };
 

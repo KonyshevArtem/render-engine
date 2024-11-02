@@ -1,17 +1,17 @@
 #ifndef RENDER_ENGINE_GRAPHICS_BACKEND_BUFFER_H
 #define RENDER_ENGINE_GRAPHICS_BACKEND_BUFFER_H
 
-#include "graphics_backend.h"
+#include <cstdint>
+#include "enums/buffer_usage_hint.h"
 
 class GraphicsBackendBuffer
 {
 public:
-    static GraphicsBackendBuffer NONE;
+    uint64_t Buffer;
+    int Size;
 
-private:
-    GRAPHICS_BACKEND_TYPE_UINT Buffer;
-
-    friend class GraphicsBackend;
+    friend class GraphicsBackendOpenGL;
+    friend class GraphicsBackendMetal;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_BUFFER_H

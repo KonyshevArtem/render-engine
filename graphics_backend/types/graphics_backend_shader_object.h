@@ -1,14 +1,16 @@
 #ifndef RENDER_ENGINE_GRAPHICS_BACKEND_SHADER_OBJECT_H
 #define RENDER_ENGINE_GRAPHICS_BACKEND_SHADER_OBJECT_H
 
-#include "graphics_backend.h"
+#include <cstdint>
+#include "enums/shader_type.h"
 
 class GraphicsBackendShaderObject
 {
 private:
-    GRAPHICS_BACKEND_TYPE_UINT ShaderObject;
+    uint64_t ShaderObject;
 
-    friend class GraphicsBackend;
+    friend class GraphicsBackendOpenGL;
+    friend class GraphicsBackendMetal;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_SHADER_OBJECT_H

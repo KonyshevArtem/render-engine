@@ -11,12 +11,49 @@ add_library(
         imgui/imstb_rectpack.h
         imgui/imstb_textedit.h
         imgui/imstb_truetype.h
-        imgui/backends/imgui_impl_glfw.h
-        imgui/backends/imgui_impl_glfw.cpp
+        imgui/misc/cpp/imgui_stdlib.h
+        imgui/misc/cpp/imgui_stdlib.cpp
+)
+
+add_library(
+        ImGuiOpenGL
+        STATIC
         imgui/backends/imgui_impl_opengl3.h
         imgui/backends/imgui_impl_opengl3.cpp
-        imgui/misc/cpp/imgui_stdlib.h
-        imgui/misc/cpp/imgui_stdlib.cpp)
+)
 
-target_link_libraries(ImGui glfw)
-target_include_directories(ImGui PUBLIC imgui imgui/backends imgui/misc/cpp)
+target_include_directories(ImGui PUBLIC imgui imgui/misc/cpp)
+target_include_directories(ImGuiOpenGL PUBLIC imgui/backends)
+target_link_libraries(ImGuiOpenGL ImGui)
+
+if (${RENDER_ENGINE_WINDOWS_PLATFORM})
+
+    add_library(
+            ImGuiGLFW
+            STATIC
+            imgui/backends/imgui_impl_glfw.h
+            imgui/backends/imgui_impl_glfw.cpp
+    )
+
+    target_include_directories(ImGuiOpenGL PUBLIC imgui/backends)
+    target_link_libraries(ImGuiGLFW ImGui glfw)
+
+elseif (${RENDER_ENGINE_APPLE_PLATFORM})
+
+    add_library(
+            ImGuiMetal
+            STATIC
+            imgui/backends/imgui_impl_metal.h
+            imgui/backends/imgui_impl_metal.mm
+    )
+
+    add_library(
+            ImGuiOSX
+            STATIC
+            imgui/backends/imgui_impl_osx.h
+            imgui/backends/imgui_impl_osx.mm
+    )
+    target_link_libraries(ImGuiOSX ImGui)
+    target_link_libraries(ImGuiMetal ImGui)
+
+endif ()

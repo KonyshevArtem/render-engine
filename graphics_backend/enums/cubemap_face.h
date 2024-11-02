@@ -1,0 +1,16 @@
+#ifndef RENDER_ENGINE_CUBEMAP_FACE_H
+#define RENDER_ENGINE_CUBEMAP_FACE_H
+
+enum class CubemapFace
+{
+    POSITIVE_X,
+    NEGATIVE_X,
+    POSITIVE_Y,
+    NEGATIVE_Y,
+    POSITIVE_Z,
+    NEGATIVE_Z,
+
+    MAX
+};
+
+#endif //RENDER_ENGINE_CUBEMAP_FACE_H

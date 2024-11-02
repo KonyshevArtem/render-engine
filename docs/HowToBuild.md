@@ -6,10 +6,13 @@ This pages lists external dependencies that are required to build the ending, an
 
 * [Dependencies](#dependencies)
   * [OpenGL](#opengl)
-  * [Boost](#boost)
-    * [Boost link issue](#boost-link-issue)
+  * [DXC](#dxc)
   * [Environment variables example](#environment-variables-example)
 * [How to build](#how-to-build-1)
+  * [Using CLion](#using-clion)
+  * [Using Terminal](#using-terminal)
+  * [Compiling Resources](#compiling-resources)
+  * [Running Executable](#running-executable)
 
 ## Dependencies
 
@@ -38,7 +41,7 @@ This pages lists external dependencies that are required to build the ending, an
 Here is an example of how `CMAKE_PREFIX_PATH` environment variable should look in order for cmake to find all dependencies
 
 ```
-set CMAKE_PREFIX_PATH=F:/glew-2.1.0/include;F:/glew-2.1.0/lib/Release/x64;F:/boost_1_78_0;F:/boost_1_78_0/stage/lib;
+set CMAKE_PREFIX_PATH=F:/glew-2.1.0/include;F:/glew-2.1.0/lib/Release/x64;
 ```
 
 ## How to build

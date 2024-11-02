@@ -71,8 +71,6 @@
 		3ABD52E92283BB9B0050D28E /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		3ABD52F12283BC300050D28E /* AAPLAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAPLAppDelegate.h; sourceTree = "<group>"; };
 		3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAPLAppDelegate.m; sourceTree = "<group>"; };
-		3BC859E12CA4877E005110D1 /* libboost_json-mt.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libboost_json-mt.a"; path = "../../../../../../../opt/homebrew/Cellar/boost/1.86.0/lib/libboost_json-mt.a"; sourceTree = "<group>"; };
-		3BC859E22CA4877E005110D1 /* libboost_json.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_json.a; path = ../../../../../../../opt/homebrew/Cellar/boost/1.86.0/lib/libboost_json.a; sourceTree = "<group>"; };
 		78FA0B4078F9C9B000000001 /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenderEngineViewController.h; sourceTree = "<group>"; };
 		932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RenderEngineViewController.m; sourceTree = "<group>"; };
@@ -80,10 +78,6 @@
 		935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libEngineFrameworkWrapper.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EngineFrameworkWrapper.h; sourceTree = "<group>"; };
 		935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EngineFrameworkWrapper.mm; sourceTree = "<group>"; };
-		935D1E152BAA2BED00362748 /* libboost_json.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libboost_json.dylib; path = ../../../../usr/local/Cellar/boost/1.83.0/lib/libboost_json.dylib; sourceTree = "<group>"; };
-		935D1E172BAA2C3E00362748 /* libboost_json-mt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libboost_json-mt.dylib"; path = "../../../../usr/local/Cellar/boost/1.83.0/lib/libboost_json-mt.dylib"; sourceTree = "<group>"; };
-		935D1E192BAA2CA500362748 /* libboost_json-mt.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libboost_json-mt.a"; path = "../../../../usr/local/Cellar/boost/1.83.0/lib/libboost_json-mt.a"; sourceTree = "<group>"; };
-		935D1E1A2BAA2CA500362748 /* libboost_json.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_json.a; path = ../../../../usr/local/Cellar/boost/1.83.0/lib/libboost_json.a; sourceTree = "<group>"; };
 		935D1E202BAA2FAC00362748 /* resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = resources; path = ../../../resources; sourceTree = "<group>"; };
 		935D1E222BAA41CE00362748 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		935D1E2D2BAE3C5600362748 /* EngineFramework.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EngineFramework.h; sourceTree = "<group>"; };
@@ -254,13 +248,7 @@
 		935D1D652BA79E7500362748 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				3BC859E12CA4877E005110D1 /* libboost_json-mt.a */,
-				3BC859E22CA4877E005110D1 /* libboost_json.a */,
 				935D1E222BAA41CE00362748 /* GameController.framework */,
-				935D1E192BAA2CA500362748 /* libboost_json-mt.a */,
-				935D1E1A2BAA2CA500362748 /* libboost_json.a */,
-				935D1E172BAA2C3E00362748 /* libboost_json-mt.dylib */,
-				935D1E152BAA2BED00362748 /* libboost_json.dylib */,
 				935D1D712BA7A5F400362748 /* libc++.tbd */,
 			);
 			name = Frameworks;
@@ -765,10 +753,8 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
-					/usr/local/Cellar/boost/1.83.0/lib,
 					"$(PROJECT_DIR)/EngineLibraries",
 					"$(PROJECT_DIR)/EngineFramework/Libraries",
-					/opt/homebrew/Cellar/boost/1.86.0/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -792,10 +778,8 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
-					/usr/local/Cellar/boost/1.83.0/lib,
 					"$(PROJECT_DIR)/EngineLibraries",
 					"$(PROJECT_DIR)/EngineFramework/Libraries",
-					/opt/homebrew/Cellar/boost/1.86.0/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.2;
 				MTL_FAST_MATH = YES;

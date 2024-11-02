@@ -69,19 +69,38 @@ First, initialize all git submodules
 git submodule update --recursive --remote
 ```
 
-Then run this terminal commands inside source directory
+### Using CLion
+
+This is the recommended way to compile
+
+Compile `ShaderCompiler`, `TextureCompressor` and `RenderEngineWindow`/`RenderEngineApple` targets 
+based on selected platform
+
+### Using Terminal
+
+Alternatively, run these terminal commands inside source directory
 
 ```
-cmake -S . -B build
+cmake -S . -B cmake-build-release
 ```
 
-Directory `build` will be created.
+Directory `cmake-build-release` will be created.
 
 ```
-make -C build
+make -C cmake-build-release
 ```
 
-After that, if everything is set up correctly, executable should be built. 
+This will compile all targets, so there is no need to specify like with CLion
 
-Folder `resources` should be copied during the build process as well.
-Resources from that folder will be loaded at runtime, so it should always be in the same directory as the executable.
+### Compiling Resources
+
+After compiling required targets, run `recompile_shaders.sh` and `reimport_textures.sh` scripts.
+
+They should generate `resources/shaders/output` and `resources/textures/output` folders with compressed texture binaries
+and shaders translated for target graphics API.
+
+### Running Executable
+
+On Windows, just launch .exe in `cmake-build-release/launchers/windows_launcher`
+
+On Mac, open XCode project in `launchers/apple_launcher/xcode` and press Start

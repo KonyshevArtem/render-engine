@@ -81,21 +81,8 @@ Engine automatically determines which gameobject are eligible for instanced draw
 Max number of gameobjects in a single instanced draw call is determined by [GlobalConstants::MaxInstancingCount](../core/global_constants.h)
 
 Engine also supports having per-instance data for instanced draw call - each instance can have unique data. 
-See [Standard](../resources/shaders/standard/standard_shared.cg) shader for an example of how to define per-instance data struct. 
+See [Standard](../resources/shaders/standard.hlsl) shader for an example of how to define per-instance data struct. 
 After per-instance data is defined, it can be set using [Renderer](../core/renderer/renderer.h) API.
-Engine will automatically copy all per-instance data from individual renderer's buffer to a single large buffer before issuing a draw call.
-
-Currently, there are two implementations of how the data can be passed to an instanced draw call:
-* Matrices and Per-Instance data are passed with SSBO (buffers that are basically unlimited in size). This implementation is used when Graphics Backend implementation supports SSBOs
-* Matrices are passed as vertex attributes and Per-Instance data is passed with constant buffer. This implementation is used when Graphics Backend does not support SSBOs (OpenGL 4.1 on MacOS)
-
-## Shader features
-* Albedo textures
-* Normal maps
-* Multipass shaders based on tags
-* Custom shader preprocessor - allows using `#include` instructions with GLSL
-* Shader description in JSON - allows specifying passes, drawing parameters and default values for uniforms
-* Alpha blending and alpha clipping
 
 ## Editor GUI
 
@@ -107,3 +94,8 @@ This window can be opened with `Windows/Scene Hierarchy`. It draws all gameObjec
 
 This window can be opened with `Windows/Debug Console`. It shows all messages printed with `Debug::LogError`, that are also shown in console window in IDE. 
 This window is opened automatically when log is issued.
+
+### Graphics Settings window
+
+This window can be opened with `Windows/Graphics Settings`.
+It allows changing some graphics settings

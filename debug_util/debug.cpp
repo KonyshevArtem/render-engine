@@ -1,6 +1,5 @@
 #include "debug.h"
 
-#include <boost/format.hpp>
 #include <iostream>
 #include <map>
 

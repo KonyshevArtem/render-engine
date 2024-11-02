@@ -1,38 +1,40 @@
 #include "shader_parser.h"
-#include <boost/json.hpp>
+#include "nlohmann/json.hpp"
 
-GraphicsBackendResourceBindings tag_invoke(boost::json::value_to_tag<GraphicsBackendResourceBindings>, const boost::json::value& jv)
+void from_json(const nlohmann::json& json, GraphicsBackendResourceBindings& bindings)
 {
-    GraphicsBackendResourceBindings bindings;
-    bindings.VertexIndex = boost::json::value_to<int>(jv.at("Vertex"));
-    bindings.FragmentIndex = boost::json::value_to<int>(jv.at("Fragment"));
-    return bindings;
+    json.at("Vertex").get_to(bindings.VertexIndex);
+    json.at("Fragment").get_to(bindings.FragmentIndex);
 }
 
-GraphicsBackendTextureInfo tag_invoke(boost::json::value_to_tag<GraphicsBackendTextureInfo>, const boost::json::value& jv)
+void from_json(const nlohmann::json& json, GraphicsBackendTextureInfo& info)
 {
-    GraphicsBackendTextureInfo info{};
-    info.TextureBindings = boost::json::value_to<GraphicsBackendResourceBindings>(jv.at("Bindings"));
-    return info;
+    json.at("Bindings").get_to(info.TextureBindings);
 }
 
-GraphicsBackendSamplerInfo tag_invoke(boost::json::value_to_tag<GraphicsBackendSamplerInfo>, const boost::json::value& jv)
+void from_json(const nlohmann::json& json, GraphicsBackendSamplerInfo& info)
 {
-    GraphicsBackendSamplerInfo info{};
-    info.Bindings = boost::json::value_to<GraphicsBackendResourceBindings>(jv.at("Bindings"));
-    return info;
+    json.at("Bindings").get_to(info.Bindings);
 }
 
-std::shared_ptr<GraphicsBackendBufferInfo> tag_invoke(boost::json::value_to_tag<std::shared_ptr<GraphicsBackendBufferInfo>>, const boost::json::value& jv)
+template <>
+struct nlohmann::adl_serializer<std::shared_ptr<GraphicsBackendBufferInfo>>
 {
-    auto bindings = boost::json::value_to<GraphicsBackendResourceBindings>(jv.at("Bindings"));
-    int size = boost::json::value_to<int>(jv.at("Size"));
-    auto variables = boost::json::value_to<std::unordered_map<std::string, int>>(jv.at("Variables"));
+    static std::shared_ptr<GraphicsBackendBufferInfo> from_json(const nlohmann::json& json)
+    {
+        int size;
+        GraphicsBackendResourceBindings bindings;
+        std::unordered_map<std::string, int> variables;
 
-    auto info = std::make_shared<GraphicsBackendBufferInfo>(size, variables);
-    info->SetBindings(bindings);
-    return info;
-}
+        json.at("Bindings").get_to(bindings);
+        json.at("Size").get_to(size);
+        json.at("Variables").get_to(variables);
+
+        auto info = std::make_shared<GraphicsBackendBufferInfo>(size, variables);
+        info->SetBindings(bindings);
+        return info;
+    }
+};
 
 namespace ShaderParser
 {
@@ -41,9 +43,9 @@ namespace ShaderParser
         std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& buffers,
         std::unordered_map<std::string, GraphicsBackendSamplerInfo>& samplers)
     {
-        auto reflectionObject = boost::json::parse(reflectionJson).as_object();
-        buffers = std::move(boost::json::value_to<std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>>(reflectionObject["Buffers"]));
-        textures = std::move(boost::json::value_to<std::unordered_map<std::string, GraphicsBackendTextureInfo>>(reflectionObject["Textures"]));
-        samplers = std::move(boost::json::value_to<std::unordered_map<std::string, GraphicsBackendSamplerInfo>>(reflectionObject["Samplers"]));
+        nlohmann::json reflectionObject = nlohmann::json::parse(reflectionJson);
+        buffers = std::move(reflectionObject.at("Buffers").template get<std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>>());
+        textures = std::move(reflectionObject.at("Textures").template get<std::unordered_map<std::string, GraphicsBackendTextureInfo>>());
+        samplers = std::move(reflectionObject.at("Samplers").template get<std::unordered_map<std::string, GraphicsBackendSamplerInfo>>());
     }
 }

@@ -95,7 +95,7 @@ namespace ShaderLoader
         }
         catch (const std::exception &_exception)
         {
-            Debug::LogErrorFormat("[ShaderLoader] Can't load shader %1%\n%2%", {_path.string(), _exception.what()});
+            Debug::LogErrorFormat("[ShaderLoader] Can't load shader {}\n{}", _path.string(), _exception.what());
             return nullptr;
         }
     }

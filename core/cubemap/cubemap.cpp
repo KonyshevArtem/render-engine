@@ -22,7 +22,7 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path& path)
     constexpr int facesCount = static_cast<int>(CubemapFace::MAX);
     if (header.Depth != facesCount)
     {
-        Debug::LogErrorFormat("Number of slices in texture file is %1%, expected %2%", {std::to_string(header.Depth), std::to_string(facesCount)});
+        Debug::LogErrorFormat("Number of slices in texture file is {}, expected {}", std::to_string(header.Depth), std::to_string(facesCount));
         return nullptr;
     }
 

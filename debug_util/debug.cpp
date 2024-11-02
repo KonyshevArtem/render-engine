@@ -21,14 +21,6 @@ void Debug::LogError(const std::string &_string)
     }
 }
 
-void Debug::LogErrorFormat(const std::string &_format, std::initializer_list<std::string> _values)
-{
-    boost::format format(_format);
-    for (const auto &v: _values)
-        format = format % v;
-    LogError(format.str());
-}
-
 void Debug::AddListener(int listenerId, std::function<void(std::string)> listener)
 {
     (*GetListeners())[listenerId] = std::move(listener);

@@ -17,8 +17,6 @@
 		3ABD52F62283BDB70050D28E /* AAPLMetalRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A40C5A82277F0F500DBB29F /* AAPLMetalRenderer.m */; };
 		3ABD52FB2283BE4B0050D28E /* AAPLMetalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52E82283BB9B0050D28E /* AAPLMetalViewController.m */; };
 		3ABD53092283C4FE0050D28E /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
-		3BC859E32CA4877E005110D1 /* libboost_json-mt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3BC859E12CA4877E005110D1 /* libboost_json-mt.a */; };
-		3BC859E42CA4877E005110D1 /* libboost_json.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3BC859E22CA4877E005110D1 /* libboost_json.a */; };
 		932D9AA72BB99B2300A4C3AB /* RenderEngineViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */; };
 		932D9AAA2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
 		932D9AAB2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
@@ -127,8 +125,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3BC859E32CA4877E005110D1 /* libboost_json-mt.a in Frameworks */,
-				3BC859E42CA4877E005110D1 /* libboost_json.a in Frameworks */,
 				93A9F03A2BAF74230023B4D5 /* libGameWindow.a in Frameworks */,
 				93A9F0652BB08DE30023B4D5 /* libImGuiMetal.a in Frameworks */,
 				93A9F0382BAF74220023B4D5 /* libRenderEngine.a in Frameworks */,

@@ -23,26 +23,6 @@ This pages lists external dependencies that are required to build the ending, an
     * Place DLL files to `C:\Windows\System32` directory
     * Add paths to header files and lib directories to `CMAKE_PREFIX_PATH`
 
-### Boost
-
-* OSX
-    * Installed with `brew install boost` command
-
-* Windows
-    * Download [sources](https://www.boost.org/users/download/)
-    * For Visual Studio toolchain
-      * Build binaries from sources using [guide](https://www.boost.org/doc/libs/1_49_0/more/getting_started/windows.html#or-build-binaries-from-source) (Section 5.2 Simplified build from source)
-    * For MinGW toolchain
-      * Follow this [guide](https://gist.github.com/zrsmithson/0b72e0cb58d0cb946fc48b5c88511da8)
-      * Don't forget to add `--with-json` argument and remove `--build-type=complete` to only build Boost::json, otherwise it will take 5 hours
-    * Add path to boost include and lib directories to `CMAKE_PREFIX_PATH`
-
-#### Boost link issue
-
-CMake might not set architecture tag for boost, and would not be able to find libs. In that case, add line `set(Boost_ARCHITECTURE -x64)` to [CMakeLists](../CMakeLists.txt) file
-
-In case of any problems, add `set(Boost_DEBUG ON)` line to [CMakeLists](../CMakeLists.txt) file. It will provide more into about the problem
-
 ### DXC
 
 * OSX

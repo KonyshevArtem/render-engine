@@ -94,4 +94,4 @@ add_library(
 	graphics_buffer/ring_buffer.h)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend Boost::json)
+target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend nlohmann_json::nlohmann_json)

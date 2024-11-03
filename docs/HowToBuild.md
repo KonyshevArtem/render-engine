@@ -6,10 +6,13 @@ This pages lists external dependencies that are required to build the ending, an
 
 * [Dependencies](#dependencies)
   * [OpenGL](#opengl)
-  * [Boost](#boost)
-    * [Boost link issue](#boost-link-issue)
+  * [DXC](#dxc)
   * [Environment variables example](#environment-variables-example)
 * [How to build](#how-to-build-1)
+  * [Using CLion](#using-clion)
+  * [Using Terminal](#using-terminal)
+  * [Compiling Resources](#compiling-resources)
+  * [Running Executable](#running-executable)
 
 ## Dependencies
 
@@ -22,26 +25,6 @@ This pages lists external dependencies that are required to build the ending, an
     * Download [GLEW binaries](http://glew.sourceforge.net/index.html)
     * Place DLL files to `C:\Windows\System32` directory
     * Add paths to header files and lib directories to `CMAKE_PREFIX_PATH`
-
-### Boost
-
-* OSX
-    * Installed with `brew install boost` command
-
-* Windows
-    * Download [sources](https://www.boost.org/users/download/)
-    * For Visual Studio toolchain
-      * Build binaries from sources using [guide](https://www.boost.org/doc/libs/1_49_0/more/getting_started/windows.html#or-build-binaries-from-source) (Section 5.2 Simplified build from source)
-    * For MinGW toolchain
-      * Follow this [guide](https://gist.github.com/zrsmithson/0b72e0cb58d0cb946fc48b5c88511da8)
-      * Don't forget to add `--with-json` argument and remove `--build-type=complete` to only build Boost::json, otherwise it will take 5 hours
-    * Add path to boost include and lib directories to `CMAKE_PREFIX_PATH`
-
-#### Boost link issue
-
-CMake might not set architecture tag for boost, and would not be able to find libs. In that case, add line `set(Boost_ARCHITECTURE -x64)` to [CMakeLists](../CMakeLists.txt) file
-
-In case of any problems, add `set(Boost_DEBUG ON)` line to [CMakeLists](../CMakeLists.txt) file. It will provide more into about the problem
 
 ### DXC
 
@@ -58,7 +41,7 @@ In case of any problems, add `set(Boost_DEBUG ON)` line to [CMakeLists](../CMake
 Here is an example of how `CMAKE_PREFIX_PATH` environment variable should look in order for cmake to find all dependencies
 
 ```
-set CMAKE_PREFIX_PATH=F:/glew-2.1.0/include;F:/glew-2.1.0/lib/Release/x64;F:/boost_1_78_0;F:/boost_1_78_0/stage/lib;
+set CMAKE_PREFIX_PATH=F:/glew-2.1.0/include;F:/glew-2.1.0/lib/Release/x64;
 ```
 
 ## How to build

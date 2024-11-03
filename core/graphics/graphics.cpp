@@ -32,9 +32,9 @@
 #include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "material/material.h"
+#include "utils.h"
 
 #include <cassert>
-#include <boost/functional/hash/hash.hpp>
 
 namespace Graphics
 {
@@ -160,10 +160,9 @@ namespace Graphics
 
     std::size_t GetDrawCallInstancingHash(const DrawCallInfo &drawCallInfo)
     {
-        std::size_t seed = 0;
-        boost::hash_combine(seed, drawCallInfo.Material);
-        boost::hash_combine(seed, drawCallInfo.Geometry);
-        return seed;
+        std::size_t materialHash = std::hash<Material*>{}(drawCallInfo.Material);
+        std::size_t geometryHash = std::hash<DrawableGeometry*>{}(drawCallInfo.Geometry);
+        return Utils::HashCombine(materialHash, geometryHash);
     }
 
     void BatchDrawCalls(std::vector<DrawCallInfo> &drawCalls, std::vector<std::vector<Matrix4x4>> &instancesMatrices, std::vector<std::vector<uint32_t>> &perInstanceIndices)

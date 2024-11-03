@@ -8,3 +8,6 @@
 [submodule "external/Cuttlefish"]
 	path = external/Cuttlefish
 	url = https://github.com/akb825/Cuttlefish
+[submodule "external/json"]
+	path = external/json
+	url = https://github.com/nlohmann/json

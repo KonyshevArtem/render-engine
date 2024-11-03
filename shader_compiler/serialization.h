@@ -3,47 +3,48 @@
 
 #include "reflection.h"
 #include "graphics_backend.h"
+#include "nlohmann/json.hpp"
 
 #include <filesystem>
-#include <boost/json/value_from.hpp>
-#include <boost/json/serialize.hpp>
 
-void tag_invoke(boost::json::value_from_tag, boost::json::value &jv, const Bindings &bindings)
+void to_json(nlohmann::json& json, const Bindings& bindings)
 {
-    jv = {
+    json = nlohmann::json{
             {"Vertex",   bindings.Vertex},
             {"Fragment", bindings.Fragment}
     };
 }
 
-void tag_invoke(boost::json::value_from_tag, boost::json::value &jv, const BufferDesc &bufferDesc)
+void to_json(nlohmann::json& json, const BufferDesc& bufferDesc)
 {
-    jv = {
+    json = nlohmann::json{
             {"Size",      bufferDesc.Size},
-            {"Bindings",  boost::json::value_from(bufferDesc.Bindings)},
-            {"Variables", boost::json::value_from(bufferDesc.Variables)},
+            {"Bindings",  nlohmann::json(bufferDesc.Bindings)},
+            {"Variables", nlohmann::json(bufferDesc.Variables)},
     };
 }
 
-void tag_invoke(boost::json::value_from_tag, boost::json::value &jv, const GenericDesc &desc)
+void to_json(nlohmann::json& json, const GenericDesc& desc)
 {
-    jv = {
-            {"Bindings",  boost::json::value_from(desc.Bindings)},
+    json = nlohmann::json{
+            {"Bindings",  nlohmann::json(desc.Bindings)},
     };
 }
 
-void tag_invoke(boost::json::value_from_tag, boost::json::value &jv, const Reflection &reflection)
+void to_json(nlohmann::json& json, const Reflection& reflection)
 {
-    jv = {
-            {"Buffers",  boost::json::value_from(reflection.Buffers)},
-            {"Textures", boost::json::value_from(reflection.Textures)},
-            {"Samplers", boost::json::value_from(reflection.Samplers)},
+    std::unordered_map<std::string, int> a;
+
+    json = nlohmann::json{
+            {"Buffers",  nlohmann::json(reflection.Buffers)},
+            {"Textures", nlohmann::json(reflection.Textures)},
+            {"Samplers", nlohmann::json(reflection.Samplers)},
     };
 }
 
 void WriteReflection(const std::filesystem::path &outputDirPath, const Reflection &reflection)
 {
-    std::string json = boost::json::serialize(boost::json::value_from(reflection));
+    std::string json = nlohmann::json(reflection).dump();
 
     std::filesystem::path outputPath = outputDirPath / "reflection.json";
     std::filesystem::create_directory(outputPath.parent_path());

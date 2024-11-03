@@ -31,14 +31,6 @@ add_library(
 	scripts/camera_fly_controller/camera_fly_controller.h
 )
 
-# boost
-# set(Boost_DEBUG ON)
-# set(Boost_ARCHITECTURE -x64) # might be required on windows, based on how boost was compiled
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_NO_WARN_NEW_VERSIONS 1)
-find_package(Boost REQUIRED COMPONENTS json)
-include_directories(${Boost_INCLUDE_DIRS})
-
 # TODO add non-editor compile target
 add_compile_definitions(RENDER_ENGINE_EDITOR)
 

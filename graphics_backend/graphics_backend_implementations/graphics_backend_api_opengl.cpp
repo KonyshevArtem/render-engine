@@ -65,7 +65,7 @@ void LogError(GLenum errorCode, const std::string& line, const std::string &file
             break;
     }
 
-    Debug::LogErrorFormat("[Graphics Backend] %1%\n%4%\n%2%:%3%", {errorString, file, std::to_string(lineNumber), line});
+    Debug::LogErrorFormat("[Graphics Backend] {}\n{}\n{}:{}", errorString, file, std::to_string(lineNumber), line);
 }
 
 #ifdef RENDER_ENGINE_EDITOR

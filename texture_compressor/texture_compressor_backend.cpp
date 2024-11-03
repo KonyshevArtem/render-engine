@@ -54,14 +54,14 @@ namespace TextureCompressorBackend
         typeInfo = TextureCompressorFormats::GetTextureTypeInfo(textureType);
         if (typeInfo.Count < 0)
         {
-            Debug::LogErrorFormat("Texture type %1% is not supported", {textureType});
+            Debug::LogErrorFormat("Texture type {} is not supported", textureType);
             return false;
         }
 
         if (inputTextureCount < typeInfo.Count)
         {
-            Debug::LogErrorFormat("Provided textures count (%1%) is not enough for provided texture type (%2%). Required textures count is %3%",
-                                  {std::to_string(inputTextureCount), typeInfo.Name, std::to_string(typeInfo.Count)});
+            Debug::LogErrorFormat("Provided textures count ({}) is not enough for provided texture type ({}). Required textures count is {}",
+                                  std::to_string(inputTextureCount), typeInfo.Name, std::to_string(typeInfo.Count));
             return false;
         }
 
@@ -73,7 +73,7 @@ namespace TextureCompressorBackend
         outFormatInfo = TextureCompressorFormats::GetTextureFormatInfo(textureFormat);
         if (outFormatInfo.Format == TextureInternalFormat::INVALID)
         {
-            Debug::LogErrorFormat("Texture format %1% is not supported", {textureFormat});
+            Debug::LogErrorFormat("Texture format {} is not supported", textureFormat);
             return false;
         }
 

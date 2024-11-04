@@ -25,7 +25,7 @@ void EngineFramework::Initialize(void *graphicsBackendData, const char *graphics
 {
     GraphicsBackend::Init(graphicsBackendData, graphicsBackend);
 
-    window = GameWindow::Create(display, Input::HandleKeyboardInput, Input::HandleMouseMove);
+    window = new GameWindow(display, Input::HandleKeyboardInput, Input::HandleMouseMove);
 
     Graphics::Init();
     Time::Init();

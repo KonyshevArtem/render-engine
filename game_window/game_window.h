@@ -10,21 +10,17 @@ typedef std::function<void(double, double)> MouseMoveHandlerDelegate;
 class GameWindow
 {
 public:
-    static GameWindow* Create(RenderHandler renderHandler,
-                              KeyboardInputHandlerDelegate keyboardInputHandler,
-                              MouseMoveHandlerDelegate mouseMoveHandler);
+    GameWindow(RenderHandler renderHandler,
+               KeyboardInputHandlerDelegate keyboardInputHandler,
+               MouseMoveHandlerDelegate mouseMoveHandler);
+    ~GameWindow();
 
-    virtual ~GameWindow() = default;
-
-    virtual void TickMainLoop(int width, int height) = 0;
+    void TickMainLoop(int width, int height);
 
     void ProcessMouseMove(float x, float y);
     void ProcessKeyPress(char key, bool pressed);
 
     bool ShouldCloseWindow() const;
-
-protected:
-    void DrawInternal(int width, int height);
 
 private:
     bool m_CloseFlag = false;

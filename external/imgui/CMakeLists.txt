@@ -34,6 +34,8 @@ if (${RENDER_ENGINE_WINDOWS_PLATFORM})
     )
     target_link_libraries(ImGuiGLFW ImGui glfw)
     target_link_libraries(ImGuiOpenGL ImGui)
+    target_include_directories(ImGuiGLFW PUBLIC imgui/backends)
+    target_include_directories(ImGuiOpenGL PUBLIC imgui/backends)
 
 elseif (${RENDER_ENGINE_APPLE_PLATFORM})
 

@@ -20,4 +20,9 @@ add_library(
 )
 
 target_include_directories(GameWindow PUBLIC .)
-target_link_libraries(GameWindow ImGui Core)
+target_link_libraries(GameWindow Core)
+
+if (${ENABLE_IMGUI})
+    target_link_libraries(GameWindow ImGui)
+    target_compile_definitions(GameWindow ENABLE_IMGUI)
+endif()

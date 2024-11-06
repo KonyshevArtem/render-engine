@@ -1,6 +1,8 @@
 #ifndef RENDER_ENGINE_WINDOW_MANAGER_H
 #define RENDER_ENGINE_WINDOW_MANAGER_H
 
+#ifdef ENABLE_IMGUI
+
 #include <memory>
 #include <type_traits>
 
@@ -23,5 +25,7 @@ namespace WindowManager
         AddWindow(std::make_shared<TWindow>());
     }
 }
+
+#endif
 
 #endif //RENDER_ENGINE_WINDOW_MANAGER_H

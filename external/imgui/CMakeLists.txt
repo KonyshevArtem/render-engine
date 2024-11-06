@@ -54,5 +54,7 @@ elseif (${RENDER_ENGINE_APPLE_PLATFORM})
     )
     target_link_libraries(ImGuiOSX ImGui)
     target_link_libraries(ImGuiMetal ImGui)
+    target_include_directories(ImGuiOSX PUBLIC imgui/backends)
+    target_include_directories(ImGuiMetal PUBLIC imgui/backends)
 
 endif ()

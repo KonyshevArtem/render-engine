@@ -1,6 +1,8 @@
 #ifndef RENDER_ENGINE_BASE_WINDOW_H
 #define RENDER_ENGINE_BASE_WINDOW_H
 
+#ifdef ENABLE_IMGUI
+
 #include <string>
 
 class BaseWindow
@@ -30,5 +32,7 @@ private:
     float m_InitialHeight;
     bool m_TopBar;
 };
+
+#endif
 
 #endif //RENDER_ENGINE_BASE_WINDOW_H

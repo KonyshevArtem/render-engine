@@ -1,6 +1,8 @@
 #ifndef RENDER_ENGINE_DEBUG_CONSOLE_WINDOW_H
 #define RENDER_ENGINE_DEBUG_CONSOLE_WINDOW_H
 
+#ifdef ENABLE_IMGUI
+
 #include "base_window.h"
 #include "window_manager.h"
 
@@ -25,5 +27,7 @@ private:
     bool m_NewLogAdded = false;
     std::vector<std::string> m_Logs;
 };
+
+#endif
 
 #endif //RENDER_ENGINE_DEBUG_CONSOLE_WINDOW_H

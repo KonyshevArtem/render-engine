@@ -1,3 +1,5 @@
+#ifdef ENABLE_IMGUI
+
 #include "top_menu_bar.h"
 #include "imgui.h"
 #include "editor/gizmos/gizmos.h"
@@ -66,3 +68,5 @@ void TopMenuBar::Draw(std::function<void()> closeWindow)
         ImGui::EndMainMenuBar();
     }
 }
+
+#endif

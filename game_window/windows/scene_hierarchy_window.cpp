@@ -1,3 +1,5 @@
+#ifdef ENABLE_IMGUI
+
 #include "scene_hierarchy_window.h"
 #include "imgui.h"
 #include "imgui_stdlib.h"
@@ -391,3 +393,5 @@ void SceneHierarchyWindow::DrawInternal()
     ProcessDestroyRequest();
     Reset();
 }
+
+#endif

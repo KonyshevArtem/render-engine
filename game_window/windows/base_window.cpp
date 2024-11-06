@@ -1,3 +1,5 @@
+#ifdef ENABLE_IMGUI
+
 #include "base_window.h"
 #include "windows_id_pool.h"
 #include "imgui.h"
@@ -35,3 +37,5 @@ void BaseWindow::Draw()
         ImGui::End();
     }
 }
+
+#endif

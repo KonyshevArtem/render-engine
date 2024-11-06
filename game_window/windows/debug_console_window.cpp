@@ -1,3 +1,5 @@
+#ifdef ENABLE_IMGUI
+
 #include "debug_console_window.h"
 #include "imgui.h"
 #include "debug.h"
@@ -108,3 +110,5 @@ DEFINE_STATIC_CONSTRUCTOR(DebugConsoleWindow)
 {
     Debug::AddListener(-1, CreateWindowListener);
 }
+
+#endif

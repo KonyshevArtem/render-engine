@@ -24,5 +24,5 @@ target_link_libraries(GameWindow Core)
 
 if (${ENABLE_IMGUI})
     target_link_libraries(GameWindow ImGui)
-    target_compile_definitions(GameWindow ENABLE_IMGUI)
+    target_compile_definitions(GameWindow PRIVATE ENABLE_IMGUI)
 endif()

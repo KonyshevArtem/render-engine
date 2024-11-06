@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -17,6 +17,29 @@
 		3ABD52F62283BDB70050D28E /* AAPLMetalRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A40C5A82277F0F500DBB29F /* AAPLMetalRenderer.m */; };
 		3ABD52FB2283BE4B0050D28E /* AAPLMetalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52E82283BB9B0050D28E /* AAPLMetalViewController.m */; };
 		3ABD53092283C4FE0050D28E /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
+		464255592CD802BF009D7BB1 /* EngineFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1E2D2BAE3C5600362748 /* EngineFramework.h */; };
+		4642555A2CD802CC009D7BB1 /* RenderEngineViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */; };
+		4642555C2CD80300009D7BB1 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4642555B2CD80300009D7BB1 /* GameController.framework */; };
+		4642555E2CD80312009D7BB1 /* resources in Resources */ = {isa = PBXBuildFile; fileRef = 935D1E202BAA2FAC00362748 /* resources */; };
+		4642556D2CD80E6D009D7BB1 /* EngineFrameworkWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		4642556E2CD80E71009D7BB1 /* EngineFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1E2D2BAE3C5600362748 /* EngineFramework.h */; };
+		4642556F2CD80E97009D7BB1 /* EngineFrameworkWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */; };
+		464255702CD80EEA009D7BB1 /* libCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0362BAF74220023B4D5 /* libCore.a */; };
+		464255712CD80EEC009D7BB1 /* libDebugUtil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0312BAF74220023B4D5 /* libDebugUtil.a */; };
+		464255722CD80EEE009D7BB1 /* libGameWindow.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0302BAF74220023B4D5 /* libGameWindow.a */; };
+		464255732CD80EF0009D7BB1 /* libGraphicsBackend.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0352BAF74220023B4D5 /* libGraphicsBackend.a */; };
+		464255742CD80EF6009D7BB1 /* libMath.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0322BAF74220023B4D5 /* libMath.a */; };
+		464255752CD80EF9009D7BB1 /* libOpenFBX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0332BAF74220023B4D5 /* libOpenFBX.a */; };
+		464255762CD80EFC009D7BB1 /* libRenderEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F02E2BAF74220023B4D5 /* libRenderEngine.a */; };
+		464255772CD80EFF009D7BB1 /* libRenderEngineApple.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0372BAF74220023B4D5 /* libRenderEngineApple.a */; };
+		464255782CD80F01009D7BB1 /* libUtils.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F02F2BAF74220023B4D5 /* libUtils.a */; };
+		4642558D2CD810CA009D7BB1 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4642558C2CD810CA009D7BB1 /* UIKit.framework */; platformFilter = ios; };
+		464255902CD81164009D7BB1 /* libEngineFrameworkWrapper-iOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 464255632CD80E20009D7BB1 /* libEngineFrameworkWrapper-iOS.a */; };
+		464255922CD81E56009D7BB1 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 464255912CD81E56009D7BB1 /* libc++.tbd */; };
+		464255932CD81EC1009D7BB1 /* ImGuiWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F0722BB0936F0023B4D5 /* ImGuiWrapper.h */; };
+		464255942CD81ED1009D7BB1 /* ImGuiWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F0722BB0936F0023B4D5 /* ImGuiWrapper.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		464255952CD81ED9009D7BB1 /* ImGuiWrapperApple.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F07A2BB0A8030023B4D5 /* ImGuiWrapperApple.h */; };
+		464255962CD81EE3009D7BB1 /* ImGuiWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 93A9F0702BB0935C0023B4D5 /* ImGuiWrapper.mm */; };
 		932D9AA72BB99B2300A4C3AB /* RenderEngineViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */; };
 		932D9AAA2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
 		932D9AAB2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
@@ -36,7 +59,7 @@
 		93A9F0422BB03BCF0023B4D5 /* resources in Resources */ = {isa = PBXBuildFile; fileRef = 935D1E202BAA2FAC00362748 /* resources */; };
 		93A9F0462BB03BDE0023B4D5 /* EngineFrameworkWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */; };
 		93A9F0472BB0452E0023B4D5 /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
-		93A9F0482BB0453B0023B4D5 /* libEngineFrameworkWrapper.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper.a */; };
+		93A9F0482BB0453B0023B4D5 /* libEngineFrameworkWrapper-macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper-macOS.a */; };
 		93A9F05B2BB0658E0023B4D5 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E222BAA41CE00362748 /* GameController.framework */; };
 		93A9F0642BB08DE30023B4D5 /* libImGuiOSX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0612BB08DE30023B4D5 /* libImGuiOSX.a */; };
 		93A9F0652BB08DE30023B4D5 /* libImGuiMetal.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0622BB08DE30023B4D5 /* libImGuiMetal.a */; };
@@ -47,6 +70,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		4642558E2CD8115D009D7BB1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3A40C5A02277F0F500DBB29F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 464255622CD80E20009D7BB1;
+			remoteInfo = "EngineFrameworkWrapper-iOS";
+		};
 		93A9F0432BB03BD40023B4D5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3A40C5A02277F0F500DBB29F /* Project object */;
@@ -55,6 +85,18 @@
 			remoteInfo = EngineFrameworkWrapper;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		464255612CD80E20009D7BB1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		3A40C5A72277F0F500DBB29F /* AAPLMetalRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AAPLMetalRenderer.h; sourceTree = "<group>"; };
@@ -71,11 +113,15 @@
 		3ABD52E92283BB9B0050D28E /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		3ABD52F12283BC300050D28E /* AAPLAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAPLAppDelegate.h; sourceTree = "<group>"; };
 		3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAPLAppDelegate.m; sourceTree = "<group>"; };
+		4642555B2CD80300009D7BB1 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/System/Library/Frameworks/GameController.framework; sourceTree = DEVELOPER_DIR; };
+		464255632CD80E20009D7BB1 /* libEngineFrameworkWrapper-iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libEngineFrameworkWrapper-iOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4642558C2CD810CA009D7BB1 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		464255912CD81E56009D7BB1 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
 		78FA0B4078F9C9B000000001 /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenderEngineViewController.h; sourceTree = "<group>"; };
 		932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RenderEngineViewController.m; sourceTree = "<group>"; };
 		935D1D712BA7A5F400362748 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
-		935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libEngineFrameworkWrapper.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper-macOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libEngineFrameworkWrapper-macOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EngineFrameworkWrapper.h; sourceTree = "<group>"; };
 		935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EngineFrameworkWrapper.mm; sourceTree = "<group>"; };
 		935D1E202BAA2FAC00362748 /* resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = resources; path = ../../../resources; sourceTree = "<group>"; };
@@ -104,7 +150,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				93A9F05B2BB0658E0023B4D5 /* GameController.framework in Frameworks */,
-				93A9F0482BB0453B0023B4D5 /* libEngineFrameworkWrapper.a in Frameworks */,
+				93A9F0482BB0453B0023B4D5 /* libEngineFrameworkWrapper-macOS.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +158,26 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				464255922CD81E56009D7BB1 /* libc++.tbd in Frameworks */,
+				464255902CD81164009D7BB1 /* libEngineFrameworkWrapper-iOS.a in Frameworks */,
+				4642558D2CD810CA009D7BB1 /* UIKit.framework in Frameworks */,
+				4642555C2CD80300009D7BB1 /* GameController.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		464255602CD80E20009D7BB1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				464255702CD80EEA009D7BB1 /* libCore.a in Frameworks */,
+				464255712CD80EEC009D7BB1 /* libDebugUtil.a in Frameworks */,
+				464255722CD80EEE009D7BB1 /* libGameWindow.a in Frameworks */,
+				464255732CD80EF0009D7BB1 /* libGraphicsBackend.a in Frameworks */,
+				464255742CD80EF6009D7BB1 /* libMath.a in Frameworks */,
+				464255752CD80EF9009D7BB1 /* libOpenFBX.a in Frameworks */,
+				464255762CD80EFC009D7BB1 /* libRenderEngine.a in Frameworks */,
+				464255772CD80EFF009D7BB1 /* libRenderEngineApple.a in Frameworks */,
+				464255782CD80F01009D7BB1 /* libUtils.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -156,7 +222,8 @@
 			children = (
 				3A40C5B52277F0F500DBB29F /* Render Engine.app */,
 				3ABD52CD2283BAFB0050D28E /* Render Engine.app */,
-				935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper.a */,
+				935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper-macOS.a */,
+				464255632CD80E20009D7BB1 /* libEngineFrameworkWrapper-iOS.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -248,7 +315,10 @@
 		935D1D652BA79E7500362748 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				464255912CD81E56009D7BB1 /* libc++.tbd */,
+				4642558C2CD810CA009D7BB1 /* UIKit.framework */,
 				935D1E222BAA41CE00362748 /* GameController.framework */,
+				4642555B2CD80300009D7BB1 /* GameController.framework */,
 				935D1D712BA7A5F400362748 /* libc++.tbd */,
 			);
 			name = Frameworks;
@@ -305,6 +375,27 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		464255572CD802B5009D7BB1 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				464255592CD802BF009D7BB1 /* EngineFramework.h in Headers */,
+				4642555A2CD802CC009D7BB1 /* RenderEngineViewController.h in Headers */,
+				464255932CD81EC1009D7BB1 /* ImGuiWrapper.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4642556C2CD80E61009D7BB1 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4642556D2CD80E6D009D7BB1 /* EngineFrameworkWrapper.h in Headers */,
+				464255942CD81ED1009D7BB1 /* ImGuiWrapper.h in Headers */,
+				4642556E2CD80E71009D7BB1 /* EngineFramework.h in Headers */,
+				464255952CD81ED9009D7BB1 /* ImGuiWrapperApple.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		935D1DE12BAA222B00362748 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -352,6 +443,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3ABD52E02283BAFE0050D28E /* Build configuration list for PBXNativeTarget "RenderEngineMetal-iOS" */;
 			buildPhases = (
+				464255572CD802B5009D7BB1 /* Headers */,
 				3ABD52C92283BAFB0050D28E /* Sources */,
 				3ABD52CA2283BAFB0050D28E /* Frameworks */,
 				3ABD52CB2283BAFB0050D28E /* Resources */,
@@ -359,15 +451,34 @@
 			buildRules = (
 			);
 			dependencies = (
+				4642558F2CD8115D009D7BB1 /* PBXTargetDependency */,
 			);
 			name = "RenderEngineMetal-iOS";
 			productName = OpenGLToMetal;
 			productReference = 3ABD52CD2283BAFB0050D28E /* Render Engine.app */;
 			productType = "com.apple.product-type.application";
 		};
-		935D1DE42BAA222B00362748 /* EngineFrameworkWrapper */ = {
+		464255622CD80E20009D7BB1 /* EngineFrameworkWrapper-iOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 935D1DEB2BAA222B00362748 /* Build configuration list for PBXNativeTarget "EngineFrameworkWrapper" */;
+			buildConfigurationList = 464255692CD80E20009D7BB1 /* Build configuration list for PBXNativeTarget "EngineFrameworkWrapper-iOS" */;
+			buildPhases = (
+				4642556C2CD80E61009D7BB1 /* Headers */,
+				4642555F2CD80E20009D7BB1 /* Sources */,
+				464255602CD80E20009D7BB1 /* Frameworks */,
+				464255612CD80E20009D7BB1 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "EngineFrameworkWrapper-iOS";
+			productName = "EngineFrameworkWrapper-iOS";
+			productReference = 464255632CD80E20009D7BB1 /* libEngineFrameworkWrapper-iOS.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		935D1DE42BAA222B00362748 /* EngineFrameworkWrapper-macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 935D1DEB2BAA222B00362748 /* Build configuration list for PBXNativeTarget "EngineFrameworkWrapper-macOS" */;
 			buildPhases = (
 				935D1DE12BAA222B00362748 /* Headers */,
 				935D1DE22BAA222B00362748 /* Sources */,
@@ -377,9 +488,9 @@
 			);
 			dependencies = (
 			);
-			name = EngineFrameworkWrapper;
+			name = "EngineFrameworkWrapper-macOS";
 			productName = RenderEngineWrapper;
-			productReference = 935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper.a */;
+			productReference = 935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper-macOS.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
@@ -397,6 +508,9 @@
 					};
 					3ABD52CC2283BAFB0050D28E = {
 						CreatedOnToolsVersion = 11.0;
+					};
+					464255622CD80E20009D7BB1 = {
+						CreatedOnToolsVersion = 15.4;
 					};
 					935D1DE42BAA222B00362748 = {
 						CreatedOnToolsVersion = 13.4.1;
@@ -418,7 +532,8 @@
 			targets = (
 				3A40C5B42277F0F500DBB29F /* RenderEngineMetal-macOS */,
 				3ABD52CC2283BAFB0050D28E /* RenderEngineMetal-iOS */,
-				935D1DE42BAA222B00362748 /* EngineFrameworkWrapper */,
+				935D1DE42BAA222B00362748 /* EngineFrameworkWrapper-macOS */,
+				464255622CD80E20009D7BB1 /* EngineFrameworkWrapper-iOS */,
 			);
 		};
 /* End PBXProject section */
@@ -437,6 +552,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4642555E2CD80312009D7BB1 /* resources in Resources */,
 				3ABD52DC2283BAFE0050D28E /* LaunchScreen.storyboard in Resources */,
 				3ABD52D72283BAFB0050D28E /* Main.storyboard in Resources */,
 			);
@@ -469,6 +585,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4642555F2CD80E20009D7BB1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4642556F2CD80E97009D7BB1 /* EngineFrameworkWrapper.mm in Sources */,
+				464255962CD81EE3009D7BB1 /* ImGuiWrapper.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		935D1DE22BAA222B00362748 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -481,9 +606,14 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		4642558F2CD8115D009D7BB1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 464255622CD80E20009D7BB1 /* EngineFrameworkWrapper-iOS */;
+			targetProxy = 4642558E2CD8115D009D7BB1 /* PBXContainerItemProxy */;
+		};
 		93A9F0442BB03BD40023B4D5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 935D1DE42BAA222B00362748 /* EngineFrameworkWrapper */;
+			target = 935D1DE42BAA222B00362748 /* EngineFrameworkWrapper-macOS */;
 			targetProxy = 93A9F0432BB03BD40023B4D5 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -519,6 +649,7 @@
 		3A40C5CA2277F0F500DBB29F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALLOW_TARGET_PLATFORM_SPECIALIZATION = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -567,12 +698,15 @@
 				LIBRARY_SEARCH_PATHS = "";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				SUPPORTED_PLATFORMS = "xrsimulator xros watchsimulator watchos macosx iphonesimulator iphoneos driverkit appletvsimulator appletvos";
+				SUPPORTS_MACCATALYST = YES;
 			};
 			name = Debug;
 		};
 		3A40C5CB2277F0F500DBB29F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALLOW_TARGET_PLATFORM_SPECIALIZATION = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -614,6 +748,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LIBRARY_SEARCH_PATHS = "";
 				MTL_ENABLE_DEBUG_INFO = NO;
+				SUPPORTED_PLATFORMS = "xrsimulator xros watchsimulator watchos macosx iphonesimulator iphoneos driverkit appletvsimulator appletvos";
+				SUPPORTS_MACCATALYST = YES;
 			};
 			name = Release;
 		};
@@ -698,7 +834,7 @@
 					"TARGET_IOS=1",
 				);
 				INFOPLIST_FILE = Common/Application/iOS/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.3;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -710,6 +846,8 @@
 				PRODUCT_NAME = "Render Engine";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -724,7 +862,7 @@
 				DEVELOPMENT_TEAM = C7KTGVADZ4;
 				GCC_PREPROCESSOR_DEFINITIONS = "TARGET_IOS=1";
 				INFOPLIST_FILE = Common/Application/iOS/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.3;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -735,6 +873,64 @@
 				PRODUCT_NAME = "Render Engine";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		4642556A2CD80E20009D7BB1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/EngineFramework/Libraries",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4642556B2CD80E20009D7BB1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/EngineFramework/Libraries",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 			};
@@ -759,6 +955,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 12.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -820,7 +1017,16 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		935D1DEB2BAA222B00362748 /* Build configuration list for PBXNativeTarget "EngineFrameworkWrapper" */ = {
+		464255692CD80E20009D7BB1 /* Build configuration list for PBXNativeTarget "EngineFrameworkWrapper-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4642556A2CD80E20009D7BB1 /* Debug */,
+				4642556B2CD80E20009D7BB1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		935D1DEB2BAA222B00362748 /* Build configuration list for PBXNativeTarget "EngineFrameworkWrapper-macOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				935D1DEC2BAA222B00362748 /* Debug */,

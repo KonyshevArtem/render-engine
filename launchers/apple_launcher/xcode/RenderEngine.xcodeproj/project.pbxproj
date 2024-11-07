@@ -20,7 +20,7 @@
 		464255592CD802BF009D7BB1 /* EngineFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1E2D2BAE3C5600362748 /* EngineFramework.h */; };
 		4642555A2CD802CC009D7BB1 /* RenderEngineViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */; };
 		4642555C2CD80300009D7BB1 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4642555B2CD80300009D7BB1 /* GameController.framework */; };
-		4642555E2CD80312009D7BB1 /* resources in Resources */ = {isa = PBXBuildFile; fileRef = 935D1E202BAA2FAC00362748 /* resources */; };
+		4642555E2CD80312009D7BB1 /* core_resources in Resources */ = {isa = PBXBuildFile; fileRef = 935D1E202BAA2FAC00362748 /* core_resources */; };
 		4642556D2CD80E6D009D7BB1 /* EngineFrameworkWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4642556E2CD80E71009D7BB1 /* EngineFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1E2D2BAE3C5600362748 /* EngineFramework.h */; };
 		4642556F2CD80E97009D7BB1 /* EngineFrameworkWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */; };
@@ -56,7 +56,7 @@
 		93A9F03F2BAF74230023B4D5 /* libGraphicsBackend.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0352BAF74220023B4D5 /* libGraphicsBackend.a */; };
 		93A9F0402BAF74230023B4D5 /* libCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0362BAF74220023B4D5 /* libCore.a */; };
 		93A9F0412BAF74230023B4D5 /* libRenderEngineApple.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93A9F0372BAF74220023B4D5 /* libRenderEngineApple.a */; };
-		93A9F0422BB03BCF0023B4D5 /* resources in Resources */ = {isa = PBXBuildFile; fileRef = 935D1E202BAA2FAC00362748 /* resources */; };
+		93A9F0422BB03BCF0023B4D5 /* core_resources in Resources */ = {isa = PBXBuildFile; fileRef = 935D1E202BAA2FAC00362748 /* core_resources */; };
 		93A9F0462BB03BDE0023B4D5 /* EngineFrameworkWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */; };
 		93A9F0472BB0452E0023B4D5 /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
 		93A9F0482BB0453B0023B4D5 /* libEngineFrameworkWrapper-macOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper-macOS.a */; };
@@ -124,7 +124,7 @@
 		935D1DE52BAA222B00362748 /* libEngineFrameworkWrapper-macOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libEngineFrameworkWrapper-macOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EngineFrameworkWrapper.h; sourceTree = "<group>"; };
 		935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EngineFrameworkWrapper.mm; sourceTree = "<group>"; };
-		935D1E202BAA2FAC00362748 /* resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = resources; path = ../../../resources; sourceTree = "<group>"; };
+		935D1E202BAA2FAC00362748 /* core_resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = core_resources; path = ../../../core_resources; sourceTree = "<group>"; };
 		935D1E222BAA41CE00362748 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		935D1E2D2BAE3C5600362748 /* EngineFramework.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EngineFramework.h; sourceTree = "<group>"; };
 		93A9F02E2BAF74220023B4D5 /* libRenderEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libRenderEngine.a; sourceTree = "<group>"; };
@@ -207,7 +207,7 @@
 			isa = PBXGroup;
 			children = (
 				935D1E312BAF516D00362748 /* EngineFramework */,
-				935D1E202BAA2FAC00362748 /* resources */,
+				935D1E202BAA2FAC00362748 /* core_resources */,
 				3ABD52FD2283BE710050D28E /* Metal */,
 				3ABD53012283C3710050D28E /* Common */,
 				935D1DE62BAA222B00362748 /* EngineFrameworkWrapper */,
@@ -544,7 +544,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3ABD52EA2283BB9B0050D28E /* Main.storyboard in Resources */,
-				93A9F0422BB03BCF0023B4D5 /* resources in Resources */,
+				93A9F0422BB03BCF0023B4D5 /* core_resources in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -552,7 +552,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4642555E2CD80312009D7BB1 /* resources in Resources */,
+				4642555E2CD80312009D7BB1 /* core_resources in Resources */,
 				3ABD52DC2283BAFE0050D28E /* LaunchScreen.storyboard in Resources */,
 				3ABD52D72283BAFB0050D28E /* Main.storyboard in Resources */,
 			);

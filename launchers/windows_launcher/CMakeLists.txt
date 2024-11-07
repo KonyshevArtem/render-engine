@@ -7,9 +7,9 @@ if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 
     # copy resources to build directory
     add_custom_target(PreBuildWindows ALL
-            COMMAND ${CMAKE_COMMAND} -E rm -rf $<TARGET_FILE_DIR:RenderEngineWindows>/resources
-            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:RenderEngineWindows>/resources
-            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:RenderEngineWindows>/resources
+            COMMAND ${CMAKE_COMMAND} -E rm -rf $<TARGET_FILE_DIR:RenderEngineWindows>/core_resources
+            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:RenderEngineWindows>/core_resources
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/core_resources $<TARGET_FILE_DIR:RenderEngineWindows>/core_resources
             COMMAND ${CMAKE_COMMAND} -E echo \"[Pre Build] Resources copied\")
     add_dependencies(RenderEngineWindows PreBuildWindows)
 

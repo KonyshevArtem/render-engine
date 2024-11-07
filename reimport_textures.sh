@@ -5,20 +5,20 @@ else
     EXECUTABLE="./cmake-build-release-visual-studio/texture_compressor/TextureCompressor.exe"
 fi
 
-$EXECUTABLE Texture2D BC7 0 1 car_albedo   resources/textures/car/car_albedo.tga
-$EXECUTABLE Texture2D BC7 1 1 car_data     resources/textures/car/car_data.tga
-$EXECUTABLE Texture2D BC7 1 1 car_normal   resources/textures/car/car_normal.tga
+$EXECUTABLE Texture2D BC7 0 1 car_albedo   core_resources/textures/car/car_albedo.tga
+$EXECUTABLE Texture2D BC7 1 1 car_data     core_resources/textures/car/car_data.tga
+$EXECUTABLE Texture2D BC7 1 1 car_normal   core_resources/textures/car/car_normal.tga
 
-$EXECUTABLE Cubemap BC7 0 1 skybox resources/textures/skybox/x_positive.png\
-                                   resources/textures/skybox/x_negative.png\
-                                   resources/textures/skybox/y_positive.png\
-                                   resources/textures/skybox/y_negative.png\
-                                   resources/textures/skybox/z_positive.png\
-                                   resources/textures/skybox/z_negative.png\
+$EXECUTABLE Cubemap BC7 0 1 skybox core_resources/textures/skybox/x_positive.png\
+                                   core_resources/textures/skybox/x_negative.png\
+                                   core_resources/textures/skybox/y_positive.png\
+                                   core_resources/textures/skybox/y_negative.png\
+                                   core_resources/textures/skybox/z_positive.png\
+                                   core_resources/textures/skybox/z_negative.png\
 
-$EXECUTABLE Texture2D BC7 0 1 billboard_tree   resources/textures/billboard_tree.png
-$EXECUTABLE Texture2D BC7 0 1 brick            resources/textures/brick.png
-$EXECUTABLE Texture2D BC7 1 1 brick_normal     resources/textures/brick_normal.png
-$EXECUTABLE Texture2D BC7 0 1 water            resources/textures/water.png
-$EXECUTABLE Texture2D BC7 1 1 water_normal     resources/textures/water_normal.png
-$EXECUTABLE Texture2D BC7 0 1 window_cube      resources/textures/window_cube.png
+$EXECUTABLE Texture2D BC7 0 1 billboard_tree   core_resources/textures/billboard_tree.png
+$EXECUTABLE Texture2D BC7 0 1 brick            core_resources/textures/brick.png
+$EXECUTABLE Texture2D BC7 1 1 brick_normal     core_resources/textures/brick_normal.png
+$EXECUTABLE Texture2D BC7 0 1 water            core_resources/textures/water.png
+$EXECUTABLE Texture2D BC7 1 1 water_normal     core_resources/textures/water_normal.png
+$EXECUTABLE Texture2D BC7 0 1 window_cube      core_resources/textures/window_cube.png

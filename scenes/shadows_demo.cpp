@@ -23,11 +23,11 @@ void ShadowsDemo::Init()
     Camera::Init(60, 0.5f, 100, 100);
 
     // init shaders
-    auto standardOpaqueShader = Shader::Load("resources/shaders/standard", {"_RECEIVE_SHADOWS"}, {}, {}, {});
+    auto standardOpaqueShader = Shader::Load("core_resources/shaders/standard", {"_RECEIVE_SHADOWS"}, {}, {}, {});
 
     // init meshes
-    auto cubeMesh = FBXAsset::Load("resources/models/cube.fbx")->GetMesh(0);
-    auto sphereMesh = FBXAsset::Load("resources/models/sphere.fbx")->GetMesh(0);
+    auto cubeMesh = FBXAsset::Load("core_resources/models/cube.fbx")->GetMesh(0);
+    auto sphereMesh = FBXAsset::Load("core_resources/models/sphere.fbx")->GetMesh(0);
 
     // init materials
     auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader);

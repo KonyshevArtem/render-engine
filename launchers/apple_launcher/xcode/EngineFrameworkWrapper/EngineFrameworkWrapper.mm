@@ -1,38 +1,52 @@
 #import "EngineFrameworkWrapper.h"
 #import "EngineFramework.h"
 
-struct InitData
+struct MetalInitData
 {
     void* Device;
     void* RenderCommandBuffer;
     void* CopyCommandBuffer;
 };
 
-struct NewFrameData
+struct MetalFrameData
 {
     void* RenderCommandBuffer;
     void* CopyCommandBuffer;
     void* BackbufferDescriptor;
 };
 
+struct FileSystemData
+{
+    const char* ExecutablePath;
+    const char* ResourcesPath;
+};
+
 @implementation EngineFrameworkWrapper
 
-+ (void) Initialize:(id<MTLDevice>)device renderCommandBuffer:(id<MTLCommandBuffer>)renderCommandBuffer copyCommandBuffer:(id<MTLCommandBuffer>)copyCommandBuffer
++ (void) Initialize:(id<MTLDevice>)device renderCommandBuffer:(id<MTLCommandBuffer>)renderCommandBuffer copyCommandBuffer:(id<MTLCommandBuffer>)copyCommandBuffer executablePath:(const char*)executablePath resourcesPath:(const char*)resourcesPath
 {
-    InitData* data = new InitData();
-    data->Device = (__bridge void*)device;
-    data->RenderCommandBuffer = (__bridge void*)renderCommandBuffer;
-    data->CopyCommandBuffer = (__bridge void*)copyCommandBuffer;
-    EngineFramework::Initialize((void*)data, "Metal");
-    delete data;
+    MetalInitData* metalInitData = new MetalInitData();
+    metalInitData->Device = (__bridge void*)device;
+    metalInitData->RenderCommandBuffer = (__bridge void*)renderCommandBuffer;
+    metalInitData->CopyCommandBuffer = (__bridge void*)copyCommandBuffer;
+    
+    FileSystemData* fileSystemData = new FileSystemData();
+    fileSystemData->ExecutablePath = executablePath;
+    fileSystemData->ResourcesPath = resourcesPath;
+    
+    EngineFramework::Initialize((void*)fileSystemData, (void*)metalInitData, "Metal");
+    
+    delete metalInitData;
+    delete fileSystemData;
 }
 
 + (void) TickMainLoop:(id<MTLCommandBuffer>)renderCommandBuffer copyCommandBuffer:(id<MTLCommandBuffer>)copyCommandBuffer backbufferDescriptor:(MTLRenderPassDescriptor *)backbufferDescriptor width:(int)width height:(int)height
 {
-    NewFrameData* data = new NewFrameData();
+    MetalFrameData* data = new MetalFrameData();
     data->RenderCommandBuffer = (__bridge void*)renderCommandBuffer;
     data->CopyCommandBuffer = (__bridge void*)copyCommandBuffer;
     data->BackbufferDescriptor = (__bridge void*)backbufferDescriptor;
+    
     EngineFramework::TickMainLoop(data, width, height);
     delete data;
 }

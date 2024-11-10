@@ -21,14 +21,14 @@
 NS::Error *s_Error;
 const int s_MaxBuffers = 31;
 
-struct InitData
+struct MetalInitData
 {
     MTL::Device* Device;
     MTL::CommandBuffer* RenderCommandBuffer;
     MTL::CommandBuffer* CopyCommandBuffer;
 };
 
-struct NewFrameData
+struct MetalFrameData
 {
     MTL::CommandBuffer* RenderCommandBuffer;
     MTL::CommandBuffer* CopyCommandBuffer;
@@ -37,7 +37,7 @@ struct NewFrameData
 
 void GraphicsBackendMetal::Init(void *data)
 {
-    auto metalData = reinterpret_cast<InitData*>(data);
+    auto metalData = reinterpret_cast<MetalInitData*>(data);
     m_Device = metalData->Device;
     m_RenderCommandBuffer = metalData->RenderCommandBuffer;
     m_CopyCommandBuffer = metalData->CopyCommandBuffer;
@@ -51,7 +51,7 @@ GraphicsBackendName GraphicsBackendMetal::GetName()
 
 void GraphicsBackendMetal::InitNewFrame(void *data)
 {
-    auto metalData = reinterpret_cast<NewFrameData*>(data);
+    auto metalData = reinterpret_cast<MetalFrameData*>(data);
     m_RenderCommandBuffer = metalData->RenderCommandBuffer;
     m_CopyCommandBuffer = metalData->CopyCommandBuffer;
     m_BackbufferDescriptor = metalData->BackbufferDescriptor;

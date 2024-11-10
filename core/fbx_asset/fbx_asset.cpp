@@ -1,30 +1,15 @@
 #include "fbx_asset.h"
 #include "vector2/vector2.h"
 #include "vector3/vector3.h"
-#include "utils/utils.h"
+#include "file_system/file_system.h"
 #include "mesh/mesh.h"
-#include <cstdio>
 
 std::shared_ptr<FBXAsset> FBXAsset::Load(const std::filesystem::path &_path)
 {
-    auto *fp = fopen((Utils::GetExecutableDirectory() / _path).string().c_str(), "rb");
-    if (!fp)
-        return nullptr;
+    std::vector<uint8_t> content;
+    FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / _path, content);
 
-    // determine fbx size
-    fseek(fp, 0, SEEK_END);
-    auto file_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-
-    // prepare buffer and read
-    std::vector<ofbx::u8> content(file_size);
-    fread(&content[0], 1, file_size, fp);
-
-    auto *scene = ofbx::load(&content[0], file_size, (ofbx::u64) ofbx::LoadFlags::TRIANGULATE); // NOLINT(cppcoreguidelines-narrowing-conversions)
-
-    // clean up
-    fclose(fp);
-
+    auto *scene = ofbx::load(&content[0], content.size(), static_cast<ofbx::u64>(ofbx::LoadFlags::TRIANGULATE)); // NOLINT(cppcoreguidelines-narrowing-conversions)
     if (!scene)
         return nullptr;
 

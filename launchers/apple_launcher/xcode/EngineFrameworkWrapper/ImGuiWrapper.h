@@ -1,7 +1,6 @@
 #ifndef ImGuiWrapper_h
 #define ImGuiWrapper_h
 
-#import <AppKit/AppKit.h>
 #import <MetalKit/MetalKit.h>
 #import <Foundation/Foundation.h>
 
@@ -12,9 +11,9 @@
 + (void) NewFrame_Metal:(MTLRenderPassDescriptor*_Nonnull)renderPassDescriptor;
 + (void) Render_Metal:(id<MTLCommandBuffer>_Nonnull)commandBuffer commandEncoder:(id<MTLRenderCommandEncoder>_Nonnull) commandEncoder;
 
-+ (bool) Init_OSX:(NSView* _Nonnull) view;
++ (bool) Init_OSX:(MTKView* _Nonnull) view;
 + (void) Shutdown_OSX;
-+ (void) NewFrame_OSX:(NSView* _Nullable) view;
++ (void) NewFrame_OSX:(MTKView* _Nullable) view;
 
 @end
 

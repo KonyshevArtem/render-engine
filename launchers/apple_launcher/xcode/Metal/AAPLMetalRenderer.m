@@ -39,7 +39,10 @@ CGSize _viewSize;
         id<MTLCommandBuffer> renderCommandBuffer = [_commandQueue commandBuffer];
         id<MTLCommandBuffer> copyCommandBuffer = [_commandQueue commandBuffer];
         
-        [EngineFrameworkWrapper Initialize:_device renderCommandBuffer:renderCommandBuffer copyCommandBuffer:copyCommandBuffer];
+        NSString* executablePath = [[NSBundle mainBundle] executablePath];
+        NSString* resourcePath = [[NSBundle mainBundle] resourcePath];
+        
+        [EngineFrameworkWrapper Initialize:_device renderCommandBuffer:renderCommandBuffer copyCommandBuffer:copyCommandBuffer executablePath:[executablePath UTF8String] resourcesPath:[resourcePath UTF8String]];
         [ImGuiWrapper Init_OSX:mtkView];
         [ImGuiWrapper Init_Metal:_device];
         

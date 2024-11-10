@@ -3,8 +3,10 @@
 #include "imgui_impl_opengl3.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_implementations/graphics_backend_api_opengl.h"
+#include "file_system/file_system.h"
 
 #include <GLFW/glfw3.h>
+#include <windows.h>
 
 GLFWwindow *s_Window = nullptr;
 
@@ -23,6 +25,12 @@ void MouseMoveFunction(GLFWwindow *window, double x, double y)
 
 int main(int argc, char **argv)
 {
+    char path[MAX_PATH];
+    GetModuleFileNameA(NULL, path, MAX_PATH);
+    FileSystem::FileSystemData fileSystemData;
+    fileSystemData.ExecutablePath = path;
+    fileSystemData.ResourcesPath = std::filesystem::path(path).parent_path().c_str();
+
     if (!glfwInit())
     {
         return 1;
@@ -47,7 +55,7 @@ int main(int argc, char **argv)
     glfwSetCursorPosCallback(s_Window, MouseMoveFunction);
     glfwSetKeyCallback(s_Window, KeyboardFunction);
 
-    EngineFramework::Initialize(nullptr, "OpenGL");
+    EngineFramework::Initialize(static_cast<void*>(&fileSystemData), nullptr, "OpenGL");
 
     ImGui_ImplGlfw_InitForOpenGL(s_Window, true);
 

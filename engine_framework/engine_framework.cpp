@@ -7,6 +7,7 @@
 #include "../scenes/shadows_demo.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "graphics_backend_api.h"
+#include "file_system/file_system.h"
 
 GameWindow* window = nullptr;
 
@@ -21,9 +22,10 @@ void display(int width, int height)
     Input::CleanUp();
 }
 
-void EngineFramework::Initialize(void *graphicsBackendData, const char *graphicsBackend)
+void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInitData, const char* graphicsBackend)
 {
-    GraphicsBackend::Init(graphicsBackendData, graphicsBackend);
+    FileSystem::Init(static_cast<FileSystem::FileSystemData*>(fileSystemData));
+    GraphicsBackend::Init(graphicsBackendInitData, graphicsBackend);
 
     window = new GameWindow(display, Input::HandleKeyboardInput, Input::HandleMouseMove);
 
@@ -35,11 +37,11 @@ void EngineFramework::Initialize(void *graphicsBackendData, const char *graphics
     //ShadowsDemo::Load();
 }
 
-void EngineFramework::TickMainLoop(void *graphicsBackendData, int width, int height)
+void EngineFramework::TickMainLoop(void* graphicsBackendFrameData, int width, int height)
 {
     if (window)
     {
-        GraphicsBackend::Current()->InitNewFrame(graphicsBackendData);
+        GraphicsBackend::Current()->InitNewFrame(graphicsBackendFrameData);
         window->TickMainLoop(width, height);
     }
 }

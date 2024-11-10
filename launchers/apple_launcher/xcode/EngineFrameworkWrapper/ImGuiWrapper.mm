@@ -23,7 +23,7 @@
     ImGui_Metal_Render(commandBuffer, commandEncoder);
 }
 
-+ (bool) Init_OSX:(NSView *)view
++ (bool) Init_OSX:(MTKView *)view
 {
     return ImGui_OSX_Init(view);
 }
@@ -33,7 +33,7 @@
     ImGui_OSX_Shutdown();
 }
 
-+ (void) NewFrame_OSX:(NSView *)view
++ (void) NewFrame_OSX:(MTKView *)view
 {
     ImGui_OSX_NewFrame(view);
 }

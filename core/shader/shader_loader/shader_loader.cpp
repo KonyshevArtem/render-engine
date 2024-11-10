@@ -2,7 +2,7 @@
 #include "shader/shader.h"
 #include "debug.h"
 #include "graphics/graphics.h"
-#include "utils.h"
+#include "utils/utils.h"
 #include "enums/shader_type.h"
 #include "types/graphics_backend_shader_object.h"
 #include "graphics_backend_api.h"

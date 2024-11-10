@@ -572,7 +572,6 @@
 					"-lMath",
 					"-lRenderEngine",
 					"-lRenderEngineApple",
-					"-lUtils",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -619,7 +618,6 @@
 					"-lMath",
 					"-lRenderEngine",
 					"-lRenderEngineApple",
-					"-lUtils",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -659,7 +657,6 @@
 					"-lMath",
 					"-lRenderEngine",
 					"-lRenderEngineApple",
-					"-lUtils",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -698,7 +695,6 @@
 					"-lMath",
 					"-lRenderEngine",
 					"-lRenderEngineApple",
-					"-lUtils",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";

@@ -91,7 +91,9 @@ add_library(
 	drawable_geometry/vertex_attributes/vertex_attributes.cpp
 	drawable_geometry/vertex_attributes/vertex_attributes.h
 	graphics_buffer/ring_buffer.cpp
-	graphics_buffer/ring_buffer.h)
+	graphics_buffer/ring_buffer.h
+	utils/utils.cpp
+	utils/utils.h)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math Utils DebugUtil OpenFBX GraphicsBackend nlohmann_json::nlohmann_json)
+target_link_libraries(Core Math DebugUtil OpenFBX GraphicsBackend nlohmann_json::nlohmann_json)

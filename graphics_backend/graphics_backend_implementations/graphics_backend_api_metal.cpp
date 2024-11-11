@@ -20,6 +20,7 @@
 
 NS::Error *s_Error;
 const int s_MaxBuffers = 31;
+MTL::StorageMode s_DefaultStorageMode;
 
 struct MetalInitData
 {
@@ -42,6 +43,8 @@ void GraphicsBackendMetal::Init(void *data)
     m_RenderCommandBuffer = metalData->RenderCommandBuffer;
     m_CopyCommandBuffer = metalData->CopyCommandBuffer;
     m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
+
+    s_DefaultStorageMode = m_Device->hasUnifiedMemory() ? MTL::StorageModeShared : MTL::StorageModeManaged;
 }
 
 GraphicsBackendName GraphicsBackendMetal::GetName()
@@ -59,7 +62,7 @@ void GraphicsBackendMetal::InitNewFrame(void *data)
 
 GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget)
 {
-    auto storageMode = isRenderTarget ? MTL::StorageModePrivate : MTL::StorageModeManaged;
+    auto storageMode = isRenderTarget ? MTL::StorageModePrivate : s_DefaultStorageMode;
 
     MTL::TextureUsage textureUsage = MTL::TextureUsageShaderRead;
     if (isRenderTarget)
@@ -255,7 +258,7 @@ TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAtt
 
 GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferUsageHint usageHint)
 {
-    auto metalBuffer = m_Device->newBuffer(size, MTL::ResourceStorageModeManaged);
+    auto metalBuffer = m_Device->newBuffer(size, s_DefaultStorageMode);
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(metalBuffer);
     buffer.Size = size;
@@ -293,7 +296,9 @@ void GraphicsBackendMetal::SetBufferData(GraphicsBackendBuffer &buffer, long off
     auto metalBuffer = reinterpret_cast<MTL::Buffer *>(buffer.Buffer);
     auto contents = reinterpret_cast<uint8_t*>(metalBuffer->contents()) + offset;
     memcpy(contents, data, size);
-    metalBuffer->didModifyRange(NS::Range::Make(offset, size));
+
+    if (s_DefaultStorageMode == MTL::StorageModeManaged)
+        metalBuffer->didModifyRange(NS::Range::Make(offset, size));
 }
 
 void GraphicsBackendMetal::CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size)

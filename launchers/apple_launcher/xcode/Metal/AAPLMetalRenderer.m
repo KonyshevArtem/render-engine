@@ -69,11 +69,13 @@ CGSize _viewSize;
 /// Called whenever the view needs to render.
 - (void) drawInMTKView:(nonnull MTKView *)view
 {
+#if !defined(TARGET_IOS) && !defined(TARGET_TVOS)
     if ([EngineFrameworkWrapper ShouldCloseWindow])
     {
         [[view window] performClose:self];
         return;
     }
+#endif
     
     MTLRenderPassDescriptor* renderPassDescriptor = [view currentRenderPassDescriptor];
     id<MTLCommandBuffer> renderCommandBuffer = [_commandQueue commandBuffer];

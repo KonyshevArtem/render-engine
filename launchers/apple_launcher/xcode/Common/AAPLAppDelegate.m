@@ -2,19 +2,14 @@
 
 @implementation AAPLAppDelegate
 
-#if defined(TARGET_IOS) || defined(TARGET_TVOS)
-
-- (BOOL)application:(PlatformWindow *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    return YES;
-}
-
-#else
-
-- (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender
+- (BOOL) application:(PlatformApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     return YES;
 }
 
-#endif
+- (BOOL) applicationShouldTerminateAfterLastWindowClosed:(PlatformApplication *)sender
+{
+    return YES;
+}
 
 @end

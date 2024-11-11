@@ -9,6 +9,8 @@
     return CGSizeMake(0, 0);
 }
 
+#if !defined(TARGET_IOS) && !defined(TARGET_TVOS)
+
 - (void) mouseMoved:(NSEvent *)event
 {
     NSPoint point = event.locationInWindow;
@@ -30,22 +32,6 @@
     [self keyPress:event pressed:false];
 }
 
-@end
-
-@implementation TrackingAreaProvider
-
-NSTrackingArea *trackingArea;
-
-- (void)updateTrackingArea:(NSView *)view
-{
-    if (trackingArea != nil)
-    {
-        [view removeTrackingArea:trackingArea];
-    }
-    
-    NSTrackingAreaOptions options = NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingActiveInKeyWindow;
-    trackingArea = [[NSTrackingArea alloc] initWithRect:[view bounds] options:options owner:view userInfo:nil];
-    [view addTrackingArea:trackingArea];
-}
+#endif
 
 @end

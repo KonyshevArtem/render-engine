@@ -15,10 +15,4 @@
 
 @end
 
-@interface TrackingAreaProvider : NSObject
-
-- (void) updateTrackingArea:(NSView*)view;
-
-@end
-
 #endif /* RenderEngineViewController_h */

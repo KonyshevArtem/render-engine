@@ -32,6 +32,10 @@
 		464258502CDE9BC5009D7BB1 /* ImGuiWrapperApple.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F07A2BB0A8030023B4D5 /* ImGuiWrapperApple.h */; };
 		464258512CDE9BE4009D7BB1 /* ImGuiWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 93A9F0702BB0935C0023B4D5 /* ImGuiWrapper.mm */; };
 		464258522CDE9BE7009D7BB1 /* EngineFrameworkWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */; };
+		464258542CE29ED0009D7BB1 /* TrackingAreaProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 464258532CE29ED0009D7BB1 /* TrackingAreaProvider.m */; };
+		464258552CE29ED0009D7BB1 /* TrackingAreaProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 464258532CE29ED0009D7BB1 /* TrackingAreaProvider.m */; };
+		464258572CE29EEB009D7BB1 /* TrackingAreaProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 464258562CE29EEB009D7BB1 /* TrackingAreaProvider.h */; };
+		464258582CE29EEB009D7BB1 /* TrackingAreaProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 464258562CE29EEB009D7BB1 /* TrackingAreaProvider.h */; };
 		932D9AA72BB99B2300A4C3AB /* RenderEngineViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */; };
 		932D9AAA2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
 		932D9AAB2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
@@ -60,6 +64,8 @@
 		4642555B2CD80300009D7BB1 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/System/Library/Frameworks/GameController.framework; sourceTree = DEVELOPER_DIR; };
 		4642558C2CD810CA009D7BB1 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		464255912CD81E56009D7BB1 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
+		464258532CE29ED0009D7BB1 /* TrackingAreaProvider.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TrackingAreaProvider.m; sourceTree = "<group>"; };
+		464258562CE29EEB009D7BB1 /* TrackingAreaProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TrackingAreaProvider.h; sourceTree = "<group>"; };
 		78FA0B4078F9C9B000000001 /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenderEngineViewController.h; sourceTree = "<group>"; };
 		932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RenderEngineViewController.m; sourceTree = "<group>"; };
@@ -165,6 +171,8 @@
 				3ABD53032283C3970050D28E /* Application */,
 				932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */,
 				932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */,
+				464258562CE29EEB009D7BB1 /* TrackingAreaProvider.h */,
+				464258532CE29ED0009D7BB1 /* TrackingAreaProvider.m */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -253,6 +261,7 @@
 				4642584F2CDE9BAC009D7BB1 /* EngineFrameworkWrapper.h in Headers */,
 				464255592CD802BF009D7BB1 /* EngineFramework.h in Headers */,
 				4642555A2CD802CC009D7BB1 /* RenderEngineViewController.h in Headers */,
+				464258582CE29EEB009D7BB1 /* TrackingAreaProvider.h in Headers */,
 				464255932CD81EC1009D7BB1 /* ImGuiWrapper.h in Headers */,
 				464258502CDE9BC5009D7BB1 /* ImGuiWrapperApple.h in Headers */,
 			);
@@ -265,6 +274,7 @@
 				93A9F0462BB03BDE0023B4D5 /* EngineFrameworkWrapper.h in Headers */,
 				93A9F07C2BB0B5420023B4D5 /* ImGuiWrapper.h in Headers */,
 				932D9AA72BB99B2300A4C3AB /* RenderEngineViewController.h in Headers */,
+				464258572CE29EEB009D7BB1 /* TrackingAreaProvider.h in Headers */,
 				4642583E2CDE97D6009D7BB1 /* ImGuiWrapperApple.h in Headers */,
 				4642583D2CDE97D4009D7BB1 /* EngineFramework.h in Headers */,
 			);
@@ -373,6 +383,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				464258542CE29ED0009D7BB1 /* TrackingAreaProvider.m in Sources */,
 				3A40C5C12277F0F500DBB29F /* AAPLMetalRenderer.m in Sources */,
 				3ABD52EC2283BB9B0050D28E /* AAPLMetalViewController.m in Sources */,
 				932D9AAA2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */,
@@ -387,6 +398,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				464258552CE29ED0009D7BB1 /* TrackingAreaProvider.m in Sources */,
 				3ABD52FB2283BE4B0050D28E /* AAPLMetalViewController.m in Sources */,
 				3ABD52F62283BDB70050D28E /* AAPLMetalRenderer.m in Sources */,
 				932D9AAB2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */,

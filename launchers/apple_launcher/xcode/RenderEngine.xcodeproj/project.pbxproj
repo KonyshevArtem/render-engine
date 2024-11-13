@@ -125,26 +125,10 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		3ABD52C72283B7830050D28E /* Application */ = {
-			isa = PBXGroup;
-			children = (
-				3ABD53062283C3F70050D28E /* macOS */,
-				3ABD52CE2283BAFB0050D28E /* iOS */,
-			);
-			path = Application;
-			sourceTree = "<group>";
-		};
-		3ABD52CE2283BAFB0050D28E /* iOS */ = {
-			isa = PBXGroup;
-			children = (
-				3ABD52D52283BAFB0050D28E /* Main.storyboard */,
-			);
-			path = iOS;
-			sourceTree = "<group>";
-		};
 		3ABD52E32283BB9B0050D28E /* macOS */ = {
 			isa = PBXGroup;
 			children = (
+				3ABD52E42283BB9B0050D28E /* Main.storyboard */,
 				3ABD52E62283BB9B0050D28E /* Info.plist */,
 			);
 			path = macOS;
@@ -157,7 +141,6 @@
 				3ABD52E82283BB9B0050D28E /* AAPLMetalViewController.m */,
 				3A40C5A72277F0F500DBB29F /* AAPLMetalRenderer.h */,
 				3A40C5A82277F0F500DBB29F /* AAPLMetalRenderer.m */,
-				3ABD52C72283B7830050D28E /* Application */,
 			);
 			path = Metal;
 			sourceTree = "<group>";
@@ -189,18 +172,11 @@
 		3ABD53052283C3B80050D28E /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				3ABD52D52283BAFB0050D28E /* Main.storyboard */,
 				3ABD52DA2283BAFE0050D28E /* LaunchScreen.storyboard */,
 				3ABD52DD2283BAFE0050D28E /* Info.plist */,
 			);
 			path = iOS;
-			sourceTree = "<group>";
-		};
-		3ABD53062283C3F70050D28E /* macOS */ = {
-			isa = PBXGroup;
-			children = (
-				3ABD52E42283BB9B0050D28E /* Main.storyboard */,
-			);
-			path = macOS;
 			sourceTree = "<group>";
 		};
 		78F9C07078F9C6B000000001 /* LICENSE */ = {

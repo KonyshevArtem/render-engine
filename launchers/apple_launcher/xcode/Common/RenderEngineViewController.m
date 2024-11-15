@@ -56,6 +56,14 @@
     }
 }
 
+- (void) touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    for (UITouch* touch in touches)
+    {
+        [EngineFrameworkWrapper ProcessTouchUp:[touch hash]];
+    }
+}
+
 #else
 
 - (void) mouseMoved:(NSEvent *)event

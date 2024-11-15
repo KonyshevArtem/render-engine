@@ -20,6 +20,8 @@ public:
     Vector2 operator-(const Vector2 &_vector) const;
 
     Vector2 operator*(float _value) const;
+
+    Vector2 operator/(float value) const;
 };
 
 #endif //RENDER_ENGINE_VECTOR2_H

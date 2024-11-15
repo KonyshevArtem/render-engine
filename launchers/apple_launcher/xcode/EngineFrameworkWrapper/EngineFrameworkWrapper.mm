@@ -71,4 +71,19 @@ struct FileSystemData
     EngineFramework::ProcessKeyPress(key, pressed);
 }
 
++ (void) ProcessTouchDown:(unsigned long)touchId x:(float)x y:(float)y
+{
+    EngineFramework::ProcessTouchDown(touchId, x, y);
+}
+
++ (void) ProcessTouchMove:(unsigned long)touchId x:(float)x y:(float)y
+{
+    EngineFramework::ProcessTouchMove(touchId, x, y);
+}
+
++ (void) ProcessTouchUp:(unsigned long)touchId
+{
+    EngineFramework::ProcessTouchUp(touchId);
+}
+
 @end

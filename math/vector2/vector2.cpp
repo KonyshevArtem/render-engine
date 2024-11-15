@@ -35,3 +35,8 @@ Vector2 Vector2::operator*(float _value) const
 {
     return {this->x * _value, this->y * _value};
 }
+
+Vector2 Vector2::operator/(float value) const
+{
+    return {x / value, y / value};
+}

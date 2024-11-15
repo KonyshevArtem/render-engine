@@ -9,7 +9,11 @@
 + (void) Shutdown;
 + (bool) ShouldCloseWindow;
 
-+ (void) ProcessMouseMove:(float) x y:(float)y;
++ (void) ProcessMouseMove:(float)x y:(float)y;
 + (void) ProcessKeyPress:(char)key pressed:(bool)pressed;
+
++ (void) ProcessTouchDown:(unsigned long)touchId x:(float)x y:(float)y;
++ (void) ProcessTouchMove:(unsigned long)touchId x:(float)x y:(float)y;
++ (void) ProcessTouchUp:(unsigned long)touchId;
 
 @end

@@ -73,3 +73,18 @@ void EngineFramework::ProcessKeyPress(char key, bool pressed)
         window->ProcessKeyPress(key, pressed);
     }
 }
+
+void EngineFramework::ProcessTouchDown(unsigned long touchId, float x, float y)
+{
+    Input::HandleTouch(Input::TouchState::DOWN, touchId, x, y);
+}
+
+void EngineFramework::ProcessTouchMove(unsigned long touchId, float x, float y)
+{
+    Input::HandleTouch(Input::TouchState::MOVE, touchId, x, y);
+}
+
+void EngineFramework::ProcessTouchUp(unsigned long touchId)
+{
+    Input::HandleTouch(Input::TouchState::UP, touchId, 0, 0);
+}

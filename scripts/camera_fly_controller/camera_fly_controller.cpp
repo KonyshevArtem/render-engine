@@ -3,6 +3,10 @@
 #include "input/input.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 
+constexpr float CAMERA_ROT_SPEED  = 10.0f;
+constexpr float CAMERA_MOVE_SPEED = 15.0f;
+constexpr float MOVE_MAX_DELTA = 100.0f;
+
 void CameraFlyController::Update()
 {
     if (Input::GetKey('E'))
@@ -22,16 +26,39 @@ void CameraFlyController::Update()
 
     auto cameraPosition = Camera::Current->GetPosition();
 
-    auto cameraFwd   = cameraRotation * Vector3(0, 0, 1);
-    auto cameraRight = cameraRotation * Vector3(1, 0, 0);
+    auto cameraFwd = cameraRotation * Vector3(0, 0, 1) * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
+    auto cameraRight = cameraRotation * Vector3(1, 0, 0) * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
     if (Input::GetKey('W'))
-        cameraPosition = cameraPosition + cameraFwd * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
+        cameraPosition = cameraPosition + cameraFwd;
     if (Input::GetKey('S'))
-        cameraPosition = cameraPosition - cameraFwd * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
+        cameraPosition = cameraPosition - cameraFwd;
     if (Input::GetKey('D'))
-        cameraPosition = cameraPosition + cameraRight * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
+        cameraPosition = cameraPosition + cameraRight;
     if (Input::GetKey('A'))
-        cameraPosition = cameraPosition - cameraRight * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
+        cameraPosition = cameraPosition - cameraRight;
+
+    Input::Touch touch;
+    m_HasMoveTouch = Input::GetTouch(m_MoveTouchId, touch);
+    if (m_HasMoveTouch)
+    {
+        Vector2 delta = (touch.Position - m_MoveTouchStartPos) / MOVE_MAX_DELTA;
+        delta.x = std::clamp(delta.x, -1.0f, 1.0f);
+        delta.y = std::clamp(delta.y, -1.0f, 1.0f);
+        cameraPosition = cameraPosition + cameraFwd * -delta.y;
+        cameraPosition = cameraPosition + cameraRight * delta.x;
+    }
+    else
+    {
+        for (const Input::Touch &touch: Input::GetTouches())
+        {
+            if (touch.State == Input::TouchState::DOWN)
+            {
+                m_MoveTouchId = touch.Id;
+                m_MoveTouchStartPos = touch.Position;
+                break;
+            }
+        }
+    }
 
     Camera::Current->SetPosition(cameraPosition);
     Camera::Current->SetRotation(cameraRotation);

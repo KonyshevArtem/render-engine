@@ -11,6 +11,10 @@ public:
 
     static void ProcessMouseMove(float x, float y);
     static void ProcessKeyPress(char key, bool pressed);
+
+    static void ProcessTouchDown(unsigned long touchId, float x, float y);
+    static void ProcessTouchMove(unsigned long touchId, float x, float y);
+    static void ProcessTouchUp(unsigned long touchId);
 };
 
 #endif //RENDER_ENGINE_RENDER_ENGINE_H

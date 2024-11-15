@@ -1,12 +1,13 @@
 #import "RenderEngineViewController.h"
 #import "EngineFrameworkWrapper.h"
 #import <Foundation/Foundation.h>
+#import <MetalKit/MTKView.h>
 
 @implementation RenderEngineViewController
 
 - (CGSize) getViewSize
 {
-    return CGSizeMake(0, 0);
+    return [(MTKView*)[self view] drawableSize];
 }
 
 #if defined(TARGET_IOS) || defined(TARGET_TVOS)

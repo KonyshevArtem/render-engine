@@ -10,9 +10,6 @@
 #endif
 
 @interface RenderEngineViewController : PlatformViewController
-
-- (CGSize) getViewSize;
-
 @end
 
 #endif /* RenderEngineViewController_h */

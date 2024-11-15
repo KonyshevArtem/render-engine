@@ -8,10 +8,9 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm;
 /// Main class that performs the rendering.
 @implementation AAPLMetalRenderer
 
-id<MTLDevice>        _device;
-id<MTLCommandQueue>  _commandQueue;
-
-id<MTLDepthStencilState>   _depthState;
+id<MTLDevice> _device;
+id<MTLCommandQueue> _commandQueue;
+id<MTLDepthStencilState> _depthState;
 
 CGSize _viewSize;
 
@@ -94,11 +93,6 @@ CGSize _viewSize;
     [copyCommandBuffer commit];
     [renderCommandBuffer presentDrawable:view.currentDrawable];
     [renderCommandBuffer commit];
-}
-
-- (CGSize) getViewSize
-{
-    return _viewSize;
 }
 
 @end

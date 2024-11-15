@@ -44,9 +44,4 @@ AAPLMetalRenderer *_renderer;
     _view.delegate = _renderer;
 }
 
-- (CGSize) getViewSize
-{
-    return [_renderer getViewSize];
-}
-
 @end

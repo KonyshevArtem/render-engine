@@ -1,13 +1,31 @@
 #import "RenderEngineViewController.h"
 #import "EngineFrameworkWrapper.h"
 #import <Foundation/Foundation.h>
-#import <MetalKit/MTKView.h>
 
 @implementation RenderEngineViewController
 
+- (CGFloat) getScreenScale
+{
+#if defined(TARGET_IOS) || defined(TARGET_TVOS)
+    return [[UIScreen mainScreen] scale];
+#else
+    return [[NSScreen mainScreen] backingScaleFactor];;
+#endif
+}
+
 - (CGSize) getViewSize
 {
-    return [(MTKView*)[self view] drawableSize];
+    CGSize size = [[self view] bounds].size;
+    CGFloat scale = [self getScreenScale];
+    return CGSizeMake(size.width * scale, size.height * scale);
+}
+
+- (CGPoint) scalePoint:(CGPoint)point
+{
+    CGFloat scale = [self getScreenScale];
+    point.x *= scale;
+    point.y *= scale;
+    return point;
 }
 
 #if defined(TARGET_IOS) || defined(TARGET_TVOS)
@@ -15,8 +33,8 @@
 - (void) touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     for (UITouch* touch in touches)
-    {        
-        CGPoint point = [touch locationInView:[self view]];
+    {
+        CGPoint point = [self scalePoint:[touch locationInView:[self view]]];
         [EngineFrameworkWrapper ProcessTouchDown:[touch hash] x:point.x y:point.y];
     }
 }
@@ -25,7 +43,7 @@
 {
     for (UITouch* touch in touches)
     {
-        CGPoint point = [touch locationInView:[self view]];
+        CGPoint point = [self scalePoint:[touch locationInView:[self view]]];
         [EngineFrameworkWrapper ProcessTouchMove:[touch hash] x:point.x y:point.y];
     }
 }
@@ -42,7 +60,7 @@
 
 - (void) mouseMoved:(NSEvent *)event
 {
-    NSPoint point = event.locationInWindow;
+    CGPoint point = [self scalePoint:event.locationInWindow];
     [EngineFrameworkWrapper ProcessMouseMove:point.x y: [self getViewSize].height - point.y];
 }
 

@@ -54,9 +54,19 @@ Vector3 Vector3::operator+(const Vector3 &_vector) const
     return {x + _vector.x, y + _vector.y, z + _vector.z};
 }
 
+void Vector3::operator+=(const Vector3& vector)
+{
+    *this = *this + vector;
+}
+
 Vector3 Vector3::operator-(const Vector3 &_vector) const
 {
     return *this + (-_vector);
+}
+
+void Vector3::operator-=(const Vector3& vector)
+{
+    *this = *this - vector;
 }
 
 Vector3 Vector3::operator*(float _value) const

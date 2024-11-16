@@ -17,7 +17,11 @@ public:
 
     Vector2 operator+(const Vector2 &_vector) const;
 
+    void operator+=(const Vector2& vector);
+
     Vector2 operator-(const Vector2 &_vector) const;
+
+    void operator-=(const Vector2& vector);
 
     Vector2 operator*(float _value) const;
 

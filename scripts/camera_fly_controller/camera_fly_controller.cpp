@@ -13,15 +13,16 @@ constexpr float TOUCH_ROTATE_MIN_DELTA = 5.0f;
 
 void CameraFlyController::Update()
 {
-    if (Input::GetKey('E'))
-        m_CameraEulerAngles = m_CameraEulerAngles + Input::GetMouseDelta() * (CAMERA_ROT_SPEED * Time::GetDeltaTime());
+    float cameraRotationDelta = CAMERA_ROT_SPEED * Time::GetDeltaTime();
+    if (Input::GetMouseButton(Input::MouseButton::RIGHT))
+        m_CameraEulerAngles += Input::GetMouseDelta() * cameraRotationDelta;
 
     if (m_HasRotateTouch)
     {
         Input::Touch touch;
         Input::GetTouch(m_RotateTouchId, touch);
         if (touch.Delta.Length() > TOUCH_ROTATE_MIN_DELTA)
-            m_CameraEulerAngles = m_CameraEulerAngles - touch.Delta * (CAMERA_ROT_SPEED * Time::GetDeltaTime());
+            m_CameraEulerAngles -= touch.Delta * cameraRotationDelta;
     }
 
     if (m_CameraEulerAngles.x < 0)
@@ -33,22 +34,28 @@ void CameraFlyController::Update()
     if (m_CameraEulerAngles.y > 360)
         m_CameraEulerAngles.y = 0;
 
-    auto xRot = Quaternion::AngleAxis(m_CameraEulerAngles.y, Vector3(-1, 0, 0));
-    auto yRot = Quaternion::AngleAxis(m_CameraEulerAngles.x, Vector3(0, -1, 0));
-    auto cameraRotation = yRot * xRot;
+    const Quaternion xRot = Quaternion::AngleAxis(m_CameraEulerAngles.y, Vector3(-1, 0, 0));
+    const Quaternion yRot = Quaternion::AngleAxis(m_CameraEulerAngles.x, Vector3(0, -1, 0));
+    const Quaternion cameraRotation = yRot * xRot;
 
-    auto cameraPosition = Camera::Current->GetPosition();
+    Vector3 cameraPosition = Camera::Current->GetPosition();
 
-    auto cameraFwd = cameraRotation * Vector3(0, 0, 1) * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
-    auto cameraRight = cameraRotation * Vector3(1, 0, 0) * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
+    float cameraMoveDelta = CAMERA_MOVE_SPEED * Time::GetDeltaTime();
+    const Vector3 cameraFwd = cameraRotation * Vector3(0, 0, 1) * cameraMoveDelta;
+    const Vector3 cameraRight = cameraRotation * Vector3(1, 0, 0) * cameraMoveDelta;
+    const Vector3 cameraUp = cameraRotation * Vector3(0, 1, 0) * cameraMoveDelta;
     if (Input::GetKey('W'))
-        cameraPosition = cameraPosition + cameraFwd;
+        cameraPosition += cameraFwd;
     if (Input::GetKey('S'))
-        cameraPosition = cameraPosition - cameraFwd;
+        cameraPosition -= cameraFwd;
     if (Input::GetKey('D'))
-        cameraPosition = cameraPosition + cameraRight;
+        cameraPosition += cameraRight;
     if (Input::GetKey('A'))
-        cameraPosition = cameraPosition - cameraRight;
+        cameraPosition -= cameraRight;
+    if (Input::GetKey('E'))
+        cameraPosition += cameraUp;
+    if (Input::GetKey('Q'))
+        cameraPosition -= cameraUp;
 
     if (m_HasMoveTouch)
     {
@@ -61,6 +68,14 @@ void CameraFlyController::Update()
         cameraPosition = cameraPosition + cameraRight * delta.x;
     }
 
+    UpdateTouchInputs();
+
+    Camera::Current->SetPosition(cameraPosition);
+    Camera::Current->SetRotation(cameraRotation);
+}
+
+void CameraFlyController::UpdateTouchInputs()
+{
     for (const Input::Touch& touch: Input::GetTouches())
     {
         if (touch.State == Input::TouchState::DOWN)
@@ -91,7 +106,4 @@ void CameraFlyController::Update()
             }
         }
     }
-
-    Camera::Current->SetPosition(cameraPosition);
-    Camera::Current->SetRotation(cameraRotation);
 }

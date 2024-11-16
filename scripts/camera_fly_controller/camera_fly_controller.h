@@ -10,6 +10,8 @@ public:
     void Update();
 
 private:
+    void UpdateTouchInputs();
+
     Vector2 m_CameraEulerAngles;
 
     bool m_HasMoveTouch = false;

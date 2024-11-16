@@ -27,9 +27,19 @@ Vector2 Vector2::operator+(const Vector2 &_vector) const
     return {this->x + _vector.x, this->y + _vector.y};
 }
 
+void Vector2::operator+=(const Vector2& vector)
+{
+    *this = *this + vector;
+}
+
 Vector2 Vector2::operator-(const Vector2 &_vector) const
 {
     return {this->x - _vector.x, this->y - _vector.y};
+}
+
+void Vector2::operator-=(const Vector2& vector)
+{
+    *this = *this - vector;
 }
 
 Vector2 Vector2::operator*(float _value) const

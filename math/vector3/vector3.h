@@ -26,7 +26,11 @@ public:
 
     Vector3 operator+(const Vector3 &_vector) const;
 
+    void operator+=(const Vector3& vector);
+
     Vector3 operator-(const Vector3 &_vector) const;
+
+    void operator-=(const Vector3& vector);
 
     Vector3 operator*(float _value) const;
 

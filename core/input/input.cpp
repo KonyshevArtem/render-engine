@@ -10,6 +10,7 @@ namespace Input
     Vector2 s_OldMousePosition = Vector2();
     Vector2 s_MousePosition = Vector2();
     Vector2 s_MouseDelta = Vector2();
+    uint8_t s_MouseButtonBits;
 
     void Update()
     {
@@ -50,6 +51,19 @@ namespace Input
                 s_Inputs.erase(key);
                 s_InputsUp.insert(key);
             }
+        }
+    }
+
+    void HandleMouseClick(MouseButton mouseButton, bool isPressed)
+    {
+        uint8_t mouseButtonBit = 1U << static_cast<int>(mouseButton);
+        if (isPressed)
+        {
+            s_MouseButtonBits |= mouseButtonBit;
+        }
+        else
+        {
+            s_MouseButtonBits &= ~mouseButtonBit;
         }
     }
 
@@ -120,6 +134,12 @@ namespace Input
         }
 
         return false;
+    }
+
+    bool GetMouseButton(MouseButton mouseButton)
+    {
+        uint8_t mouseButtonBit = 1U << static_cast<int>(mouseButton);
+        return (s_MouseButtonBits & mouseButtonBit) != 0;
     }
 
     const Vector2 &GetMousePosition()

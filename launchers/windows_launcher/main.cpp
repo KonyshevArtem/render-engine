@@ -18,6 +18,11 @@ void KeyboardFunction(GLFWwindow *window, int keycode, int scancode, int action,
     }
 }
 
+void MouseClickFunction(GLFWwindow* window, int button, int action, int mods)
+{
+    EngineFramework::ProcessMouseClick(button, action == GLFW_PRESS);
+}
+
 void MouseMoveFunction(GLFWwindow *window, double x, double y)
 {
     EngineFramework::ProcessMouseMove(static_cast<float>(x), static_cast<float>(y));
@@ -54,6 +59,7 @@ int main(int argc, char **argv)
     glfwMakeContextCurrent(s_Window);
     glfwSwapInterval(1);
 
+    glfwSetMouseButtonCallback(s_Window, MouseClickFunction);
     glfwSetCursorPosCallback(s_Window, MouseMoveFunction);
     glfwSetKeyCallback(s_Window, KeyboardFunction);
 

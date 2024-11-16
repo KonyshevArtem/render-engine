@@ -27,7 +27,7 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
     FileSystem::Init(static_cast<FileSystem::FileSystemData*>(fileSystemData));
     GraphicsBackend::Init(graphicsBackendInitData, graphicsBackend);
 
-    window = new GameWindow(display, Input::HandleKeyboardInput, Input::HandleMouseMove);
+    window = new GameWindow(display);
 
     Graphics::Init();
     Time::Init();
@@ -58,19 +58,27 @@ void EngineFramework::Shutdown()
     Graphics::Shutdown();
 }
 
+void EngineFramework::ProcessMouseClick(int mouseButton, bool pressed)
+{
+    if (!window || !window->CaptureMouse())
+    {
+        Input::HandleMouseClick(static_cast<Input::MouseButton>(mouseButton), pressed);
+    }
+}
+
 void EngineFramework::ProcessMouseMove(float x, float y)
 {
-    if (window)
+    if (!window || !window->CaptureMouse())
     {
-        window->ProcessMouseMove(x, y);
+        Input::HandleMouseMove(x, y);
     }
 }
 
 void EngineFramework::ProcessKeyPress(char key, bool pressed)
 {
-    if (window)
+    if (!window || !window->CaptureKeyboard())
     {
-        window->ProcessKeyPress(key, pressed);
+        Input::HandleKeyboardInput(key, pressed);
     }
 }
 

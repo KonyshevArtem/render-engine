@@ -8,10 +8,8 @@
 
 #include <utility>
 
-GameWindow::GameWindow(RenderHandler renderHandler, KeyboardInputHandlerDelegate keyboardInputHandler, MouseMoveHandlerDelegate mouseMoveHandler):
-    m_RenderHandler(std::move(renderHandler)),
-    m_KeyboardInputHandler(std::move(keyboardInputHandler)),
-    m_MouseMoveHandler(std::move(mouseMoveHandler))
+GameWindow::GameWindow(RenderHandler renderHandler):
+    m_RenderHandler(std::move(renderHandler))
 {
 #ifdef ENABLE_IMGUI
     IMGUI_CHECKVERSION();
@@ -50,35 +48,25 @@ void GameWindow::TickMainLoop(int width, int height)
 #endif
 }
 
-void GameWindow::ProcessKeyPress(char key, bool pressed)
-{
-#ifdef ENABLE_IMGUI
-    auto &io = ImGui::GetIO();
-    if (!io.WantCaptureKeyboard)
-#endif
-    {
-        if (m_KeyboardInputHandler)
-        {
-            m_KeyboardInputHandler(key, pressed);
-        }
-    }
-}
-
-void GameWindow::ProcessMouseMove(float x, float y)
-{
-#ifdef ENABLE_IMGUI
-    auto &io = ImGui::GetIO();
-    if (!io.WantCaptureMouse)
-#endif
-    {
-        if (m_MouseMoveHandler)
-        {
-            m_MouseMoveHandler(x, y);
-        }
-    }
-}
-
 bool GameWindow::ShouldCloseWindow() const
 {
     return m_CloseFlag;
+}
+
+bool GameWindow::CaptureKeyboard() const
+{
+#ifdef ENABLE_IMGUI
+    return ImGui::GetIO().WantCaptureKeyboard;
+#else
+    return false;
+#endif
+}
+
+bool GameWindow::CaptureMouse() const
+{
+#ifdef ENABLE_IMGUI
+    return ImGui::GetIO().WantCaptureMouse;
+#else
+    return false;
+#endif
 }

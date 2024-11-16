@@ -9,6 +9,7 @@ public:
     static bool ShouldCloseWindow();
     static void Shutdown();
 
+    static void ProcessMouseClick(int mouseButton, bool pressed);
     static void ProcessMouseMove(float x, float y);
     static void ProcessKeyPress(char key, bool pressed);
 

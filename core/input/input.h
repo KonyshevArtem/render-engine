@@ -15,6 +15,13 @@ namespace Input
         UP
     };
 
+    enum class MouseButton
+    {
+        LEFT,
+        RIGHT,
+        MIDDLE
+    };
+
     struct Touch
     {
         uint64_t Id{};
@@ -27,6 +34,7 @@ namespace Input
     void CleanUp();
 
     void HandleKeyboardInput(unsigned char key, bool isPressed);
+    void HandleMouseClick(MouseButton mouseButton, bool isPressed);
     void HandleMouseMove(double x, double y);
     void HandleTouch(TouchState state, uint64_t touchId, float x, float y);
 
@@ -34,6 +42,7 @@ namespace Input
     bool GetKeyUp(unsigned char key);
     bool GetKey(unsigned char key);
     bool GetTouch(uint64_t touchId, Touch& outTouch);
+    bool GetMouseButton(MouseButton mouseButton);
     const Vector2& GetMousePosition();
     const Vector2& GetMouseDelta();
     const std::vector<Touch>& GetTouches();

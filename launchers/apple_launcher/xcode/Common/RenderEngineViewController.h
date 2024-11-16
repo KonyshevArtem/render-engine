@@ -10,15 +10,6 @@
 #endif
 
 @interface RenderEngineViewController : PlatformViewController
-
-- (CGSize) getViewSize;
-
-@end
-
-@interface TrackingAreaProvider : NSObject
-
-- (void) updateTrackingArea:(NSView*)view;
-
 @end
 
 #endif /* RenderEngineViewController_h */

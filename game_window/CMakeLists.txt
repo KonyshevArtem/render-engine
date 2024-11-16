@@ -17,12 +17,12 @@ add_library(
         window_manager.h
         windows/graphics_settings_window.cpp
         windows/graphics_settings_window.h
-        game_window_implementations/game_window_platform_windows.cpp
-        game_window_implementations/game_window_platform_windows.h
-        game_window_implementations/game_window_platform_apple.cpp
-        game_window_implementations/game_window_platform_apple.h
 )
 
-add_compile_definitions(GL_SILENCE_DEPRECATION)
 target_include_directories(GameWindow PUBLIC .)
-target_link_libraries(GameWindow ImGui Core)
+target_link_libraries(GameWindow Core)
+
+if (${ENABLE_IMGUI})
+    target_link_libraries(GameWindow ImGui)
+    target_compile_definitions(GameWindow PRIVATE ENABLE_IMGUI)
+endif()

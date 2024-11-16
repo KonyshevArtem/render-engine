@@ -1,3 +1,5 @@
+#ifdef ENABLE_IMGUI
+
 #ifndef RENDER_ENGINE_SCENE_HIERARCHY_WINDOW_H
 #define RENDER_ENGINE_SCENE_HIERARCHY_WINDOW_H
 
@@ -42,5 +44,6 @@ private:
     void Reset();
 };
 
+#endif
 
 #endif //RENDER_ENGINE_SCENE_HIERARCHY_WINDOW_H

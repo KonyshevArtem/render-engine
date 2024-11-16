@@ -26,14 +26,14 @@ void PBRDemo::Init()
     Camera::Init(80, 0.5f, 100, 100);
 
     //init mesh
-    auto sphereAsset = FBXAsset::Load("resources/models/sphere.fbx");
+    auto sphereAsset = FBXAsset::Load("core_resources/models/sphere.fbx");
     auto sphereMesh  = sphereAsset->GetMesh(0);
 
     //init shader
-    auto shader = Shader::Load("resources/shaders/standard", {"_REFLECTION"}, {}, {}, {});
+    auto shader = Shader::Load("core_resources/shaders/standard", {"_REFLECTION"}, {}, {}, {});
 
     //init skybox
-    Skybox = Cubemap::Load("resources/textures/skybox/skybox");
+    Skybox = Cubemap::Load("core_resources/textures/skybox/skybox");
 
     for (float i = 0; i < 6; ++i)
     {

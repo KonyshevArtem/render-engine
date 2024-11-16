@@ -7,6 +7,7 @@
 #include "../scenes/shadows_demo.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "graphics_backend_api.h"
+#include "file_system/file_system.h"
 
 GameWindow* window = nullptr;
 
@@ -21,11 +22,12 @@ void display(int width, int height)
     Input::CleanUp();
 }
 
-void EngineFramework::Initialize(void *graphicsBackendData, const char *graphicsBackend)
+void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInitData, const char* graphicsBackend)
 {
-    GraphicsBackend::Init(graphicsBackendData, graphicsBackend);
+    FileSystem::Init(static_cast<FileSystem::FileSystemData*>(fileSystemData));
+    GraphicsBackend::Init(graphicsBackendInitData, graphicsBackend);
 
-    window = GameWindow::Create(display, Input::HandleKeyboardInput, Input::HandleMouseMove);
+    window = new GameWindow(display);
 
     Graphics::Init();
     Time::Init();
@@ -35,11 +37,11 @@ void EngineFramework::Initialize(void *graphicsBackendData, const char *graphics
     //ShadowsDemo::Load();
 }
 
-void EngineFramework::TickMainLoop(void *graphicsBackendData, int width, int height)
+void EngineFramework::TickMainLoop(void* graphicsBackendFrameData, int width, int height)
 {
     if (window)
     {
-        GraphicsBackend::Current()->InitNewFrame(graphicsBackendData);
+        GraphicsBackend::Current()->InitNewFrame(graphicsBackendFrameData);
         window->TickMainLoop(width, height);
     }
 }
@@ -56,18 +58,41 @@ void EngineFramework::Shutdown()
     Graphics::Shutdown();
 }
 
+void EngineFramework::ProcessMouseClick(int mouseButton, bool pressed)
+{
+    if (!window || !window->CaptureMouse())
+    {
+        Input::HandleMouseClick(static_cast<Input::MouseButton>(mouseButton), pressed);
+    }
+}
+
 void EngineFramework::ProcessMouseMove(float x, float y)
 {
-    if (window)
+    if (!window || !window->CaptureMouse())
     {
-        window->ProcessMouseMove(x, y);
+        Input::HandleMouseMove(x, y);
     }
 }
 
 void EngineFramework::ProcessKeyPress(char key, bool pressed)
 {
-    if (window)
+    if (!window || !window->CaptureKeyboard())
     {
-        window->ProcessKeyPress(key, pressed);
+        Input::HandleKeyboardInput(key, pressed);
     }
+}
+
+void EngineFramework::ProcessTouchDown(unsigned long touchId, float x, float y)
+{
+    Input::HandleTouch(Input::TouchState::DOWN, touchId, x, y);
+}
+
+void EngineFramework::ProcessTouchMove(unsigned long touchId, float x, float y)
+{
+    Input::HandleTouch(Input::TouchState::MOVE, touchId, x, y);
+}
+
+void EngineFramework::ProcessTouchUp(unsigned long touchId)
+{
+    Input::HandleTouch(Input::TouchState::UP, touchId, 0, 0);
 }

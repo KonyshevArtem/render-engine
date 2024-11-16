@@ -37,15 +37,15 @@ void TestScene::Init()
     Camera::Init(75, 0.5f, 100, 100);
 
     // init textures
-    auto brickTexture  = Texture2D::Load("resources/textures/brick");
-    auto brickNormal   = Texture2D::Load("resources/textures/brick_normal");
-    auto waterTexture  = Texture2D::Load("resources/textures/water");
-    auto waterNormal   = Texture2D::Load("resources/textures/water_normal");
-    auto billboardTree = Texture2D::Load("resources/textures/billboard_tree");
-    auto windowTexture = Texture2D::Load("resources/textures/window_cube");
-    auto carAlbedo     = Texture2D::Load("resources/textures/car/car_albedo");
-    auto carNormal     = Texture2D::Load("resources/textures/car/car_normal");
-    auto carData       = Texture2D::Load("resources/textures/car/car_data");
+    auto brickTexture  = Texture2D::Load("core_resources/textures/brick");
+    auto brickNormal   = Texture2D::Load("core_resources/textures/brick_normal");
+    auto waterTexture  = Texture2D::Load("core_resources/textures/water");
+    auto waterNormal   = Texture2D::Load("core_resources/textures/water_normal");
+    auto billboardTree = Texture2D::Load("core_resources/textures/billboard_tree");
+    auto windowTexture = Texture2D::Load("core_resources/textures/window_cube");
+    auto carAlbedo     = Texture2D::Load("core_resources/textures/car/car_albedo");
+    auto carNormal     = Texture2D::Load("core_resources/textures/car/car_normal");
+    auto carData       = Texture2D::Load("core_resources/textures/car/car_data");
 
 #ifdef RENDER_ENGINE_EDITOR
     textures.push_back(brickTexture);
@@ -60,20 +60,20 @@ void TestScene::Init()
 #endif
 
     // init skybox cubemap
-    Skybox = Cubemap::Load("resources/textures/skybox/skybox");
+    Skybox = Cubemap::Load("core_resources/textures/skybox/skybox");
 
     // init shaders
-    auto standardOpaqueShader = Shader::Load("resources/shaders/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
-    auto standardOpaqueDataMapShader = Shader::Load("resources/shaders/standard", {"_DATA_MAP", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
-    auto standardTransparentShader = Shader::Load("resources/shaders/standard", {"_RECEIVE_SHADOWS"}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA}, {}, {});
-    auto standardInstancingShader = Shader::Load("resources/shaders/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_PER_INSTANCE_DATA", "_INSTANCING"}, {}, {}, {});
+    auto standardOpaqueShader = Shader::Load("core_resources/shaders/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
+    auto standardOpaqueDataMapShader = Shader::Load("core_resources/shaders/standard", {"_DATA_MAP", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
+    auto standardTransparentShader = Shader::Load("core_resources/shaders/standard", {"_RECEIVE_SHADOWS"}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA}, {}, {});
+    auto standardInstancingShader = Shader::Load("core_resources/shaders/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_PER_INSTANCE_DATA", "_INSTANCING"}, {}, {}, {});
 
     // init meshes
-    auto cubeAsset     = FBXAsset::Load("resources/models/cube.fbx");
-    auto cylinderAsset = FBXAsset::Load("resources/models/cylinder.fbx");
-    auto planeAsset    = FBXAsset::Load("resources/models/plane.fbx");
-    auto carAsset      = FBXAsset::Load("resources/models/car.fbx");
-    auto sphereAsset   = FBXAsset::Load("resources/models/sphere.fbx");
+    auto cubeAsset     = FBXAsset::Load("core_resources/models/cube.fbx");
+    auto cylinderAsset = FBXAsset::Load("core_resources/models/cylinder.fbx");
+    auto planeAsset    = FBXAsset::Load("core_resources/models/plane.fbx");
+    auto carAsset      = FBXAsset::Load("core_resources/models/car.fbx");
+    auto sphereAsset   = FBXAsset::Load("core_resources/models/sphere.fbx");
 
     auto cubeMesh     = cubeAsset->GetMesh(0);
     auto cylinderMesh = cylinderAsset->GetMesh(0);

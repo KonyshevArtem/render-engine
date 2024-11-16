@@ -1,18 +1,12 @@
 #import "AAPLMetalViewController.h"
 #import "AAPLMetalRenderer.h"
+#import "TrackingAreaProvider.h"
 
 @implementation AAPLMetalView
 
-TrackingAreaProvider *_trackingAreaProvider;
-
 - (void) updateTrackingAreas
 {
-    if (_trackingAreaProvider == nil)
-    {
-        _trackingAreaProvider = [TrackingAreaProvider alloc];
-    }
-
-    [_trackingAreaProvider updateTrackingArea:self];
+    [TrackingAreaProvider updateTrackingArea:self];
 }
 
 @end
@@ -48,11 +42,6 @@ AAPLMetalRenderer *_renderer;
     [_renderer mtkView:_view drawableSizeWillChange:_view.drawableSize];
 
     _view.delegate = _renderer;
-}
-
-- (CGSize) getViewSize
-{
-    return [_renderer getViewSize];
 }
 
 @end

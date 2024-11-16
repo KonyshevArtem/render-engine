@@ -32,7 +32,7 @@
 #include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "material/material.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 #include <cassert>
 
@@ -318,7 +318,7 @@ namespace Graphics
             matricesBuffer[i * 2 + 1] = matrices[i].Invert().Transpose();
         }
 
-        auto matricesSize = sizeof(Matrix4x4) * matricesBuffer.size() * 2;
+        auto matricesSize = sizeof(Matrix4x4) * matricesBuffer.size();
         s_InstancingMatricesBuffer->SetData(matricesBuffer.data(), 0, matricesSize);
     }
 

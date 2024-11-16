@@ -3,8 +3,10 @@
 #include "imgui_impl_opengl3.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_implementations/graphics_backend_api_opengl.h"
+#include "file_system/file_system.h"
 
 #include <GLFW/glfw3.h>
+#include <windows.h>
 
 GLFWwindow *s_Window = nullptr;
 
@@ -16,6 +18,11 @@ void KeyboardFunction(GLFWwindow *window, int keycode, int scancode, int action,
     }
 }
 
+void MouseClickFunction(GLFWwindow* window, int button, int action, int mods)
+{
+    EngineFramework::ProcessMouseClick(button, action == GLFW_PRESS);
+}
+
 void MouseMoveFunction(GLFWwindow *window, double x, double y)
 {
     EngineFramework::ProcessMouseMove(static_cast<float>(x), static_cast<float>(y));
@@ -23,6 +30,14 @@ void MouseMoveFunction(GLFWwindow *window, double x, double y)
 
 int main(int argc, char **argv)
 {
+    char executablePath[MAX_PATH];
+    GetModuleFileNameA(NULL, executablePath, MAX_PATH);
+    std::string resourcesPath = std::filesystem::path(executablePath).parent_path().string();
+
+    FileSystem::FileSystemData fileSystemData{};
+    fileSystemData.ExecutablePath = executablePath;
+    fileSystemData.ResourcesPath = resourcesPath.c_str();
+
     if (!glfwInit())
     {
         return 1;
@@ -44,10 +59,11 @@ int main(int argc, char **argv)
     glfwMakeContextCurrent(s_Window);
     glfwSwapInterval(1);
 
+    glfwSetMouseButtonCallback(s_Window, MouseClickFunction);
     glfwSetCursorPosCallback(s_Window, MouseMoveFunction);
     glfwSetKeyCallback(s_Window, KeyboardFunction);
 
-    EngineFramework::Initialize(nullptr, "OpenGL");
+    EngineFramework::Initialize(static_cast<void*>(&fileSystemData), nullptr, "OpenGL");
 
     ImGui_ImplGlfw_InitForOpenGL(s_Window, true);
 

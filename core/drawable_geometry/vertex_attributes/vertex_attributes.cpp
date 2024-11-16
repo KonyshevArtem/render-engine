@@ -1,5 +1,5 @@
 #include "vertex_attributes.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 size_t GetHash_Internal(const GraphicsBackendVertexAttributeDescriptor &attribute)
 {

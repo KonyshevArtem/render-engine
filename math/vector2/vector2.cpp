@@ -1,4 +1,5 @@
 #include "vector2.h"
+#include <cmath>
 
 const Vector2 &Vector2::Zero()
 {
@@ -26,12 +27,32 @@ Vector2 Vector2::operator+(const Vector2 &_vector) const
     return {this->x + _vector.x, this->y + _vector.y};
 }
 
+void Vector2::operator+=(const Vector2& vector)
+{
+    *this = *this + vector;
+}
+
 Vector2 Vector2::operator-(const Vector2 &_vector) const
 {
     return {this->x - _vector.x, this->y - _vector.y};
 }
 
+void Vector2::operator-=(const Vector2& vector)
+{
+    *this = *this - vector;
+}
+
 Vector2 Vector2::operator*(float _value) const
 {
     return {this->x * _value, this->y * _value};
+}
+
+Vector2 Vector2::operator/(float value) const
+{
+    return {x / value, y / value};
+}
+
+float Vector2::Length() const
+{
+    return sqrtf(x * x + y * y);
 }

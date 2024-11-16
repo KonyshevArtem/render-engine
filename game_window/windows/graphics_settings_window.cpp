@@ -1,3 +1,5 @@
+#ifdef ENABLE_IMGUI
+
 #include "graphics_settings_window.h"
 #include "graphics/graphics_settings.h"
 #include "imgui.h"
@@ -73,4 +75,4 @@ void GraphicsSettingsWindow::DrawInternal()
     DrawTonemappingSettings();
 }
 
-
+#endif

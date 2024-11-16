@@ -170,6 +170,18 @@ MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat for
             return MTL::PixelFormat::PixelFormatBC6H_RGBFloat;
         case TextureInternalFormat::BC7:
             return isLinear ? MTL::PixelFormat::PixelFormatBC7_RGBAUnorm : MTL::PixelFormat::PixelFormatBC7_RGBAUnorm_sRGB;
+        case TextureInternalFormat::ASTC_4X4:
+            return isLinear ? MTL::PixelFormat::PixelFormatASTC_4x4_LDR : MTL::PixelFormat::PixelFormatASTC_4x4_sRGB;
+        case TextureInternalFormat::ASTC_5X5:
+            return isLinear ? MTL::PixelFormat::PixelFormatASTC_5x5_LDR : MTL::PixelFormat::PixelFormatASTC_5x5_sRGB;
+        case TextureInternalFormat::ASTC_6X6:
+            return isLinear ? MTL::PixelFormat::PixelFormatASTC_6x6_LDR : MTL::PixelFormat::PixelFormatASTC_6x6_sRGB;
+        case TextureInternalFormat::ASTC_8X8:
+            return isLinear ? MTL::PixelFormat::PixelFormatASTC_8x8_LDR : MTL::PixelFormat::PixelFormatASTC_8x8_sRGB;
+        case TextureInternalFormat::ASTC_10X10:
+            return isLinear ? MTL::PixelFormat::PixelFormatASTC_10x10_LDR : MTL::PixelFormat::PixelFormatASTC_10x10_sRGB;
+        case TextureInternalFormat::ASTC_12X12:
+            return isLinear ? MTL::PixelFormat::PixelFormatASTC_12x12_LDR : MTL::PixelFormat::PixelFormatASTC_12x12_sRGB;
         case TextureInternalFormat::INVALID:
         default:
             return MTL::PixelFormat::PixelFormatInvalid;
@@ -185,7 +197,13 @@ TextureInternalFormat MetalHelpers::FromTextureInternalFormat(MTL::PixelFormat f
                     format == MTL::PixelFormat::PixelFormatBC1_RGBA_sRGB |
                     format == MTL::PixelFormat::PixelFormatBC2_RGBA_sRGB |
                     format == MTL::PixelFormat::PixelFormatBC3_RGBA_sRGB |
-                    format == MTL::PixelFormat::PixelFormatBC7_RGBAUnorm_sRGB);
+                    format == MTL::PixelFormat::PixelFormatBC7_RGBAUnorm_sRGB |
+                    format == MTL::PixelFormat::PixelFormatASTC_4x4_sRGB |
+                    format == MTL::PixelFormat::PixelFormatASTC_5x5_sRGB |
+                    format == MTL::PixelFormat::PixelFormatASTC_6x6_sRGB |
+                    format == MTL::PixelFormat::PixelFormatASTC_8x8_sRGB |
+                    format == MTL::PixelFormat::PixelFormatASTC_10x10_sRGB |
+                    format == MTL::PixelFormat::PixelFormatASTC_12x12_sRGB);
 
     switch (format)
     {
@@ -298,6 +316,24 @@ TextureInternalFormat MetalHelpers::FromTextureInternalFormat(MTL::PixelFormat f
         case MTL::PixelFormat::PixelFormatBC7_RGBAUnorm:
         case MTL::PixelFormat::PixelFormatBC7_RGBAUnorm_sRGB:
             return TextureInternalFormat::BC7;
+        case MTL::PixelFormat::PixelFormatASTC_4x4_sRGB:
+        case MTL::PixelFormat::PixelFormatASTC_4x4_LDR:
+            return TextureInternalFormat::ASTC_4X4;
+        case MTL::PixelFormat::PixelFormatASTC_5x5_sRGB:
+        case MTL::PixelFormat::PixelFormatASTC_5x5_LDR:
+            return TextureInternalFormat::ASTC_5X5;
+        case MTL::PixelFormat::PixelFormatASTC_6x6_sRGB:
+        case MTL::PixelFormat::PixelFormatASTC_6x6_LDR:
+            return TextureInternalFormat::ASTC_6X6;
+        case MTL::PixelFormat::PixelFormatASTC_8x8_sRGB:
+        case MTL::PixelFormat::PixelFormatASTC_8x8_LDR:
+            return TextureInternalFormat::ASTC_8X8;
+        case MTL::PixelFormat::PixelFormatASTC_10x10_sRGB:
+        case MTL::PixelFormat::PixelFormatASTC_10x10_LDR:
+            return TextureInternalFormat::ASTC_10X10;
+        case MTL::PixelFormat::PixelFormatASTC_12x12_sRGB:
+        case MTL::PixelFormat::PixelFormatASTC_12x12_LDR:
+            return TextureInternalFormat::ASTC_12X12;
         case MTL::PixelFormat::PixelFormatInvalid:
             return TextureInternalFormat::INVALID;
         default:

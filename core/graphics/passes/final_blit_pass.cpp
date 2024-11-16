@@ -8,7 +8,7 @@
 
 void FinalBlitPass::Execute(Context &context, const std::shared_ptr<Texture2D> &source)
 {
-    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("resources/shaders/final_blit", {}, {}, {}, {false, DepthFunction::ALWAYS}));
+    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("core_resources/shaders/final_blit", {}, {}, {}, {false, DepthFunction::ALWAYS}));
 
     GraphicsSettings::TonemappingMode tonemappingMode = GraphicsSettings::GetTonemappingMode();
 

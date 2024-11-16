@@ -1,59 +1,72 @@
 #include "game_window.h"
+
+#ifdef ENABLE_IMGUI
 #include "top_menu_bar.h"
 #include "window_manager.h"
 #include "imgui.h"
-#include "game_window_implementations/game_window_platform_windows.h"
-#include "game_window_implementations/game_window_platform_apple.h"
+#endif
 
 #include <utility>
 
-GameWindow *GameWindow::Create(RenderHandler renderHandler,
-                               KeyboardInputHandlerDelegate keyboardInputHandler,
-                               MouseMoveHandlerDelegate mouseMoveHandler)
+GameWindow::GameWindow(RenderHandler renderHandler):
+    m_RenderHandler(std::move(renderHandler))
 {
-#if RENDER_ENGINE_WINDOWS
-    GameWindow *window = new GameWindowPlatformWindows();
-#elif RENDER_ENGINE_APPLE
-    GameWindow *window = new GameWindowPlatformApple();
+#ifdef ENABLE_IMGUI
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    ImGui::StyleColorsDark();
 #endif
-
-    window->m_RenderHandler = std::move(renderHandler);
-    window->m_KeyboardInputHandler = std::move(keyboardInputHandler);
-    window->m_MouseMoveHandler = std::move(mouseMoveHandler);
-
-    return window;
 }
 
-void GameWindow::DrawInternal(int width, int height)
+GameWindow::~GameWindow()
 {
+#ifdef ENABLE_IMGUI
+    ImGui::DestroyContext();
+#endif
+}
+
+void GameWindow::TickMainLoop(int width, int height)
+{
+#ifdef ENABLE_IMGUI
+    ImGui::NewFrame();
+#endif
+
     if (m_RenderHandler)
     {
         m_RenderHandler(width, height);
     }
 
+#ifdef ENABLE_IMGUI
     TopMenuBar::Draw([this](){ m_CloseFlag = true; });
     WindowManager::DrawAllWindows();
-}
 
-void GameWindow::ProcessKeyPress(char key, bool pressed)
-{
-    auto &io = ImGui::GetIO();
-    if (!io.WantCaptureKeyboard && m_KeyboardInputHandler)
-    {
-        m_KeyboardInputHandler(key, pressed);
-    }
-}
-
-void GameWindow::ProcessMouseMove(float x, float y)
-{
-    auto &io = ImGui::GetIO();
-    if (!io.WantCaptureMouse && m_MouseMoveHandler)
-    {
-        m_MouseMoveHandler(x, y);
-    }
+    ImGui::Render();
+#endif
 }
 
 bool GameWindow::ShouldCloseWindow() const
 {
     return m_CloseFlag;
+}
+
+bool GameWindow::CaptureKeyboard() const
+{
+#ifdef ENABLE_IMGUI
+    return ImGui::GetIO().WantCaptureKeyboard;
+#else
+    return false;
+#endif
+}
+
+bool GameWindow::CaptureMouse() const
+{
+#ifdef ENABLE_IMGUI
+    return ImGui::GetIO().WantCaptureMouse;
+#else
+    return false;
+#endif
 }

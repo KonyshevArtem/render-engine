@@ -1,5 +1,5 @@
 #include "texture_binary_reader.h"
-#include "utils.h"
+#include "file_system/file_system.h"
 
 bool TextureBinaryReader::ReadTexture(const std::filesystem::path &path)
 {
@@ -7,7 +7,7 @@ bool TextureBinaryReader::ReadTexture(const std::filesystem::path &path)
 
     m_TextureBinaryData.clear();
 
-    if (!Utils::ReadFileBytes(Utils::GetExecutableDirectory() / path, m_TextureBinaryData))
+    if (!FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / path, m_TextureBinaryData))
     {
         return false;
     }

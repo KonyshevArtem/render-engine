@@ -4,34 +4,23 @@
 #include <functional>
 
 typedef std::function<void(int, int)> RenderHandler;
-typedef std::function<void(unsigned char, bool)> KeyboardInputHandlerDelegate;
-typedef std::function<void(double, double)> MouseMoveHandlerDelegate;
 
 class GameWindow
 {
 public:
-    static GameWindow* Create(RenderHandler renderHandler,
-                              KeyboardInputHandlerDelegate keyboardInputHandler,
-                              MouseMoveHandlerDelegate mouseMoveHandler);
+    GameWindow(RenderHandler renderHandler);
+    ~GameWindow();
 
-    virtual ~GameWindow() = default;
-
-    virtual void TickMainLoop(int width, int height) = 0;
-
-    void ProcessMouseMove(float x, float y);
-    void ProcessKeyPress(char key, bool pressed);
+    void TickMainLoop(int width, int height);
 
     bool ShouldCloseWindow() const;
-
-protected:
-    void DrawInternal(int width, int height);
+    bool CaptureKeyboard() const;
+    bool CaptureMouse() const;
 
 private:
     bool m_CloseFlag = false;
 
     RenderHandler m_RenderHandler;
-    KeyboardInputHandlerDelegate m_KeyboardInputHandler;
-    MouseMoveHandlerDelegate  m_MouseMoveHandler;
 };
 
 #endif

@@ -1,21 +1,20 @@
 #if defined(TARGET_IOS) || defined(TARGET_TVOS)
 #import <UIKit/UIKit.h>
+#define PlatformWindow UIWindow
+#define PlatformApplication UIApplication
 #define PlatformApplicationDelegate UIResponder<UIApplicationDelegate>
 #else
 #import <AppKit/AppKit.h>
+#define PlatformWindow NSWindow
+#define PlatformApplication NSApplication
 #define PlatformApplicationDelegate NSObject<NSApplicationDelegate>
 #endif
 
 @interface AAPLAppDelegate : PlatformApplicationDelegate
 
-#if defined(TARGET_IOS) || defined(TARGET_TVOS)
+@property (strong, nonatomic) PlatformWindow *window;
 
-@property (strong, nonatomic) UIWindow *window;
-
-#else
-
-- (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender;
-
-#endif
+- (BOOL) application:(PlatformApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions;
+- (BOOL) applicationShouldTerminateAfterLastWindowClosed:(PlatformApplication *)sender;
 
 @end

@@ -1,3 +1,5 @@
+#ifdef ENABLE_IMGUI
+
 #include "window_manager.h"
 #include "windows/base_window.h"
 
@@ -26,3 +28,5 @@ void WindowManager::AddWindow(const std::shared_ptr<BaseWindow> &window)
 {
     s_Windows.push_back(window);
 }
+
+#endif

@@ -2,7 +2,7 @@
 #include "shader/shader.h"
 #include "debug.h"
 #include "graphics/graphics.h"
-#include "utils.h"
+#include "file_system/file_system.h"
 #include "enums/shader_type.h"
 #include "types/graphics_backend_shader_object.h"
 #include "graphics_backend_api.h"
@@ -66,9 +66,9 @@ namespace ShaderLoader
         {
             std::string backendLiteral = GetBackendLiteral(GraphicsBackend::Current()->GetName());
             std::string shaderName = _path.filename().replace_extension("").string();
-            std::filesystem::path backendPath = Utils::GetExecutableDirectory() / _path.parent_path() / "output" / shaderName / backendLiteral / keywordHash;
+            std::filesystem::path backendPath = FileSystem::GetResourcesPath() / _path.parent_path() / "output" / shaderName / backendLiteral / keywordHash;
 
-            auto reflectionJson = Utils::ReadFile(backendPath / "reflection.json");
+            auto reflectionJson = FileSystem::ReadFile(backendPath / "reflection.json");
             std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;
             std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers;
             std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers;
@@ -81,7 +81,7 @@ namespace ShaderLoader
                 if (!std::filesystem::exists(sourcePath))
                     continue;
 
-                std::string shaderSource = Utils::ReadFile(sourcePath);
+                std::string shaderSource = FileSystem::ReadFile(sourcePath);
                 auto shader = GraphicsBackend::Current()->CompileShader(SHADER_TYPES[i], shaderSource);
                 shaders.push_back(shader);
             }

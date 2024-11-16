@@ -10,8 +10,8 @@
 
 void SkyboxPass::Execute(const Context &_ctx)
 {
-    static std::shared_ptr<Mesh> mesh = FBXAsset::Load("resources/models/cube.fbx")->GetMesh(0);
-    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("resources/shaders/skybox", {}, {}, {CullFace::FRONT}, {}));
+    static std::shared_ptr<Mesh> mesh = FBXAsset::Load("core_resources/models/cube.fbx")->GetMesh(0);
+    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("core_resources/shaders/skybox", {}, {}, {CullFace::FRONT}, {}));
 
     if (mesh == nullptr || _ctx.Skybox == nullptr)
         return;

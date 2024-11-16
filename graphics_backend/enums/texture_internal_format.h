@@ -74,6 +74,13 @@ enum class TextureInternalFormat : uint16_t
     BC6H,
     BC7,
 
+    ASTC_4X4,
+    ASTC_5X5,
+    ASTC_6X6,
+    ASTC_8X8,
+    ASTC_10X10,
+    ASTC_12X12,
+
     DEPTH_COMPONENT,
     DEPTH_STENCIL,
 

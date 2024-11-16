@@ -8,10 +8,9 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm;
 /// Main class that performs the rendering.
 @implementation AAPLMetalRenderer
 
-id<MTLDevice>        _device;
-id<MTLCommandQueue>  _commandQueue;
-
-id<MTLDepthStencilState>   _depthState;
+id<MTLDevice> _device;
+id<MTLCommandQueue> _commandQueue;
+id<MTLDepthStencilState> _depthState;
 
 CGSize _viewSize;
 
@@ -39,7 +38,10 @@ CGSize _viewSize;
         id<MTLCommandBuffer> renderCommandBuffer = [_commandQueue commandBuffer];
         id<MTLCommandBuffer> copyCommandBuffer = [_commandQueue commandBuffer];
         
-        [EngineFrameworkWrapper Initialize:_device renderCommandBuffer:renderCommandBuffer copyCommandBuffer:copyCommandBuffer];
+        NSString* executablePath = [[NSBundle mainBundle] executablePath];
+        NSString* resourcePath = [[NSBundle mainBundle] resourcePath];
+        
+        [EngineFrameworkWrapper Initialize:_device renderCommandBuffer:renderCommandBuffer copyCommandBuffer:copyCommandBuffer executablePath:[executablePath UTF8String] resourcesPath:[resourcePath UTF8String]];
         [ImGuiWrapper Init_OSX:mtkView];
         [ImGuiWrapper Init_Metal:_device];
         
@@ -66,11 +68,13 @@ CGSize _viewSize;
 /// Called whenever the view needs to render.
 - (void) drawInMTKView:(nonnull MTKView *)view
 {
+#if !defined(TARGET_IOS) && !defined(TARGET_TVOS)
     if ([EngineFrameworkWrapper ShouldCloseWindow])
     {
         [[view window] performClose:self];
         return;
     }
+#endif
     
     MTLRenderPassDescriptor* renderPassDescriptor = [view currentRenderPassDescriptor];
     id<MTLCommandBuffer> renderCommandBuffer = [_commandQueue commandBuffer];
@@ -89,11 +93,6 @@ CGSize _viewSize;
     [copyCommandBuffer commit];
     [renderCommandBuffer presentDrawable:view.currentDrawable];
     [renderCommandBuffer commit];
-}
-
-- (CGSize) getViewSize
-{
-    return _viewSize;
 }
 
 @end

@@ -22,6 +22,8 @@ public:
     Vector2 operator*(float _value) const;
 
     Vector2 operator/(float value) const;
+
+    float Length() const;
 };
 
 #endif //RENDER_ENGINE_VECTOR2_H

@@ -6,18 +6,20 @@
 
 constexpr float CAMERA_ROT_SPEED  = 10.0f;
 constexpr float CAMERA_MOVE_SPEED = 15.0f;
-constexpr float MOVE_MAX_DELTA = 100.0f;
+constexpr float TOUCH_MOVE_MAX_DELTA = 100.0f;
+constexpr float TOUCH_ROTATE_MIN_DELTA = 5.0f;
 
 void CameraFlyController::Update()
 {
     if (Input::GetKey('E'))
         m_CameraEulerAngles = m_CameraEulerAngles + Input::GetMouseDelta() * (CAMERA_ROT_SPEED * Time::GetDeltaTime());
 
-    Input::Touch touch;
-    m_HasRotateTouch = Input::GetTouch(m_RotateTouchId, touch);
     if (m_HasRotateTouch)
     {
-        m_CameraEulerAngles = m_CameraEulerAngles - touch.Delta * (CAMERA_ROT_SPEED * Time::GetDeltaTime());
+        Input::Touch touch;
+        Input::GetTouch(m_RotateTouchId, touch);
+        if (touch.Delta.Length() > TOUCH_ROTATE_MIN_DELTA)
+            m_CameraEulerAngles = m_CameraEulerAngles - touch.Delta * (CAMERA_ROT_SPEED * Time::GetDeltaTime());
     }
 
     if (m_CameraEulerAngles.x < 0)
@@ -46,33 +48,45 @@ void CameraFlyController::Update()
     if (Input::GetKey('A'))
         cameraPosition = cameraPosition - cameraRight;
 
-    m_HasMoveTouch = Input::GetTouch(m_MoveTouchId, touch);
     if (m_HasMoveTouch)
     {
-        Vector2 delta = (touch.Position - m_MoveTouchStartPos) / MOVE_MAX_DELTA;
+        Input::Touch touch;
+        Input::GetTouch(m_MoveTouchId, touch);
+        Vector2 delta = (touch.Position - m_MoveTouchStartPos) / TOUCH_MOVE_MAX_DELTA;
         delta.x = std::clamp(delta.x, -1.0f, 1.0f);
         delta.y = std::clamp(delta.y, -1.0f, 1.0f);
         cameraPosition = cameraPosition + cameraFwd * -delta.y;
         cameraPosition = cameraPosition + cameraRight * delta.x;
     }
 
-    for (const Input::Touch &touch: Input::GetTouches())
+    for (const Input::Touch& touch: Input::GetTouches())
     {
-        if (touch.State != Input::TouchState::DOWN)
-            continue;
-
-        float halfScreenWidth = 0.5f * Graphics::GetScreenWidth();
-        if (touch.Position.x < halfScreenWidth && !m_HasMoveTouch)
+        if (touch.State == Input::TouchState::DOWN)
         {
-            m_MoveTouchId = touch.Id;
-            m_MoveTouchStartPos = touch.Position;
-            break;
+            float halfScreenWidth = 0.5f * Graphics::GetScreenWidth();
+            if (touch.Position.x < halfScreenWidth && !m_HasMoveTouch)
+            {
+                m_HasMoveTouch = true;
+                m_MoveTouchId = touch.Id;
+                m_MoveTouchStartPos = touch.Position;
+            }
+
+            if (touch.Position.x > halfScreenWidth && !m_HasRotateTouch)
+            {
+                m_HasRotateTouch = true;
+                m_RotateTouchId = touch.Id;
+            }
         }
-
-        if (touch.Position.x > halfScreenWidth && !m_HasRotateTouch)
+        else if (touch.State == Input::TouchState::UP)
         {
-            m_RotateTouchId = touch.Id;
-            break;
+            if (m_HasMoveTouch && touch.Id == m_MoveTouchId)
+            {
+                m_HasMoveTouch = false;
+            }
+            if (m_HasRotateTouch && touch.Id == m_RotateTouchId)
+            {
+                m_HasRotateTouch = false;
+            }
         }
     }
 

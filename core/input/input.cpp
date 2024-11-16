@@ -21,6 +21,16 @@ namespace Input
     {
         s_InputsUp.clear();
         s_InputsDown.clear();
+
+        for (int i = 0; i < s_Touches.size(); ++i)
+        {
+            if (s_Touches[i].State == TouchState::UP)
+            {
+                s_Touches[i] = s_Touches[s_Touches.size() - 1];
+                s_Touches.pop_back();
+                --i;
+            }
+        }
     }
 
     void HandleKeyboardInput(unsigned char key, bool isPressed)
@@ -66,18 +76,18 @@ namespace Input
                     touch.Delta = pos - touch.Position;
                     touch.Position = pos;
                     touch.State = TouchState::MOVE;
+                    break;
                 }
             }
         }
 
         if (state == TouchState::UP)
         {
-            for (int i = 0; i < s_Touches.size(); ++i)
+            for (Touch& touch : s_Touches)
             {
-                if (s_Touches[i].Id == touchId)
+                if (touch.Id == touchId)
                 {
-                    s_Touches[i] = s_Touches[s_Touches.size() - 1];
-                    s_Touches.pop_back();
+                    touch.State = TouchState::UP;
                     break;
                 }
             }

@@ -1,4 +1,5 @@
 #include "vector2.h"
+#include <cmath>
 
 const Vector2 &Vector2::Zero()
 {
@@ -39,4 +40,9 @@ Vector2 Vector2::operator*(float _value) const
 Vector2 Vector2::operator/(float value) const
 {
     return {x / value, y / value};
+}
+
+float Vector2::Length() const
+{
+    return sqrtf(x * x + y * y);
 }

@@ -71,6 +71,13 @@ namespace TextureCompressorFormats
                     {TextureInternalFormat::BC5, "BC5", cuttlefish::Texture::Format::BC5, cuttlefish::Texture::Type::UNorm},
                     {TextureInternalFormat::BC6H, "BC6H", cuttlefish::Texture::Format::BC6H, cuttlefish::Texture::Type::UNorm},
                     {TextureInternalFormat::BC7, "BC7", cuttlefish::Texture::Format::BC7, cuttlefish::Texture::Type::UNorm},
+
+                    {TextureInternalFormat::ASTC_4X4, "ASTC_4X4", cuttlefish::Texture::Format::ASTC_4x4, cuttlefish::Texture::Type::UNorm},
+                    {TextureInternalFormat::ASTC_5X5, "ASTC_5X5", cuttlefish::Texture::Format::ASTC_5x5, cuttlefish::Texture::Type::UNorm},
+                    {TextureInternalFormat::ASTC_6X6, "ASTC_6X6", cuttlefish::Texture::Format::ASTC_6x6, cuttlefish::Texture::Type::UNorm},
+                    {TextureInternalFormat::ASTC_8X8, "ASTC_8X8", cuttlefish::Texture::Format::ASTC_8x8, cuttlefish::Texture::Type::UNorm},
+                    {TextureInternalFormat::ASTC_10X10, "ASTC_10X10", cuttlefish::Texture::Format::ASTC_10x10, cuttlefish::Texture::Type::UNorm},
+                    {TextureInternalFormat::ASTC_12X12, "ASTC_12X12", cuttlefish::Texture::Format::ASTC_12x12, cuttlefish::Texture::Type::UNorm},
             };
 
     const TextureFormatInfo& GetTextureFormatInfo(const std::string& textureFormat)

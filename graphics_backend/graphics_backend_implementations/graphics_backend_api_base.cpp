@@ -96,6 +96,12 @@ bool GraphicsBackendBase::IsCompressedTextureFormat(TextureInternalFormat format
         case TextureInternalFormat::BC5:
         case TextureInternalFormat::BC6H:
         case TextureInternalFormat::BC7:
+        case TextureInternalFormat::ASTC_4X4:
+        case TextureInternalFormat::ASTC_5X5:
+        case TextureInternalFormat::ASTC_6X6:
+        case TextureInternalFormat::ASTC_8X8:
+        case TextureInternalFormat::ASTC_10X10:
+        case TextureInternalFormat::ASTC_12X12:
             return true;
     }
 }
@@ -112,7 +118,18 @@ int GraphicsBackendBase::GetBlockSize(TextureInternalFormat format)
         case TextureInternalFormat::BC5:
         case TextureInternalFormat::BC6H:
         case TextureInternalFormat::BC7:
+        case TextureInternalFormat::ASTC_4X4:
             return 4;
+        case TextureInternalFormat::ASTC_5X5:
+            return 5;
+        case TextureInternalFormat::ASTC_6X6:
+            return 6;
+        case TextureInternalFormat::ASTC_8X8:
+            return 8;
+        case TextureInternalFormat::ASTC_10X10:
+            return 10;
+        case TextureInternalFormat::ASTC_12X12:
+            return 12;
         default:
             return 0;
     }
@@ -131,6 +148,12 @@ int GraphicsBackendBase::GetBlockBytes(TextureInternalFormat format)
         case TextureInternalFormat::BC5:
         case TextureInternalFormat::BC6H:
         case TextureInternalFormat::BC7:
+        case TextureInternalFormat::ASTC_4X4:
+        case TextureInternalFormat::ASTC_5X5:
+        case TextureInternalFormat::ASTC_6X6:
+        case TextureInternalFormat::ASTC_8X8:
+        case TextureInternalFormat::ASTC_10X10:
+        case TextureInternalFormat::ASTC_12X12:
             return 16;
         default:
             return 0;

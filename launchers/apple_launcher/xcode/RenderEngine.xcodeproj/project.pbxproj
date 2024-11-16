@@ -559,7 +559,7 @@
 					"-lOpenFBX",
 					"-lMath",
 					"-lRenderEngine",
-					"-lRenderEngineApple",
+					"-lRenderEngineLauncher",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -605,7 +605,7 @@
 					"-lOpenFBX",
 					"-lMath",
 					"-lRenderEngine",
-					"-lRenderEngineApple",
+					"-lRenderEngineLauncher",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -644,7 +644,7 @@
 					"-lOpenFBX",
 					"-lMath",
 					"-lRenderEngine",
-					"-lRenderEngineApple",
+					"-lRenderEngineLauncher",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -682,7 +682,7 @@
 					"-lOpenFBX",
 					"-lMath",
 					"-lRenderEngine",
-					"-lRenderEngineApple",
+					"-lRenderEngineLauncher",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";

@@ -22,7 +22,7 @@ namespace FileSystem
 
     std::string ReadFile(const std::filesystem::path& path)
     {
-        auto *file = fopen(path.c_str(), "r");
+        auto *file = fopen(path.string().c_str(), "r");
         if (file == nullptr)
             throw std::runtime_error("[Utils] Can't open file: " + path.string());
 

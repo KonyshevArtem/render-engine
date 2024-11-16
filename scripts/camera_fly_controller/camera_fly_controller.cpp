@@ -4,6 +4,8 @@
 #include "input/input.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 
+#include <algorithm>
+
 constexpr float CAMERA_ROT_SPEED  = 10.0f;
 constexpr float CAMERA_MOVE_SPEED = 15.0f;
 constexpr float TOUCH_MOVE_MAX_DELTA = 100.0f;

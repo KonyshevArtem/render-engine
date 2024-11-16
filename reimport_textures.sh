@@ -3,7 +3,7 @@ if [ "$OS" = "Darwin" ]; then
     EXECUTABLE="./cmake-build-release/texture_compressor/TextureCompressor.app/Contents/MacOS/TextureCompressor"
     FORMAT="ASTC_6X6"
 else
-    EXECUTABLE="./cmake-build-release-visual-studio/texture_compressor/TextureCompressor.exe"
+    EXECUTABLE="./cmake-build-release/texture_compressor/TextureCompressor.exe"
     FORMAT="BC7"
 fi
 

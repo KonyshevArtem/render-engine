@@ -25,11 +25,13 @@ void MouseMoveFunction(GLFWwindow *window, double x, double y)
 
 int main(int argc, char **argv)
 {
-    char path[MAX_PATH];
-    GetModuleFileNameA(NULL, path, MAX_PATH);
-    FileSystem::FileSystemData fileSystemData;
-    fileSystemData.ExecutablePath = path;
-    fileSystemData.ResourcesPath = std::filesystem::path(path).parent_path().c_str();
+    char executablePath[MAX_PATH];
+    GetModuleFileNameA(NULL, executablePath, MAX_PATH);
+    std::string resourcesPath = std::filesystem::path(executablePath).parent_path().string();
+
+    FileSystem::FileSystemData fileSystemData{};
+    fileSystemData.ExecutablePath = executablePath;
+    fileSystemData.ResourcesPath = resourcesPath.c_str();
 
     if (!glfwInit())
     {

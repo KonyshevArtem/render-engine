@@ -61,6 +61,11 @@ struct FileSystemData
     return EngineFramework::ShouldCloseWindow();
 }
 
++ (void) ProcessMouseClick:(int)mouseButton pressed:(bool)pressed
+{
+    EngineFramework::ProcessMouseClick(mouseButton, pressed);
+}
+
 + (void) ProcessMouseMove:(float)x y:(float)y
 {
     EngineFramework::ProcessMouseMove(x, y);

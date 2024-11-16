@@ -9,6 +9,7 @@
 + (void) Shutdown;
 + (bool) ShouldCloseWindow;
 
++ (void) ProcessMouseClick:(int)mouseButton pressed:(bool)pressed;
 + (void) ProcessMouseMove:(float)x y:(float)y;
 + (void) ProcessKeyPress:(char)key pressed:(bool)pressed;
 

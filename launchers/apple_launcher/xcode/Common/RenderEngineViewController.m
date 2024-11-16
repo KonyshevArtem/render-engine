@@ -4,6 +4,9 @@
 
 @implementation RenderEngineViewController
 
+const int k_MouseButtonLeft = 0;
+const int k_MouseButtonRight = 1;
+
 - (CGFloat) getScreenScale
 {
 #if defined(TARGET_IOS) || defined(TARGET_TVOS)
@@ -65,6 +68,51 @@
 }
 
 #else
+
+- (void) mouseDown:(NSEvent *)event
+{
+    [EngineFrameworkWrapper ProcessMouseClick:k_MouseButtonLeft pressed:true];
+}
+
+- (void) mouseUp:(NSEvent *)event
+{
+    [EngineFrameworkWrapper ProcessMouseClick:k_MouseButtonRight pressed:false];
+}
+
+- (void) mouseDragged:(NSEvent *)event
+{
+    [self mouseMoved:event];
+}
+
+- (void) rightMouseDown:(NSEvent *)event
+{
+    [EngineFrameworkWrapper ProcessMouseClick:k_MouseButtonRight pressed:true];
+}
+
+- (void) rightMouseUp:(NSEvent *)event
+{
+    [EngineFrameworkWrapper ProcessMouseClick:k_MouseButtonRight pressed:false];
+}
+
+- (void) rightMouseDragged:(NSEvent *)event
+{
+    [self mouseMoved:event];
+}
+
+- (void) otherMouseDown:(NSEvent *)event
+{
+    [EngineFrameworkWrapper ProcessMouseClick:(int)event.buttonNumber pressed:true];
+}
+
+- (void) otherMouseUp:(NSEvent *)event
+{
+    [EngineFrameworkWrapper ProcessMouseClick:(int)event.buttonNumber pressed:false];
+}
+
+- (void) otherMouseDragged:(NSEvent *)event
+{
+    [self mouseMoved:event];
+}
 
 - (void) mouseMoved:(NSEvent *)event
 {

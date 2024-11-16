@@ -56,8 +56,20 @@ git submodule update --recursive --remote
 
 This is the recommended way to compile
 
-Compile `ShaderCompiler`, `TextureCompressor` and `RenderEngineWindow`/`RenderEngineApple` targets 
-based on selected platform
+1. Select CMake Profile according to the platform and build configuration:
+   * Windows
+     * Debug-Win64
+     * Release-Win64
+   * Mac
+     * Debug-Mac-ARM64
+     * Release-Mac-ARM64
+   * iOS
+     * Debug-iOS
+     * Release-iOS
+
+2. Compile `ShaderCompiler`, `TextureCompressor` and `RenderEngineLauncher` targets
+
+Note, that `ShaderCompiler` and `TextureCompressor` targets are not available for iOS, they have to be built with MacOS profile 
 
 ### Using Terminal
 

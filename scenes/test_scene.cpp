@@ -172,8 +172,9 @@ void TestScene::Init()
 
     for (int i = 0; i < 4; ++i)
     {
-        auto billboard         = GameObject::Create("Billboard " + std::to_string(i));
-        auto billboardRenderer = std::make_shared<BillboardRenderer>(billboard, billboardTree);
+        std::string name = "TreeBillboard_" + std::to_string(i);
+        auto billboard = GameObject::Create(name);
+        auto billboardRenderer = std::make_shared<BillboardRenderer>(billboard, billboardTree, name);
         billboardRenderer->SetSize(5);
         billboard->SetLocalPosition(Vector3 {-20.0f + 10 * i, -10, 20});
         billboard->Renderer = std::move(billboardRenderer);

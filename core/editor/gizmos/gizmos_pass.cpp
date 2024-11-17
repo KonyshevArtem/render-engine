@@ -16,28 +16,23 @@ void GizmosPass::Execute(Context &_context)
 {
     static auto gizmosMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {}), "Gizmos");
 
-    GraphicsBackend::Current()->BeginRenderPass();
+    GraphicsBackend::Current()->BeginRenderPass("Gizmos pass");
+    const auto &gizmos = Gizmos::GetGizmosToDraw();
+    for (const auto &pair : gizmos)
     {
-        auto debugGroup = GraphicsBackendDebugGroup("Gizmos pass");
-
-        const auto &gizmos = Gizmos::GetGizmosToDraw();
-        for (const auto &pair : gizmos)
+        auto &matrices = pair.second;
+        auto begin = matrices.begin();
+        int totalCount = matrices.size();
+        while (totalCount > 0)
         {
-            auto &matrices = pair.second;
-            auto begin = matrices.begin();
-            int totalCount = matrices.size();
-            while (totalCount > 0)
-            {
-                auto end = begin + std::min(GlobalConstants::MaxInstancingCount, totalCount);
-                std::vector<Matrix4x4> matricesSlice(begin, end);
-                Graphics::DrawInstanced(*pair.first, *gizmosMaterial, matricesSlice, 0);
+            auto end = begin + std::min(GlobalConstants::MaxInstancingCount, totalCount);
+            std::vector<Matrix4x4> matricesSlice(begin, end);
+            Graphics::DrawInstanced(*pair.first, *gizmosMaterial, matricesSlice, 0);
 
-                begin = end;
-                totalCount -= GlobalConstants::MaxInstancingCount;
-            }
+            begin = end;
+            totalCount -= GlobalConstants::MaxInstancingCount;
         }
     }
-
     GraphicsBackend::Current()->EndRenderPass();
 }
 

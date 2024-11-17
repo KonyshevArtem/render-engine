@@ -45,31 +45,27 @@ void SelectionOutlinePass::Execute(Context &_context)
         Graphics::SetRenderTarget(colorTarget, silhouetteRenderTarget);
         Graphics::SetRenderTarget(depthTarget);
 
-        GraphicsBackend::Current()->BeginRenderPass();
+        GraphicsBackend::Current()->BeginRenderPass("Selection Outline Pass");
+        for (const auto &go: selectedGameObjects)
         {
-            auto debugGroup = GraphicsBackendDebugGroup("Selected outline pass");
-
-            for (const auto &go: selectedGameObjects)
+            if (!go || !go->Renderer)
             {
-                if (!go || !go->Renderer)
+                continue;
+            }
+
+            const auto &renderer = go->Renderer;
+            const auto &geometry = renderer->GetGeometry();
+            const auto &material = renderer->GetMaterial();
+
+            if (geometry && material)
+            {
+                if (material->GetShader()->SupportInstancing())
                 {
-                    continue;
+                    Graphics::DrawInstanced(*geometry, *material, {renderer->GetModelMatrix()}, 0);
                 }
-
-                const auto &renderer = go->Renderer;
-                const auto &geometry = renderer->GetGeometry();
-                const auto &material = renderer->GetMaterial();
-
-                if (geometry && material)
+                else
                 {
-                    if (material->GetShader()->SupportInstancing())
-                    {
-                        Graphics::DrawInstanced(*geometry, *material, {renderer->GetModelMatrix()}, 0);
-                    }
-                    else
-                    {
-                        Graphics::Draw(*geometry, *silhouetteMaterial, renderer->GetModelMatrix(), 0);
-                    }
+                    Graphics::Draw(*geometry, *silhouetteMaterial, renderer->GetModelMatrix(), 0);
                 }
             }
         }
@@ -83,7 +79,7 @@ void SelectionOutlinePass::Execute(Context &_context)
     {
         blitMaterial->SetVector("_Color", outlineColor);
 
-        Graphics::Blit(silhouetteRenderTarget, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *blitMaterial);
+        Graphics::Blit(silhouetteRenderTarget, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *blitMaterial, "Selection Blit Pass");
     }
 }
 

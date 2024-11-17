@@ -246,7 +246,7 @@ namespace Graphics
 
         SetRenderTarget(colorTargetDescriptor, cameraColorTarget);
         SetRenderTarget(depthTargetDescriptor, cameraDepthTarget);
-        GraphicsBackend::Current()->BeginRenderPass();
+        GraphicsBackend::Current()->BeginRenderPass("Forward Render Pass");
 
         SetViewport({0, 0, static_cast<float>(s_ScreenWidth), static_cast<float>(s_ScreenHeight)});
 
@@ -273,7 +273,7 @@ namespace Graphics
 
 #if RENDER_ENGINE_EDITOR
 
-        GraphicsBackend::Current()->BeginCopyPass();
+        GraphicsBackend::Current()->BeginCopyPass("Copy Depth To Backbuffer");
         CopyTextureToTexture(cameraDepthTarget, nullptr, GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
         GraphicsBackend::Current()->EndCopyPass();
 
@@ -616,7 +616,7 @@ namespace Graphics
         }
     }
 
-    void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material)
+    void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material, const std::string& name)
     {
         static std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
 
@@ -624,7 +624,7 @@ namespace Graphics
 
         SetRenderTarget(destinationDescriptor, destination);
 
-        GraphicsBackend::Current()->BeginRenderPass();
+        GraphicsBackend::Current()->BeginRenderPass(name);
         Draw(*fullscreenMesh, material, Matrix4x4::Identity(), 0);
         GraphicsBackend::Current()->EndRenderPass();
     }

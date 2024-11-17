@@ -66,12 +66,12 @@ public:
     void PushDebugGroup(const std::string& name, int id) override;
     void PopDebugGroup() override;
 
-    void BeginRenderPass() override;
+    void BeginRenderPass(const std::string& name) override;
     void EndRenderPass() override;
-    void BeginCopyPass() override;
+    void BeginCopyPass(const std::string& name) override;
     void EndCopyPass() override;
 
-    GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction) override;
+    GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name) override;
     void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
     void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
 

@@ -99,12 +99,12 @@ public:
     virtual void PushDebugGroup(const std::string& name, int id) = 0;
     virtual void PopDebugGroup() = 0;
 
-    virtual void BeginRenderPass() = 0;
+    virtual void BeginRenderPass(const std::string& name) = 0;
     virtual void EndRenderPass() = 0;
-    virtual void BeginCopyPass() = 0;
+    virtual void BeginCopyPass(const std::string& name) = 0;
     virtual void EndCopyPass() = 0;
 
-    virtual GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction) = 0;
+    virtual GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name) = 0;
     virtual void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
     virtual void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
 

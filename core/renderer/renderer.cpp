@@ -106,7 +106,7 @@ void Renderer::SetDataToBuffers(const std::string &name, const void *data, uint6
 
         if (oldBuffer)
         {
-            GraphicsBackend::Current()->BeginCopyPass();
+            GraphicsBackend::Current()->BeginCopyPass("PerInstanceData Buffer Extension");
             Graphics::CopyBufferData(oldBuffer, s_InstanceDataBuffer, 0, 0, oldBuffer->GetSize());
             GraphicsBackend::Current()->EndCopyPass();
         }

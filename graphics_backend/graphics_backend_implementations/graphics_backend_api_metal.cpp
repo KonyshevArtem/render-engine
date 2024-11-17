@@ -40,9 +40,8 @@ void GraphicsBackendMetal::Init(void *data)
 {
     auto metalData = reinterpret_cast<MetalInitData*>(data);
     m_Device = metalData->Device;
-    m_RenderCommandBuffer = metalData->RenderCommandBuffer;
-    m_CopyCommandBuffer = metalData->CopyCommandBuffer;
     m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
+    SetCommandBuffers(metalData->RenderCommandBuffer, metalData->CopyCommandBuffer);
 
     s_DefaultStorageMode = m_Device->hasUnifiedMemory() ? MTL::StorageModeShared : MTL::StorageModeManaged;
 }
@@ -55,12 +54,11 @@ GraphicsBackendName GraphicsBackendMetal::GetName()
 void GraphicsBackendMetal::InitNewFrame(void *data)
 {
     auto metalData = reinterpret_cast<MetalFrameData*>(data);
-    m_RenderCommandBuffer = metalData->RenderCommandBuffer;
-    m_CopyCommandBuffer = metalData->CopyCommandBuffer;
     m_BackbufferDescriptor = metalData->BackbufferDescriptor;
+    SetCommandBuffers(metalData->RenderCommandBuffer, metalData->CopyCommandBuffer);
 }
 
-GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget)
+GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
 {
     auto storageMode = isRenderTarget ? MTL::StorageModePrivate : s_DefaultStorageMode;
 
@@ -96,6 +94,11 @@ GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height
     auto metalTexture = m_Device->newTexture(descriptor);
     descriptor->release();
 
+    if (!name.empty())
+    {
+        metalTexture->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+    }
+
     GraphicsBackendTexture texture{};
     texture.Texture = reinterpret_cast<uint64_t>(metalTexture);
     texture.Type = type;
@@ -104,7 +107,7 @@ GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod)
+GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name)
 {
     auto descriptor = MTL::SamplerDescriptor::alloc()->init();
 
@@ -125,6 +128,11 @@ GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapM
 
     descriptor->setLodMinClamp(minLod);
     descriptor->setMipFilter(MTL::SamplerMipFilter::SamplerMipFilterNearest);
+
+    if (!name.empty())
+    {
+        descriptor->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+    }
 
     auto metalSampler = m_Device->newSamplerState(descriptor);
     descriptor->release();
@@ -256,9 +264,15 @@ TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAtt
     return format;
 }
 
-GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferUsageHint usageHint)
+GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferUsageHint usageHint, const std::string& name)
 {
     auto metalBuffer = m_Device->newBuffer(size, s_DefaultStorageMode);
+
+    if (!name.empty())
+    {
+        metalBuffer->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+    }
+
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(metalBuffer);
     buffer.Size = size;
@@ -328,7 +342,7 @@ int GraphicsBackendMetal::GetConstantBufferOffsetAlignment()
     return 4;
 }
 
-GraphicsBackendGeometry GraphicsBackendMetal::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
+GraphicsBackendGeometry GraphicsBackendMetal::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name)
 {
     GraphicsBackendGeometry geometry{};
     geometry.VertexBuffer = vertexBuffer;
@@ -362,12 +376,17 @@ void GraphicsBackendMetal::SetViewport(int x, int y, int width, int height, floa
     m_RenderCommandEncoder->setViewport(viewport);
 }
 
-GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shaderType, const std::string &source)
+GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shaderType, const std::string &source, const std::string& name)
 {
     auto library = m_Device->newLibrary(NS::String::string(source.c_str(), NS::UTF8StringEncoding), nullptr, &s_Error);
     if (!library)
     {
         throw std::runtime_error(s_Error->localizedDescription()->utf8String());
+    }
+
+    if (!name.empty())
+    {
+        library->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
     }
 
     GraphicsBackendShaderObject shaderObject{};
@@ -376,7 +395,7 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
 }
 
 GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
-                                                           const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
+                                                           const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name)
 {
     assert(shaders.size() == 2);
 
@@ -399,6 +418,11 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
     const MTL::Function* fragmentFunction = fragmentLib->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding));
     desc->setVertexFunction(vertexFunction);
     desc->setFragmentFunction(fragmentFunction);
+
+    if (!name.empty())
+    {
+        desc->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+    }
 
     auto *vertDesc = desc->vertexDescriptor();
 
@@ -523,11 +547,16 @@ void GraphicsBackendMetal::PopDebugGroup()
     m_RenderCommandEncoder->popDebugGroup();
 }
 
-void GraphicsBackendMetal::BeginRenderPass()
+void GraphicsBackendMetal::BeginRenderPass(const std::string& name)
 {
     assert(m_RenderCommandBuffer != nullptr);
     assert(m_RenderCommandEncoder == nullptr);
     m_RenderCommandEncoder = m_RenderCommandBuffer->renderCommandEncoder(m_RenderPassDescriptor);
+
+    if (!name.empty())
+    {
+        m_RenderCommandEncoder->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+    }
 }
 
 void GraphicsBackendMetal::EndRenderPass()
@@ -547,11 +576,16 @@ void GraphicsBackendMetal::EndRenderPass()
     m_RenderPassDescriptor->setStencilAttachment(m_BackbufferDescriptor->stencilAttachment());
 }
 
-void GraphicsBackendMetal::BeginCopyPass()
+void GraphicsBackendMetal::BeginCopyPass(const std::string& name)
 {
     assert(m_CopyCommandBuffer != nullptr);
     assert(m_BlitCommandEncoder == nullptr);
     m_BlitCommandEncoder = m_CopyCommandBuffer->blitCommandEncoder();
+
+    if (!name.empty())
+    {
+        m_BlitCommandEncoder->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+    }
 }
 
 void GraphicsBackendMetal::EndCopyPass()
@@ -561,11 +595,17 @@ void GraphicsBackendMetal::EndCopyPass()
     m_BlitCommandEncoder = nullptr;
 }
 
-GraphicsBackendDepthStencilState GraphicsBackendMetal::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction)
+GraphicsBackendDepthStencilState GraphicsBackendMetal::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name)
 {
     auto descriptor = MTL::DepthStencilDescriptor::alloc()->init();
     descriptor->setDepthWriteEnabled(depthWrite);
     descriptor->setDepthCompareFunction(MetalHelpers::ToDepthCompareFunction(depthFunction));
+
+    if (!name.empty())
+    {
+        descriptor->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+    }
+
     auto metalState = m_Device->newDepthStencilState(descriptor);
     descriptor->release();
 
@@ -608,6 +648,18 @@ MTL::Texture* GraphicsBackendMetal::GetTextureFromDescriptor(const GraphicsBacke
 
     int index = static_cast<int>(descriptor.Attachment);
     return m_BackbufferDescriptor->colorAttachments()->object(index)->texture();
+}
+
+void GraphicsBackendMetal::SetCommandBuffers(class MTL::CommandBuffer* renderCommandBuffer, class MTL::CommandBuffer* copyCommandBuffer)
+{
+    assert(renderCommandBuffer != nullptr);
+    assert(copyCommandBuffer != nullptr);
+
+    m_RenderCommandBuffer = renderCommandBuffer;
+    m_CopyCommandBuffer = copyCommandBuffer;
+
+    m_RenderCommandBuffer->setLabel(NS::String::string("Render Command Buffer", NS::UTF8StringEncoding));
+    m_CopyCommandBuffer->setLabel(NS::String::string("Copy Command Buffer", NS::UTF8StringEncoding));
 }
 
 #endif // RENDER_BACKEND_METAL

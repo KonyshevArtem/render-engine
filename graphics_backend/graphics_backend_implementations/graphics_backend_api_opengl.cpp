@@ -663,7 +663,7 @@ void GraphicsBackendOpenGL::PopDebugGroup()
 #endif
 }
 
-void GraphicsBackendOpenGL::BeginRenderPass()
+void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
 {
     GLbitfield clearFlag = 0;
 
@@ -688,7 +688,7 @@ void GraphicsBackendOpenGL::EndRenderPass()
     ResetClearFlags();
 }
 
-void GraphicsBackendOpenGL::BeginCopyPass()
+void GraphicsBackendOpenGL::BeginCopyPass(const std::string& name)
 {
 }
 
@@ -696,7 +696,7 @@ void GraphicsBackendOpenGL::EndCopyPass()
 {
 }
 
-GraphicsBackendDepthStencilState GraphicsBackendOpenGL::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction)
+GraphicsBackendDepthStencilState GraphicsBackendOpenGL::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name)
 {
     auto glState = new DepthStencilState();
     glState->DepthFunction = OpenGLHelpers::ToDepthCompareFunction(depthFunction);

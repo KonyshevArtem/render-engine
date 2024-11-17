@@ -12,7 +12,7 @@ struct Context;
 class RenderPass
 {
 public:
-    RenderPass(std::string _name, DrawCallSortMode _sorting, DrawCallFilter _filter, const std::string &_lightModeTag);
+    RenderPass(std::string _name, DrawCallSortMode _sorting, DrawCallFilter _filter);
     ~RenderPass() = default;
 
     void Execute(const Context &_ctx);

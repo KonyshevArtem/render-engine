@@ -53,7 +53,6 @@ namespace Graphics
     std::unique_ptr<FinalBlitPass>    s_FinalBlitPass;
 
 #if RENDER_ENGINE_EDITOR
-    std::unique_ptr<RenderPass> s_FallbackRenderPass;
     std::unique_ptr<GizmosPass> s_GizmosPass;
     std::unique_ptr<SelectionOutlinePass> s_SelectionOutlinePass;
 #endif
@@ -82,15 +81,14 @@ namespace Graphics
 
     void InitPasses()
     {
-        s_OpaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque(), "Forward");
-        s_TransparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent(), "Forward");
-        s_ShadowCasterPass     = std::make_unique<ShadowCasterPass>(s_ShadowsDataBuffer);
-        s_SkyboxPass           = std::make_unique<SkyboxPass>();
-        s_FinalBlitPass        = std::make_unique<FinalBlitPass>();
+        s_OpaqueRenderPass = std::make_unique<RenderPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque());
+        s_TransparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent());
+        s_ShadowCasterPass = std::make_unique<ShadowCasterPass>(s_ShadowsDataBuffer);
+        s_SkyboxPass = std::make_unique<SkyboxPass>();
+        s_FinalBlitPass = std::make_unique<FinalBlitPass>();
 
 #if RENDER_ENGINE_EDITOR
-        s_FallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::All(), "Fallback");
-        s_GizmosPass         = std::make_unique<GizmosPass>();
+        s_GizmosPass = std::make_unique<GizmosPass>();
         s_SelectionOutlinePass = std::make_unique<SelectionOutlinePass>();
 #endif
     }
@@ -252,12 +250,6 @@ namespace Graphics
 
         if (s_OpaqueRenderPass)
             s_OpaqueRenderPass->Execute(ctx);
-
-#if RENDER_ENGINE_EDITOR
-        if (s_FallbackRenderPass)
-            s_FallbackRenderPass->Execute(ctx);
-#endif
-
         if (s_SkyboxPass)
             s_SkyboxPass->Execute(ctx);
         if (s_TransparentRenderPass)

@@ -5,7 +5,7 @@
 
 #include <utility>
 
-RenderPass::RenderPass(std::string _name, DrawCallSortMode _sorting, DrawCallFilter _filter, const std::string &_lightModeTag) :
+RenderPass::RenderPass(std::string _name, DrawCallSortMode _sorting, DrawCallFilter _filter) :
     m_Name(std::move(_name)),
     m_RenderSettings(RenderSettings {_sorting, std::move(_filter), nullptr})
 {

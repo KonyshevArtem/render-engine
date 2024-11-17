@@ -22,7 +22,8 @@ public:
     ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
                std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
                std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
-               std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers);
+               std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
+               std::string name);
 
     ~ShaderPass();
 
@@ -66,13 +67,14 @@ private:
     CullInfo m_CullInfo;
     GraphicsBackendDepthStencilState m_DepthStencilState;
     BlendInfo m_BlendInfo;
+    std::string m_Name;
 
     std::unordered_map<std::string, GraphicsBackendTextureInfo> m_Textures;
     std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
 
     const GraphicsBackendProgram &CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat, bool isLinear,
-                                            TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes);
+                                            TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name);
 };
 
 

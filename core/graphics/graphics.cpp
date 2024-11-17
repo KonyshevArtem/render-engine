@@ -74,10 +74,10 @@ namespace Graphics
         assert(sizeof(ShadowsData) == 1456);
         assert(sizeof(PerDrawData) == 128);
 
-        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
-        s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
-        s_ShadowsDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
-        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(sizeof(PerDrawData), BufferUsageHint::DYNAMIC_DRAW);
+        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW, "CameraData");
+        s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW, "LightingData");
+        s_ShadowsDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW, "ShadowsData");
+        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(sizeof(PerDrawData), BufferUsageHint::DYNAMIC_DRAW, "PerDrawData");
     }
 
     void InitPasses()
@@ -99,8 +99,8 @@ namespace Graphics
     {
         auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
 
-        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW);
-        s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(4096, BufferUsageHint::DYNAMIC_DRAW);
+        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW, "PerInstanceMatrices");
+        s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(4096, BufferUsageHint::DYNAMIC_DRAW, "PerInstanceIndices");
     }
 
     void Init()
@@ -228,8 +228,8 @@ namespace Graphics
 
         if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
         {
-            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true);
-            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, true, true);
+            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true, "CameraColorRT");
+            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, true, true, "CameraDepthRT");
         }
 
         GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);

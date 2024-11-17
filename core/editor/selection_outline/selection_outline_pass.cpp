@@ -20,16 +20,16 @@ void CheckTexture(std::shared_ptr<Texture2D> &_texture)
     int height = Graphics::GetScreenHeight();
     if (!_texture || _texture->GetWidth() != width || _texture->GetHeight() != height)
     {
-        _texture = Texture2D::Create(width, height, TextureInternalFormat::RGBA8, false, true);
+        _texture = Texture2D::Create(width, height, TextureInternalFormat::RGBA8, false, true, "SilhouetteRT");
         _texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
     }
 }
 
 void SelectionOutlinePass::Execute(Context &_context)
 {
-    static std::shared_ptr<Material>  blitMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/outlineBlit", {}, {}, {}, {false, DepthFunction::ALWAYS}));
-    static std::shared_ptr<Material>  outlineMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/silhouette", {}, {}, {}, {false, DepthFunction::ALWAYS}));
-    static std::shared_ptr<Texture2D> outlineTexture  = nullptr;
+    static std::shared_ptr<Material>  blitMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/outlineBlit", {}, {}, {}, {false, DepthFunction::ALWAYS}), "OutlineBlit");
+    static std::shared_ptr<Material>  silhouetteMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/silhouette", {}, {}, {}, {false, DepthFunction::ALWAYS}), "Silhouette");
+    static std::shared_ptr<Texture2D> silhouetteRenderTarget  = nullptr;
     static Vector4                    outlineColor {1, 0.73f, 0, 1};
     static GraphicsBackendRenderTargetDescriptor colorTarget { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
     static GraphicsBackendRenderTargetDescriptor depthTarget { FramebufferAttachment::DEPTH_ATTACHMENT };
@@ -38,11 +38,11 @@ void SelectionOutlinePass::Execute(Context &_context)
     if (selectedGameObjects.empty())
         return;
 
-    CheckTexture(outlineTexture);
+    CheckTexture(silhouetteRenderTarget);
 
     // render selected gameObjects
     {
-        Graphics::SetRenderTarget(colorTarget, outlineTexture);
+        Graphics::SetRenderTarget(colorTarget, silhouetteRenderTarget);
         Graphics::SetRenderTarget(depthTarget);
 
         GraphicsBackend::Current()->BeginRenderPass();
@@ -68,7 +68,7 @@ void SelectionOutlinePass::Execute(Context &_context)
                     }
                     else
                     {
-                        Graphics::Draw(*geometry, *outlineMaterial, renderer->GetModelMatrix(), 0);
+                        Graphics::Draw(*geometry, *silhouetteMaterial, renderer->GetModelMatrix(), 0);
                     }
                 }
             }
@@ -83,7 +83,7 @@ void SelectionOutlinePass::Execute(Context &_context)
     {
         blitMaterial->SetVector("_Color", outlineColor);
 
-        Graphics::Blit(outlineTexture, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *blitMaterial);
+        Graphics::Blit(silhouetteRenderTarget, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *blitMaterial);
     }
 }
 

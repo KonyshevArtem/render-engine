@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <memory>
 #include <vector>
+#include <string>
 
 class Mesh;
 
@@ -24,7 +25,7 @@ public:
     FBXAsset &operator=(FBXAsset &&)      = delete;
 
 private:
-    explicit FBXAsset(ofbx::IScene *_scene);
+    explicit FBXAsset(ofbx::IScene* scene, const std::string& name);
 
     std::vector<std::shared_ptr<Mesh>> m_Meshes;
 };

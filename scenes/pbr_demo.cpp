@@ -40,7 +40,7 @@ void PBRDemo::Init()
         for (float j = 0; j < 6; ++j)
         {
             //init material
-            auto material = std::make_shared<Material>(shader);
+            auto material = std::make_shared<Material>(shader, "PBRDemo_" + std::to_string(i * 6 + j));
             material->SetTexture("_Albedo", Texture2D::White());
             material->SetFloat("_Roughness", 1 - j / 5);
             material->SetFloat("_Metallness", i / 5);

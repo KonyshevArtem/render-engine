@@ -5,13 +5,14 @@
 #include "bounds/bounds.h"
 
 #include <vector>
+#include <string>
 
 struct Vector3;
 
 class Lines : public DrawableGeometry
 {
 public:
-    Lines(const std::vector<Vector3> &points, const std::vector<int> &indices);
+    Lines(const std::vector<Vector3>& points, const std::vector<int>& indices, const std::string& name);
     ~Lines() override = default;
 
     inline Bounds GetBounds() const

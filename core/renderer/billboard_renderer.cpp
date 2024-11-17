@@ -11,9 +11,9 @@ BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObj
     static std::vector<Vector3> points(4);
     static std::vector<int> indices{0, 1, 2, 1, 2, 3};
 
-    m_Mesh = std::make_shared<Mesh>(points, indices);
+    m_Mesh = std::make_shared<Mesh>(points, indices, "BillboardQuad");
 
-    m_Material = std::make_shared<Material>(shader);
+    m_Material = std::make_shared<Material>(shader, "Billboard");
     m_Material->SetTexture("_Texture", _texture);
 
     m_Aspect = static_cast<float>(_texture->GetWidth()) / _texture->GetHeight();

@@ -4,7 +4,7 @@
 #include "shader/shader_pass/shader_pass.h"
 #include "types/graphics_backend_buffer_info.h"
 
-GraphicsBufferWrapper::GraphicsBufferWrapper(const std::shared_ptr<Shader> &shader, const std::string &bufferName)
+GraphicsBufferWrapper::GraphicsBufferWrapper(const std::shared_ptr<Shader>& shader, const std::string& bufferName, const std::string& debugName)
 {
     int passesCount = shader->PassesCount();
     m_PassBuffers.resize(passesCount);
@@ -18,8 +18,12 @@ GraphicsBufferWrapper::GraphicsBufferWrapper(const std::shared_ptr<Shader> &shad
         auto it = buffers.find(bufferName);
         if (it != buffers.end())
         {
+            std::string name = debugName;
+            name.append("_");
+            name.append(bufferName);
+
             const auto &bufferInfo = it->second;
-            m_PassBuffers[i] = std::make_shared<GraphicsBuffer>(bufferInfo->GetSize(), BufferUsageHint::DYNAMIC_DRAW);
+            m_PassBuffers[i] = std::make_shared<GraphicsBuffer>(bufferInfo->GetSize(), BufferUsageHint::DYNAMIC_DRAW, name);
             m_PassBuffersInfo[i] = bufferInfo;
         }
         else

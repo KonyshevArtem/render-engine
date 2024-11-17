@@ -1,7 +1,7 @@
 #include "texture.h"
 #include "graphics_backend_api.h"
 
-Texture::Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isLinear, bool isRenderTarget) :
+Texture::Texture(TextureType textureType, TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) :
         m_TextureType(textureType),
         m_Width(width),
         m_Height(height),
@@ -10,9 +10,10 @@ Texture::Texture(TextureType textureType, TextureInternalFormat format, unsigned
         m_WrapMode(TextureWrapMode::REPEAT),
         m_FilteringMode(mipLevels > 1 ? TextureFilteringMode::LINEAR_MIPMAP_NEAREST : TextureFilteringMode::LINEAR),
         m_BorderColor(Vector4::Zero()),
-        m_MinLod(0)
+        m_MinLod(0),
+        m_SamplerName(name + "_Sampler")
 {
-    m_Texture = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_Depth, m_TextureType, format, mipLevels, isLinear, isRenderTarget);
+    m_Texture = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_Depth, m_TextureType, format, mipLevels, isLinear, isRenderTarget, name);
     RecreateSampler(false);
 }
 
@@ -56,5 +57,5 @@ void Texture::RecreateSampler(bool deleteOld)
         GraphicsBackend::Current()->DeleteSampler(m_Sampler);
     }
 
-    m_Sampler = GraphicsBackend::Current()->CreateSampler(m_WrapMode, m_FilteringMode, &m_BorderColor.x, m_MinLod);
+    m_Sampler = GraphicsBackend::Current()->CreateSampler(m_WrapMode, m_FilteringMode, &m_BorderColor.x, m_MinLod, m_SamplerName);
 }

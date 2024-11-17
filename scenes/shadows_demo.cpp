@@ -30,7 +30,7 @@ void ShadowsDemo::Init()
     auto sphereMesh = FBXAsset::Load("core_resources/models/sphere.fbx")->GetMesh(0);
 
     // init materials
-    auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader);
+    auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader, "ShadowsDemo");
     standardOpaqueMaterial->SetTexture("_Albedo", Texture2D::White());
     standardOpaqueMaterial->SetFloat("_Roughness", 0.5f);
     standardOpaqueMaterial->SetFloat("_Metallness", 1);

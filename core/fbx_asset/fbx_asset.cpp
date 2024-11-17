@@ -13,7 +13,7 @@ std::shared_ptr<FBXAsset> FBXAsset::Load(const std::filesystem::path &_path)
     if (!scene)
         return nullptr;
 
-    auto asset = std::shared_ptr<FBXAsset>(new FBXAsset(scene));
+    auto asset = std::shared_ptr<FBXAsset>(new FBXAsset(scene, _path.string()));
 
     scene->destroy();
     return asset;
@@ -27,11 +27,11 @@ std::shared_ptr<Mesh> FBXAsset::GetMesh(unsigned int _index) const
     return m_Meshes.at(_index);
 }
 
-FBXAsset::FBXAsset(ofbx::IScene *_scene)
+FBXAsset::FBXAsset(ofbx::IScene* scene, const std::string& name)
 {
-    for (int i = 0; i < _scene->getMeshCount(); ++i)
+    for (int i = 0; i < scene->getMeshCount(); ++i)
     {
-        auto *m = _scene->getMesh(i);
+        auto *m = scene->getMesh(i);
         if (m == nullptr)
             continue;
 
@@ -78,7 +78,11 @@ FBXAsset::FBXAsset(ofbx::IScene *_scene)
             indexes.push_back(index < 0 ? -index - 1 : index);
         }
 
-        auto mesh = std::make_shared<Mesh>(vertices, normals, indexes, uvs, tangents);
+        std::string debugName = name;
+        debugName.append("_");
+        debugName.append(m->name);
+
+        auto mesh = std::make_shared<Mesh>(vertices, normals, indexes, uvs, tangents, debugName);
 
         m_Meshes.push_back(mesh);
     }

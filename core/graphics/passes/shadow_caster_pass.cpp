@@ -17,9 +17,9 @@
 
 ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer) :
     m_ShadowsConstantBuffer(std::move(shadowsConstantBuffer)),
-    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SPOT_LIGHT_SHADOW_MAP_SIZE, GlobalConstants::MaxSpotLightSources)),
-    m_DirectionLightShadowMap(Texture2D::Create(DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE, TextureInternalFormat::DEPTH_COMPONENT, true, true)),
-    m_PointLightShadowMap(Texture2DArray::ShadowMapArray(POINT_LIGHT_SHADOW_MAP_FACE_SIZE, GlobalConstants::MaxPointLightSources * 6))
+    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SPOT_LIGHT_SHADOW_MAP_SIZE, GlobalConstants::MaxSpotLightSources, "SpotLightShadowMap")),
+    m_DirectionLightShadowMap(Texture2D::Create(DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE, TextureInternalFormat::DEPTH_COMPONENT, true, true, "DirectionalShadowMap")),
+    m_PointLightShadowMap(Texture2DArray::ShadowMapArray(POINT_LIGHT_SHADOW_MAP_FACE_SIZE, GlobalConstants::MaxPointLightSources * 6, "PointLightShadowMap"))
 {
     Graphics::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
     Graphics::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
@@ -132,7 +132,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
 void ShadowCasterPass::Render(const std::vector<std::shared_ptr<Renderer>> &_renderers, const Vector4& viewport)
 {
-    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("core_resources/shaders/shadowCaster", {}, {}, {}, {}));
+    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("core_resources/shaders/shadowCaster", {}, {}, {}, {}), "ShadowCaster");
     static RenderSettings renderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material};
 
     GraphicsBackend::Current()->BeginRenderPass();

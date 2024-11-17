@@ -18,7 +18,7 @@ class GraphicsBufferWrapper;
 class Material
 {
 public:
-    explicit Material(std::shared_ptr<Shader> _shader);
+    Material(std::shared_ptr<Shader> shader, const std::string& name);
     ~Material() = default;
 
     Material(const Material &) = delete;

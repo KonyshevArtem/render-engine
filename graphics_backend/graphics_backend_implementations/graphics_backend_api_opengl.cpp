@@ -140,7 +140,7 @@ void GraphicsBackendOpenGL::InitNewFrame(void *data)
 {
 }
 
-GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget)
+GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
 {
     GraphicsBackendTexture texture{};
     CHECK_GRAPHICS_BACKEND_FUNC(glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture)))
@@ -149,6 +149,10 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
     CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(textureType, texture.Texture))
     CHECK_GRAPHICS_BACKEND_FUNC(glTexParameteri(textureType, GL_TEXTURE_BASE_LEVEL, 0))
     CHECK_GRAPHICS_BACKEND_FUNC(glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, mipLevels - 1))
+    if (!name.empty())
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_TEXTURE, texture.Texture, name.length(), name.c_str()));
+    }
 
     texture.Type = type;
     texture.Format = format;
@@ -165,7 +169,7 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod)
+GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name)
 {
     GraphicsBackendSampler sampler{};
     CHECK_GRAPHICS_BACKEND_FUNC(glGenSamplers(1, reinterpret_cast<GLuint *>(&sampler.Sampler)))
@@ -186,6 +190,11 @@ GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrap
     }
 
     CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_LOD, minLod))
+
+    if (!name.empty())
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_SAMPLER, sampler.Sampler, name.length(), name.c_str()));
+    }
 
     return sampler;
 }
@@ -309,12 +318,16 @@ TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAt
     return TextureInternalFormat::RGBA8;
 }
 
-GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferUsageHint usageHint)
+GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferUsageHint usageHint, const std::string& name)
 {
     GLuint glBuffer;
     CHECK_GRAPHICS_BACKEND_FUNC(glGenBuffers(1, &glBuffer))
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer))
     CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(GL_SHADER_STORAGE_BUFFER, size, nullptr, OpenGLHelpers::ToBufferUsageHint(usageHint)))
+    if (!name.empty())
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_BUFFER, glBuffer, name.length(), name.c_str()))
+    }
 
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = static_cast<uint64_t>(glBuffer);
@@ -387,7 +400,7 @@ int GraphicsBackendOpenGL::GetConstantBufferOffsetAlignment()
     return alignment;
 }
 
-GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
+GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name)
 {
     GraphicsBackendGeometry geometry{};
     geometry.VertexBuffer = vertexBuffer;
@@ -397,6 +410,10 @@ GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBack
     CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.Buffer))
     CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.Buffer))
+    if (!name.empty())
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_VERTEX_ARRAY, geometry.VertexArrayObject, name.length(), name.c_str()))
+    }
 
     for (const auto &descriptor : vertexAttributes)
     {
@@ -438,7 +455,7 @@ void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, flo
     CHECK_GRAPHICS_BACKEND_FUNC(glDepthRange(near, far))
 }
 
-GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string &source)
+GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string& source, const std::string& name)
 {
     GraphicsBackendShaderObject shaderObject{};
     shaderObject.ShaderObject = CHECK_GRAPHICS_BACKEND_FUNC(glCreateShader(OpenGLHelpers::ToShaderType(shaderType)))
@@ -446,6 +463,11 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
     auto *sourceChar = source.c_str();
     CHECK_GRAPHICS_BACKEND_FUNC(glShaderSource(shaderObject.ShaderObject, 1, &sourceChar, nullptr))
     CHECK_GRAPHICS_BACKEND_FUNC(glCompileShader(shaderObject.ShaderObject))
+
+    if (!name.empty())
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_SHADER, shaderObject.ShaderObject, name.length(), name.c_str()));
+    }
 
     int isCompiled;
     CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderiv(shaderObject.ShaderObject, GL_COMPILE_STATUS, &isCompiled))
@@ -464,7 +486,7 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
 }
 
 GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
-                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes)
+                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name)
 {
     GraphicsBackendProgram program{};
     program.Program = CHECK_GRAPHICS_BACKEND_FUNC(glCreateProgram())
@@ -487,6 +509,11 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<Gr
         {
             CHECK_GRAPHICS_BACKEND_FUNC(glDetachShader(program.Program, shader.ShaderObject))
         }
+    }
+
+    if (!name.empty())
+    {
+        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_PROGRAM, program.Program, name.length(), name.c_str()))
     }
 
     int isLinked;

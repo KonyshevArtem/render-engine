@@ -74,6 +74,11 @@ namespace ShaderLoader
             std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers;
             ShaderParser::ParseReflection(reflectionJson, textures, buffers, samplers);
 
+            std::string shaderDebugName;
+            shaderDebugName.append(_path.string());
+            shaderDebugName.append("_");
+            shaderDebugName.append(keywordHash);
+
             std::vector<GraphicsBackendShaderObject> shaders;
             for (int i = 0; i < SUPPORTED_SHADERS_COUNT; ++i)
             {
@@ -81,12 +86,16 @@ namespace ShaderLoader
                 if (!std::filesystem::exists(sourcePath))
                     continue;
 
+                std::string shaderFunctionDebugName = shaderDebugName;
+                shaderFunctionDebugName.append("_");
+                shaderFunctionDebugName.append(SHADER_SOURCE_FILE_NAME[i]);
+
                 std::string shaderSource = FileSystem::ReadFile(sourcePath);
-                auto shader = GraphicsBackend::Current()->CompileShader(SHADER_TYPES[i], shaderSource);
+                auto shader = GraphicsBackend::Current()->CompileShader(SHADER_TYPES[i], shaderSource, shaderFunctionDebugName);
                 shaders.push_back(shader);
             }
 
-            auto passPtr = std::make_shared<ShaderPass>(shaders, blendInfo, cullInfo, depthInfo, textures, buffers, samplers);
+            auto passPtr = std::make_shared<ShaderPass>(shaders, blendInfo, cullInfo, depthInfo, textures, buffers, samplers, shaderDebugName);
 
             std::vector<std::shared_ptr<ShaderPass>> passes;
             passes.push_back(passPtr);

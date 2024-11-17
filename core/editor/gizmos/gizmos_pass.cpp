@@ -14,7 +14,7 @@
 
 void GizmosPass::Execute(Context &_context)
 {
-    static auto gizmosMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {}));
+    static auto gizmosMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {}), "Gizmos");
 
     GraphicsBackend::Current()->BeginRenderPass();
     {

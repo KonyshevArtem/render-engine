@@ -15,8 +15,8 @@ public:
     GraphicsBackendName GetName() override;
     void InitNewFrame(void *data) override;
 
-    GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget) override;
-    GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod) override;
+    GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) override;
+    GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name) override;
     void DeleteTexture(const GraphicsBackendTexture &texture) override;
     void DeleteSampler(const GraphicsBackendSampler &sampler) override;
 
@@ -29,7 +29,7 @@ public:
     void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) override;
     TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear) override;
 
-    GraphicsBackendBuffer CreateBuffer(int size, BufferUsageHint usageHint) override;
+    GraphicsBackendBuffer CreateBuffer(int size, BufferUsageHint usageHint, const std::string& name) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
     void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
     void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
@@ -39,15 +39,15 @@ public:
     uint64_t GetMaxConstantBufferSize() override;
     int GetConstantBufferOffsetAlignment() override;
 
-    GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;
+    GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) override;
     void DeleteGeometry(const GraphicsBackendGeometry &geometry) override;
 
     void SetCullFace(CullFace cullFace) override;
     void SetCullFaceOrientation(CullFaceOrientation orientation) override;
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
 
-    GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) override;
-    GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) override;
+    GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) override;
+    GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) override;
     void DeleteShader(GraphicsBackendShaderObject shader) override;
     void DeleteProgram(GraphicsBackendProgram program) override;
     void UseProgram(GraphicsBackendProgram program) override;

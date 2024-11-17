@@ -102,11 +102,11 @@ void Renderer::SetDataToBuffers(const std::string &name, const void *data, uint6
     if (!s_InstanceDataBuffer || s_InstanceDataBuffer->GetSize() < m_InstanceDataBufferOffset + m_InstanceDataBufferInfo->GetSize())
     {
         std::shared_ptr<GraphicsBuffer> oldBuffer = s_InstanceDataBuffer;
-        s_InstanceDataBuffer = std::make_shared<GraphicsBuffer>(m_InstanceDataBufferOffset + m_InstanceDataBufferInfo->GetSize() * 2, BufferUsageHint::DYNAMIC_DRAW);
+        s_InstanceDataBuffer = std::make_shared<GraphicsBuffer>(m_InstanceDataBufferOffset + m_InstanceDataBufferInfo->GetSize() * 2, BufferUsageHint::DYNAMIC_DRAW, "PerInstanceData");
 
         if (oldBuffer)
         {
-            GraphicsBackend::Current()->BeginCopyPass();
+            GraphicsBackend::Current()->BeginCopyPass("PerInstanceData Buffer Extension");
             Graphics::CopyBufferData(oldBuffer, s_InstanceDataBuffer, 0, 0, oldBuffer->GetSize());
             GraphicsBackend::Current()->EndCopyPass();
         }

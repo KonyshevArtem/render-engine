@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 class GraphicsBuffer;
 class GraphicsBackendBuffer;
@@ -13,7 +14,7 @@ class GraphicsBackendBuffer;
 class RingBuffer
 {
 public:
-    RingBuffer(uint64_t elementSize, BufferUsageHint usageHint);
+    RingBuffer(uint64_t elementSize, BufferUsageHint usageHint, std::string name);
     ~RingBuffer() = default;
 
     const GraphicsBackendBuffer& GetBackendBuffer() const
@@ -46,6 +47,7 @@ private:
     BufferUsageHint m_UsageHint;
     uint64_t m_ElementSize;
     int m_Capacity;
+    std::string m_Name;
 
     int m_CurrentOffset = -1;
 };

@@ -5,10 +5,12 @@
 #include "types/graphics_backend_resource_bindings.h"
 #include "enums/buffer_usage_hint.h"
 
+#include <string>
+
 class GraphicsBuffer
 {
 public:
-    GraphicsBuffer(uint64_t size, BufferUsageHint usageHint);
+    GraphicsBuffer(uint64_t size, BufferUsageHint usageHint, std::string name);
     ~GraphicsBuffer();
 
     void Bind(const GraphicsBackendResourceBindings &binding, int offset, int size) const;
@@ -35,6 +37,7 @@ private:
     GraphicsBackendBuffer m_Buffer{};
     BufferUsageHint m_UsageHint;
     uint64_t m_Size;
+    std::string m_Name;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BUFFER_H

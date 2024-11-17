@@ -7,7 +7,7 @@
 class Texture2DArray: public Texture
 {
 public:
-    static std::shared_ptr<Texture2DArray> ShadowMapArray(unsigned int _size, unsigned int _count);
+    static std::shared_ptr<Texture2DArray> ShadowMapArray(uint32_t size, uint32_t count, const std::string& name);
 
     ~Texture2DArray() override = default;
 
@@ -18,7 +18,7 @@ public:
     Texture2DArray &operator=(Texture2DArray &&)      = delete;
 
 private:
-    Texture2DArray(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isLinear);
+    Texture2DArray(TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, bool isLinear, const std::string& name);
 };
 
 #endif //RENDER_ENGINE_TEXTURE_2D_ARRAY_H

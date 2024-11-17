@@ -10,6 +10,8 @@
 #include "types/graphics_backend_sampler.h"
 #include "vector4/vector4.h"
 
+#include <string>
+
 class Texture
 {
 public:
@@ -29,17 +31,17 @@ public:
         return m_Sampler;
     }
 
-    inline unsigned int GetWidth() const
+    inline uint32_t GetWidth() const
     {
         return m_Width;
     }
 
-    inline unsigned int GetHeight() const
+    inline uint32_t GetHeight() const
     {
         return m_Height;
     }
 
-    inline unsigned int GetMipLevels() const
+    inline uint32_t GetMipLevels() const
     {
         return m_MipLevels;
     }
@@ -51,20 +53,21 @@ public:
     Texture &operator=(Texture &&) = delete;
 
 protected:
-    Texture(TextureType textureType, TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int depth, unsigned int mipLevels, bool isLinear, bool isRenderTarget);
+    Texture(TextureType textureType, TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, bool isLinear, bool isRenderTarget, const std::string& name);
 
     void UploadPixels(void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace = CubemapFace::POSITIVE_X) const;
 
 private:
     void RecreateSampler(bool deleteOld);
 
-    unsigned int m_Width = 0;
-    unsigned int m_Height = 0;
-    unsigned int m_Depth = 0;
+    uint32_t m_Width = 0;
+    uint32_t m_Height = 0;
+    uint32_t m_Depth = 0;
     GraphicsBackendTexture m_Texture{};
     GraphicsBackendSampler m_Sampler{};
     TextureType m_TextureType = TextureType::TEXTURE_2D;
-    unsigned int m_MipLevels = 0;
+    uint32_t m_MipLevels = 0;
+    std::string m_SamplerName;
 
     TextureWrapMode m_WrapMode;
     TextureFilteringMode m_FilteringMode;

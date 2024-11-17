@@ -48,8 +48,8 @@ public:
     virtual GraphicsBackendName GetName() = 0;
     virtual void InitNewFrame(void *data) = 0;
 
-    virtual GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget) = 0;
-    virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod) = 0;
+    virtual GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) = 0;
+    virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name) = 0;
     virtual void DeleteTexture(const GraphicsBackendTexture &texture) = 0;
     virtual void DeleteSampler(const GraphicsBackendSampler &sampler) = 0;
 
@@ -62,7 +62,7 @@ public:
     virtual void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) = 0;
     virtual TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool *outIsLinear) = 0;
 
-    virtual GraphicsBackendBuffer CreateBuffer(int size, BufferUsageHint usageHint) = 0;
+    virtual GraphicsBackendBuffer CreateBuffer(int size, BufferUsageHint usageHint, const std::string& name) = 0;
     virtual void DeleteBuffer(const GraphicsBackendBuffer &buffer) = 0;
     virtual void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;
     virtual void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;
@@ -72,15 +72,15 @@ public:
     virtual uint64_t GetMaxConstantBufferSize() = 0;
     virtual int GetConstantBufferOffsetAlignment() = 0;
 
-    virtual GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;
+    virtual GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) = 0;
     virtual void DeleteGeometry(const GraphicsBackendGeometry &geometry) = 0;
 
     virtual void SetCullFace(CullFace cullFace) = 0;
     virtual void SetCullFaceOrientation(CullFaceOrientation orientation) = 0;
     virtual void SetViewport(int x, int y, int width, int height, float near, float far) = 0;
 
-    virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source) = 0;
-    virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes) = 0;
+    virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) = 0;
+    virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) = 0;
     virtual void DeleteShader(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;
@@ -96,15 +96,15 @@ public:
 
     virtual void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) = 0;
 
-    virtual void PushDebugGroup(const std::string& name, int id) = 0;
+    virtual void PushDebugGroup(const std::string& name) = 0;
     virtual void PopDebugGroup() = 0;
 
-    virtual void BeginRenderPass() = 0;
+    virtual void BeginRenderPass(const std::string& name) = 0;
     virtual void EndRenderPass() = 0;
-    virtual void BeginCopyPass() = 0;
+    virtual void BeginCopyPass(const std::string& name) = 0;
     virtual void EndCopyPass() = 0;
 
-    virtual GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction) = 0;
+    virtual GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name) = 0;
     virtual void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
     virtual void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
 

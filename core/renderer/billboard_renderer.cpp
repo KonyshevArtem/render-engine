@@ -4,19 +4,24 @@
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
 
-BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject> &_gameObject, const std::shared_ptr<Texture2D> &_texture) :
-    Renderer(_gameObject, nullptr)
+std::shared_ptr<Mesh> s_BillboardMesh = nullptr;
+
+BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject>& gameObject, const std::shared_ptr<Texture2D>& texture, const std::string& name) :
+    Renderer(gameObject, nullptr)
 {
     static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/billboard", {}, {}, {CullFace::NONE}, {});
     static std::vector<Vector3> points(4);
     static std::vector<int> indices{0, 1, 2, 1, 2, 3};
 
-    m_Mesh = std::make_shared<Mesh>(points, indices);
+    if (!s_BillboardMesh)
+    {
+        s_BillboardMesh = std::make_shared<Mesh>(points, indices, "BillboardQuad");
+    }
 
-    m_Material = std::make_shared<Material>(shader);
-    m_Material->SetTexture("_Texture", _texture);
+    m_Material = std::make_shared<Material>(shader, name);
+    m_Material->SetTexture("_Texture", texture);
 
-    m_Aspect = static_cast<float>(_texture->GetWidth()) / _texture->GetHeight();
+    m_Aspect = static_cast<float>(texture->GetWidth()) / texture->GetHeight();
 }
 
 Bounds BillboardRenderer::GetAABB() const
@@ -26,7 +31,7 @@ Bounds BillboardRenderer::GetAABB() const
 
 std::shared_ptr<DrawableGeometry> BillboardRenderer::GetGeometry() const
 {
-    return m_Mesh;
+    return s_BillboardMesh;
 }
 
 void BillboardRenderer::SetSize(float _size)

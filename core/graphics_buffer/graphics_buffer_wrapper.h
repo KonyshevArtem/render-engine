@@ -12,7 +12,7 @@ class GraphicsBackendBufferInfo;
 class GraphicsBufferWrapper
 {
 public:
-    GraphicsBufferWrapper(const std::shared_ptr<Shader> &shader, const std::string &bufferName);
+    GraphicsBufferWrapper(const std::shared_ptr<Shader>& shader, const std::string& bufferName, const std::string& debugName);
     ~GraphicsBufferWrapper() = default;
 
     void TrySetVariable(const std::string &variableName, const void *data, uint64_t size);

@@ -9,7 +9,7 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const s
 
     if (!shader)
     {
-        auto fallback = ShaderLoader::Load("core_resources/shaders/fallback/fallback", {}, {}, {}, {});
+        static std::shared_ptr<Shader> fallback = ShaderLoader::Load("core_resources/shaders/fallback", {}, {}, {}, {});
 
         if (!fallback)
             exit(1);

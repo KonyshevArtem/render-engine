@@ -2,8 +2,8 @@
 #include "debug.h"
 #include "texture/texture_binary_reader.h"
 
-Cubemap::Cubemap(TextureInternalFormat format, unsigned int width, unsigned int height, unsigned int mipLevels, bool isLinear) :
-        Texture(TextureType::TEXTURE_CUBEMAP, format, width, height, 0, mipLevels, isLinear, false)
+Cubemap::Cubemap(TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, bool isLinear, const std::string& name) :
+        Texture(TextureType::TEXTURE_CUBEMAP, format, width, height, 0, mipLevels, isLinear, false, name)
 {
 }
 
@@ -26,7 +26,7 @@ std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path& path)
         return nullptr;
     }
 
-    std::shared_ptr<Cubemap> cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.TextureFormat, header.Width, header.Height, header.MipCount, header.IsLinear));
+    std::shared_ptr<Cubemap> cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.TextureFormat, header.Width, header.Height, header.MipCount, header.IsLinear, path.string()));
     for (int face = 0; face < facesCount; ++face)
     {
         for (int mip = 0; mip < header.MipCount; ++mip)
@@ -45,8 +45,8 @@ std::shared_ptr<Cubemap> &Cubemap::White()
 
     if (white == nullptr)
     {
-        unsigned char pixels[4] = {255, 255, 255, 255};
-        white = CreateDefaultCubemap(&pixels[0]);
+        uint8_t pixels[4] = {255, 255, 255, 255};
+        white = CreateDefaultCubemap(&pixels[0], "WhiteCubemap");
     }
 
     return white;
@@ -58,16 +58,16 @@ std::shared_ptr<Cubemap> &Cubemap::Black()
 
     if (black == nullptr)
     {
-        unsigned char pixels[4] = {0, 0, 0, 255};
-        black = CreateDefaultCubemap(&pixels[0]);
+        uint8_t pixels[4] = {0, 0, 0, 255};
+        black = CreateDefaultCubemap(&pixels[0], "BlackCubemap");
     }
 
     return black;
 }
 
-std::shared_ptr<Cubemap> Cubemap::CreateDefaultCubemap(unsigned char *pixels)
+std::shared_ptr<Cubemap> Cubemap::CreateDefaultCubemap(uint8_t* pixels, const std::string& name)
 {
-    auto cubemap = std::shared_ptr<Cubemap>(new Cubemap(TextureInternalFormat::RGBA8, 1, 1, 1, false));
+    auto cubemap = std::shared_ptr<Cubemap>(new Cubemap(TextureInternalFormat::RGBA8, 1, 1, 1, false, name));
     for (int face = 0; face < static_cast<int>(CubemapFace::MAX); ++face)
     {
         cubemap->UploadPixels(pixels, 0, 0, 0, static_cast<CubemapFace>(face));

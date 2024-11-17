@@ -6,10 +6,10 @@
 
 #include <utility>
 
-Material::Material(std::shared_ptr<Shader> _shader) :
-        m_Shader(std::move(_shader))
+Material::Material(std::shared_ptr<Shader> shader, const std::string& name) :
+        m_Shader(std::move(shader))
 {
-    m_PerMaterialDataBufferWrapper = std::make_shared<GraphicsBufferWrapper>(m_Shader, GlobalConstants::PerMaterialDataBufferName);
+    m_PerMaterialDataBufferWrapper = std::make_shared<GraphicsBufferWrapper>(m_Shader, GlobalConstants::PerMaterialDataBufferName, name);
 }
 
 void Material::SetTexture(const std::string &name, std::shared_ptr<Texture> texture)

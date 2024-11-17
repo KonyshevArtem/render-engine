@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 class GraphicsBuffer;
 struct Context;
@@ -38,7 +39,7 @@ private:
 
     ShadowsData m_ShadowsData{};
 
-    static void Render(const std::vector<std::shared_ptr<Renderer>> &renderers, const Vector4& viewport);
+    static void Render(const std::vector<std::shared_ptr<Renderer>>& renderers, const Vector4& viewport, const std::string& passName);
 };
 
 #endif //RENDER_ENGINE_SHADOW_CASTER_PASS_H

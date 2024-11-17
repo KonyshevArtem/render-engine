@@ -53,7 +53,6 @@ namespace Graphics
     std::unique_ptr<FinalBlitPass>    s_FinalBlitPass;
 
 #if RENDER_ENGINE_EDITOR
-    std::unique_ptr<RenderPass> s_FallbackRenderPass;
     std::unique_ptr<GizmosPass> s_GizmosPass;
     std::unique_ptr<SelectionOutlinePass> s_SelectionOutlinePass;
 #endif
@@ -74,23 +73,22 @@ namespace Graphics
         assert(sizeof(ShadowsData) == 1456);
         assert(sizeof(PerDrawData) == 128);
 
-        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW);
-        s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW);
-        s_ShadowsDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW);
-        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(sizeof(PerDrawData), BufferUsageHint::DYNAMIC_DRAW);
+        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW, "CameraData");
+        s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW, "LightingData");
+        s_ShadowsDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW, "ShadowsData");
+        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(sizeof(PerDrawData), BufferUsageHint::DYNAMIC_DRAW, "PerDrawData");
     }
 
     void InitPasses()
     {
-        s_OpaqueRenderPass     = std::make_unique<RenderPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque(), "Forward");
-        s_TransparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent(), "Forward");
-        s_ShadowCasterPass     = std::make_unique<ShadowCasterPass>(s_ShadowsDataBuffer);
-        s_SkyboxPass           = std::make_unique<SkyboxPass>();
-        s_FinalBlitPass        = std::make_unique<FinalBlitPass>();
+        s_OpaqueRenderPass = std::make_unique<RenderPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque());
+        s_TransparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent());
+        s_ShadowCasterPass = std::make_unique<ShadowCasterPass>(s_ShadowsDataBuffer);
+        s_SkyboxPass = std::make_unique<SkyboxPass>();
+        s_FinalBlitPass = std::make_unique<FinalBlitPass>();
 
 #if RENDER_ENGINE_EDITOR
-        s_FallbackRenderPass = std::make_unique<RenderPass>("Fallback", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::All(), "Fallback");
-        s_GizmosPass         = std::make_unique<GizmosPass>();
+        s_GizmosPass = std::make_unique<GizmosPass>();
         s_SelectionOutlinePass = std::make_unique<SelectionOutlinePass>();
 #endif
     }
@@ -99,8 +97,8 @@ namespace Graphics
     {
         auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
 
-        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW);
-        s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(4096, BufferUsageHint::DYNAMIC_DRAW);
+        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW, "PerInstanceMatrices");
+        s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(4096, BufferUsageHint::DYNAMIC_DRAW, "PerInstanceIndices");
     }
 
     void Init()
@@ -228,8 +226,8 @@ namespace Graphics
 
         if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
         {
-            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true);
-            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, true, true);
+            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true, "CameraColorRT");
+            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, true, true, "CameraDepthRT");
         }
 
         GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
@@ -246,18 +244,12 @@ namespace Graphics
 
         SetRenderTarget(colorTargetDescriptor, cameraColorTarget);
         SetRenderTarget(depthTargetDescriptor, cameraDepthTarget);
-        GraphicsBackend::Current()->BeginRenderPass();
+        GraphicsBackend::Current()->BeginRenderPass("Forward Render Pass");
 
         SetViewport({0, 0, static_cast<float>(s_ScreenWidth), static_cast<float>(s_ScreenHeight)});
 
         if (s_OpaqueRenderPass)
             s_OpaqueRenderPass->Execute(ctx);
-
-#if RENDER_ENGINE_EDITOR
-        if (s_FallbackRenderPass)
-            s_FallbackRenderPass->Execute(ctx);
-#endif
-
         if (s_SkyboxPass)
             s_SkyboxPass->Execute(ctx);
         if (s_TransparentRenderPass)
@@ -273,7 +265,7 @@ namespace Graphics
 
 #if RENDER_ENGINE_EDITOR
 
-        GraphicsBackend::Current()->BeginCopyPass();
+        GraphicsBackend::Current()->BeginCopyPass("Copy Depth To Backbuffer");
         CopyTextureToTexture(cameraDepthTarget, nullptr, GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
         GraphicsBackend::Current()->EndCopyPass();
 
@@ -616,7 +608,7 @@ namespace Graphics
         }
     }
 
-    void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material)
+    void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material, const std::string& name)
     {
         static std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
 
@@ -624,7 +616,7 @@ namespace Graphics
 
         SetRenderTarget(destinationDescriptor, destination);
 
-        GraphicsBackend::Current()->BeginRenderPass();
+        GraphicsBackend::Current()->BeginRenderPass(name);
         Draw(*fullscreenMesh, material, Matrix4x4::Identity(), 0);
         GraphicsBackend::Current()->EndRenderPass();
     }

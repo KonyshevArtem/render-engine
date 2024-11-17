@@ -82,7 +82,7 @@ void TestScene::Init()
     auto sphereMesh   = sphereAsset->GetMesh(0);
 
     // init materials
-    auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader);
+    auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader, "StandardOpaque");
     standardOpaqueMaterial->SetTexture("_Albedo", Texture2D::White());
     standardOpaqueMaterial->SetTexture("_NormalMap", Texture2D::Normal());
     standardOpaqueMaterial->SetFloat("_NormalIntensity", 1);
@@ -91,7 +91,7 @@ void TestScene::Init()
     standardOpaqueMaterial->SetTexture("_ReflectionCube", Skybox);
     standardOpaqueMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
 
-    auto brickMaterial = std::make_shared<Material>(standardOpaqueShader);
+    auto brickMaterial = std::make_shared<Material>(standardOpaqueShader, "Brick");
     brickMaterial->SetTexture("_Albedo", brickTexture);
     brickMaterial->SetTexture("_NormalMap", brickNormal);
     brickMaterial->SetFloat("_Roughness", 0.5f);
@@ -100,7 +100,7 @@ void TestScene::Init()
     brickMaterial->SetTexture("_ReflectionCube", Skybox);
     brickMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
 
-    m_WaterMaterial = std::make_shared<Material>(standardOpaqueShader);
+    m_WaterMaterial = std::make_shared<Material>(standardOpaqueShader, "Water");
     m_WaterMaterial->SetTexture("_Albedo", waterTexture);
     m_WaterMaterial->SetTexture("_NormalMap", waterNormal);
     m_WaterMaterial->SetTexture("_ReflectionCube", Skybox);
@@ -109,13 +109,13 @@ void TestScene::Init()
     m_WaterMaterial->SetFloat("_Metallness", 0.2f);
     m_WaterMaterial->SetFloat("_NormalIntensity", 3);
 
-    auto transparentMaterial = std::make_shared<Material>(standardTransparentShader);
+    auto transparentMaterial = std::make_shared<Material>(standardTransparentShader, "StandardTransparent");
     transparentMaterial->SetTexture("_Albedo", windowTexture);
     transparentMaterial->SetFloat("_Roughness", 0.8f);
     transparentMaterial->SetFloat("_Metallness", 0);
     transparentMaterial->SetRenderQueue(3000);
 
-    auto carMaterial = std::make_shared<Material>(standardOpaqueDataMapShader);
+    auto carMaterial = std::make_shared<Material>(standardOpaqueDataMapShader, "Car");
     carMaterial->SetTexture("_Albedo", carAlbedo);
     carMaterial->SetTexture("_NormalMap", carNormal);
     carMaterial->SetTexture("_Data", carData);
@@ -123,7 +123,7 @@ void TestScene::Init()
     carMaterial->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
     carMaterial->SetFloat("_NormalIntensity", 1);
 
-    auto sphereMaterial = std::make_shared<Material>(standardInstancingShader);
+    auto sphereMaterial = std::make_shared<Material>(standardInstancingShader, "Sphere");
     sphereMaterial->SetTexture("_Albedo", Texture2D::White());
     sphereMaterial->SetTexture("_NormalMap", Texture2D::Normal());
     sphereMaterial->SetFloat("_NormalIntensity", 1);
@@ -172,8 +172,9 @@ void TestScene::Init()
 
     for (int i = 0; i < 4; ++i)
     {
-        auto billboard         = GameObject::Create("Billboard " + std::to_string(i));
-        auto billboardRenderer = std::make_shared<BillboardRenderer>(billboard, billboardTree);
+        std::string name = "TreeBillboard_" + std::to_string(i);
+        auto billboard = GameObject::Create(name);
+        auto billboardRenderer = std::make_shared<BillboardRenderer>(billboard, billboardTree, name);
         billboardRenderer->SetSize(5);
         billboard->SetLocalPosition(Vector3 {-20.0f + 10 * i, -10, 20});
         billboard->Renderer = std::move(billboardRenderer);

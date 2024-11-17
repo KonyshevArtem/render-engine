@@ -3,11 +3,12 @@
 
 #include <algorithm>
 
-GraphicsBuffer::GraphicsBuffer(uint64_t size, BufferUsageHint usageHint) :
+GraphicsBuffer::GraphicsBuffer(uint64_t size, BufferUsageHint usageHint, std::string name) :
         m_UsageHint(usageHint),
-        m_Size(size)
+        m_Size(size),
+        m_Name(std::move(name))
 {
-    m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, usageHint);
+    m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, usageHint, m_Name);
 }
 
 GraphicsBuffer::~GraphicsBuffer()
@@ -33,7 +34,7 @@ void GraphicsBuffer::Resize(uint64_t size)
     if (size > 0)
     {
         GraphicsBackend::Current()->DeleteBuffer(m_Buffer);
-        m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, m_UsageHint);
+        m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, m_UsageHint, m_Name);
         m_Size = size;
     }
 }

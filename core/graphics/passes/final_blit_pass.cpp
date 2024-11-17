@@ -8,12 +8,12 @@
 
 void FinalBlitPass::Execute(Context &context, const std::shared_ptr<Texture2D> &source)
 {
-    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("core_resources/shaders/final_blit", {}, {}, {}, {false, DepthFunction::ALWAYS}));
+    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("core_resources/shaders/final_blit", {}, {}, {}, {false, DepthFunction::ALWAYS}), "FinalBlit");
 
     GraphicsSettings::TonemappingMode tonemappingMode = GraphicsSettings::GetTonemappingMode();
 
     material->SetFloat("_OneOverGamma", 1 / GraphicsSettings::GetGamma());
     material->SetFloat("_Exposure", GraphicsSettings::GetExposure());
     material->SetInt("_TonemappingMode", static_cast<int>(tonemappingMode));
-    Graphics::Blit(source, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *material);
+    Graphics::Blit(source, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *material, "Final Blit Pass");
 }

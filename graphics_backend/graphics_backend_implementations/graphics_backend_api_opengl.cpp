@@ -20,6 +20,7 @@
 
 #include <type_traits>
 #include <stdexcept>
+#include <cassert>
 
 struct DepthStencilState
 {
@@ -36,6 +37,7 @@ struct BlendState
 
 GLuint s_Framebuffers[2];
 GLbitfield s_ClearFlags[static_cast<int>(FramebufferAttachment::MAX)];
+uint64_t s_DebugGroupId = 0;
 
 void LogError(GLenum errorCode, const std::string& line, const std::string &file, int lineNumber)
 {
@@ -649,16 +651,17 @@ void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &s
     CHECK_GRAPHICS_BACKEND_FUNC(glBlitFramebuffer(sourceX, sourceX, sourceX + width, sourceY + height, destinationX, destinationY, destinationX + width, destinationY + height, mask, GL_NEAREST))
 }
 
-void GraphicsBackendOpenGL::PushDebugGroup(const std::string &name, int id)
+void GraphicsBackendOpenGL::PushDebugGroup(const std::string& name)
 {
 #ifdef GL_KHR_debug
-    CHECK_GRAPHICS_BACKEND_FUNC(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, id, -1, name.c_str()))
+    CHECK_GRAPHICS_BACKEND_FUNC(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, s_DebugGroupId++, -1, name.c_str()))
 #endif
 }
 
 void GraphicsBackendOpenGL::PopDebugGroup()
 {
 #ifdef GL_KHR_debug
+    assert(s_DebugGroupId-- > 0);
     CHECK_GRAPHICS_BACKEND_FUNC(glPopDebugGroup())
 #endif
 }
@@ -673,6 +676,8 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
         clearFlag |= s_ClearFlags[i];
     }
 
+    PushDebugGroup(name);
+
     if (clearFlag != 0)
     {
         if ((clearFlag & (GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)) != 0)
@@ -686,14 +691,17 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
 void GraphicsBackendOpenGL::EndRenderPass()
 {
     ResetClearFlags();
+    PopDebugGroup();
 }
 
 void GraphicsBackendOpenGL::BeginCopyPass(const std::string& name)
 {
+    PushDebugGroup(name);
 }
 
 void GraphicsBackendOpenGL::EndCopyPass()
 {
+    PopDebugGroup();
 }
 
 GraphicsBackendDepthStencilState GraphicsBackendOpenGL::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name)

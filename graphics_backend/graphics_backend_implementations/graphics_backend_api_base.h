@@ -96,7 +96,7 @@ public:
 
     virtual void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) = 0;
 
-    virtual void PushDebugGroup(const std::string& name, int id) = 0;
+    virtual void PushDebugGroup(const std::string& name) = 0;
     virtual void PopDebugGroup() = 0;
 
     virtual void BeginRenderPass(const std::string& name) = 0;

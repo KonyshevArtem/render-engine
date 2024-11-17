@@ -5,7 +5,7 @@
 
 struct GraphicsBackendDebugGroup
 {
-    explicit GraphicsBackendDebugGroup(const std::string &_name);
+    explicit GraphicsBackendDebugGroup(const std::string& name);
     ~GraphicsBackendDebugGroup();
 };
 

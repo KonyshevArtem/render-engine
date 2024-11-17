@@ -63,7 +63,7 @@ public:
 
     void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) override;
 
-    void PushDebugGroup(const std::string& name, int id) override;
+    void PushDebugGroup(const std::string& name) override;
     void PopDebugGroup() override;
 
     void BeginRenderPass(const std::string& name) override;

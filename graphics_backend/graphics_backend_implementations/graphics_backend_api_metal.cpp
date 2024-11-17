@@ -535,7 +535,7 @@ void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &so
     m_BlitCommandEncoder->copyFromTexture(metalSource, 0, 0, sourceOrigin, size, metalDestination, 0, 0, destinationOrigin);
 }
 
-void GraphicsBackendMetal::PushDebugGroup(const std::string &name, int id)
+void GraphicsBackendMetal::PushDebugGroup(const std::string& name)
 {
     assert(m_RenderCommandEncoder != nullptr);
     m_RenderCommandEncoder->pushDebugGroup(NS::String::string(name.c_str(), NS::UTF8StringEncoding));

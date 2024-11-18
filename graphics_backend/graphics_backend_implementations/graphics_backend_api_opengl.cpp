@@ -39,48 +39,57 @@ GLuint s_Framebuffers[2];
 GLbitfield s_ClearFlags[static_cast<int>(FramebufferAttachment::MAX)];
 uint64_t s_DebugGroupId = 0;
 
-void LogError(GLenum errorCode, const std::string& line, const std::string &file, int lineNumber)
+void DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
-    std::string errorString = "Unknown error";
-    switch (errorCode)
+    auto GetSourceName = [source]() -> std::string
     {
-        case GL_INVALID_ENUM:
-            errorString = "GL_INVALID_ENUM";
+        switch (source)
+        {
+            case GL_DEBUG_SOURCE_API:
+                return "OpenGL API";
+            case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+                return "Window System";
+            case GL_DEBUG_SOURCE_SHADER_COMPILER:
+                return "Shader Compiler";
+            case GL_DEBUG_SOURCE_THIRD_PARTY:
+                return "Third Party";
+            case GL_DEBUG_SOURCE_APPLICATION:
+                return "Application";
+            case GL_DEBUG_SOURCE_OTHER:
+                return "Other";
+        }
+    };
+
+    auto GetTypeName = [type]() -> std::string
+    {
+        switch (type)
+        {
+            case GL_DEBUG_TYPE_ERROR:
+                return "Error";
+            case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+                return "Undefined Behaviour";
+            case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+                return "Deprecated Behaviour";
+            case GL_DEBUG_TYPE_PORTABILITY:
+                return "Portability";
+            case GL_DEBUG_TYPE_PERFORMANCE:
+                return "Performance";
+        }
+    };
+
+    switch (type)
+    {
+        case GL_DEBUG_TYPE_ERROR:
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+            Debug::LogErrorFormat("[GraphicsBackend] [{}] [{}] {}", GetSourceName(), GetTypeName(), std::string(message, length));
             break;
-        case GL_INVALID_VALUE:
-            errorString = "GL_INVALID_VALUE";
-            break;
-        case GL_INVALID_OPERATION:
-            errorString = "GL_INVALID_OPERATION";
-            break;
-        case GL_INVALID_FRAMEBUFFER_OPERATION:
-            errorString = "GL_INVALID_FRAMEBUFFER_OPERATION";
-            break;
-        case GL_OUT_OF_MEMORY:
-            errorString = "GL_OUT_OF_MEMORY";
-            break;
-        case GL_STACK_UNDERFLOW:
-            errorString = "GL_STACK_UNDERFLOW";
-            break;
-        case GL_STACK_OVERFLOW:
-            errorString = "GL_STACK_OVERFLOW";
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        case GL_DEBUG_TYPE_PORTABILITY:
+        case GL_DEBUG_TYPE_PERFORMANCE:
+            Debug::LogWarningFormat("[GraphicsBackend] [{}] [{}] {}", GetSourceName(), GetTypeName(), std::string(message, length));
             break;
     }
-
-    Debug::LogErrorFormat("[Graphics Backend] {}\n{}\n{}:{}", errorString, file, std::to_string(lineNumber), line);
 }
-
-#ifdef RENDER_ENGINE_EDITOR
-#define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction)               \
-    backendFunction;                                               \
-    {                                                              \
-        auto error = glGetError();                                 \
-        if (error != GL_NO_ERROR)                                            \
-            LogError(error, #backendFunction, __FILE__, __LINE__); \
-    }
-#else
-#define CHECK_GRAPHICS_BACKEND_FUNC(backendFunction) backendFunction;
-#endif
 
 template<typename T>
 constexpr auto Cast(T value) -> typename std::underlying_type<T>::type
@@ -112,17 +121,22 @@ void GraphicsBackendOpenGL::Init(void *data)
 #endif
 
     int extensionsCount;
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetIntegerv(GL_NUM_EXTENSIONS, &extensionsCount))
+    glGetIntegerv(GL_NUM_EXTENSIONS, &extensionsCount);
     for (int i = 0; i < extensionsCount; ++i)
     {
-        const unsigned char *ext = CHECK_GRAPHICS_BACKEND_FUNC(glGetStringi(GL_EXTENSIONS, i))
+        const unsigned char *ext = glGetStringi(GL_EXTENSIONS, i);
         m_Extensions.insert(std::string(reinterpret_cast<const char *>(ext)));
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenFramebuffers(2, &s_Framebuffers[0]))
+    glGenFramebuffers(2, &s_Framebuffers[0]);
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS))
-    CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_DEPTH_TEST))
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    glEnable(GL_DEPTH_TEST);
+
+#if RENDER_ENGINE_EDITOR
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(DebugMessageCallback, nullptr);
+#endif
 
     ResetClearFlags();
 }
@@ -145,15 +159,15 @@ void GraphicsBackendOpenGL::InitNewFrame(void *data)
 GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
 {
     GraphicsBackendTexture texture{};
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture)))
+    glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture));
 
     GLenum textureType = OpenGLHelpers::ToTextureType(type);
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(textureType, texture.Texture))
-    CHECK_GRAPHICS_BACKEND_FUNC(glTexParameteri(textureType, GL_TEXTURE_BASE_LEVEL, 0))
-    CHECK_GRAPHICS_BACKEND_FUNC(glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, mipLevels - 1))
+    glBindTexture(textureType, texture.Texture);
+    glTexParameteri(textureType, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, mipLevels - 1);
     if (!name.empty())
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_TEXTURE, texture.Texture, name.length(), name.c_str()));
+        glObjectLabel(GL_TEXTURE, texture.Texture, name.length(), name.c_str());
     }
 
     texture.Type = type;
@@ -174,28 +188,28 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
 GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name)
 {
     GraphicsBackendSampler sampler{};
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenSamplers(1, reinterpret_cast<GLuint *>(&sampler.Sampler)))
+    glGenSamplers(1, reinterpret_cast<GLuint *>(&sampler.Sampler));
 
     GLint wrap = OpenGLHelpers::ToTextureWrapMode(wrapMode);
-    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_S, wrap))
-    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_T, wrap))
-    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_R, wrap))
+    glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_S, wrap);
+    glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_T, wrap);
+    glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_R, wrap);
 
     GLint minFilter, magFilter;
     OpenGLHelpers::ToTextureFilteringMode(filteringMode, minFilter, magFilter);
-    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_FILTER, minFilter))
-    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MAG_FILTER, magFilter))
+    glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_FILTER, minFilter);
+    glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MAG_FILTER, magFilter);
 
     if (borderColor != nullptr)
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameterfv(sampler.Sampler, GL_TEXTURE_BORDER_COLOR, borderColor))
+        glSamplerParameterfv(sampler.Sampler, GL_TEXTURE_BORDER_COLOR, borderColor);
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_LOD, minLod))
+    glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_LOD, minLod);
 
     if (!name.empty())
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_SAMPLER, sampler.Sampler, name.length(), name.c_str()));
+        glObjectLabel(GL_SAMPLER, sampler.Sampler, name.length(), name.c_str());
     }
 
     return sampler;
@@ -203,34 +217,34 @@ GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrap
 
 void GraphicsBackendOpenGL::DeleteTexture(const GraphicsBackendTexture &texture)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteTextures(1, reinterpret_cast<const GLuint *>(&texture.Texture)))
+    glDeleteTextures(1, reinterpret_cast<const GLuint *>(&texture.Texture));
 }
 
 void GraphicsBackendOpenGL::DeleteSampler(const GraphicsBackendSampler &sampler)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteSamplers(1, reinterpret_cast<const GLuint *>(&sampler.Sampler)))
+    glDeleteSamplers(1, reinterpret_cast<const GLuint *>(&sampler.Sampler));
 }
 
 void GraphicsBackendOpenGL::BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture)
 {
     auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
-    CHECK_GRAPHICS_BACKEND_FUNC(glActiveTexture(OpenGLHelpers::ToTextureUnit(binding)))
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(OpenGLHelpers::ToTextureType(texture.Type), texture.Texture))
-    CHECK_GRAPHICS_BACKEND_FUNC(glUniform1i(binding, binding))
+    glActiveTexture(OpenGLHelpers::ToTextureUnit(binding));
+    glBindTexture(OpenGLHelpers::ToTextureType(texture.Type), texture.Texture);
+    glUniform1i(binding, binding);
 }
 
 void GraphicsBackendOpenGL::BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler)
 {
     auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
-    CHECK_GRAPHICS_BACKEND_FUNC(glActiveTexture(OpenGLHelpers::ToTextureUnit(binding)))
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindSampler(binding, sampler.Sampler))
+    glActiveTexture(OpenGLHelpers::ToTextureUnit(binding));
+    glBindSampler(binding, sampler.Sampler);
 }
 
 void GraphicsBackendOpenGL::GenerateMipmaps(const GraphicsBackendTexture &texture)
 {
     GLenum textureType = OpenGLHelpers::ToTextureType(texture.Type);
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(textureType, texture.Texture))
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenerateMipmap(textureType))
+    glBindTexture(textureType, texture.Texture);
+    glGenerateMipmap(textureType);
 }
 
 void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData)
@@ -240,16 +254,16 @@ void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &text
     GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(texture.Format, texture.IsLinear);
     bool isImage3D = texture.Type == TextureType::TEXTURE_2D_ARRAY;
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindTexture(type, texture.Texture))
+    glBindTexture(type, texture.Texture);
     if (IsCompressedTextureFormat(texture.Format) && imageSize != 0)
     {
         if (isImage3D)
         {
-            CHECK_GRAPHICS_BACKEND_FUNC(glCompressedTexImage3D(target, level, internalFormat, width, height, depth, 0, imageSize, pixelsData))
+            glCompressedTexImage3D(target, level, internalFormat, width, height, depth, 0, imageSize, pixelsData);
         }
         else
         {
-            CHECK_GRAPHICS_BACKEND_FUNC(glCompressedTexImage2D(target, level, internalFormat, width, height, 0, imageSize, pixelsData))
+            glCompressedTexImage2D(target, level, internalFormat, width, height, 0, imageSize, pixelsData);
         }
     }
     else
@@ -258,11 +272,11 @@ void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &text
         GLenum dataType = OpenGLHelpers::ToTextureDataType(texture.Format);
         if (isImage3D)
         {
-            CHECK_GRAPHICS_BACKEND_FUNC(glTexImage3D(target, level, internalFormat, width, height, depth, 0, pixelFormat, dataType, pixelsData))
+            glTexImage3D(target, level, internalFormat, width, height, depth, 0, pixelFormat, dataType, pixelsData);
         }
         else
         {
-            CHECK_GRAPHICS_BACKEND_FUNC(glTexImage2D(target, level, internalFormat, width, height, 0, pixelFormat, dataType, pixelsData))
+            glTexImage2D(target, level, internalFormat, width, height, 0, pixelFormat, dataType, pixelsData);
         }
     }
 }
@@ -271,11 +285,11 @@ void AttachTextureToFramebuffer(GLenum framebuffer, GLenum attachment, TextureTy
 {
     if (type == TextureType::TEXTURE_2D)
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTexture(framebuffer, attachment, texture, level))
+        glFramebufferTexture(framebuffer, attachment, texture, level);
     }
     else
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glFramebufferTextureLayer(framebuffer, attachment, texture, level, layer))
+        glFramebufferTextureLayer(framebuffer, attachment, texture, level, layer);
     }
 }
 
@@ -283,11 +297,11 @@ void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTarget
 {
     if (descriptor.IsBackbuffer)
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         return;
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[0]))
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[0]);
 
     GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(descriptor.Attachment);
     AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, descriptor.Texture.Type, descriptor.Texture.Texture, descriptor.Level, descriptor.Layer);
@@ -323,12 +337,12 @@ TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAt
 GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferUsageHint usageHint, const std::string& name)
 {
     GLuint glBuffer;
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenBuffers(1, &glBuffer))
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer))
-    CHECK_GRAPHICS_BACKEND_FUNC(glBufferData(GL_SHADER_STORAGE_BUFFER, size, nullptr, OpenGLHelpers::ToBufferUsageHint(usageHint)))
+    glGenBuffers(1, &glBuffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, size, nullptr, OpenGLHelpers::ToBufferUsageHint(usageHint));
     if (!name.empty())
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_BUFFER, glBuffer, name.length(), name.c_str()))
+        glObjectLabel(GL_BUFFER, glBuffer, name.length(), name.c_str());
     }
 
     GraphicsBackendBuffer buffer{};
@@ -339,14 +353,14 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferUsageH
 
 void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteBuffers(1, reinterpret_cast<const GLuint *>(&buffer.Buffer)))
+    glDeleteBuffers(1, reinterpret_cast<const GLuint *>(&buffer.Buffer));
 }
 
 void BindBuffer_Internal(GLenum bindTarget, const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
     auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(bindTarget, buffer.Buffer))
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBufferRange(bindTarget, binding, buffer.Buffer, offset, size))
+    glBindBuffer(bindTarget, buffer.Buffer);
+    glBindBufferRange(bindTarget, binding, buffer.Buffer, offset, size);
 }
 
 void GraphicsBackendOpenGL::BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
@@ -363,17 +377,17 @@ void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buff
 
 void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_UNIFORM_BUFFER, buffer.Buffer))
-    void *contents = CHECK_GRAPHICS_BACKEND_FUNC(glMapBufferRange(GL_UNIFORM_BUFFER, offset, size, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT))
+    glBindBuffer(GL_UNIFORM_BUFFER, buffer.Buffer);
+    void *contents = glMapBufferRange(GL_UNIFORM_BUFFER, offset, size, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
     memcpy(contents, data, size);
-    CHECK_GRAPHICS_BACKEND_FUNC(glUnmapBuffer(GL_UNIFORM_BUFFER))
+    glUnmapBuffer(GL_UNIFORM_BUFFER);
 }
 
 void GraphicsBackendOpenGL::CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_COPY_READ_BUFFER, source.Buffer))
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_COPY_WRITE_BUFFER, destination.Buffer))
-    CHECK_GRAPHICS_BACKEND_FUNC(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, sourceOffset, destinationOffset, size))
+    glBindBuffer(GL_COPY_READ_BUFFER, source.Buffer);
+    glBindBuffer(GL_COPY_WRITE_BUFFER, destination.Buffer);
+    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, sourceOffset, destinationOffset, size);
 }
 
 uint64_t GraphicsBackendOpenGL::GetMaxConstantBufferSize()
@@ -383,7 +397,7 @@ uint64_t GraphicsBackendOpenGL::GetMaxConstantBufferSize()
     if (size == 0)
     {
         int tempSize;
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &tempSize))
+        glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &tempSize);
         size = tempSize;
     }
 
@@ -396,7 +410,7 @@ int GraphicsBackendOpenGL::GetConstantBufferOffsetAlignment()
 
     if (alignment == 0)
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment))
+        glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);
     }
 
     return alignment;
@@ -408,19 +422,19 @@ GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBack
     geometry.VertexBuffer = vertexBuffer;
     geometry.IndexBuffer = indexBuffer;
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glGenVertexArrays(1, reinterpret_cast<GLuint *>(&geometry.VertexArrayObject)))
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.Buffer))
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.Buffer))
+    glGenVertexArrays(1, reinterpret_cast<GLuint *>(&geometry.VertexArrayObject));
+    glBindVertexArray(geometry.VertexArrayObject);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.Buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.Buffer);
     if (!name.empty())
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_VERTEX_ARRAY, geometry.VertexArrayObject, name.length(), name.c_str()))
+        glObjectLabel(GL_VERTEX_ARRAY, geometry.VertexArrayObject, name.length(), name.c_str());
     }
 
     for (const auto &descriptor : vertexAttributes)
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glEnableVertexAttribArray(descriptor.Index))
-        CHECK_GRAPHICS_BACKEND_FUNC(glVertexAttribPointer(descriptor.Index, descriptor.Dimensions, OpenGLHelpers::ToVertexAttributeDataType(descriptor.DataType), descriptor.IsNormalized ? GL_TRUE : GL_FALSE, descriptor.Stride, reinterpret_cast<const void *>(descriptor.Offset)))
+        glEnableVertexAttribArray(descriptor.Index);
+        glVertexAttribPointer(descriptor.Index, descriptor.Dimensions, OpenGLHelpers::ToVertexAttributeDataType(descriptor.DataType), descriptor.IsNormalized ? GL_TRUE : GL_FALSE, descriptor.Stride, reinterpret_cast<const void *>(descriptor.Offset));
     }
 
     return geometry;
@@ -428,7 +442,7 @@ GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBack
 
 void GraphicsBackendOpenGL::DeleteGeometry(const GraphicsBackendGeometry &geometry)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteVertexArrays(1, reinterpret_cast<const GLuint *>(&geometry.VertexArrayObject)))
+    glDeleteVertexArrays(1, reinterpret_cast<const GLuint *>(&geometry.VertexArrayObject));
     DeleteBuffer(geometry.VertexBuffer);
     DeleteBuffer(geometry.IndexBuffer);
 }
@@ -437,49 +451,49 @@ void GraphicsBackendOpenGL::SetCullFace(CullFace cullFace)
 {
     if (cullFace == CullFace::NONE)
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glDisable(GL_CULL_FACE))
+        glDisable(GL_CULL_FACE);
     }
     else
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_CULL_FACE))
-        CHECK_GRAPHICS_BACKEND_FUNC(glCullFace(OpenGLHelpers::ToCullFace(cullFace)))
+        glEnable(GL_CULL_FACE);
+        glCullFace(OpenGLHelpers::ToCullFace(cullFace));
     }
 }
 
 void GraphicsBackendOpenGL::SetCullFaceOrientation(CullFaceOrientation orientation)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glFrontFace(OpenGLHelpers::ToCullFaceOrientation(orientation)))
+    glFrontFace(OpenGLHelpers::ToCullFaceOrientation(orientation));
 }
 
 void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, float near, float far)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glViewport(x, y, width, height))
-    CHECK_GRAPHICS_BACKEND_FUNC(glDepthRange(near, far))
+    glViewport(x, y, width, height);
+    glDepthRange(near, far);
 }
 
 GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string& source, const std::string& name)
 {
     GraphicsBackendShaderObject shaderObject{};
-    shaderObject.ShaderObject = CHECK_GRAPHICS_BACKEND_FUNC(glCreateShader(OpenGLHelpers::ToShaderType(shaderType)))
+    shaderObject.ShaderObject = glCreateShader(OpenGLHelpers::ToShaderType(shaderType));
 
     auto *sourceChar = source.c_str();
-    CHECK_GRAPHICS_BACKEND_FUNC(glShaderSource(shaderObject.ShaderObject, 1, &sourceChar, nullptr))
-    CHECK_GRAPHICS_BACKEND_FUNC(glCompileShader(shaderObject.ShaderObject))
+    glShaderSource(shaderObject.ShaderObject, 1, &sourceChar, nullptr);
+    glCompileShader(shaderObject.ShaderObject);
 
     if (!name.empty())
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_SHADER, shaderObject.ShaderObject, name.length(), name.c_str()));
+        glObjectLabel(GL_SHADER, shaderObject.ShaderObject, name.length(), name.c_str());
     }
 
     int isCompiled;
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderiv(shaderObject.ShaderObject, GL_COMPILE_STATUS, &isCompiled))
+    glGetShaderiv(shaderObject.ShaderObject, GL_COMPILE_STATUS, &isCompiled);
     if (!isCompiled)
     {
         int infoLogLength;
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderiv(shaderObject.ShaderObject, GL_INFO_LOG_LENGTH, &infoLogLength));
+        glGetShaderiv(shaderObject.ShaderObject, GL_INFO_LOG_LENGTH, &infoLogLength);
 
         std::string logMsg(infoLogLength + 1, ' ');
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetShaderInfoLog(shaderObject.ShaderObject, infoLogLength, nullptr, &logMsg[0]))
+        glGetShaderInfoLog(shaderObject.ShaderObject, infoLogLength, nullptr, &logMsg[0]);
 
         throw std::runtime_error(OpenGLHelpers::GetShaderTypeName(shaderType) + " shader compilation failed with errors:\n" + logMsg);
     }
@@ -491,42 +505,42 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<Gr
                                                             const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name)
 {
     GraphicsBackendProgram program{};
-    program.Program = CHECK_GRAPHICS_BACKEND_FUNC(glCreateProgram())
+    program.Program = glCreateProgram();
 
     for (auto &shader : shaders)
     {
-        bool isShader = CHECK_GRAPHICS_BACKEND_FUNC(glIsShader(shader.ShaderObject))
+        bool isShader = glIsShader(shader.ShaderObject);
         if (isShader)
         {
-            CHECK_GRAPHICS_BACKEND_FUNC(glAttachShader(program.Program, shader.ShaderObject))
+            glAttachShader(program.Program, shader.ShaderObject);
         }
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glLinkProgram(program.Program))
+    glLinkProgram(program.Program);
 
     for (auto &shader : shaders)
     {
-        bool isShader = CHECK_GRAPHICS_BACKEND_FUNC(glIsShader(shader.ShaderObject))
+        bool isShader = glIsShader(shader.ShaderObject);
         if (isShader)
         {
-            CHECK_GRAPHICS_BACKEND_FUNC(glDetachShader(program.Program, shader.ShaderObject))
+            glDetachShader(program.Program, shader.ShaderObject);
         }
     }
 
     if (!name.empty())
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glObjectLabel(GL_PROGRAM, program.Program, name.length(), name.c_str()))
+        glObjectLabel(GL_PROGRAM, program.Program, name.length(), name.c_str());
     }
 
     int isLinked;
-    CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_LINK_STATUS, &isLinked))
+    glGetProgramiv(program.Program, GL_LINK_STATUS, &isLinked);
     if (!isLinked)
     {
         int infoLogLength;
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramiv(program.Program, GL_INFO_LOG_LENGTH, &infoLogLength))
+        glGetProgramiv(program.Program, GL_INFO_LOG_LENGTH, &infoLogLength);
 
         std::string logMsg(infoLogLength + 1, ' ');
-        CHECK_GRAPHICS_BACKEND_FUNC(glGetProgramInfoLog(program.Program, infoLogLength, nullptr, &logMsg[0]))
+        glGetProgramInfoLog(program.Program, infoLogLength, nullptr, &logMsg[0]);
 
         throw std::runtime_error("Link failed with error:\n" + logMsg);
     }
@@ -542,12 +556,12 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<Gr
 
 void GraphicsBackendOpenGL::DeleteShader(GraphicsBackendShaderObject shader)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteShader(shader.ShaderObject))
+    glDeleteShader(shader.ShaderObject);
 }
 
 void GraphicsBackendOpenGL::DeleteProgram(GraphicsBackendProgram program)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glDeleteProgram(program.Program))
+    glDeleteProgram(program.Program);
 
     auto blendState = reinterpret_cast<BlendState*>(program.BlendState);
     delete blendState;
@@ -560,55 +574,55 @@ bool GraphicsBackendOpenGL::RequireStrictPSODescriptor()
 
 void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glUseProgram(program.Program))
+    glUseProgram(program.Program);
 
     auto blendState = reinterpret_cast<BlendState*>(program.BlendState);
     if (blendState)
     {
         if (blendState->Enabled)
         {
-            CHECK_GRAPHICS_BACKEND_FUNC(glEnable(GL_BLEND))
-            CHECK_GRAPHICS_BACKEND_FUNC(glBlendFunc(blendState->SourceFactor, blendState->DestinationFactor))
+            glEnable(GL_BLEND);
+            glBlendFunc(blendState->SourceFactor, blendState->DestinationFactor);
         }
         else
         {
-            CHECK_GRAPHICS_BACKEND_FUNC(glDisable(GL_BLEND))
+            glDisable(GL_BLEND);
         }
     }
 }
 
 void GraphicsBackendOpenGL::SetClearColor(float r, float g, float b, float a)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glClearColor(r, g, b, a))
+    glClearColor(r, g, b, a);
 }
 
 void GraphicsBackendOpenGL::SetClearDepth(double depth)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glClearDepth(depth))
+    glClearDepth(depth);
 }
 
 void GraphicsBackendOpenGL::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArrays(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, count))
+    glBindVertexArray(geometry.VertexArrayObject);
+    glDrawArrays(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
 }
 
 void GraphicsBackendOpenGL::DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawArraysInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, instanceCount))
+    glBindVertexArray(geometry.VertexArrayObject);
+    glDrawArraysInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, instanceCount);
 }
 
 void GraphicsBackendOpenGL::DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElements(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr))
+    glBindVertexArray(geometry.VertexArrayObject);
+    glDrawElements(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr);
 }
 
 void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindVertexArray(geometry.VertexArrayObject))
-    CHECK_GRAPHICS_BACKEND_FUNC(glDrawElementsInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr, instanceCount))
+    glBindVertexArray(geometry.VertexArrayObject);
+    glDrawElementsInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr, instanceCount);
 }
 
 void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
@@ -638,31 +652,32 @@ void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &s
         mask |= GL_COLOR_BUFFER_BIT;
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Framebuffers[0]))
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Framebuffers[0]);
     AttachTextureToFramebuffer(GL_READ_FRAMEBUFFER, glAttachment, source.Type, source.Texture, 0, 0);
 
     GLuint destinationFramebuffer = destinationDescriptor.IsBackbuffer ? 0 : s_Framebuffers[1];
-    CHECK_GRAPHICS_BACKEND_FUNC(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destinationFramebuffer))
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destinationFramebuffer);
     if (!destinationDescriptor.IsBackbuffer)
     {
         AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, destinationDescriptor.Texture.Type, destinationDescriptor.Texture.Texture, 0, 0);
     }
 
-    CHECK_GRAPHICS_BACKEND_FUNC(glBlitFramebuffer(sourceX, sourceX, sourceX + width, sourceY + height, destinationX, destinationY, destinationX + width, destinationY + height, mask, GL_NEAREST))
+    glBlitFramebuffer(sourceX, sourceX, sourceX + width, sourceY + height, destinationX, destinationY, destinationX + width, destinationY + height, mask, GL_NEAREST);
 }
 
 void GraphicsBackendOpenGL::PushDebugGroup(const std::string& name)
 {
 #ifdef GL_KHR_debug
-    CHECK_GRAPHICS_BACKEND_FUNC(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, s_DebugGroupId++, -1, name.c_str()))
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, s_DebugGroupId++, -1, name.c_str());
 #endif
 }
 
 void GraphicsBackendOpenGL::PopDebugGroup()
 {
 #ifdef GL_KHR_debug
-    assert(s_DebugGroupId-- > 0);
-    CHECK_GRAPHICS_BACKEND_FUNC(glPopDebugGroup())
+    assert(s_DebugGroupId > 0);
+    glPopDebugGroup();
+    --s_DebugGroupId;
 #endif
 }
 
@@ -682,9 +697,9 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
     {
         if ((clearFlag & (GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)) != 0)
         {
-            CHECK_GRAPHICS_BACKEND_FUNC(glDepthMask(GL_TRUE))
+            glDepthMask(GL_TRUE);
         }
-        CHECK_GRAPHICS_BACKEND_FUNC(glClear(clearFlag))
+        glClear(clearFlag);
     }
 }
 
@@ -710,7 +725,7 @@ GraphicsBackendDepthStencilState GraphicsBackendOpenGL::CreateDepthStencilState(
     glState->DepthFunction = OpenGLHelpers::ToDepthCompareFunction(depthFunction);
     glState->DepthWrite = depthWrite ? GL_TRUE : GL_FALSE;
 
-    GraphicsBackendDepthStencilState state;
+    GraphicsBackendDepthStencilState state{};
     state.m_State = reinterpret_cast<uint64_t>(glState);
     return state;
 }
@@ -726,8 +741,8 @@ void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStenc
     auto glState = reinterpret_cast<DepthStencilState*>(state.m_State);
     if (glState)
     {
-        CHECK_GRAPHICS_BACKEND_FUNC(glDepthFunc(glState->DepthFunction))
-        CHECK_GRAPHICS_BACKEND_FUNC(glDepthMask(glState->DepthWrite))
+        glDepthFunc(glState->DepthFunction);
+        glDepthMask(glState->DepthWrite);
     }
 }
 

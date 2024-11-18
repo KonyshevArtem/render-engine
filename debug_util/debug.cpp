@@ -9,15 +9,31 @@ std::map<int, std::function<void(std::string)>> *GetListeners()
     return listeners;
 }
 
-void Debug::LogError(const std::string &_string)
+void NotifyListeners(const std::string& string)
 {
-    std::cerr << "[ERROR] " << _string << std::endl;
-
     auto &listeners = *GetListeners();
     for (const auto &pair : listeners)
     {
-        pair.second(_string);
+        pair.second(string);
     }
+}
+
+void Debug::LogInfo(const std::string& string)
+{
+    std::cout << "[INFO]" << string << std::endl;
+    NotifyListeners(string);
+}
+
+void Debug::LogWarning(const std::string& string)
+{
+    std::cout << "[WARNING]" << string << std::endl;
+    NotifyListeners(string);
+}
+
+void Debug::LogError(const std::string& string)
+{
+    std::cerr << "[ERROR] " << string << std::endl;
+    NotifyListeners(string);
 }
 
 void Debug::AddListener(int listenerId, std::function<void(std::string)> listener)

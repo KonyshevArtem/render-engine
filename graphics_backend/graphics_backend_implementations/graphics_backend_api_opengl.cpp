@@ -21,6 +21,7 @@
 #include <type_traits>
 #include <stdexcept>
 #include <cassert>
+#include <array>
 
 struct DepthStencilState
 {
@@ -35,9 +36,28 @@ struct BlendState
     bool Enabled;
 };
 
+struct DebugMessageType
+{
+    GLenum Type;
+    bool Enabled;
+};
+
 GLuint s_Framebuffers[2];
 GLbitfield s_ClearFlags[static_cast<int>(FramebufferAttachment::MAX)];
 uint64_t s_DebugGroupId = 0;
+
+std::array s_DebugMessageTypes =
+{
+    DebugMessageType{GL_DEBUG_TYPE_ERROR, true},
+    DebugMessageType{GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, true},
+    DebugMessageType{GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, true},
+    DebugMessageType{GL_DEBUG_TYPE_PORTABILITY, true},
+    DebugMessageType{GL_DEBUG_TYPE_PERFORMANCE, true},
+    DebugMessageType{GL_DEBUG_TYPE_MARKER, false},
+    DebugMessageType{GL_DEBUG_TYPE_PUSH_GROUP, false},
+    DebugMessageType{GL_DEBUG_TYPE_POP_GROUP, false},
+    DebugMessageType{GL_DEBUG_TYPE_OTHER, false}
+};
 
 void DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
@@ -123,7 +143,13 @@ void GraphicsBackendOpenGL::Init(void *data)
 
 #if RENDER_ENGINE_EDITOR
     glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(DebugMessageCallback, nullptr);
+
+    for (const DebugMessageType& messageType : s_DebugMessageTypes)
+    {
+        glDebugMessageControl(GL_DONT_CARE, messageType.Type, GL_DONT_CARE, 0, nullptr, messageType.Enabled ? GL_TRUE : GL_FALSE);
+    }
 #endif
 
     ResetClearFlags();

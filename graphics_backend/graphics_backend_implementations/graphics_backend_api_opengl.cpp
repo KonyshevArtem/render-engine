@@ -91,18 +91,6 @@ void DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity
     }
 }
 
-template<typename T>
-constexpr auto Cast(T value) -> typename std::underlying_type<T>::type
-{
-    return static_cast<typename std::underlying_type<T>::type>(value);
-}
-
-template<typename T>
-constexpr auto Cast(T *values) -> typename std::underlying_type<T>::type*
-{
-    return reinterpret_cast<typename std::underlying_type<T>::type*>(values);
-}
-
 void ResetClearFlags()
 {
     int max = static_cast<int>(FramebufferAttachment::MAX);

@@ -23,7 +23,7 @@ GraphicsBufferWrapper::GraphicsBufferWrapper(const std::shared_ptr<Shader>& shad
             name.append(bufferName);
 
             const auto &bufferInfo = it->second;
-            m_PassBuffers[i] = std::make_shared<GraphicsBuffer>(bufferInfo->GetSize(), BufferUsageHint::DYNAMIC_DRAW, name);
+            m_PassBuffers[i] = std::make_shared<GraphicsBuffer>(bufferInfo->GetSize(), name);
             m_PassBuffersInfo[i] = bufferInfo;
         }
         else

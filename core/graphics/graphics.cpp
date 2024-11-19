@@ -73,10 +73,10 @@ namespace Graphics
         assert(sizeof(ShadowsData) == 1456);
         assert(sizeof(PerDrawData) == 128);
 
-        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), BufferUsageHint::DYNAMIC_DRAW, "CameraData");
-        s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), BufferUsageHint::DYNAMIC_DRAW, "LightingData");
-        s_ShadowsDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), BufferUsageHint::DYNAMIC_DRAW, "ShadowsData");
-        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(sizeof(PerDrawData), BufferUsageHint::DYNAMIC_DRAW, "PerDrawData");
+        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), "CameraData");
+        s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), "LightingData");
+        s_ShadowsDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData");
+        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(sizeof(PerDrawData), "PerDrawData");
     }
 
     void InitPasses()
@@ -97,8 +97,8 @@ namespace Graphics
     {
         auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
 
-        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, BufferUsageHint::DYNAMIC_DRAW, "PerInstanceMatrices");
-        s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(4096, BufferUsageHint::DYNAMIC_DRAW, "PerInstanceIndices");
+        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, "PerInstanceMatrices");
+        s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(4096, "PerInstanceIndices");
     }
 
     void Init()

@@ -39,7 +39,7 @@ public:
     void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) override;
     TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear) override;
 
-    GraphicsBackendBuffer CreateBuffer(int size, BufferUsageHint usageHint, const std::string& name) override;
+    GraphicsBackendBuffer CreateBuffer(int size, const std::string& name) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
     void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
     void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;

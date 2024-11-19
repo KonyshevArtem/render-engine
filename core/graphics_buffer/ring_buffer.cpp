@@ -16,13 +16,12 @@ uint64_t AlignSize(uint64_t size)
     return size;
 }
 
-RingBuffer::RingBuffer(uint64_t elementSize, BufferUsageHint usageHint, std::string name) :
-    m_UsageHint(usageHint),
+RingBuffer::RingBuffer(uint64_t elementSize, std::string name) :
     m_ElementSize(AlignSize(elementSize)),
     m_Capacity(k_DefaultCapacity),
     m_Name(std::move(name))
 {
-    m_Buffer = std::make_shared<GraphicsBuffer>(m_ElementSize * m_Capacity, m_UsageHint, m_Name);
+    m_Buffer = std::make_shared<GraphicsBuffer>(m_ElementSize * m_Capacity, m_Name);
 }
 
 void RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
@@ -33,7 +32,7 @@ void RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
         m_Capacity += k_DefaultCapacity;
 
         std::shared_ptr<GraphicsBuffer> oldBuffer = m_Buffer;
-        m_Buffer = std::make_shared<GraphicsBuffer>(m_ElementSize * m_Capacity, m_UsageHint, m_Name);
+        m_Buffer = std::make_shared<GraphicsBuffer>(m_ElementSize * m_Capacity, m_Name);
 
         if (oldBuffer)
         {

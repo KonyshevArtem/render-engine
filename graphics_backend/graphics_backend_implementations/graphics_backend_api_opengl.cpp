@@ -348,12 +348,12 @@ TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAt
     return TextureInternalFormat::RGBA8;
 }
 
-GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferUsageHint usageHint, const std::string& name)
+GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::string& name)
 {
     GLuint glBuffer;
     glGenBuffers(1, &glBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, size, nullptr, OpenGLHelpers::ToBufferUsageHint(usageHint));
+    glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, nullptr, GL_MAP_WRITE_BIT);
     if (!name.empty())
     {
         glObjectLabel(GL_BUFFER, glBuffer, name.length(), name.c_str());

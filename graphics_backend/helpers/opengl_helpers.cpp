@@ -34,33 +34,6 @@ GLuint OpenGLHelpers::ToShaderType(ShaderType shaderType)
     }
 }
 
-GLenum OpenGLHelpers::ToBufferUsageHint(BufferUsageHint usageHint)
-{
-    switch (usageHint)
-    {
-        case BufferUsageHint::STREAM_DRAW:
-            return GL_STREAM_DRAW;
-        case BufferUsageHint::STREAM_READ:
-            return GL_STREAM_READ;
-        case BufferUsageHint::STREAM_COPY:
-            return GL_STREAM_COPY;
-        case BufferUsageHint::STATIC_DRAW:
-            return GL_STATIC_DRAW;
-        case BufferUsageHint::STATIC_READ:
-            return GL_STATIC_READ;
-        case BufferUsageHint::STATIC_COPY:
-            return GL_STATIC_COPY;
-        case BufferUsageHint::DYNAMIC_DRAW:
-            return GL_DYNAMIC_DRAW;
-        case BufferUsageHint::DYNAMIC_READ:
-            return GL_DYNAMIC_READ;
-        case BufferUsageHint::DYNAMIC_COPY:
-            return GL_DYNAMIC_COPY;
-        default:
-            return 0;
-    }
-}
-
 GLenum OpenGLHelpers::ToPrimitiveType(PrimitiveType primitiveType)
 {
     switch (primitiveType)

@@ -6,7 +6,6 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <memory>
 
 enum class TextureType;
@@ -14,7 +13,6 @@ enum class TextureInternalFormat : uint16_t;
 enum class FramebufferAttachment;
 enum class PrimitiveType;
 enum class VertexAttributeDataType;
-enum class BufferUsageHint;
 enum class BlendFactor;
 enum class CullFace;
 enum class DepthFunction;
@@ -62,7 +60,7 @@ public:
     virtual void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) = 0;
     virtual TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool *outIsLinear) = 0;
 
-    virtual GraphicsBackendBuffer CreateBuffer(int size, BufferUsageHint usageHint, const std::string& name) = 0;
+    virtual GraphicsBackendBuffer CreateBuffer(int size, const std::string& name) = 0;
     virtual void DeleteBuffer(const GraphicsBackendBuffer &buffer) = 0;
     virtual void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;
     virtual void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;

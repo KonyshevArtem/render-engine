@@ -264,7 +264,7 @@ TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAtt
     return format;
 }
 
-GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, BufferUsageHint usageHint, const std::string& name)
+GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, const std::string& name)
 {
     auto metalBuffer = m_Device->newBuffer(size, s_DefaultStorageMode);
 

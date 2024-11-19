@@ -230,6 +230,8 @@ namespace Graphics
             cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, true, true, "CameraDepthRT");
         }
 
+        Renderer::UploadInstanceDataBuffer();
+
         GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
         GraphicsBackend::Current()->SetClearDepth(1);
 

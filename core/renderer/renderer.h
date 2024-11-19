@@ -33,6 +33,7 @@ public:
     uint32_t GetInstanceDataIndex() const;
     uint32_t GetInstanceDataOffset() const;
 
+    static void UploadInstanceDataBuffer();
     static const std::shared_ptr<GraphicsBuffer> &GetInstanceDataBuffer();
 
     bool CastShadows = true;
@@ -43,11 +44,11 @@ protected:
     std::shared_ptr<Material> m_Material;
 
 private:
-    void SetDataToBuffers(const std::string &name, const void *data, uint64_t size);
+    void SetInstanceData(const std::string &name, const void *data, uint64_t size);
 
     std::weak_ptr<GameObject> m_GameObject;
     std::shared_ptr<GraphicsBackendBufferInfo> m_InstanceDataBufferInfo;
-    int64_t m_InstanceDataBufferOffset;
+    int64_t m_InstanceDataOffset;
 };
 
 #endif //RENDER_ENGINE_RENDERER_H

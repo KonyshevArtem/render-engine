@@ -42,6 +42,12 @@ struct DebugMessageType
     bool Enabled;
 };
 
+struct BufferData
+{
+    uint64_t GLBuffer;
+    uint8_t* Data;
+};
+
 GLuint s_Framebuffers[2];
 GLbitfield s_ClearFlags[static_cast<int>(FramebufferAttachment::MAX)];
 uint64_t s_DebugGroupId = 0;
@@ -353,28 +359,37 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::s
     GLuint glBuffer;
     glGenBuffers(1, &glBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer);
-    glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, nullptr, GL_MAP_WRITE_BIT);
+    glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
     if (!name.empty())
     {
         glObjectLabel(GL_BUFFER, glBuffer, name.length(), name.c_str());
     }
 
+    BufferData* bufferData = new BufferData();
+    bufferData->GLBuffer = glBuffer;
+    bufferData->Data = static_cast<uint8_t*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
+
     GraphicsBackendBuffer buffer{};
-    buffer.Buffer = static_cast<uint64_t>(glBuffer);
+    buffer.Buffer = reinterpret_cast<uint64_t>(bufferData);
     buffer.Size = size;
     return buffer;
 }
 
 void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
+    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+    glUnmapNamedBuffer(bufferData->GLBuffer);
     glDeleteBuffers(1, reinterpret_cast<const GLuint *>(&buffer.Buffer));
+    delete bufferData;
 }
 
 void BindBuffer_Internal(GLenum bindTarget, const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
+    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+
     auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
-    glBindBuffer(bindTarget, buffer.Buffer);
-    glBindBufferRange(bindTarget, binding, buffer.Buffer, offset, size);
+    glBindBuffer(bindTarget, bufferData->GLBuffer);
+    glBindBufferRange(bindTarget, binding, bufferData->GLBuffer, offset, size);
 }
 
 void GraphicsBackendOpenGL::BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
@@ -391,16 +406,17 @@ void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buff
 
 void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
 {
-    glBindBuffer(GL_UNIFORM_BUFFER, buffer.Buffer);
-    void *contents = glMapBufferRange(GL_UNIFORM_BUFFER, offset, size, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-    memcpy(contents, data, size);
-    glUnmapBuffer(GL_UNIFORM_BUFFER);
+    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+    memcpy(bufferData->Data + offset, data, size);
 }
 
 void GraphicsBackendOpenGL::CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size)
 {
-    glBindBuffer(GL_COPY_READ_BUFFER, source.Buffer);
-    glBindBuffer(GL_COPY_WRITE_BUFFER, destination.Buffer);
+    const BufferData* sourceBufferData = reinterpret_cast<BufferData*>(source.Buffer);
+    const BufferData* destinationBufferData = reinterpret_cast<BufferData*>(destination.Buffer);
+
+    glBindBuffer(GL_COPY_READ_BUFFER, sourceBufferData->GLBuffer);
+    glBindBuffer(GL_COPY_WRITE_BUFFER, destinationBufferData->GLBuffer);
     glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, sourceOffset, destinationOffset, size);
 }
 
@@ -436,10 +452,13 @@ GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBack
     geometry.VertexBuffer = vertexBuffer;
     geometry.IndexBuffer = indexBuffer;
 
+    const BufferData* vertexBufferData = reinterpret_cast<BufferData*>(vertexBuffer.Buffer);
+    const BufferData* indexBufferData = reinterpret_cast<BufferData*>(indexBuffer.Buffer);
+
     glGenVertexArrays(1, reinterpret_cast<GLuint *>(&geometry.VertexArrayObject));
     glBindVertexArray(geometry.VertexArrayObject);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.Buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.Buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferData->GLBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferData->GLBuffer);
     if (!name.empty())
     {
         glObjectLabel(GL_VERTEX_ARRAY, geometry.VertexArrayObject, name.length(), name.c_str());

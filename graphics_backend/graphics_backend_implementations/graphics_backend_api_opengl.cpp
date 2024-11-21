@@ -378,7 +378,8 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::s
 void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
     const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
-    glUnmapNamedBuffer(bufferData->GLBuffer);
+    glBindBuffer(GL_UNIFORM_BUFFER, bufferData->GLBuffer);
+    glUnmapBuffer(GL_UNIFORM_BUFFER);
     glDeleteBuffers(1, reinterpret_cast<const GLuint *>(&buffer.Buffer));
     delete bufferData;
 }

@@ -99,17 +99,16 @@ void Renderer::SetDataToBuffers(const std::string &name, const void *data, uint6
         s_InstanceDataBufferOffset += m_InstanceDataBufferInfo->GetSize();
     }
 
-    if (!s_InstanceDataBuffer || s_InstanceDataBuffer->GetSize() < m_InstanceDataBufferOffset + m_InstanceDataBufferInfo->GetSize())
-    {
-        std::shared_ptr<GraphicsBuffer> oldBuffer = s_InstanceDataBuffer;
-        s_InstanceDataBuffer = std::make_shared<GraphicsBuffer>(m_InstanceDataBufferOffset + m_InstanceDataBufferInfo->GetSize() * 2, "PerInstanceData");
+    const uint64_t requiredBufferSize = m_InstanceDataBufferOffset + m_InstanceDataBufferInfo->GetSize();
+    const uint64_t allocatedBufferSize = m_InstanceDataBufferOffset + m_InstanceDataBufferInfo->GetSize() * 2;
 
-        if (oldBuffer)
-        {
-            GraphicsBackend::Current()->BeginCopyPass("PerInstanceData Buffer Extension");
-            Graphics::CopyBufferData(oldBuffer, s_InstanceDataBuffer, 0, 0, oldBuffer->GetSize());
-            GraphicsBackend::Current()->EndCopyPass();
-        }
+    if (!s_InstanceDataBuffer)
+    {
+        s_InstanceDataBuffer = std::make_shared<GraphicsBuffer>(allocatedBufferSize, "PerInstanceData");
+    }
+    else if (s_InstanceDataBuffer->GetSize() < requiredBufferSize)
+    {
+        s_InstanceDataBuffer->Resize(allocatedBufferSize);
     }
 
     auto& variables = m_InstanceDataBufferInfo->GetVariables();

@@ -13,7 +13,7 @@ class GraphicsBackendBuffer;
 class RingBuffer
 {
 public:
-    RingBuffer(uint64_t elementSize, std::string name);
+    RingBuffer(uint64_t elementSize, const std::string& name);
     ~RingBuffer() = default;
 
     const GraphicsBackendBuffer& GetBackendBuffer() const
@@ -45,7 +45,6 @@ private:
 
     uint64_t m_ElementSize;
     int m_Capacity;
-    std::string m_Name;
 
     int m_CurrentOffset = -1;
 };

@@ -354,12 +354,14 @@ TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAt
     return TextureInternalFormat::RGBA8;
 }
 
-GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::string& name)
+GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
 {
+    const GLbitfield bufferFlags = allowCPUWrites ? GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT : 0;
+
     GLuint glBuffer;
     glGenBuffers(1, &glBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer);
-    glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+    glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, data, bufferFlags);
     if (!name.empty())
     {
         glObjectLabel(GL_BUFFER, glBuffer, name.length(), name.c_str());
@@ -367,7 +369,7 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::s
 
     BufferData* bufferData = new BufferData();
     bufferData->GLBuffer = glBuffer;
-    bufferData->Data = static_cast<uint8_t*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
+    bufferData->Data = allowCPUWrites ? static_cast<uint8_t*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, bufferFlags)) : nullptr;
 
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(bufferData);
@@ -378,8 +380,12 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::s
 void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
     const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
-    glBindBuffer(GL_UNIFORM_BUFFER, bufferData->GLBuffer);
-    glUnmapBuffer(GL_UNIFORM_BUFFER);
+    if (bufferData->Data)
+    {
+        glBindBuffer(GL_UNIFORM_BUFFER, bufferData->GLBuffer);
+        glUnmapBuffer(GL_UNIFORM_BUFFER);
+    }
+
     glDeleteBuffers(1, reinterpret_cast<const GLuint *>(&buffer.Buffer));
     delete bufferData;
 }
@@ -408,6 +414,7 @@ void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buff
 void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
 {
     const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+    assert(bufferData->Data);
     memcpy(bufferData->Data + offset, data, size);
 }
 

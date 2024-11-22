@@ -7,7 +7,7 @@ GraphicsBuffer::GraphicsBuffer(uint64_t size, std::string name) :
         m_Size(size),
         m_Name(std::move(name))
 {
-    m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, m_Name);
+    m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, m_Name, true);
 }
 
 GraphicsBuffer::~GraphicsBuffer()
@@ -34,7 +34,7 @@ void GraphicsBuffer::Resize(uint64_t size)
     {
         const GraphicsBackendBuffer oldBuffer = m_Buffer;
 
-        m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, m_Name);
+        m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, m_Name, true);
         GraphicsBackend::Current()->BeginCopyPass(m_Name + " Buffer Resize Copy");
         GraphicsBackend::Current()->CopyBufferSubData(oldBuffer, m_Buffer, 0, 0, m_Size);
         GraphicsBackend::Current()->EndCopyPass();

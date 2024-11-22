@@ -283,10 +283,16 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool
             return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
         case TextureInternalFormat::BC7:
             return isLinear ? GL_COMPRESSED_RGBA_BPTC_UNORM : GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
-        case TextureInternalFormat::DEPTH_COMPONENT:
-            return GL_DEPTH_COMPONENT;
-        case TextureInternalFormat::DEPTH_STENCIL:
-            return GL_DEPTH_STENCIL;
+        case TextureInternalFormat::DEPTH_32:
+            return GL_DEPTH_COMPONENT32F;
+        case TextureInternalFormat::DEPTH_24:
+            return GL_DEPTH_COMPONENT24;
+        case TextureInternalFormat::DEPTH_16:
+            return GL_DEPTH_COMPONENT16;
+        case TextureInternalFormat::DEPTH_32_STENCIL_8:
+            return GL_DEPTH32F_STENCIL8;
+        case TextureInternalFormat::DEPTH_24_STENCIL_8:
+            return GL_DEPTH24_STENCIL8;
         default:
             return 0;
     }
@@ -449,10 +455,16 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bo
         case GL_COMPRESSED_RGBA_BPTC_UNORM:
         case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
             return TextureInternalFormat::BC7;
-        case GL_DEPTH_COMPONENT:
-            return TextureInternalFormat::DEPTH_COMPONENT;
-        case GL_DEPTH_STENCIL:
-            return TextureInternalFormat::DEPTH_STENCIL;
+        case GL_DEPTH_COMPONENT32F:
+            return TextureInternalFormat::DEPTH_32;
+        case GL_DEPTH_COMPONENT24:
+            return TextureInternalFormat::DEPTH_24;
+        case GL_DEPTH_COMPONENT16:
+            return TextureInternalFormat::DEPTH_16;
+        case GL_DEPTH32F_STENCIL8:
+            return TextureInternalFormat::DEPTH_32_STENCIL_8;
+        case GL_DEPTH24_STENCIL8:
+            return TextureInternalFormat::DEPTH_24_STENCIL_8;
         default:
             return TextureInternalFormat::RGBA8;
     }
@@ -533,8 +545,11 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::BC3:
         case TextureInternalFormat::BC7:
             return GL_RGBA;
-        case TextureInternalFormat::DEPTH_COMPONENT:
-        case TextureInternalFormat::DEPTH_STENCIL:
+        case TextureInternalFormat::DEPTH_32:
+        case TextureInternalFormat::DEPTH_24:
+        case TextureInternalFormat::DEPTH_16:
+        case TextureInternalFormat::DEPTH_32_STENCIL_8:
+        case TextureInternalFormat::DEPTH_24_STENCIL_8:
             return GL_DEPTH_COMPONENT;
     }
 }
@@ -543,7 +558,11 @@ GLenum OpenGLHelpers::ToTextureDataType(TextureInternalFormat format)
 {
     switch (format)
     {
-        case TextureInternalFormat::DEPTH_COMPONENT:
+        case TextureInternalFormat::DEPTH_32:
+        case TextureInternalFormat::DEPTH_24:
+        case TextureInternalFormat::DEPTH_16:
+        case TextureInternalFormat::DEPTH_32_STENCIL_8:
+        case TextureInternalFormat::DEPTH_24_STENCIL_8:
             return GL_FLOAT;
         default:
             return GL_UNSIGNED_BYTE;

@@ -227,7 +227,7 @@ namespace Graphics
         if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
         {
             cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true, "CameraColorRT");
-            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_COMPONENT, true, true, "CameraDepthRT");
+            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_24_STENCIL_8, true, true, "CameraDepthRT");
         }
 
         GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);

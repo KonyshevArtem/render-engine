@@ -106,6 +106,7 @@ public:
     virtual void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
     virtual void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
 
+    bool IsTexture3D(TextureType type);
     bool IsCompressedTextureFormat(TextureInternalFormat format);
     int GetBlockSize(TextureInternalFormat format);
     int GetBlockBytes(TextureInternalFormat format);

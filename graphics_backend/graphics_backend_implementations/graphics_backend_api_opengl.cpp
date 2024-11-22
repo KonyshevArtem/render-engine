@@ -181,7 +181,7 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
     GraphicsBackendTexture texture{};
     glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture));
 
-    GLenum textureType = OpenGLHelpers::ToTextureType(type);
+    const GLenum textureType = OpenGLHelpers::ToTextureType(type);
     glBindTexture(textureType, texture.Texture);
     glTexParameteri(textureType, GL_TEXTURE_BASE_LEVEL, 0);
     glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, mipLevels - 1);
@@ -190,18 +190,19 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
         glObjectLabel(GL_TEXTURE, texture.Texture, name.length(), name.c_str());
     }
 
+    const GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(format, isLinear);
+    if (IsTexture3D(type))
+    {
+        glTexStorage3D(textureType, mipLevels, internalFormat, width, height, depth);
+    }
+    else
+    {
+        glTexStorage2D(textureType, mipLevels, internalFormat, width, height);
+    }
+
     texture.Type = type;
     texture.Format = format;
     texture.IsLinear = isLinear;
-
-    if (isRenderTarget)
-    {
-        for (int i = 0; i < mipLevels; ++i)
-        {
-            UploadImagePixels(texture, i, CubemapFace::POSITIVE_X, width / (i + 1), height / (i + 1), depth, 0, nullptr);
-        }
-    }
-
     return texture;
 }
 
@@ -269,34 +270,34 @@ void GraphicsBackendOpenGL::GenerateMipmaps(const GraphicsBackendTexture &textur
 
 void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData)
 {
-    GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
-    GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, cubemapFace);
-    GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(texture.Format, texture.IsLinear);
-    bool isImage3D = texture.Type == TextureType::TEXTURE_2D_ARRAY;
+    const GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
+    const GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, cubemapFace);
+    const GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(texture.Format, texture.IsLinear);
+    const bool isTexture3D = IsTexture3D(texture.Type);
 
     glBindTexture(type, texture.Texture);
     if (IsCompressedTextureFormat(texture.Format) && imageSize != 0)
     {
-        if (isImage3D)
+        if (isTexture3D)
         {
-            glCompressedTexImage3D(target, level, internalFormat, width, height, depth, 0, imageSize, pixelsData);
+            glCompressedTexSubImage3D(target, level, 0, 0, 0, width, height, depth, internalFormat, imageSize, pixelsData);
         }
         else
         {
-            glCompressedTexImage2D(target, level, internalFormat, width, height, 0, imageSize, pixelsData);
+            glCompressedTexSubImage2D(target, level, 0, 0, width, height, internalFormat, imageSize, pixelsData);
         }
     }
     else
     {
-        GLenum pixelFormat = OpenGLHelpers::ToTextureFormat(texture.Format);
-        GLenum dataType = OpenGLHelpers::ToTextureDataType(texture.Format);
-        if (isImage3D)
+        const GLenum pixelFormat = OpenGLHelpers::ToTextureFormat(texture.Format);
+        const GLenum dataType = OpenGLHelpers::ToTextureDataType(texture.Format);
+        if (isTexture3D)
         {
-            glTexImage3D(target, level, internalFormat, width, height, depth, 0, pixelFormat, dataType, pixelsData);
+            glTexSubImage3D(target, level, 0, 0, 0, width, height, depth, pixelFormat, dataType, pixelsData);
         }
         else
         {
-            glTexImage2D(target, level, internalFormat, width, height, 0, pixelFormat, dataType, pixelsData);
+            glTexSubImage2D(target, level, 0, 0, width, height, pixelFormat, dataType, pixelsData);
         }
     }
 }

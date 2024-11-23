@@ -20,7 +20,6 @@
 
 NS::Error *s_Error;
 const int s_MaxBuffers = 31;
-MTL::StorageMode s_DefaultTextureStorageMode;
 MTL::ResourceOptions s_DefaultBufferStorageMode;
 
 struct MetalInitData
@@ -50,9 +49,7 @@ void GraphicsBackendMetal::Init(void *data)
     m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
     SetCommandBuffers(metalData->RenderCommandBuffer, metalData->CopyCommandBuffer);
 
-    const bool hasUnifiedMem = m_Device->hasUnifiedMemory();
-    s_DefaultTextureStorageMode = hasUnifiedMem ? MTL::StorageModeShared : MTL::StorageModeManaged;
-    s_DefaultBufferStorageMode = hasUnifiedMem ? MTL::ResourceStorageModeShared : MTL::ResourceStorageModePrivate;
+    s_DefaultBufferStorageMode = m_Device->hasUnifiedMemory() ? MTL::ResourceStorageModeShared : MTL::ResourceStorageModePrivate;
 }
 
 GraphicsBackendName GraphicsBackendMetal::GetName()
@@ -69,27 +66,25 @@ void GraphicsBackendMetal::InitNewFrame(void *data)
 
 GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
 {
-    auto storageMode = isRenderTarget ? MTL::StorageModePrivate : s_DefaultTextureStorageMode;
-
     MTL::TextureUsage textureUsage = MTL::TextureUsageShaderRead;
     if (isRenderTarget)
     {
         textureUsage |= MTL::TextureUsageRenderTarget;
     }
 
-    auto descriptor = MTL::TextureDescriptor::alloc()->init();
+    MTL::TextureDescriptor *descriptor = MTL::TextureDescriptor::alloc()->init();
     descriptor->setWidth(width);
     descriptor->setHeight(height);
     descriptor->setPixelFormat(MetalHelpers::ToTextureInternalFormat(format, isLinear));
     descriptor->setTextureType(MetalHelpers::ToTextureType(type));
-    descriptor->setStorageMode(storageMode);
+    descriptor->setStorageMode(MTL::StorageModePrivate);
     descriptor->setUsage(textureUsage);
     descriptor->setMipmapLevelCount(mipLevels);
 
-    bool isTextureArray = type == TextureType::TEXTURE_1D_ARRAY ||
-                          type == TextureType::TEXTURE_2D_ARRAY ||
-                          type == TextureType::TEXTURE_2D_MULTISAMPLE_ARRAY ||
-                          type == TextureType::TEXTURE_CUBEMAP_ARRAY;
+    const bool isTextureArray = type == TextureType::TEXTURE_1D_ARRAY ||
+                                type == TextureType::TEXTURE_2D_ARRAY ||
+                                type == TextureType::TEXTURE_2D_MULTISAMPLE_ARRAY ||
+                                type == TextureType::TEXTURE_CUBEMAP_ARRAY;
 
     if (type == TextureType::TEXTURE_3D)
     {
@@ -100,7 +95,7 @@ GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height
         descriptor->setArrayLength(depth);
     }
 
-    auto metalTexture = m_Device->newTexture(descriptor);
+    MTL::Texture* metalTexture = m_Device->newTexture(descriptor);
     descriptor->release();
 
     if (!name.empty())
@@ -208,7 +203,6 @@ void GraphicsBackendMetal::GenerateMipmaps(const GraphicsBackendTexture &texture
 
 void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData)
 {
-    auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
     int bytesPerRow;
     if (IsCompressedTextureFormat(texture.Format))
     {
@@ -220,7 +214,14 @@ void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &textu
     {
         bytesPerRow = imageSize / height;
     }
-    metalTexture->replaceRegion(MTL::Region::Make3D(0, 0, depth, width, height, 1), level, static_cast<NS::UInteger>(cubemapFace), pixelsData, bytesPerRow, 0);
+
+    MTL::Texture* metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
+    MTL::Buffer* tempBuffer = m_Device->newBuffer(pixelsData, imageSize, s_DefaultBufferStorageMode);
+    BeginCopyPass("Upload Texture Data");
+    m_BlitCommandEncoder->copyFromBuffer(tempBuffer, 0, bytesPerRow, imageSize, MTL::Size::Make(width, height, 1), metalTexture, static_cast<NS::UInteger>(cubemapFace), level, MTL::Origin::Make(0, 0, depth));
+    EndCopyPass();
+
+    tempBuffer->release();
 }
 
 void GraphicsBackendMetal::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor)

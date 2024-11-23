@@ -29,7 +29,7 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendI
         m_Name(std::move(name))
 {
     const TextureInternalFormat k_DefaultColorFormat = TextureInternalFormat::RGBA16F;
-    const TextureInternalFormat k_DefaultDepthFormat = TextureInternalFormat::DEPTH_24_STENCIL_8;
+    const TextureInternalFormat k_DefaultDepthFormat = TextureInternalFormat::DEPTH_32_STENCIL_8;
 
     static std::vector<GraphicsBackendVertexAttributeDescriptor> s_DefaultVertexAttributes;
     if (s_DefaultVertexAttributes.empty())

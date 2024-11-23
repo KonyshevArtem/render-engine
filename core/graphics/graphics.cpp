@@ -219,7 +219,7 @@ namespace Graphics
         static std::shared_ptr<Texture2D> cameraDepthTarget;
 
         static GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
-        static GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
+        static GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
 
         s_ScreenWidth  = width;
         s_ScreenHeight = height;
@@ -227,7 +227,7 @@ namespace Graphics
         if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
         {
             cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true, "CameraColorRT");
-            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_24_STENCIL_8, true, true, "CameraDepthRT");
+            cameraDepthTarget = Texture2D::Create(width, height, TextureInternalFormat::DEPTH_32_STENCIL_8, true, true, "CameraDepthRT");
         }
 
         GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);

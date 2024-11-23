@@ -227,17 +227,23 @@ void GraphicsBackendMetal::AttachRenderTarget(const GraphicsBackendRenderTargetD
         desc->setStoreAction(MetalHelpers::ToStoreAction(descriptor.StoreAction));
     };
 
-    if (descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT || descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)
+    const bool isDepthStencil = descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+    const bool isDepth = descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT || isDepthStencil;
+    const bool isStencil = descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT || isDepthStencil;
+
+    if (isDepth || isStencil)
     {
-        configureDescriptor(m_RenderPassDescriptor->depthAttachment());
-    }
-    else if (descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT)
-    {
-        configureDescriptor(m_RenderPassDescriptor->stencilAttachment());
+        if (isDepth)
+            configureDescriptor(m_RenderPassDescriptor->depthAttachment());
+
+        if (isStencil)
+            configureDescriptor(m_RenderPassDescriptor->stencilAttachment());
+        else
+            m_RenderPassDescriptor->stencilAttachment()->setTexture(nullptr);
     }
     else
     {
-        int index = static_cast<int>(descriptor.Attachment);
+        const int index = static_cast<int>(descriptor.Attachment);
         configureDescriptor(m_RenderPassDescriptor->colorAttachments()->object(index));
     }
 }
@@ -411,6 +417,9 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
     attachmentDesc->setDestinationRGBBlendFactor(MetalHelpers::ToBlendFactor(colorAttachmentDescriptor.DestinationFactor));
 
     desc->setDepthAttachmentPixelFormat(metalDepthFormat);
+
+    if (depthFormat == TextureInternalFormat::DEPTH_32_STENCIL_8 || depthFormat == TextureInternalFormat::DEPTH_24_STENCIL_8)
+        desc->setStencilAttachmentPixelFormat(metalDepthFormat);
 
     auto *vertexLib = reinterpret_cast<MTL::Library*>(shaders[0].ShaderObject);
     auto *fragmentLib = reinterpret_cast<MTL::Library*>(shaders[1].ShaderObject);

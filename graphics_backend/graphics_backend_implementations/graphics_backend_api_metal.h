@@ -44,8 +44,8 @@ public:
     void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
     void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
 
-    void SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data) override;
-    void CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size) override;
+    void SetBufferData(const GraphicsBackendBuffer &buffer, long offset, long size, const void *data) override;
+    void CopyBufferSubData(const GraphicsBackendBuffer &source, const GraphicsBackendBuffer &destination, int sourceOffset, int destinationOffset, int size) override;
     uint64_t GetMaxConstantBufferSize() override;
     int GetConstantBufferOffsetAlignment() override;
 

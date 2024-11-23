@@ -20,7 +20,8 @@
 
 NS::Error *s_Error;
 const int s_MaxBuffers = 31;
-MTL::StorageMode s_DefaultStorageMode;
+MTL::StorageMode s_DefaultTextureStorageMode;
+MTL::ResourceOptions s_DefaultBufferStorageMode;
 
 struct MetalInitData
 {
@@ -36,6 +37,12 @@ struct MetalFrameData
     MTL::RenderPassDescriptor* BackbufferDescriptor;
 };
 
+struct BufferData
+{
+    MTL::Buffer* Buffer;
+    MTL::ResourceOptions StorageMode;
+};
+
 void GraphicsBackendMetal::Init(void *data)
 {
     auto metalData = reinterpret_cast<MetalInitData*>(data);
@@ -43,7 +50,9 @@ void GraphicsBackendMetal::Init(void *data)
     m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
     SetCommandBuffers(metalData->RenderCommandBuffer, metalData->CopyCommandBuffer);
 
-    s_DefaultStorageMode = m_Device->hasUnifiedMemory() ? MTL::StorageModeShared : MTL::StorageModeManaged;
+    const bool hasUnifiedMem = m_Device->hasUnifiedMemory();
+    s_DefaultTextureStorageMode = hasUnifiedMem ? MTL::StorageModeShared : MTL::StorageModeManaged;
+    s_DefaultBufferStorageMode = hasUnifiedMem ? MTL::ResourceStorageModeShared : MTL::ResourceStorageModePrivate;
 }
 
 GraphicsBackendName GraphicsBackendMetal::GetName()
@@ -60,7 +69,7 @@ void GraphicsBackendMetal::InitNewFrame(void *data)
 
 GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
 {
-    auto storageMode = isRenderTarget ? MTL::StorageModePrivate : s_DefaultStorageMode;
+    auto storageMode = isRenderTarget ? MTL::StorageModePrivate : s_DefaultTextureStorageMode;
 
     MTL::TextureUsage textureUsage = MTL::TextureUsageShaderRead;
     if (isRenderTarget)
@@ -272,37 +281,53 @@ TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAtt
 
 GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
 {
-    auto metalBuffer = m_Device->newBuffer(size, s_DefaultStorageMode);
+    const MTL::ResourceOptions storageMode = allowCPUWrites ? s_DefaultBufferStorageMode : MTL::ResourceStorageModePrivate;
+    MTL::Buffer* metalBuffer = allowCPUWrites && data ? m_Device->newBuffer(data, size, storageMode) : m_Device->newBuffer(size, storageMode);
+
+    if (!allowCPUWrites)
+    {
+        MTL::Buffer* tempBuffer = m_Device->newBuffer(data, size, s_DefaultBufferStorageMode);
+        BeginCopyPass("Init Buffer " + name);
+        m_BlitCommandEncoder->copyFromBuffer(tempBuffer, 0, metalBuffer, 0, size);
+        EndCopyPass();
+
+        tempBuffer->release();
+    }
 
     if (!name.empty())
     {
         metalBuffer->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
     }
 
+    BufferData* bufferData = new BufferData();
+    bufferData->Buffer = metalBuffer;
+    bufferData->StorageMode = storageMode;
+
     GraphicsBackendBuffer buffer{};
-    buffer.Buffer = reinterpret_cast<uint64_t>(metalBuffer);
+    buffer.Buffer = reinterpret_cast<uint64_t>(bufferData);
     buffer.Size = size;
     return buffer;
 }
 
 void GraphicsBackendMetal::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
-    auto *metalBuffer = reinterpret_cast<MTL::Buffer*>(buffer.Buffer);
-    metalBuffer->release();
+    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+    bufferData->Buffer->release();
+    delete bufferData;
 }
 
 void GraphicsBackendMetal::BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
     assert(m_RenderCommandEncoder != nullptr);
 
-    auto *metalBuffer = reinterpret_cast<MTL::Buffer*>(buffer.Buffer);
+    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
     if (bindings.VertexIndex >= 0)
     {
-        m_RenderCommandEncoder->setVertexBuffer(metalBuffer, offset, bindings.VertexIndex);
+        m_RenderCommandEncoder->setVertexBuffer(bufferData->Buffer, offset, bindings.VertexIndex);
     }
     if (bindings.FragmentIndex >= 0)
     {
-        m_RenderCommandEncoder->setFragmentBuffer(metalBuffer, offset, bindings.FragmentIndex);
+        m_RenderCommandEncoder->setFragmentBuffer(bufferData->Buffer, offset, bindings.FragmentIndex);
     }
 }
 
@@ -311,23 +336,23 @@ void GraphicsBackendMetal::BindConstantBuffer(const GraphicsBackendBuffer &buffe
     BindBuffer(buffer, bindings, offset, size);
 }
 
-void GraphicsBackendMetal::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
+void GraphicsBackendMetal::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data)
 {
-    auto metalBuffer = reinterpret_cast<MTL::Buffer *>(buffer.Buffer);
-    auto contents = reinterpret_cast<uint8_t*>(metalBuffer->contents()) + offset;
+    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+    uint8_t* contents = static_cast<uint8_t*>(bufferData->Buffer->contents()) + offset;
     memcpy(contents, data, size);
 
-    if (s_DefaultStorageMode == MTL::StorageModeManaged)
-        metalBuffer->didModifyRange(NS::Range::Make(offset, size));
+    if (bufferData->StorageMode == MTL::ResourceStorageModeManaged)
+        bufferData->Buffer->didModifyRange(NS::Range::Make(offset, size));
 }
 
-void GraphicsBackendMetal::CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size)
+void GraphicsBackendMetal::CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size)
 {
     assert(m_BlitCommandEncoder != nullptr);
 
-    auto metalSource = reinterpret_cast<MTL::Buffer*>(source.Buffer);
-    auto metalDestination = reinterpret_cast<MTL::Buffer*>(destination.Buffer);
-    m_BlitCommandEncoder->copyFromBuffer(metalSource, sourceOffset, metalDestination, destinationOffset, size);
+    const BufferData* sourceBufferData = reinterpret_cast<BufferData*>(source.Buffer);
+    const BufferData* destinationBufferData = reinterpret_cast<BufferData*>(destination.Buffer);
+    m_BlitCommandEncoder->copyFromBuffer(sourceBufferData->Buffer, sourceOffset, destinationBufferData->Buffer, destinationOffset, size);
 }
 
 uint64_t GraphicsBackendMetal::GetMaxConstantBufferSize()
@@ -500,7 +525,8 @@ void GraphicsBackendMetal::DrawArrays(const GraphicsBackendGeometry &geometry, P
 {
     assert(m_RenderCommandEncoder != nullptr);
 
-    m_RenderCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
+    const BufferData* vertexBufferData = reinterpret_cast<BufferData*>(geometry.VertexBuffer.Buffer);
+    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, s_MaxBuffers - 1);
     m_RenderCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
 }
 
@@ -508,7 +534,8 @@ void GraphicsBackendMetal::DrawArraysInstanced(const GraphicsBackendGeometry &ge
 {
     assert(m_RenderCommandEncoder != nullptr);
 
-    m_RenderCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
+    const BufferData* vertexBufferData = reinterpret_cast<BufferData*>(geometry.VertexBuffer.Buffer);
+    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, s_MaxBuffers - 1);
     m_RenderCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, indicesCount);
 }
 
@@ -516,16 +543,20 @@ void GraphicsBackendMetal::DrawElements(const GraphicsBackendGeometry &geometry,
 {
     assert(m_RenderCommandEncoder != nullptr);
 
-    m_RenderCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
-    m_RenderCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0);
+    const BufferData* vertexBufferData = reinterpret_cast<BufferData*>(geometry.VertexBuffer.Buffer);
+    const BufferData* indexBufferData = reinterpret_cast<BufferData*>(geometry.IndexBuffer.Buffer);
+    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, s_MaxBuffers - 1);
+    m_RenderCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), indexBufferData->Buffer, 0);
 }
 
 void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
     assert(m_RenderCommandEncoder != nullptr);
 
-    m_RenderCommandEncoder->setVertexBuffer(reinterpret_cast<MTL::Buffer*>(geometry.VertexBuffer.Buffer), 0, s_MaxBuffers - 1);
-    m_RenderCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), reinterpret_cast<MTL::Buffer*>(geometry.IndexBuffer.Buffer), 0, instanceCount);
+    const BufferData* vertexBufferData = reinterpret_cast<BufferData*>(geometry.VertexBuffer.Buffer);
+    const BufferData* indexBufferData = reinterpret_cast<BufferData*>(geometry.IndexBuffer.Buffer);
+    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, s_MaxBuffers - 1);
+    m_RenderCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), indexBufferData->Buffer, 0, instanceCount);
 }
 
 void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)

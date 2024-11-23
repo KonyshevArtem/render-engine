@@ -412,14 +412,14 @@ void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buff
     BindBuffer_Internal(GL_UNIFORM_BUFFER, buffer, bindings, offset, size);
 }
 
-void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
+void GraphicsBackendOpenGL::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data)
 {
     const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
     assert(bufferData->Data);
     memcpy(bufferData->Data + offset, data, size);
 }
 
-void GraphicsBackendOpenGL::CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size)
+void GraphicsBackendOpenGL::CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size)
 {
     const BufferData* sourceBufferData = reinterpret_cast<BufferData*>(source.Buffer);
     const BufferData* destinationBufferData = reinterpret_cast<BufferData*>(destination.Buffer);

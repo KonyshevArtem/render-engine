@@ -327,6 +327,9 @@ void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTarget
     GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(descriptor.Attachment);
     AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, descriptor.Texture.Type, descriptor.Texture.Texture, descriptor.Level, descriptor.Layer);
 
+    if (descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT)
+        AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, descriptor.Texture.Type, 0, 0, 0);
+
     if (descriptor.LoadAction == LoadAction::CLEAR)
     {
         int attachmentIndex = static_cast<int>(descriptor.Attachment);

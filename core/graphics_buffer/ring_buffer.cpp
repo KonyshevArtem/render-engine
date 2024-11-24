@@ -16,13 +16,11 @@ uint64_t AlignSize(uint64_t size)
     return size;
 }
 
-RingBuffer::RingBuffer(uint64_t elementSize, BufferUsageHint usageHint, std::string name) :
-    m_UsageHint(usageHint),
+RingBuffer::RingBuffer(uint64_t elementSize, const std::string& name) :
     m_ElementSize(AlignSize(elementSize)),
-    m_Capacity(k_DefaultCapacity),
-    m_Name(std::move(name))
+    m_Capacity(k_DefaultCapacity)
 {
-    m_Buffer = std::make_shared<GraphicsBuffer>(m_ElementSize * m_Capacity, m_UsageHint, m_Name);
+    m_Buffer = std::make_shared<GraphicsBuffer>(m_ElementSize * m_Capacity, name);
 }
 
 void RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
@@ -31,16 +29,7 @@ void RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
     if (m_CurrentOffset >= m_Capacity)
     {
         m_Capacity += k_DefaultCapacity;
-
-        std::shared_ptr<GraphicsBuffer> oldBuffer = m_Buffer;
-        m_Buffer = std::make_shared<GraphicsBuffer>(m_ElementSize * m_Capacity, m_UsageHint, m_Name);
-
-        if (oldBuffer)
-        {
-            GraphicsBackend::Current()->BeginCopyPass(m_Name + " Ring Buffer Extension");
-            Graphics::CopyBufferData(oldBuffer, m_Buffer, 0, 0, oldBuffer->GetSize());
-            GraphicsBackend::Current()->EndCopyPass();
-        }
+        m_Buffer->Resize(m_ElementSize * m_Capacity);
     }
 
     m_Buffer->SetData(data, m_ElementSize * m_CurrentOffset + offset, size);

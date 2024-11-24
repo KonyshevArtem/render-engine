@@ -31,9 +31,6 @@ Mesh::Mesh(const std::vector<Vector3>& vertices,
     uint64_t indexSize = sizeof(int) * indexes.size();
     uint64_t vertexSize = posSize + uvSize + normalsSize + tangentsSize;
 
-    auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(vertexSize * vertexCount, BufferUsageHint::STATIC_DRAW, name + "_Vertices");
-    auto indexBuffer = GraphicsBackend::Current()->CreateBuffer(indexSize, BufferUsageHint::STATIC_DRAW, name + "_Indices");
-
     m_VertexAttributes.Add({0, 3, VertexAttributeDataType::FLOAT, false, vertexSize, 0});
     if (hasNormals)
     {
@@ -75,10 +72,10 @@ Mesh::Mesh(const std::vector<Vector3>& vertices,
         }
     }
 
-    m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, m_VertexAttributes.GetAttributes(), name);
+    auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(vertexSize * vertexCount, name + "_Vertices", false, vertexDataPtr);
+    auto indexBuffer = GraphicsBackend::Current()->CreateBuffer(indexSize, name + "_Indices", false, indexes.data());
 
-    GraphicsBackend::Current()->SetBufferData(indexBuffer, 0, indexSize, indexes.data());
-    GraphicsBackend::Current()->SetBufferData(vertexBuffer, 0, vertexSize * vertexCount, vertexDataPtr);
+    m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, m_VertexAttributes.GetAttributes(), name);
 }
 
 const std::shared_ptr<Mesh> &Mesh::GetFullscreenMesh()

@@ -81,8 +81,11 @@ enum class TextureInternalFormat : uint16_t
     ASTC_10X10,
     ASTC_12X12,
 
-    DEPTH_COMPONENT,
-    DEPTH_STENCIL,
+    DEPTH_32,
+    DEPTH_24,
+    DEPTH_16,
+    DEPTH_32_STENCIL_8,
+    DEPTH_24_STENCIL_8,
 
     BGRA8,
     BGRA8_SNORM,

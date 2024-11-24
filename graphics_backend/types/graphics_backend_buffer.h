@@ -2,7 +2,6 @@
 #define RENDER_ENGINE_GRAPHICS_BACKEND_BUFFER_H
 
 #include <cstdint>
-#include "enums/buffer_usage_hint.h"
 
 class GraphicsBackendBuffer
 {

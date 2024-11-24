@@ -7,8 +7,6 @@ Point::Point(const std::string& name) :
     m_VertexAttributes.Add({0, 3, VertexAttributeDataType::FLOAT, false, 0, 0});
 
     float zero[3] {0, 0, 0};
-    auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(sizeof(zero), BufferUsageHint::STATIC_DRAW, name + "_Vertex");
-    GraphicsBackend::Current()->SetBufferData(vertexBuffer, 0, sizeof(zero), &zero);
-
+    auto vertexBuffer = GraphicsBackend::Current()->CreateBuffer(sizeof(zero), name + "_Vertex", false, &zero);
     m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, {}, m_VertexAttributes.GetAttributes(), name);
 }

@@ -2,7 +2,6 @@
 #define RENDER_ENGINE_RING_BUFFER_H
 
 #include "graphics_buffer.h"
-#include "enums/buffer_usage_hint.h"
 
 #include <cstdint>
 #include <memory>
@@ -14,7 +13,7 @@ class GraphicsBackendBuffer;
 class RingBuffer
 {
 public:
-    RingBuffer(uint64_t elementSize, BufferUsageHint usageHint, std::string name);
+    RingBuffer(uint64_t elementSize, const std::string& name);
     ~RingBuffer() = default;
 
     const GraphicsBackendBuffer& GetBackendBuffer() const
@@ -44,10 +43,8 @@ public:
 private:
     std::shared_ptr<GraphicsBuffer> m_Buffer;
 
-    BufferUsageHint m_UsageHint;
     uint64_t m_ElementSize;
     int m_Capacity;
-    std::string m_Name;
 
     int m_CurrentOffset = -1;
 };

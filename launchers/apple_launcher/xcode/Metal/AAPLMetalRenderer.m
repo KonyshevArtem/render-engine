@@ -2,7 +2,7 @@
 #import "EngineFrameworkWrapper.h"
 #import "ImGuiWrapper.h"
 
-static const MTLPixelFormat AAPLDepthFormat = MTLPixelFormatDepth32Float;
+static const MTLPixelFormat AAPLDepthFormat = MTLPixelFormatDepth32Float_Stencil8;
 static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm;
 
 /// Main class that performs the rendering.

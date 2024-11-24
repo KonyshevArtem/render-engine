@@ -29,13 +29,13 @@ public:
     void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) override;
     TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear) override;
 
-    GraphicsBackendBuffer CreateBuffer(int size, BufferUsageHint usageHint, const std::string& name) override;
+    GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data = nullptr) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
     void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
     void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
 
-    void SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data) override;
-    void CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size) override;
+    void SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data) override;
+    void CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size) override;
     uint64_t GetMaxConstantBufferSize() override;
     int GetConstantBufferOffsetAlignment() override;
 

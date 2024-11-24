@@ -3,12 +3,11 @@
 
 #include <algorithm>
 
-GraphicsBuffer::GraphicsBuffer(uint64_t size, BufferUsageHint usageHint, std::string name) :
-        m_UsageHint(usageHint),
+GraphicsBuffer::GraphicsBuffer(uint64_t size, std::string name) :
         m_Size(size),
         m_Name(std::move(name))
 {
-    m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, usageHint, m_Name);
+    m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, m_Name, true);
 }
 
 GraphicsBuffer::~GraphicsBuffer()
@@ -31,10 +30,16 @@ void GraphicsBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
 
 void GraphicsBuffer::Resize(uint64_t size)
 {
-    if (size > 0)
+    if (size > 0 && m_Size != size)
     {
-        GraphicsBackend::Current()->DeleteBuffer(m_Buffer);
-        m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, m_UsageHint, m_Name);
+        const GraphicsBackendBuffer oldBuffer = m_Buffer;
+
+        m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, m_Name, true);
+        GraphicsBackend::Current()->BeginCopyPass(m_Name + " Buffer Resize Copy");
+        GraphicsBackend::Current()->CopyBufferSubData(oldBuffer, m_Buffer, 0, 0, m_Size);
+        GraphicsBackend::Current()->EndCopyPass();
+
+        GraphicsBackend::Current()->DeleteBuffer(oldBuffer);
         m_Size = size;
     }
 }

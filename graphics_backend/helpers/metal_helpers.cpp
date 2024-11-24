@@ -152,10 +152,14 @@ MTL::PixelFormat MetalHelpers::ToTextureInternalFormat(TextureInternalFormat for
             return MTL::PixelFormat::PixelFormatBGRA8Unorm;
         case TextureInternalFormat::BGRA8_SNORM:
             return MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB;
-        case TextureInternalFormat::DEPTH_COMPONENT:
+        case TextureInternalFormat::DEPTH_32:
             return MTL::PixelFormat::PixelFormatDepth32Float;
-        case TextureInternalFormat::DEPTH_STENCIL:
+        case TextureInternalFormat::DEPTH_16:
+            return MTL::PixelFormat::PixelFormatDepth16Unorm;
+        case TextureInternalFormat::DEPTH_32_STENCIL_8:
             return MTL::PixelFormat::PixelFormatDepth32Float_Stencil8;
+        case TextureInternalFormat::DEPTH_24_STENCIL_8:
+            return MTL::PixelFormat::PixelFormatDepth24Unorm_Stencil8;
         case TextureInternalFormat::BC1_RGBA:
             return isLinear ? MTL::PixelFormat::PixelFormatBC1_RGBA : MTL::PixelFormat::PixelFormatBC1_RGBA_sRGB;
         case TextureInternalFormat::BC2:
@@ -292,9 +296,13 @@ TextureInternalFormat MetalHelpers::FromTextureInternalFormat(MTL::PixelFormat f
         case MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB:
             return TextureInternalFormat::BGRA8_SNORM;
         case MTL::PixelFormat::PixelFormatDepth32Float:
-            return TextureInternalFormat::DEPTH_COMPONENT;
+            return TextureInternalFormat::DEPTH_32;
+        case MTL::PixelFormat::PixelFormatDepth16Unorm:
+            return TextureInternalFormat::DEPTH_16;
         case MTL::PixelFormat::PixelFormatDepth32Float_Stencil8:
-            return TextureInternalFormat::DEPTH_STENCIL;
+            return TextureInternalFormat::DEPTH_32_STENCIL_8;
+        case MTL::PixelFormat::PixelFormatDepth24Unorm_Stencil8:
+            return TextureInternalFormat::DEPTH_24_STENCIL_8;
         case MTL::PixelFormat::PixelFormatBC1_RGBA:
         case MTL::PixelFormat::PixelFormatBC1_RGBA_sRGB:
             return TextureInternalFormat::BC1_RGBA;

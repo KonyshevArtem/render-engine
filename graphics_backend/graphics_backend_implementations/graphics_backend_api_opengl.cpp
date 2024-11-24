@@ -42,6 +42,12 @@ struct DebugMessageType
     bool Enabled;
 };
 
+struct BufferData
+{
+    uint64_t GLBuffer;
+    uint8_t* Data;
+};
+
 GLuint s_Framebuffers[2];
 GLbitfield s_ClearFlags[static_cast<int>(FramebufferAttachment::MAX)];
 uint64_t s_DebugGroupId = 0;
@@ -175,7 +181,7 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
     GraphicsBackendTexture texture{};
     glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture));
 
-    GLenum textureType = OpenGLHelpers::ToTextureType(type);
+    const GLenum textureType = OpenGLHelpers::ToTextureType(type);
     glBindTexture(textureType, texture.Texture);
     glTexParameteri(textureType, GL_TEXTURE_BASE_LEVEL, 0);
     glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, mipLevels - 1);
@@ -184,18 +190,19 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
         glObjectLabel(GL_TEXTURE, texture.Texture, name.length(), name.c_str());
     }
 
+    const GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(format, isLinear);
+    if (IsTexture3D(type))
+    {
+        glTexStorage3D(textureType, mipLevels, internalFormat, width, height, depth);
+    }
+    else
+    {
+        glTexStorage2D(textureType, mipLevels, internalFormat, width, height);
+    }
+
     texture.Type = type;
     texture.Format = format;
     texture.IsLinear = isLinear;
-
-    if (isRenderTarget)
-    {
-        for (int i = 0; i < mipLevels; ++i)
-        {
-            UploadImagePixels(texture, i, CubemapFace::POSITIVE_X, width / (i + 1), height / (i + 1), depth, 0, nullptr);
-        }
-    }
-
     return texture;
 }
 
@@ -263,34 +270,34 @@ void GraphicsBackendOpenGL::GenerateMipmaps(const GraphicsBackendTexture &textur
 
 void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData)
 {
-    GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
-    GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, cubemapFace);
-    GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(texture.Format, texture.IsLinear);
-    bool isImage3D = texture.Type == TextureType::TEXTURE_2D_ARRAY;
+    const GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
+    const GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, cubemapFace);
+    const GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(texture.Format, texture.IsLinear);
+    const bool isTexture3D = IsTexture3D(texture.Type);
 
     glBindTexture(type, texture.Texture);
     if (IsCompressedTextureFormat(texture.Format) && imageSize != 0)
     {
-        if (isImage3D)
+        if (isTexture3D)
         {
-            glCompressedTexImage3D(target, level, internalFormat, width, height, depth, 0, imageSize, pixelsData);
+            glCompressedTexSubImage3D(target, level, 0, 0, 0, width, height, depth, internalFormat, imageSize, pixelsData);
         }
         else
         {
-            glCompressedTexImage2D(target, level, internalFormat, width, height, 0, imageSize, pixelsData);
+            glCompressedTexSubImage2D(target, level, 0, 0, width, height, internalFormat, imageSize, pixelsData);
         }
     }
     else
     {
-        GLenum pixelFormat = OpenGLHelpers::ToTextureFormat(texture.Format);
-        GLenum dataType = OpenGLHelpers::ToTextureDataType(texture.Format);
-        if (isImage3D)
+        const GLenum pixelFormat = OpenGLHelpers::ToTextureFormat(texture.Format);
+        const GLenum dataType = OpenGLHelpers::ToTextureDataType(texture.Format);
+        if (isTexture3D)
         {
-            glTexImage3D(target, level, internalFormat, width, height, depth, 0, pixelFormat, dataType, pixelsData);
+            glTexSubImage3D(target, level, 0, 0, 0, width, height, depth, pixelFormat, dataType, pixelsData);
         }
         else
         {
-            glTexImage2D(target, level, internalFormat, width, height, 0, pixelFormat, dataType, pixelsData);
+            glTexSubImage2D(target, level, 0, 0, width, height, pixelFormat, dataType, pixelsData);
         }
     }
 }
@@ -320,6 +327,9 @@ void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTarget
     GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(descriptor.Attachment);
     AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, descriptor.Texture.Type, descriptor.Texture.Texture, descriptor.Level, descriptor.Layer);
 
+    if (descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT)
+        AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, descriptor.Texture.Type, 0, 0, 0);
+
     if (descriptor.LoadAction == LoadAction::CLEAR)
     {
         int attachmentIndex = static_cast<int>(descriptor.Attachment);
@@ -348,33 +358,49 @@ TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAt
     return TextureInternalFormat::RGBA8;
 }
 
-GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, BufferUsageHint usageHint, const std::string& name)
+GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
 {
+    const GLbitfield bufferFlags = allowCPUWrites ? GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT : 0;
+
     GLuint glBuffer;
     glGenBuffers(1, &glBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, size, nullptr, OpenGLHelpers::ToBufferUsageHint(usageHint));
+    glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, data, bufferFlags);
     if (!name.empty())
     {
         glObjectLabel(GL_BUFFER, glBuffer, name.length(), name.c_str());
     }
 
+    BufferData* bufferData = new BufferData();
+    bufferData->GLBuffer = glBuffer;
+    bufferData->Data = allowCPUWrites ? static_cast<uint8_t*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, bufferFlags)) : nullptr;
+
     GraphicsBackendBuffer buffer{};
-    buffer.Buffer = static_cast<uint64_t>(glBuffer);
+    buffer.Buffer = reinterpret_cast<uint64_t>(bufferData);
     buffer.Size = size;
     return buffer;
 }
 
 void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
+    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+    if (bufferData->Data)
+    {
+        glBindBuffer(GL_UNIFORM_BUFFER, bufferData->GLBuffer);
+        glUnmapBuffer(GL_UNIFORM_BUFFER);
+    }
+
     glDeleteBuffers(1, reinterpret_cast<const GLuint *>(&buffer.Buffer));
+    delete bufferData;
 }
 
 void BindBuffer_Internal(GLenum bindTarget, const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
+    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+
     auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
-    glBindBuffer(bindTarget, buffer.Buffer);
-    glBindBufferRange(bindTarget, binding, buffer.Buffer, offset, size);
+    glBindBuffer(bindTarget, bufferData->GLBuffer);
+    glBindBufferRange(bindTarget, binding, bufferData->GLBuffer, offset, size);
 }
 
 void GraphicsBackendOpenGL::BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
@@ -389,18 +415,20 @@ void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buff
     BindBuffer_Internal(GL_UNIFORM_BUFFER, buffer, bindings, offset, size);
 }
 
-void GraphicsBackendOpenGL::SetBufferData(GraphicsBackendBuffer &buffer, long offset, long size, const void *data)
+void GraphicsBackendOpenGL::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data)
 {
-    glBindBuffer(GL_UNIFORM_BUFFER, buffer.Buffer);
-    void *contents = glMapBufferRange(GL_UNIFORM_BUFFER, offset, size, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-    memcpy(contents, data, size);
-    glUnmapBuffer(GL_UNIFORM_BUFFER);
+    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+    assert(bufferData->Data);
+    memcpy(bufferData->Data + offset, data, size);
 }
 
-void GraphicsBackendOpenGL::CopyBufferSubData(GraphicsBackendBuffer source, GraphicsBackendBuffer destination, int sourceOffset, int destinationOffset, int size)
+void GraphicsBackendOpenGL::CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size)
 {
-    glBindBuffer(GL_COPY_READ_BUFFER, source.Buffer);
-    glBindBuffer(GL_COPY_WRITE_BUFFER, destination.Buffer);
+    const BufferData* sourceBufferData = reinterpret_cast<BufferData*>(source.Buffer);
+    const BufferData* destinationBufferData = reinterpret_cast<BufferData*>(destination.Buffer);
+
+    glBindBuffer(GL_COPY_READ_BUFFER, sourceBufferData->GLBuffer);
+    glBindBuffer(GL_COPY_WRITE_BUFFER, destinationBufferData->GLBuffer);
     glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, sourceOffset, destinationOffset, size);
 }
 
@@ -436,10 +464,13 @@ GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBack
     geometry.VertexBuffer = vertexBuffer;
     geometry.IndexBuffer = indexBuffer;
 
+    const BufferData* vertexBufferData = reinterpret_cast<BufferData*>(vertexBuffer.Buffer);
+    const BufferData* indexBufferData = reinterpret_cast<BufferData*>(indexBuffer.Buffer);
+
     glGenVertexArrays(1, reinterpret_cast<GLuint *>(&geometry.VertexArrayObject));
     glBindVertexArray(geometry.VertexArrayObject);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.Buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.Buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferData->GLBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferData->GLBuffer);
     if (!name.empty())
     {
         glObjectLabel(GL_VERTEX_ARRAY, geometry.VertexArrayObject, name.length(), name.c_str());

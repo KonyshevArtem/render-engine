@@ -2,6 +2,7 @@
 #include "graphics_backend_api_opengl.h"
 #include "graphics_backend_api_metal.h"
 #include "enums/texture_internal_format.h"
+#include "enums/texture_type.h"
 
 GraphicsBackendBase *GraphicsBackendBase::Create(const std::string &backend)
 {
@@ -20,6 +21,11 @@ GraphicsBackendBase *GraphicsBackendBase::Create(const std::string &backend)
 #endif
 
     return nullptr;
+}
+
+bool GraphicsBackendBase::IsTexture3D(TextureType type)
+{
+    return type == TextureType::TEXTURE_2D_ARRAY || type == TextureType::TEXTURE_3D || type == TextureType::TEXTURE_CUBEMAP_ARRAY;
 }
 
 bool GraphicsBackendBase::IsCompressedTextureFormat(TextureInternalFormat format)
@@ -85,8 +91,11 @@ bool GraphicsBackendBase::IsCompressedTextureFormat(TextureInternalFormat format
         case TextureInternalFormat::RGBA16UI:
         case TextureInternalFormat::RGBA32I:
         case TextureInternalFormat::RGBA32UI:
-        case TextureInternalFormat::DEPTH_COMPONENT:
-        case TextureInternalFormat::DEPTH_STENCIL:
+        case TextureInternalFormat::DEPTH_32:
+        case TextureInternalFormat::DEPTH_24:
+        case TextureInternalFormat::DEPTH_16:
+        case TextureInternalFormat::DEPTH_32_STENCIL_8:
+        case TextureInternalFormat::DEPTH_24_STENCIL_8:
             return false;
         case TextureInternalFormat::BC1_RGB:
         case TextureInternalFormat::BC1_RGBA:

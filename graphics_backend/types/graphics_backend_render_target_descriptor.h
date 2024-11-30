@@ -23,7 +23,7 @@ struct GraphicsBackendRenderTargetDescriptor
 
     static inline GraphicsBackendRenderTargetDescriptor DepthBackbuffer(enum LoadAction loadAction = LoadAction::LOAD, enum StoreAction storeAction = StoreAction::STORE)
     {
-        return { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = loadAction, .StoreAction = storeAction, .IsBackbuffer = true };
+        return { .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .LoadAction = loadAction, .StoreAction = storeAction, .IsBackbuffer = true };
     }
 };
 

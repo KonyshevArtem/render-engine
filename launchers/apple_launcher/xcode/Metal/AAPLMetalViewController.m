@@ -20,25 +20,14 @@ AAPLMetalRenderer *_renderer;
 {
     [super viewDidLoad];
 
-    // Set the view to use the default device.
     _view = (AAPLMetalView *)self.view;
     _view.device = MTLCreateSystemDefaultDevice();
 
-    if(!_view.device)
-    {
-        assert(!"Metal is not supported on this device.");
-        return;
-    }
+#if !defined(TARGET_IOS) && !defined(TARGET_TVOS)
+    [_view setFrameSize:NSSizeFromCGSize(CGSizeMake(1920, 1080))];
+#endif
 
     _renderer = [[AAPLMetalRenderer alloc] initWithMetalKitView:_view];
-
-    if(!_renderer)
-    {
-        assert(!"Renderer failed initialization.");
-        return;
-    }
-
-    // Initialize renderer with the view size.
     [_renderer mtkView:_view drawableSizeWillChange:_view.drawableSize];
 
     _view.delegate = _renderer;

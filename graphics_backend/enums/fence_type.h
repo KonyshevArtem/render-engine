@@ -1,0 +1,10 @@
+#ifndef RENDER_ENGINE_FENCE_TYPE_H
+#define RENDER_ENGINE_FENCE_TYPE_H
+
+enum class FenceType
+{
+    RENDER_TO_COPY,
+    COPY_TO_RENDER,
+};
+
+#endif //RENDER_ENGINE_FENCE_TYPE_H

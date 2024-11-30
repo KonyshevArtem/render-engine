@@ -4,6 +4,7 @@
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
 #include "enums/framebuffer_attachment.h"
+#include "enums/fence_type.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "types/graphics_backend_buffer.h"
@@ -14,6 +15,7 @@
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "types/graphics_backend_depth_stencil_state.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
+#include "types/graphics_backend_fence.h"
 #include "helpers/metal_helpers.h"
 
 #include "Metal/Metal.hpp"
@@ -672,6 +674,46 @@ void GraphicsBackendMetal::SetDepthStencilState(const GraphicsBackendDepthStenci
     if (metalState)
     {
         m_RenderCommandEncoder->setDepthStencilState(metalState);
+    }
+}
+
+GraphicsBackendFence GraphicsBackendMetal::InsertFence(FenceType fenceType, const std::string& name)
+{
+    MTL::Event* metalEvent = m_Device->newEvent();
+
+    if (!name.empty())
+    {
+        metalEvent->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+    }
+
+    switch (fenceType)
+    {
+        case FenceType::RENDER_TO_COPY:
+            m_RenderCommandBuffer->encodeSignalEvent(metalEvent, 1);
+            break;
+        case FenceType::COPY_TO_RENDER:
+            m_CopyCommandBuffer->encodeSignalEvent(metalEvent, 1);
+            break;
+    }
+
+    GraphicsBackendFence fence{};
+    fence.Fence = reinterpret_cast<uint64_t>(metalEvent);
+    fence.Type = fenceType;
+    return fence;
+}
+
+void GraphicsBackendMetal::WaitForFence(const GraphicsBackendFence& fence)
+{
+    const MTL::Event* metalEvent = reinterpret_cast<MTL::Event*>(fence.Fence);
+
+    switch (fence.Type)
+    {
+        case FenceType::RENDER_TO_COPY:
+            m_CopyCommandBuffer->encodeWait(metalEvent, 1);
+            break;
+        case FenceType::COPY_TO_RENDER:
+            m_RenderCommandBuffer->encodeWait(metalEvent, 1);
+            break;
     }
 }
 

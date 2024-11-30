@@ -33,6 +33,7 @@
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "material/material.h"
 #include "utils/utils.h"
+#include "types/graphics_backend_fence.h"
 
 #include <cassert>
 
@@ -259,6 +260,9 @@ namespace Graphics
 
         GraphicsBackend::Current()->EndRenderPass();
 
+        const GraphicsBackendFence afterForwardPassFence = GraphicsBackend::Current()->InsertFence(FenceType::RENDER_TO_COPY, "After Forward Pass");
+        GraphicsBackend::Current()->WaitForFence(afterForwardPassFence);
+
         if (s_FinalBlitPass)
             s_FinalBlitPass->Execute(ctx, cameraColorTarget);
 
@@ -270,6 +274,9 @@ namespace Graphics
         GraphicsBackend::Current()->BeginCopyPass("Copy Depth To Backbuffer");
         CopyTextureToTexture(cameraDepthTarget, nullptr, GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
         GraphicsBackend::Current()->EndCopyPass();
+
+        const GraphicsBackendFence afterDepthCopyFence = GraphicsBackend::Current()->InsertFence(FenceType::COPY_TO_RENDER, "After Depth Copy");
+        GraphicsBackend::Current()->WaitForFence(afterDepthCopyFence);
 
         if (s_GizmosPass)
         {

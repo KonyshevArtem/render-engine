@@ -43,7 +43,9 @@ add_library(GraphicsBackend
         types/graphics_backend_color_attachment_descriptor.h
         types/graphics_backend_texture_info.h
         types/graphics_backend_sampler_info.h
-        enums/cubemap_face.h)
+        enums/cubemap_face.h
+        enums/fence_type.h
+        types/graphics_backend_fence.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

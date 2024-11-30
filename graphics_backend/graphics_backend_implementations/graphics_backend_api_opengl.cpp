@@ -793,11 +793,12 @@ void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStenc
     }
 }
 
-GraphicsBackendFence GraphicsBackendMetal::InsertFence(FenceType fenceType, const std::string& name)
+GraphicsBackendFence GraphicsBackendOpenGL::InsertFence(FenceType fenceType, const std::string& name)
 {
+    return GraphicsBackendFence{};
 }
 
-void GraphicsBackendMetal::WaitForFence(const GraphicsBackendFence& fence)
+void GraphicsBackendOpenGL::WaitForFence(const GraphicsBackendFence& fence)
 {
 }
 

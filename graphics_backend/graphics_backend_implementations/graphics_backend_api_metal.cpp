@@ -679,40 +679,40 @@ void GraphicsBackendMetal::SetDepthStencilState(const GraphicsBackendDepthStenci
 
 GraphicsBackendFence GraphicsBackendMetal::InsertFence(FenceType fenceType, const std::string& name)
 {
-    MTL::Event* metalFence = m_Device->newEvent();
+    MTL::Event* metalEvent = m_Device->newEvent();
 
     if (!name.empty())
     {
-        metalFence->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+        metalEvent->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
     }
 
     switch (fenceType)
     {
         case FenceType::RENDER_TO_COPY:
-            m_RenderCommandBuffer->encodeSignalEvent(metalFence, 1);
+            m_RenderCommandBuffer->encodeSignalEvent(metalEvent, 1);
             break;
         case FenceType::COPY_TO_RENDER:
-            m_CopyCommandBuffer->encodeSignalEvent(metalFence, 1);
+            m_CopyCommandBuffer->encodeSignalEvent(metalEvent, 1);
             break;
     }
 
     GraphicsBackendFence fence{};
-    fence.Fence = reinterpret_cast<uint64_t>(metalFence);
+    fence.Fence = reinterpret_cast<uint64_t>(metalEvent);
     fence.Type = fenceType;
     return fence;
 }
 
 void GraphicsBackendMetal::WaitForFence(const GraphicsBackendFence& fence)
 {
-    const MTL::Event* metalFence = reinterpret_cast<MTL::Event*>(fence.Fence);
+    const MTL::Event* metalEvent = reinterpret_cast<MTL::Event*>(fence.Fence);
 
     switch (fence.Type)
     {
         case FenceType::RENDER_TO_COPY:
-            m_CopyCommandBuffer->encodeWait(metalFence, 1);
+            m_CopyCommandBuffer->encodeWait(metalEvent, 1);
             break;
         case FenceType::COPY_TO_RENDER:
-            m_RenderCommandBuffer->encodeWait(metalFence, 1);
+            m_RenderCommandBuffer->encodeWait(metalEvent, 1);
             break;
     }
 }

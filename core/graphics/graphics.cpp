@@ -617,6 +617,8 @@ namespace Graphics
 
         material.SetTexture("_BlitTexture", source);
 
+        depthDescriptor.IsBackbuffer = destinationDescriptor.IsBackbuffer;
+
         SetRenderTarget(destinationDescriptor, destination);
         SetRenderTarget(depthDescriptor, nullptr);
 

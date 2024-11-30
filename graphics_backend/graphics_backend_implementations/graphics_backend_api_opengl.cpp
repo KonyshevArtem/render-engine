@@ -48,8 +48,20 @@ struct BufferData
     uint8_t* Data;
 };
 
+struct RenderTargetState
+{
+    GLuint Target;
+    GLbitfield ClearFlags;
+    bool IsBackbuffer;
+    bool IsEnabled;
+
+    TextureType TextureType;
+    int Level;
+    int Layer;
+};
+
 GLuint s_Framebuffers[2];
-GLbitfield s_ClearFlags[static_cast<int>(FramebufferAttachment::MAX)];
+RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
 uint64_t s_DebugGroupId = 0;
 
 std::array s_DebugMessageTypes =
@@ -117,12 +129,21 @@ void DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity
     }
 }
 
-void ResetClearFlags()
+void ResetRenderTargetStates()
 {
-    int max = static_cast<int>(FramebufferAttachment::MAX);
+    constexpr int max = static_cast<int>(FramebufferAttachment::MAX);
     for (int i = 0; i < max; ++i)
     {
-        s_ClearFlags[i] = 0;
+        const FramebufferAttachment attachment = static_cast<FramebufferAttachment>(i);
+
+        RenderTargetState& state = s_RenderTargetStates[i];
+        state.Target = 0;
+        state.ClearFlags = 0;
+        state.IsBackbuffer = true;
+        state.IsEnabled = attachment == FramebufferAttachment::COLOR_ATTACHMENT0 || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+        state.TextureType = TextureType::TEXTURE_2D;
+        state.Level = 0;
+        state.Layer = 0;
     }
 }
 
@@ -158,7 +179,7 @@ void GraphicsBackendOpenGL::Init(void *data)
     }
 #endif
 
-    ResetClearFlags();
+    ResetRenderTargetStates();
 }
 
 const std::string &GraphicsBackendOpenGL::GetGLSLVersionString()
@@ -316,39 +337,56 @@ void AttachTextureToFramebuffer(GLenum framebuffer, GLenum attachment, TextureTy
 
 void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor)
 {
+    const int attachmentIndex = static_cast<int>(descriptor.Attachment);
+    RenderTargetState& state = s_RenderTargetStates[attachmentIndex];
+
+    state.IsBackbuffer = descriptor.IsBackbuffer;
+
     if (descriptor.IsBackbuffer)
     {
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        return;
+        state.Target = 0;
+        state.IsEnabled = descriptor.Attachment == FramebufferAttachment::COLOR_ATTACHMENT0 ||
+                          descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT ||
+                          descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT ||
+                          descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT;
+    }
+    else
+    {
+        state.Target = descriptor.Texture.Texture;
+        state.TextureType = descriptor.Texture.Type;
+        state.Level = descriptor.Level;
+        state.Layer = descriptor.Layer;
+        state.IsEnabled = true;
     }
 
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[0]);
-
-    GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(descriptor.Attachment);
-    AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, descriptor.Texture.Type, descriptor.Texture.Texture, descriptor.Level, descriptor.Layer);
-
+    const bool needClear = descriptor.LoadAction == LoadAction::CLEAR;
     if (descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT)
-        AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, descriptor.Texture.Type, 0, 0, 0);
-
-    if (descriptor.LoadAction == LoadAction::CLEAR)
     {
-        int attachmentIndex = static_cast<int>(descriptor.Attachment);
-        if (descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT)
-        {
-            s_ClearFlags[attachmentIndex] = GL_DEPTH_BUFFER_BIT;
-        }
-        else if (descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT)
-        {
-            s_ClearFlags[attachmentIndex] = GL_STENCIL_BUFFER_BIT;
-        }
-        else if (descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)
-        {
-            s_ClearFlags[attachmentIndex] = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
-        }
-        else
-        {
-            s_ClearFlags[attachmentIndex] = GL_COLOR_BUFFER_BIT;
-        }
+        state.ClearFlags = needClear ? GL_DEPTH_BUFFER_BIT : 0;
+        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)].IsEnabled = false;
+
+        RenderTargetState& stencilState = s_RenderTargetStates[static_cast<int>(FramebufferAttachment::STENCIL_ATTACHMENT)];
+        stencilState.IsEnabled = true;
+        stencilState.Target = 0;
+    }
+    else if (descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT)
+    {
+        state.ClearFlags = needClear ? GL_STENCIL_BUFFER_BIT : 0;
+        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)].IsEnabled = false;
+
+        RenderTargetState& depthState = s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_ATTACHMENT)];
+        depthState.IsEnabled = false;
+        depthState.Target = 0;
+    }
+    else if (descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)
+    {
+        state.ClearFlags = needClear ? GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT : 0;
+        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_ATTACHMENT)].IsEnabled = false;
+        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::STENCIL_ATTACHMENT)].IsEnabled = false;
+    }
+    else
+    {
+        state.ClearFlags = needClear ? GL_COLOR_BUFFER_BIT : 0;
     }
 }
 
@@ -728,15 +766,39 @@ void GraphicsBackendOpenGL::PopDebugGroup()
 
 void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
 {
+    bool isBackbuffer = true;
     GLbitfield clearFlag = 0;
 
-    int maxAttachments = static_cast<int>(FramebufferAttachment::MAX);
-    for (int i = 0; i < maxAttachments; ++i)
+    for (const RenderTargetState& state : s_RenderTargetStates)
     {
-        clearFlag |= s_ClearFlags[i];
+        if (!state.IsEnabled)
+            continue;
+
+        isBackbuffer &= state.IsBackbuffer;
+        clearFlag |= state.ClearFlags;
     }
 
     PushDebugGroup(name);
+
+    if (isBackbuffer)
+    {
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    }
+    else
+    {
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[0]);
+
+        constexpr int maxAttachments = static_cast<int>(FramebufferAttachment::MAX);
+        for (int i = 0; i < maxAttachments; ++i)
+        {
+            const RenderTargetState& state = s_RenderTargetStates[i];
+            if (!state.IsEnabled)
+                continue;
+
+            const GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(static_cast<FramebufferAttachment>(i));
+            AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, state.TextureType, state.Target, state.Level, state.Layer);
+        }
+    }
 
     if (clearFlag != 0)
     {
@@ -750,7 +812,7 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
 
 void GraphicsBackendOpenGL::EndRenderPass()
 {
-    ResetClearFlags();
+    ResetRenderTargetStates();
     PopDebugGroup();
 }
 

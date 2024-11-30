@@ -23,6 +23,7 @@ enum class IndicesDataType;
 enum class TextureWrapMode;
 enum class TextureFilteringMode;
 enum class CubemapFace;
+enum class FenceType;
 
 class GraphicsBackendTexture;
 class GraphicsBackendSampler;
@@ -36,6 +37,7 @@ struct GraphicsBackendResourceBindings;
 struct GraphicsBackendRenderTargetDescriptor;
 struct GraphicsBackendDepthStencilState;
 struct GraphicsBackendColorAttachmentDescriptor;
+struct GraphicsBackendFence;
 
 class GraphicsBackendBase
 {
@@ -105,6 +107,9 @@ public:
     virtual GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name) = 0;
     virtual void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
     virtual void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
+
+    virtual GraphicsBackendFence InsertFence(FenceType fenceType, const std::string& name) = 0;
+    virtual void WaitForFence(const GraphicsBackendFence& fence) = 0;
 
     bool IsTexture3D(TextureType type);
     bool IsCompressedTextureFormat(TextureInternalFormat format);

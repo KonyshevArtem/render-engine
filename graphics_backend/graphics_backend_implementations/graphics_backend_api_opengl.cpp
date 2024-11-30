@@ -4,6 +4,7 @@
 #include "enums/texture_data_type.h"
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
+#include "enums/fence_type.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "types/graphics_backend_buffer.h"
@@ -15,6 +16,7 @@
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "types/graphics_backend_depth_stencil_state.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
+#include "types/graphics_backend_fence.h"
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 
@@ -789,6 +791,14 @@ void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStenc
         glDepthFunc(glState->DepthFunction);
         glDepthMask(glState->DepthWrite);
     }
+}
+
+GraphicsBackendFence GraphicsBackendMetal::InsertFence(FenceType fenceType, const std::string& name)
+{
+}
+
+void GraphicsBackendMetal::WaitForFence(const GraphicsBackendFence& fence)
+{
 }
 
 #endif // RENDER_BACKEND_OPENGL

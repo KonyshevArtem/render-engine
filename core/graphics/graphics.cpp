@@ -216,6 +216,9 @@ namespace Graphics
         s_PerDrawDataBuffer->Reset();
         s_CameraDataBuffer->Reset();
 
+        if (width == 0 || height == 0)
+            return;
+
         static std::shared_ptr<Texture2D> cameraColorTarget;
         static std::shared_ptr<Texture2D> cameraDepthTarget;
 

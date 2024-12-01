@@ -26,5 +26,9 @@ void CopyDepthPass::Execute(const Context& ctx)
     GraphicsBackend::Current()->EndCopyPass();
 
     GraphicsBackend::Current()->SignalFence(m_EndFence);
-    GraphicsBackend::Current()->WaitForFence(m_EndFence);
+}
+
+const GraphicsBackendFence & CopyDepthPass::GetEndFence() const
+{
+    return m_EndFence;
 }

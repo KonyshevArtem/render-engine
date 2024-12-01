@@ -15,11 +15,16 @@
 #include "shader/shader.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 
-ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer) :
+constexpr int k_SpotLightShadowMapSize = 1024;
+constexpr int k_DirLightShadowMapSize = 2048;
+constexpr int k_PointLightShadowMapSize = 512;
+
+ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer, int priority) :
+    RenderPass(priority),
     m_ShadowsConstantBuffer(std::move(shadowsConstantBuffer)),
-    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(SPOT_LIGHT_SHADOW_MAP_SIZE, GlobalConstants::MaxSpotLightSources, "SpotLightShadowMap")),
-    m_DirectionLightShadowMap(Texture2D::Create(DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE, TextureInternalFormat::DEPTH_32, true, true, "DirectionalShadowMap")),
-    m_PointLightShadowMap(Texture2DArray::ShadowMapArray(POINT_LIGHT_SHADOW_MAP_FACE_SIZE, GlobalConstants::MaxPointLightSources * 6, "PointLightShadowMap"))
+    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(k_SpotLightShadowMapSize, GlobalConstants::MaxSpotLightSources, "SpotLightShadowMap")),
+    m_DirectionLightShadowMap(Texture2D::Create(k_DirLightShadowMapSize, k_DirLightShadowMapSize, TextureInternalFormat::DEPTH_32, true, true, "DirectionalShadowMap")),
+    m_PointLightShadowMap(Texture2DArray::ShadowMapArray(k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, "PointLightShadowMap"))
 {
     Graphics::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
     Graphics::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
@@ -35,7 +40,11 @@ ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConsta
     m_PointLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
 }
 
-void ShadowCasterPass::Execute(const Context &_ctx)
+void ShadowCasterPass::Prepare()
+{
+}
+
+void ShadowCasterPass::Execute(const Context& ctx)
 {
     static const GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::DONT_CARE, .StoreAction = StoreAction::DONT_CARE };
 
@@ -50,14 +59,14 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             Matrix4x4::TBN({-1, 0, 0}, {0, 1, 0}, {0, 0, -1}).Invert(), // back
     };
 
-    if (_ctx.ShadowCastersCount == 0)
+    if (ctx.ShadowCastersCount == 0)
         return;
 
     GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
 
     int spotLightsCount = 0;
     int pointLightsCount = 0;
-    for (const auto *light: _ctx.Lights)
+    for (const auto *light: ctx.Lights)
     {
         if (light == nullptr)
             continue;
@@ -70,17 +79,17 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             Graphics::SetRenderTarget(depthTargetDescriptor, m_SpotLightShadowMapArray);
 
             auto view = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
-            auto proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, _ctx.ShadowDistance);
+            auto proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, ctx.ShadowDistance);
 
             Graphics::SetCameraData(view, proj);
             m_ShadowsData.SpotLightsViewProjMatrices[spotLightsCount] = biasMatrix * proj * view;
-            Render(_ctx.Renderers, {0, 0, SPOT_LIGHT_SHADOW_MAP_SIZE, SPOT_LIGHT_SHADOW_MAP_SIZE}, "Spot Light Shadow Pass " + std::to_string(spotLightsCount));
+            Render(ctx.Renderers, {0, 0, k_SpotLightShadowMapSize, k_SpotLightShadowMapSize}, "Spot Light Shadow Pass " + std::to_string(spotLightsCount));
 
             ++spotLightsCount;
         }
         if (light->Type == LightType::POINT)
         {
-            auto proj = Matrix4x4::Perspective(90, 1, 0.01f, _ctx.ShadowDistance);
+            auto proj = Matrix4x4::Perspective(90, 1, 0.01f, ctx.ShadowDistance);
             for (int i = 0; i < 6; ++i)
             {
                 depthTargetDescriptor.Layer = pointLightsCount * 6 + i;
@@ -92,7 +101,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
                 m_ShadowsData.PointLightShadows[pointLightsCount].ViewProjMatrices[i] = biasMatrix * proj * view;
 
                 Graphics::SetCameraData(view, proj);
-                Render(_ctx.Renderers, {0, 0, POINT_LIGHT_SHADOW_MAP_FACE_SIZE, POINT_LIGHT_SHADOW_MAP_FACE_SIZE}, "Point Light Shadow Pass " + std::to_string(pointLightsCount));
+                Render(ctx.Renderers, {0, 0, k_PointLightShadowMapSize, k_PointLightShadowMapSize}, "Point Light Shadow Pass " + std::to_string(pointLightsCount));
             }
 
             m_ShadowsData.PointLightShadows[pointLightsCount].Position = light->Position.ToVector4(0);
@@ -106,7 +115,7 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
             Graphics::SetRenderTarget(depthTargetDescriptor, m_DirectionLightShadowMap);
 
-            auto &bounds = _ctx.ShadowCasterBounds;
+            auto &bounds = ctx.ShadowCasterBounds;
 
             auto sizeWorldSpace   = bounds.GetSize();
             auto maxExtentWorldSpace = std::max({sizeWorldSpace.x, sizeWorldSpace.y, sizeWorldSpace.z});
@@ -117,13 +126,13 @@ void ShadowCasterPass::Execute(const Context &_ctx)
             auto boundsViewSpace    = viewMatrix * bounds;
             auto extentsViewSpace   = boundsViewSpace.GetExtents();
             auto maxExtentViewSpace = std::max(extentsViewSpace.x, extentsViewSpace.y);
-            auto projMatrix         = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0, _ctx.ShadowDistance);
+            auto projMatrix         = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0, ctx.ShadowDistance);
 
             Graphics::SetCameraData(viewMatrix, projMatrix);
 
             m_ShadowsData.DirectionalLightViewProjMatrix = biasMatrix * projMatrix * viewMatrix;
 
-            Render(_ctx.Renderers, {0, 0, DIR_LIGHT_SHADOW_MAP_SIZE, DIR_LIGHT_SHADOW_MAP_SIZE}, "Directional Light Shadow Pass");
+            Render(ctx.Renderers, {0, 0, k_DirLightShadowMapSize, k_DirLightShadowMapSize}, "Directional Light Shadow Pass");
         }
     }
 
@@ -132,8 +141,9 @@ void ShadowCasterPass::Execute(const Context &_ctx)
 
 void ShadowCasterPass::Render(const std::vector<std::shared_ptr<Renderer>> &_renderers, const Vector4& viewport, const std::string& passName)
 {
-    static std::shared_ptr<Material> material = std::make_shared<Material>(Shader::Load("core_resources/shaders/shadowCaster", {}, {}, {}, {}), "ShadowCaster");
-    static RenderSettings renderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material};
+    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/shadowCaster", {}, {}, {}, {});
+    static const std::shared_ptr<Material> material = std::make_shared<Material>(shader, "ShadowCaster");
+    static const RenderSettings renderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material};
 
     GraphicsBackend::Current()->BeginRenderPass(passName);
     Graphics::SetViewport(viewport);

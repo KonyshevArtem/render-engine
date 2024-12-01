@@ -95,7 +95,9 @@ add_library(
 	utils/utils.cpp
 	utils/utils.h
 	file_system/file_system.cpp
-	file_system/file_system.h)
+	file_system/file_system.h
+	graphics/passes/draw_renderers_pass.cpp
+	graphics/passes/draw_renderers_pass.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil OpenFBX GraphicsBackend nlohmann_json::nlohmann_json)

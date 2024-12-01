@@ -12,21 +12,27 @@
 
 #include <cmath>
 
-void GizmosPass::Execute(Context &_context)
+GizmosPass::GizmosPass(int priority) :
+    RenderPass(priority)
 {
-    static auto gizmosMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {}), "Gizmos");
+}
+
+void GizmosPass::Execute(const Context& ctx)
+{
+    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {});
+    static const std::shared_ptr<Material> gizmosMaterial = std::make_shared<Material>(shader, "Gizmos");
 
     GraphicsBackend::Current()->BeginRenderPass("Gizmos pass");
-    const auto &gizmos = Gizmos::GetGizmosToDraw();
-    for (const auto &pair : gizmos)
+    const auto& gizmos = Gizmos::GetGizmosToDraw();
+    for (const auto& pair : gizmos)
     {
-        auto &matrices = pair.second;
+        const std::vector<Matrix4x4>& matrices = pair.second;
         auto begin = matrices.begin();
         int totalCount = matrices.size();
         while (totalCount > 0)
         {
-            auto end = begin + std::min(GlobalConstants::MaxInstancingCount, totalCount);
-            std::vector<Matrix4x4> matricesSlice(begin, end);
+            const auto end = begin + std::min(GlobalConstants::MaxInstancingCount, totalCount);
+            const std::vector<Matrix4x4> matricesSlice(begin, end);
             Graphics::DrawInstanced(*pair.first, *gizmosMaterial, matricesSlice, 0);
 
             begin = end;

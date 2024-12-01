@@ -34,6 +34,7 @@
 #include "material/material.h"
 #include "utils/utils.h"
 #include "types/graphics_backend_fence.h"
+#include "passes/draw_renderers_pass.h"
 
 #include <cassert>
 
@@ -48,10 +49,10 @@ namespace Graphics
     std::shared_ptr<RingBuffer> s_CameraDataBuffer;
 
     std::unique_ptr<ShadowCasterPass> s_ShadowCasterPass;
-    std::unique_ptr<RenderPass>       s_OpaqueRenderPass;
-    std::unique_ptr<RenderPass>       s_TransparentRenderPass;
-    std::unique_ptr<SkyboxPass>       s_SkyboxPass;
-    std::unique_ptr<FinalBlitPass>    s_FinalBlitPass;
+    std::unique_ptr<DrawRenderersPass> s_OpaqueRenderPass;
+    std::unique_ptr<DrawRenderersPass> s_TransparentRenderPass;
+    std::unique_ptr<SkyboxPass> s_SkyboxPass;
+    std::unique_ptr<FinalBlitPass> s_FinalBlitPass;
 
 #if RENDER_ENGINE_EDITOR
     std::unique_ptr<GizmosPass> s_GizmosPass;
@@ -82,15 +83,15 @@ namespace Graphics
 
     void InitPasses()
     {
-        s_OpaqueRenderPass = std::make_unique<RenderPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque());
-        s_TransparentRenderPass = std::make_unique<RenderPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent());
-        s_ShadowCasterPass = std::make_unique<ShadowCasterPass>(s_ShadowsDataBuffer);
-        s_SkyboxPass = std::make_unique<SkyboxPass>();
-        s_FinalBlitPass = std::make_unique<FinalBlitPass>();
+        s_OpaqueRenderPass = std::make_unique<DrawRenderersPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque(), 1);
+        s_TransparentRenderPass = std::make_unique<DrawRenderersPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent(), 3);
+        s_ShadowCasterPass = std::make_unique<ShadowCasterPass>(s_ShadowsDataBuffer, 0);
+        s_SkyboxPass = std::make_unique<SkyboxPass>(2);
+        s_FinalBlitPass = std::make_unique<FinalBlitPass>(4);
 
 #if RENDER_ENGINE_EDITOR
-        s_GizmosPass = std::make_unique<GizmosPass>();
-        s_SelectionOutlinePass = std::make_unique<SelectionOutlinePass>();
+        s_GizmosPass = std::make_unique<GizmosPass>(5);
+        s_SelectionOutlinePass = std::make_unique<SelectionOutlinePass>(6);
 #endif
     }
 
@@ -267,7 +268,10 @@ namespace Graphics
         GraphicsBackend::Current()->WaitForFence(afterForwardPassFence);
 
         if (s_FinalBlitPass)
-            s_FinalBlitPass->Execute(ctx, cameraColorTarget);
+        {
+            s_FinalBlitPass->Prepare(cameraColorTarget);
+            s_FinalBlitPass->Execute(ctx);
+        }
 
         SetRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
         SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());

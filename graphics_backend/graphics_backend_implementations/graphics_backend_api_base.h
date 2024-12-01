@@ -108,7 +108,8 @@ public:
     virtual void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
     virtual void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
 
-    virtual GraphicsBackendFence InsertFence(FenceType fenceType, const std::string& name) = 0;
+    virtual GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) = 0;
+    virtual void SignalFence(const GraphicsBackendFence& fence) = 0;
     virtual void WaitForFence(const GraphicsBackendFence& fence) = 0;
 
     bool IsTexture3D(TextureType type);

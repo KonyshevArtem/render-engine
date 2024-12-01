@@ -33,8 +33,9 @@
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "material/material.h"
 #include "utils/utils.h"
-#include "types/graphics_backend_fence.h"
 #include "passes/draw_renderers_pass.h"
+#include "passes/forward_render_pass.h"
+#include "editor/copy_depth/copy_depth_pass.h"
 
 #include <cassert>
 
@@ -48,15 +49,14 @@ namespace Graphics
     std::shared_ptr<RingBuffer> s_PerDrawDataBuffer;
     std::shared_ptr<RingBuffer> s_CameraDataBuffer;
 
-    std::unique_ptr<ShadowCasterPass> s_ShadowCasterPass;
-    std::unique_ptr<DrawRenderersPass> s_OpaqueRenderPass;
-    std::unique_ptr<DrawRenderersPass> s_TransparentRenderPass;
-    std::unique_ptr<SkyboxPass> s_SkyboxPass;
-    std::unique_ptr<FinalBlitPass> s_FinalBlitPass;
+    std::shared_ptr<ForwardRenderPass> s_ForwardRenderPass;
+    std::shared_ptr<ShadowCasterPass> s_ShadowCasterPass;
+    std::shared_ptr<FinalBlitPass> s_FinalBlitPass;
 
 #if RENDER_ENGINE_EDITOR
-    std::unique_ptr<GizmosPass> s_GizmosPass;
-    std::unique_ptr<SelectionOutlinePass> s_SelectionOutlinePass;
+    std::shared_ptr<CopyDepthPass> s_CopyDepthPass;
+    std::shared_ptr<GizmosPass> s_GizmosPass;
+    std::shared_ptr<SelectionOutlinePass> s_SelectionOutlinePass;
 #endif
 
     int s_ScreenWidth  = 0;
@@ -83,15 +83,14 @@ namespace Graphics
 
     void InitPasses()
     {
-        s_OpaqueRenderPass = std::make_unique<DrawRenderersPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque(), 1);
-        s_TransparentRenderPass = std::make_unique<DrawRenderersPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent(), 3);
-        s_ShadowCasterPass = std::make_unique<ShadowCasterPass>(s_ShadowsDataBuffer, 0);
-        s_SkyboxPass = std::make_unique<SkyboxPass>(2);
-        s_FinalBlitPass = std::make_unique<FinalBlitPass>(4);
+        s_ShadowCasterPass = std::make_shared<ShadowCasterPass>(s_ShadowsDataBuffer, 0);
+        s_ForwardRenderPass = std::make_shared<ForwardRenderPass>(1);
+        s_FinalBlitPass = std::make_shared<FinalBlitPass>(2);
 
 #if RENDER_ENGINE_EDITOR
-        s_GizmosPass = std::make_unique<GizmosPass>(5);
-        s_SelectionOutlinePass = std::make_unique<SelectionOutlinePass>(6);
+        s_CopyDepthPass = std::make_shared<CopyDepthPass>(3);
+        s_GizmosPass = std::make_shared<GizmosPass>(4);
+        s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>(5);
 #endif
     }
 
@@ -231,41 +230,30 @@ namespace Graphics
 
         if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
         {
-            TextureInternalFormat depthFormat = GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL ? TextureInternalFormat::DEPTH_32_STENCIL_8 : TextureInternalFormat::DEPTH_24_STENCIL_8;
+            const TextureInternalFormat depthFormat = GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL ? TextureInternalFormat::DEPTH_32_STENCIL_8 : TextureInternalFormat::DEPTH_24_STENCIL_8;
 
             cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true, "CameraColorRT");
             cameraDepthTarget = Texture2D::Create(width, height, depthFormat, true, true, "CameraDepthRT");
+
+            colorTargetDescriptor.Texture = cameraColorTarget->GetBackendTexture();
+            depthTargetDescriptor.Texture = cameraDepthTarget->GetBackendTexture();
         }
 
         GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
         GraphicsBackend::Current()->SetClearDepth(1);
 
-        Context ctx;
+        const Context ctx;
 
         SetLightingData(ctx.Lights);
 
         if (s_ShadowCasterPass)
             s_ShadowCasterPass->Execute(ctx);
 
-        SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix);
-
-        SetRenderTarget(colorTargetDescriptor, cameraColorTarget);
-        SetRenderTarget(depthTargetDescriptor, cameraDepthTarget);
-        GraphicsBackend::Current()->BeginRenderPass("Forward Render Pass");
-
-        SetViewport({0, 0, static_cast<float>(s_ScreenWidth), static_cast<float>(s_ScreenHeight)});
-
-        if (s_OpaqueRenderPass)
-            s_OpaqueRenderPass->Execute(ctx);
-        if (s_SkyboxPass)
-            s_SkyboxPass->Execute(ctx);
-        if (s_TransparentRenderPass)
-            s_TransparentRenderPass->Execute(ctx);
-
-        GraphicsBackend::Current()->EndRenderPass();
-
-        const GraphicsBackendFence afterForwardPassFence = GraphicsBackend::Current()->InsertFence(FenceType::RENDER_TO_COPY, "After Forward Pass");
-        GraphicsBackend::Current()->WaitForFence(afterForwardPassFence);
+        if (s_ForwardRenderPass)
+        {
+            s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor);
+            s_ForwardRenderPass->Execute(ctx);
+        }
 
         if (s_FinalBlitPass)
         {
@@ -273,35 +261,22 @@ namespace Graphics
             s_FinalBlitPass->Execute(ctx);
         }
 
-        SetRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
-        SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
-
 #if RENDER_ENGINE_EDITOR
 
-        GraphicsBackend::Current()->BeginCopyPass("Copy Depth To Backbuffer");
-        CopyTextureToTexture(cameraDepthTarget, nullptr, GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
-        GraphicsBackend::Current()->EndCopyPass();
-
-        const GraphicsBackendFence afterDepthCopyFence = GraphicsBackend::Current()->InsertFence(FenceType::COPY_TO_RENDER, "After Depth Copy");
-        GraphicsBackend::Current()->WaitForFence(afterDepthCopyFence);
+        if (s_CopyDepthPass)
+        {
+            s_CopyDepthPass->Prepare(s_ForwardRenderPass->GetEndFence(), cameraDepthTarget);
+            s_CopyDepthPass->Execute(ctx);
+        }
 
         if (s_GizmosPass)
         {
-            for (const auto &renderer : ctx.Renderers)
-            {
-                if (renderer)
-                {
-                    auto bounds = renderer->GetAABB();
-                    Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
-                }
-            }
+            s_GizmosPass->Prepare(ctx.Renderers);
             s_GizmosPass->Execute(ctx);
         }
 
         if (s_SelectionOutlinePass)
             s_SelectionOutlinePass->Execute(ctx);
-
-        Gizmos::ClearGizmos();
 #endif
     }
 

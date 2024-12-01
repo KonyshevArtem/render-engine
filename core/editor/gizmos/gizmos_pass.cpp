@@ -9,6 +9,9 @@
 #include "global_constants.h"
 #include "graphics_backend_api.h"
 #include "material/material.h"
+#include "renderer/renderer.h"
+#include "quaternion/quaternion.h"
+#include "types/graphics_backend_render_target_descriptor.h"
 
 #include <cmath>
 
@@ -17,10 +20,25 @@ GizmosPass::GizmosPass(int priority) :
 {
 }
 
+void GizmosPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers) const
+{
+    for (const std::shared_ptr<Renderer>& renderer : renderers)
+    {
+        if (renderer)
+        {
+            auto bounds = renderer->GetAABB();
+            Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
+        }
+    }
+}
+
 void GizmosPass::Execute(const Context& ctx)
 {
     static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {});
     static const std::shared_ptr<Material> gizmosMaterial = std::make_shared<Material>(shader, "Gizmos");
+
+    Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
+    Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
 
     GraphicsBackend::Current()->BeginRenderPass("Gizmos pass");
     const auto& gizmos = Gizmos::GetGizmosToDraw();
@@ -40,6 +58,8 @@ void GizmosPass::Execute(const Context& ctx)
         }
     }
     GraphicsBackend::Current()->EndRenderPass();
+
+    Gizmos::ClearGizmos();
 }
 
 #endif

@@ -17,6 +17,11 @@ public:
     RenderPass &operator=(const RenderPass &) = delete;
     RenderPass &operator=(RenderPass &&) = delete;
 
+    struct Comparer
+    {
+        bool operator()(const RenderPass& renderPassA, const RenderPass& renderPassB) const;
+    };
+
 private:
     int m_Priority;
 };

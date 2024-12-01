@@ -5,7 +5,11 @@
 
 #include "graphics/passes/render_pass.h"
 
+#include <vector>
+#include <memory>
+
 struct Context;
+class Renderer;
 
 class GizmosPass : public RenderPass
 {
@@ -13,6 +17,7 @@ public:
     explicit GizmosPass(int priority);
     ~GizmosPass() override = default;
 
+    void Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers) const;
     void Execute(const Context& ctx) override;
 
     GizmosPass(const GizmosPass&) = delete;

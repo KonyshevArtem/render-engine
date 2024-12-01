@@ -30,6 +30,10 @@ SelectionOutlinePass::SelectionOutlinePass(int priority) :
 {
 }
 
+void SelectionOutlinePass::Prepare()
+{
+}
+
 void SelectionOutlinePass::Execute(const Context& ctx)
 {
     static std::shared_ptr<Material>  blitMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/outlineBlit", {}, {}, {}, {false, DepthFunction::ALWAYS}), "OutlineBlit");

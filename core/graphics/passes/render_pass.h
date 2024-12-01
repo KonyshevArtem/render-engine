@@ -1,6 +1,8 @@
 #ifndef RENDER_ENGINE_RENDER_PASS_H
 #define RENDER_ENGINE_RENDER_PASS_H
 
+#include <memory>
+
 struct Context;
 
 class RenderPass
@@ -19,7 +21,7 @@ public:
 
     struct Comparer
     {
-        bool operator()(const RenderPass& renderPassA, const RenderPass& renderPassB) const;
+        bool operator()(const std::shared_ptr<RenderPass>& renderPassA, const std::shared_ptr<RenderPass>& renderPassB) const;
     };
 
 private:

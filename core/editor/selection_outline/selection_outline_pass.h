@@ -13,6 +13,7 @@ public:
     explicit SelectionOutlinePass(int priority);
     ~SelectionOutlinePass() override = default;
 
+    void Prepare();
     void Execute(const Context& ctx) override;
 
     SelectionOutlinePass(const SelectionOutlinePass&) = delete;

@@ -85,10 +85,10 @@ namespace Graphics
     {
         s_ShadowCasterPass = std::make_shared<ShadowCasterPass>(s_ShadowsDataBuffer, 0);
         s_ForwardRenderPass = std::make_shared<ForwardRenderPass>(1);
-        s_FinalBlitPass = std::make_shared<FinalBlitPass>(2);
+        s_FinalBlitPass = std::make_shared<FinalBlitPass>(3);
 
 #if RENDER_ENGINE_EDITOR
-        s_CopyDepthPass = std::make_shared<CopyDepthPass>(3);
+        s_CopyDepthPass = std::make_shared<CopyDepthPass>(2);
         s_GizmosPass = std::make_shared<GizmosPass>(4);
         s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>(5);
 #endif
@@ -246,38 +246,31 @@ namespace Graphics
 
         SetLightingData(ctx.Lights);
 
-        if (s_ShadowCasterPass)
-            s_ShadowCasterPass->Execute(ctx);
+        std::vector<std::shared_ptr<RenderPass>> renderPasses;
 
-        if (s_ForwardRenderPass)
-        {
-            s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor);
-            s_ForwardRenderPass->Execute(ctx);
-        }
+        s_ShadowCasterPass->Prepare();
+        s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor);
+        s_FinalBlitPass->Prepare(cameraColorTarget);
 
-        if (s_FinalBlitPass)
-        {
-            s_FinalBlitPass->Prepare(cameraColorTarget);
-            s_FinalBlitPass->Execute(ctx);
-        }
+        renderPasses.push_back(s_ShadowCasterPass);
+        renderPasses.push_back(s_ForwardRenderPass);
+        renderPasses.push_back(s_FinalBlitPass);
 
 #if RENDER_ENGINE_EDITOR
+        s_CopyDepthPass->Prepare(s_ForwardRenderPass->GetEndFence(), cameraDepthTarget);
+        s_GizmosPass->Prepare(ctx.Renderers);
+        s_SelectionOutlinePass->Prepare();
 
-        if (s_CopyDepthPass)
-        {
-            s_CopyDepthPass->Prepare(s_ForwardRenderPass->GetEndFence(), cameraDepthTarget);
-            s_CopyDepthPass->Execute(ctx);
-        }
-
-        if (s_GizmosPass)
-        {
-            s_GizmosPass->Prepare(ctx.Renderers);
-            s_GizmosPass->Execute(ctx);
-        }
-
-        if (s_SelectionOutlinePass)
-            s_SelectionOutlinePass->Execute(ctx);
+        renderPasses.push_back(s_CopyDepthPass);
+        renderPasses.push_back(s_GizmosPass);
+        renderPasses.push_back(s_SelectionOutlinePass);
 #endif
+
+        std::sort(renderPasses.begin(), renderPasses.end(), RenderPass::Comparer());
+        for (const std::shared_ptr<RenderPass>& pass : renderPasses)
+        {
+            pass->Execute(ctx);
+        }
     }
 
     void SetupMatrices(const Matrix4x4 &modelMatrix)

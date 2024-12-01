@@ -17,7 +17,7 @@ public:
     explicit GizmosPass(int priority);
     ~GizmosPass() override = default;
 
-    void Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers) const;
+    bool Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers) const;
     void Execute(const Context& ctx) override;
 
     GizmosPass(const GizmosPass&) = delete;

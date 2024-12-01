@@ -20,8 +20,11 @@ GizmosPass::GizmosPass(int priority) :
 {
 }
 
-void GizmosPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers) const
+bool GizmosPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers) const
 {
+    if (!Gizmos::IsEnabled())
+        return false;
+
     for (const std::shared_ptr<Renderer>& renderer : renderers)
     {
         if (renderer)
@@ -30,6 +33,8 @@ void GizmosPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers
             Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
         }
     }
+
+    return true;
 }
 
 void GizmosPass::Execute(const Context& ctx)

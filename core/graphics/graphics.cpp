@@ -257,13 +257,19 @@ namespace Graphics
         renderPasses.push_back(s_FinalBlitPass);
 
 #if RENDER_ENGINE_EDITOR
-        s_CopyDepthPass->Prepare(s_ForwardRenderPass->GetEndFence(), cameraDepthTarget);
-        s_GizmosPass->Prepare(ctx.Renderers);
-        s_SelectionOutlinePass->Prepare();
+        const bool executeGizmosPass = s_GizmosPass->Prepare(ctx.Renderers);
+        const bool executeSelectionPass = s_SelectionOutlinePass->Prepare();
 
-        renderPasses.push_back(s_CopyDepthPass);
-        renderPasses.push_back(s_GizmosPass);
-        renderPasses.push_back(s_SelectionOutlinePass);
+        if (executeGizmosPass)
+        {
+            s_CopyDepthPass->Prepare(s_ForwardRenderPass->GetEndFence(), cameraDepthTarget);
+
+            renderPasses.push_back(s_CopyDepthPass);
+            renderPasses.push_back(s_GizmosPass);
+        }
+
+        if (executeSelectionPass)
+            renderPasses.push_back(s_SelectionOutlinePass);
 #endif
 
         std::sort(renderPasses.begin(), renderPasses.end(), RenderPass::Comparer());

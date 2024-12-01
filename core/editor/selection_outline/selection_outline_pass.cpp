@@ -30,8 +30,9 @@ SelectionOutlinePass::SelectionOutlinePass(int priority) :
 {
 }
 
-void SelectionOutlinePass::Prepare()
+bool SelectionOutlinePass::Prepare()
 {
+    return !Hierarchy::GetSelectedGameObjects().empty();
 }
 
 void SelectionOutlinePass::Execute(const Context& ctx)
@@ -43,9 +44,7 @@ void SelectionOutlinePass::Execute(const Context& ctx)
     static GraphicsBackendRenderTargetDescriptor colorTarget { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
     static GraphicsBackendRenderTargetDescriptor depthTarget { FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT };
 
-    auto selectedGameObjects = Hierarchy::GetSelectedGameObjects();
-    if (selectedGameObjects.empty())
-        return;
+    const std::unordered_set<std::shared_ptr<GameObject>>& selectedGameObjects = Hierarchy::GetSelectedGameObjects();
 
     CheckTexture(silhouetteRenderTarget);
 

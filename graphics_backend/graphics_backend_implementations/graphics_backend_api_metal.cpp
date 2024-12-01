@@ -692,11 +692,11 @@ GraphicsBackendFence GraphicsBackendMetal::CreateFence(FenceType fenceType, cons
     return fence;
 }
 
-GraphicsBackendFence GraphicsBackendMetal::SignalFence(const GraphicsBackendFence& fence)
+void GraphicsBackendMetal::SignalFence(const GraphicsBackendFence& fence)
 {
     const MTL::Event* metalEvent = reinterpret_cast<MTL::Event*>(fence.Fence);
 
-    switch (fenceType)
+    switch (fence.Type)
     {
         case FenceType::RENDER_TO_COPY:
             m_RenderCommandBuffer->encodeSignalEvent(metalEvent, 1);

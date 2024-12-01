@@ -776,7 +776,7 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
         if (!state.IsEnabled)
             continue;
 
-        isBackbuffer &= state.IsBackbuffer;
+        isBackbuffer &= state.IsBackbuffer || !state.Target;
         clearFlag |= state.ClearFlags;
     }
 

@@ -594,12 +594,10 @@ namespace Graphics
 
     void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material, const std::string& name)
     {
-        static std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
-        static GraphicsBackendRenderTargetDescriptor depthDescriptor{FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT};
+        static const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
+        static const GraphicsBackendRenderTargetDescriptor depthDescriptor{FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT};
 
         material.SetTexture("_BlitTexture", source);
-
-        depthDescriptor.IsBackbuffer = destinationDescriptor.IsBackbuffer;
 
         SetRenderTarget(destinationDescriptor, destination);
         SetRenderTarget(depthDescriptor, nullptr);

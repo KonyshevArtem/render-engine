@@ -18,6 +18,7 @@ public:
 
     void Prepare(const GraphicsBackendFence& waitForFence, const std::shared_ptr<Texture2D>& sourceDepth);
     void Execute(const Context& ctx) override;
+    const GraphicsBackendFence& GetEndFence() const;
 
     CopyDepthPass(const CopyDepthPass&) = delete;
     CopyDepthPass(CopyDepthPass&&) = delete;

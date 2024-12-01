@@ -89,8 +89,8 @@ namespace Graphics
 
 #if RENDER_ENGINE_EDITOR
         s_CopyDepthPass = std::make_shared<CopyDepthPass>(2);
-        s_GizmosPass = std::make_shared<GizmosPass>(4);
-        s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>(5);
+        s_GizmosPass = std::make_shared<GizmosPass>(5);
+        s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>(4);
 #endif
     }
 
@@ -257,7 +257,7 @@ namespace Graphics
         renderPasses.push_back(s_FinalBlitPass);
 
 #if RENDER_ENGINE_EDITOR
-        const bool executeGizmosPass = s_GizmosPass->Prepare(ctx.Renderers);
+        const bool executeGizmosPass = s_GizmosPass->Prepare(ctx.Renderers, s_CopyDepthPass->GetEndFence());
         const bool executeSelectionPass = s_SelectionOutlinePass->Prepare();
 
         if (executeGizmosPass)

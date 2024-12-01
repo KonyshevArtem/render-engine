@@ -20,10 +20,12 @@ GizmosPass::GizmosPass(int priority) :
 {
 }
 
-bool GizmosPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers) const
+bool GizmosPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers, const GraphicsBackendFence& waitForFence)
 {
     if (!Gizmos::IsEnabled())
         return false;
+
+    m_Fence = waitForFence;
 
     for (const std::shared_ptr<Renderer>& renderer : renderers)
     {
@@ -41,6 +43,8 @@ void GizmosPass::Execute(const Context& ctx)
 {
     static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {});
     static const std::shared_ptr<Material> gizmosMaterial = std::make_shared<Material>(shader, "Gizmos");
+
+    GraphicsBackend::Current()->WaitForFence(m_Fence);
 
     Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
     Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());

@@ -4,6 +4,7 @@
 #if RENDER_ENGINE_EDITOR
 
 #include "graphics/passes/render_pass.h"
+#include "types/graphics_backend_fence.h"
 
 #include <vector>
 #include <memory>
@@ -17,7 +18,7 @@ public:
     explicit GizmosPass(int priority);
     ~GizmosPass() override = default;
 
-    bool Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers) const;
+    bool Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers, const GraphicsBackendFence& waitForFence);
     void Execute(const Context& ctx) override;
 
     GizmosPass(const GizmosPass&) = delete;
@@ -25,6 +26,9 @@ public:
 
     GizmosPass &operator=(const GizmosPass&) = delete;
     GizmosPass &operator=(GizmosPass&&) = delete;
+
+private:
+    GraphicsBackendFence m_Fence;
 };
 
 #endif

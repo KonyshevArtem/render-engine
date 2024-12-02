@@ -776,7 +776,7 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
         if (!state.IsEnabled)
             continue;
 
-        isBackbuffer &= state.IsBackbuffer;
+        isBackbuffer &= state.IsBackbuffer || !state.Target;
         clearFlag |= state.ClearFlags;
     }
 
@@ -855,9 +855,13 @@ void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStenc
     }
 }
 
-GraphicsBackendFence GraphicsBackendOpenGL::InsertFence(FenceType fenceType, const std::string& name)
+GraphicsBackendFence GraphicsBackendOpenGL::CreateFence(FenceType fenceType, const std::string& name)
 {
     return GraphicsBackendFence{};
+}
+
+void GraphicsBackendOpenGL::SignalFence(const GraphicsBackendFence& fence)
+{
 }
 
 void GraphicsBackendOpenGL::WaitForFence(const GraphicsBackendFence& fence)

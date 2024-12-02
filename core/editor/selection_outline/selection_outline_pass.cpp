@@ -16,8 +16,8 @@
 
 void CheckTexture(std::shared_ptr<Texture2D> &_texture)
 {
-    int width  = Graphics::GetScreenWidth();
-    int height = Graphics::GetScreenHeight();
+    const int width  = Graphics::GetScreenWidth();
+    const int height = Graphics::GetScreenHeight();
     if (!_texture || _texture->GetWidth() != width || _texture->GetHeight() != height)
     {
         _texture = Texture2D::Create(width, height, TextureInternalFormat::RGBA8, false, true, "SilhouetteRT");
@@ -25,7 +25,17 @@ void CheckTexture(std::shared_ptr<Texture2D> &_texture)
     }
 }
 
-void SelectionOutlinePass::Execute(Context &_context)
+SelectionOutlinePass::SelectionOutlinePass(int priority) :
+    RenderPass(priority)
+{
+}
+
+bool SelectionOutlinePass::Prepare()
+{
+    return !Hierarchy::GetSelectedGameObjects().empty();
+}
+
+void SelectionOutlinePass::Execute(const Context& ctx)
 {
     static std::shared_ptr<Material>  blitMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/outlineBlit", {}, {}, {}, {false, DepthFunction::ALWAYS}), "OutlineBlit");
     static std::shared_ptr<Material>  silhouetteMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/silhouette", {}, {}, {}, {false, DepthFunction::ALWAYS}), "Silhouette");
@@ -34,9 +44,7 @@ void SelectionOutlinePass::Execute(Context &_context)
     static GraphicsBackendRenderTargetDescriptor colorTarget { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
     static GraphicsBackendRenderTargetDescriptor depthTarget { FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT };
 
-    auto selectedGameObjects = Hierarchy::GetSelectedGameObjects();
-    if (selectedGameObjects.empty())
-        return;
+    const std::unordered_set<std::shared_ptr<GameObject>>& selectedGameObjects = Hierarchy::GetSelectedGameObjects();
 
     CheckTexture(silhouetteRenderTarget);
 

@@ -1,21 +1,23 @@
 #ifndef RENDER_ENGINE_SKYBOX_PASS_H
 #define RENDER_ENGINE_SKYBOX_PASS_H
 
+#include "render_pass.h"
+
 struct Context;
 
-class SkyboxPass
+class SkyboxPass : public RenderPass
 {
 public:
-    SkyboxPass()  = default;
-    ~SkyboxPass() = default;
+    explicit SkyboxPass(int priority);
+    ~SkyboxPass() override = default;
 
-    static void Execute(const Context &_ctx);
+    void Execute(const Context& ctx) override;
 
-    SkyboxPass(const SkyboxPass &) = delete;
-    SkyboxPass(SkyboxPass &&)      = delete;
+    SkyboxPass(const SkyboxPass&) = delete;
+    SkyboxPass(SkyboxPass&&) = delete;
 
-    SkyboxPass &operator=(const SkyboxPass &) = delete;
-    SkyboxPass &operator=(SkyboxPass &&)      = delete;
+    SkyboxPass &operator=(const SkyboxPass&) = delete;
+    SkyboxPass &operator=(SkyboxPass&&) = delete;
 };
 
 #endif //RENDER_ENGINE_SKYBOX_PASS_H

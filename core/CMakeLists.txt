@@ -95,7 +95,13 @@ add_library(
 	utils/utils.cpp
 	utils/utils.h
 	file_system/file_system.cpp
-	file_system/file_system.h)
+	file_system/file_system.h
+	graphics/passes/draw_renderers_pass.cpp
+	graphics/passes/draw_renderers_pass.h
+	graphics/passes/forward_render_pass.cpp
+	graphics/passes/forward_render_pass.h
+	editor/copy_depth/copy_depth_pass.cpp
+	editor/copy_depth/copy_depth_pass.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil OpenFBX GraphicsBackend nlohmann_json::nlohmann_json)

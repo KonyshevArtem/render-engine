@@ -9,24 +9,57 @@
 #include "global_constants.h"
 #include "graphics_backend_api.h"
 #include "material/material.h"
+#include "renderer/renderer.h"
+#include "quaternion/quaternion.h"
+#include "types/graphics_backend_render_target_descriptor.h"
 
 #include <cmath>
 
-void GizmosPass::Execute(Context &_context)
+GizmosPass::GizmosPass(int priority) :
+    RenderPass(priority)
 {
-    static auto gizmosMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {}), "Gizmos");
+}
+
+bool GizmosPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers, const GraphicsBackendFence& waitForFence)
+{
+    if (!Gizmos::IsEnabled())
+        return false;
+
+    m_Fence = waitForFence;
+
+    for (const std::shared_ptr<Renderer>& renderer : renderers)
+    {
+        if (renderer)
+        {
+            auto bounds = renderer->GetAABB();
+            Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
+        }
+    }
+
+    return true;
+}
+
+void GizmosPass::Execute(const Context& ctx)
+{
+    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {});
+    static const std::shared_ptr<Material> gizmosMaterial = std::make_shared<Material>(shader, "Gizmos");
+
+    GraphicsBackend::Current()->WaitForFence(m_Fence);
+
+    Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
+    Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
 
     GraphicsBackend::Current()->BeginRenderPass("Gizmos pass");
-    const auto &gizmos = Gizmos::GetGizmosToDraw();
-    for (const auto &pair : gizmos)
+    const auto& gizmos = Gizmos::GetGizmosToDraw();
+    for (const auto& pair : gizmos)
     {
-        auto &matrices = pair.second;
+        const std::vector<Matrix4x4>& matrices = pair.second;
         auto begin = matrices.begin();
         int totalCount = matrices.size();
         while (totalCount > 0)
         {
-            auto end = begin + std::min(GlobalConstants::MaxInstancingCount, totalCount);
-            std::vector<Matrix4x4> matricesSlice(begin, end);
+            const auto end = begin + std::min(GlobalConstants::MaxInstancingCount, totalCount);
+            const std::vector<Matrix4x4> matricesSlice(begin, end);
             Graphics::DrawInstanced(*pair.first, *gizmosMaterial, matricesSlice, 0);
 
             begin = end;
@@ -34,6 +67,8 @@ void GizmosPass::Execute(Context &_context)
         }
     }
     GraphicsBackend::Current()->EndRenderPass();
+
+    Gizmos::ClearGizmos();
 }
 
 #endif

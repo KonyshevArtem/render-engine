@@ -1,23 +1,34 @@
-#if RENDER_ENGINE_EDITOR
-
 #ifndef RENDER_ENGINE_GIZMOS_PASS_H
 #define RENDER_ENGINE_GIZMOS_PASS_H
 
-struct Context;
+#if RENDER_ENGINE_EDITOR
 
-class GizmosPass
+#include "graphics/passes/render_pass.h"
+#include "types/graphics_backend_fence.h"
+
+#include <vector>
+#include <memory>
+
+struct Context;
+class Renderer;
+
+class GizmosPass : public RenderPass
 {
 public:
-    GizmosPass() = default;
-    ~GizmosPass() = default;
+    explicit GizmosPass(int priority);
+    ~GizmosPass() override = default;
 
-    void Execute(Context &_context);
+    bool Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers, const GraphicsBackendFence& waitForFence);
+    void Execute(const Context& ctx) override;
 
-    GizmosPass(const GizmosPass &) = delete;
-    GizmosPass(GizmosPass &&)      = delete;
+    GizmosPass(const GizmosPass&) = delete;
+    GizmosPass(GizmosPass&&) = delete;
 
-    GizmosPass &operator=(const GizmosPass &) = delete;
-    GizmosPass &operator=(GizmosPass &&) = delete;
+    GizmosPass &operator=(const GizmosPass&) = delete;
+    GizmosPass &operator=(GizmosPass&&) = delete;
+
+private:
+    GraphicsBackendFence m_Fence;
 };
 
 #endif

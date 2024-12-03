@@ -17,10 +17,13 @@ ForwardRenderPass::ForwardRenderPass(int priority) :
     m_SkyboxPass = std::make_unique<SkyboxPass>(2);
 }
 
-void ForwardRenderPass::Prepare(const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor)
+void ForwardRenderPass::Prepare(const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor, const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers)
 {
     m_ColorTargetDescriptor = colorTargetDescriptor;
     m_DepthTargetDescriptor = depthTargetDescriptor;
+
+    m_OpaquePass->Prepare(cameraPosition, renderers);
+    m_TransparentPass->Prepare(cameraPosition, renderers);
 }
 
 void ForwardRenderPass::Execute(const Context& ctx)

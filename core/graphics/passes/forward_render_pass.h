@@ -6,9 +6,12 @@
 #include "types/graphics_backend_fence.h"
 
 #include <memory>
+#include <vector>
 
 class DrawRenderersPass;
 class SkyboxPass;
+class Renderer;
+struct Vector3;
 
 class ForwardRenderPass : public RenderPass
 {
@@ -16,7 +19,7 @@ public:
     explicit ForwardRenderPass(int priority);
     ~ForwardRenderPass() override = default;
 
-    void Prepare(const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor);
+    void Prepare(const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor, const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers);
     void Execute(const Context& ctx) override;
     const GraphicsBackendFence& GetEndFence() const;
 

@@ -2,6 +2,7 @@
 #include "graphics/context.h"
 #include "graphics/graphics.h"
 #include "graphics_backend_debug_group.h"
+#include "vector3/vector3.h"
 
 #include <utility>
 
@@ -12,13 +13,14 @@ DrawRenderersPass::DrawRenderersPass(std::string name, DrawCallSortMode sorting,
 {
 }
 
-void DrawRenderersPass::Prepare()
+void DrawRenderersPass::Prepare(const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers)
 {
+    m_RenderQueue.Prepare(cameraPosition, renderers, m_RenderSettings);
 }
 
 void DrawRenderersPass::Execute(const Context& ctx)
 {
     auto debugGroup = GraphicsBackendDebugGroup(m_Name);
 
-    Graphics::DrawRenderers(ctx.Renderers, m_RenderSettings);
+    Graphics::DrawRenderQueue(m_RenderQueue);
 }

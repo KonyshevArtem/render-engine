@@ -40,113 +40,135 @@ ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConsta
     m_PointLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
 }
 
-void ShadowCasterPass::Prepare()
+void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers, const std::vector<std::shared_ptr<Light>>& lights, float shadowsDistance)
 {
-}
-
-void ShadowCasterPass::Execute(const Context& ctx)
-{
-    static const GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::DONT_CARE, .StoreAction = StoreAction::DONT_CARE };
-
     static const Matrix4x4 biasMatrix = Matrix4x4::TRS(Vector3{0.5f, 0.5f, 0.5f}, Quaternion(), Vector3{0.5f, 0.5f, 0.5f});
+    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/shadowCaster", {}, {}, {}, {});
+    static const std::shared_ptr<Material> material = std::make_shared<Material>(shader, "ShadowCaster");
+    static const RenderSettings renderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material};
 
-    static Matrix4x4 pointLightViewMatrices[6]{
-            Matrix4x4::TBN({0, 0, 1}, {0, 1, 0}, {-1, 0, 0}).Invert(), // right
-            Matrix4x4::TBN({0, 0, -1}, {0, 1, 0}, {1, 0, 0}).Invert(), // left
-            Matrix4x4::TBN({1, 0, 0}, {0, 0, 1}, {0, -1, 0}).Invert(), // up
-            Matrix4x4::TBN({1, 0, 0}, {0, 0, -1}, {0, 1, 0}).Invert(), // down
-            Matrix4x4::TBN({1, 0, 0}, {0, 1, 0}, {0, 0, 1}).Invert(), // forward
-            Matrix4x4::TBN({-1, 0, 0}, {0, 1, 0}, {0, 0, -1}).Invert(), // back
+    static Matrix4x4 pointLightViewMatrices[6]
+    {
+        Matrix4x4::TBN({0, 0, 1}, {0, 1, 0}, {-1, 0, 0}).Invert(), // right
+        Matrix4x4::TBN({0, 0, -1}, {0, 1, 0}, {1, 0, 0}).Invert(), // left
+        Matrix4x4::TBN({1, 0, 0}, {0, 0, 1}, {0, -1, 0}).Invert(), // up
+        Matrix4x4::TBN({1, 0, 0}, {0, 0, -1}, {0, 1, 0}).Invert(), // down
+        Matrix4x4::TBN({1, 0, 0}, {0, 1, 0}, {0, 0, 1}).Invert(), // forward
+        Matrix4x4::TBN({-1, 0, 0}, {0, 1, 0}, {0, 0, -1}).Invert(), // back
     };
 
-    if (ctx.ShadowCastersCount == 0)
-        return;
+    m_DirectionalLightRenderQueue.Clear();
+    for (RenderQueue& queue : m_PointLightsRenderQueues)
+        queue.Clear();
+    for (RenderQueue& queue : m_SpotLightRenderQueues)
+        queue.Clear();
 
-    GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
-
-    int spotLightsCount = 0;
-    int pointLightsCount = 0;
-    for (const auto *light: ctx.Lights)
+    uint8_t spotLightIndex = 0;
+    uint8_t pointLightsIndex = 0;
+    for (const std::shared_ptr<Light>& light : lights)
     {
         if (light == nullptr)
             continue;
 
         if (light->Type == LightType::SPOT)
         {
-            depthTargetDescriptor.Layer = spotLightsCount;
+            const Matrix4x4 view = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
+            const Matrix4x4 proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, shadowsDistance);
 
-            Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
-            Graphics::SetRenderTarget(depthTargetDescriptor, m_SpotLightShadowMapArray);
+            m_SpotLightMatrices[spotLightIndex] = {view, proj};
+            m_SpotLightRenderQueues[spotLightIndex].Prepare(light->Position, renderers, renderSettings);
+            m_ShadowsGPUData.SpotLightsViewProjMatrices[spotLightIndex] = biasMatrix * proj * view;
 
-            auto view = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
-            auto proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, ctx.ShadowDistance);
-
-            Graphics::SetCameraData(view, proj);
-            m_ShadowsData.SpotLightsViewProjMatrices[spotLightsCount] = biasMatrix * proj * view;
-            Render(ctx.Renderers, {0, 0, k_SpotLightShadowMapSize, k_SpotLightShadowMapSize}, "Spot Light Shadow Pass " + std::to_string(spotLightsCount));
-
-            ++spotLightsCount;
+            ++spotLightIndex;
         }
         if (light->Type == LightType::POINT)
         {
-            auto proj = Matrix4x4::Perspective(90, 1, 0.01f, ctx.ShadowDistance);
+            const Matrix4x4 proj = Matrix4x4::Perspective(90, 1, 0.01f, shadowsDistance);
             for (int i = 0; i < 6; ++i)
             {
-                depthTargetDescriptor.Layer = pointLightsCount * 6 + i;
+                const Matrix4x4 view = pointLightViewMatrices[i] * Matrix4x4::Translation(-light->Position);
 
-                Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
-                Graphics::SetRenderTarget(depthTargetDescriptor, m_PointLightShadowMap);
-
-                auto view = pointLightViewMatrices[i] * Matrix4x4::Translation(-light->Position);
-                m_ShadowsData.PointLightShadows[pointLightsCount].ViewProjMatrices[i] = biasMatrix * proj * view;
-
-                Graphics::SetCameraData(view, proj);
-                Render(ctx.Renderers, {0, 0, k_PointLightShadowMapSize, k_PointLightShadowMapSize}, "Point Light Shadow Pass " + std::to_string(pointLightsCount));
+                m_PointLightMatrices[pointLightsIndex * 6 + i] = {view, proj};
+                m_PointLightsRenderQueues[pointLightsIndex].Prepare(light->Position, renderers, renderSettings);
+                m_ShadowsGPUData.PointLightShadows[pointLightsIndex].ViewProjMatrices[i] = biasMatrix * proj * view;
             }
 
-            m_ShadowsData.PointLightShadows[pointLightsCount].Position = light->Position.ToVector4(0);
+            m_ShadowsGPUData.PointLightShadows[pointLightsIndex].Position = light->Position.ToVector4(0);
 
-            ++pointLightsCount;
+            ++pointLightsIndex;
         }
         else if (light->Type == LightType::DIRECTIONAL)
         {
-            depthTargetDescriptor.Layer = 0;
+            m_DirectionalLightRenderQueue.Prepare({}, renderers, renderSettings);
 
-            Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
-            Graphics::SetRenderTarget(depthTargetDescriptor, m_DirectionLightShadowMap);
+            Bounds shadowCastersBounds;
+            const std::vector<DrawCallInfo>& dirLightShadowDrawCalls = m_DirectionalLightRenderQueue.GetDrawCalls();
+            for (int i = 0; i < dirLightShadowDrawCalls.size(); ++i)
+            {
+                if (i == 0)
+                    shadowCastersBounds = dirLightShadowDrawCalls[i].AABB;
+                else
+                    shadowCastersBounds = dirLightShadowDrawCalls[i].AABB.Combine(shadowCastersBounds);
+            }
 
-            auto &bounds = ctx.ShadowCasterBounds;
+            const Vector3 sizeWorldSpace = shadowCastersBounds.GetSize();
+            const float maxExtentWorldSpace = std::max({sizeWorldSpace.x, sizeWorldSpace.y, sizeWorldSpace.z});
+            const Vector3 lightDir = light->Rotation * Vector3{0, 0, 1};
+            const Vector3 viewPos = shadowCastersBounds.GetCenter() - lightDir * maxExtentWorldSpace;
+            const Matrix4x4 viewMatrix = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-viewPos);
 
-            auto sizeWorldSpace   = bounds.GetSize();
-            auto maxExtentWorldSpace = std::max({sizeWorldSpace.x, sizeWorldSpace.y, sizeWorldSpace.z});
-            auto lightDir            = light->Rotation * Vector3 {0, 0, 1};
-            auto viewPos             = bounds.GetCenter() - lightDir * maxExtentWorldSpace;
-            auto viewMatrix          = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-viewPos);
+            const Bounds boundsViewSpace = viewMatrix * shadowCastersBounds;
+            const Vector3 extentsViewSpace = boundsViewSpace.GetExtents();
+            const float maxExtentViewSpace = std::max(extentsViewSpace.x, extentsViewSpace.y);
+            const Matrix4x4 projMatrix = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0, shadowsDistance);
 
-            auto boundsViewSpace    = viewMatrix * bounds;
-            auto extentsViewSpace   = boundsViewSpace.GetExtents();
-            auto maxExtentViewSpace = std::max(extentsViewSpace.x, extentsViewSpace.y);
-            auto projMatrix         = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0, ctx.ShadowDistance);
-
-            Graphics::SetCameraData(viewMatrix, projMatrix);
-
-            m_ShadowsData.DirectionalLightViewProjMatrix = biasMatrix * projMatrix * viewMatrix;
-
-            Render(ctx.Renderers, {0, 0, k_DirLightShadowMapSize, k_DirLightShadowMapSize}, "Directional Light Shadow Pass");
+            m_DirectionLightMatrices = {viewMatrix, projMatrix};
+            m_ShadowsGPUData.DirectionalLightViewProjMatrix = biasMatrix * projMatrix * viewMatrix;
         }
     }
 
-    m_ShadowsConstantBuffer->SetData(&m_ShadowsData, 0, sizeof(ShadowsData));
+    m_ShadowsConstantBuffer->SetData(&m_ShadowsGPUData, 0, sizeof(ShadowsData));
 }
 
-void ShadowCasterPass::Render(const std::vector<std::shared_ptr<Renderer>> &_renderers, const Vector4& viewport, const std::string& passName)
+void ShadowCasterPass::Execute(const Context& ctx)
 {
-    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/shadowCaster", {}, {}, {}, {});
-    static const std::shared_ptr<Material> material = std::make_shared<Material>(shader, "ShadowCaster");
-    static const RenderSettings renderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material};
+    for (int i = 0; i < GlobalConstants::MaxSpotLightSources; ++i)
+    {
+        if (m_SpotLightRenderQueues[i].IsEmpty())
+            break;
+
+        Render(m_SpotLightRenderQueues[i], m_SpotLightShadowMapArray, i, m_SpotLightMatrices[i], "Spot Light Shadow Pass " + std::to_string(i));
+    }
+
+    for (int i = 0; i < GlobalConstants::MaxPointLightSources; ++i)
+    {
+        if (m_PointLightsRenderQueues[i].IsEmpty())
+            break;
+
+        for (int j = 0; j < 6; ++j)
+        {
+            const int viewIndex = i * 6 + j;
+            Render(m_PointLightsRenderQueues[i], m_PointLightShadowMap, viewIndex, m_PointLightMatrices[viewIndex], "Point Light Shadow Pass " + std::to_string(i));
+        }
+    }
+
+    if (!m_DirectionalLightRenderQueue.IsEmpty())
+        Render(m_DirectionalLightRenderQueue, m_DirectionLightShadowMap, 0, m_DirectionLightMatrices, "Directional Light Shadow Pass");
+}
+
+void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsMatrices& matrices, const std::string& passName)
+{
+    static constexpr GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::DONT_CARE, .StoreAction = StoreAction::DONT_CARE };
+
+    const Vector4& viewport{0, 0, static_cast<float>(target->GetWidth()), static_cast<float>(target->GetHeight())};
+    const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR, .Layer = targetLayer };
+
+    Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
+    Graphics::SetRenderTarget(depthTargetDescriptor, target);
+    Graphics::SetCameraData(matrices.ViewMatrix, matrices.ProjectionMatrix);
 
     GraphicsBackend::Current()->BeginRenderPass(passName);
     Graphics::SetViewport(viewport);
-    Graphics::DrawRenderers(_renderers, renderSettings);
+    Graphics::DrawRenderQueue(renderQueue);
     GraphicsBackend::Current()->EndRenderPass();
 }

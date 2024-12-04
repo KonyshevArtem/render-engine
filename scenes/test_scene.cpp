@@ -73,13 +73,11 @@ void TestScene::Init()
     auto cylinderAsset = FBXAsset::Load("core_resources/models/cylinder.fbx");
     auto planeAsset    = FBXAsset::Load("core_resources/models/plane.fbx");
     auto carAsset      = FBXAsset::Load("core_resources/models/car.fbx");
-    auto sphereAsset   = FBXAsset::Load("core_resources/models/sphere.fbx");
 
     auto cubeMesh     = cubeAsset->GetMesh(0);
     auto cylinderMesh = cylinderAsset->GetMesh(0);
     auto planeMesh    = planeAsset->GetMesh(0);
     auto carMesh      = carAsset->GetMesh(0);
-    auto sphereMesh   = sphereAsset->GetMesh(0);
 
     // init materials
     auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader, "StandardOpaque");
@@ -197,17 +195,17 @@ void TestScene::Init()
     constexpr int gridSize     = 20;
     for (int i = 0; i < spheresCount; ++i)
     {
-        auto  sphere     = GameObject::Create("Sphere " + std::to_string(i));
-        float x          = (i % (gridSize * gridSize)) % gridSize;
-        int   y          = i / (gridSize * gridSize);
-        float z          = (i % (gridSize * gridSize)) / gridSize;
-        sphere->Renderer = std::make_shared<MeshRenderer>(sphere, sphereMesh, sphereMaterial);
-        sphere->SetLocalPosition({-40.0f + 80.0f * x / gridSize, -15.0f - 2.5f * y, -40.0f + 80.0f * z / gridSize});
-        sphere->Renderer->CastShadows = false;
-        sphere->Renderer->SetVector("_Color", {colorDistribution(random), colorDistribution(random), colorDistribution(random), 1});
-        sphere->Renderer->SetFloat("_Size", sizeDistribution(random));
+        auto instancedCube = GameObject::Create("Instanced Cube " + std::to_string(i));
+        float x = (i % (gridSize * gridSize)) % gridSize;
+        int y = i / (gridSize * gridSize);
+        float z = (i % (gridSize * gridSize)) / gridSize;
+        instancedCube->Renderer = std::make_shared<MeshRenderer>(instancedCube, cubeMesh, sphereMaterial);
+        instancedCube->SetLocalPosition({-40.0f + 80.0f * x / gridSize, -15.0f - 2.5f * y, -40.0f + 80.0f * z / gridSize});
+        instancedCube->Renderer->CastShadows = false;
+        instancedCube->Renderer->SetVector("_Color", {colorDistribution(random), colorDistribution(random), colorDistribution(random), 1});
+        instancedCube->Renderer->SetFloat("_Size", sizeDistribution(random));
 
-        sphere->SetParent(spheresParent);
+        instancedCube->SetParent(spheresParent);
     }
 
     // init lights

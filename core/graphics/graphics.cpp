@@ -8,7 +8,6 @@
 #include "light/light.h"
 #include "passes/render_pass.h"
 #include "passes/shadow_caster_pass.h"
-#include "passes/skybox_pass.h"
 #include "renderer/renderer.h"
 #include "texture/texture.h"
 #include "graphics_buffer/graphics_buffer.h"
@@ -21,7 +20,6 @@
 #include "data_structs/lighting_data.h"
 #include "data_structs/per_draw_data.h"
 #include "types/graphics_backend_buffer_info.h"
-#include "render_settings/draw_call_comparer.h"
 #include "render_settings/draw_call_filter.h"
 #include "texture_2d/texture_2d.h"
 #include "mesh/mesh.h"
@@ -33,9 +31,9 @@
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "material/material.h"
 #include "utils/utils.h"
-#include "passes/draw_renderers_pass.h"
 #include "passes/forward_render_pass.h"
 #include "editor/copy_depth/copy_depth_pass.h"
+#include "render_queue/render_queue.h"
 
 #include <cassert>
 
@@ -117,7 +115,7 @@ namespace Graphics
     {
     }
 
-    void SetLightingData(const std::vector<Light *> &_lights)
+    void SetLightingData(const std::vector<std::shared_ptr<Light>>& lights)
     {
         LightingData lightingData{};
         lightingData.AmbientLight = GraphicsSettings::GetAmbientLightColor() * GraphicsSettings::GetAmbientLightIntensity();
@@ -125,7 +123,7 @@ namespace Graphics
         lightingData.SpotLightsCount = 0;
         lightingData.HasDirectionalLight = -1;
 
-        for (const auto &light: _lights)
+        for (const std::shared_ptr<Light>& light : lights)
         {
             if (light == nullptr)
                 continue;
@@ -155,58 +153,6 @@ namespace Graphics
         }
 
         s_LightingDataBuffer->SetData(&lightingData, 0, sizeof(lightingData));
-    }
-
-    std::size_t GetDrawCallInstancingHash(const DrawCallInfo &drawCallInfo)
-    {
-        std::size_t materialHash = std::hash<Material*>{}(drawCallInfo.Material);
-        std::size_t geometryHash = std::hash<DrawableGeometry*>{}(drawCallInfo.Geometry);
-        return Utils::HashCombine(materialHash, geometryHash);
-    }
-
-    void BatchDrawCalls(std::vector<DrawCallInfo> &drawCalls, std::vector<std::vector<Matrix4x4>> &instancesMatrices, std::vector<std::vector<uint32_t>> &perInstanceIndices)
-    {
-        static std::unordered_map<std::size_t, size_t> instancingMap;
-
-        instancingMap.clear();
-        instancesMatrices.clear();
-        perInstanceIndices.clear();
-
-        for (size_t i = 0; i < drawCalls.size(); ++i)
-        {
-            DrawCallInfo& drawCall = drawCalls[i];
-            if (!drawCall.Material->GetShader()->SupportInstancing())
-            {
-                continue;
-            }
-
-            size_t hash = GetDrawCallInstancingHash(drawCall);
-            auto it = instancingMap.find(hash);
-
-            if (it == instancingMap.end())
-            {
-                size_t dataIndex = instancesMatrices.size();
-                instancesMatrices.push_back({drawCall.ModelMatrix});
-                perInstanceIndices.push_back({drawCall.PerInstanceDataIndex});
-                drawCall.InstancesDataIndex = dataIndex;
-                drawCall.Instanced = true;
-                instancingMap[hash] = i;
-                continue;
-            }
-
-            DrawCallInfo& instancedDrawCall = drawCalls[it->second];
-            size_t dataIndex = instancedDrawCall.InstancesDataIndex;
-            instancesMatrices[dataIndex].push_back(drawCall.ModelMatrix);
-            perInstanceIndices[dataIndex].push_back(drawCall.PerInstanceDataIndex);
-            instancedDrawCall.AABB = instancedDrawCall.AABB.Combine(drawCall.AABB);
-
-            drawCalls[i] = drawCalls[drawCalls.size() - 1];
-            drawCalls.pop_back();
-            --i;
-
-            if (instancesMatrices[dataIndex].size() >= GlobalConstants::MaxInstancingCount)
-                instancingMap.erase(it);
-        }
     }
 
     void Render(int width, int height)
@@ -248,8 +194,8 @@ namespace Graphics
 
         std::vector<std::shared_ptr<RenderPass>> renderPasses;
 
-        s_ShadowCasterPass->Prepare();
-        s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor);
+        s_ShadowCasterPass->Prepare(ctx.Renderers, ctx.Lights, Camera::Current->GetShadowDistance());
+        s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor, Camera::Current->GetPosition(), ctx.Renderers);
         s_FinalBlitPass->Prepare(cameraColorTarget);
 
         renderPasses.push_back(s_ShadowCasterPass);
@@ -422,75 +368,26 @@ namespace Graphics
         SetTextures(material.GetTextures(), shaderPass);
     }
 
-    void SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>> &renderers, std::vector<DrawCallInfo> &drawCalls, const RenderSettings& settings)
+    void DrawRenderQueue(const RenderQueue& renderQueue)
     {
-        drawCalls.clear();
-        drawCalls.reserve(renderers.size());
-
-        for (const auto &renderer : renderers)
+        for (const DrawCallInfo& drawCall : renderQueue.GetDrawCalls())
         {
-            if (renderer)
-            {
-                auto geometry = renderer->GetGeometry().get();
-                auto material = settings.OverrideMaterial ? settings.OverrideMaterial.get() : renderer->GetMaterial().get();
-                if (geometry && material)
-                {
-                    drawCalls.push_back({geometry, material, renderer->GetModelMatrix(), renderer->GetAABB(),
-                                         renderer->GetInstanceDataIndex(), renderer->GetInstanceDataOffset(), renderer->CastShadows});
-                }
-            }
-        }
-    }
-
-    void FilterDrawCalls(std::vector<DrawCallInfo> &drawCalls, const DrawCallFilter &filter)
-    {
-        for (int i = 0; i < drawCalls.size(); ++i)
-        {
-            const auto &drawCall = drawCalls[i];
-            if (!filter(drawCall))
-            {
-                drawCalls[i] = drawCalls[drawCalls.size() - 1];
-                drawCalls.pop_back();
-                --i;
-            }
-        }
-    }
-
-    void SortDrawCalls(std::vector<DrawCallInfo> &drawCalls, DrawCallSortMode sortMode)
-    {
-        if (sortMode != DrawCallSortMode::NO_SORTING)
-            std::sort(drawCalls.begin(), drawCalls.end(), DrawCallComparer {sortMode, s_LastCameraPosition});
-    }
-
-    void DrawRenderers(const std::vector<std::shared_ptr<Renderer>> &renderers, const RenderSettings &settings)
-    {
-        static std::vector<DrawCallInfo> filteredSortedDrawCalls;
-        static std::vector<std::vector<Matrix4x4>> instancedMatrices;
-        static std::vector<std::vector<uint32_t>> perInstanceIndices;
-
-        SetupDrawCalls(renderers, filteredSortedDrawCalls, settings);
-        FilterDrawCalls(filteredSortedDrawCalls, settings.Filter);
-        BatchDrawCalls(filteredSortedDrawCalls, instancedMatrices, perInstanceIndices);
-        SortDrawCalls(filteredSortedDrawCalls, settings.Sorting);
-
-        for (const auto &drawCall: filteredSortedDrawCalls)
-        {
-            const auto &shader = drawCall.Material->GetShader();
+            const std::shared_ptr<Shader>& shader = drawCall.Material->GetShader();
             for (int i = 0; i < shader->PassesCount(); ++i)
             {
-                auto pass = shader->GetPass(i);
+                const std::shared_ptr<ShaderPass> pass = shader->GetPass(i);
                 if (drawCall.Instanced)
                 {
                     uint64_t indicesOffset;
-                    SetupPerInstanceIndices(perInstanceIndices[drawCall.InstancesDataIndex], indicesOffset);
+                    SetupPerInstanceIndices(drawCall.PerInstanceDataIndices, indicesOffset);
 
-                    DrawInstanced(*drawCall.Geometry, *drawCall.Material, instancedMatrices[drawCall.InstancesDataIndex], i,
+                    DrawInstanced(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrices, i,
                         Renderer::GetInstanceDataBuffer(), 0,
                         s_PerInstanceIndicesBuffer, indicesOffset);
                 }
                 else
                 {
-                    Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrix, i, Renderer::GetInstanceDataBuffer(), drawCall.PerInstanceDataOffset);
+                    Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrices[0], i, Renderer::GetInstanceDataBuffer(), drawCall.PerInstanceDataOffset);
                 }
             }
         }

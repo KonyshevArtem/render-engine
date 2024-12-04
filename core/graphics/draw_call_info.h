@@ -5,21 +5,22 @@
 #include "matrix4x4/matrix4x4.h"
 
 #include <cstdint>
+#include <vector>
 
 class DrawableGeometry;
 class Material;
 
 struct DrawCallInfo
 {
-    DrawableGeometry *Geometry;
-    Material *Material;
-    Matrix4x4 ModelMatrix;
-    Bounds AABB;
-    uint32_t PerInstanceDataIndex;
-    uint32_t PerInstanceDataOffset;
-    bool CastShadows;
-    bool Instanced;
-    size_t InstancesDataIndex;
+    const DrawableGeometry* Geometry = nullptr;
+    const Material* Material = nullptr;
+    std::vector<Matrix4x4> ModelMatrices;
+    Bounds AABB{};
+    std::vector<uint32_t> PerInstanceDataIndices;
+    uint32_t PerInstanceDataOffset = 0;
+    bool CastShadows = false;
+    bool Instanced = false;
+    size_t InstancesDataIndex = 0;
 };
 
 #endif

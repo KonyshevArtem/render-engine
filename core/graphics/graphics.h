@@ -13,6 +13,7 @@ class Texture;
 class GraphicsBuffer;
 class DrawableGeometry;
 class Material;
+class RenderQueue;
 struct GraphicsBackendRenderTargetDescriptor;
 
 namespace Graphics
@@ -20,7 +21,7 @@ namespace Graphics
     void                      Init();
     void                      Shutdown();
     void                      Render(int width, int height);
-    void                      DrawRenderers(const std::vector<std::shared_ptr<Renderer>> &renderers, const RenderSettings &settings);
+    void                      DrawRenderQueue(const RenderQueue& renderQueue);
     void                      Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr, uint64_t perInstanceOffset = 0);
     void                      DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex, const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr, uint64_t perInstanceDataOffset = 0, const std::shared_ptr<GraphicsBuffer> &perInstanceIndices = nullptr, uint64_t perInstanceIndicesOffset = 0);
     void                      SetCameraData(const Matrix4x4 &_viewMatrix, Matrix4x4 _projectionMatrix);

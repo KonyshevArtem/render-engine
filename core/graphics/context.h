@@ -15,10 +15,9 @@ class GameObject;
 
 struct Context
 {
-public:
     Context();
 
-    std::vector<Light *> Lights;
+    std::vector<std::shared_ptr<Light>> Lights;
 
     std::vector<std::shared_ptr<Renderer>> Renderers;
 
@@ -27,12 +26,8 @@ public:
 
     std::shared_ptr<Cubemap> Skybox;
 
-    Bounds ShadowCasterBounds;
-    int ShadowCastersCount = 0;
-    float ShadowDistance = 0;
-
 private:
-    void CollectRenderers(const std::shared_ptr<GameObject> &_gameObject);
+    void CollectRenderers(const std::shared_ptr<GameObject> &gameObject);
 };
 
 #endif //RENDER_ENGINE_CONTEXT_H

@@ -9,48 +9,34 @@ Context::Context()
     if (Scene::Current == nullptr || Camera::Current == nullptr)
         return;
 
-    const auto &scene = Scene::Current;
+    const std::shared_ptr<Scene>& scene = Scene::Current;
 
-    Skybox           = scene->Skybox;
-    ViewMatrix       = Camera::Current->GetViewMatrix();
+    Skybox = scene->Skybox;
+    ViewMatrix = Camera::Current->GetViewMatrix();
     ProjectionMatrix = Camera::Current->GetProjectionMatrix();
-    ShadowDistance   = Camera::Current->GetShadowDistance();
 
-    auto &gameObjects = Scene::Current->GetRootGameObjects();
-    for (auto &go : gameObjects)
+    const std::vector<std::shared_ptr<GameObject>>& gameObjects = Scene::Current->GetRootGameObjects();
+    for (const std::shared_ptr<GameObject>& go : gameObjects)
         CollectRenderers(go);
 
-    for (const auto &light: scene->Lights)
+    for (const std::shared_ptr<Light>& light : scene->Lights)
     {
         if (light != nullptr)
-            Lights.push_back(light.get());
+            Lights.push_back(light);
     }
 }
 
-void Context::CollectRenderers(const std::shared_ptr<GameObject> &_gameObject)
+void Context::CollectRenderers(const std::shared_ptr<GameObject> &gameObject)
 {
-    if (!_gameObject)
+    if (!gameObject)
         return;
 
-    const auto &renderer = _gameObject->Renderer;
+    const std::shared_ptr<Renderer>& renderer = gameObject->Renderer;
     if (renderer)
     {
         Renderers.push_back(renderer);
-        if (renderer->CastShadows)
-        {
-            if (ShadowCastersCount == 0)
-            {
-                ShadowCasterBounds = renderer->GetAABB();
-            }
-            else
-            {
-                ShadowCasterBounds = ShadowCasterBounds.Combine(renderer->GetAABB());
-            }
-
-            ++ShadowCastersCount;
-        }
     }
 
-    for (auto it = _gameObject->Children.cbegin(); it != _gameObject->Children.cend(); it++)
-        CollectRenderers(*it);
+    for (const std::shared_ptr<GameObject>& child : gameObject->Children)
+        CollectRenderers(child);
 }

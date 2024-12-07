@@ -19,6 +19,7 @@ protected:
     BaseWindow(float width, float height, const std::string &title, size_t typeHashCode, bool topBar = true);
     virtual ~BaseWindow();
 
+    virtual void DrawTopBar(){};
     virtual void DrawInternal() = 0;
 
     int m_Id;

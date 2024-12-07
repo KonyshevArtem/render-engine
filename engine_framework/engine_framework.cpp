@@ -15,6 +15,7 @@ GameWindow* window = nullptr;
 void display(int width, int height)
 {
     Profiler::BeginNewFrame();
+    Profiler::Marker marker("Process Frame");
 
     Time::Update();
     Input::Update();

@@ -15,6 +15,7 @@ public:
     ~DebugConsoleWindow() override;
 
 protected:
+    void DrawTopBar() override;
     void DrawInternal() override;
 
 private:

@@ -11,6 +11,7 @@ public:
         std::chrono::high_resolution_clock::time_point Begin;
         std::chrono::high_resolution_clock::time_point End;
         const char* Name = nullptr;
+        const int Depth = 0;
     };
 
     struct Marker

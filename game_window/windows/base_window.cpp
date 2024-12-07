@@ -31,6 +31,12 @@ void BaseWindow::Draw()
         ImGuiWindowFlags_ flags = m_TopBar ? ImGuiWindowFlags_MenuBar : ImGuiWindowFlags_None;
         if (ImGui::Begin(m_Title.c_str(), &m_IsOpened, flags))
         {
+            if (m_TopBar && ImGui::BeginMenuBar())
+            {
+                DrawTopBar();
+                ImGui::EndMenuBar();
+            }
+
             DrawInternal();
         }
 

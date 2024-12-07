@@ -13,11 +13,13 @@ public:
     ~ProfilerWindow() override;
 
 protected:
+    void DrawTopBar() override;
     void DrawInternal() override;
 
 private:
     std::chrono::microseconds m_CurrentRange;
     std::chrono::microseconds m_Offset;
+    bool m_IsEnabled;
 
     void HandleZoom();
     void HandleDrag(double rangeToWidth);

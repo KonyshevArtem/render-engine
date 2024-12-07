@@ -10,6 +10,7 @@
 constexpr int k_DefaultRangeMicroseconds = 500000;
 constexpr int k_MinRangeMicroseconds = 16000;
 constexpr int k_ZoomSpeedMicroseconds = 16000;
+constexpr int k_MarkerHeight = 20;
 
 int64_t GetMicroseconds(const std::chrono::high_resolution_clock::time_point& begin, const std::chrono::high_resolution_clock::time_point& end)
 {
@@ -26,16 +27,27 @@ void DrawFrameSeparator(double separatorX)
 }
 
 ProfilerWindow::ProfilerWindow() :
-    BaseWindow(1400, 800, "Hierarchy", typeid(ProfilerWindow).hash_code(), false),
+    BaseWindow(1400, 800, "Hierarchy", typeid(ProfilerWindow).hash_code()),
     m_CurrentRange(k_DefaultRangeMicroseconds),
-    m_Offset(0)
+    m_Offset(0),
+    m_IsEnabled(true)
 {
-    Profiler::SetEnabled(true);
+    Profiler::SetEnabled(m_IsEnabled);
 }
 
 ProfilerWindow::~ProfilerWindow()
 {
     Profiler::SetEnabled(false);
+}
+
+void ProfilerWindow::DrawTopBar()
+{
+    const char* buttonLabel = m_IsEnabled ? "Pause" : "Resume";
+    if (ImGui::Button(buttonLabel))
+    {
+        m_IsEnabled = !m_IsEnabled;
+        Profiler::SetEnabled(m_IsEnabled);
+    }
 }
 
 void ProfilerWindow::DrawInternal()
@@ -46,7 +58,7 @@ void ProfilerWindow::DrawInternal()
 
     HandleZoom();
 
-    const std::chrono::high_resolution_clock::time_point rangeEnd = std::chrono::high_resolution_clock::now() - m_Offset;
+    const std::chrono::high_resolution_clock::time_point rangeEnd = frameMarkerInfos.back().back().End - m_Offset;
     const std::chrono::high_resolution_clock::time_point rangeBegin = rangeEnd - m_CurrentRange;
 
     const double rangeToWidth = ImGui::GetWindowContentRegionMax().x / static_cast<double>(m_CurrentRange.count());
@@ -62,11 +74,11 @@ void ProfilerWindow::DrawInternal()
         {
             const double duration = GetMicroseconds(marker.Begin, marker.End);
             const float posX = GetMicroseconds(rangeBegin, marker.Begin) * rangeToWidth;
-            const float posY = ImGui::GetWindowContentRegionMin().y;
+            const float posY = ImGui::GetWindowContentRegionMin().y + marker.Depth * k_MarkerHeight;
             const float width = duration * rangeToWidth;
 
             ImGui::SetCursorPos({posX, posY});
-            ImGui::Button(marker.Name, {width, 0});
+            ImGui::Button(marker.Name, {width, k_MarkerHeight});
             if (ImGui::IsItemHovered())
             {
                 ImGui::SetTooltip(std::format("{}\n{}ms", marker.Name, duration / 1000.0).c_str());

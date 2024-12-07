@@ -7,9 +7,9 @@
 
 #include <typeinfo>
 
-constexpr int k_DefaultRangeMicroseconds = 500000;
-constexpr int k_MinRangeMicroseconds = 16000;
-constexpr int k_ZoomSpeedMicroseconds = 16000;
+constexpr int k_DefaultRangeMicroseconds = 33000;
+constexpr int k_MinRangeMicroseconds = 1000;
+constexpr int k_ZoomSpeedMicroseconds = 4000;
 constexpr int k_MarkerHeight = 20;
 
 int64_t GetMicroseconds(const std::chrono::high_resolution_clock::time_point& begin, const std::chrono::high_resolution_clock::time_point& end)
@@ -17,17 +17,47 @@ int64_t GetMicroseconds(const std::chrono::high_resolution_clock::time_point& be
     return std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
 }
 
-void DrawFrameSeparator(double separatorX)
+void DrawSeparator(const Profiler::MarkerInfo& marker, std::chrono::high_resolution_clock::time_point rangeBegin, double rangeToWidth)
 {
+    assert(marker.Type == Profiler::MarkerType::SEPARATOR);
+
     const ImVec2 windowPos = ImGui::GetWindowPos();
-    const float linePosX = separatorX + windowPos.x;
+    const float linePosX = GetMicroseconds(rangeBegin, marker.Begin) * rangeToWidth + windowPos.x;
     const float lineStartPosY = ImGui::GetWindowContentRegionMin().y + windowPos.y;
     const float lineEndPosY = ImGui::GetWindowContentRegionMax().y + windowPos.y;
     ImGui::GetWindowDrawList()->AddLine({linePosX, lineStartPosY}, {linePosX, lineEndPosY}, IM_COL32(255, 0, 0, 255), 1);
 }
 
+void DrawMarker(const Profiler::MarkerInfo& marker, std::chrono::high_resolution_clock::time_point rangeBegin, double rangeToWidth)
+{
+    assert(marker.Type == Profiler::MarkerType::MARKER);
+
+    const double duration = GetMicroseconds(marker.Begin, marker.End);
+    const float posX = GetMicroseconds(rangeBegin, marker.Begin) * rangeToWidth;
+    const float posY = ImGui::GetWindowContentRegionMin().y + marker.Depth * k_MarkerHeight;
+    const float width = duration * rangeToWidth;
+
+    size_t nameHash = std::hash<std::string>{}(marker.Name);
+    ImVec4 color = ImGui::ColorConvertU32ToFloat4(*reinterpret_cast<ImU32*>(&nameHash));
+    color.x *= 0.5;
+    color.y *= 0.5;
+    color.z *= 0.5;
+    color.w = 1;
+
+    ImGui::SetCursorPos({posX, posY});
+    ImGui::PushStyleColor(ImGuiCol_Button, color);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+    ImGui::Button(marker.Name, {width, k_MarkerHeight});
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip(std::format("{}\n{}ms", marker.Name, duration / 1000.0).c_str());
+    }
+    ImGui::PopStyleColor(3);
+}
+
 ProfilerWindow::ProfilerWindow() :
-    BaseWindow(1400, 800, "Hierarchy", typeid(ProfilerWindow).hash_code()),
+    BaseWindow(1400, 800, "Profiler", typeid(ProfilerWindow).hash_code()),
     m_CurrentRange(k_DefaultRangeMicroseconds),
     m_Offset(0),
     m_IsEnabled(true)
@@ -68,20 +98,16 @@ void ProfilerWindow::DrawInternal()
 
     for (const std::vector<Profiler::MarkerInfo>& markerInfos : frameMarkerInfos)
     {
-        DrawFrameSeparator(GetMicroseconds(rangeBegin, markerInfos[0].Begin) * rangeToWidth);
-
         for (const Profiler::MarkerInfo& marker : markerInfos)
         {
-            const double duration = GetMicroseconds(marker.Begin, marker.End);
-            const float posX = GetMicroseconds(rangeBegin, marker.Begin) * rangeToWidth;
-            const float posY = ImGui::GetWindowContentRegionMin().y + marker.Depth * k_MarkerHeight;
-            const float width = duration * rangeToWidth;
-
-            ImGui::SetCursorPos({posX, posY});
-            ImGui::Button(marker.Name, {width, k_MarkerHeight});
-            if (ImGui::IsItemHovered())
+            switch (marker.Type)
             {
-                ImGui::SetTooltip(std::format("{}\n{}ms", marker.Name, duration / 1000.0).c_str());
+                case Profiler::MarkerType::MARKER:
+                    DrawMarker(marker, rangeBegin, rangeToWidth);
+                    break;
+                case Profiler::MarkerType::SEPARATOR:
+                    DrawSeparator(marker, rangeBegin, rangeToWidth);
+                    break;
             }
         }
     }

@@ -2,6 +2,7 @@
 #include "draw_renderers_pass.h"
 #include "skybox_pass.h"
 #include "graphics_backend_api.h"
+#include "editor/profiler/profiler.h"
 #include "graphics/graphics.h"
 #include "vector4/vector4.h"
 #include "graphics/context.h"
@@ -19,6 +20,8 @@ ForwardRenderPass::ForwardRenderPass(int priority) :
 
 void ForwardRenderPass::Prepare(const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor, const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers)
 {
+    Profiler::Marker marker("ForwardRenderPass::Prepare");
+
     m_ColorTargetDescriptor = colorTargetDescriptor;
     m_DepthTargetDescriptor = depthTargetDescriptor;
 
@@ -28,6 +31,8 @@ void ForwardRenderPass::Prepare(const GraphicsBackendRenderTargetDescriptor& col
 
 void ForwardRenderPass::Execute(const Context& ctx)
 {
+    Profiler::Marker marker("ForwardRenderPass::Execute");
+
     GraphicsBackend::Current()->AttachRenderTarget(m_ColorTargetDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(m_DepthTargetDescriptor);
 

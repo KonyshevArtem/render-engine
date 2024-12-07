@@ -12,6 +12,7 @@
 #include "renderer/renderer.h"
 #include "quaternion/quaternion.h"
 #include "types/graphics_backend_render_target_descriptor.h"
+#include "editor/profiler/profiler.h"
 
 #include <cmath>
 
@@ -24,6 +25,8 @@ bool GizmosPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers
 {
     if (!Gizmos::IsEnabled())
         return false;
+
+    Profiler::Marker marker("GizmosPass::Prepare");
 
     m_Fence = waitForFence;
 
@@ -43,6 +46,8 @@ void GizmosPass::Execute(const Context& ctx)
 {
     static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {});
     static const std::shared_ptr<Material> gizmosMaterial = std::make_shared<Material>(shader, "Gizmos");
+
+    Profiler::Marker marker("GizmosPass::Execute");
 
     GraphicsBackend::Current()->WaitForFence(m_Fence);
 

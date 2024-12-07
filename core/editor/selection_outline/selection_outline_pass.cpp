@@ -13,6 +13,7 @@
 #include "enums/framebuffer_attachment.h"
 #include "enums/load_action.h"
 #include "types/graphics_backend_render_target_descriptor.h"
+#include "editor/profiler/profiler.h"
 
 void CheckTexture(std::shared_ptr<Texture2D> &_texture)
 {
@@ -43,6 +44,8 @@ void SelectionOutlinePass::Execute(const Context& ctx)
     static Vector4                    outlineColor {1, 0.73f, 0, 1};
     static GraphicsBackendRenderTargetDescriptor colorTarget { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
     static GraphicsBackendRenderTargetDescriptor depthTarget { FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT };
+
+    Profiler::Marker marker("SelectionOutlinePass::Execute");
 
     const std::unordered_set<std::shared_ptr<GameObject>>& selectedGameObjects = Hierarchy::GetSelectedGameObjects();
 

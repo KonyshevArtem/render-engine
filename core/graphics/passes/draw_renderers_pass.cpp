@@ -3,6 +3,7 @@
 #include "graphics/graphics.h"
 #include "graphics_backend_debug_group.h"
 #include "vector3/vector3.h"
+#include "editor/profiler/profiler.h"
 
 #include <utility>
 
@@ -15,12 +16,15 @@ DrawRenderersPass::DrawRenderersPass(std::string name, DrawCallSortMode sorting,
 
 void DrawRenderersPass::Prepare(const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers)
 {
+    Profiler::Marker marker("DrawRenderersPass::Prepare");
+
     m_RenderQueue.Prepare(cameraPosition, renderers, m_RenderSettings);
 }
 
 void DrawRenderersPass::Execute(const Context& ctx)
 {
-    auto debugGroup = GraphicsBackendDebugGroup(m_Name);
+    Profiler::Marker marker("DrawRenderersPass::Execute");
 
+    auto debugGroup = GraphicsBackendDebugGroup(m_Name);
     Graphics::DrawRenderQueue(m_RenderQueue);
 }

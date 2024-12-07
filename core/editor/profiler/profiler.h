@@ -6,8 +6,15 @@
 class Profiler
 {
 public:
+    enum class MarkerType
+    {
+        MARKER,
+        SEPARATOR
+    };
+
     struct MarkerInfo
     {
+        const MarkerType Type = MarkerType::MARKER;
         std::chrono::high_resolution_clock::time_point Begin;
         std::chrono::high_resolution_clock::time_point End;
         const char* Name = nullptr;

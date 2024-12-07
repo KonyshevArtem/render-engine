@@ -8,7 +8,7 @@ bool s_IsEnabled = false;
 std::vector<std::vector<Profiler::MarkerInfo>> s_MarkerInfos;
 
 Profiler::Marker::Marker(const char* name) :
-    Info{std::chrono::high_resolution_clock::now(), std::chrono::high_resolution_clock::now(), name, s_Depth++}
+    Info{MarkerType::MARKER, std::chrono::high_resolution_clock::now(), std::chrono::high_resolution_clock::now(), name, s_Depth++}
 {
 }
 
@@ -33,6 +33,7 @@ void Profiler::BeginNewFrame()
         s_MarkerInfos.erase(s_MarkerInfos.begin());
 
     s_MarkerInfos.emplace_back();
+    s_MarkerInfos.back().push_back({MarkerType::SEPARATOR, std::chrono::high_resolution_clock::now()});
 }
 
 void Profiler::AddMarkerInfo(const MarkerInfo& markerInfo)

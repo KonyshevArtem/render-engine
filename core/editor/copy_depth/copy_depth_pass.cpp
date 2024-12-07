@@ -1,5 +1,6 @@
 #include "copy_depth_pass.h"
 #include "graphics_backend_api.h"
+#include "editor/profiler/profiler.h"
 #include "graphics/graphics.h"
 #include "texture_2d/texture_2d.h"
 #include "types/graphics_backend_render_target_descriptor.h"
@@ -19,6 +20,8 @@ void CopyDepthPass::Prepare(const GraphicsBackendFence& waitForFence, const std:
 
 void CopyDepthPass::Execute(const Context& ctx)
 {
+    Profiler::Marker marker("CopyDepthPass::Execute");
+
     GraphicsBackend::Current()->WaitForFence(m_StartFence);
 
     GraphicsBackend::Current()->BeginCopyPass("Copy Depth To Backbuffer");

@@ -103,7 +103,9 @@ add_library(
 	editor/copy_depth/copy_depth_pass.cpp
 	editor/copy_depth/copy_depth_pass.h
 	graphics/render_queue/render_queue.cpp
-	graphics/render_queue/render_queue.h)
+	graphics/render_queue/render_queue.h
+	editor/profiler/profiler.cpp
+	editor/profiler/profiler.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil OpenFBX GraphicsBackend nlohmann_json::nlohmann_json)

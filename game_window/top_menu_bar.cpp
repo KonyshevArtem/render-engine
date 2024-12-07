@@ -6,6 +6,7 @@
 #include "windows/debug_console_window.h"
 #include "windows/scene_hierarchy_window.h"
 #include "windows/graphics_settings_window.h"
+#include "windows/profiler_window.h"
 
 void DrawEngineMenu(std::function<void()> &closeWindow)
 {
@@ -51,6 +52,11 @@ void DrawWindowsMenu()
         if (ImGui::MenuItem("Graphics Settings"))
         {
             WindowManager::Create<GraphicsSettingsWindow>();
+        }
+
+        if (ImGui::MenuItem("Profiler"))
+        {
+            WindowManager::Create<ProfilerWindow>();
         }
 
         ImGui::EndMenu();

@@ -7,12 +7,15 @@
 #include "../scenes/shadows_demo.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "graphics_backend_api.h"
+#include "editor/profiler/profiler.h"
 #include "file_system/file_system.h"
 
 GameWindow* window = nullptr;
 
 void display(int width, int height)
 {
+    Profiler::BeginNewFrame();
+
     Time::Update();
     Input::Update();
     Scene::Update();

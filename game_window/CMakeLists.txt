@@ -17,6 +17,8 @@ add_library(
         window_manager.h
         windows/graphics_settings_window.cpp
         windows/graphics_settings_window.h
+        windows/profiler_window.cpp
+        windows/profiler_window.h
 )
 
 target_include_directories(GameWindow PUBLIC .)

@@ -6,6 +6,7 @@
 #include "editor/profiler/profiler.h"
 
 #include <typeinfo>
+#include <vector>
 
 constexpr int k_DefaultRangeMicroseconds = 33000;
 constexpr int k_MinRangeMicroseconds = 1000;

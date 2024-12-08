@@ -86,14 +86,12 @@ void ProfilerWindow::DrawInternal()
     if (frameMarkerInfos.empty())
         return;
 
-    HandleZoom();
-
     const std::chrono::high_resolution_clock::time_point rangeEnd = frameMarkerInfos.back().back().End - m_Offset;
     const std::chrono::high_resolution_clock::time_point rangeBegin = rangeEnd - m_CurrentRange;
 
     const double rangeToWidth = ImGui::GetWindowContentRegionMax().x / static_cast<double>(m_CurrentRange.count());
 
-    ImGui::BeginChild("Content");
+    ImGui::BeginChild("Content", {0, 0});
     HandleDrag(rangeToWidth);
 
     for (const std::vector<Profiler::MarkerInfo>& markerInfos : frameMarkerInfos)
@@ -113,16 +111,28 @@ void ProfilerWindow::DrawInternal()
     }
 
     ImGui::EndChild();
+    HandleZoom(); // call after EndChild for IsItemHovered to work
 }
 
 void ProfilerWindow::HandleZoom()
 {
-    const float mouseWheelInput = ImGui::GetIO().MouseWheel;
-    if (mouseWheelInput != 0)
+    if (ImGui::IsItemHovered())
     {
-        m_CurrentRange -= std::chrono::microseconds(static_cast<int>(mouseWheelInput * k_ZoomSpeedMicroseconds));
-        if (m_CurrentRange.count() < k_MinRangeMicroseconds)
-            m_CurrentRange = std::chrono::microseconds(k_MinRangeMicroseconds);
+        const float mouseWheelInput = ImGui::GetIO().MouseWheel;
+        if (mouseWheelInput != 0)
+        {
+            int zoomMicroseconds = static_cast<int>(mouseWheelInput * k_ZoomSpeedMicroseconds);
+            m_CurrentRange -= std::chrono::microseconds(zoomMicroseconds);
+            if (m_CurrentRange.count() < k_MinRangeMicroseconds)
+            {
+                m_CurrentRange = std::chrono::microseconds(k_MinRangeMicroseconds);
+                zoomMicroseconds = 0;
+            }
+
+            const float mousePosX = ImGui::GetIO().MousePos.x - ImGui::GetWindowPos().x;
+            const float mousePosNormalizedX = 1 - mousePosX / ImGui::GetWindowContentRegionMax().x;
+            AddOffset(static_cast<int>(mousePosNormalizedX * zoomMicroseconds));
+        }
     }
 }
 
@@ -132,12 +142,15 @@ void ProfilerWindow::HandleDrag(double rangeToWidth)
     {
         const int mouseDeltaX = ImGui::GetIO().MouseDelta.x / rangeToWidth;
         if (mouseDeltaX != 0)
-        {
-            m_Offset += std::chrono::microseconds(mouseDeltaX);
-            if (m_Offset.count() < 0)
-                m_Offset = std::chrono::microseconds(0);
-        }
+            AddOffset(mouseDeltaX);
     }
+}
+
+void ProfilerWindow::AddOffset(int offset)
+{
+    m_Offset += std::chrono::microseconds(offset);
+    if (m_Offset.count() < 0)
+        m_Offset = std::chrono::microseconds(0);
 }
 
 #endif

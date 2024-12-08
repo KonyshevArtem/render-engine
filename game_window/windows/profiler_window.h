@@ -23,6 +23,7 @@ private:
 
     void HandleZoom();
     void HandleDrag(double rangeToWidth);
+    void AddOffset(int offset);
 };
 
 #endif

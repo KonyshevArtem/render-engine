@@ -223,6 +223,7 @@ namespace Graphics
 
         {
             Profiler::Marker marker("Execute Render");
+            Profiler::GPUMarker gpuMarker("Execute Render");
 
             std::sort(renderPasses.begin(), renderPasses.end(), RenderPass::Comparer());
             for (const std::shared_ptr<RenderPass>& pass : renderPasses)

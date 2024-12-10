@@ -4,6 +4,7 @@
 #ifdef ENABLE_IMGUI
 
 #include "base_window.h"
+#include "editor/profiler/profiler.h"
 #include <chrono>
 
 class ProfilerWindow : public BaseWindow
@@ -17,6 +18,15 @@ protected:
     void DrawInternal() override;
 
 private:
+    struct DraggableContentRegion
+    {
+        DraggableContentRegion(const char* id, double rangeToWidth, float width, float height, ProfilerWindow* profilerWindow);
+        ~DraggableContentRegion();
+
+    private:
+        ProfilerWindow* m_ProfilerWindow;
+    };
+
     std::chrono::microseconds m_CurrentRange;
     std::chrono::microseconds m_Offset;
     bool m_IsEnabled;
@@ -24,6 +34,7 @@ private:
     void HandleZoom();
     void HandleDrag(double rangeToWidth);
     void AddOffset(int offset);
+    void DrawMarkers(const std::string& label, const std::vector<Profiler::FrameInfo>& profilerFrames, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth);
 };
 
 #endif

@@ -17,6 +17,7 @@
 #include "types/graphics_backend_depth_stencil_state.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_fence.h"
+#include "types/graphics_backend_profiler_marker.h"
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 
@@ -24,6 +25,7 @@
 #include <stdexcept>
 #include <cassert>
 #include <array>
+#include <chrono>
 
 struct DepthStencilState
 {
@@ -65,6 +67,7 @@ struct RenderTargetState
 GLuint s_Framebuffers[2];
 RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
 uint64_t s_DebugGroupId = 0;
+uint64_t s_TimestampDifference = 0;
 
 std::array s_DebugMessageTypes =
 {
@@ -182,6 +185,13 @@ void GraphicsBackendOpenGL::Init(void *data)
 #endif
 
     ResetRenderTargetStates();
+
+    int64_t glTimestamp;
+    glGetInteger64v(GL_TIMESTAMP, &glTimestamp);
+    glTimestamp /= 1000;
+
+    const auto cpuTimestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    s_TimestampDifference = cpuTimestamp - glTimestamp;
 }
 
 const std::string &GraphicsBackendOpenGL::GetGLSLVersionString()
@@ -764,6 +774,54 @@ void GraphicsBackendOpenGL::PopDebugGroup()
     glPopDebugGroup();
     --s_DebugGroupId;
 #endif
+}
+
+GraphicsBackendProfilerMarker GraphicsBackendOpenGL::PushProfilerMarker()
+{
+    GLuint glQueries[2];
+    glGenQueries(2, &glQueries[0]);
+    glQueryCounter(glQueries[0], GL_TIMESTAMP);
+
+    GraphicsBackendProfilerMarker marker{};
+    marker.StartMarker = glQueries[0];
+    marker.EndMarker = glQueries[1];
+    return marker;
+}
+
+void GraphicsBackendOpenGL::PopProfilerMarker(const GraphicsBackendProfilerMarker& marker)
+{
+    const GLuint glQuery = marker.EndMarker;
+    glQueryCounter(glQuery, GL_TIMESTAMP);
+}
+
+bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, uint64_t& outBeginTime, uint64_t& outEndTime)
+{
+    const GLuint glQueryStart = marker.StartMarker;
+    const GLuint glQueryEnd = marker.EndMarker;
+
+    GLuint queryStartAvailable;
+    GLuint queryEndAvailable;
+    glGetQueryObjectuiv(glQueryStart, GL_QUERY_RESULT_AVAILABLE, &queryStartAvailable);
+    glGetQueryObjectuiv(glQueryEnd, GL_QUERY_RESULT_AVAILABLE, &queryEndAvailable);
+
+    const bool markerResolved = queryStartAvailable && queryEndAvailable;
+    if (markerResolved)
+    {
+        glGetQueryObjectui64v(glQueryStart, GL_QUERY_RESULT_NO_WAIT, &outBeginTime);
+        glGetQueryObjectui64v(glQueryEnd, GL_QUERY_RESULT_NO_WAIT, &outEndTime);
+        glDeleteQueries(1, &glQueryStart);
+        glDeleteQueries(1, &glQueryEnd);
+
+        // from nanoseconds to microseconds
+        outBeginTime /= 1000;
+        outEndTime /= 1000;
+
+        // GL_TIMESTAMP is counted from implementation-defined point of time, that might not match with system clock
+        outBeginTime += s_TimestampDifference;
+        outEndTime += s_TimestampDifference;
+    }
+
+    return markerResolved;
 }
 
 void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)

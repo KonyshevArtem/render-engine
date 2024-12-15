@@ -48,6 +48,7 @@ void GizmosPass::Execute(const Context& ctx)
     static const std::shared_ptr<Material> gizmosMaterial = std::make_shared<Material>(shader, "Gizmos");
 
     Profiler::Marker marker("GizmosPass::Execute");
+    Profiler::GPUMarker gpuMarker("GizmosPass::Execute");
 
     GraphicsBackend::Current()->WaitForFence(m_Fence);
 

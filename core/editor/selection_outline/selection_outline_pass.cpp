@@ -53,6 +53,8 @@ void SelectionOutlinePass::Execute(const Context& ctx)
 
     // render selected gameObjects
     {
+        Profiler::GPUMarker gpuMarker("Selection Outline Pass");
+
         Graphics::SetRenderTarget(colorTarget, silhouetteRenderTarget);
         Graphics::SetRenderTarget(depthTarget);
 
@@ -88,6 +90,8 @@ void SelectionOutlinePass::Execute(const Context& ctx)
 
     // blit to screen
     {
+        Profiler::GPUMarker gpuMarker("Selection Blit Pass");
+
         blitMaterial->SetVector("_Color", outlineColor);
 
         Graphics::Blit(silhouetteRenderTarget, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *blitMaterial, "Selection Blit Pass");

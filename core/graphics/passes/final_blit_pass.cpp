@@ -24,6 +24,7 @@ void FinalBlitPass::Execute(const Context& ctx)
     static const std::shared_ptr<Material> material = std::make_shared<Material>(shader, "FinalBlit");
 
     Profiler::Marker marker("FinalBlitPass::Execute");
+    Profiler::GPUMarker gpuMarker("FinalBlitPass::Execute");
 
     const GraphicsSettings::TonemappingMode tonemappingMode = GraphicsSettings::GetTonemappingMode();
 

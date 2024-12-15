@@ -172,6 +172,7 @@ void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_
     static constexpr GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::DONT_CARE, .StoreAction = StoreAction::DONT_CARE };
 
     Profiler::Marker marker("ShadowCasterPass::Render");
+    Profiler::GPUMarker gpuMarker("ShadowCasterPass::Render");
 
     const Vector4& viewport{0, 0, static_cast<float>(target->GetWidth()), static_cast<float>(target->GetHeight())};
     const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR, .Layer = targetLayer };

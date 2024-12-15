@@ -100,7 +100,7 @@ public:
     virtual void PushDebugGroup(const std::string& name) = 0;
     virtual void PopDebugGroup() = 0;
     virtual GraphicsBackendProfilerMarker PushProfilerMarker() = 0;
-    virtual void PopProfilerMarker(const GraphicsBackendProfilerMarker& marker) = 0;
+    virtual void PopProfilerMarker(GraphicsBackendProfilerMarker& marker) = 0;
     virtual bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, uint64_t& outBeginTime, uint64_t& outEndTime) = 0;
 
     virtual void BeginRenderPass(const std::string& name) = 0;

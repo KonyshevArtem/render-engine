@@ -2,7 +2,9 @@
 #define PROFILER_MARKERS_H
 
 #include "types/graphics_backend_profiler_marker.h"
+
 #include <chrono>
+#include <vector>
 
 class Profiler
 {

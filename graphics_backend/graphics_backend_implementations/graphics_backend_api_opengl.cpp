@@ -788,7 +788,7 @@ GraphicsBackendProfilerMarker GraphicsBackendOpenGL::PushProfilerMarker()
     return marker;
 }
 
-void GraphicsBackendOpenGL::PopProfilerMarker(const GraphicsBackendProfilerMarker& marker)
+void GraphicsBackendOpenGL::PopProfilerMarker(GraphicsBackendProfilerMarker& marker)
 {
     const GLuint glQuery = marker.EndMarker;
     glQueryCounter(glQuery, GL_TIMESTAMP);

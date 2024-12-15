@@ -66,7 +66,7 @@ public:
     void PushDebugGroup(const std::string& name) override;
     void PopDebugGroup() override;
     GraphicsBackendProfilerMarker PushProfilerMarker() override;
-    void PopProfilerMarker(const GraphicsBackendProfilerMarker& marker) override;
+    void PopProfilerMarker(GraphicsBackendProfilerMarker& marker) override;
     bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, uint64_t& outBeginTime, uint64_t& outEndTime) override;
 
     void BeginRenderPass(const std::string& name) override;

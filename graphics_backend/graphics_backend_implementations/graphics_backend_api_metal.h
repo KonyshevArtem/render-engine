@@ -14,8 +14,6 @@ namespace MTL
     class BlitCommandEncoder;
     class RenderPipelineReflection;
     class Texture;
-
-    enum PixelFormat : std::uintptr_t;
 }
 
 class GraphicsBackendMetal : public GraphicsBackendBase
@@ -75,6 +73,9 @@ public:
 
     void PushDebugGroup(const std::string& name) override;
     void PopDebugGroup() override;
+    GraphicsBackendProfilerMarker PushProfilerMarker() override;
+    void PopProfilerMarker(GraphicsBackendProfilerMarker& marker) override;
+    bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, uint64_t& outBeginTime, uint64_t& outEndTime) override;
 
     void BeginRenderPass(const std::string& name) override;
     void EndRenderPass() override;
@@ -97,6 +98,9 @@ private:
     MTL::RenderPassDescriptor* m_RenderPassDescriptor = nullptr;
     MTL::RenderCommandEncoder* m_RenderCommandEncoder = nullptr;
     MTL::BlitCommandEncoder* m_BlitCommandEncoder = nullptr;
+
+    bool m_SupportTimestampCounters = false;
+    bool m_ProfilerMarkerActive = false;
 
     MTL::Texture* GetTextureFromDescriptor(const GraphicsBackendRenderTargetDescriptor& descriptor);
     void SetCommandBuffers(MTL::CommandBuffer* renderCommandBuffer, MTL::CommandBuffer* copyCommandBuffer);

@@ -32,13 +32,13 @@ void DrawSeparator(const Profiler::MarkerInfo& marker, std::chrono::system_clock
     ImGui::GetWindowDrawList()->AddLine({linePosX, lineStartPosY}, {linePosX, lineEndPosY}, IM_COL32(255, 0, 0, 255), 1);
 }
 
-void DrawMarker(const Profiler::MarkerInfo& marker, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth)
+void DrawMarker(const Profiler::MarkerInfo& marker, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth, int depthOffset)
 {
     assert(marker.Type == Profiler::MarkerType::MARKER);
 
     const double duration = GetMicroseconds(marker.Begin, marker.End);
     const float posX = GetMicroseconds(rangeBegin, marker.Begin) * rangeToWidth;
-    const float posY = ImGui::GetWindowContentRegionMin().y + marker.Depth * k_MarkerHeight;
+    const float posY = ImGui::GetWindowContentRegionMin().y + (marker.Depth + depthOffset) * k_MarkerHeight;
     const float width = duration * rangeToWidth;
 
     size_t nameHash = std::hash<std::string>{}(marker.Name);
@@ -124,7 +124,8 @@ void ProfilerWindow::DrawInternal()
         for (int i = 0; i < static_cast<int>(Profiler::MarkerContext::MAX); ++i)
         {
             const Profiler::MarkerContext context = static_cast<Profiler::MarkerContext>(i);
-            DrawMarkers(GetContextLabel(context), Profiler::GetContextFrames(context), rangeBegin, rangeToWidth);
+            const bool isRenderContext = static_cast<Profiler::MarkerContext>(i) == Profiler::MarkerContext::GPU_RENDER;
+            DrawMarkers(GetContextLabel(context), Profiler::GetContextFrames(context), rangeBegin, rangeToWidth, isRenderContext);
         }
     }
 }
@@ -168,7 +169,7 @@ void ProfilerWindow::AddOffset(int offset)
         m_Offset = std::chrono::microseconds(0);
 }
 
-void ProfilerWindow::DrawMarkers(const std::string& label, const std::vector<Profiler::FrameInfo>& profilerFrames, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth)
+void ProfilerWindow::DrawMarkers(const std::string& label, const std::vector<Profiler::FrameInfo>& profilerFrames, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth, bool handleOverlap)
 {
     if (profilerFrames.empty())
         return;
@@ -181,16 +182,51 @@ void ProfilerWindow::DrawMarkers(const std::string& label, const std::vector<Pro
         maxDepth = std::max(frameInfo.MaxDepth, maxDepth);
     }
 
-    DraggableContentRegion region(label.c_str(), rangeToWidth, 0, (maxDepth + 1) * k_MarkerHeight + k_MarkerContentMargin, this);
+    const int markerLines = maxDepth + 1;
+    std::vector<uint64_t> markerLinesMaxTimestamp;
+    if (handleOverlap)
+    {
+        markerLinesMaxTimestamp.reserve(markerLines);
+        for (int i = 0; i < markerLines; ++i)
+            markerLinesMaxTimestamp.push_back(0);
+    }
+
+    DraggableContentRegion region(label.c_str(), rangeToWidth, 0, markerLines * k_MarkerHeight + k_MarkerContentMargin, this);
     {
         for (const Profiler::FrameInfo& frameInfo : profilerFrames)
         {
             for (const Profiler::MarkerInfo& marker : frameInfo.Markers)
             {
+                int depthOffset = 0;
+                if (handleOverlap)
+                {
+                    bool depthFound = false;
+                    const uint64_t beginTimestamp = marker.Begin.time_since_epoch().count();
+                    for (int i = 0; i < markerLinesMaxTimestamp.size(); ++i)
+                    {
+                        const int currentDepth = (marker.Depth + i) % markerLinesMaxTimestamp.size();
+                        const uint64_t maxTimestampAtDepth = markerLinesMaxTimestamp[currentDepth];
+                        if (beginTimestamp > maxTimestampAtDepth)
+                        {
+                            depthFound = true;
+                            depthOffset = currentDepth - marker.Depth;
+                            break;
+                        }
+                    }
+
+                    if (!depthFound)
+                    {
+                        markerLinesMaxTimestamp.push_back(0);
+                        depthOffset = markerLinesMaxTimestamp.size() - marker.Depth - 1;
+                    }
+
+                    markerLinesMaxTimestamp[marker.Depth + depthOffset] = marker.End.time_since_epoch().count();
+                }
+
                 switch (marker.Type)
                 {
                     case Profiler::MarkerType::MARKER:
-                        DrawMarker(marker, rangeBegin, rangeToWidth);
+                        DrawMarker(marker, rangeBegin, rangeToWidth, depthOffset);
                         break;
                     case Profiler::MarkerType::SEPARATOR:
                         DrawSeparator(marker, rangeBegin, rangeToWidth);

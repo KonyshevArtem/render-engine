@@ -25,13 +25,42 @@ public:
 
     struct MarkerInfo
     {
-        const MarkerType Type = MarkerType::MARKER;
+        MarkerType Type = MarkerType::MARKER;
         std::chrono::system_clock::time_point Begin;
         std::chrono::system_clock::time_point End;
         const char* Name = nullptr;
-        const int Depth = 0;
+        int Depth = 0;
 
         explicit MarkerInfo(MarkerType type, const char* name = nullptr, int depth = 0);
+
+        MarkerInfo(const MarkerInfo& other) = default;
+        MarkerInfo(MarkerInfo&& info) = default;
+
+        MarkerInfo& operator=(const MarkerInfo& other)
+        {
+            if (&other != this)
+            {
+                Type = other.Type;
+                Begin = other.Begin;
+                End = other.End;
+                Name = other.Name;
+                Depth = other.Depth;
+            }
+            return *this;
+        }
+
+        MarkerInfo& operator=(MarkerInfo&& other)
+        {
+            if (&other != this)
+            {
+                Type = other.Type;
+                Begin = other.Begin;
+                End = other.End;
+                Name = other.Name;
+                Depth = other.Depth;
+            }
+            return *this;
+        }
     };
 
     struct GPUMarkerInfo
@@ -70,6 +99,7 @@ public:
         std::vector<MarkerInfo> Markers;
         int FrameNumber;
         int MaxDepth;
+        bool IsSorted;
     };
 
     static void SetEnabled(bool enabled);

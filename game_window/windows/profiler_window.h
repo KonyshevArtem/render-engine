@@ -34,7 +34,7 @@ private:
     void HandleZoom();
     void HandleDrag(double rangeToWidth);
     void AddOffset(int offset);
-    void DrawMarkers(const std::string& label, const std::vector<Profiler::FrameInfo>& profilerFrames, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth);
+    void DrawMarkers(const std::string& label, const std::vector<Profiler::FrameInfo>& profilerFrames, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth, bool handleOverlap);
 };
 
 #endif

@@ -116,6 +116,16 @@ void Profiler::BeginNewFrame()
             --i;
         }
     }
+
+    std::vector<FrameInfo>& gpuFrames = s_ContextFrames[static_cast<int>(MarkerContext::GPU_RENDER)];
+    for (FrameInfo& gpuFrame: gpuFrames)
+    {
+        if (!gpuFrame.IsSorted && gpuFrame.Markers.size() > 1)
+        {
+            std::ranges::sort(gpuFrame.Markers, [](const MarkerInfo& info1, const MarkerInfo& info2){ return info1.Begin < info2.Begin; });
+            gpuFrame.IsSorted = true;
+        }
+    }
 }
 
 void Profiler::AddMarkerInfo(MarkerContext context, const MarkerInfo& markerInfo, int frame)
@@ -144,6 +154,7 @@ void Profiler::AddMarkerInfo(MarkerContext context, const MarkerInfo& markerInfo
     {
         frameInfo->MaxDepth = std::max(frameInfo->MaxDepth, markerInfo.Depth);
         frameInfo->Markers.push_back(markerInfo);
+        frameInfo->IsSorted = false;
     }
 }
 

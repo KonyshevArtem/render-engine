@@ -8,18 +8,25 @@
 #include "material/material.h"
 #include "shader/shader.h"
 
+std::shared_ptr<Mesh> SkyboxPass::m_Mesh = nullptr;
+
 SkyboxPass::SkyboxPass(int priority) :
     RenderPass(priority)
 {
 }
 
+void SkyboxPass::Prepare()
+{
+    if (!m_Mesh)
+        m_Mesh = FBXAsset::Load("core_resources/models/cube.fbx")->GetMesh(0);
+}
+
 void SkyboxPass::Execute(const Context& ctx)
 {
-    static const std::shared_ptr<Mesh> mesh = FBXAsset::Load("core_resources/models/cube.fbx")->GetMesh(0);
     static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/skybox", {}, {}, {CullFace::FRONT}, {});
     static const std::shared_ptr<Material> material = std::make_shared<Material>(shader, "Skybox");
 
-    if (mesh == nullptr || ctx.Skybox == nullptr)
+    if (m_Mesh == nullptr || ctx.Skybox == nullptr)
         return;
 
     auto debugGroup = GraphicsBackendDebugGroup("Skybox pass");
@@ -27,5 +34,5 @@ void SkyboxPass::Execute(const Context& ctx)
     const Matrix4x4 modelMatrix = Matrix4x4::Translation(ctx.ViewMatrix.Invert().GetPosition());
     material->SetTexture("_Skybox", ctx.Skybox);
 
-    Graphics::Draw(*mesh, *material, modelMatrix, 0);
+    Graphics::Draw(*m_Mesh, *material, modelMatrix, 0);
 }

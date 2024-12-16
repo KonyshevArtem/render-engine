@@ -26,6 +26,7 @@ void ForwardRenderPass::Prepare(const GraphicsBackendRenderTargetDescriptor& col
     m_DepthTargetDescriptor = depthTargetDescriptor;
 
     m_OpaquePass->Prepare(cameraPosition, renderers);
+    m_SkyboxPass->Prepare();
     m_TransparentPass->Prepare(cameraPosition, renderers);
 }
 

@@ -87,6 +87,7 @@ public:
     void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
 
     GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) override;
+    void DeleteFence(const GraphicsBackendFence& fence) override;
     void SignalFence(const GraphicsBackendFence& fence) override;
     void WaitForFence(const GraphicsBackendFence& fence) override;
 

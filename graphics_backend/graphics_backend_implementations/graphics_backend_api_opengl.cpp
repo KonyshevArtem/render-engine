@@ -918,6 +918,10 @@ GraphicsBackendFence GraphicsBackendOpenGL::CreateFence(FenceType fenceType, con
     return GraphicsBackendFence{};
 }
 
+void GraphicsBackendOpenGL::DeleteFence(const GraphicsBackendFence& fence)
+{
+}
+
 void GraphicsBackendOpenGL::SignalFence(const GraphicsBackendFence& fence)
 {
 }

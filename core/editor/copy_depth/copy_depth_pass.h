@@ -14,7 +14,7 @@ class CopyDepthPass : public RenderPass
 {
 public:
     explicit CopyDepthPass(int priority);
-    ~CopyDepthPass() override = default;
+    ~CopyDepthPass() override;
 
     void Prepare(const GraphicsBackendFence& waitForFence, const std::shared_ptr<Texture2D>& sourceDepth);
     void Execute(const Context& ctx) override;

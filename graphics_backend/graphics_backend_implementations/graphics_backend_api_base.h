@@ -113,6 +113,7 @@ public:
     virtual void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
 
     virtual GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) = 0;
+    virtual void DeleteFence(const GraphicsBackendFence& fence) = 0;
     virtual void SignalFence(const GraphicsBackendFence& fence) = 0;
     virtual void WaitForFence(const GraphicsBackendFence& fence) = 0;
 

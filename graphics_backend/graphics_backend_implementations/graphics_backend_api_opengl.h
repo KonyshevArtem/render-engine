@@ -75,6 +75,7 @@ public:
     void EndCopyPass() override;
 
     GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name) override;
+    void DeleteFence(const GraphicsBackendFence& fence) override;
     void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
     void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
 

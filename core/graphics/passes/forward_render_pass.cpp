@@ -18,6 +18,11 @@ ForwardRenderPass::ForwardRenderPass(int priority) :
     m_SkyboxPass = std::make_unique<SkyboxPass>(2);
 }
 
+ForwardRenderPass::~ForwardRenderPass()
+{
+    GraphicsBackend::Current()->DeleteFence(m_EndFence);
+}
+
 void ForwardRenderPass::Prepare(const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor, const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers)
 {
     Profiler::Marker marker("ForwardRenderPass::Prepare");

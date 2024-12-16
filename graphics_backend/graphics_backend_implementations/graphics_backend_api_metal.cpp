@@ -26,6 +26,7 @@ constexpr int k_MaxBuffers = 31;
 constexpr int k_MaxTimestampSamples = 100;
 
 MTL::ResourceOptions s_DefaultBufferStorageMode;
+uint32_t s_Frame = 0;
 
 MTL::CounterSampleBuffer* s_CounterSampleBuffer;
 bool s_CounterSampleFinished[k_MaxTimestampSamples];
@@ -103,6 +104,8 @@ void GraphicsBackendMetal::InitNewFrame(void *data)
     const MetalFrameData* metalData = static_cast<MetalFrameData*>(data);
     m_BackbufferDescriptor = metalData->BackbufferDescriptor;
     SetCommandBuffers(metalData->RenderCommandBuffer, metalData->CopyCommandBuffer);
+
+    ++s_Frame;
 }
 
 GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
@@ -819,6 +822,12 @@ GraphicsBackendFence GraphicsBackendMetal::CreateFence(FenceType fenceType, cons
     return fence;
 }
 
+void GraphicsBackendMetal::DeleteFence(const GraphicsBackendFence& fence)
+{
+    MTL::Event* metalEvent = reinterpret_cast<MTL::Event*>(fence.Fence);
+    metalEvent->release();
+}
+
 void GraphicsBackendMetal::SignalFence(const GraphicsBackendFence& fence)
 {
     const MTL::Event* metalEvent = reinterpret_cast<MTL::Event*>(fence.Fence);
@@ -826,10 +835,10 @@ void GraphicsBackendMetal::SignalFence(const GraphicsBackendFence& fence)
     switch (fence.Type)
     {
         case FenceType::RENDER_TO_COPY:
-            m_RenderCommandBuffer->encodeSignalEvent(metalEvent, 1);
+            m_RenderCommandBuffer->encodeSignalEvent(metalEvent, s_Frame);
             break;
         case FenceType::COPY_TO_RENDER:
-            m_CopyCommandBuffer->encodeSignalEvent(metalEvent, 1);
+            m_CopyCommandBuffer->encodeSignalEvent(metalEvent, s_Frame);
             break;
     }
 }
@@ -841,10 +850,10 @@ void GraphicsBackendMetal::WaitForFence(const GraphicsBackendFence& fence)
     switch (fence.Type)
     {
         case FenceType::RENDER_TO_COPY:
-            m_CopyCommandBuffer->encodeWait(metalEvent, 1);
+            m_CopyCommandBuffer->encodeWait(metalEvent, s_Frame);
             break;
         case FenceType::COPY_TO_RENDER:
-            m_RenderCommandBuffer->encodeWait(metalEvent, 1);
+            m_RenderCommandBuffer->encodeWait(metalEvent, s_Frame);
             break;
     }
 }

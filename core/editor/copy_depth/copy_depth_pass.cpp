@@ -12,6 +12,11 @@ CopyDepthPass::CopyDepthPass(int priority) :
 {
 }
 
+CopyDepthPass::~CopyDepthPass()
+{
+    GraphicsBackend::Current()->DeleteFence(m_EndFence);
+}
+
 void CopyDepthPass::Prepare(const GraphicsBackendFence& waitForFence, const std::shared_ptr<Texture2D>& sourceDepth)
 {
     m_StartFence = waitForFence;

@@ -152,7 +152,6 @@ void Profiler::AddMarkerInfo(MarkerContext context, const MarkerInfo& markerInfo
 
     if (frameInfo)
     {
-        frameInfo->MaxDepth = std::max(frameInfo->MaxDepth, markerInfo.Depth);
         frameInfo->Markers.push_back(markerInfo);
         frameInfo->IsSorted = false;
     }

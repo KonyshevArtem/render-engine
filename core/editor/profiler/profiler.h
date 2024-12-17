@@ -98,7 +98,6 @@ public:
     {
         std::vector<MarkerInfo> Markers;
         int FrameNumber;
-        int MaxDepth;
         bool IsSorted;
     };
 

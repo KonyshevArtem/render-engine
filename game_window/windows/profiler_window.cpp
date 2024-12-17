@@ -124,8 +124,7 @@ void ProfilerWindow::DrawInternal()
         for (int i = 0; i < static_cast<int>(Profiler::MarkerContext::MAX); ++i)
         {
             const Profiler::MarkerContext context = static_cast<Profiler::MarkerContext>(i);
-            const bool isRenderContext = static_cast<Profiler::MarkerContext>(i) == Profiler::MarkerContext::GPU_RENDER;
-            DrawMarkers(GetContextLabel(context), Profiler::GetContextFrames(context), rangeBegin, rangeToWidth, isRenderContext);
+            DrawMarkers(GetContextLabel(context), context, rangeBegin, rangeToWidth);
         }
     }
 }
@@ -169,20 +168,20 @@ void ProfilerWindow::AddOffset(int offset)
         m_Offset = std::chrono::microseconds(0);
 }
 
-void ProfilerWindow::DrawMarkers(const std::string& label, const std::vector<Profiler::FrameInfo>& profilerFrames, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth, bool handleOverlap)
+void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerContext context, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth)
 {
+    static int maxDepths[static_cast<int>(Profiler::MarkerContext::MAX)];
+
+    const std::vector<Profiler::FrameInfo>& profilerFrames = Profiler::GetContextFrames(context);
     if (profilerFrames.empty())
         return;
 
     ImGui::Text(label.c_str());
 
-    int maxDepth = 0;
-    for (const Profiler::FrameInfo& frameInfo : profilerFrames)
-    {
-        maxDepth = std::max(frameInfo.MaxDepth, maxDepth);
-    }
-
+    int& maxDepth = maxDepths[static_cast<int>(context)];
     const int markerLines = maxDepth + 1;
+    const bool handleOverlap = context == Profiler::MarkerContext::GPU_RENDER;
+
     std::vector<uint64_t> markerLinesMaxTimestamp;
     if (handleOverlap)
     {
@@ -222,6 +221,8 @@ void ProfilerWindow::DrawMarkers(const std::string& label, const std::vector<Pro
 
                     markerLinesMaxTimestamp[marker.Depth + depthOffset] = marker.End.time_since_epoch().count();
                 }
+
+                maxDepth = std::max(maxDepth, marker.Depth + depthOffset);
 
                 switch (marker.Type)
                 {

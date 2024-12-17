@@ -19,6 +19,7 @@ public:
     {
         MAIN_THREAD,
         GPU_RENDER,
+        GPU_COPY,
 
         MAX
     };

@@ -46,7 +46,8 @@ add_library(GraphicsBackend
         enums/cubemap_face.h
         enums/fence_type.h
         types/graphics_backend_fence.h
-        types/graphics_backend_profiler_marker.h)
+        types/graphics_backend_profiler_marker.h
+        enums/gpu_queue.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

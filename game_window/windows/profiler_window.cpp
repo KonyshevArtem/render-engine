@@ -116,6 +116,8 @@ void ProfilerWindow::DrawInternal()
                 return "Main Thread";
             case Profiler::MarkerContext::GPU_RENDER:
                 return "GPU Render";
+            case Profiler::MarkerContext::GPU_COPY:
+                return "GPU Copy";
         }
     };
 
@@ -180,7 +182,7 @@ void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerConte
 
     int& maxDepth = maxDepths[static_cast<int>(context)];
     const int markerLines = maxDepth + 1;
-    const bool handleOverlap = context == Profiler::MarkerContext::GPU_RENDER;
+    const bool handleOverlap = context == Profiler::MarkerContext::GPU_RENDER || context ==  Profiler::MarkerContext::GPU_COPY;
 
     std::vector<uint64_t> markerLinesMaxTimestamp;
     if (handleOverlap)

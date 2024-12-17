@@ -3,6 +3,7 @@
 
 #include "enums/graphics_backend_name.h"
 #include "types/graphics_backend_vertex_attribute_descriptor.h"
+#include "types/graphics_backend_profiler_marker.h"
 
 #include <string>
 #include <vector>
@@ -38,7 +39,6 @@ struct GraphicsBackendRenderTargetDescriptor;
 struct GraphicsBackendDepthStencilState;
 struct GraphicsBackendColorAttachmentDescriptor;
 struct GraphicsBackendFence;
-struct GraphicsBackendProfilerMarker;
 
 class GraphicsBackendBase
 {
@@ -101,7 +101,7 @@ public:
     virtual void PopDebugGroup() = 0;
     virtual GraphicsBackendProfilerMarker PushProfilerMarker() = 0;
     virtual void PopProfilerMarker(GraphicsBackendProfilerMarker& marker) = 0;
-    virtual bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, uint64_t& outBeginTime, uint64_t& outEndTime) = 0;
+    virtual bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults) = 0;
 
     virtual void BeginRenderPass(const std::string& name) = 0;
     virtual void EndRenderPass() = 0;

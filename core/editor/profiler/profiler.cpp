@@ -21,6 +21,19 @@ int DecrementDepth(Profiler::MarkerContext context)
     return s_ContextDepth[static_cast<int>(context)]--;
 }
 
+void SortMarkers(Profiler::MarkerContext context)
+{
+    std::vector<Profiler::FrameInfo>& gpuFrames = s_ContextFrames[static_cast<int>(context)];
+    for (Profiler::FrameInfo& gpuFrame: gpuFrames)
+    {
+        if (!gpuFrame.IsSorted && gpuFrame.Markers.size() > 1)
+        {
+            std::ranges::sort(gpuFrame.Markers, [](const Profiler::MarkerInfo& info1, const Profiler::MarkerInfo& info2){ return info1.Begin < info2.Begin; });
+            gpuFrame.IsSorted = true;
+        }
+    }
+}
+
 Profiler::MarkerInfo::MarkerInfo(MarkerType type, const char* name, int depth) :
     Type(type),
     Begin(std::chrono::system_clock::now()),
@@ -102,14 +115,32 @@ void Profiler::BeginNewFrame()
     {
         const GPUMarkerInfo& gpuMarker = s_PendingGPUMarkers[i];
 
-        uint64_t startTime;
-        uint64_t endTime;
-        if (GraphicsBackend::Current()->ResolveProfilerMarker(gpuMarker.ProfilerMarker, startTime, endTime))
+        ProfilerMarkerResolveResults results;
+        if (GraphicsBackend::Current()->ResolveProfilerMarker(gpuMarker.ProfilerMarker, results))
         {
-            MarkerInfo markerInfo(MarkerType::MARKER, gpuMarker.Name, gpuMarker.Depth);
-            markerInfo.Begin = std::chrono::system_clock::time_point(std::chrono::microseconds(startTime));
-            markerInfo.End = std::chrono::system_clock::time_point(std::chrono::microseconds(endTime));
-            AddMarkerInfo(MarkerContext::GPU_RENDER, markerInfo, gpuMarker.FrameNumber);
+            for (int gpuQueue = 0; gpuQueue < static_cast<int>(GPUQueue::MAX); ++gpuQueue)
+            {
+                auto queueToContext = [](int queueIndex)
+                {
+                    const GPUQueue queue = static_cast<GPUQueue>(queueIndex);
+                    switch (queue)
+                    {
+                        case GPUQueue::COPY:
+                            return MarkerContext::GPU_COPY;
+                        default:
+                            return MarkerContext::GPU_RENDER;
+                    }
+                };
+
+                const ProfilerMarkerResolveResult& result = results[gpuQueue];
+                if (!result.IsActive)
+                    continue;
+
+                MarkerInfo markerInfo(MarkerType::MARKER, gpuMarker.Name, gpuMarker.Depth);
+                markerInfo.Begin = std::chrono::system_clock::time_point(std::chrono::microseconds(result.StartTimestamp));
+                markerInfo.End = std::chrono::system_clock::time_point(std::chrono::microseconds(result.EndTimestamp));
+                AddMarkerInfo(queueToContext(gpuQueue), markerInfo, gpuMarker.FrameNumber);
+            }
 
             s_PendingGPUMarkers[i] = s_PendingGPUMarkers.back();
             s_PendingGPUMarkers.pop_back();
@@ -117,15 +148,8 @@ void Profiler::BeginNewFrame()
         }
     }
 
-    std::vector<FrameInfo>& gpuFrames = s_ContextFrames[static_cast<int>(MarkerContext::GPU_RENDER)];
-    for (FrameInfo& gpuFrame: gpuFrames)
-    {
-        if (!gpuFrame.IsSorted && gpuFrame.Markers.size() > 1)
-        {
-            std::ranges::sort(gpuFrame.Markers, [](const MarkerInfo& info1, const MarkerInfo& info2){ return info1.Begin < info2.Begin; });
-            gpuFrame.IsSorted = true;
-        }
-    }
+    SortMarkers(MarkerContext::GPU_RENDER);
+    SortMarkers(MarkerContext::GPU_COPY);
 }
 
 void Profiler::AddMarkerInfo(MarkerContext context, const MarkerInfo& markerInfo, int frame)

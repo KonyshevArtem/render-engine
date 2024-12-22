@@ -4,7 +4,7 @@ if (${RENDER_ENGINE_APPLE_PLATFORM})
     target_link_libraries(RenderEngineLauncher RenderEngine)
 
     if (${ENABLE_IMGUI})
-        target_link_libraries(RenderEngineLauncher ImGuiOSX ImGuiMetal)
+        target_link_libraries(RenderEngineLauncher ImGuiMetal)
         target_compile_definitions(RenderEngineLauncher PRIVATE ENABLE_IMGUI)
     endif ()
 

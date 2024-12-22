@@ -24,17 +24,11 @@ if (${RENDER_ENGINE_WINDOWS_PLATFORM})
             STATIC
             imgui/backends/imgui_impl_opengl3.h
             imgui/backends/imgui_impl_opengl3.cpp
-    )
-
-    add_library(
-            ImGuiGLFW
-            STATIC
             imgui/backends/imgui_impl_glfw.h
             imgui/backends/imgui_impl_glfw.cpp
     )
-    target_link_libraries(ImGuiGLFW ImGui glfw)
-    target_link_libraries(ImGuiOpenGL ImGui)
-    target_include_directories(ImGuiGLFW PUBLIC imgui/backends)
+
+    target_link_libraries(ImGuiOpenGL ImGui glfw)
     target_include_directories(ImGuiOpenGL PUBLIC imgui/backends)
 
 elseif (${RENDER_ENGINE_APPLE_PLATFORM})
@@ -44,17 +38,11 @@ elseif (${RENDER_ENGINE_APPLE_PLATFORM})
             STATIC
             imgui/backends/imgui_impl_metal.h
             imgui/backends/imgui_impl_metal.mm
-    )
-
-    add_library(
-            ImGuiOSX
-            STATIC
             imgui/backends/imgui_impl_osx.h
             imgui/backends/imgui_impl_osx.mm
     )
-    target_link_libraries(ImGuiOSX ImGui)
+
     target_link_libraries(ImGuiMetal ImGui)
-    target_include_directories(ImGuiOSX PUBLIC imgui/backends)
     target_include_directories(ImGuiMetal PUBLIC imgui/backends)
 
 endif ()

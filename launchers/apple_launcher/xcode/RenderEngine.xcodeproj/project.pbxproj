@@ -551,7 +551,6 @@
 				OTHER_LDFLAGS = (
 					"-lCore",
 					"-lImGuiMetal",
-					"-lImGuiOSX",
 					"-lImGui",
 					"-lDebugUtil",
 					"-lGraphicsBackend",
@@ -597,7 +596,6 @@
 				OTHER_LDFLAGS = (
 					"-lCore",
 					"-lImGuiMetal",
-					"-lImGuiOSX",
 					"-lImGui",
 					"-lDebugUtil",
 					"-lGraphicsBackend",

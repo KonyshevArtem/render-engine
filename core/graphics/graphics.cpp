@@ -34,6 +34,7 @@
 #include "passes/forward_render_pass.h"
 #include "editor/copy_depth/copy_depth_pass.h"
 #include "render_queue/render_queue.h"
+#include "editor/profiler/profiler.h"
 
 #include <cassert>
 
@@ -174,54 +175,60 @@ namespace Graphics
         s_ScreenWidth  = width;
         s_ScreenHeight = height;
 
-        if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
-        {
-            const TextureInternalFormat depthFormat = GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL ? TextureInternalFormat::DEPTH_32_STENCIL_8 : TextureInternalFormat::DEPTH_24_STENCIL_8;
-
-            cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true, "CameraColorRT");
-            cameraDepthTarget = Texture2D::Create(width, height, depthFormat, true, true, "CameraDepthRT");
-
-            colorTargetDescriptor.Texture = cameraColorTarget->GetBackendTexture();
-            depthTargetDescriptor.Texture = cameraDepthTarget->GetBackendTexture();
-        }
-
-        GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
-        GraphicsBackend::Current()->SetClearDepth(1);
-
         const Context ctx;
-
-        SetLightingData(ctx.Lights);
-
         std::vector<std::shared_ptr<RenderPass>> renderPasses;
+        {
+            Profiler::Marker marker("Prepare Render");
 
-        s_ShadowCasterPass->Prepare(ctx.Renderers, ctx.Lights, Camera::Current->GetShadowDistance());
-        s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor, Camera::Current->GetPosition(), ctx.Renderers);
-        s_FinalBlitPass->Prepare(cameraColorTarget);
+            if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
+            {
+                const TextureInternalFormat depthFormat = GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL ? TextureInternalFormat::DEPTH_32_STENCIL_8 : TextureInternalFormat::DEPTH_24_STENCIL_8;
 
-        renderPasses.push_back(s_ShadowCasterPass);
-        renderPasses.push_back(s_ForwardRenderPass);
-        renderPasses.push_back(s_FinalBlitPass);
+                cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true, "CameraColorRT");
+                cameraDepthTarget = Texture2D::Create(width, height, depthFormat, true, true, "CameraDepthRT");
+
+                colorTargetDescriptor.Texture = cameraColorTarget->GetBackendTexture();
+                depthTargetDescriptor.Texture = cameraDepthTarget->GetBackendTexture();
+            }
+
+            GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
+            GraphicsBackend::Current()->SetClearDepth(1);
+
+            SetLightingData(ctx.Lights);
+
+            s_ShadowCasterPass->Prepare(ctx.Renderers, ctx.Lights, Camera::Current->GetShadowDistance());
+            s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor, Camera::Current->GetPosition(), ctx.Renderers);
+            s_FinalBlitPass->Prepare(cameraColorTarget);
+
+            renderPasses.push_back(s_ShadowCasterPass);
+            renderPasses.push_back(s_ForwardRenderPass);
+            renderPasses.push_back(s_FinalBlitPass);
 
 #if RENDER_ENGINE_EDITOR
-        const bool executeGizmosPass = s_GizmosPass->Prepare(ctx.Renderers, s_CopyDepthPass->GetEndFence());
-        const bool executeSelectionPass = s_SelectionOutlinePass->Prepare();
+            const bool executeGizmosPass = s_GizmosPass->Prepare(ctx.Renderers, s_CopyDepthPass->GetEndFence());
+            const bool executeSelectionPass = s_SelectionOutlinePass->Prepare();
 
-        if (executeGizmosPass)
-        {
-            s_CopyDepthPass->Prepare(s_ForwardRenderPass->GetEndFence(), cameraDepthTarget);
+            if (executeGizmosPass)
+            {
+                s_CopyDepthPass->Prepare(s_ForwardRenderPass->GetEndFence(), cameraDepthTarget);
 
-            renderPasses.push_back(s_CopyDepthPass);
-            renderPasses.push_back(s_GizmosPass);
+                renderPasses.push_back(s_CopyDepthPass);
+                renderPasses.push_back(s_GizmosPass);
+            }
+
+            if (executeSelectionPass)
+                renderPasses.push_back(s_SelectionOutlinePass);
+#endif
         }
 
-        if (executeSelectionPass)
-            renderPasses.push_back(s_SelectionOutlinePass);
-#endif
-
-        std::sort(renderPasses.begin(), renderPasses.end(), RenderPass::Comparer());
-        for (const std::shared_ptr<RenderPass>& pass : renderPasses)
         {
-            pass->Execute(ctx);
+            Profiler::Marker marker("Execute Render");
+
+            std::sort(renderPasses.begin(), renderPasses.end(), RenderPass::Comparer());
+            for (const std::shared_ptr<RenderPass>& pass : renderPasses)
+            {
+                pass->Execute(ctx);
+            }
         }
     }
 

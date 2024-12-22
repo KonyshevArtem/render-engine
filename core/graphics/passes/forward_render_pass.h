@@ -17,7 +17,7 @@ class ForwardRenderPass : public RenderPass
 {
 public:
     explicit ForwardRenderPass(int priority);
-    ~ForwardRenderPass() override = default;
+    ~ForwardRenderPass() override;
 
     void Prepare(const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor, const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers);
     void Execute(const Context& ctx) override;

@@ -9,6 +9,7 @@
 #include "texture_2d_array/texture_2d_array.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug_group.h"
+#include "editor/profiler/profiler.h"
 #include "enums/framebuffer_attachment.h"
 #include "enums/load_action.h"
 #include "material/material.h"
@@ -57,6 +58,8 @@ void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& ren
         Matrix4x4::TBN({-1, 0, 0}, {0, 1, 0}, {0, 0, -1}).Invert(), // back
     };
 
+    Profiler::Marker marker("ShadowCasterPass::Prepare");
+
     m_DirectionalLightRenderQueue.Clear();
     for (RenderQueue& queue : m_PointLightsRenderQueues)
         queue.Clear();
@@ -72,6 +75,8 @@ void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& ren
 
         if (light->Type == LightType::SPOT)
         {
+            Profiler::Marker marker("Prepare Spot Light");
+
             const Matrix4x4 view = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
             const Matrix4x4 proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, shadowsDistance);
 
@@ -83,6 +88,8 @@ void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& ren
         }
         if (light->Type == LightType::POINT)
         {
+            Profiler::Marker marker("Prepare Point Light");
+
             const Matrix4x4 proj = Matrix4x4::Perspective(90, 1, 0.01f, shadowsDistance);
             for (int i = 0; i < 6; ++i)
             {
@@ -99,6 +106,8 @@ void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& ren
         }
         else if (light->Type == LightType::DIRECTIONAL)
         {
+            Profiler::Marker marker("Prepare Directional Light");
+
             m_DirectionalLightRenderQueue.Prepare({}, renderers, renderSettings);
 
             Bounds shadowCastersBounds;
@@ -132,6 +141,8 @@ void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& ren
 
 void ShadowCasterPass::Execute(const Context& ctx)
 {
+    Profiler::Marker marker("ShadowCasterPass::Execute");
+
     for (int i = 0; i < GlobalConstants::MaxSpotLightSources; ++i)
     {
         if (m_SpotLightRenderQueues[i].IsEmpty())
@@ -159,6 +170,9 @@ void ShadowCasterPass::Execute(const Context& ctx)
 void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsMatrices& matrices, const std::string& passName)
 {
     static constexpr GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::DONT_CARE, .StoreAction = StoreAction::DONT_CARE };
+
+    Profiler::Marker marker("ShadowCasterPass::Render");
+    Profiler::GPUMarker gpuMarker("ShadowCasterPass::Render");
 
     const Vector4& viewport{0, 0, static_cast<float>(target->GetWidth()), static_cast<float>(target->GetHeight())};
     const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR, .Layer = targetLayer };

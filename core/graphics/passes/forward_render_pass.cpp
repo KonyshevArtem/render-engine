@@ -2,6 +2,7 @@
 #include "draw_renderers_pass.h"
 #include "skybox_pass.h"
 #include "graphics_backend_api.h"
+#include "editor/profiler/profiler.h"
 #include "graphics/graphics.h"
 #include "vector4/vector4.h"
 #include "graphics/context.h"
@@ -17,17 +18,28 @@ ForwardRenderPass::ForwardRenderPass(int priority) :
     m_SkyboxPass = std::make_unique<SkyboxPass>(2);
 }
 
+ForwardRenderPass::~ForwardRenderPass()
+{
+    GraphicsBackend::Current()->DeleteFence(m_EndFence);
+}
+
 void ForwardRenderPass::Prepare(const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor, const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers)
 {
+    Profiler::Marker marker("ForwardRenderPass::Prepare");
+
     m_ColorTargetDescriptor = colorTargetDescriptor;
     m_DepthTargetDescriptor = depthTargetDescriptor;
 
     m_OpaquePass->Prepare(cameraPosition, renderers);
+    m_SkyboxPass->Prepare();
     m_TransparentPass->Prepare(cameraPosition, renderers);
 }
 
 void ForwardRenderPass::Execute(const Context& ctx)
 {
+    Profiler::Marker marker("ForwardRenderPass::Execute");
+    Profiler::GPUMarker gpuMarker("ForwardRenderPass::Execute");
+
     GraphicsBackend::Current()->AttachRenderTarget(m_ColorTargetDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(m_DepthTargetDescriptor);
 

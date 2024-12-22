@@ -41,23 +41,21 @@ void DrawLog(const std::string &log, int index, int &selectedIndex)
     ImGui::Separator();
 }
 
-void DebugConsoleWindow::DrawInternal()
+void DebugConsoleWindow::DrawTopBar()
 {
-    if (ImGui::BeginMenuBar())
+    if (ImGui::Button(m_Paused ? "Resume" : "Pause"))
     {
-        if (ImGui::Button(m_Paused ? "Resume" : "Pause"))
-        {
-            m_Paused = !m_Paused;
-        }
-
-        if (ImGui::Button("Clear"))
-        {
-            m_Logs.clear();
-        }
-
-        ImGui::EndMenuBar();
+        m_Paused = !m_Paused;
     }
 
+    if (ImGui::Button("Clear"))
+    {
+        m_Logs.clear();
+    }
+}
+
+void DebugConsoleWindow::DrawInternal()
+{
     if (ImGui::BeginChild("Small Logs", {0, -200}, ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY))
     {
         ImGuiListClipper clipper;

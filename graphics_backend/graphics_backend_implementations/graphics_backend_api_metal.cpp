@@ -19,22 +19,32 @@
 #include "helpers/metal_helpers.h"
 
 #include "Metal/Metal.hpp"
+#include "Metal/MTLCounters.hpp"
 
-NS::Error *s_Error;
-const int s_MaxBuffers = 31;
+constexpr int k_MaxBuffers = 31;
+constexpr int k_MaxTimestampSamples = 100;
+
 MTL::ResourceOptions s_DefaultBufferStorageMode;
+uint32_t s_Frame = 0;
+
+MTL::CounterSampleBuffer* s_CounterSampleBuffers[k_MaxGPUQueuesCount];
+bool s_CounterSampleFinished[k_MaxGPUQueuesCount][k_MaxTimestampSamples];
+int s_CurrentCounterSampleOffsets[k_MaxGPUQueuesCount];
+
+MTL::Timestamp s_CpuStartTimestamp;
+MTL::Timestamp s_GpuStartTimestamp;
 
 struct MetalInitData
 {
     MTL::Device* Device;
-    MTL::CommandBuffer* RenderCommandBuffer;
-    MTL::CommandBuffer* CopyCommandBuffer;
+    class MTL::CommandBuffer* RenderCommandBuffer;
+    class MTL::CommandBuffer* CopyCommandBuffer;
 };
 
 struct MetalFrameData
 {
-    MTL::CommandBuffer* RenderCommandBuffer;
-    MTL::CommandBuffer* CopyCommandBuffer;
+    class MTL::CommandBuffer* RenderCommandBuffer;
+    class MTL::CommandBuffer* CopyCommandBuffer;
     MTL::RenderPassDescriptor* BackbufferDescriptor;
 };
 
@@ -46,12 +56,42 @@ struct BufferData
 
 void GraphicsBackendMetal::Init(void *data)
 {
-    auto metalData = reinterpret_cast<MetalInitData*>(data);
+    const MetalInitData* metalData = static_cast<MetalInitData*>(data);
     m_Device = metalData->Device;
     m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
     SetCommandBuffers(metalData->RenderCommandBuffer, metalData->CopyCommandBuffer);
 
     s_DefaultBufferStorageMode = m_Device->hasUnifiedMemory() ? MTL::ResourceStorageModeShared : MTL::ResourceStorageModePrivate;
+
+    if (m_Device->supportsCounterSampling(MTL::CounterSamplingPointAtStageBoundary))
+    {
+        for (int i = 0; i < m_Device->counterSets()->count(); ++i)
+        {
+            const MTL::CounterSet* set = reinterpret_cast<MTL::CounterSet*>(m_Device->counterSets()->object(i));
+            if (set->name()->isEqualToString(MTL::CommonCounterSetTimestamp))
+            {
+                for (int j = 0; j < set->counters()->count(); ++j)
+                {
+                    const MTL::Counter* counter = reinterpret_cast<MTL::Counter*>(set->counters()->object(j));
+                    if (counter->name()->isEqualToString(MTL::CommonCounterTimestamp))
+                    {
+                        MTL::CounterSampleBufferDescriptor* descriptor = MTL::CounterSampleBufferDescriptor::alloc()->init();
+                        descriptor->setCounterSet(set);
+                        descriptor->setStorageMode(MTL::StorageModeShared);
+                        descriptor->setSampleCount(k_MaxTimestampSamples);
+
+                        for (int gpuQueue = 0; gpuQueue < k_MaxGPUQueuesCount; ++gpuQueue)
+                            s_CounterSampleBuffers[gpuQueue] = m_Device->newCounterSampleBuffer(descriptor, nullptr);
+                        descriptor->release();
+
+                        m_Device->sampleTimestamps(&s_CpuStartTimestamp, &s_GpuStartTimestamp);
+                        m_SupportTimestampCounters = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }
 
 GraphicsBackendName GraphicsBackendMetal::GetName()
@@ -61,9 +101,11 @@ GraphicsBackendName GraphicsBackendMetal::GetName()
 
 void GraphicsBackendMetal::InitNewFrame(void *data)
 {
-    auto metalData = reinterpret_cast<MetalFrameData*>(data);
+    const MetalFrameData* metalData = static_cast<MetalFrameData*>(data);
     m_BackbufferDescriptor = metalData->BackbufferDescriptor;
     SetCommandBuffers(metalData->RenderCommandBuffer, metalData->CopyCommandBuffer);
+
+    ++s_Frame;
 }
 
 GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
@@ -412,10 +454,11 @@ void GraphicsBackendMetal::SetViewport(int x, int y, int width, int height, floa
 
 GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shaderType, const std::string &source, const std::string& name)
 {
-    auto library = m_Device->newLibrary(NS::String::string(source.c_str(), NS::UTF8StringEncoding), nullptr, &s_Error);
+    NS::Error* error;
+    auto library = m_Device->newLibrary(NS::String::string(source.c_str(), NS::UTF8StringEncoding), nullptr, &error);
     if (!library)
     {
-        throw std::runtime_error(s_Error->localizedDescription()->utf8String());
+        throw std::runtime_error(error->localizedDescription()->utf8String());
     }
 
     if (!name.empty())
@@ -467,21 +510,22 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const std::vector<Gra
     {
         auto *attrDesc = vertDesc->attributes()->object(attr.Index);
         attrDesc->setFormat(MetalHelpers::ToVertexFormat(attr.DataType, attr.Dimensions, attr.IsNormalized));
-        attrDesc->setBufferIndex(s_MaxBuffers - 1);
+        attrDesc->setBufferIndex(k_MaxBuffers - 1);
         attrDesc->setOffset(attr.Offset);
     }
 
-    auto *layoutDesc = vertDesc->layouts()->object(s_MaxBuffers - 1);
+    auto *layoutDesc = vertDesc->layouts()->object(k_MaxBuffers - 1);
     layoutDesc->setStride(vertexAttributes[0].Stride);
     layoutDesc->setStepRate(1);
     layoutDesc->setStepFunction(MTL::VertexStepFunctionPerVertex);
 
+    NS::Error* error;
     MTL::PipelineOption options = MTL::PipelineOptionNone;
-    auto *pso = m_Device->newRenderPipelineState(desc, options, nullptr, &s_Error);
+    auto *pso = m_Device->newRenderPipelineState(desc, options, nullptr, &error);
 
-    if (s_Error != nullptr)
+    if (error != nullptr)
     {
-        throw std::runtime_error(s_Error->localizedDescription()->utf8String());
+        throw std::runtime_error(error->localizedDescription()->utf8String());
     }
 
     GraphicsBackendProgram program{};
@@ -529,7 +573,7 @@ void GraphicsBackendMetal::DrawArrays(const GraphicsBackendGeometry &geometry, P
     assert(m_RenderCommandEncoder != nullptr);
 
     const BufferData* vertexBufferData = reinterpret_cast<BufferData*>(geometry.VertexBuffer.Buffer);
-    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, s_MaxBuffers - 1);
+    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, k_MaxBuffers - 1);
     m_RenderCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
 }
 
@@ -538,7 +582,7 @@ void GraphicsBackendMetal::DrawArraysInstanced(const GraphicsBackendGeometry &ge
     assert(m_RenderCommandEncoder != nullptr);
 
     const BufferData* vertexBufferData = reinterpret_cast<BufferData*>(geometry.VertexBuffer.Buffer);
-    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, s_MaxBuffers - 1);
+    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, k_MaxBuffers - 1);
     m_RenderCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, indicesCount);
 }
 
@@ -548,7 +592,7 @@ void GraphicsBackendMetal::DrawElements(const GraphicsBackendGeometry &geometry,
 
     const BufferData* vertexBufferData = reinterpret_cast<BufferData*>(geometry.VertexBuffer.Buffer);
     const BufferData* indexBufferData = reinterpret_cast<BufferData*>(geometry.IndexBuffer.Buffer);
-    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, s_MaxBuffers - 1);
+    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, k_MaxBuffers - 1);
     m_RenderCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), indexBufferData->Buffer, 0);
 }
 
@@ -558,7 +602,7 @@ void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &
 
     const BufferData* vertexBufferData = reinterpret_cast<BufferData*>(geometry.VertexBuffer.Buffer);
     const BufferData* indexBufferData = reinterpret_cast<BufferData*>(geometry.IndexBuffer.Buffer);
-    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, s_MaxBuffers - 1);
+    m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, k_MaxBuffers - 1);
     m_RenderCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), indexBufferData->Buffer, 0, instanceCount);
 }
 
@@ -590,10 +634,114 @@ void GraphicsBackendMetal::PopDebugGroup()
     m_RenderCommandEncoder->popDebugGroup();
 }
 
+GraphicsBackendProfilerMarker GraphicsBackendMetal::PushProfilerMarker()
+{
+    assert(!m_ProfilerMarkerActive);
+    m_ProfilerMarkerActive = m_SupportTimestampCounters;
+
+    GraphicsBackendProfilerMarker marker{};
+    for (int gpuQueue = 0; gpuQueue < k_MaxGPUQueuesCount; ++gpuQueue)
+        marker.Info[gpuQueue].StartMarker = s_CurrentCounterSampleOffsets[gpuQueue];
+    return marker;
+}
+
+void GraphicsBackendMetal::PopProfilerMarker(GraphicsBackendProfilerMarker& marker)
+{
+    assert(m_ProfilerMarkerActive);
+    m_ProfilerMarkerActive = false;
+
+    for (int gpuQueue = 0; gpuQueue < k_MaxGPUQueuesCount; ++gpuQueue)
+    {
+        GraphicsBackendProfilerMarker::MarkerInfo& info = marker.Info[gpuQueue];
+        const int currentCounterSampleOffset = s_CurrentCounterSampleOffsets[gpuQueue];
+        const bool isActive = info.StartMarker != currentCounterSampleOffset;
+        const uint64_t sampleIndex = currentCounterSampleOffset == 0 ? k_MaxTimestampSamples - 1 : currentCounterSampleOffset - 1;
+        info.EndMarker = isActive ? sampleIndex : info.StartMarker;
+    }
+}
+
+bool GraphicsBackendMetal::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults)
+{
+    if (!m_SupportTimestampCounters)
+        return true;
+
+    static MTL::Timestamp cpuDuration;
+    static MTL::Timestamp gpuDuration;
+    static std::uint64_t timestampDifference;
+    if (cpuDuration == 0 || gpuDuration == 0)
+    {
+        MTL::Timestamp cpuTimestamp;
+        MTL::Timestamp gpuTimestamp;
+        m_Device->sampleTimestamps(&cpuTimestamp, &gpuTimestamp);
+
+        cpuDuration = cpuTimestamp - s_CpuStartTimestamp;
+        gpuDuration = gpuTimestamp - s_GpuStartTimestamp;
+
+        const uint64_t systemCpuTimestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        timestampDifference = systemCpuTimestamp - cpuTimestamp;
+    }
+
+    auto tryResolve = [](uint64_t counterOffset, int queueIndex, uint64_t& outCpuTimestamp)
+    {
+        if (!s_CounterSampleFinished[queueIndex][counterOffset])
+            return false;
+
+        const NS::Data* data = s_CounterSampleBuffers[queueIndex]->resolveCounterRange(NS::Range::Make(counterOffset, 1));
+        const MTL::CounterResultTimestamp* timestampData = static_cast<MTL::CounterResultTimestamp*>(data->mutableBytes());
+        const uint64_t gpuTimestamp = timestampData->timestamp;
+
+        const double normalizedGpuTime = static_cast<double>(gpuTimestamp - s_GpuStartTimestamp) / gpuDuration;
+        const double nanoseconds = normalizedGpuTime * cpuDuration + s_CpuStartTimestamp + timestampDifference;
+        outCpuTimestamp = nanoseconds / 1000;
+        return true;
+    };
+
+    bool resolved = true;
+    for (int gpuQueue = 0; gpuQueue < k_MaxGPUQueuesCount; ++gpuQueue)
+    {
+        const GraphicsBackendProfilerMarker::MarkerInfo& markerInfo = marker.Info[gpuQueue];
+        outResults[gpuQueue].IsActive = markerInfo.StartMarker != markerInfo.EndMarker;
+        if (!outResults[gpuQueue].IsActive)
+            continue;
+
+        resolved &= tryResolve(markerInfo.StartMarker, gpuQueue, outResults[gpuQueue].StartTimestamp);
+        resolved &= tryResolve(markerInfo.EndMarker, gpuQueue, outResults[gpuQueue].EndTimestamp);
+    }
+
+    return resolved;
+}
+
+void SetCounterSampleFinished(uint64_t sampleIndex, int queueIndex, bool finished)
+{
+    s_CounterSampleFinished[queueIndex][sampleIndex] = finished;
+    s_CounterSampleFinished[queueIndex][sampleIndex + 1] = finished;
+}
+
 void GraphicsBackendMetal::BeginRenderPass(const std::string& name)
 {
     assert(m_RenderCommandBuffer != nullptr);
     assert(m_RenderCommandEncoder == nullptr);
+
+    if (m_ProfilerMarkerActive)
+    {
+        uint64_t counterSamplerIndex = s_CurrentCounterSampleOffsets[k_RenderGPUQueueIndex];
+        SetCounterSampleFinished(counterSamplerIndex, k_RenderGPUQueueIndex, false);
+
+        MTL::RenderPassSampleBufferAttachmentDescriptor* descriptor = m_RenderPassDescriptor->sampleBufferAttachments()->object(0);
+        descriptor->setSampleBuffer(s_CounterSampleBuffers[k_RenderGPUQueueIndex]);
+        descriptor->setStartOfVertexSampleIndex(counterSamplerIndex);
+        descriptor->setEndOfVertexSampleIndex(NS::UIntegerMax);
+        descriptor->setStartOfFragmentSampleIndex(NS::UIntegerMax);
+        descriptor->setEndOfFragmentSampleIndex(counterSamplerIndex + 1);
+
+        m_RenderCommandBuffer->addCompletedHandler([counterSamplerIndex](class MTL::CommandBuffer*)
+        {
+            SetCounterSampleFinished(counterSamplerIndex, k_RenderGPUQueueIndex, true);
+        });
+
+        s_CurrentCounterSampleOffsets[k_RenderGPUQueueIndex] = (s_CurrentCounterSampleOffsets[k_RenderGPUQueueIndex] + 2) % k_MaxTimestampSamples;
+    }
+
     m_RenderCommandEncoder = m_RenderCommandBuffer->renderCommandEncoder(m_RenderPassDescriptor);
 
     if (!name.empty())
@@ -609,7 +757,7 @@ void GraphicsBackendMetal::EndRenderPass()
     m_RenderCommandEncoder->endEncoding();
     m_RenderCommandEncoder = nullptr;
 
-    auto colorTargetCount = m_RenderPassDescriptor->colorAttachments()->retainCount();
+    const NS::UInteger colorTargetCount = m_RenderPassDescriptor->colorAttachments()->retainCount();
     for (int i = 0; i < colorTargetCount; ++i)
     {
         m_RenderPassDescriptor->colorAttachments()->setObject(m_BackbufferDescriptor->colorAttachments()->object(i), i);
@@ -617,13 +765,36 @@ void GraphicsBackendMetal::EndRenderPass()
 
     m_RenderPassDescriptor->setDepthAttachment(m_BackbufferDescriptor->depthAttachment());
     m_RenderPassDescriptor->setStencilAttachment(m_BackbufferDescriptor->stencilAttachment());
+
+    m_RenderPassDescriptor->sampleBufferAttachments()->setObject(nullptr, 0);
 }
 
 void GraphicsBackendMetal::BeginCopyPass(const std::string& name)
 {
     assert(m_CopyCommandBuffer != nullptr);
     assert(m_BlitCommandEncoder == nullptr);
-    m_BlitCommandEncoder = m_CopyCommandBuffer->blitCommandEncoder();
+
+    MTL::BlitPassDescriptor* passDescriptor = MTL::BlitPassDescriptor::alloc()->init();
+    if (m_ProfilerMarkerActive)
+    {
+        uint64_t counterSamplerIndex = s_CurrentCounterSampleOffsets[k_CopyGPUQueueIndex];
+        SetCounterSampleFinished(counterSamplerIndex, k_CopyGPUQueueIndex, false);
+
+        MTL::BlitPassSampleBufferAttachmentDescriptor* descriptor = passDescriptor->sampleBufferAttachments()->object(0);
+        descriptor->setSampleBuffer(s_CounterSampleBuffers[k_CopyGPUQueueIndex]);
+        descriptor->setStartOfEncoderSampleIndex(counterSamplerIndex);
+        descriptor->setEndOfEncoderSampleIndex(counterSamplerIndex + 1);
+
+        m_CopyCommandBuffer->addCompletedHandler([counterSamplerIndex](class MTL::CommandBuffer*)
+        {
+            SetCounterSampleFinished(counterSamplerIndex, k_CopyGPUQueueIndex, true);
+        });
+
+        s_CurrentCounterSampleOffsets[k_CopyGPUQueueIndex] = (s_CurrentCounterSampleOffsets[k_CopyGPUQueueIndex] + 2) % k_MaxTimestampSamples;
+    }
+
+    m_BlitCommandEncoder = m_CopyCommandBuffer->blitCommandEncoder(passDescriptor);
+    passDescriptor->release();
 
     if (!name.empty())
     {
@@ -692,6 +863,12 @@ GraphicsBackendFence GraphicsBackendMetal::CreateFence(FenceType fenceType, cons
     return fence;
 }
 
+void GraphicsBackendMetal::DeleteFence(const GraphicsBackendFence& fence)
+{
+    MTL::Event* metalEvent = reinterpret_cast<MTL::Event*>(fence.Fence);
+    metalEvent->release();
+}
+
 void GraphicsBackendMetal::SignalFence(const GraphicsBackendFence& fence)
 {
     const MTL::Event* metalEvent = reinterpret_cast<MTL::Event*>(fence.Fence);
@@ -699,10 +876,10 @@ void GraphicsBackendMetal::SignalFence(const GraphicsBackendFence& fence)
     switch (fence.Type)
     {
         case FenceType::RENDER_TO_COPY:
-            m_RenderCommandBuffer->encodeSignalEvent(metalEvent, 1);
+            m_RenderCommandBuffer->encodeSignalEvent(metalEvent, s_Frame);
             break;
         case FenceType::COPY_TO_RENDER:
-            m_CopyCommandBuffer->encodeSignalEvent(metalEvent, 1);
+            m_CopyCommandBuffer->encodeSignalEvent(metalEvent, s_Frame);
             break;
     }
 }
@@ -714,10 +891,10 @@ void GraphicsBackendMetal::WaitForFence(const GraphicsBackendFence& fence)
     switch (fence.Type)
     {
         case FenceType::RENDER_TO_COPY:
-            m_CopyCommandBuffer->encodeWait(metalEvent, 1);
+            m_CopyCommandBuffer->encodeWait(metalEvent, s_Frame);
             break;
         case FenceType::COPY_TO_RENDER:
-            m_RenderCommandBuffer->encodeWait(metalEvent, 1);
+            m_RenderCommandBuffer->encodeWait(metalEvent, s_Frame);
             break;
     }
 }

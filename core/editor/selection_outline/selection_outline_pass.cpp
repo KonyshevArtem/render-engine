@@ -13,6 +13,7 @@
 #include "enums/framebuffer_attachment.h"
 #include "enums/load_action.h"
 #include "types/graphics_backend_render_target_descriptor.h"
+#include "editor/profiler/profiler.h"
 
 void CheckTexture(std::shared_ptr<Texture2D> &_texture)
 {
@@ -44,12 +45,16 @@ void SelectionOutlinePass::Execute(const Context& ctx)
     static GraphicsBackendRenderTargetDescriptor colorTarget { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
     static GraphicsBackendRenderTargetDescriptor depthTarget { FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT };
 
+    Profiler::Marker marker("SelectionOutlinePass::Execute");
+
     const std::unordered_set<std::shared_ptr<GameObject>>& selectedGameObjects = Hierarchy::GetSelectedGameObjects();
 
     CheckTexture(silhouetteRenderTarget);
 
     // render selected gameObjects
     {
+        Profiler::GPUMarker gpuMarker("Selection Outline Pass");
+
         Graphics::SetRenderTarget(colorTarget, silhouetteRenderTarget);
         Graphics::SetRenderTarget(depthTarget);
 
@@ -85,6 +90,8 @@ void SelectionOutlinePass::Execute(const Context& ctx)
 
     // blit to screen
     {
+        Profiler::GPUMarker gpuMarker("Selection Blit Pass");
+
         blitMaterial->SetVector("_Color", outlineColor);
 
         Graphics::Blit(silhouetteRenderTarget, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *blitMaterial, "Selection Blit Pass");

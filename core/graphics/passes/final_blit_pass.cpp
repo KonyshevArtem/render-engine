@@ -1,4 +1,5 @@
 #include "final_blit_pass.h"
+#include "editor/profiler/profiler.h"
 #include "texture_2d/texture_2d.h"
 #include "material/material.h"
 #include "shader/shader.h"
@@ -21,6 +22,9 @@ void FinalBlitPass::Execute(const Context& ctx)
 {
     static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/final_blit", {}, {}, {}, {false, DepthFunction::ALWAYS});
     static const std::shared_ptr<Material> material = std::make_shared<Material>(shader, "FinalBlit");
+
+    Profiler::Marker marker("FinalBlitPass::Execute");
+    Profiler::GPUMarker gpuMarker("FinalBlitPass::Execute");
 
     const GraphicsSettings::TonemappingMode tonemappingMode = GraphicsSettings::GetTonemappingMode();
 

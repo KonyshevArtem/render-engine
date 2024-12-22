@@ -65,6 +65,9 @@ public:
 
     void PushDebugGroup(const std::string& name) override;
     void PopDebugGroup() override;
+    GraphicsBackendProfilerMarker PushProfilerMarker() override;
+    void PopProfilerMarker(GraphicsBackendProfilerMarker& marker) override;
+    bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults) override;
 
     void BeginRenderPass(const std::string& name) override;
     void EndRenderPass() override;
@@ -72,6 +75,7 @@ public:
     void EndCopyPass() override;
 
     GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name) override;
+    void DeleteFence(const GraphicsBackendFence& fence) override;
     void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
     void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
 

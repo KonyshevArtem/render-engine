@@ -17,6 +17,7 @@
 #include "types/graphics_backend_depth_stencil_state.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_fence.h"
+#include "types/graphics_backend_profiler_marker.h"
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 
@@ -24,6 +25,7 @@
 #include <stdexcept>
 #include <cassert>
 #include <array>
+#include <chrono>
 
 struct DepthStencilState
 {
@@ -65,6 +67,7 @@ struct RenderTargetState
 GLuint s_Framebuffers[2];
 RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
 uint64_t s_DebugGroupId = 0;
+uint64_t s_TimestampDifference = 0;
 
 std::array s_DebugMessageTypes =
 {
@@ -182,6 +185,13 @@ void GraphicsBackendOpenGL::Init(void *data)
 #endif
 
     ResetRenderTargetStates();
+
+    int64_t glTimestamp;
+    glGetInteger64v(GL_TIMESTAMP, &glTimestamp);
+    glTimestamp /= 1000;
+
+    const auto cpuTimestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    s_TimestampDifference = cpuTimestamp - glTimestamp;
 }
 
 const std::string &GraphicsBackendOpenGL::GetGLSLVersionString()
@@ -766,6 +776,59 @@ void GraphicsBackendOpenGL::PopDebugGroup()
 #endif
 }
 
+GraphicsBackendProfilerMarker GraphicsBackendOpenGL::PushProfilerMarker()
+{
+    GLuint glQueries[2];
+    glGenQueries(2, &glQueries[0]);
+    glQueryCounter(glQueries[0], GL_TIMESTAMP);
+
+    GraphicsBackendProfilerMarker marker{};
+    marker.Info[k_RenderGPUQueueIndex].StartMarker = glQueries[0];
+    marker.Info[k_RenderGPUQueueIndex].EndMarker = glQueries[1];
+    return marker;
+}
+
+void GraphicsBackendOpenGL::PopProfilerMarker(GraphicsBackendProfilerMarker& marker)
+{
+    const GLuint glQuery = marker.Info[k_RenderGPUQueueIndex].EndMarker;
+    glQueryCounter(glQuery, GL_TIMESTAMP);
+}
+
+bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults)
+{
+    const GLuint glQueryStart = marker.Info[k_RenderGPUQueueIndex].StartMarker;
+    const GLuint glQueryEnd = marker.Info[k_RenderGPUQueueIndex].EndMarker;
+
+    GLuint queryStartAvailable;
+    GLuint queryEndAvailable;
+    glGetQueryObjectuiv(glQueryStart, GL_QUERY_RESULT_AVAILABLE, &queryStartAvailable);
+    glGetQueryObjectuiv(glQueryEnd, GL_QUERY_RESULT_AVAILABLE, &queryEndAvailable);
+
+    const bool markerResolved = queryStartAvailable && queryEndAvailable;
+    if (markerResolved)
+    {
+        auto resolveQuery = [](GLuint query, uint64_t& outTimestamp)
+        {
+            glGetQueryObjectui64v(query, GL_QUERY_RESULT_NO_WAIT, &outTimestamp);
+            glDeleteQueries(1, &query);
+
+            // from nanoseconds to microseconds
+            outTimestamp /= 1000;
+
+            // GL_TIMESTAMP is counted from implementation-defined point of time, that might not match with system clock
+            outTimestamp += s_TimestampDifference;
+        };
+
+        resolveQuery(glQueryStart, outResults[k_RenderGPUQueueIndex].StartTimestamp);
+        resolveQuery(glQueryEnd, outResults[k_RenderGPUQueueIndex].EndTimestamp);
+    }
+
+    outResults[k_RenderGPUQueueIndex].IsActive = markerResolved;
+    outResults[k_CopyGPUQueueIndex].IsActive = false;
+
+    return markerResolved;
+}
+
 void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
 {
     bool isBackbuffer = true;
@@ -858,6 +921,10 @@ void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStenc
 GraphicsBackendFence GraphicsBackendOpenGL::CreateFence(FenceType fenceType, const std::string& name)
 {
     return GraphicsBackendFence{};
+}
+
+void GraphicsBackendOpenGL::DeleteFence(const GraphicsBackendFence& fence)
+{
 }
 
 void GraphicsBackendOpenGL::SignalFence(const GraphicsBackendFence& fence)

@@ -23,14 +23,13 @@
 
 constexpr int k_MaxBuffers = 31;
 constexpr int k_MaxTimestampSamples = 100;
-constexpr int k_MaxQueueTypes = static_cast<int>(GPUQueue::MAX);
 
 MTL::ResourceOptions s_DefaultBufferStorageMode;
 uint32_t s_Frame = 0;
 
-MTL::CounterSampleBuffer* s_CounterSampleBuffers[k_MaxQueueTypes];
-bool s_CounterSampleFinished[k_MaxQueueTypes][k_MaxTimestampSamples];
-int s_CurrentCounterSampleOffsets[k_MaxQueueTypes];
+MTL::CounterSampleBuffer* s_CounterSampleBuffers[k_MaxGPUQueuesCount];
+bool s_CounterSampleFinished[k_MaxGPUQueuesCount][k_MaxTimestampSamples];
+int s_CurrentCounterSampleOffsets[k_MaxGPUQueuesCount];
 
 MTL::Timestamp s_CpuStartTimestamp;
 MTL::Timestamp s_GpuStartTimestamp;
@@ -81,7 +80,7 @@ void GraphicsBackendMetal::Init(void *data)
                         descriptor->setStorageMode(MTL::StorageModeShared);
                         descriptor->setSampleCount(k_MaxTimestampSamples);
 
-                        for (int gpuQueue = 0; gpuQueue < k_MaxQueueTypes; ++gpuQueue)
+                        for (int gpuQueue = 0; gpuQueue < k_MaxGPUQueuesCount; ++gpuQueue)
                             s_CounterSampleBuffers[gpuQueue] = m_Device->newCounterSampleBuffer(descriptor, nullptr);
                         descriptor->release();
 
@@ -641,7 +640,7 @@ GraphicsBackendProfilerMarker GraphicsBackendMetal::PushProfilerMarker()
     m_ProfilerMarkerActive = m_SupportTimestampCounters;
 
     GraphicsBackendProfilerMarker marker{};
-    for (int gpuQueue = 0; gpuQueue < k_MaxQueueTypes; ++gpuQueue)
+    for (int gpuQueue = 0; gpuQueue < k_MaxGPUQueuesCount; ++gpuQueue)
         marker.Info[gpuQueue].StartMarker = s_CurrentCounterSampleOffsets[gpuQueue];
     return marker;
 }
@@ -651,7 +650,7 @@ void GraphicsBackendMetal::PopProfilerMarker(GraphicsBackendProfilerMarker& mark
     assert(m_ProfilerMarkerActive);
     m_ProfilerMarkerActive = false;
 
-    for (int gpuQueue = 0; gpuQueue < k_MaxQueueTypes; ++gpuQueue)
+    for (int gpuQueue = 0; gpuQueue < k_MaxGPUQueuesCount; ++gpuQueue)
     {
         GraphicsBackendProfilerMarker::MarkerInfo& info = marker.Info[gpuQueue];
         const int currentCounterSampleOffset = s_CurrentCounterSampleOffsets[gpuQueue];
@@ -698,7 +697,7 @@ bool GraphicsBackendMetal::ResolveProfilerMarker(const GraphicsBackendProfilerMa
     };
 
     bool resolved = true;
-    for (int gpuQueue = 0; gpuQueue < k_MaxQueueTypes; ++gpuQueue)
+    for (int gpuQueue = 0; gpuQueue < k_MaxGPUQueuesCount; ++gpuQueue)
     {
         const GraphicsBackendProfilerMarker::MarkerInfo& markerInfo = marker.Info[gpuQueue];
         outResults[gpuQueue].IsActive = markerInfo.StartMarker != markerInfo.EndMarker;
@@ -720,18 +719,16 @@ void SetCounterSampleFinished(uint64_t sampleIndex, int queueIndex, bool finishe
 
 void GraphicsBackendMetal::BeginRenderPass(const std::string& name)
 {
-    static constexpr int renderQueueIndex = static_cast<int>(GPUQueue::RENDER);
-
     assert(m_RenderCommandBuffer != nullptr);
     assert(m_RenderCommandEncoder == nullptr);
 
     if (m_ProfilerMarkerActive)
     {
-        uint64_t counterSamplerIndex = s_CurrentCounterSampleOffsets[renderQueueIndex];
-        SetCounterSampleFinished(counterSamplerIndex, renderQueueIndex, false);
+        uint64_t counterSamplerIndex = s_CurrentCounterSampleOffsets[k_RenderGPUQueueIndex];
+        SetCounterSampleFinished(counterSamplerIndex, k_RenderGPUQueueIndex, false);
 
         MTL::RenderPassSampleBufferAttachmentDescriptor* descriptor = m_RenderPassDescriptor->sampleBufferAttachments()->object(0);
-        descriptor->setSampleBuffer(s_CounterSampleBuffers[renderQueueIndex]);
+        descriptor->setSampleBuffer(s_CounterSampleBuffers[k_RenderGPUQueueIndex]);
         descriptor->setStartOfVertexSampleIndex(counterSamplerIndex);
         descriptor->setEndOfVertexSampleIndex(NS::UIntegerMax);
         descriptor->setStartOfFragmentSampleIndex(NS::UIntegerMax);
@@ -739,10 +736,10 @@ void GraphicsBackendMetal::BeginRenderPass(const std::string& name)
 
         m_RenderCommandBuffer->addCompletedHandler([counterSamplerIndex](class MTL::CommandBuffer*)
         {
-            SetCounterSampleFinished(counterSamplerIndex, renderQueueIndex, true);
+            SetCounterSampleFinished(counterSamplerIndex, k_RenderGPUQueueIndex, true);
         });
 
-        s_CurrentCounterSampleOffsets[renderQueueIndex] = (s_CurrentCounterSampleOffsets[renderQueueIndex] + 2) % k_MaxTimestampSamples;
+        s_CurrentCounterSampleOffsets[k_RenderGPUQueueIndex] = (s_CurrentCounterSampleOffsets[k_RenderGPUQueueIndex] + 2) % k_MaxTimestampSamples;
     }
 
     m_RenderCommandEncoder = m_RenderCommandBuffer->renderCommandEncoder(m_RenderPassDescriptor);
@@ -774,28 +771,26 @@ void GraphicsBackendMetal::EndRenderPass()
 
 void GraphicsBackendMetal::BeginCopyPass(const std::string& name)
 {
-    static constexpr int copyQueueIndex = static_cast<int>(GPUQueue::COPY);
-
     assert(m_CopyCommandBuffer != nullptr);
     assert(m_BlitCommandEncoder == nullptr);
 
     MTL::BlitPassDescriptor* passDescriptor = MTL::BlitPassDescriptor::alloc()->init();
     if (m_ProfilerMarkerActive)
     {
-        uint64_t counterSamplerIndex = s_CurrentCounterSampleOffsets[copyQueueIndex];
-        SetCounterSampleFinished(counterSamplerIndex, copyQueueIndex, false);
+        uint64_t counterSamplerIndex = s_CurrentCounterSampleOffsets[k_CopyGPUQueueIndex];
+        SetCounterSampleFinished(counterSamplerIndex, k_CopyGPUQueueIndex, false);
 
         MTL::BlitPassSampleBufferAttachmentDescriptor* descriptor = passDescriptor->sampleBufferAttachments()->object(0);
-        descriptor->setSampleBuffer(s_CounterSampleBuffers[copyQueueIndex]);
+        descriptor->setSampleBuffer(s_CounterSampleBuffers[k_CopyGPUQueueIndex]);
         descriptor->setStartOfEncoderSampleIndex(counterSamplerIndex);
         descriptor->setEndOfEncoderSampleIndex(counterSamplerIndex + 1);
 
         m_CopyCommandBuffer->addCompletedHandler([counterSamplerIndex](class MTL::CommandBuffer*)
         {
-            SetCounterSampleFinished(counterSamplerIndex, copyQueueIndex, true);
+            SetCounterSampleFinished(counterSamplerIndex, k_CopyGPUQueueIndex, true);
         });
 
-        s_CurrentCounterSampleOffsets[copyQueueIndex] = (s_CurrentCounterSampleOffsets[copyQueueIndex] + 2) % k_MaxTimestampSamples;
+        s_CurrentCounterSampleOffsets[k_CopyGPUQueueIndex] = (s_CurrentCounterSampleOffsets[k_CopyGPUQueueIndex] + 2) % k_MaxTimestampSamples;
     }
 
     m_BlitCommandEncoder = m_CopyCommandBuffer->blitCommandEncoder(passDescriptor);

@@ -36,7 +36,7 @@ void DrawMarker(const Profiler::MarkerInfo& marker, std::chrono::system_clock::t
 {
     assert(marker.Type == Profiler::MarkerType::MARKER);
 
-    const double duration = GetMicroseconds(marker.Begin, marker.End);
+    const double duration = std::max(GetMicroseconds(marker.Begin, marker.End), int64_t(1));
     const float posX = GetMicroseconds(rangeBegin, marker.Begin) * rangeToWidth;
     const float posY = ImGui::GetWindowContentRegionMin().y + (marker.Depth + depthOffset) * k_MarkerHeight;
     const float width = duration * rangeToWidth;
@@ -207,7 +207,7 @@ void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerConte
                     {
                         const int currentDepth = (marker.Depth + i) % markerLinesMaxTimestamp.size();
                         const uint64_t maxTimestampAtDepth = markerLinesMaxTimestamp[currentDepth];
-                        if (beginTimestamp > maxTimestampAtDepth)
+                        if (beginTimestamp >= maxTimestampAtDepth)
                         {
                             depthFound = true;
                             depthOffset = currentDepth - marker.Depth;

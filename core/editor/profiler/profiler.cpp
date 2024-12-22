@@ -1,6 +1,8 @@
 #include "profiler.h"
 #include "graphics_backend_api.h"
+
 #include <vector>
+#include <algorithm>
 
 constexpr int k_MaxFrames = 10;
 

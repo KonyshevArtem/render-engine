@@ -38,7 +38,7 @@ void ForwardRenderPass::Prepare(const GraphicsBackendRenderTargetDescriptor& col
 void ForwardRenderPass::Execute(const Context& ctx)
 {
     Profiler::Marker marker("ForwardRenderPass::Execute");
-    Profiler::GPUMarker gpuMarker("ForwardRenderPass:Execute");
+    Profiler::GPUMarker gpuMarker("ForwardRenderPass::Execute");
 
     GraphicsBackend::Current()->AttachRenderTarget(m_ColorTargetDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(m_DepthTargetDescriptor);

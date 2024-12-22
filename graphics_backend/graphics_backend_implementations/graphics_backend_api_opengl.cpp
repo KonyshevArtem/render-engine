@@ -783,21 +783,21 @@ GraphicsBackendProfilerMarker GraphicsBackendOpenGL::PushProfilerMarker()
     glQueryCounter(glQueries[0], GL_TIMESTAMP);
 
     GraphicsBackendProfilerMarker marker{};
-    marker.StartMarker = glQueries[0];
-    marker.EndMarker = glQueries[1];
+    marker.Info[k_RenderGPUQueueIndex].StartMarker = glQueries[0];
+    marker.Info[k_RenderGPUQueueIndex].EndMarker = glQueries[1];
     return marker;
 }
 
 void GraphicsBackendOpenGL::PopProfilerMarker(GraphicsBackendProfilerMarker& marker)
 {
-    const GLuint glQuery = marker.EndMarker;
+    const GLuint glQuery = marker.Info[k_RenderGPUQueueIndex].EndMarker;
     glQueryCounter(glQuery, GL_TIMESTAMP);
 }
 
-bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, uint64_t& outBeginTime, uint64_t& outEndTime)
+bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults)
 {
-    const GLuint glQueryStart = marker.StartMarker;
-    const GLuint glQueryEnd = marker.EndMarker;
+    const GLuint glQueryStart = marker.Info[k_RenderGPUQueueIndex].StartMarker;
+    const GLuint glQueryEnd = marker.Info[k_RenderGPUQueueIndex].EndMarker;
 
     GLuint queryStartAvailable;
     GLuint queryEndAvailable;
@@ -807,19 +807,24 @@ bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerM
     const bool markerResolved = queryStartAvailable && queryEndAvailable;
     if (markerResolved)
     {
-        glGetQueryObjectui64v(glQueryStart, GL_QUERY_RESULT_NO_WAIT, &outBeginTime);
-        glGetQueryObjectui64v(glQueryEnd, GL_QUERY_RESULT_NO_WAIT, &outEndTime);
-        glDeleteQueries(1, &glQueryStart);
-        glDeleteQueries(1, &glQueryEnd);
+        auto resolveQuery = [](GLuint query, uint64_t& outTimestamp)
+        {
+            glGetQueryObjectui64v(query, GL_QUERY_RESULT_NO_WAIT, &outTimestamp);
+            glDeleteQueries(1, &query);
 
-        // from nanoseconds to microseconds
-        outBeginTime /= 1000;
-        outEndTime /= 1000;
+            // from nanoseconds to microseconds
+            outTimestamp /= 1000;
 
-        // GL_TIMESTAMP is counted from implementation-defined point of time, that might not match with system clock
-        outBeginTime += s_TimestampDifference;
-        outEndTime += s_TimestampDifference;
+            // GL_TIMESTAMP is counted from implementation-defined point of time, that might not match with system clock
+            outTimestamp += s_TimestampDifference;
+        };
+
+        resolveQuery(glQueryStart, outResults[k_RenderGPUQueueIndex].StartTimestamp);
+        resolveQuery(glQueryEnd, outResults[k_RenderGPUQueueIndex].EndTimestamp);
     }
+
+    outResults[k_RenderGPUQueueIndex].IsActive = markerResolved;
+    outResults[k_CopyGPUQueueIndex].IsActive = false;
 
     return markerResolved;
 }

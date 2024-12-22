@@ -9,6 +9,7 @@
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
 #include "file_system/file_system.h"
+#include "imgui_wrapper.h"
 
 GameWindow* window = nullptr;
 
@@ -26,10 +27,11 @@ void display(int width, int height)
     Input::CleanUp();
 }
 
-void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInitData, const char* graphicsBackend)
+void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInitData, void* imGuiData, const char* graphicsBackend)
 {
     FileSystem::Init(static_cast<FileSystem::FileSystemData*>(fileSystemData));
     GraphicsBackend::Init(graphicsBackendInitData, graphicsBackend);
+    ImGuiWrapper::Init(imGuiData);
 
     window = new GameWindow(display);
 
@@ -41,12 +43,14 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
     //ShadowsDemo::Load();
 }
 
-void EngineFramework::TickMainLoop(void* graphicsBackendFrameData, int width, int height)
+void EngineFramework::TickMainLoop(void* graphicsBackendFrameData, void* imGuiData, int width, int height)
 {
     if (window)
     {
+        ImGuiWrapper::NewFrame(imGuiData);
         GraphicsBackend::Current()->InitNewFrame(graphicsBackendFrameData);
         window->TickMainLoop(width, height);
+        ImGuiWrapper::Render(imGuiData);
     }
 }
 
@@ -59,6 +63,7 @@ void EngineFramework::Shutdown()
 {
     delete window;
 
+    ImGuiWrapper::Shutdown();
     Graphics::Shutdown();
 }
 

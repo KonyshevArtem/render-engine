@@ -1,6 +1,5 @@
 #import "AAPLMetalRenderer.h"
 #import "EngineFrameworkWrapper.h"
-#import "ImGuiWrapper.h"
 
 static const MTLPixelFormat AAPLDepthFormat = MTLPixelFormatDepth32Float_Stencil8;
 static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm;
@@ -37,9 +36,7 @@ CGSize s_ViewSize;
         NSString* executablePath = [[NSBundle mainBundle] executablePath];
         NSString* resourcePath = [[NSBundle mainBundle] resourcePath];
         
-        [EngineFrameworkWrapper Initialize:s_Device renderCommandBuffer:renderCommandBuffer copyCommandBuffer:copyCommandBuffer executablePath:[executablePath UTF8String] resourcesPath:[resourcePath UTF8String]];
-        [ImGuiWrapper Init_OSX:mtkView];
-        [ImGuiWrapper Init_Metal:s_Device];
+        [EngineFrameworkWrapper Initialize:s_Device renderCommandBuffer:renderCommandBuffer copyCommandBuffer:copyCommandBuffer view:mtkView executablePath:[executablePath UTF8String] resourcesPath:[resourcePath UTF8String]];
         
         [copyCommandBuffer commit];
         [renderCommandBuffer commit];
@@ -50,8 +47,6 @@ CGSize s_ViewSize;
 
 - (void) dealloc
 {
-    [ImGuiWrapper Shutdown_Metal];
-    [ImGuiWrapper Shutdown_OSX];
     [EngineFrameworkWrapper Shutdown];
 }
 
@@ -76,15 +71,7 @@ CGSize s_ViewSize;
     id<MTLCommandBuffer> renderCommandBuffer = [s_RenderCommandQueue commandBuffer];
     id<MTLCommandBuffer> copyCommandBuffer = [s_CopyCommandQueue commandBuffer];
     
-    [ImGuiWrapper NewFrame_Metal:renderPassDescriptor];
-    [ImGuiWrapper NewFrame_OSX:view];
-    
     [EngineFrameworkWrapper TickMainLoop:renderCommandBuffer copyCommandBuffer:copyCommandBuffer backbufferDescriptor:renderPassDescriptor width:s_ViewSize.width height:s_ViewSize.height];
-    
-    [[[renderPassDescriptor colorAttachments] objectAtIndexedSubscript:0] setLoadAction:MTLLoadActionLoad];
-    id<MTLRenderCommandEncoder> commandEncoder = [renderCommandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-    [ImGuiWrapper Render_Metal:renderCommandBuffer commandEncoder:commandEncoder];
-    [commandEncoder endEncoding];
     
     [copyCommandBuffer commit];
     [renderCommandBuffer presentDrawable:view.currentDrawable];

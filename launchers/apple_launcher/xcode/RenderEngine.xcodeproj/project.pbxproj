@@ -23,14 +23,9 @@
 		4642555E2CD80312009D7BB1 /* core_resources in Resources */ = {isa = PBXBuildFile; fileRef = 935D1E202BAA2FAC00362748 /* core_resources */; };
 		4642558D2CD810CA009D7BB1 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4642558C2CD810CA009D7BB1 /* UIKit.framework */; platformFilter = ios; };
 		464255922CD81E56009D7BB1 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 464255912CD81E56009D7BB1 /* libc++.tbd */; };
-		464255932CD81EC1009D7BB1 /* ImGuiWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F0722BB0936F0023B4D5 /* ImGuiWrapper.h */; };
 		4642583D2CDE97D4009D7BB1 /* EngineFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1E2D2BAE3C5600362748 /* EngineFramework.h */; };
-		4642583E2CDE97D6009D7BB1 /* ImGuiWrapperApple.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F07A2BB0A8030023B4D5 /* ImGuiWrapperApple.h */; };
-		4642583F2CDE97F2009D7BB1 /* ImGuiWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 93A9F0702BB0935C0023B4D5 /* ImGuiWrapper.mm */; };
 		464258402CDE97F6009D7BB1 /* EngineFrameworkWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */; };
 		4642584F2CDE9BAC009D7BB1 /* EngineFrameworkWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */; };
-		464258502CDE9BC5009D7BB1 /* ImGuiWrapperApple.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F07A2BB0A8030023B4D5 /* ImGuiWrapperApple.h */; };
-		464258512CDE9BE4009D7BB1 /* ImGuiWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 93A9F0702BB0935C0023B4D5 /* ImGuiWrapper.mm */; };
 		464258522CDE9BE7009D7BB1 /* EngineFrameworkWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */; };
 		464258542CE29ED0009D7BB1 /* TrackingAreaProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 464258532CE29ED0009D7BB1 /* TrackingAreaProvider.m */; };
 		464258552CE29ED0009D7BB1 /* TrackingAreaProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 464258532CE29ED0009D7BB1 /* TrackingAreaProvider.m */; };
@@ -43,7 +38,6 @@
 		93A9F0462BB03BDE0023B4D5 /* EngineFrameworkWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */; };
 		93A9F0472BB0452E0023B4D5 /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
 		93A9F05B2BB0658E0023B4D5 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E222BAA41CE00362748 /* GameController.framework */; };
-		93A9F07C2BB0B5420023B4D5 /* ImGuiWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 93A9F0722BB0936F0023B4D5 /* ImGuiWrapper.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -75,9 +69,6 @@
 		935D1E202BAA2FAC00362748 /* core_resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = core_resources; path = ../../../core_resources; sourceTree = "<group>"; };
 		935D1E222BAA41CE00362748 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		935D1E2D2BAE3C5600362748 /* EngineFramework.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EngineFramework.h; sourceTree = "<group>"; };
-		93A9F0702BB0935C0023B4D5 /* ImGuiWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ImGuiWrapper.mm; sourceTree = "<group>"; };
-		93A9F0722BB0936F0023B4D5 /* ImGuiWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImGuiWrapper.h; sourceTree = "<group>"; };
-		93A9F07A2BB0A8030023B4D5 /* ImGuiWrapperApple.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImGuiWrapperApple.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -204,8 +195,6 @@
 			children = (
 				935D1DE72BAA222B00362748 /* EngineFrameworkWrapper.h */,
 				935D1DE92BAA222B00362748 /* EngineFrameworkWrapper.mm */,
-				93A9F0722BB0936F0023B4D5 /* ImGuiWrapper.h */,
-				93A9F0702BB0935C0023B4D5 /* ImGuiWrapper.mm */,
 			);
 			path = EngineFrameworkWrapper;
 			sourceTree = "<group>";
@@ -221,7 +210,6 @@
 		935D1E3F2BAF534B00362748 /* Include */ = {
 			isa = PBXGroup;
 			children = (
-				93A9F07A2BB0A8030023B4D5 /* ImGuiWrapperApple.h */,
 				935D1E2D2BAE3C5600362748 /* EngineFramework.h */,
 			);
 			path = Include;
@@ -238,8 +226,6 @@
 				464255592CD802BF009D7BB1 /* EngineFramework.h in Headers */,
 				4642555A2CD802CC009D7BB1 /* RenderEngineViewController.h in Headers */,
 				464258582CE29EEB009D7BB1 /* TrackingAreaProvider.h in Headers */,
-				464255932CD81EC1009D7BB1 /* ImGuiWrapper.h in Headers */,
-				464258502CDE9BC5009D7BB1 /* ImGuiWrapperApple.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -248,10 +234,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				93A9F0462BB03BDE0023B4D5 /* EngineFrameworkWrapper.h in Headers */,
-				93A9F07C2BB0B5420023B4D5 /* ImGuiWrapper.h in Headers */,
 				932D9AA72BB99B2300A4C3AB /* RenderEngineViewController.h in Headers */,
 				464258572CE29EEB009D7BB1 /* TrackingAreaProvider.h in Headers */,
-				4642583E2CDE97D6009D7BB1 /* ImGuiWrapperApple.h in Headers */,
 				4642583D2CDE97D4009D7BB1 /* EngineFramework.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -365,7 +349,6 @@
 				932D9AAA2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */,
 				3ABD52ED2283BB9B0050D28E /* main.m in Sources */,
 				93A9F0472BB0452E0023B4D5 /* AAPLAppDelegate.m in Sources */,
-				4642583F2CDE97F2009D7BB1 /* ImGuiWrapper.mm in Sources */,
 				464258402CDE97F6009D7BB1 /* EngineFrameworkWrapper.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -380,7 +363,6 @@
 				932D9AAB2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */,
 				3ABD53092283C4FE0050D28E /* AAPLAppDelegate.m in Sources */,
 				3ABD52F02283BC260050D28E /* main.m in Sources */,
-				464258512CDE9BE4009D7BB1 /* ImGuiWrapper.mm in Sources */,
 				464258522CDE9BE7009D7BB1 /* EngineFrameworkWrapper.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -550,7 +532,7 @@
 				MTL_HEADER_SEARCH_PATHS = Common;
 				OTHER_LDFLAGS = (
 					"-lCore",
-					"-lImGuiMetal",
+					"-lImGuiWrapper",
 					"-lImGui",
 					"-lDebugUtil",
 					"-lGraphicsBackend",
@@ -595,7 +577,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"-lCore",
-					"-lImGuiMetal",
+					"-lImGuiWrapper",
 					"-lImGui",
 					"-lDebugUtil",
 					"-lGraphicsBackend",

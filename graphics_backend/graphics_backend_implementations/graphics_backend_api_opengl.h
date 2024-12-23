@@ -11,7 +11,6 @@ class GraphicsBackendOpenGL : public GraphicsBackendBase
 public:
     void Init(void *data) override;
 
-    const std::string &GetGLSLVersionString();
     GraphicsBackendName GetName() override;
     void InitNewFrame(void *data) override;
 

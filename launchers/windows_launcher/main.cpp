@@ -1,14 +1,18 @@
 #include "engine_framework.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 #include "graphics_backend_api.h"
-#include "graphics_backend_implementations/graphics_backend_api_opengl.h"
 #include "file_system/file_system.h"
 
 #include <GLFW/glfw3.h>
 #include <windows.h>
 
 GLFWwindow *s_Window = nullptr;
+
+struct ImGuiInitData
+{
+    void* Window;
+    int OpenGLMajorVersion;
+    int OpenGLMinorVersion;
+};
 
 void KeyboardFunction(GLFWwindow *window, int keycode, int scancode, int action, int mods)
 {
@@ -63,12 +67,12 @@ int main(int argc, char **argv)
     glfwSetCursorPosCallback(s_Window, MouseMoveFunction);
     glfwSetKeyCallback(s_Window, KeyboardFunction);
 
-    EngineFramework::Initialize(static_cast<void*>(&fileSystemData), nullptr, "OpenGL");
+    ImGuiInitData imGuiInitData = ImGuiInitData();
+    imGuiInitData.Window = s_Window;
+    imGuiInitData.OpenGLMajorVersion = OPENGL_MAJOR_VERSION;
+    imGuiInitData.OpenGLMinorVersion = OPENGL_MINOR_VERSION;
 
-    ImGui_ImplGlfw_InitForOpenGL(s_Window, true);
-
-    GraphicsBackendOpenGL* openGL = reinterpret_cast<GraphicsBackendOpenGL*>(GraphicsBackend::Current());
-    ImGui_ImplOpenGL3_Init(openGL->GetGLSLVersionString().c_str());
+    EngineFramework::Initialize(static_cast<void*>(&fileSystemData), nullptr, static_cast<void*>(&imGuiInitData), "OpenGL");
 
     while (!glfwWindowShouldClose(s_Window))
     {
@@ -80,18 +84,10 @@ int main(int argc, char **argv)
         glfwPollEvents();
         glfwGetFramebufferSize(s_Window, &width, &height);
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-
-        EngineFramework::TickMainLoop(nullptr, width, height);
-
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        EngineFramework::TickMainLoop(nullptr, nullptr, width, height);
 
         glfwSwapBuffers(s_Window);
     }
-
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
 
     EngineFramework::Shutdown();
 

@@ -194,12 +194,6 @@ void GraphicsBackendOpenGL::Init(void *data)
     s_TimestampDifference = cpuTimestamp - glTimestamp;
 }
 
-const std::string &GraphicsBackendOpenGL::GetGLSLVersionString()
-{
-    static std::string glslVersion = "#version " + std::to_string(OPENGL_MAJOR_VERSION * 100 + OPENGL_MINOR_VERSION * 10);
-    return glslVersion;
-}
-
 GraphicsBackendName GraphicsBackendOpenGL::GetName()
 {
     return GraphicsBackendName::OPENGL;

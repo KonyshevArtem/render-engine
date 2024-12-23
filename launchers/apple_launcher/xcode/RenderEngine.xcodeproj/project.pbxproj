@@ -625,6 +625,7 @@
 					"-lMath",
 					"-lRenderEngine",
 					"-lRenderEngineLauncher",
+					"-lImGuiWrapper",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -663,6 +664,7 @@
 					"-lMath",
 					"-lRenderEngine",
 					"-lRenderEngineLauncher",
+					"-lImGuiWrapper",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";

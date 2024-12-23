@@ -8,8 +8,8 @@ typedef std::function<void(int, int)> RenderHandler;
 class GameWindow
 {
 public:
-    GameWindow(RenderHandler renderHandler);
-    ~GameWindow();
+    explicit GameWindow(RenderHandler renderHandler);
+    ~GameWindow() = default;
 
     void TickMainLoop(int width, int height);
 

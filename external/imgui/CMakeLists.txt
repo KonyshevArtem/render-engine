@@ -17,44 +17,60 @@ add_library(
 
 target_include_directories(ImGui PUBLIC imgui imgui/misc/cpp)
 
+list(
+        APPEND
+        IMGUI_WRAPPER_SOURCES
+        imgui_wrapper.h
+        imgui_wrapper_common.h
+)
+
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 
-    add_library(
-            ImGuiOpenGL
-            STATIC
-            imgui/backends/imgui_impl_opengl3.h
-            imgui/backends/imgui_impl_opengl3.cpp
+    list(
+            APPEND
+            IMGUI_WRAPPER_SOURCES
+            imgui_wrapper_windows.cpp
     )
 
-    add_library(
-            ImGuiGLFW
-            STATIC
-            imgui/backends/imgui_impl_glfw.h
-            imgui/backends/imgui_impl_glfw.cpp
-    )
-    target_link_libraries(ImGuiGLFW ImGui glfw)
-    target_link_libraries(ImGuiOpenGL ImGui)
-    target_include_directories(ImGuiGLFW PUBLIC imgui/backends)
-    target_include_directories(ImGuiOpenGL PUBLIC imgui/backends)
+    if (${ENABLE_IMGUI})
+        list(
+                APPEND
+                IMGUI_WRAPPER_SOURCES
+                imgui/backends/imgui_impl_opengl3.h
+                imgui/backends/imgui_impl_opengl3.cpp
+                imgui/backends/imgui_impl_glfw.h
+                imgui/backends/imgui_impl_glfw.cpp
+        )
+
+        set(IMGUI_WRAPPER_LIBS ImGui glfw)
+        set(IMGUI_WRAPPER_DEFINES ENABLE_IMGUI)
+    endif ()
 
 elseif (${RENDER_ENGINE_APPLE_PLATFORM})
 
-    add_library(
-            ImGuiMetal
-            STATIC
-            imgui/backends/imgui_impl_metal.h
-            imgui/backends/imgui_impl_metal.mm
+    list(
+            APPEND
+            IMGUI_WRAPPER_SOURCES
+            imgui_wrapper_apple.cpp
     )
 
-    add_library(
-            ImGuiOSX
-            STATIC
-            imgui/backends/imgui_impl_osx.h
-            imgui/backends/imgui_impl_osx.mm
-    )
-    target_link_libraries(ImGuiOSX ImGui)
-    target_link_libraries(ImGuiMetal ImGui)
-    target_include_directories(ImGuiOSX PUBLIC imgui/backends)
-    target_include_directories(ImGuiMetal PUBLIC imgui/backends)
+    if (${ENABLE_IMGUI})
+        list(
+                APPEND
+                IMGUI_WRAPPER_SOURCES
+                imgui/backends/imgui_impl_metal.h
+                imgui/backends/imgui_impl_metal.mm
+                imgui/backends/imgui_impl_osx.h
+                imgui/backends/imgui_impl_osx.mm
+        )
+
+        set(IMGUI_WRAPPER_LIBS ImGui metal-cpp)
+        set(IMGUI_WRAPPER_DEFINES IMGUI_IMPL_METAL_CPP IMGUI_IMPL_METAL_CPP_EXTENSIONS ENABLE_IMGUI)
+    endif ()
 
 endif ()
+
+add_library(ImGuiWrapper STATIC ${IMGUI_WRAPPER_SOURCES})
+target_link_libraries(ImGuiWrapper ${IMGUI_WRAPPER_LIBS})
+target_compile_definitions(ImGuiWrapper PRIVATE ${IMGUI_WRAPPER_DEFINES})
+target_include_directories(ImGuiWrapper PUBLIC ./ imgui/backends)

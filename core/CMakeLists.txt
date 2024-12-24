@@ -108,4 +108,4 @@ add_library(
 	editor/profiler/profiler.h)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math DebugUtil OpenFBX GraphicsBackend nlohmann_json::nlohmann_json)
+target_link_libraries(Core Math DebugUtil OpenFBX GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)

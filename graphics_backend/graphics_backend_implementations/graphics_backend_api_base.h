@@ -47,7 +47,8 @@ public:
 
     virtual void Init(void *data) = 0;
     virtual GraphicsBackendName GetName() = 0;
-    virtual void InitNewFrame(void *data) = 0;
+    virtual void InitNewFrame() = 0;
+    virtual void FillImGuiData(void* data) = 0;
 
     virtual GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) = 0;
     virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name) = 0;
@@ -116,6 +117,9 @@ public:
     virtual void DeleteFence(const GraphicsBackendFence& fence) = 0;
     virtual void SignalFence(const GraphicsBackendFence& fence) = 0;
     virtual void WaitForFence(const GraphicsBackendFence& fence) = 0;
+
+    virtual void Flush() = 0;
+    virtual void Present() = 0;
 
     bool IsTexture3D(TextureType type);
     bool IsCompressedTextureFormat(TextureInternalFormat format);

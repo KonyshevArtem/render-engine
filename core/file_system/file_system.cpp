@@ -8,18 +8,14 @@
 #include <string>
 #include <cassert>
 
+#if RENDER_ENGINE_APPLE
+#include <Foundation/NSBundle.hpp>
+#elif RENDER_ENGINE_WINDOWS
+#include <windows.h>
+#endif
+
 namespace FileSystem
 {
-    std::filesystem::path s_ExecutablePath;
-    std::filesystem::path s_ResourcesPath;
-
-    void Init(const FileSystemData* fileSystemData)
-    {
-        assert(fileSystemData);
-        s_ExecutablePath = std::filesystem::path(fileSystemData->ExecutablePath);
-        s_ResourcesPath = std::filesystem::path(fileSystemData->ResourcesPath);
-    }
-
     std::string ReadFile(const std::filesystem::path& path)
     {
         auto *file = fopen(path.string().c_str(), "r");
@@ -118,14 +114,34 @@ namespace FileSystem
 
     const std::filesystem::path& GetExecutablePath()
     {
-        assert(!s_ExecutablePath.empty());
-        return s_ExecutablePath;
+#if RENDER_ENGINE_APPLE
+        static const std::filesystem::path path = std::filesystem::path(NS::Bundle::mainBundle()->executablePath()->cString(NS::UTF8StringEncoding));
+#elif RENDER_ENGINE_WINDOWS
+        static std::filesystem::path path;
+        if (path.empty())
+        {
+            char executablePath[MAX_PATH];
+            GetModuleFileNameA(NULL, executablePath, MAX_PATH);
+            path = std::filesystem::path(executablePath);
+        }
+#endif
+        return path;
     }
 
     const std::filesystem::path& GetResourcesPath()
     {
-        assert(!s_ResourcesPath.empty());
-        return s_ResourcesPath;
+#if RENDER_ENGINE_APPLE
+        static const std::filesystem::path path = std::filesystem::path(NS::Bundle::mainBundle()->resourcePath()->cString(NS::UTF8StringEncoding));
+#elif RENDER_ENGINE_WINDOWS
+        static std::filesystem::path path;
+        if (path.empty())
+        {
+            char executablePath[MAX_PATH];
+            GetModuleFileNameA(NULL, executablePath, MAX_PATH);
+            path = std::filesystem::path(executablePath).parent_path();
+        }
+#endif
+        return path;
     }
 
 }

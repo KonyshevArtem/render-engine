@@ -7,10 +7,6 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm;
 /// Main class that performs the rendering.
 @implementation AAPLMetalRenderer
 
-id<MTLDevice> s_Device;
-id<MTLCommandQueue> s_RenderCommandQueue;
-id<MTLCommandQueue> s_CopyCommandQueue;
-
 CGSize s_ViewSize;
 
 /// Initialize the renderer with the MetalKit view that references the Metal device you render with.
@@ -20,26 +16,10 @@ CGSize s_ViewSize;
     self = [super init];
     if(self)
     {
-        s_Device = mtkView.device;
-        s_RenderCommandQueue = [s_Device newCommandQueue];
-        s_CopyCommandQueue = [s_Device newCommandQueue];
-        
-        [s_RenderCommandQueue setLabel:@"Render Queue"];
-        [s_CopyCommandQueue setLabel:@"Copy Queue"];
-
         mtkView.colorPixelFormat = AAPLColorFormat;
         mtkView.depthStencilPixelFormat = AAPLDepthFormat;
         
-        id<MTLCommandBuffer> renderCommandBuffer = [s_RenderCommandQueue commandBuffer];
-        id<MTLCommandBuffer> copyCommandBuffer = [s_CopyCommandQueue commandBuffer];
-        
-        NSString* executablePath = [[NSBundle mainBundle] executablePath];
-        NSString* resourcePath = [[NSBundle mainBundle] resourcePath];
-        
-        [EngineFrameworkWrapper Initialize:s_Device renderCommandBuffer:renderCommandBuffer copyCommandBuffer:copyCommandBuffer view:mtkView executablePath:[executablePath UTF8String] resourcesPath:[resourcePath UTF8String]];
-        
-        [copyCommandBuffer commit];
-        [renderCommandBuffer commit];
+        [EngineFrameworkWrapper Initialize:mtkView];
     }
 
     return self;
@@ -67,15 +47,7 @@ CGSize s_ViewSize;
     }
 #endif
     
-    MTLRenderPassDescriptor* renderPassDescriptor = [view currentRenderPassDescriptor];
-    id<MTLCommandBuffer> renderCommandBuffer = [s_RenderCommandQueue commandBuffer];
-    id<MTLCommandBuffer> copyCommandBuffer = [s_CopyCommandQueue commandBuffer];
-    
-    [EngineFrameworkWrapper TickMainLoop:renderCommandBuffer copyCommandBuffer:copyCommandBuffer backbufferDescriptor:renderPassDescriptor width:s_ViewSize.width height:s_ViewSize.height];
-    
-    [copyCommandBuffer commit];
-    [renderCommandBuffer presentDrawable:view.currentDrawable];
-    [renderCommandBuffer commit];
+    [EngineFrameworkWrapper TickMainLoop:s_ViewSize.width height:s_ViewSize.height];
 }
 
 @end

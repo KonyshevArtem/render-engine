@@ -20,6 +20,7 @@
 
 #include "Metal/Metal.hpp"
 #include "Metal/MTLCounters.hpp"
+#include "MetalKit/MetalKit.hpp"
 
 constexpr int k_MaxBuffers = 31;
 constexpr int k_MaxTimestampSamples = 100;
@@ -34,20 +35,6 @@ int s_CurrentCounterSampleOffsets[k_MaxGPUQueuesCount];
 MTL::Timestamp s_CpuStartTimestamp;
 MTL::Timestamp s_GpuStartTimestamp;
 
-struct MetalInitData
-{
-    MTL::Device* Device;
-    class MTL::CommandBuffer* RenderCommandBuffer;
-    class MTL::CommandBuffer* CopyCommandBuffer;
-};
-
-struct MetalFrameData
-{
-    class MTL::CommandBuffer* RenderCommandBuffer;
-    class MTL::CommandBuffer* CopyCommandBuffer;
-    MTL::RenderPassDescriptor* BackbufferDescriptor;
-};
-
 struct BufferData
 {
     MTL::Buffer* Buffer;
@@ -56,10 +43,17 @@ struct BufferData
 
 void GraphicsBackendMetal::Init(void *data)
 {
-    const MetalInitData* metalData = static_cast<MetalInitData*>(data);
-    m_Device = metalData->Device;
+    m_View = static_cast<MTK::View*>(data);
+    m_Device = m_View->device();
+
+    m_RenderCommandQueue = m_Device->newCommandQueue();
+    m_CopyCommandQueue = m_Device->newCommandQueue();
+
+    m_RenderCommandQueue->setLabel(NS::String::string("Render Command Queue", NS::UTF8StringEncoding));
+    m_CopyCommandQueue->setLabel(NS::String::string("Copy Command Queue", NS::UTF8StringEncoding));
+
     m_RenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
-    SetCommandBuffers(metalData->RenderCommandBuffer, metalData->CopyCommandBuffer);
+    SetCommandBuffers(m_RenderCommandQueue->commandBuffer(), m_CopyCommandQueue->commandBuffer());
 
     s_DefaultBufferStorageMode = m_Device->hasUnifiedMemory() ? MTL::ResourceStorageModeShared : MTL::ResourceStorageModePrivate;
 
@@ -99,13 +93,25 @@ GraphicsBackendName GraphicsBackendMetal::GetName()
     return GraphicsBackendName::METAL;
 }
 
-void GraphicsBackendMetal::InitNewFrame(void *data)
+void GraphicsBackendMetal::InitNewFrame()
 {
-    const MetalFrameData* metalData = static_cast<MetalFrameData*>(data);
-    m_BackbufferDescriptor = metalData->BackbufferDescriptor;
-    SetCommandBuffers(metalData->RenderCommandBuffer, metalData->CopyCommandBuffer);
+    m_BackbufferDescriptor = m_View->currentRenderPassDescriptor();
+    SetCommandBuffers(m_RenderCommandQueue->commandBuffer(), m_CopyCommandQueue->commandBuffer());
 
     ++s_Frame;
+}
+
+void GraphicsBackendMetal::FillImGuiData(void* data)
+{
+    struct ImGuiData
+    {
+        MTK::View* View;
+        MTL::CommandQueue* RenderQueue;
+    };
+
+    ImGuiData* imGuiData = static_cast<ImGuiData*>(data);
+    imGuiData->View = m_View;
+    imGuiData->RenderQueue = m_RenderCommandQueue;
 }
 
 GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
@@ -925,6 +931,21 @@ void GraphicsBackendMetal::SetCommandBuffers(class MTL::CommandBuffer* renderCom
 
     m_RenderCommandBuffer->setLabel(NS::String::string("Render Command Buffer", NS::UTF8StringEncoding));
     m_CopyCommandBuffer->setLabel(NS::String::string("Copy Command Buffer", NS::UTF8StringEncoding));
+}
+
+void GraphicsBackendMetal::Present()
+{
+    m_CopyCommandBuffer->commit();
+    m_RenderCommandBuffer->presentDrawable(m_View->currentDrawable());
+    m_RenderCommandBuffer->commit();
+}
+
+void GraphicsBackendMetal::Flush()
+{
+    m_RenderCommandBuffer->commit();
+    m_CopyCommandBuffer->commit();
+
+    SetCommandBuffers(m_RenderCommandQueue->commandBuffer(), m_CopyCommandQueue->commandBuffer());
 }
 
 #endif // RENDER_BACKEND_METAL

@@ -1,18 +1,7 @@
 #include "engine_framework.h"
-#include "graphics_backend_api.h"
-#include "file_system/file_system.h"
-
 #include <GLFW/glfw3.h>
-#include <windows.h>
 
 GLFWwindow *s_Window = nullptr;
-
-struct ImGuiInitData
-{
-    void* Window;
-    int OpenGLMajorVersion;
-    int OpenGLMinorVersion;
-};
 
 void KeyboardFunction(GLFWwindow *window, int keycode, int scancode, int action, int mods)
 {
@@ -34,14 +23,6 @@ void MouseMoveFunction(GLFWwindow *window, double x, double y)
 
 int main(int argc, char **argv)
 {
-    char executablePath[MAX_PATH];
-    GetModuleFileNameA(NULL, executablePath, MAX_PATH);
-    std::string resourcesPath = std::filesystem::path(executablePath).parent_path().string();
-
-    FileSystem::FileSystemData fileSystemData{};
-    fileSystemData.ExecutablePath = executablePath;
-    fileSystemData.ResourcesPath = resourcesPath.c_str();
-
     if (!glfwInit())
     {
         return 1;
@@ -67,12 +48,7 @@ int main(int argc, char **argv)
     glfwSetCursorPosCallback(s_Window, MouseMoveFunction);
     glfwSetKeyCallback(s_Window, KeyboardFunction);
 
-    ImGuiInitData imGuiInitData = ImGuiInitData();
-    imGuiInitData.Window = s_Window;
-    imGuiInitData.OpenGLMajorVersion = OPENGL_MAJOR_VERSION;
-    imGuiInitData.OpenGLMinorVersion = OPENGL_MINOR_VERSION;
-
-    EngineFramework::Initialize(static_cast<void*>(&fileSystemData), nullptr, static_cast<void*>(&imGuiInitData), "OpenGL");
+    EngineFramework::Initialize(s_Window, "OpenGL");
 
     while (!glfwWindowShouldClose(s_Window))
     {
@@ -84,7 +60,7 @@ int main(int argc, char **argv)
         glfwPollEvents();
         glfwGetFramebufferSize(s_Window, &width, &height);
 
-        EngineFramework::TickMainLoop(nullptr, nullptr, width, height);
+        EngineFramework::TickMainLoop(width, height);
 
         glfwSwapBuffers(s_Window);
     }

@@ -5,32 +5,29 @@
 
 #include "imgui_impl_metal.h"
 #include "imgui_impl_osx.h"
+#include "MetalKit/MetalKit.hpp"
 
 namespace ImGuiWrapper
 {
-    static void* s_View;
+    static MTK::View* s_View;
+    static MTL::CommandQueue* s_RenderQueue;
 
-    struct InitData
+    void Init(const std::function<void(void*)>& fillImGuiData)
     {
-        MTL::Device* Device;
-        void* View;
-    };
+        struct ImGuiData
+        {
+            MTK::View* View;
+            MTL::CommandQueue* RenderQueue;
+        };
 
-    struct NewFrameData
-    {
-        MTL::RenderPassDescriptor* RenderPassDescriptor;
-        MTL::CommandBuffer* CommandBuffer;
-    };
-
-    void Init(void* data)
-    {
-        InitData* initData = static_cast<InitData*>(data);
+        ImGuiData data;
+        fillImGuiData(static_cast<void*>(&data));
+        s_View = data.View;
+        s_RenderQueue = data.RenderQueue;
 
         ImGuiWrapperCommon::Init();
-        ImGui_ImplMetal_Init(initData->Device);
-        ImGui_ImplOSX_Init(initData->View);
-
-        s_View = initData->View;
+        ImGui_ImplMetal_Init(s_View->device());
+        ImGui_ImplOSX_Init(s_View);
     }
 
     void Shutdown()
@@ -40,25 +37,26 @@ namespace ImGuiWrapper
         ImGuiWrapperCommon::Shutdown();
     }
 
-    void NewFrame(void* data)
+    void NewFrame()
     {
-        NewFrameData* newFrameData = static_cast<NewFrameData*>(data);
-        ImGui_ImplMetal_NewFrame(newFrameData->RenderPassDescriptor);
+        ImGui_ImplMetal_NewFrame(s_View->currentRenderPassDescriptor());
         ImGui_ImplOSX_NewFrame(s_View);
         ImGuiWrapperCommon::NewFrame();
     }
 
-    void Render(void* data)
+    void Render()
     {
-        NewFrameData* newFrameData = static_cast<NewFrameData*>(data);
+        MTL::RenderPassDescriptor* descriptor = s_View->currentRenderPassDescriptor();
+        descriptor->colorAttachments()->object(0)->setLoadAction(MTL::LoadActionLoad);
 
-        newFrameData->RenderPassDescriptor->colorAttachments()->object(0)->setLoadAction(MTL::LoadActionLoad);
-        MTL::RenderCommandEncoder* commandEncoder = newFrameData->CommandBuffer->renderCommandEncoder(newFrameData->RenderPassDescriptor);
+        MTL::CommandBuffer* commandBuffer = s_RenderQueue->commandBuffer();
+        MTL::RenderCommandEncoder* commandEncoder = commandBuffer->renderCommandEncoder(descriptor);
 
         ImGuiWrapperCommon::Render();
-        ImGui_ImplMetal_RenderDrawData(ImGui::GetDrawData(), newFrameData->CommandBuffer, commandEncoder);
+        ImGui_ImplMetal_RenderDrawData(ImGui::GetDrawData(), commandBuffer, commandEncoder);
 
         commandEncoder->endEncoding();
+        commandBuffer->commit();
     }
 }
 
@@ -66,10 +64,10 @@ namespace ImGuiWrapper
 
 namespace ImGuiWrapper
 {
-    void Init(void* data) {}
+    void Init(const std::function<void(void*)>& fillImGuiData) {}
     void Shutdown() {}
-    void NewFrame(void* data) {}
-    void Render(void* data) {}
+    void NewFrame() {}
+    void Render() {}
 }
 
 #endif

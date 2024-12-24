@@ -7,14 +7,6 @@
 
 namespace FileSystem
 {
-    struct FileSystemData
-    {
-        const char* ExecutablePath;
-        const char* ResourcesPath;
-    };
-
-    void Init(const FileSystemData* fileSystemData);
-
     std::string ReadFile(const std::filesystem::path& path);
     std::string ReadFileWithIncludes(const std::filesystem::path& path);
     bool        ReadFileBytes(const std::filesystem::path& path, std::vector<uint8_t>& bytes);

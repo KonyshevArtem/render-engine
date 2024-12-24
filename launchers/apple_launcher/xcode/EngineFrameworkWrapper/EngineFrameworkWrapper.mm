@@ -1,23 +1,11 @@
 #import "EngineFrameworkWrapper.h"
 #import "EngineFramework.h"
 
-struct FileSystemData
-{
-    const char* ExecutablePath;
-    const char* ResourcesPath;
-};
-
 @implementation EngineFrameworkWrapper
 
-+ (void) Initialize:(MTKView*)view executablePath:(const char*)executablePath resourcesPath:(const char*)resourcesPath
++ (void) Initialize:(MTKView*)view
 {
-    FileSystemData* fileSystemData = new FileSystemData();
-    fileSystemData->ExecutablePath = executablePath;
-    fileSystemData->ResourcesPath = resourcesPath;
-    
-    EngineFramework::Initialize((void*)fileSystemData, (__bridge void*)view, "Metal");
-    
-    delete fileSystemData;
+    EngineFramework::Initialize((__bridge void*)view, "Metal");
 }
 
 + (void) TickMainLoop:(int)width height:(int)height

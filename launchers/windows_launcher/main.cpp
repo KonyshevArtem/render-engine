@@ -1,6 +1,5 @@
 #include "engine_framework.h"
 #include "graphics_backend_api.h"
-#include "file_system/file_system.h"
 
 #include <GLFW/glfw3.h>
 #include <windows.h>
@@ -34,14 +33,6 @@ void MouseMoveFunction(GLFWwindow *window, double x, double y)
 
 int main(int argc, char **argv)
 {
-    char executablePath[MAX_PATH];
-    GetModuleFileNameA(NULL, executablePath, MAX_PATH);
-    std::string resourcesPath = std::filesystem::path(executablePath).parent_path().string();
-
-    FileSystem::FileSystemData fileSystemData{};
-    fileSystemData.ExecutablePath = executablePath;
-    fileSystemData.ResourcesPath = resourcesPath.c_str();
-
     if (!glfwInit())
     {
         return 1;
@@ -72,7 +63,7 @@ int main(int argc, char **argv)
     imGuiInitData.OpenGLMajorVersion = OPENGL_MAJOR_VERSION;
     imGuiInitData.OpenGLMinorVersion = OPENGL_MINOR_VERSION;
 
-    EngineFramework::Initialize(static_cast<void*>(&fileSystemData), nullptr, static_cast<void*>(&imGuiInitData), "OpenGL");
+    EngineFramework::Initialize(nullptr, nullptr, static_cast<void*>(&imGuiInitData), "OpenGL");
 
     while (!glfwWindowShouldClose(s_Window))
     {

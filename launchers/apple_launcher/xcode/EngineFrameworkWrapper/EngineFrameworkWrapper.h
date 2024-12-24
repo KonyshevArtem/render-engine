@@ -5,7 +5,7 @@
 
 @interface EngineFrameworkWrapper : NSObject
 
-+ (void) Initialize:(MTKView*)view executablePath:(const char*)executablePath resourcesPath:(const char*)resourcesPath;
++ (void) Initialize:(MTKView*)view;
 + (void) TickMainLoop:(int)width height:(int)height;
 + (void) Shutdown;
 + (bool) ShouldCloseWindow;

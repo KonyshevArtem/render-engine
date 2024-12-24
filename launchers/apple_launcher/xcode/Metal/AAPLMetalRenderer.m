@@ -19,10 +19,7 @@ CGSize s_ViewSize;
         mtkView.colorPixelFormat = AAPLColorFormat;
         mtkView.depthStencilPixelFormat = AAPLDepthFormat;
         
-        NSString* executablePath = [[NSBundle mainBundle] executablePath];
-        NSString* resourcePath = [[NSBundle mainBundle] resourcePath];
-        
-        [EngineFrameworkWrapper Initialize:mtkView executablePath:[executablePath UTF8String] resourcesPath:[resourcePath UTF8String]];
+        [EngineFrameworkWrapper Initialize:mtkView];
     }
 
     return self;

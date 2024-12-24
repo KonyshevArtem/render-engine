@@ -9,10 +9,10 @@
 class GraphicsBackendOpenGL : public GraphicsBackendBase
 {
 public:
-    void Init(void *data) override;
-
+    void Init(void* data) override;
     GraphicsBackendName GetName() override;
-    void InitNewFrame(void *data) override;
+    void InitNewFrame() override;
+    void FillImGuiData(void* data) override;
 
     GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) override;
     GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name) override;
@@ -81,6 +81,9 @@ public:
     GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) override;
     void SignalFence(const GraphicsBackendFence& fence) override;
     void WaitForFence(const GraphicsBackendFence& fence) override;
+
+    void Flush() override;
+    void Present() override;
 
 private:
     std::set<std::string> m_Extensions;

@@ -64,6 +64,7 @@ struct RenderTargetState
     int Layer;
 };
 
+void* s_Window;
 GLuint s_Framebuffers[2];
 RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
 uint64_t s_DebugGroupId = 0;
@@ -152,13 +153,15 @@ void ResetRenderTargetStates()
     }
 }
 
-void GraphicsBackendOpenGL::Init(void *data)
+void GraphicsBackendOpenGL::Init(void* data)
 {
 #ifdef REQUIRE_GLEW_INIT
     auto result = glewInit();
     if (result != GLEW_OK)
         throw;
 #endif
+
+    s_Window = data;
 
     int extensionsCount;
     glGetIntegerv(GL_NUM_EXTENSIONS, &extensionsCount);
@@ -199,8 +202,23 @@ GraphicsBackendName GraphicsBackendOpenGL::GetName()
     return GraphicsBackendName::OPENGL;
 }
 
-void GraphicsBackendOpenGL::InitNewFrame(void *data)
+void GraphicsBackendOpenGL::InitNewFrame()
 {
+}
+
+void GraphicsBackendOpenGL::FillImGuiData(void* data)
+{
+    struct ImGuiData
+    {
+        void* Window;
+        int MajorVersion;
+        int MinorVersion;
+    };
+
+    ImGuiData* imGuiData = static_cast<ImGuiData*>(data);
+    imGuiData->Window = s_Window;
+    imGuiData->MajorVersion = OPENGL_MAJOR_VERSION;
+    imGuiData->MinorVersion = OPENGL_MINOR_VERSION;
 }
 
 GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
@@ -926,6 +944,15 @@ void GraphicsBackendOpenGL::SignalFence(const GraphicsBackendFence& fence)
 }
 
 void GraphicsBackendOpenGL::WaitForFence(const GraphicsBackendFence& fence)
+{
+}
+
+void GraphicsBackendOpenGL::Flush()
+{
+    glFlush();
+}
+
+void GraphicsBackendOpenGL::Present()
 {
 }
 

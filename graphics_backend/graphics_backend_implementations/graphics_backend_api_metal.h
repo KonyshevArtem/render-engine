@@ -12,8 +12,13 @@ namespace MTL
     class RenderPassDescriptor;
     class RenderCommandEncoder;
     class BlitCommandEncoder;
-    class RenderPipelineReflection;
     class Texture;
+    class CommandQueue;
+}
+
+namespace MTK
+{
+    class View;
 }
 
 class GraphicsBackendMetal : public GraphicsBackendBase
@@ -21,7 +26,8 @@ class GraphicsBackendMetal : public GraphicsBackendBase
 public:
     void Init(void *data) override;
     GraphicsBackendName GetName() override;
-    void InitNewFrame(void *data) override;
+    void InitNewFrame() override;
+    void FillImGuiData(void* data) override;
 
     GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) override;
     GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name) override;
@@ -91,8 +97,14 @@ public:
     void SignalFence(const GraphicsBackendFence& fence) override;
     void WaitForFence(const GraphicsBackendFence& fence) override;
 
+    void Flush() override;
+    void Present() override;
+
 private:
     MTL::Device* m_Device = nullptr;
+    MTK::View* m_View = nullptr;
+    MTL::CommandQueue* m_RenderCommandQueue = nullptr;
+    MTL::CommandQueue* m_CopyCommandQueue = nullptr;
     MTL::CommandBuffer* m_RenderCommandBuffer = nullptr;
     MTL::CommandBuffer* m_CopyCommandBuffer = nullptr;
     MTL::RenderPassDescriptor* m_BackbufferDescriptor = nullptr;

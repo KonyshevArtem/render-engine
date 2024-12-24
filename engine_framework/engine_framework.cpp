@@ -27,11 +27,11 @@ void display(int width, int height)
     Input::CleanUp();
 }
 
-void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInitData, void* imGuiData, const char* graphicsBackend)
+void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInitData, const char* graphicsBackend)
 {
     FileSystem::Init(static_cast<FileSystem::FileSystemData*>(fileSystemData));
     GraphicsBackend::Init(graphicsBackendInitData, graphicsBackend);
-    ImGuiWrapper::Init(imGuiData);
+    ImGuiWrapper::Init([](void* imGuiData){ GraphicsBackend::Current()->FillImGuiData(imGuiData); });
 
     window = new GameWindow(display);
 
@@ -41,16 +41,23 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
     TestScene::Load();
     //PBRDemo::Load();
     //ShadowsDemo::Load();
+
+    GraphicsBackend::Current()->Flush();
 }
 
-void EngineFramework::TickMainLoop(void* graphicsBackendFrameData, void* imGuiData, int width, int height)
+void EngineFramework::TickMainLoop(int width, int height)
 {
     if (window)
     {
-        ImGuiWrapper::NewFrame(imGuiData);
-        GraphicsBackend::Current()->InitNewFrame(graphicsBackendFrameData);
+        ImGuiWrapper::NewFrame();
+        GraphicsBackend::Current()->InitNewFrame();
+
         window->TickMainLoop(width, height);
-        ImGuiWrapper::Render(imGuiData);
+        GraphicsBackend::Current()->Flush();
+
+        ImGuiWrapper::Render();
+
+        GraphicsBackend::Current()->Present();
     }
 }
 

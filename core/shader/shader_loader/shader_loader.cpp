@@ -8,6 +8,7 @@
 #include "graphics_backend_api.h"
 #include "shader_parser.h"
 #include "shader/shader_pass/shader_pass.h"
+#include "utils/utils.h"
 
 #include <span>
 
@@ -53,7 +54,7 @@ namespace ShaderLoader
             outSupportInstancing |= keyword == INSTANCING_KEYWORD;
         }
 
-        return std::to_string(std::hash<std::string>{}(keywordsDirectives));
+        return std::to_string(Utils::HashFNV1a(keywordsDirectives));
     }
 
     std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,

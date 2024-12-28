@@ -35,6 +35,8 @@ namespace ShaderLoader
         {
             case GraphicsBackendName::OPENGL:
                 return "opengl";
+            case GraphicsBackendName::GLES:
+                return "gles";
             case GraphicsBackendName::METAL:
                 return "metal";
             default:

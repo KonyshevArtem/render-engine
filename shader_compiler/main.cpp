@@ -61,14 +61,15 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
     auto sourceBuffer = static_cast<uint32_t*>(pShader->GetBufferPointer());
     size_t sourceSize = pShader->GetBufferSize() * sizeof(uint8_t) / sizeof(uint32_t);
 
-    if (backend == GRAPHICS_BACKEND_OPENGL)
+    bool isGLES = backend == GRAPHICS_BACKEND_GLES;
+    if (backend == GRAPHICS_BACKEND_OPENGL || isGLES)
     {
         auto glsl = new spirv_cross::CompilerGLSL(sourceBuffer, sourceSize);
         glsl->build_combined_image_samplers();
 
         spirv_cross::CompilerGLSL::Options options;
-        options.version = 460;
-        options.es = false;
+        options.version = isGLES ? 320 : 460;
+        options.es = isGLES;
         glsl->set_common_options(options);
 
         const auto& combinedImageSamplers = glsl->get_combined_image_samplers();

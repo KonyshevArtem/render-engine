@@ -34,6 +34,12 @@
 #if __has_include("OpenGL/gl3ext.h")
 #include <OpenGL/gl3ext.h>
 #endif
+#if __has_include("GLES3/gl32.h")
+#include <GLES3/gl32.h>
+#endif
+#if __has_include("GLES2/gl2ext.h")
+#include <GLES2/gl2ext.h>
+#endif
 
 namespace OpenGLHelpers
 {

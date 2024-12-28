@@ -199,7 +199,11 @@ void GraphicsBackendOpenGL::Init(void* data)
 
 GraphicsBackendName GraphicsBackendOpenGL::GetName()
 {
+#if RENDER_ENGINE_ANDROID
+    return GraphicsBackendName::GLES;
+#else
     return GraphicsBackendName::OPENGL;
+#endif
 }
 
 void GraphicsBackendOpenGL::InitNewFrame()

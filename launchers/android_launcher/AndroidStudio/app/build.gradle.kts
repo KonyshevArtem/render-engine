@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.tasks.factory.dependsOn
+
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -30,6 +32,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 }
+
+tasks.register("copyResources")
+{
+    copy{
+        from(file("../../../../core_resources"))
+        into(file("src/main/assets/core_resources"))
+    }
+}
+
+tasks.preBuild.dependsOn("copyResources")
 
 dependencies {
 

@@ -68,6 +68,14 @@ elseif (${RENDER_ENGINE_APPLE_PLATFORM})
         set(IMGUI_WRAPPER_DEFINES IMGUI_IMPL_METAL_CPP IMGUI_IMPL_METAL_CPP_EXTENSIONS ENABLE_IMGUI)
     endif ()
 
+elseif (${RENDER_ENGINE_ANDROID_PLATFORM})
+
+    list(
+            APPEND
+            IMGUI_WRAPPER_SOURCES
+            imgui_wrapper_windows.cpp
+    )
+
 endif ()
 
 add_library(ImGuiWrapper STATIC ${IMGUI_WRAPPER_SOURCES})

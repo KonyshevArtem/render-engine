@@ -1,10 +1,18 @@
+read -p "Platform (windows, apple, android): " PLATFORM
+
 OS=$(uname)
 if [ "$OS" = "Darwin" ]; then
     EXECUTABLE="./cmake-build-release/texture_compressor/TextureCompressor.app/Contents/MacOS/TextureCompressor"
-    FORMAT="ASTC_6X6"
 else
     EXECUTABLE="./cmake-build-release/texture_compressor/TextureCompressor.exe"
+fi
+
+if [ "$PLATFORM" = "windows" ]; then
     FORMAT="BC7"
+elif [ "$PLATFORM" = "android" ]; then
+    FORMAT="ASTC_6X6"
+elif [ "$PLATFORM" = "apple" ]; then
+    FORMAT="ASTC_6X6"
 fi
 
 $EXECUTABLE Texture2D $FORMAT 0 1 car_albedo   core_resources/textures/car/car_albedo.tga
@@ -24,3 +32,5 @@ $EXECUTABLE Texture2D $FORMAT 1 1 brick_normal     core_resources/textures/brick
 $EXECUTABLE Texture2D $FORMAT 0 1 water            core_resources/textures/water.png
 $EXECUTABLE Texture2D $FORMAT 1 1 water_normal     core_resources/textures/water_normal.png
 $EXECUTABLE Texture2D $FORMAT 0 1 window_cube      core_resources/textures/window_cube.png
+
+read -p "Finished compressing textures for ${PLATFORM} ${FORMAT}" _

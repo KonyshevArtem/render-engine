@@ -283,6 +283,18 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool
             return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
         case TextureInternalFormat::BC7:
             return isLinear ? GL_COMPRESSED_RGBA_BPTC_UNORM : GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+        case TextureInternalFormat::ASTC_4X4:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_4x4 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4;
+        case TextureInternalFormat::ASTC_5X5:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_5x5 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5;
+        case TextureInternalFormat::ASTC_6X6:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_6x6 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6;
+        case TextureInternalFormat::ASTC_8X8:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_8x8 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8;
+        case TextureInternalFormat::ASTC_10X10:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_10x10 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10;
+        case TextureInternalFormat::ASTC_12X12:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_12x12 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12;
         case TextureInternalFormat::DEPTH_32:
             return GL_DEPTH_COMPONENT32F;
         case TextureInternalFormat::DEPTH_24:
@@ -300,13 +312,20 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool
 
 TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bool& outIsLinear)
 {
-    outIsLinear = !(format == GL_SRGB8 |
-                    format == GL_SRGB8_ALPHA8 |
-                    format == GL_COMPRESSED_SRGB_S3TC_DXT1_EXT |
-                    format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT |
-                    format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT |
-                    format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT |
-                    format == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM);
+    outIsLinear = !(format == GL_SRGB8
+                    | format == GL_SRGB8_ALPHA8
+                    | format == GL_COMPRESSED_SRGB_S3TC_DXT1_EXT
+                    | format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT
+                    | format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT
+                    | format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT
+                    | format == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12
+                    );
 
     switch (format)
     {
@@ -455,6 +474,24 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bo
         case GL_COMPRESSED_RGBA_BPTC_UNORM:
         case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
             return TextureInternalFormat::BC7;
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4:
+        case GL_COMPRESSED_RGBA_ASTC_4x4:
+            return TextureInternalFormat::ASTC_4X4;
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5:
+        case GL_COMPRESSED_RGBA_ASTC_5x5:
+            return TextureInternalFormat::ASTC_5X5;
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6:
+        case GL_COMPRESSED_RGBA_ASTC_6x6:
+            return TextureInternalFormat::ASTC_6X6;
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8:
+        case GL_COMPRESSED_RGBA_ASTC_8x8:
+            return TextureInternalFormat::ASTC_8X8;
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10:
+        case GL_COMPRESSED_RGBA_ASTC_10x10:
+            return TextureInternalFormat::ASTC_10X10;
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12:
+        case GL_COMPRESSED_RGBA_ASTC_12x12:
+            return TextureInternalFormat::ASTC_12X12;
         case GL_DEPTH_COMPONENT32F:
             return TextureInternalFormat::DEPTH_32;
         case GL_DEPTH_COMPONENT24:
@@ -544,6 +581,12 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::BC2:
         case TextureInternalFormat::BC3:
         case TextureInternalFormat::BC7:
+        case TextureInternalFormat::ASTC_4X4:
+        case TextureInternalFormat::ASTC_5X5:
+        case TextureInternalFormat::ASTC_6X6:
+        case TextureInternalFormat::ASTC_8X8:
+        case TextureInternalFormat::ASTC_10X10:
+        case TextureInternalFormat::ASTC_12X12:
             return GL_RGBA;
         case TextureInternalFormat::DEPTH_32:
         case TextureInternalFormat::DEPTH_24:

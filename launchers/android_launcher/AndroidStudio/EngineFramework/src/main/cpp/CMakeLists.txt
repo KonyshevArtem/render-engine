@@ -1,0 +1,37 @@
+cmake_minimum_required(VERSION 3.22.1)
+
+project("engineframework")
+
+find_library(GLESv2_LIB GLESv2)
+find_library(GLESv3_LIB GLESv3)
+
+set(
+        DEPENDENCIES
+        Core
+        DebugUtil
+        GameWindow
+        GraphicsBackend
+        ImGuiWrapper
+        Math
+        OpenFBX
+        RenderEngine
+        RenderEngineLauncher
+)
+
+foreach (LIB ${DEPENDENCIES})
+
+    add_library(${LIB} STATIC IMPORTED)
+    set_target_properties(${LIB} PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/libs/${CMAKE_ANDROID_ARCH_ABI}/${CMAKE_BUILD_TYPE}/lib${LIB}.a)
+
+endforeach ()
+
+add_library(${CMAKE_PROJECT_NAME} SHARED engine_framework.cpp)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE include)
+target_link_libraries(
+        ${CMAKE_PROJECT_NAME}
+        android
+        log
+        ${DEPENDENCIES}
+        ${GLESv2_LIB}
+        ${GLESv3_LIB}
+)

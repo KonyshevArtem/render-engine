@@ -9,6 +9,7 @@
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
 #include "imgui_wrapper.h"
+#include "file_system/file_system.h"
 
 GameWindow* window = nullptr;
 
@@ -26,8 +27,9 @@ void display(int width, int height)
     Input::CleanUp();
 }
 
-void EngineFramework::Initialize(void* graphicsBackendInitData, const char* graphicsBackend)
+void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInitData, const char* graphicsBackend)
 {
+    FileSystem::Init(fileSystemData);
     GraphicsBackend::Init(graphicsBackendInitData, graphicsBackend);
     ImGuiWrapper::Init([](void* imGuiData){ GraphicsBackend::Current()->FillImGuiData(imGuiData); });
 

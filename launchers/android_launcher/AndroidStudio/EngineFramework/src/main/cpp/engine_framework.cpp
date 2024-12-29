@@ -6,7 +6,7 @@
 extern "C" JNIEXPORT void JNICALL
 Java_com_artemkonyshev_engineframework_EngineFramework_Initialize(JNIEnv* env, jobject /* this */, jobject assetManager)
 {
-    EngineFramework::Initialize(AAssetManager_fromJava(env, assetManager), "OpenGL");
+    EngineFramework::Initialize(AAssetManager_fromJava(env, assetManager), nullptr, "OpenGL");
 }
 
 extern "C" JNIEXPORT void JNICALL

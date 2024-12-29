@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     glfwSetCursorPosCallback(s_Window, MouseMoveFunction);
     glfwSetKeyCallback(s_Window, KeyboardFunction);
 
-    EngineFramework::Initialize(s_Window, "OpenGL");
+    EngineFramework::Initialize(nullptr, s_Window, "OpenGL");
 
     while (!glfwWindowShouldClose(s_Window))
     {

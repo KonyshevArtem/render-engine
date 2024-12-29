@@ -86,7 +86,7 @@ namespace ShaderLoader
             for (int i = 0; i < SUPPORTED_SHADERS_COUNT; ++i)
             {
                 std::filesystem::path sourcePath = backendPath / SHADER_SOURCE_FILE_NAME[i];
-                if (!std::filesystem::exists(sourcePath))
+                if (!FileSystem::FileExists(sourcePath))
                     continue;
 
                 std::string shaderFunctionDebugName = shaderDebugName;

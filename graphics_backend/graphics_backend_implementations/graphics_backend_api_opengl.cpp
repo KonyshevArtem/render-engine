@@ -21,7 +21,6 @@
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 
-#include <type_traits>
 #include <stdexcept>
 #include <cassert>
 #include <array>
@@ -155,11 +154,7 @@ void ResetRenderTargetStates()
 
 void GraphicsBackendOpenGL::Init(void* data)
 {
-#ifdef REQUIRE_GLEW_INIT
-    auto result = glewInit();
-    if (result != GLEW_OK)
-        throw;
-#endif
+    OpenGLHelpers::InitBindings();
 
     s_Window = data;
 
@@ -173,7 +168,9 @@ void GraphicsBackendOpenGL::Init(void* data)
 
     glGenFramebuffers(2, &s_Framebuffers[0]);
 
+#ifdef GL_ARB_seamless_cube_map
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+#endif
     glEnable(GL_DEPTH_TEST);
 
 #if RENDER_ENGINE_EDITOR
@@ -579,7 +576,7 @@ void GraphicsBackendOpenGL::SetCullFaceOrientation(CullFaceOrientation orientati
 void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, float near, float far)
 {
     glViewport(x, y, width, height);
-    glDepthRange(near, far);
+    glDepthRangef(near, far);
 }
 
 GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string& source, const std::string& name)
@@ -709,7 +706,7 @@ void GraphicsBackendOpenGL::SetClearColor(float r, float g, float b, float a)
 
 void GraphicsBackendOpenGL::SetClearDepth(double depth)
 {
-    glClearDepth(depth);
+    glClearDepthf(depth);
 }
 
 void GraphicsBackendOpenGL::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
@@ -825,7 +822,7 @@ bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerM
     {
         auto resolveQuery = [](GLuint query, uint64_t& outTimestamp)
         {
-            glGetQueryObjectui64v(query, GL_QUERY_RESULT_NO_WAIT, &outTimestamp);
+            glGetQueryObjectui64v(query, GL_QUERY_RESULT, &outTimestamp);
             glDeleteQueries(1, &query);
 
             // from nanoseconds to microseconds

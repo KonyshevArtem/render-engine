@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project("engineframework")
 
-find_library(GLESv2_LIB GLESv2)
-find_library(GLESv3_LIB GLESv3)
-
 set(
         DEPENDENCIES
         Core
@@ -32,6 +29,7 @@ target_link_libraries(
         android
         log
         ${DEPENDENCIES}
-        ${GLESv2_LIB}
-        ${GLESv3_LIB}
+        GLESv2
+        GLESv3
+        EGL
 )

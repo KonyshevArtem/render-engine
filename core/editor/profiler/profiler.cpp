@@ -46,11 +46,13 @@ Profiler::MarkerInfo::MarkerInfo(MarkerType type, const char* name, int depth) :
 }
 
 Profiler::GPUMarkerInfo::GPUMarkerInfo(const char* name, int depth, int frameNumber) :
-    ProfilerMarker(GraphicsBackend::Current()->PushProfilerMarker()),
+    ProfilerMarker(),
     Name(name),
     Depth(depth),
     FrameNumber(frameNumber)
 {
+    if (s_IsEnabled)
+        ProfilerMarker = GraphicsBackend::Current()->PushProfilerMarker();
 }
 
 Profiler::GPUMarkerInfo& Profiler::GPUMarkerInfo::operator=(const GPUMarkerInfo& info)
@@ -83,9 +85,11 @@ Profiler::GPUMarker::GPUMarker(const char* name) :
 
 Profiler::GPUMarker::~GPUMarker()
 {
-    GraphicsBackend::Current()->PopProfilerMarker(m_Info.ProfilerMarker);
     if (s_IsEnabled)
+    {
+        GraphicsBackend::Current()->PopProfilerMarker(m_Info.ProfilerMarker);
         s_PendingGPUMarkers.push_back(m_Info);
+    }
     DecrementDepth(m_Context);
 }
 

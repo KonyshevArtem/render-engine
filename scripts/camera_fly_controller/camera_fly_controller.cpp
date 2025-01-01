@@ -9,7 +9,7 @@
 constexpr float CAMERA_ROT_SPEED  = 10.0f;
 constexpr float CAMERA_MOVE_SPEED = 15.0f;
 constexpr float TOUCH_MOVE_MAX_DELTA = 100.0f;
-constexpr float TOUCH_ROTATE_MIN_DELTA = 5.0f;
+constexpr float TOUCH_ROTATE_MIN_DELTA = 0.001f;
 
 void CameraFlyController::Update()
 {
@@ -21,7 +21,7 @@ void CameraFlyController::Update()
     {
         Input::Touch touch;
         Input::GetTouch(m_RotateTouchId, touch);
-        if (touch.Delta.Length() > TOUCH_ROTATE_MIN_DELTA)
+        if (touch.Delta.Length() / Graphics::GetScreenHeight() > TOUCH_ROTATE_MIN_DELTA)
             m_CameraEulerAngles -= touch.Delta * cameraRotationDelta;
     }
 

@@ -4,6 +4,7 @@
 namespace Input
 {
     std::vector<Touch> s_Touches;
+    std::vector<Touch> s_PendingTouches;
     std::unordered_set<unsigned char> s_Inputs;
     std::unordered_set<unsigned char> s_InputsDown;
     std::unordered_set<unsigned char> s_InputsUp;
@@ -12,10 +13,53 @@ namespace Input
     Vector2 s_MouseDelta = Vector2();
     uint8_t s_MouseButtonBits;
 
+    void ProcessPendingTouches()
+    {
+        for (const Touch& pendingTouch: s_PendingTouches)
+        {
+            if (pendingTouch.State == TouchState::DOWN)
+            {
+                const Touch touch{pendingTouch.Id, TouchState::DOWN, {pendingTouch.Position.x, pendingTouch.Position.y}, {0, 0}};
+                s_Touches.push_back(touch);
+            }
+
+            if (pendingTouch.State == TouchState::MOVE)
+            {
+                for (Touch& touch: s_Touches)
+                {
+                    if (touch.Id == pendingTouch.Id)
+                    {
+                        Vector2 pos = {pendingTouch.Position.x, pendingTouch.Position.y};
+                        touch.Delta = pos - touch.Position;
+                        touch.Position = pos;
+                        touch.State = TouchState::MOVE;
+                        break;
+                    }
+                }
+            }
+
+            if (pendingTouch.State == TouchState::UP)
+            {
+                for (Touch& touch: s_Touches)
+                {
+                    if (touch.Id == pendingTouch.Id)
+                    {
+                        touch.State = TouchState::UP;
+                        break;
+                    }
+                }
+            }
+        }
+
+        s_PendingTouches.clear();
+    }
+
     void Update()
     {
         s_MouseDelta = s_OldMousePosition - s_MousePosition;
         s_OldMousePosition = s_MousePosition;
+
+        ProcessPendingTouches();
     }
 
     void CleanUp()
@@ -74,38 +118,7 @@ namespace Input
 
     void HandleTouch(TouchState state, uint64_t touchId, float x, float y)
     {
-        if (state == TouchState::DOWN)
-        {
-            const Touch touch{touchId, TouchState::DOWN, {x, y}, {0, 0}};
-            s_Touches.push_back(touch);
-        }
-
-        if (state == TouchState::MOVE)
-        {
-            for (Touch& touch : s_Touches)
-            {
-                if (touch.Id == touchId)
-                {
-                    Vector2 pos = {x, y};
-                    touch.Delta = pos - touch.Position;
-                    touch.Position = pos;
-                    touch.State = TouchState::MOVE;
-                    break;
-                }
-            }
-        }
-
-        if (state == TouchState::UP)
-        {
-            for (Touch& touch : s_Touches)
-            {
-                if (touch.Id == touchId)
-                {
-                    touch.State = TouchState::UP;
-                    break;
-                }
-            }
-        }
+        s_PendingTouches.push_back(Touch{touchId, state, {x, y}, {0, 0}});
     }
 
     bool GetKeyDown(unsigned char key)

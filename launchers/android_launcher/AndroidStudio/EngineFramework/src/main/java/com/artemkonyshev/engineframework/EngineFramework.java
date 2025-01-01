@@ -11,4 +11,8 @@ public class EngineFramework
 
     public native void Initialize(AssetManager assetManager);
     public native void TickMainLoop(int width, int height);
+
+    public native void ProcessTouchDown(long touchId, float x, float y);
+    public native void ProcessTouchMove(long touchId, float x, float y);
+    public native void ProcessTouchUp(long touchId);
 }

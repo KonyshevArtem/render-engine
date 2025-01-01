@@ -15,15 +15,15 @@ public class RenderEngineGLRenderer implements GLSurfaceView.Renderer
     private EngineFramework m_EngineFramework;
     private AssetManager m_AssetManager;
 
-    public RenderEngineGLRenderer(AssetManager assetManager)
+    public RenderEngineGLRenderer(AssetManager assetManager, EngineFramework engineFramework)
     {
         m_AssetManager = assetManager;
+        m_EngineFramework = engineFramework;
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config)
     {
-        m_EngineFramework = new EngineFramework();
         m_EngineFramework.Initialize(m_AssetManager);
     }
 

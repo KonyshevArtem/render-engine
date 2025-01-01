@@ -14,3 +14,21 @@ Java_com_artemkonyshev_engineframework_EngineFramework_TickMainLoop(JNIEnv* env,
 {
     EngineFramework::TickMainLoop(width, height);
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_artemkonyshev_engineframework_EngineFramework_ProcessTouchDown(JNIEnv* env, jobject /* this */, jlong touchId, float x, float y)
+{
+    EngineFramework::ProcessTouchDown(touchId, x, y);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_artemkonyshev_engineframework_EngineFramework_ProcessTouchMove(JNIEnv* env, jobject /* this */, jlong touchId, float x, float y)
+{
+    EngineFramework::ProcessTouchMove(touchId, x, y);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_artemkonyshev_engineframework_EngineFramework_ProcessTouchUp(JNIEnv* env, jobject /* this */, jlong touchId)
+{
+    EngineFramework::ProcessTouchUp(touchId);
+}

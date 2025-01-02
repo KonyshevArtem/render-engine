@@ -96,4 +96,6 @@ $EXECUTABLE $BACKEND core_resources/shaders/billboard.hlsl
 
 $EXECUTABLE $BACKEND core_resources/shaders/gizmos.hlsl _INSTANCING
 
+$EXECUTABLE $BACKEND core_resources/shaders/editor/shadowMapDebug.hlsl
+
 read -p "Finished compiling shaders for ${PLATFORM} ${BACKEND}" _

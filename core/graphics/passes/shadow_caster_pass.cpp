@@ -33,12 +33,15 @@ ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConsta
 
     m_DirectionLightShadowMap->SetBorderColor({1, 1, 1, 1});
     m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
+    m_DirectionLightShadowMap->SetFilteringMode(TextureFilteringMode::NEAREST);
 
     m_SpotLightShadowMapArray->SetBorderColor({1, 1, 1, 1});
     m_SpotLightShadowMapArray->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
+    m_SpotLightShadowMapArray->SetFilteringMode(TextureFilteringMode::NEAREST);
 
     m_PointLightShadowMap->SetBorderColor({1, 1, 1, 1});
     m_PointLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
+    m_PointLightShadowMap->SetFilteringMode(TextureFilteringMode::NEAREST);
 }
 
 void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers, const std::vector<std::shared_ptr<Light>>& lights, float shadowsDistance)

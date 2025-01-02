@@ -41,6 +41,12 @@ void Texture::SetBorderColor(const Vector4 &color)
     RecreateSampler(true);
 }
 
+void Texture::SetFilteringMode(TextureFilteringMode mode)
+{
+    m_FilteringMode = mode;
+    RecreateSampler(true);
+}
+
 void Texture::UploadPixels(void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace) const
 {
     int sizeMultiplier = 1 << mipLevel;

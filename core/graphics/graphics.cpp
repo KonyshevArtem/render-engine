@@ -35,6 +35,7 @@
 #include "editor/copy_depth/copy_depth_pass.h"
 #include "render_queue/render_queue.h"
 #include "editor/profiler/profiler.h"
+#include "editor/debug_pass/shadow_map_debug_pass.h"
 
 #include <cassert>
 
@@ -56,12 +57,12 @@ namespace Graphics
     std::shared_ptr<CopyDepthPass> s_CopyDepthPass;
     std::shared_ptr<GizmosPass> s_GizmosPass;
     std::shared_ptr<SelectionOutlinePass> s_SelectionOutlinePass;
+    std::shared_ptr<ShadowMapDebugPass> s_ShadowMapDebugPass;
 #endif
 
     int s_ScreenWidth  = 0;
     int s_ScreenHeight = 0;
 
-    Vector3 s_LastCameraPosition;
     uint64_t s_PerInstanceIndicesOffset;
 
     std::unordered_map<std::string, std::shared_ptr<Texture>> s_GlobalTextures;
@@ -90,6 +91,7 @@ namespace Graphics
         s_CopyDepthPass = std::make_shared<CopyDepthPass>(2);
         s_GizmosPass = std::make_shared<GizmosPass>(5);
         s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>(4);
+        s_ShadowMapDebugPass = std::make_shared<ShadowMapDebugPass>(6);
 #endif
     }
 
@@ -218,6 +220,8 @@ namespace Graphics
 
             if (executeSelectionPass)
                 renderPasses.push_back(s_SelectionOutlinePass);
+
+            renderPasses.push_back(s_ShadowMapDebugPass);
 #endif
         }
 
@@ -470,8 +474,6 @@ namespace Graphics
         cameraData.CameraDirection = Camera::Current->GetRotation() * Vector3{0, 0, 1};
 
         s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
-
-        s_LastCameraPosition = cameraData.CameraPosition;
     }
 
     void SetRenderTarget(GraphicsBackendRenderTargetDescriptor descriptor, const std::shared_ptr<Texture> &target)

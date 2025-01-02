@@ -37,7 +37,9 @@ bool isFragVisible(float fragZ)
 
 float getShadowTerm(float fragZ, float shadowMapDepth, float lightAngleCos)
 {
-    float bias = max(0.0002 * (1 - lightAngleCos), 0.0002);
+    const float biasValue = 0.002;
+
+    float bias = max(biasValue * (1 - lightAngleCos), biasValue);
     return shadowMapDepth > (fragZ - bias) ? 1 : 0;
 }
 

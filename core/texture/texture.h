@@ -20,6 +20,7 @@ public:
     void SetMinMipLevel(int minMipLevel);
     void SetWrapMode(TextureWrapMode wrapMode);
     void SetBorderColor(const Vector4 &color);
+    void SetFilteringMode(TextureFilteringMode mode);
 
     inline const GraphicsBackendTexture& GetBackendTexture() const
     {

@@ -1,4 +1,8 @@
-read -p "Platform (windows, apple, android): " PLATFORM
+if [ -z "$1" ]; then
+    echo "Platform (windows, apple, android): "; read PLATFORM
+else
+    PLATFORM=$1
+fi
 
 OS=$(uname)
 if [ "$OS" = "Darwin" ]; then
@@ -103,4 +107,7 @@ $EXECUTABLE $BACKEND $OUTPUT_PATH/gizmos $INPUT_PATH/gizmos.hlsl _INSTANCING
 
 $EXECUTABLE $BACKEND $OUTPUT_PATH/editor/shadowMapDebug $INPUT_PATH/editor/shadowMapDebug.hlsl
 
-read -p "Finished compiling shaders for ${PLATFORM} ${BACKEND}" _
+echo "Finished compiling shaders for ${PLATFORM} ${BACKEND}";
+if [ -z "$1" ]; then
+    read _
+fi

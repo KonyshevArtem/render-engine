@@ -1,10 +1,12 @@
-read -p "Platform (windows, apple, android): " PLATFORM
+echo "Platform (windows, apple, android): "; read PLATFORM
 
 if [[ "$PLATFORM" != "windows" && "$PLATFORM" != "android" && "$PLATFORM" != "apple" ]]; then
-    read -p "Unknown platform: $PLATFORM" _
+    echo "Unknown platform: $PLATFORM"; read _
     exit 1
 fi
 
-source compile_shaders.sh <<< $PLATFORM
+source compile_shaders.sh $PLATFORM
 source compress_textures.sh <<< $PLATFORM
 source copy_models.sh <<< $PLATFORM
+
+echo "Finished building resources"; read _

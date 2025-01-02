@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <vector>
 
 bool FileSystemBase::FileExists(const std::filesystem::path& path)
 {

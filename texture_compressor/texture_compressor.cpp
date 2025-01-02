@@ -7,7 +7,7 @@
 void PrintHelp()
 {
     std::cout << "Parameters: <texture type STRING> <texture format STRING> <is linear BOOL>"
-                 "<generate mipmaps BOOL> <output name STRING> <texture paths STRING>\n";
+                 "<generate mipmaps BOOL> <output path STRING> <texture paths STRING>\n";
 
     std::cout << "\nAvailable texture types:\n";
     for (const auto &typeInfo: TextureCompressorFormats::GetTextureTypesInfo())
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     std::string textureFormat = argv[2];
     bool isLinear = std::stoi(argv[3]) == 1;
     bool generateMips = std::stoi(argv[4]) == 1;
-    std::string outputName = argv[5];
+    std::string outputPath = argv[5];
 
     std::vector<std::string> texturePaths;
     for (int i = 6; i < argc; ++i)
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
         texturePaths.emplace_back(argv[i]);
     }
 
-    TextureCompressorBackend::CompressTexture(texturePaths, textureType, textureFormat, isLinear, generateMips, outputName);
+    TextureCompressorBackend::CompressTexture(texturePaths, textureType, textureFormat, isLinear, generateMips, outputPath);
 
     return 0;
 }

@@ -36,7 +36,7 @@ android {
 tasks.register("copyResources")
 {
     copy{
-        from(file("../../../../core_resources"))
+        from(file("../../../../build_resources/android/core_resources"))
         into(file("src/main/assets/core_resources"))
     }
 }

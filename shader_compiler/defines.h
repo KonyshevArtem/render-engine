@@ -7,7 +7,7 @@
 std::vector<std::wstring> GetDefines(int argc, char** argv)
 {
     std::vector<std::wstring> defines;
-    for (int i = 3; i < argc; ++i)
+    for (int i = 4; i < argc; ++i)
     {
         std::wstring define(argv[i], argv[i] + strlen(argv[i]));
         defines.emplace_back(std::move(define));

@@ -15,10 +15,8 @@ std::shared_ptr<Texture2D> Texture2D::Create(uint32_t _width, uint32_t _height, 
 
 std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path& path)
 {
-    std::filesystem::path fixedPath = path.parent_path() / "output" / path.filename();
-
     TextureBinaryReader reader;
-    if (!reader.ReadTexture(fixedPath))
+    if (!reader.ReadTexture(path))
     {
         return nullptr;
     }

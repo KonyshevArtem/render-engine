@@ -130,7 +130,7 @@ void WriteShaderSource(const std::filesystem::path& outputDirPath, spirv_cross::
 
 int main(int argc, char **argv)
 {
-    if (argc < 3)
+    if (argc < 4)
     {
         std::cout << "No HLSL path or no target backend are specified" << std::endl;
         return 1;
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    std::filesystem::path hlslPath = std::filesystem::absolute(std::filesystem::path(argv[2]));
+    std::filesystem::path hlslPath = std::filesystem::absolute(std::filesystem::path(argv[3]));
     std::cout << "Compiling shader at path: " << hlslPath << std::endl;
 
     std::vector<std::wstring> defines = GetDefines(argc, argv);
@@ -169,8 +169,7 @@ int main(int argc, char **argv)
     spirv_cross::Compiler* vertexSPIRV = CompileSPIRV(vertexDXC, backend, true);
     spirv_cross::Compiler* fragmentSPIRV = CompileSPIRV(fragmentDXC, backend, false);
 
-    std::string shaderName = hlslPath.filename().replace_extension("").string();
-    std::filesystem::path outputDirPath = hlslPath.parent_path() / "output" / shaderName / GetBackendLiteral(backend) / definesHash;
+    std::filesystem::path outputDirPath = std::filesystem::path(argv[2]) / GetBackendLiteral(backend) / definesHash;
 
     WriteShaderSource(outputDirPath, vertexSPIRV, true);
     WriteShaderSource(outputDirPath, fragmentSPIRV, false);

@@ -9,10 +9,8 @@ Cubemap::Cubemap(TextureInternalFormat format, uint32_t width, uint32_t height, 
 
 std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path& path)
 {
-    std::filesystem::path fixedPath = path.parent_path() / "output" / path.filename();
-
     TextureBinaryReader reader;
-    if (!reader.ReadTexture(fixedPath))
+    if (!reader.ReadTexture(path))
     {
         return nullptr;
     }

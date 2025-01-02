@@ -14,7 +14,7 @@ ShadowMapDebugPass::ShadowMapDebugPass(int priority) : RenderPass(priority)
 
 void ShadowMapDebugPass::Execute(const Context& ctx)
 {
-    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowMapDebug.hlsl", {}, {}, {CullFace::NONE, CullFaceOrientation::CLOCKWISE}, {false, DepthFunction::ALWAYS});
+    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowMapDebug", {}, {}, {CullFace::NONE, CullFaceOrientation::CLOCKWISE}, {false, DepthFunction::ALWAYS});
     static std::shared_ptr<Material> material = std::make_shared<Material>(shader, "ShadowMap Debug");
 
     if (s_Enabled)

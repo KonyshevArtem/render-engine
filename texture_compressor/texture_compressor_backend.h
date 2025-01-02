@@ -3,11 +3,12 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
 
 namespace TextureCompressorBackend
 {
     void CompressTexture(const std::vector<std::string>& paths, const std::string& textureType, const std::string& textureFormat,
-                        bool isLinear, bool generateMips, const std::string& outputName);
+                        bool isLinear, bool generateMips, const std::filesystem::path& outputPath);
 }
 
 #endif

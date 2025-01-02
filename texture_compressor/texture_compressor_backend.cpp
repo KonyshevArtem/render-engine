@@ -172,7 +172,7 @@ namespace TextureCompressorBackend
     }
 
     void CompressTexture(const std::vector<std::string>& paths, const std::string& textureType, const std::string& textureFormat,
-                        bool isLinear, bool generateMips, const std::string& outputName)
+                        bool isLinear, bool generateMips, const std::filesystem::path& outputPath)
     {
         constexpr uint32_t headerSize = sizeof(TextureHeader);
 
@@ -204,8 +204,7 @@ namespace TextureCompressorBackend
         uint32_t totalCompressedSize;
         std::vector<uint32_t> compressedSizes = ExtractSizes(texture, header, isCubemap, totalCompressedSize);
 
-        std::filesystem::path outputPath = std::filesystem::path(paths[0]).parent_path() / "output" / outputName;
-        std::filesystem::create_directory(outputPath.parent_path());
+        std::filesystem::create_directories(outputPath.parent_path());
 
         std::ofstream fout;
         fout.open(outputPath, std::ios::binary | std::ios::out);

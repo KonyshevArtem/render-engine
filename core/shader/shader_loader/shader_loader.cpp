@@ -68,8 +68,7 @@ namespace ShaderLoader
         try
         {
             std::string backendLiteral = GetBackendLiteral(GraphicsBackend::Current()->GetName());
-            std::string shaderName = _path.filename().replace_extension("").string();
-            std::filesystem::path backendPath = FileSystem::GetResourcesPath() / _path.parent_path() / "output" / shaderName / backendLiteral / keywordHash;
+            std::filesystem::path backendPath = FileSystem::GetResourcesPath() / _path / backendLiteral / keywordHash;
 
             auto reflectionJson = FileSystem::ReadFile(backendPath / "reflection.json");
             std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;

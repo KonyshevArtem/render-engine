@@ -25,6 +25,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
+            ndk { abiFilters.add("arm64-v8a") }
         }
     }
     compileOptions {

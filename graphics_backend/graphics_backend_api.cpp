@@ -13,3 +13,8 @@ GraphicsBackendBase *GraphicsBackend::Current()
 {
     return s_GraphicsBackend;
 }
+
+int GraphicsBackend::GetInFlightFrameIndex()
+{
+    return Current()->GetFrameNumber() % GetMaxFramesInFlight();
+}

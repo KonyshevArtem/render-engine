@@ -1,6 +1,7 @@
 #ifndef RENDER_ENGINE_TEXTURE_H
 #define RENDER_ENGINE_TEXTURE_H
 
+#include "graphics_backend_api.h"
 #include "enums/texture_type.h"
 #include "enums/texture_wrap_mode.h"
 #include "enums/texture_filtering_mode.h"
@@ -24,7 +25,7 @@ public:
 
     inline const GraphicsBackendTexture& GetBackendTexture() const
     {
-        return m_Texture;
+        return m_Texture[m_DoubleBuffered ? GraphicsBackend::GetInFlightFrameIndex() : 0];
     }
 
     inline const GraphicsBackendSampler& GetBackendSampler() const
@@ -64,7 +65,7 @@ private:
     uint32_t m_Width = 0;
     uint32_t m_Height = 0;
     uint32_t m_Depth = 0;
-    GraphicsBackendTexture m_Texture{};
+    GraphicsBackendTexture m_Texture[GraphicsBackend::GetMaxFramesInFlight()];
     GraphicsBackendSampler m_Sampler{};
     TextureType m_TextureType = TextureType::TEXTURE_2D;
     uint32_t m_MipLevels = 0;
@@ -74,6 +75,7 @@ private:
     TextureFilteringMode m_FilteringMode;
     Vector4 m_BorderColor;
     int m_MinLod;
+    bool m_DoubleBuffered;
 };
 
 #endif //RENDER_ENGINE_TEXTURE_H

@@ -11,15 +11,24 @@ Texture::Texture(TextureType textureType, TextureInternalFormat format, uint32_t
         m_FilteringMode(mipLevels > 1 ? TextureFilteringMode::LINEAR_MIPMAP_NEAREST : TextureFilteringMode::LINEAR),
         m_BorderColor(Vector4::Zero()),
         m_MinLod(0),
-        m_SamplerName(name + "_Sampler")
+        m_SamplerName(name + "_Sampler"),
+        m_DoubleBuffered(isRenderTarget)
 {
-    m_Texture = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_Depth, m_TextureType, format, mipLevels, isLinear, isRenderTarget, name);
+    for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
+    {
+        if (i == 0 || m_DoubleBuffered)
+            m_Texture[i] = GraphicsBackend::Current()->CreateTexture(m_Width, m_Height, m_Depth, m_TextureType, format, mipLevels, isLinear, isRenderTarget, name + "_0");
+    }
     RecreateSampler(false);
 }
 
 Texture::~Texture()
 {
-    GraphicsBackend::Current()->DeleteTexture(m_Texture);
+    for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
+    {
+        if (i == 0 || m_DoubleBuffered)
+            GraphicsBackend::Current()->DeleteTexture(m_Texture[i]);
+    }
     GraphicsBackend::Current()->DeleteSampler(m_Sampler);
 }
 
@@ -53,7 +62,7 @@ void Texture::UploadPixels(void *pixels, int size, int depth, int mipLevel, Cube
     unsigned int width = m_Width / sizeMultiplier;
     unsigned int height = m_Height / sizeMultiplier;
 
-    GraphicsBackend::Current()->UploadImagePixels(m_Texture, mipLevel, cubemapFace, width, height, depth, size, pixels);
+    GraphicsBackend::Current()->UploadImagePixels(GetBackendTexture(), mipLevel, cubemapFace, width, height, depth, size, pixels);
 }
 
 void Texture::RecreateSampler(bool deleteOld)

@@ -1,6 +1,7 @@
 #ifndef RENDER_ENGINE_GRAPHICS_BUFFER_H
 #define RENDER_ENGINE_GRAPHICS_BUFFER_H
 
+#include "graphics_backend_api.h"
 #include "types/graphics_backend_buffer.h"
 #include "types/graphics_backend_resource_bindings.h"
 
@@ -9,10 +10,9 @@
 class GraphicsBuffer
 {
 public:
-    GraphicsBuffer(uint64_t size, std::string name);
+    GraphicsBuffer(uint64_t size, std::string name, bool doubleBuffered = true);
     ~GraphicsBuffer();
 
-    void Bind(const GraphicsBackendResourceBindings &binding, int offset, int size) const;
     void SetData(const void *data, uint64_t offset, uint64_t size);
     void Resize(uint64_t size);
 
@@ -23,7 +23,7 @@ public:
 
     inline const GraphicsBackendBuffer& GetBackendBuffer() const
     {
-        return m_Buffer;
+        return m_Buffer[m_DoubleBuffered ? GraphicsBackend::GetInFlightFrameIndex() : 0];
     }
 
     GraphicsBuffer(const GraphicsBuffer &) = delete;
@@ -33,9 +33,10 @@ public:
     GraphicsBuffer &operator()(GraphicsBuffer &&)      = delete;
 
 private:
-    GraphicsBackendBuffer m_Buffer{};
+    GraphicsBackendBuffer m_Buffer[GraphicsBackend::GetMaxFramesInFlight()];
     uint64_t m_Size;
     std::string m_Name;
+    bool m_DoubleBuffered;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BUFFER_H

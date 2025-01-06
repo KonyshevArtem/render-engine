@@ -1,5 +1,6 @@
 #ifdef RENDER_BACKEND_OPENGL
 
+#include "graphics_backend_api.h"
 #include "graphics_backend_api_opengl.h"
 #include "enums/texture_data_type.h"
 #include "enums/primitive_type.h"
@@ -64,10 +65,11 @@ struct RenderTargetState
 };
 
 void* s_Window;
-GLuint s_Framebuffers[2];
+GLuint s_Framebuffers[GraphicsBackend::GetMaxFramesInFlight()][2];
 RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
 uint64_t s_DebugGroupId = 0;
 uint64_t s_TimestampDifference = 0;
+GLsync s_FrameFinishFence[GraphicsBackend::GetMaxFramesInFlight()];
 
 std::array s_DebugMessageTypes =
 {
@@ -166,7 +168,7 @@ void GraphicsBackendOpenGL::Init(void* data)
         m_Extensions.insert(std::string(reinterpret_cast<const char *>(ext)));
     }
 
-    glGenFramebuffers(2, &s_Framebuffers[0]);
+    glGenFramebuffers(2 * GraphicsBackend::GetMaxFramesInFlight(), &s_Framebuffers[0][0]);
 
 #ifdef GL_ARB_seamless_cube_map
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -205,6 +207,14 @@ GraphicsBackendName GraphicsBackendOpenGL::GetName()
 
 void GraphicsBackendOpenGL::InitNewFrame()
 {
+    GraphicsBackendBase::InitNewFrame();
+
+    GLsync currentFence = s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()];
+    if (glIsSync(currentFence))
+    {
+        glClientWaitSync(currentFence, GL_SYNC_FLUSH_COMMANDS_BIT, 160000000);
+        glDeleteSync(currentFence);
+    }
 }
 
 void GraphicsBackendOpenGL::FillImGuiData(void* data)
@@ -760,10 +770,10 @@ void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &s
         mask |= GL_COLOR_BUFFER_BIT;
     }
 
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Framebuffers[0]);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][0]);
     AttachTextureToFramebuffer(GL_READ_FRAMEBUFFER, glAttachment, source.Type, source.Texture, 0, 0);
 
-    GLuint destinationFramebuffer = destinationDescriptor.IsBackbuffer ? 0 : s_Framebuffers[1];
+    GLuint destinationFramebuffer = destinationDescriptor.IsBackbuffer ? 0 : s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][1];
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destinationFramebuffer);
     if (!destinationDescriptor.IsBackbuffer)
     {
@@ -864,7 +874,7 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
     }
     else
     {
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[0]);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][0]);
 
         constexpr int maxAttachments = static_cast<int>(FramebufferAttachment::MAX);
         for (int i = 0; i < maxAttachments; ++i)
@@ -955,6 +965,7 @@ void GraphicsBackendOpenGL::Flush()
 
 void GraphicsBackendOpenGL::Present()
 {
+    s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 }
 
 #endif // RENDER_BACKEND_OPENGL

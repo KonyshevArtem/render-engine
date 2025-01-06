@@ -188,10 +188,10 @@ namespace Graphics
 
                 cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true, "CameraColorRT");
                 cameraDepthTarget = Texture2D::Create(width, height, depthFormat, true, true, "CameraDepthRT");
-
-                colorTargetDescriptor.Texture = cameraColorTarget->GetBackendTexture();
-                depthTargetDescriptor.Texture = cameraDepthTarget->GetBackendTexture();
             }
+
+            colorTargetDescriptor.Texture = cameraColorTarget->GetBackendTexture();
+            depthTargetDescriptor.Texture = cameraDepthTarget->GetBackendTexture();
 
             GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
             GraphicsBackend::Current()->SetClearDepth(1);

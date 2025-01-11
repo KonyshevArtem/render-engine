@@ -5,7 +5,7 @@
 
 + (void) Initialize:(MTKView*)view
 {
-    EngineFramework::Initialize((__bridge void*)view, "Metal");
+    EngineFramework::Initialize(nullptr, (__bridge void*)view, "Metal");
 }
 
 + (void) TickMainLoop:(int)width height:(int)height

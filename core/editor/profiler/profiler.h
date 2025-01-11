@@ -31,8 +31,9 @@ public:
         std::chrono::system_clock::time_point End;
         const char* Name = nullptr;
         int Depth = 0;
+        uint64_t Frame = 0;
 
-        explicit MarkerInfo(MarkerType type, const char* name = nullptr, int depth = 0);
+        explicit MarkerInfo(MarkerType type, const char* name = nullptr, int depth = 0, uint64_t frame = 0);
 
         MarkerInfo(const MarkerInfo& other) = default;
         MarkerInfo(MarkerInfo&& info) = default;
@@ -69,9 +70,9 @@ public:
         GraphicsBackendProfilerMarker ProfilerMarker;
         const char* Name = nullptr;
         int Depth = 0;
-        int FrameNumber = 0;
+        uint64_t Frame = 0;
 
-        GPUMarkerInfo(const char* name, int depth, int frameNumber);
+        GPUMarkerInfo(const char* name, int depth, uint64_t frame);
         GPUMarkerInfo& operator=(const GPUMarkerInfo& info);
     };
 
@@ -98,7 +99,7 @@ public:
     struct FrameInfo
     {
         std::vector<MarkerInfo> Markers;
-        int FrameNumber;
+        uint64_t Frame;
         bool IsSorted;
     };
 
@@ -107,7 +108,7 @@ public:
     static std::vector<FrameInfo>& GetContextFrames(MarkerContext context);
 
 private:
-    static void AddMarkerInfo(MarkerContext context, const MarkerInfo& markerInfo, int frame = -1);
+    static void AddMarkerInfo(MarkerContext context, const MarkerInfo& markerInfo, uint64_t frame = 0);
 };
 
 #endif //PROFILER_MARKERS_H

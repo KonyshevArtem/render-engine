@@ -4,7 +4,8 @@
 enum class GraphicsBackendName
 {
     OPENGL  = 0,
-    METAL   = 1,
+    GLES    = 1,
+    METAL   = 2,
 };
 
 #endif //RENDER_ENGINE_BACKEND_TYPE_H

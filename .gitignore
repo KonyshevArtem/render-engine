@@ -3,6 +3,7 @@ build
 
 **/shaders/**/output
 **/textures/**/output
+**/build_resources
 
 # Created by https://www.toptal.com/developers/gitignore/api/clion
 # Edit at https://www.toptal.com/developers/gitignore?templates=clion

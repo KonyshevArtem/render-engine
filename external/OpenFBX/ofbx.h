@@ -8,7 +8,7 @@ namespace ofbx
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__ANDROID__)
 	typedef long long i64;
 	typedef unsigned long long u64;
 #else

@@ -8,6 +8,7 @@
 #include "graphics_backend_api.h"
 #include "shader_parser.h"
 #include "shader/shader_pass/shader_pass.h"
+#include "utils/utils.h"
 
 #include <span>
 
@@ -34,6 +35,8 @@ namespace ShaderLoader
         {
             case GraphicsBackendName::OPENGL:
                 return "opengl";
+            case GraphicsBackendName::GLES:
+                return "gles";
             case GraphicsBackendName::METAL:
                 return "metal";
             default:
@@ -53,7 +56,7 @@ namespace ShaderLoader
             outSupportInstancing |= keyword == INSTANCING_KEYWORD;
         }
 
-        return std::to_string(std::hash<std::string>{}(keywordsDirectives));
+        return std::to_string(Utils::HashFNV1a(keywordsDirectives));
     }
 
     std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
@@ -65,8 +68,7 @@ namespace ShaderLoader
         try
         {
             std::string backendLiteral = GetBackendLiteral(GraphicsBackend::Current()->GetName());
-            std::string shaderName = _path.filename().replace_extension("").string();
-            std::filesystem::path backendPath = FileSystem::GetResourcesPath() / _path.parent_path() / "output" / shaderName / backendLiteral / keywordHash;
+            std::filesystem::path backendPath = FileSystem::GetResourcesPath() / _path / backendLiteral / keywordHash;
 
             auto reflectionJson = FileSystem::ReadFile(backendPath / "reflection.json");
             std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;
@@ -83,7 +85,7 @@ namespace ShaderLoader
             for (int i = 0; i < SUPPORTED_SHADERS_COUNT; ++i)
             {
                 std::filesystem::path sourcePath = backendPath / SHADER_SOURCE_FILE_NAME[i];
-                if (!std::filesystem::exists(sourcePath))
+                if (!FileSystem::FileExists(sourcePath))
                     continue;
 
                 std::string shaderFunctionDebugName = shaderDebugName;

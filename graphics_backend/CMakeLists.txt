@@ -65,6 +65,10 @@ elseif (${RENDER_ENGINE_APPLE_PLATFORM})
 
     target_compile_definitions(GraphicsBackend PUBLIC RENDER_BACKEND_METAL)
 
+elseif (${RENDER_ENGINE_ANDROID_PLATFORM})
+
+    target_compile_definitions(GraphicsBackend PUBLIC RENDER_BACKEND_OPENGL OPENGL_MAJOR_VERSION=3 OPENGL_MINOR_VERSION=2)
+
 endif()
 
 target_include_directories(GraphicsBackend PUBLIC .)

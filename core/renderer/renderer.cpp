@@ -104,7 +104,7 @@ void Renderer::SetDataToBuffers(const std::string &name, const void *data, uint6
 
     if (!s_InstanceDataBuffer)
     {
-        s_InstanceDataBuffer = std::make_shared<GraphicsBuffer>(allocatedBufferSize, "PerInstanceData");
+        s_InstanceDataBuffer = std::make_shared<GraphicsBuffer>(allocatedBufferSize, "PerInstanceData", false);
     }
     else if (s_InstanceDataBuffer->GetSize() < requiredBufferSize)
     {

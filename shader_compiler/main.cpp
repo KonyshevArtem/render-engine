@@ -61,14 +61,15 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
     auto sourceBuffer = static_cast<uint32_t*>(pShader->GetBufferPointer());
     size_t sourceSize = pShader->GetBufferSize() * sizeof(uint8_t) / sizeof(uint32_t);
 
-    if (backend == GRAPHICS_BACKEND_OPENGL)
+    bool isGLES = backend == GRAPHICS_BACKEND_GLES;
+    if (backend == GRAPHICS_BACKEND_OPENGL || isGLES)
     {
         auto glsl = new spirv_cross::CompilerGLSL(sourceBuffer, sourceSize);
         glsl->build_combined_image_samplers();
 
         spirv_cross::CompilerGLSL::Options options;
-        options.version = 460;
-        options.es = false;
+        options.version = isGLES ? 320 : 460;
+        options.es = isGLES;
         glsl->set_common_options(options);
 
         const auto& combinedImageSamplers = glsl->get_combined_image_samplers();
@@ -129,7 +130,7 @@ void WriteShaderSource(const std::filesystem::path& outputDirPath, spirv_cross::
 
 int main(int argc, char **argv)
 {
-    if (argc < 3)
+    if (argc < 4)
     {
         std::cout << "No HLSL path or no target backend are specified" << std::endl;
         return 1;
@@ -147,7 +148,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    std::filesystem::path hlslPath = std::filesystem::absolute(std::filesystem::path(argv[2]));
+    std::filesystem::path hlslPath = std::filesystem::absolute(std::filesystem::path(argv[3]));
     std::cout << "Compiling shader at path: " << hlslPath << std::endl;
 
     std::vector<std::wstring> defines = GetDefines(argc, argv);
@@ -168,8 +169,7 @@ int main(int argc, char **argv)
     spirv_cross::Compiler* vertexSPIRV = CompileSPIRV(vertexDXC, backend, true);
     spirv_cross::Compiler* fragmentSPIRV = CompileSPIRV(fragmentDXC, backend, false);
 
-    std::string shaderName = hlslPath.filename().replace_extension("").string();
-    std::filesystem::path outputDirPath = hlslPath.parent_path() / "output" / shaderName / GetBackendLiteral(backend) / definesHash;
+    std::filesystem::path outputDirPath = std::filesystem::path(argv[2]) / GetBackendLiteral(backend) / definesHash;
 
     WriteShaderSource(outputDirPath, vertexSPIRV, true);
     WriteShaderSource(outputDirPath, fragmentSPIRV, false);

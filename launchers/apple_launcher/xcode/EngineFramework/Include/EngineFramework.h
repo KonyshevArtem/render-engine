@@ -4,7 +4,7 @@
 class EngineFramework
 {
 public:
-    static void Initialize(void* graphicsBackendInitData, const char* graphicsBackend);
+    static void Initialize(void* fileSystemData, void* graphicsBackendInitData, const char* graphicsBackend);
     static void TickMainLoop(int width, int height);
     static bool ShouldCloseWindow();
     static void Shutdown();

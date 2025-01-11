@@ -23,6 +23,16 @@ GraphicsBackendBase *GraphicsBackendBase::Create(const std::string &backend)
     return nullptr;
 }
 
+void GraphicsBackendBase::InitNewFrame()
+{
+    ++m_FrameCount;
+}
+
+uint64_t GraphicsBackendBase::GetFrameNumber() const
+{
+    return m_FrameCount;
+}
+
 bool GraphicsBackendBase::IsTexture3D(TextureType type)
 {
     return type == TextureType::TEXTURE_2D_ARRAY || type == TextureType::TEXTURE_3D || type == TextureType::TEXTURE_CUBEMAP_ARRAY;

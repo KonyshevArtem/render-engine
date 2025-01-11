@@ -7,7 +7,7 @@
 std::vector<std::wstring> GetDefines(int argc, char** argv)
 {
     std::vector<std::wstring> defines;
-    for (int i = 3; i < argc; ++i)
+    for (int i = 4; i < argc; ++i)
     {
         std::wstring define(argv[i], argv[i] + strlen(argv[i]));
         defines.emplace_back(std::move(define));
@@ -17,6 +17,21 @@ std::vector<std::wstring> GetDefines(int argc, char** argv)
 
 std::string GetDefinesHash(std::vector<std::wstring> defines)
 {
+    auto HashFNV1a = [](const std::string &str)
+    {
+        constexpr uint64_t fnvPrime = 1099511628211ULL;
+        constexpr uint64_t fnvOffsetBasis = 14695981039346656037ULL;
+
+        uint64_t hash = fnvOffsetBasis;
+
+        for (const char c: str) {
+            hash ^= c;
+            hash *= fnvPrime;
+        }
+
+        return hash;
+    };
+
     std::sort(defines.begin(), defines.end());
 
     std::string combinedDefines;
@@ -26,7 +41,7 @@ std::string GetDefinesHash(std::vector<std::wstring> defines)
         combinedDefines += d + ",";
     }
 
-    return std::to_string(std::hash<std::string>{}(combinedDefines));
+    return std::to_string(HashFNV1a(combinedDefines));
 }
 
 void PrintDefines(const std::vector<std::wstring>& defines, const std::string& definesHash)

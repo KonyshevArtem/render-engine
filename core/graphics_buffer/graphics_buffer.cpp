@@ -1,23 +1,26 @@
 #include "graphics_buffer.h"
-#include "graphics_backend_api.h"
 
 #include <algorithm>
 
-GraphicsBuffer::GraphicsBuffer(uint64_t size, std::string name) :
+GraphicsBuffer::GraphicsBuffer(uint64_t size, std::string name, bool doubleBuffered) :
         m_Size(size),
-        m_Name(std::move(name))
+        m_Name(std::move(name)),
+        m_DoubleBuffered(doubleBuffered)
 {
-    m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, m_Name, true);
+    for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
+    {
+        if (i == 0 || m_DoubleBuffered)
+            m_Buffer[i] = GraphicsBackend::Current()->CreateBuffer(size, m_Name + "_0", true);
+    }
 }
 
 GraphicsBuffer::~GraphicsBuffer()
 {
-    GraphicsBackend::Current()->DeleteBuffer(m_Buffer);
-}
-
-void GraphicsBuffer::Bind(const GraphicsBackendResourceBindings &bindings, int offset, int size) const
-{
-    GraphicsBackend::Current()->BindBuffer(m_Buffer, bindings, offset, size);
+    for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
+    {
+        if (i == 0 || m_DoubleBuffered)
+            GraphicsBackend::Current()->DeleteBuffer(m_Buffer[i]);
+    }
 }
 
 void GraphicsBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
@@ -25,21 +28,27 @@ void GraphicsBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
     offset = std::min(offset, m_Size);
     size = std::min(size, m_Size - offset);
 
-    GraphicsBackend::Current()->SetBufferData(m_Buffer, offset, size, data);
+    GraphicsBackend::Current()->SetBufferData(GetBackendBuffer(), offset, size, data);
 }
 
 void GraphicsBuffer::Resize(uint64_t size)
 {
     if (size > 0 && m_Size != size)
     {
-        const GraphicsBackendBuffer oldBuffer = m_Buffer;
-
-        m_Buffer = GraphicsBackend::Current()->CreateBuffer(size, m_Name, true);
         GraphicsBackend::Current()->BeginCopyPass(m_Name + " Buffer Resize Copy");
-        GraphicsBackend::Current()->CopyBufferSubData(oldBuffer, m_Buffer, 0, 0, m_Size);
-        GraphicsBackend::Current()->EndCopyPass();
 
-        GraphicsBackend::Current()->DeleteBuffer(oldBuffer);
+        for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
+        {
+            if (i != 0 && !m_DoubleBuffered)
+                break;
+
+            const GraphicsBackendBuffer oldBuffer = m_Buffer[i];
+            m_Buffer[i] = GraphicsBackend::Current()->CreateBuffer(size, m_Name, true);
+            GraphicsBackend::Current()->CopyBufferSubData(oldBuffer, m_Buffer[i], 0, 0, m_Size);
+            GraphicsBackend::Current()->DeleteBuffer(oldBuffer);
+        }
+
+        GraphicsBackend::Current()->EndCopyPass();
         m_Size = size;
     }
 }

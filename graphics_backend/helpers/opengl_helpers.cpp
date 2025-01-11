@@ -1,6 +1,82 @@
 #ifdef RENDER_BACKEND_OPENGL
 
 #include "opengl_helpers.h"
+#include <stdexcept>
+
+#if GL_EXT_texture_norm16 && !GL_ARB_texture_rg
+#define GL_R16      GL_R16_EXT
+#define GL_RG16     GL_RG16_EXT
+#define GL_RGB16    GL_RGB16_EXT
+#define GL_RGBA16   GL_RGBA16_EXT
+#endif
+
+#if GL_EXT_render_snorm && !GL_VERSION_3_1
+#define GL_R16_SNORM    GL_R16_SNORM_EXT
+#define GL_RG16_SNORM   GL_RG16_SNORM_EXT
+#endif
+
+#if GL_OES_required_internalformat && !GL_VERSION_1_1
+#define GL_RGB10    GL_RGB10_EXT
+#endif
+
+#if GL_APPLE_texture_format_BGRA8888 && !GL_VERSION_1_2
+#define GL_BGRA     GL_BGRA_EXT
+#endif
+
+#if GL_EXT_texture_compression_rgtc && !GL_ARB_texture_compression_rgtc
+#define GL_COMPRESSED_RED_RGTC1     GL_COMPRESSED_RED_RGTC1_EXT
+#define GL_COMPRESSED_RG_RGTC2      GL_COMPRESSED_RED_GREEN_RGTC2_EXT
+#endif
+
+#if GL_EXT_texture_compression_bptc && !GL_ARB_texture_compression_bptc
+#define GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT     GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_EXT
+#define GL_COMPRESSED_RGBA_BPTC_UNORM           GL_COMPRESSED_RGBA_BPTC_UNORM_EXT
+#define GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM     GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_EXT
+#endif
+
+#if GL_EXT_blend_func_extended && !GL_ARB_blend_func_extended
+#define GL_SRC1_COLOR               GL_SRC1_COLOR_EXT
+#define GL_ONE_MINUS_SRC1_COLOR     GL_ONE_MINUS_SRC1_COLOR_EXT
+#define GL_ONE_MINUS_SRC1_ALPHA     GL_ONE_MINUS_SRC1_ALPHA_EXT
+#endif
+
+#ifdef REQUIRE_BINDINGS_INIT
+
+PFNGLQUERYCOUNTEREXTPROC glQueryCounterEXT;
+PFNGLGETQUERYOBJECTUI64VEXTPROC glGetQueryObjectui64vEXT;
+PFNGLBUFFERSTORAGEEXTPROC glBufferStorageEXT;
+
+void glQueryCounter(GLuint id, GLenum target)
+{
+    glQueryCounterEXT(id, target);
+}
+
+void glGetQueryObjectui64v(GLuint id, GLenum pname, GLuint64* params)
+{
+    glGetQueryObjectui64vEXT(id, pname, params);
+}
+
+void glBufferStorage(GLenum target, GLsizeiptr size, const void *data, GLbitfield flags)
+{
+    glBufferStorageEXT(target, size, data, flags);
+}
+
+#endif
+
+void OpenGLHelpers::InitBindings()
+{
+#ifdef REQUIRE_GLEW_INIT
+    auto result = glewInit();
+    if (result != GLEW_OK)
+        throw;
+#endif
+
+#ifdef REQUIRE_BINDINGS_INIT
+    glQueryCounterEXT = (PFNGLQUERYCOUNTEREXTPROC) eglGetProcAddress("glQueryCounterEXT");
+    glGetQueryObjectui64vEXT = (PFNGLGETQUERYOBJECTUI64VEXTPROC) eglGetProcAddress("glGetQueryObjectui64vEXT");
+    glBufferStorageEXT = (PFNGLBUFFERSTORAGEEXTPROC) eglGetProcAddress("glBufferStorageEXT");
+#endif
+}
 
 std::string OpenGLHelpers::GetShaderTypeName(ShaderType shaderType)
 {
@@ -98,8 +174,10 @@ GLenum OpenGLHelpers::ToVertexAttributeDataType(VertexAttributeDataType dataType
             return GL_HALF_FLOAT;
         case VertexAttributeDataType::FLOAT:
             return GL_FLOAT;
+#if GL_VERSION_1_1
         case VertexAttributeDataType::DOUBLE:
             return GL_DOUBLE;
+#endif
         case VertexAttributeDataType::FIXED:
             return GL_FIXED;
         case VertexAttributeDataType::INT_2_10_10_10_REV:
@@ -108,6 +186,8 @@ GLenum OpenGLHelpers::ToVertexAttributeDataType(VertexAttributeDataType dataType
             return GL_UNSIGNED_INT_2_10_10_10_REV;
         case VertexAttributeDataType::UNSIGNED_INT_10F_11F_11F_REV:
             return GL_UNSIGNED_INT_10F_11F_11F_REV;
+        default:
+            throw std::runtime_error("Not implemented");
     }
 }
 
@@ -115,10 +195,12 @@ GLenum OpenGLHelpers::ToTextureType(TextureType textureType)
 {
     switch (textureType)
     {
+#if GL_VERSION_1_1
         case TextureType::TEXTURE_1D:
             return GL_TEXTURE_1D;
         case TextureType::TEXTURE_1D_ARRAY:
             return GL_TEXTURE_1D_ARRAY;
+#endif
         case TextureType::TEXTURE_2D:
             return GL_TEXTURE_2D;
         case TextureType::TEXTURE_2D_MULTISAMPLE:
@@ -133,10 +215,14 @@ GLenum OpenGLHelpers::ToTextureType(TextureType textureType)
             return GL_TEXTURE_CUBE_MAP;
         case TextureType::TEXTURE_CUBEMAP_ARRAY:
             return GL_TEXTURE_CUBE_MAP_ARRAY;
+#if GL_VERSION_3_1
         case TextureType::TEXTURE_RECTANGLE:
             return GL_TEXTURE_RECTANGLE;
+#endif
         case TextureType::TEXTURE_BUFFER:
             return GL_TEXTURE_BUFFER;
+        default:
+            throw std::runtime_error("Not implemented");
     }
 }
 
@@ -160,24 +246,28 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool
             return GL_RG16;
         case TextureInternalFormat::RG16_SNORM:
             return GL_RG16_SNORM;
+#if GL_VERSION_1_1
         case TextureInternalFormat::R3_G3_B2:
             return GL_R3_G3_B2;
         case TextureInternalFormat::RGB4:
             return GL_RGB4;
         case TextureInternalFormat::RGB5:
             return GL_RGB5;
+        case TextureInternalFormat::RGB12:
+            return GL_RGB12;
+        case TextureInternalFormat::RGBA2:
+            return GL_RGBA2;
+        case TextureInternalFormat::RGBA12:
+            return GL_RGBA12;
+#endif
         case TextureInternalFormat::RGB8:
             return isLinear ? GL_RGB8 : GL_SRGB8;
         case TextureInternalFormat::RGB8_SNORM:
             return GL_RGB8_SNORM;
         case TextureInternalFormat::RGB10:
             return GL_RGB10;
-        case TextureInternalFormat::RGB12:
-            return GL_RGB12;
         case TextureInternalFormat::RGB16:
             return GL_RGB16;
-        case TextureInternalFormat::RGBA2:
-            return GL_RGBA2;
         case TextureInternalFormat::RGBA4:
             return GL_RGBA4;
         case TextureInternalFormat::RGB5_A1:
@@ -190,8 +280,6 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool
             return GL_RGB10_A2;
         case TextureInternalFormat::RGB10_A2UI:
             return GL_RGB10_A2UI;
-        case TextureInternalFormat::RGBA12:
-            return GL_RGBA12;
         case TextureInternalFormat::RGBA16:
             return GL_RGBA16;
         case TextureInternalFormat::R16F:
@@ -265,7 +353,6 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool
         case TextureInternalFormat::BGRA8:
         case TextureInternalFormat::BGRA8_SNORM:
             return GL_BGRA;
-#if GL_EXT_texture_compression_s3tc && GL_EXT_texture_sRGB
         case TextureInternalFormat::BC1_RGB:
             return isLinear ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT : GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
         case TextureInternalFormat::BC1_RGBA:
@@ -274,7 +361,6 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool
             return isLinear ? GL_COMPRESSED_RGBA_S3TC_DXT3_EXT : GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
         case TextureInternalFormat::BC3:
             return isLinear ? GL_COMPRESSED_RGBA_S3TC_DXT5_EXT : GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
-#endif
         case TextureInternalFormat::BC4:
             return GL_COMPRESSED_RED_RGTC1;
         case TextureInternalFormat::BC5:
@@ -283,6 +369,20 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool
             return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
         case TextureInternalFormat::BC7:
             return isLinear ? GL_COMPRESSED_RGBA_BPTC_UNORM : GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+#if GL_ES_VERSION_3_2
+        case TextureInternalFormat::ASTC_4X4:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_4x4 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4;
+        case TextureInternalFormat::ASTC_5X5:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_5x5 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5;
+        case TextureInternalFormat::ASTC_6X6:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_6x6 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6;
+        case TextureInternalFormat::ASTC_8X8:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_8x8 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8;
+        case TextureInternalFormat::ASTC_10X10:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_10x10 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10;
+        case TextureInternalFormat::ASTC_12X12:
+            return isLinear ? GL_COMPRESSED_RGBA_ASTC_12x12 : GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12;
+#endif
         case TextureInternalFormat::DEPTH_32:
             return GL_DEPTH_COMPONENT32F;
         case TextureInternalFormat::DEPTH_24:
@@ -294,19 +394,28 @@ GLenum OpenGLHelpers::ToTextureInternalFormat(TextureInternalFormat format, bool
         case TextureInternalFormat::DEPTH_24_STENCIL_8:
             return GL_DEPTH24_STENCIL8;
         default:
-            return 0;
+            throw std::runtime_error("Not implemented");
     }
 }
 
 TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bool& outIsLinear)
 {
-    outIsLinear = !(format == GL_SRGB8 |
-                    format == GL_SRGB8_ALPHA8 |
-                    format == GL_COMPRESSED_SRGB_S3TC_DXT1_EXT |
-                    format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT |
-                    format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT |
-                    format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT |
-                    format == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM);
+    outIsLinear = !(format == GL_SRGB8
+                    | format == GL_SRGB8_ALPHA8
+                    | format == GL_COMPRESSED_SRGB_S3TC_DXT1_EXT
+                    | format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT
+                    | format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT
+                    | format == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT
+                    | format == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+#if GL_ES_VERSION_3_2
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10
+                    | format == GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12
+#endif
+                    );
 
     switch (format)
     {
@@ -326,12 +435,20 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bo
             return TextureInternalFormat::RG16;
         case GL_RG16_SNORM:
             return TextureInternalFormat::RG16_SNORM;
+#if GL_VERSION_1_1
         case GL_R3_G3_B2:
             return TextureInternalFormat::R3_G3_B2;
         case GL_RGB4:
             return TextureInternalFormat::RGB4;
         case GL_RGB5:
             return TextureInternalFormat::RGB5;
+        case GL_RGB12:
+            return TextureInternalFormat::RGB12;
+        case GL_RGBA2:
+            return TextureInternalFormat::RGBA2;
+        case GL_RGBA12:
+            return TextureInternalFormat::RGBA12;
+#endif
         case GL_RGB8:
         case GL_SRGB8:
             return TextureInternalFormat::RGB8;
@@ -339,12 +456,8 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bo
             return TextureInternalFormat::RGB8_SNORM;
         case GL_RGB10:
             return TextureInternalFormat::RGB10;
-        case GL_RGB12:
-            return TextureInternalFormat::RGB12;
         case GL_RGB16:
             return TextureInternalFormat::RGB16;
-        case GL_RGBA2:
-            return TextureInternalFormat::RGBA2;
         case GL_RGBA4:
             return TextureInternalFormat::RGBA4;
         case GL_RGB5_A1:
@@ -358,8 +471,6 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bo
             return TextureInternalFormat::RGB10_A2;
         case GL_RGB10_A2UI:
             return TextureInternalFormat::RGB10_A2UI;
-        case GL_RGBA12:
-            return TextureInternalFormat::RGBA12;
         case GL_RGBA16:
             return TextureInternalFormat::RGBA16;
         case GL_R16F:
@@ -432,7 +543,6 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bo
             return TextureInternalFormat::RGBA32UI;
         case GL_BGRA:
             return TextureInternalFormat::BGRA8;
-#if GL_EXT_texture_compression_s3tc && GL_EXT_texture_sRGB
         case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
         case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
             return TextureInternalFormat::BC1_RGB;
@@ -445,7 +555,6 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bo
         case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
             return TextureInternalFormat::BC3;
-#endif
         case GL_COMPRESSED_RED_RGTC1:
             return TextureInternalFormat::BC4;
         case GL_COMPRESSED_RG_RGTC2:
@@ -455,6 +564,26 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bo
         case GL_COMPRESSED_RGBA_BPTC_UNORM:
         case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
             return TextureInternalFormat::BC7;
+#if GL_ES_VERSION_3_2
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4:
+        case GL_COMPRESSED_RGBA_ASTC_4x4:
+            return TextureInternalFormat::ASTC_4X4;
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5:
+        case GL_COMPRESSED_RGBA_ASTC_5x5:
+            return TextureInternalFormat::ASTC_5X5;
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6:
+        case GL_COMPRESSED_RGBA_ASTC_6x6:
+            return TextureInternalFormat::ASTC_6X6;
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8:
+        case GL_COMPRESSED_RGBA_ASTC_8x8:
+            return TextureInternalFormat::ASTC_8X8;
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10:
+        case GL_COMPRESSED_RGBA_ASTC_10x10:
+            return TextureInternalFormat::ASTC_10X10;
+        case GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12:
+        case GL_COMPRESSED_RGBA_ASTC_12x12:
+            return TextureInternalFormat::ASTC_12X12;
+#endif
         case GL_DEPTH_COMPONENT32F:
             return TextureInternalFormat::DEPTH_32;
         case GL_DEPTH_COMPONENT24:
@@ -466,7 +595,7 @@ TextureInternalFormat OpenGLHelpers::FromTextureInternalFormat(GLenum format, bo
         case GL_DEPTH24_STENCIL8:
             return TextureInternalFormat::DEPTH_24_STENCIL_8;
         default:
-            return TextureInternalFormat::RGBA8;
+            throw std::runtime_error("Not implemented");
     }
 }
 
@@ -544,6 +673,12 @@ GLenum OpenGLHelpers::ToTextureFormat(TextureInternalFormat format)
         case TextureInternalFormat::BC2:
         case TextureInternalFormat::BC3:
         case TextureInternalFormat::BC7:
+        case TextureInternalFormat::ASTC_4X4:
+        case TextureInternalFormat::ASTC_5X5:
+        case TextureInternalFormat::ASTC_6X6:
+        case TextureInternalFormat::ASTC_8X8:
+        case TextureInternalFormat::ASTC_10X10:
+        case TextureInternalFormat::ASTC_12X12:
             return GL_RGBA;
         case TextureInternalFormat::DEPTH_32:
         case TextureInternalFormat::DEPTH_24:
@@ -593,10 +728,12 @@ GLenum OpenGLHelpers::ToTextureTarget(TextureType type, CubemapFace cubemapFace)
 {
     switch (type)
     {
+#if GL_VERSION_1_1
         case TextureType::TEXTURE_1D:
             return GL_TEXTURE_1D;
         case TextureType::TEXTURE_1D_ARRAY:
             return GL_TEXTURE_1D_ARRAY;
+#endif
         case TextureType::TEXTURE_2D:
             return GL_TEXTURE_2D;
         case TextureType::TEXTURE_2D_MULTISAMPLE:
@@ -610,12 +747,14 @@ GLenum OpenGLHelpers::ToTextureTarget(TextureType type, CubemapFace cubemapFace)
         case TextureType::TEXTURE_CUBEMAP:
         case TextureType::TEXTURE_CUBEMAP_ARRAY:
             return GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<int>(cubemapFace);
+#if GL_VERSION_3_1
         case TextureType::TEXTURE_RECTANGLE:
             return GL_TEXTURE_RECTANGLE;
+#endif
         case TextureType::TEXTURE_BUFFER:
             return GL_TEXTURE_BUFFER;
         default:
-            return 0;
+            throw std::runtime_error("Not implemented");
     }
 }
 
@@ -797,66 +936,85 @@ GLenum OpenGLHelpers::ToBlendFactor(BlendFactor factor)
 
 bool OpenGLHelpers::IsTexture(GLenum uniformType)
 {
-    return uniformType == GL_SAMPLER_1D ||
+    return
+#if GL_VERSION_2_0
+           uniformType == GL_SAMPLER_1D ||
+           uniformType == GL_SAMPLER_1D_SHADOW ||
+#endif
            uniformType == GL_SAMPLER_2D ||
            uniformType == GL_SAMPLER_3D ||
            uniformType == GL_SAMPLER_CUBE ||
-           uniformType == GL_SAMPLER_1D_SHADOW ||
            uniformType == GL_SAMPLER_2D_SHADOW ||
+#if GL_VERSION_3_0
            uniformType == GL_SAMPLER_1D_ARRAY ||
-           uniformType == GL_SAMPLER_2D_ARRAY ||
            uniformType == GL_SAMPLER_1D_ARRAY_SHADOW ||
+           uniformType == GL_INT_SAMPLER_1D ||
+           uniformType == GL_INT_SAMPLER_1D_ARRAY ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_1D ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_1D_ARRAY ||
+#endif
+           uniformType == GL_SAMPLER_2D_ARRAY ||
            uniformType == GL_SAMPLER_2D_ARRAY_SHADOW ||
            uniformType == GL_SAMPLER_2D_MULTISAMPLE ||
            uniformType == GL_SAMPLER_2D_MULTISAMPLE_ARRAY ||
            uniformType == GL_SAMPLER_CUBE_SHADOW ||
            uniformType == GL_SAMPLER_BUFFER ||
+#if GL_VERSION_3_1
            uniformType == GL_SAMPLER_2D_RECT ||
            uniformType == GL_SAMPLER_2D_RECT_SHADOW ||
-           uniformType == GL_INT_SAMPLER_1D ||
+           uniformType == GL_INT_SAMPLER_2D_RECT ||
+           uniformType == GL_UNSIGNED_INT_SAMPLER_2D_RECT ||
+#endif
            uniformType == GL_INT_SAMPLER_2D ||
            uniformType == GL_INT_SAMPLER_3D ||
            uniformType == GL_INT_SAMPLER_CUBE ||
-           uniformType == GL_INT_SAMPLER_1D_ARRAY ||
            uniformType == GL_INT_SAMPLER_2D_ARRAY ||
            uniformType == GL_INT_SAMPLER_2D_MULTISAMPLE ||
            uniformType == GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
            uniformType == GL_INT_SAMPLER_BUFFER ||
-           uniformType == GL_INT_SAMPLER_2D_RECT ||
-           uniformType == GL_UNSIGNED_INT_SAMPLER_1D ||
            uniformType == GL_UNSIGNED_INT_SAMPLER_2D ||
            uniformType == GL_UNSIGNED_INT_SAMPLER_3D ||
            uniformType == GL_UNSIGNED_INT_SAMPLER_CUBE ||
-           uniformType == GL_UNSIGNED_INT_SAMPLER_1D_ARRAY ||
            uniformType == GL_UNSIGNED_INT_SAMPLER_2D_ARRAY ||
            uniformType == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE ||
            uniformType == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
-           uniformType == GL_UNSIGNED_INT_SAMPLER_BUFFER ||
-           uniformType == GL_UNSIGNED_INT_SAMPLER_2D_RECT;
+           uniformType == GL_UNSIGNED_INT_SAMPLER_BUFFER;
 }
 
 TextureDataType OpenGLHelpers::FromTextureDataType(GLenum textureDataType)
 {
     switch (textureDataType)
     {
+#if GL_VERSION_2_0
         case GL_SAMPLER_1D:
             return TextureDataType::SAMPLER_1D;
+        case GL_SAMPLER_1D_SHADOW:
+            return TextureDataType::SAMPLER_1D_SHADOW;
+#endif
         case GL_SAMPLER_2D:
             return TextureDataType::SAMPLER_2D;
         case GL_SAMPLER_3D:
             return TextureDataType::SAMPLER_3D;
         case GL_SAMPLER_CUBE:
             return TextureDataType::SAMPLER_CUBE;
-        case GL_SAMPLER_1D_SHADOW:
-            return TextureDataType::SAMPLER_1D_SHADOW;
         case GL_SAMPLER_2D_SHADOW:
             return TextureDataType::SAMPLER_2D_SHADOW;
+#if GL_VERSION_3_0
         case GL_SAMPLER_1D_ARRAY:
             return TextureDataType::SAMPLER_1D_ARRAY;
-        case GL_SAMPLER_2D_ARRAY:
-            return TextureDataType::SAMPLER_2D_ARRAY;
         case GL_SAMPLER_1D_ARRAY_SHADOW:
             return TextureDataType::SAMPLER_1D_ARRAY_SHADOW;
+        case GL_INT_SAMPLER_1D:
+            return TextureDataType::INT_SAMPLER_1D;
+        case GL_INT_SAMPLER_1D_ARRAY:
+            return TextureDataType::INT_SAMPLER_1D_ARRAY;
+        case GL_UNSIGNED_INT_SAMPLER_1D:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_1D;
+        case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_1D_ARRAY;
+#endif
+        case GL_SAMPLER_2D_ARRAY:
+            return TextureDataType::SAMPLER_2D_ARRAY;
         case GL_SAMPLER_2D_ARRAY_SHADOW:
             return TextureDataType::SAMPLER_2D_ARRAY_SHADOW;
         case GL_SAMPLER_2D_MULTISAMPLE:
@@ -867,20 +1025,22 @@ TextureDataType OpenGLHelpers::FromTextureDataType(GLenum textureDataType)
             return TextureDataType::SAMPLER_CUBE_SHADOW;
         case GL_SAMPLER_BUFFER:
             return TextureDataType::SAMPLER_BUFFER;
+#if GL_VERSION_3_1
         case GL_SAMPLER_2D_RECT:
             return TextureDataType::SAMPLER_2D_RECT;
         case GL_SAMPLER_2D_RECT_SHADOW:
             return TextureDataType::SAMPLER_2D_RECT_SHADOW;
-        case GL_INT_SAMPLER_1D:
-            return TextureDataType::INT_SAMPLER_1D;
+        case GL_INT_SAMPLER_2D_RECT:
+            return TextureDataType::INT_SAMPLER_2D_RECT;
+        case GL_UNSIGNED_INT_SAMPLER_2D_RECT:
+            return TextureDataType::UNSIGNED_INT_SAMPLER_2D_RECT;
+#endif
         case GL_INT_SAMPLER_2D:
             return TextureDataType::INT_SAMPLER_2D;
         case GL_INT_SAMPLER_3D:
             return TextureDataType::INT_SAMPLER_3D;
         case GL_INT_SAMPLER_CUBE:
             return TextureDataType::INT_SAMPLER_CUBE;
-        case GL_INT_SAMPLER_1D_ARRAY:
-            return TextureDataType::INT_SAMPLER_1D_ARRAY;
         case GL_INT_SAMPLER_2D_ARRAY:
             return TextureDataType::INT_SAMPLER_2D_ARRAY;
         case GL_INT_SAMPLER_2D_MULTISAMPLE:
@@ -889,18 +1049,12 @@ TextureDataType OpenGLHelpers::FromTextureDataType(GLenum textureDataType)
             return TextureDataType::INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
         case GL_INT_SAMPLER_BUFFER:
             return TextureDataType::INT_SAMPLER_BUFFER;
-        case GL_INT_SAMPLER_2D_RECT:
-            return TextureDataType::INT_SAMPLER_2D_RECT;
-        case GL_UNSIGNED_INT_SAMPLER_1D:
-            return TextureDataType::UNSIGNED_INT_SAMPLER_1D;
         case GL_UNSIGNED_INT_SAMPLER_2D:
             return TextureDataType::UNSIGNED_INT_SAMPLER_2D;
         case GL_UNSIGNED_INT_SAMPLER_3D:
             return TextureDataType::UNSIGNED_INT_SAMPLER_3D;
         case GL_UNSIGNED_INT_SAMPLER_CUBE:
             return TextureDataType::UNSIGNED_INT_SAMPLER_CUBE;
-        case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY:
-            return TextureDataType::UNSIGNED_INT_SAMPLER_1D_ARRAY;
         case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
             return TextureDataType::UNSIGNED_INT_SAMPLER_2D_ARRAY;
         case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:
@@ -909,8 +1063,6 @@ TextureDataType OpenGLHelpers::FromTextureDataType(GLenum textureDataType)
             return TextureDataType::UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
         case GL_UNSIGNED_INT_SAMPLER_BUFFER:
             return TextureDataType::UNSIGNED_INT_SAMPLER_BUFFER;
-        case GL_UNSIGNED_INT_SAMPLER_2D_RECT:
-            return TextureDataType::UNSIGNED_INT_SAMPLER_2D_RECT;
     }
 }
 

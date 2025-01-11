@@ -3,6 +3,10 @@
 #include <iostream>
 #include <map>
 
+#if __has_include("android/log.h")
+#include <android/log.h>
+#endif
+
 std::map<int, std::function<void(std::string)>> *GetListeners()
 {
     static auto *listeners = new std::map<int, std::function<void(std::string)>>();
@@ -20,19 +24,34 @@ void NotifyListeners(const std::string& string)
 
 void Debug::LogInfo(const std::string& string)
 {
+#if RENDER_ENGINE_ANDROID
+    __android_log_write(ANDROID_LOG_INFO, "RenderEngine", string.c_str());
+#else
     std::cout << "[INFO]" << string << std::endl;
+#endif
+
     NotifyListeners(string);
 }
 
 void Debug::LogWarning(const std::string& string)
 {
+#if RENDER_ENGINE_ANDROID
+    __android_log_write(ANDROID_LOG_WARN, "RenderEngine", string.c_str());
+#else
     std::cout << "[WARNING]" << string << std::endl;
+#endif
+
     NotifyListeners(string);
 }
 
 void Debug::LogError(const std::string& string)
 {
+#if RENDER_ENGINE_ANDROID
+    __android_log_write(ANDROID_LOG_ERROR, "RenderEngine", string.c_str());
+#else
     std::cerr << "[ERROR] " << string << std::endl;
+#endif
+
     NotifyListeners(string);
 }
 

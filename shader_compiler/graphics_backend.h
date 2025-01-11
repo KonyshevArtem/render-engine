@@ -6,7 +6,8 @@
 enum GraphicsBackend : int
 {
     GRAPHICS_BACKEND_OPENGL = 0,
-    GRAPHICS_BACKEND_METAL = 1,
+    GRAPHICS_BACKEND_GLES = 1,
+    GRAPHICS_BACKEND_METAL = 2,
 
     GRAPHICS_BACKEND_MAX
 };
@@ -17,6 +18,8 @@ std::string GetBackendLiteral(GraphicsBackend backend)
     {
         case GRAPHICS_BACKEND_OPENGL:
             return "opengl";
+        case GRAPHICS_BACKEND_GLES:
+            return "gles";
         case GRAPHICS_BACKEND_METAL:
             return "metal";
         default:
@@ -30,6 +33,8 @@ std::wstring GetBackendDefine(GraphicsBackend backend)
     {
         case GRAPHICS_BACKEND_OPENGL:
             return L"OPENGL_SHADER";
+        case GRAPHICS_BACKEND_GLES:
+            return L"GLES_SHADER";
         case GRAPHICS_BACKEND_METAL:
             return L"METAL_SHADER";
         default:

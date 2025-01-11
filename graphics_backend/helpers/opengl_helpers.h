@@ -34,9 +34,33 @@
 #if __has_include("OpenGL/gl3ext.h")
 #include <OpenGL/gl3ext.h>
 #endif
+#if __has_include("GLES3/gl32.h")
+#include <GLES3/gl32.h>
+#endif
+#if __has_include("GLES2/gl2ext.h")
+#include <GLES2/gl2ext.h>
+#endif
+#if __has_include("GLES/egl.h")
+#include <GLES/egl.h>
+#define REQUIRE_BINDINGS_INIT
+#endif
+
+#ifdef REQUIRE_BINDINGS_INIT
+
+#define GL_TIMESTAMP GL_TIMESTAMP_EXT
+#define GL_MAP_PERSISTENT_BIT GL_MAP_PERSISTENT_BIT_EXT
+#define GL_MAP_COHERENT_BIT GL_MAP_COHERENT_BIT_EXT
+
+void glQueryCounter(GLuint id, GLenum target);
+void glGetQueryObjectui64v(GLuint id, GLenum pname, GLuint64* params);
+void glBufferStorage(GLenum target, GLsizeiptr size, const void* data, GLbitfield flags);
+
+#endif
 
 namespace OpenGLHelpers
 {
+    void InitBindings();
+
     std::string GetShaderTypeName(ShaderType shaderType);
     GLuint ToShaderType(ShaderType shaderType);
     GLenum ToPrimitiveType(PrimitiveType primitiveType);

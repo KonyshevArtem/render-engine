@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
-	add_compile_definitions(RENDER_ENGINE_WINDOWS=1 RENDER_ENGINE_APPLE=0 _USE_MATH_DEFINES)
+	add_compile_definitions(RENDER_ENGINE_WINDOWS=1 RENDER_ENGINE_APPLE=0 RENDER_ENGINE_ANDROID=0 _USE_MATH_DEFINES)
 	set(RENDER_ENGINE_WINDOWS_PLATFORM 1)
 	set(ENABLE_IMGUI 1)
 
@@ -19,11 +19,18 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
 	set(RENDER_ENGINE_IOS_PLATFORM 1)
 	set(ENABLE_IMGUI 0)
 
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
+
+	add_compile_definitions(RENDER_ENGINE_WINDOWS=0 RENDER_ENGINE_APPLE=0 RENDER_ENGINE_ANDROID=1)
+	set(RENDER_ENGINE_ANDROID_PLATFORM 1)
+	set(ENABLE_IMGUI 0)
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/launchers/android_launcher/AndroidStudio/EngineFramework/src/main/cpp/libs/${CMAKE_ANDROID_ARCH_ABI}/${CMAKE_BUILD_TYPE}")
+
 endif ()
 
 if ((${RENDER_ENGINE_MACOS_PLATFORM}) OR (${RENDER_ENGINE_IOS_PLATFORM}))
 
-	add_compile_definitions(RENDER_ENGINE_WINDOWS=0 RENDER_ENGINE_APPLE=1)
+	add_compile_definitions(RENDER_ENGINE_WINDOWS=0 RENDER_ENGINE_APPLE=1 RENDER_ENGINE_ANDROID=0)
 	set(RENDER_ENGINE_APPLE_PLATFORM 1)
 	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/launchers/apple_launcher/xcode/EngineFramework/Libraries/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE}")
 
@@ -56,6 +63,7 @@ add_compile_definitions(RENDER_ENGINE_EDITOR)
 #launchers source code
 add_subdirectory(launchers/windows_launcher)
 add_subdirectory(launchers/apple_launcher)
+add_subdirectory(launchers/android_launcher)
 
 # engine source code
 add_subdirectory(graphics_backend)

@@ -1,5 +1,6 @@
 #ifdef RENDER_BACKEND_OPENGL
 
+#include "graphics_backend_api.h"
 #include "graphics_backend_api_opengl.h"
 #include "enums/texture_data_type.h"
 #include "enums/primitive_type.h"
@@ -21,7 +22,6 @@
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 
-#include <type_traits>
 #include <stdexcept>
 #include <cassert>
 #include <array>
@@ -65,10 +65,11 @@ struct RenderTargetState
 };
 
 void* s_Window;
-GLuint s_Framebuffers[2];
+GLuint s_Framebuffers[GraphicsBackend::GetMaxFramesInFlight()][2];
 RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
 uint64_t s_DebugGroupId = 0;
 uint64_t s_TimestampDifference = 0;
+GLsync s_FrameFinishFence[GraphicsBackend::GetMaxFramesInFlight()];
 
 std::array s_DebugMessageTypes =
 {
@@ -155,11 +156,7 @@ void ResetRenderTargetStates()
 
 void GraphicsBackendOpenGL::Init(void* data)
 {
-#ifdef REQUIRE_GLEW_INIT
-    auto result = glewInit();
-    if (result != GLEW_OK)
-        throw;
-#endif
+    OpenGLHelpers::InitBindings();
 
     s_Window = data;
 
@@ -171,9 +168,11 @@ void GraphicsBackendOpenGL::Init(void* data)
         m_Extensions.insert(std::string(reinterpret_cast<const char *>(ext)));
     }
 
-    glGenFramebuffers(2, &s_Framebuffers[0]);
+    glGenFramebuffers(2 * GraphicsBackend::GetMaxFramesInFlight(), &s_Framebuffers[0][0]);
 
+#ifdef GL_ARB_seamless_cube_map
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+#endif
     glEnable(GL_DEPTH_TEST);
 
 #if RENDER_ENGINE_EDITOR
@@ -199,11 +198,23 @@ void GraphicsBackendOpenGL::Init(void* data)
 
 GraphicsBackendName GraphicsBackendOpenGL::GetName()
 {
+#if RENDER_ENGINE_ANDROID
+    return GraphicsBackendName::GLES;
+#else
     return GraphicsBackendName::OPENGL;
+#endif
 }
 
 void GraphicsBackendOpenGL::InitNewFrame()
 {
+    GraphicsBackendBase::InitNewFrame();
+
+    GLsync currentFence = s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()];
+    if (glIsSync(currentFence))
+    {
+        glClientWaitSync(currentFence, GL_SYNC_FLUSH_COMMANDS_BIT, 160000000);
+        glDeleteSync(currentFence);
+    }
 }
 
 void GraphicsBackendOpenGL::FillImGuiData(void* data)
@@ -467,9 +478,7 @@ void BindBuffer_Internal(GLenum bindTarget, const GraphicsBackendBuffer &buffer,
 
 void GraphicsBackendOpenGL::BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
-#if GL_ARB_shader_storage_buffer_object
     BindBuffer_Internal(GL_SHADER_STORAGE_BUFFER, buffer, bindings, offset, size);
-#endif
 }
 
 void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
@@ -575,7 +584,7 @@ void GraphicsBackendOpenGL::SetCullFaceOrientation(CullFaceOrientation orientati
 void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, float near, float far)
 {
     glViewport(x, y, width, height);
-    glDepthRange(near, far);
+    glDepthRangef(near, far);
 }
 
 GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string& source, const std::string& name)
@@ -705,7 +714,7 @@ void GraphicsBackendOpenGL::SetClearColor(float r, float g, float b, float a)
 
 void GraphicsBackendOpenGL::SetClearDepth(double depth)
 {
-    glClearDepth(depth);
+    glClearDepthf(depth);
 }
 
 void GraphicsBackendOpenGL::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
@@ -759,10 +768,10 @@ void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &s
         mask |= GL_COLOR_BUFFER_BIT;
     }
 
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Framebuffers[0]);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][0]);
     AttachTextureToFramebuffer(GL_READ_FRAMEBUFFER, glAttachment, source.Type, source.Texture, 0, 0);
 
-    GLuint destinationFramebuffer = destinationDescriptor.IsBackbuffer ? 0 : s_Framebuffers[1];
+    GLuint destinationFramebuffer = destinationDescriptor.IsBackbuffer ? 0 : s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][1];
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destinationFramebuffer);
     if (!destinationDescriptor.IsBackbuffer)
     {
@@ -821,7 +830,7 @@ bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerM
     {
         auto resolveQuery = [](GLuint query, uint64_t& outTimestamp)
         {
-            glGetQueryObjectui64v(query, GL_QUERY_RESULT_NO_WAIT, &outTimestamp);
+            glGetQueryObjectui64v(query, GL_QUERY_RESULT, &outTimestamp);
             glDeleteQueries(1, &query);
 
             // from nanoseconds to microseconds
@@ -863,7 +872,7 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
     }
     else
     {
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[0]);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][0]);
 
         constexpr int maxAttachments = static_cast<int>(FramebufferAttachment::MAX);
         for (int i = 0; i < maxAttachments; ++i)
@@ -954,6 +963,7 @@ void GraphicsBackendOpenGL::Flush()
 
 void GraphicsBackendOpenGL::Present()
 {
+    s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 }
 
 #endif // RENDER_BACKEND_OPENGL

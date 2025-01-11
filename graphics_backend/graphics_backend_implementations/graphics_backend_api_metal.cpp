@@ -1,5 +1,6 @@
 #ifdef RENDER_BACKEND_METAL
 
+#include "graphics_backend_api.h"
 #include "graphics_backend_api_metal.h"
 #include "enums/primitive_type.h"
 #include "enums/indices_data_type.h"
@@ -22,11 +23,12 @@
 #include "Metal/MTLCounters.hpp"
 #include "MetalKit/MetalKit.hpp"
 
+#include <semaphore>
+
 constexpr int k_MaxBuffers = 31;
 constexpr int k_MaxTimestampSamples = 100;
 
 MTL::ResourceOptions s_DefaultBufferStorageMode;
-uint32_t s_Frame = 0;
 
 MTL::CounterSampleBuffer* s_CounterSampleBuffers[k_MaxGPUQueuesCount];
 bool s_CounterSampleFinished[k_MaxGPUQueuesCount][k_MaxTimestampSamples];
@@ -34,6 +36,8 @@ int s_CurrentCounterSampleOffsets[k_MaxGPUQueuesCount];
 
 MTL::Timestamp s_CpuStartTimestamp;
 MTL::Timestamp s_GpuStartTimestamp;
+
+std::counting_semaphore s_FramesInFlightSemaphore{GraphicsBackend::GetMaxFramesInFlight()};
 
 struct BufferData
 {
@@ -95,10 +99,12 @@ GraphicsBackendName GraphicsBackendMetal::GetName()
 
 void GraphicsBackendMetal::InitNewFrame()
 {
+    GraphicsBackendBase::InitNewFrame();
+
+    s_FramesInFlightSemaphore.acquire();
+
     m_BackbufferDescriptor = m_View->currentRenderPassDescriptor();
     SetCommandBuffers(m_RenderCommandQueue->commandBuffer(), m_CopyCommandQueue->commandBuffer());
-
-    ++s_Frame;
 }
 
 void GraphicsBackendMetal::FillImGuiData(void* data)
@@ -882,10 +888,10 @@ void GraphicsBackendMetal::SignalFence(const GraphicsBackendFence& fence)
     switch (fence.Type)
     {
         case FenceType::RENDER_TO_COPY:
-            m_RenderCommandBuffer->encodeSignalEvent(metalEvent, s_Frame);
+            m_RenderCommandBuffer->encodeSignalEvent(metalEvent, GetFrameNumber());
             break;
         case FenceType::COPY_TO_RENDER:
-            m_CopyCommandBuffer->encodeSignalEvent(metalEvent, s_Frame);
+            m_CopyCommandBuffer->encodeSignalEvent(metalEvent, GetFrameNumber());
             break;
     }
 }
@@ -897,10 +903,10 @@ void GraphicsBackendMetal::WaitForFence(const GraphicsBackendFence& fence)
     switch (fence.Type)
     {
         case FenceType::RENDER_TO_COPY:
-            m_CopyCommandBuffer->encodeWait(metalEvent, s_Frame);
+            m_CopyCommandBuffer->encodeWait(metalEvent, GetFrameNumber());
             break;
         case FenceType::COPY_TO_RENDER:
-            m_RenderCommandBuffer->encodeWait(metalEvent, s_Frame);
+            m_RenderCommandBuffer->encodeWait(metalEvent, GetFrameNumber());
             break;
     }
 }
@@ -936,6 +942,7 @@ void GraphicsBackendMetal::SetCommandBuffers(class MTL::CommandBuffer* renderCom
 void GraphicsBackendMetal::Present()
 {
     m_CopyCommandBuffer->commit();
+    m_RenderCommandBuffer->addCompletedHandler([](MTL::CommandBuffer*){s_FramesInFlightSemaphore.release();});
     m_RenderCommandBuffer->presentDrawable(m_View->currentDrawable());
     m_RenderCommandBuffer->commit();
 }

@@ -60,6 +60,9 @@ This is the recommended way to compile
    * Windows
      * Debug-Win64
      * Release-Win64
+   * Android
+     * Debug-Android-ARM64
+     * RelWithDebInfo-Android-ARM64
    * Mac
      * Debug-Mac-ARM64
      * Release-Mac-ARM64
@@ -89,13 +92,15 @@ This will compile all targets, so there is no need to specify like with CLion
 
 ### Compiling Resources
 
-After compiling required targets, run `recompile_shaders.sh` and `reimport_textures.sh` scripts.
+After compiling required targets, run `build_scripts/build_resources.sh` script.
 
-They should generate `resources/shaders/output` and `resources/textures/output` folders with compressed texture binaries
+It will generate `build_resources` directory with models, compressed textures 
 and shaders translated for target graphics API.
 
 ### Running Executable
 
 On Windows, just launch .exe in `cmake-build-release/launchers/windows_launcher`
+
+On Android, open Android Studio project in `launchers/android_launcher/AndroidStudio` and press Start
 
 On Mac, open XCode project in `launchers/apple_launcher/xcode` and press Start

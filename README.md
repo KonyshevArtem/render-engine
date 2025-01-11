@@ -3,7 +3,7 @@
 The purpose of this project is to replicate rendering functionality that can be found in other
 game engines, so all the API is very similar to Unity
 
-This engine can run on Windows, MacOS and iOS, and uses OpenGL and Metal for rendering
+This engine can run on Windows, Android, MacOS and iOS, and uses OpenGL, GLES and Metal for rendering
 
 ![Screen](docs/images/screen.png)
 

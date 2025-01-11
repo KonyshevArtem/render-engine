@@ -478,9 +478,7 @@ void BindBuffer_Internal(GLenum bindTarget, const GraphicsBackendBuffer &buffer,
 
 void GraphicsBackendOpenGL::BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
-#if GL_ARB_shader_storage_buffer_object
     BindBuffer_Internal(GL_SHADER_STORAGE_BUFFER, buffer, bindings, offset, size);
-#endif
 }
 
 void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)

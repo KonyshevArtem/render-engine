@@ -5,28 +5,63 @@ This pages lists external dependencies that are required to build the ending, an
 ## Table of contents
 
 * [Dependencies](#dependencies)
+  * [Visual Studio 17 2022](#visual-studio-17-2022)
+  * [XCode](#xcode)
+  * [Android Studio](#android-studio)
+  * [CMake](#cmake)
+  * [Ninja](#ninja)
   * [OpenGL](#opengl)
   * [DXC](#dxc)
-  * [Environment variables example](#environment-variables-example)
 * [How to build](#how-to-build-1)
-  * [Using CLion](#using-clion)
-  * [Using Terminal](#using-terminal)
+  * [Building Executable](#building-executable)
+    * [Using Build Script](#using-build-script) 
+    * [Using CLion](#using-clion)
   * [Compiling Resources](#compiling-resources)
-  * [Running Executable](#running-executable)
 
 ## Dependencies
 
+### Visual Studio 17 2022
+
+Required for compiling Windows builds. Can be downloaded from official website.
+
+### XCode
+
+Required for compiling Mac and iOS builds. Can be downloaded from AppStore.
+
+### Android Studio
+
+Required for compiling Android builds. Can be downloaded from official website.
+
+* Android SDK and NDK must also be installed
+* Set `JAVA_HOME` environment variable
+  * Example: `setx JAVA_HOME C:\Program Files\Android\Android Studio\jbr`
+
+### CMake
+
+Required for building. Comes packaged with CLion or can be downloaded from official website.
+
+* Add CMake bin path to `PATH` environment variable
+  * Example: `setx PATH %PATH%;C:\Program Files\JetBrains\CLion 2023.3.6\bin\cmake\win\x64\bin`
+
+### Ninja
+
+Required for compiling Android builds. Comes packaged with CLion or can be downloaded from [official website](https://ninja-build.org/).
+
+* Add Ninja bin path to `PATH` environment variable
+  * Example: `setx PATH %PATH%;C:\Program Files\JetBrains\CLion 2023.3.6\bin\ninja\win\x64`
+
 ### OpenGL
 
-* OSX
-    * Should be installed by default
+GLEW is required for Windows builds.
 
-* Windows
-    * Download [GLEW binaries](http://glew.sourceforge.net/index.html)
-    * Place DLL files to `C:\Windows\System32` directory
-    * Add paths to header files and lib directories to `CMAKE_PREFIX_PATH`
+  * Download [GLEW binaries](http://glew.sourceforge.net/index.html)
+  * Place DLL files to `C:\Windows\System32` directory
+  * Add paths to header files and lib directories to `CMAKE_PREFIX_PATH`
+    * Example: `setx CMAKE_PREFIX_PATH %CMAKE_PREFIX_PATH%;C:\Workspace\glew-2.1.0-win32\glew-2.1.0\include;C:\Workspace\glew-2.1.0-win32\glew-2.1.0\lib\Release\x64;`
 
 ### DXC
+
+Required for compiling shaders for all platforms.
 
 * OSX
   * No additional actions needed, library is already provided
@@ -36,14 +71,6 @@ This pages lists external dependencies that are required to build the ending, an
   * Download a release from [DXC GitHub](https://github.com/microsoft/DirectXShaderCompiler)
   * Place DLL files to `C:\Windows\System32`
 
-### Environment variables example
-
-Here is an example of how `CMAKE_PREFIX_PATH` environment variable should look in order for cmake to find all dependencies
-
-```
-set CMAKE_PREFIX_PATH=F:/glew-2.1.0/include;F:/glew-2.1.0/lib/Release/x64;
-```
-
 ## How to build
 
 First, initialize all git submodules
@@ -52,9 +79,20 @@ First, initialize all git submodules
 git submodule update --recursive --remote
 ```
 
-### Using CLion
+### Building Executable
 
-This is the recommended way to compile
+#### Using Build Script
+
+After installing all dependencies for required platform, run `build_scripts/build_executable.sh` script.
+
+This scripts will compile `TextureCompressor`, `ShaderCompiler` and `RenderEngineLauncher` targets and build resources inside `build_resources` directory
+with models, compressed textures and shaders translated for target graphics API.
+
+Executable can be found at:
+* Windows - `cmake-build-release-win64/launchers/windows_launcher/Release`
+* Android - `launchers/android_launcher/AndroidStudio/app/build/outputs/apk/release`
+
+#### Using CLion
 
 1. Select CMake Profile according to the platform and build configuration:
    * Windows
@@ -71,36 +109,13 @@ This is the recommended way to compile
      * Release-iOS
 
 2. Compile `ShaderCompiler`, `TextureCompressor` and `RenderEngineLauncher` targets
+   * Note, that `ShaderCompiler` and `TextureCompressor` targets are not available for iOS and Android, they have to be built with MacOS or Windows profile
 
-Note, that `ShaderCompiler` and `TextureCompressor` targets are not available for iOS, they have to be built with MacOS profile 
-
-### Using Terminal
-
-Alternatively, run these terminal commands inside source directory
-
-```
-cmake -S . -B cmake-build-release
-```
-
-Directory `cmake-build-release` will be created.
-
-```
-make -C cmake-build-release
-```
-
-This will compile all targets, so there is no need to specify like with CLion
+3. Run executable
+   * On Windows - launch executable in `cmake-build-release-win64/launchers/windows_launcher/Release`
+   * On Android - open Android Studio project in `launchers/android_launcher/AndroidStudio`, attach device and press Start
+   * On Mac - open XCode project in `launcher/apple_launcher/xcode`, select Mac or iOS target and press Start
 
 ### Compiling Resources
 
-After compiling required targets, run `build_scripts/build_resources.sh` script.
-
-It will generate `build_resources` directory with models, compressed textures 
-and shaders translated for target graphics API.
-
-### Running Executable
-
-On Windows, just launch .exe in `cmake-build-release/launchers/windows_launcher`
-
-On Android, open Android Studio project in `launchers/android_launcher/AndroidStudio` and press Start
-
-On Mac, open XCode project in `launchers/apple_launcher/xcode` and press Start
+To manually recompile resources, run `build_scripts/build_resources.sh` script. They will automatically get included into new build when running from CLion, Android Studio or XCode

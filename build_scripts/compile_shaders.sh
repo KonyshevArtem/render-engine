@@ -1,21 +1,23 @@
 if [ -z "$1" ]; then
-    echo "Platform (windows, apple, android): "; read PLATFORM
+    echo "Platform (windows, mac, ios, android): "; read PLATFORM
 else
     PLATFORM=$1
 fi
 
 OS=$(uname)
 if [ "$OS" = "Darwin" ]; then
-    EXECUTABLE="../cmake-build-release/shader_compiler/ShaderCompiler.app/Contents/MacOS/ShaderCompiler"
+    EXECUTABLE="../cmake-build-release-mac-arm64/shader_compiler/ShaderCompiler.app/Contents/MacOS/ShaderCompiler"
 else
-    EXECUTABLE="../cmake-build-release/shader_compiler/ShaderCompiler.exe"
+    EXECUTABLE="../cmake-build-release-win64/shader_compiler/Release/ShaderCompiler.exe"
 fi
 
 if [ "$PLATFORM" = "windows" ]; then
     BACKEND="opengl"
 elif [ "$PLATFORM" = "android" ]; then
     BACKEND="gles"
-elif [ "$PLATFORM" = "apple" ]; then
+elif [ "$PLATFORM" = "mac" ]; then
+    BACKEND="metal"
+elif [ "$PLATFORM" = "ios" ]; then
     BACKEND="metal"
 fi
 

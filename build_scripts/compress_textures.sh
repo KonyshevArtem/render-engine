@@ -6,7 +6,7 @@ fi
 
 OS=$(uname)
 if [ "$OS" = "Darwin" ]; then
-    EXECUTABLE="../cmake-build-release-mac-win64/texture_compressor/TextureCompressor.app/Contents/MacOS/TextureCompressor"
+    EXECUTABLE="../cmake-build-release-mac-arm64/texture_compressor/TextureCompressor.app/Contents/MacOS/TextureCompressor"
 else
     EXECUTABLE="../cmake-build-release-win64/texture_compressor/Release/TextureCompressor.exe"
 fi

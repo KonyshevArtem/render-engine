@@ -92,6 +92,8 @@ Executable can be found at:
 * Windows - `cmake-build-release-win64/launchers/windows_launcher/Release`
 * Android - `launchers/android_launcher/AndroidStudio/app/build/outputs/apk/release`
 
+For Mac/iOS - open XCode project at `launchers/apple_launcher/xcode`, select Mac or iOS target and press Start
+
 #### Using CLion
 
 1. Select CMake Profile according to the platform and build configuration:

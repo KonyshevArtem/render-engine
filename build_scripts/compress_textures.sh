@@ -1,21 +1,23 @@
 if [ -z "$1" ]; then
-    echo "Platform (windows, apple, android): "; read PLATFORM
+    echo "Platform (windows, mac, ios, android): "; read PLATFORM
 else
     PLATFORM=$1
 fi
 
 OS=$(uname)
 if [ "$OS" = "Darwin" ]; then
-    EXECUTABLE="../cmake-build-release/texture_compressor/TextureCompressor.app/Contents/MacOS/TextureCompressor"
+    EXECUTABLE="../cmake-build-release-mac-arm64/texture_compressor/TextureCompressor.app/Contents/MacOS/TextureCompressor"
 else
-    EXECUTABLE="../cmake-build-release/texture_compressor/TextureCompressor.exe"
+    EXECUTABLE="../cmake-build-release-win64/texture_compressor/Release/TextureCompressor.exe"
 fi
 
 if [ "$PLATFORM" = "windows" ]; then
     FORMAT="BC7"
 elif [ "$PLATFORM" = "android" ]; then
     FORMAT="ASTC_6X6"
-elif [ "$PLATFORM" = "apple" ]; then
+elif [ "$PLATFORM" = "mac" ]; then
+    FORMAT="ASTC_6X6"
+elif [ "$PLATFORM" = "ios" ]; then
     FORMAT="ASTC_6X6"
 fi
 
@@ -42,7 +44,7 @@ $EXECUTABLE Texture2D $FORMAT 0 1 $OUTPUT_PATH/water            $INPUT_PATH/wate
 $EXECUTABLE Texture2D $FORMAT 1 1 $OUTPUT_PATH/water_normal     $INPUT_PATH/water_normal.png
 $EXECUTABLE Texture2D $FORMAT 0 1 $OUTPUT_PATH/window_cube      $INPUT_PATH/window_cube.png
 
-echo "Finished compressing textures for ${PLATFORM} ${FORMAT}"; read _
+echo "Finished compressing textures for ${PLATFORM} ${FORMAT}";
 if [ -z "$1" ]; then
     read _
 fi

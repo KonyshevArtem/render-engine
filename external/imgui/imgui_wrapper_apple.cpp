@@ -58,6 +58,8 @@ namespace ImGuiWrapper
         commandEncoder->endEncoding();
         commandBuffer->commit();
     }
+
+    void ProcessMessage(void* data) {}
 }
 
 #else
@@ -68,6 +70,7 @@ namespace ImGuiWrapper
     void Shutdown() {}
     void NewFrame() {}
     void Render() {}
+    void ProcessMessage(void* data) {}
 }
 
 #endif

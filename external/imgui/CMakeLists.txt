@@ -38,11 +38,11 @@ if (${RENDER_ENGINE_WINDOWS_PLATFORM})
                 IMGUI_WRAPPER_SOURCES
                 imgui/backends/imgui_impl_opengl3.h
                 imgui/backends/imgui_impl_opengl3.cpp
-                imgui/backends/imgui_impl_glfw.h
-                imgui/backends/imgui_impl_glfw.cpp
+                imgui/backends/imgui_impl_win32.h
+                imgui/backends/imgui_impl_win32.cpp
         )
 
-        set(IMGUI_WRAPPER_LIBS ImGui glfw)
+        set(IMGUI_WRAPPER_LIBS ImGui)
         set(IMGUI_WRAPPER_DEFINES ENABLE_IMGUI)
     endif ()
 

@@ -1,6 +1,7 @@
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 
     add_executable(RenderEngineLauncher main.cpp)
+    set_target_properties(RenderEngineLauncher PROPERTIES WIN32_EXECUTABLE TRUE)
 
     target_link_libraries(RenderEngineLauncher RenderEngine)
     target_include_directories(RenderEngineLauncher PUBLIC ${PROJECT_SOURCE_DIR}/engine_framework)

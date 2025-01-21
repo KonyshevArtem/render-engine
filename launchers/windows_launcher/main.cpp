@@ -1,76 +1,140 @@
 #include "engine_framework.h"
-#include <GLFW/glfw3.h>
+#include "imgui_wrapper.h"
 
-GLFWwindow *s_Window = nullptr;
+#include <windows.h>
+#include <windowsx.h>
 
-void KeyboardFunction(GLFWwindow *window, int keycode, int scancode, int action, int mods)
+LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    if (action == GLFW_PRESS || action == GLFW_RELEASE)
+    struct Data
     {
-        EngineFramework::ProcessKeyPress(static_cast<char>(keycode), action == GLFW_PRESS);
-    }
-}
+        HWND Window;
+        UINT Message;
+        WPARAM WParam;
+        LPARAM LParam;
+    };
 
-void MouseClickFunction(GLFWwindow* window, int button, int action, int mods)
-{
-    EngineFramework::ProcessMouseClick(button, action == GLFW_PRESS);
-}
+    Data data{window, message, wParam, lParam};
+    ImGuiWrapper::ProcessMessage(&data);
 
-void MouseMoveFunction(GLFWwindow *window, double x, double y)
-{
-    EngineFramework::ProcessMouseMove(static_cast<float>(x), static_cast<float>(y));
-}
-
-int main(int argc, char **argv)
-{
-    if (!glfwInit())
+    auto getMouseKeyIndex = [](UINT msg)
     {
-        return 1;
-    }
+        if (msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP)
+            return 0;
+        if (msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP)
+            return 1;
+        if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP)
+            return 2;
+        return -1;
+    };
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR_VERSION);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_MINOR_VERSION);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    int width = 1920;
-    int height = 1080;
-
-    s_Window = glfwCreateWindow(width, height, "RenderEngine", nullptr, nullptr);
-    if (!s_Window)
+    auto isMouseButtonDown = [](UINT msg)
     {
-        return 1;
-    }
+        return msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN;
+    };
 
-    glfwMakeContextCurrent(s_Window);
-    glfwSwapInterval(1);
-
-    glfwSetMouseButtonCallback(s_Window, MouseClickFunction);
-    glfwSetCursorPosCallback(s_Window, MouseMoveFunction);
-    glfwSetKeyCallback(s_Window, KeyboardFunction);
-
-    EngineFramework::Initialize(nullptr, s_Window, "OpenGL");
-
-    while (!glfwWindowShouldClose(s_Window))
+    switch (message)
     {
-        if (EngineFramework::ShouldCloseWindow())
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP:
+            EngineFramework::ProcessMouseClick(getMouseKeyIndex(message), isMouseButtonDown(message));
+            return 0;
+        case WM_KEYDOWN:
+        case WM_KEYUP:
+            EngineFramework::ProcessKeyPress(static_cast<char>(wParam), message == WM_KEYDOWN);
+            return 0;
+        case WM_MOUSEMOVE:
         {
-            break;
+            int x = GET_X_LPARAM(lParam);
+            int y = GET_Y_LPARAM(lParam);
+            EngineFramework::ProcessMouseMove(static_cast<float>(x), static_cast<float>(y));
+            return 0;
         }
+        default:
+            return DefWindowProc(window, message, wParam, lParam);
+    }
+}
 
-        glfwPollEvents();
-        glfwGetFramebufferSize(s_Window, &width, &height);
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
+{
+    WNDCLASS windowClass{};
+    windowClass.style = CS_OWNDC;
+    windowClass.lpfnWndProc = WindowProc;
+    windowClass.hInstance = hInstance;
+    windowClass.lpszClassName = "RenderEngine Window Class";
+    RegisterClass(&windowClass);
 
-        EngineFramework::TickMainLoop(width, height);
+    HWND window = CreateWindowEx(
+            0,
+            windowClass.lpszClassName,
+            "Render Engine",
+            WS_OVERLAPPEDWINDOW,
+            CW_USEDEFAULT, CW_USEDEFAULT, 1920, 1080,
+            nullptr,
+            nullptr,
+            hInstance,
+            nullptr
+    );
 
-        glfwSwapBuffers(s_Window);
+    if (!window)
+        return 0;
+
+    HDC deviceContext = GetDC(window);
+
+    PIXELFORMATDESCRIPTOR pixelFormatDescriptor = {};
+    pixelFormatDescriptor.nSize = sizeof(pixelFormatDescriptor);
+    pixelFormatDescriptor.nVersion = 1;
+    pixelFormatDescriptor.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
+    pixelFormatDescriptor.cColorBits = 32;
+    pixelFormatDescriptor.cDepthBits = 24;
+    pixelFormatDescriptor.iLayerType = PFD_MAIN_PLANE;
+    int pixelFormat = ChoosePixelFormat(deviceContext, &pixelFormatDescriptor);
+    SetPixelFormat(deviceContext, pixelFormat, &pixelFormatDescriptor);
+
+    HGLRC glContext = wglCreateContext(deviceContext);
+    wglMakeCurrent(deviceContext, glContext);
+
+    ShowWindow(window, nCmdShow);
+
+    EngineFramework::Initialize(nullptr, window, "OpenGL");
+
+    MSG msg = {};
+    while (msg.message != WM_QUIT)
+    {
+        if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        else
+        {
+            if (EngineFramework::ShouldCloseWindow())
+                PostQuitMessage(0);
+
+            RECT rect;
+            if (GetWindowRect(window, &rect))
+            {
+                int width = rect.right - rect.left;
+                int height = rect.bottom - rect.top;
+                EngineFramework::TickMainLoop(width, height);
+            }
+
+            SwapBuffers(deviceContext);
+        }
     }
 
-    EngineFramework::Shutdown();
-
-    // Don't call those to keep OpenGL context, so objects can be destroyed
-    // TODO: refactor when resources are properly managed
-    //glfwDestroyWindow(s_Window);
-    //glfwTerminate();
+    wglMakeCurrent(nullptr, nullptr);
+    wglDeleteContext(glContext);
+    ReleaseDC(window, deviceContext);
+    DestroyWindow(window);
 
     return 0;
 }

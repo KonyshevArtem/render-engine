@@ -9,6 +9,7 @@ namespace ImGuiWrapper
     void Shutdown();
     void NewFrame();
     void Render();
+    void ProcessMessage(void* data);
 }
 
 #endif //RENDER_ENGINE_IMGUI_WRAPPER_H

@@ -1,4 +1,3 @@
-add_subdirectory(glfw)
 add_subdirectory(metal-cpp)
 add_subdirectory(OpenFBX)
 add_subdirectory(imgui)

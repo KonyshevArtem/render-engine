@@ -2,7 +2,6 @@
 
 This pages lists all external tools that are used by Render Engine:
 
-* [GLFW](https://www.glfw.org)
 * [Dear ImGui](https://github.com/ocornut/imgui)
 * [OpenFBX](https://github.com/nem0/OpenFBX)
 * [Cuttlefish](https://github.com/akb825/Cuttlefish)

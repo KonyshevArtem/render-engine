@@ -1,6 +1,7 @@
 #include "graphics_backend_api_base.h"
 #include "graphics_backend_api_opengl.h"
 #include "graphics_backend_api_metal.h"
+#include "graphics_backend_api_dx12.h"
 #include "enums/texture_internal_format.h"
 #include "enums/texture_type.h"
 
@@ -17,6 +18,13 @@ GraphicsBackendBase *GraphicsBackendBase::Create(const std::string &backend)
     if (backend == "Metal")
     {
         return new GraphicsBackendMetal();
+    }
+#endif
+
+#ifdef RENDER_BACKEND_DX12
+    if (backend == "DX12")
+    {
+        return new GraphicsBackendDX12();
     }
 #endif
 

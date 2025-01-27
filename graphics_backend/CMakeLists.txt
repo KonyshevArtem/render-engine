@@ -30,6 +30,8 @@ add_library(GraphicsBackend
         graphics_backend_implementations/graphics_backend_api_opengl.h
         graphics_backend_implementations/graphics_backend_api_metal.cpp
         graphics_backend_implementations/graphics_backend_api_metal.h
+        graphics_backend_implementations/graphics_backend_api_dx12.cpp
+        graphics_backend_implementations/graphics_backend_api_dx12.h
         types/graphics_backend_vertex_attribute_descriptor.h
         types/graphics_backend_resource_bindings.h
         helpers/opengl_helpers.h
@@ -51,12 +53,15 @@ add_library(GraphicsBackend
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 
-    # glew for windows
+    # opengl for windows
     find_package(GLEW REQUIRED)
     target_include_directories(GraphicsBackend PUBLIC ${GLEW_INCLUDE_DIRS})
     target_link_libraries(GraphicsBackend ${GLEW_LIBRARIES} glu32.lib opengl32.lib)
 
-    target_compile_definitions(GraphicsBackend PUBLIC RENDER_BACKEND_OPENGL OPENGL_MAJOR_VERSION=4 OPENGL_MINOR_VERSION=6)
+    # dx12 for windows
+    target_link_libraries(GraphicsBackend DirectX-Headers DirectX-Guids d3d12.lib dxgi.lib d3dcompiler.lib dxguid.lib)
+
+    target_compile_definitions(GraphicsBackend PUBLIC RENDER_BACKEND_OPENGL RENDER_BACKEND_DX12 OPENGL_MAJOR_VERSION=4 OPENGL_MINOR_VERSION=6)
 
 elseif (${RENDER_ENGINE_APPLE_PLATFORM})
 

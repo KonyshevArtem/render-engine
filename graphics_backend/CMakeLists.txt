@@ -49,7 +49,10 @@ add_library(GraphicsBackend
         enums/fence_type.h
         types/graphics_backend_fence.h
         types/graphics_backend_profiler_marker.h
-        enums/gpu_queue.h)
+        enums/gpu_queue.h
+        enums/vertex_attribute_semantic.h
+        helpers/dx12_helpers.cpp
+        helpers/dx12_helpers.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

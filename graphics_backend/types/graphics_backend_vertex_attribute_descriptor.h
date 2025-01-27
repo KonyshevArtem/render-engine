@@ -2,10 +2,12 @@
 #define RENDER_ENGINE_GRAPHICS_BACKEND_VERTEX_ATTRIBUTE_DESCRIPTOR_H
 
 #include "enums/vertex_attribute_data_type.h"
+#include "enums/vertex_attribute_semantic.h"
 #include <cstdint>
 
 struct GraphicsBackendVertexAttributeDescriptor
 {
+    VertexAttributeSemantic Semantic;
     uint8_t Index;
     uint8_t Dimensions;
     VertexAttributeDataType DataType;

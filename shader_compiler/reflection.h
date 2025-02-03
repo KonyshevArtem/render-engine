@@ -114,6 +114,18 @@ void HandleConstantBufferReflection(const _D3D12_SHADER_INPUT_BIND_DESC& inputDe
     }
 }
 
+void HandleStructuredBufferReflection(const _D3D12_SHADER_INPUT_BIND_DESC& inputDesc, const CComPtr<ID3D12ShaderReflection>& reflection,
+                                      std::unordered_map<std::string, BufferDesc>& buffers, bool isVertexShader)
+{
+    if (!TrySetBinding(buffers, inputDesc.Name, inputDesc.BindPoint, isVertexShader))
+    {
+        BufferDesc bufferDesc{};
+        SetBinding(bufferDesc.Bindings, inputDesc.BindPoint, isVertexShader);
+
+        buffers[inputDesc.Name] = std::move(bufferDesc);
+    }
+}
+
 void HandleConstantBufferReflection(spirv_cross::Compiler* compiler, const spirv_cross::Resource& resource, int index, std::unordered_map<std::string, BufferDesc>& buffers, bool isVertexShader, GraphicsBackend backend)
 {
     int32_t bindPoint;
@@ -238,6 +250,10 @@ void ExtractReflectionFromDXC(const CComPtr<IDxcResult> &results, const CComPtr<
             else if (inputDesc.Type == D3D_SIT_SAMPLER)
             {
                 HandleGenericReflection(inputDesc, reflection.Samplers, isVertexShader);
+            }
+            else if (inputDesc.Type == D3D_SIT_STRUCTURED)
+            {
+                HandleStructuredBufferReflection(inputDesc, pReflection, reflection.Buffers, isVertexShader);
             }
         }
     }

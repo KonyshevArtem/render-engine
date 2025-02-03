@@ -11,7 +11,8 @@ CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CCom
     std::wstring backendDefine = GetBackendDefine(backend);
 
     std::vector<LPCWSTR> vszArgs;
-    vszArgs.push_back(L"-spirv");
+    if (backend != GRAPHICS_BACKEND_DX12)
+        vszArgs.push_back(L"-spirv");
     vszArgs.push_back(L"-E");
     vszArgs.push_back(isVertexShader ? L"vertexMain" : L"fragmentMain");
     vszArgs.push_back(L"-T");
@@ -104,7 +105,7 @@ void WriteShaderBinary(const std::filesystem::path &outputDirPath, const CComPtr
     results->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), nullptr);
     if (pShader != nullptr)
     {
-        std::filesystem::path outputPath = outputDirPath / (isVertexShader ? "vs.bin" : "ps.bin");
+        std::filesystem::path outputPath = outputDirPath / (isVertexShader ? "vs" : "ps");
         std::filesystem::create_directories(outputPath.parent_path());
 
         FILE *fp = fopen(outputPath.string().c_str(), "wb");
@@ -166,17 +167,29 @@ int main(int argc, char **argv)
     CComPtr<IDxcResult> vertexDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, defines, true);
     CComPtr<IDxcResult> fragmentDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, defines, false);
 
-    spirv_cross::Compiler* vertexSPIRV = CompileSPIRV(vertexDXC, backend, true);
-    spirv_cross::Compiler* fragmentSPIRV = CompileSPIRV(fragmentDXC, backend, false);
-
+    Reflection reflection;
     std::filesystem::path outputDirPath = std::filesystem::path(argv[2]) / GetBackendLiteral(backend) / definesHash;
 
-    WriteShaderSource(outputDirPath, vertexSPIRV, true);
-    WriteShaderSource(outputDirPath, fragmentSPIRV, false);
+    if (backend == GRAPHICS_BACKEND_DX12)
+    {
+        WriteShaderBinary(outputDirPath, vertexDXC, true);
+        WriteShaderBinary(outputDirPath, fragmentDXC, false);
 
-    Reflection reflection;
-    ExtractReflectionFromSPIRV(vertexSPIRV, true, reflection, backend);
-    ExtractReflectionFromSPIRV(fragmentSPIRV, false, reflection, backend);
+        ExtractReflectionFromDXC(vertexDXC, pUtils, true, reflection);
+        ExtractReflectionFromDXC(fragmentDXC, pUtils, false, reflection);
+    }
+    else
+    {
+        spirv_cross::Compiler *vertexSPIRV = CompileSPIRV(vertexDXC, backend, true);
+        spirv_cross::Compiler *fragmentSPIRV = CompileSPIRV(fragmentDXC, backend, false);
+
+        WriteShaderSource(outputDirPath, vertexSPIRV, true);
+        WriteShaderSource(outputDirPath, fragmentSPIRV, false);
+
+        ExtractReflectionFromSPIRV(vertexSPIRV, true, reflection, backend);
+        ExtractReflectionFromSPIRV(fragmentSPIRV, false, reflection, backend);
+    }
+
     WriteReflection(outputDirPath, reflection);
 
     return 0;

@@ -19,6 +19,7 @@
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_fence.h"
 #include "types/graphics_backend_profiler_marker.h"
+#include "types/graphics_backend_sampler_info.h"
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 
@@ -617,8 +618,17 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
     return shaderObject;
 }
 
+GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name)
+{
+    return {};
+}
+
 GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
-                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name)
+                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
+                                                            std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
+                                                            std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
+                                                            std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
+                                                            const std::string& name)
 {
     GraphicsBackendProgram program{};
     program.Program = glCreateProgram();

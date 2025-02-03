@@ -88,7 +88,7 @@ const GraphicsBackendProgram &ShaderPass::CreatePSO(std::vector<GraphicsBackendS
     colorAttachmentDescriptor.BlendingEnabled = blendInfo.Enabled;
     colorAttachmentDescriptor.IsLinear = isLinear;
 
-    auto program = GraphicsBackend::Current()->CreateProgram(shaders, colorAttachmentDescriptor, depthFormat, vertexAttributes, name);
+    auto program = GraphicsBackend::Current()->CreateProgram(shaders, colorAttachmentDescriptor, depthFormat, vertexAttributes, m_Textures, m_Buffers, m_Samplers, name);
 
     size_t hash = GetPSOHash(VertexAttributes::GetHash(vertexAttributes), colorFormat, isLinear, depthFormat);
     m_Programs[hash] = program;

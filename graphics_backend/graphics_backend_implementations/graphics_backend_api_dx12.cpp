@@ -19,6 +19,7 @@
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_fence.h"
 #include "types/graphics_backend_profiler_marker.h"
+#include "types/graphics_backend_sampler_info.h"
 #include "helpers/dx12_helpers.h"
 #include "debug.h"
 
@@ -34,6 +35,12 @@ ID3D12DescriptorHeap* s_RenderTargetDescriptorHeap;
 UINT s_RenderTargetDescriptorSize;
 
 ID3D12Resource* s_RenderTargets[GraphicsBackend::GetMaxFramesInFlight()];
+
+struct DX12ShaderObject
+{
+    ID3D12PipelineState* PSO;
+    ID3D12RootSignature* RootSignature;
+};
 
 void GetHardwareAdapter(IDXGIFactory7* pFactory, IDXGIAdapter4** ppAdapter)
 {
@@ -241,8 +248,24 @@ GraphicsBackendShaderObject GraphicsBackendDX12::CompileShader(ShaderType shader
     return shader;
 }
 
+GraphicsBackendShaderObject GraphicsBackendDX12::CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t> &shaderBinary, const std::string &name)
+{
+    ID3DBlob* blob;
+
+    D3DCreateBlob(shaderBinary.size(), &blob);
+    memcpy(blob->GetBufferPointer(), shaderBinary.data(), shaderBinary.size());
+
+    GraphicsBackendShaderObject shader{};
+    shader.ShaderObject = reinterpret_cast<uint64_t>(blob);
+    return shader;
+}
+
 GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<GraphicsBackendShaderObject>& shaders, const GraphicsBackendColorAttachmentDescriptor& colorAttachmentDescriptor, TextureInternalFormat depthFormat,
-                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, const std::string& name)
+                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes,
+                                                            std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
+                                                            std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
+                                                            std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
+                                                            const std::string& name)
 {
     std::vector<D3D12_INPUT_ELEMENT_DESC> dxVertexAttributes;
     for (const auto& attr: vertexAttributes)
@@ -259,23 +282,118 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<Grap
         dxVertexAttributes.push_back(desc);
     }
 
-//    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-//    psoDesc.InputLayout = { dxVertexAttributes.data(), static_cast<UINT>(dxVertexAttributes.size()) };
-//    psoDesc.pRootSignature = m_rootSignature.Get();
-//    psoDesc.VS = { reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
-//    psoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
-//    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-//    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-//    psoDesc.DepthStencilState.DepthEnable = FALSE;
-//    psoDesc.DepthStencilState.StencilEnable = FALSE;
-//    psoDesc.SampleMask = UINT_MAX;
-//    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-//    psoDesc.NumRenderTargets = 1;
-//    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-//    psoDesc.SampleDesc.Count = 1;
-//    s_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
+    auto GetShaderRegister = [](const GraphicsBackendResourceBindings& bindings) -> UINT
+    {
+        return bindings.VertexIndex != -1 ? bindings.VertexIndex : bindings.FragmentIndex;
+    };
 
-    return {};
+    auto GetShaderVisibility = [](const GraphicsBackendResourceBindings& bindings) -> D3D12_SHADER_VISIBILITY
+    {
+        const bool isVertex = bindings.VertexIndex != -1;
+        const bool isFragment = bindings.FragmentIndex != -1;
+
+        if (isVertex && isFragment)
+            return D3D12_SHADER_VISIBILITY_ALL;
+        return isVertex ? D3D12_SHADER_VISIBILITY_VERTEX : D3D12_SHADER_VISIBILITY_PIXEL;
+    };
+
+    std::vector<D3D12_ROOT_PARAMETER1> rootParameters;
+    rootParameters.reserve(textures.size() + buffers.size() + samplers.size());
+
+    for (const auto& pair: buffers)
+    {
+        const std::shared_ptr<GraphicsBackendBufferInfo>& buffer = pair.second;
+        const GraphicsBackendResourceBindings& bindings = buffer->GetBinding();
+        const bool isConstant = buffer->GetSize() > 0;
+
+        D3D12_ROOT_PARAMETER1 parameter{};
+        parameter.ParameterType = isConstant ? D3D12_ROOT_PARAMETER_TYPE_CBV : D3D12_ROOT_PARAMETER_TYPE_SRV;
+        parameter.Descriptor.ShaderRegister = GetShaderRegister(bindings);
+        parameter.ShaderVisibility = GetShaderVisibility(bindings);
+        rootParameters.push_back(parameter);
+    }
+
+    for (const auto& pair: textures)
+    {
+        const GraphicsBackendTextureInfo& texture = pair.second;
+        const GraphicsBackendResourceBindings& bindings = texture.TextureBindings;
+
+        D3D12_DESCRIPTOR_RANGE1* range = new D3D12_DESCRIPTOR_RANGE1();
+        range->RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        range->BaseShaderRegister = GetShaderRegister(bindings);
+        range->NumDescriptors = 1;
+
+        D3D12_ROOT_PARAMETER1 parameter{};
+        parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        parameter.DescriptorTable.pDescriptorRanges = range;
+        parameter.DescriptorTable.NumDescriptorRanges = 1;
+        rootParameters.push_back(parameter);
+    }
+
+    for (const auto& pair: samplers)
+    {
+        const GraphicsBackendSamplerInfo& sampler = pair.second;
+        const GraphicsBackendResourceBindings& bindings = sampler.Bindings;
+
+        D3D12_DESCRIPTOR_RANGE1* range = new D3D12_DESCRIPTOR_RANGE1();
+        range->RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+        range->BaseShaderRegister = GetShaderRegister(bindings);
+        range->NumDescriptors = 1;
+
+        D3D12_ROOT_PARAMETER1 parameter{};
+        parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        parameter.DescriptorTable.pDescriptorRanges = range;
+        parameter.DescriptorTable.NumDescriptorRanges = 1;
+        rootParameters.push_back(parameter);
+    }
+
+    D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc{};
+    rootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
+    rootSignatureDesc.Desc_1_1.NumParameters = rootParameters.size();
+    rootSignatureDesc.Desc_1_1.pParameters = rootParameters.data();
+    rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+    ID3DBlob* rootSignatureBlob;
+    ID3DBlob* errorBlob;
+    if (!SUCCEEDED(D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &rootSignatureBlob, &errorBlob)))
+        throw std::runtime_error(static_cast<const char *>(errorBlob->GetBufferPointer()));
+
+    ID3D12RootSignature* rootSignature;
+    s_Device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+
+    ID3DBlob* vertexBlob = reinterpret_cast<ID3DBlob*>(shaders[0].ShaderObject);
+    ID3DBlob* fragmentBlob = reinterpret_cast<ID3DBlob*>(shaders[1].ShaderObject);
+
+    D3D12_BLEND_DESC blendDescriptor = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    blendDescriptor.RenderTarget[0].BlendEnable = colorAttachmentDescriptor.BlendingEnabled;
+    blendDescriptor.RenderTarget[0].SrcBlend = DX12Helpers::ToBlendFactor(colorAttachmentDescriptor.SourceFactor);
+    blendDescriptor.RenderTarget[0].DestBlend = DX12Helpers::ToBlendFactor(colorAttachmentDescriptor.DestinationFactor);
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
+    psoDesc.InputLayout = { dxVertexAttributes.data(), static_cast<UINT>(dxVertexAttributes.size()) };
+    psoDesc.pRootSignature = rootSignature;
+    psoDesc.VS = { reinterpret_cast<UINT8*>(vertexBlob->GetBufferPointer()), vertexBlob->GetBufferSize() };
+    psoDesc.PS = { reinterpret_cast<UINT8*>(fragmentBlob->GetBufferPointer()), fragmentBlob->GetBufferSize() };
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.BlendState = blendDescriptor;
+    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.SampleMask = UINT_MAX;
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    psoDesc.NumRenderTargets = 1;
+    psoDesc.RTVFormats[0] = DX12Helpers::ToTextureInternalFormat(colorAttachmentDescriptor.Format, colorAttachmentDescriptor.IsLinear);
+    psoDesc.DSVFormat = DX12Helpers::ToTextureInternalFormat(depthFormat, true);
+    psoDesc.SampleDesc.Count = 1;
+
+    ID3D12PipelineState* pso;
+    s_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso));
+
+    DX12ShaderObject* shaderObject = new DX12ShaderObject();
+    shaderObject->PSO = pso;
+    shaderObject->RootSignature = rootSignature;
+
+    GraphicsBackendProgram program{};
+    program.Program = reinterpret_cast<uint64_t>(shaderObject);
+    return program;
 }
 
 void GraphicsBackendDX12::DeleteShader(GraphicsBackendShaderObject shader)

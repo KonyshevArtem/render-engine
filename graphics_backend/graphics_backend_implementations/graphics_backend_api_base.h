@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 enum class TextureType;
 enum class TextureInternalFormat : uint16_t;
@@ -39,6 +40,7 @@ struct GraphicsBackendRenderTargetDescriptor;
 struct GraphicsBackendDepthStencilState;
 struct GraphicsBackendColorAttachmentDescriptor;
 struct GraphicsBackendFence;
+struct GraphicsBackendSamplerInfo;
 
 class GraphicsBackendBase
 {
@@ -83,7 +85,12 @@ public:
     virtual void SetViewport(int x, int y, int width, int height, float near, float far) = 0;
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) = 0;
-    virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) = 0;
+    virtual GraphicsBackendShaderObject CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name) = 0;
+    virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
+                                                 std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
+                                                 std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
+                                                 std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
+                                                 const std::string& name) = 0;
     virtual void DeleteShader(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;

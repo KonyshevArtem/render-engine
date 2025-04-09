@@ -23,36 +23,169 @@
 #include "helpers/dx12_helpers.h"
 #include "debug.h"
 
-IDXGISwapChain4* s_SwapChain;
-
-ID3D12Device* s_Device;
-ID3D12CommandQueue* s_RenderQueue;
-ID3D12CommandQueue* s_CopyQueue;
-ID3D12CommandAllocator* s_RenderCommandAllocator;
-ID3D12CommandAllocator* s_CopyCommandAllocator;
-
-ID3D12DescriptorHeap* s_RenderTargetDescriptorHeap;
-UINT s_RenderTargetDescriptorSize;
-
-ID3D12Resource* s_RenderTargets[GraphicsBackend::GetMaxFramesInFlight()];
-
-struct DX12ShaderObject
+namespace DX12Local
 {
-    ID3D12PipelineState* PSO;
-    ID3D12RootSignature* RootSignature;
-};
-
-void GetHardwareAdapter(IDXGIFactory7* pFactory, IDXGIAdapter4** ppAdapter)
-{
-    for (UINT i = 0; pFactory->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(ppAdapter)) != DXGI_ERROR_NOT_FOUND; ++i)
+    struct RenderTargetState
     {
-        DXGI_ADAPTER_DESC3 desc;
-        (*ppAdapter)->GetDesc3(&desc);
-        if ((desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) != 0)
-            continue;
+        bool IsEnabled;
+        bool NeedClear;
+    };
 
-        wprintf(L"Adapter: %s\n", desc.Description);
-        break;
+    struct ShaderObject
+    {
+        ID3D12PipelineState* PSO;
+        ID3D12RootSignature* RootSignature;
+    };
+
+    struct PerFrameData
+    {
+        ID3D12CommandAllocator* RenderCommandAllocator;
+        ID3D12CommandAllocator* CopyCommandAllocator;
+
+        ID3D12GraphicsCommandList6* RenderCommandList;
+        ID3D12GraphicsCommandList* CopyCommandList;
+
+        ID3D12Fence* RenderQueueFence;
+        ID3D12Fence* CopyQueueFence;
+        HANDLE RenderQueueFenceEvent;
+        HANDLE CopyQueueFenceEvent;
+        uint64_t FenceValue;
+    };
+
+    IDXGISwapChain4* s_SwapChain;
+
+    ID3D12Device5* s_Device;
+    ID3D12CommandQueue* s_RenderQueue;
+    ID3D12CommandQueue* s_CopyQueue;
+    ID3D12InfoQueue* s_InfoQueue;
+
+    ID3D12DescriptorHeap* s_RenderTargetDescriptorHeap;
+    UINT s_RenderTargetDescriptorSize;
+
+    float s_ClearColor[4];
+    double s_ClearDepth;
+    RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
+
+    ID3D12Resource* s_RenderTargets[GraphicsBackend::GetMaxFramesInFlight()];
+    PerFrameData s_PerFrameData[GraphicsBackend::GetMaxFramesInFlight()];
+
+    void GetHardwareAdapter(IDXGIFactory7* pFactory, IDXGIAdapter4** ppAdapter)
+    {
+        for (UINT i = 0; pFactory->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(ppAdapter)) != DXGI_ERROR_NOT_FOUND; ++i)
+        {
+            DXGI_ADAPTER_DESC3 desc;
+            (*ppAdapter)->GetDesc3(&desc);
+            if ((desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) != 0)
+                continue;
+
+            wprintf(L"Adapter: %s\n", desc.Description);
+            break;
+        }
+    }
+
+    void ResetRenderTargetStates()
+    {
+        constexpr int max = static_cast<int>(FramebufferAttachment::MAX);
+        for (int i = 0; i < max; ++i)
+        {
+            const FramebufferAttachment attachment = static_cast<FramebufferAttachment>(i);
+
+            RenderTargetState& state = s_RenderTargetStates[i];
+            state.IsEnabled = attachment == FramebufferAttachment::COLOR_ATTACHMENT0;
+            state.NeedClear = false;
+        }
+    }
+
+    void PrintInfoQueueMessages()
+    {
+        if (!s_InfoQueue)
+            return;
+
+        const auto GetMessageCategoryName = [](const D3D12_MESSAGE_CATEGORY category) -> const char*
+        {
+            switch (category)
+            {
+                case D3D12_MESSAGE_CATEGORY_APPLICATION_DEFINED:
+                    return "Application Defined";
+                case D3D12_MESSAGE_CATEGORY_MISCELLANEOUS:
+                    return "Miscellaneous";
+                case D3D12_MESSAGE_CATEGORY_INITIALIZATION:
+                    return "Initialization";
+                case D3D12_MESSAGE_CATEGORY_CLEANUP:
+                    return "Cleanup";
+                case D3D12_MESSAGE_CATEGORY_COMPILATION:
+                    return "Compilation";
+                case D3D12_MESSAGE_CATEGORY_STATE_CREATION:
+                    return "State Creation";
+                case D3D12_MESSAGE_CATEGORY_STATE_SETTING:
+                    return "State Setting";
+                case D3D12_MESSAGE_CATEGORY_STATE_GETTING:
+                    return "State Getting";
+                case D3D12_MESSAGE_CATEGORY_RESOURCE_MANIPULATION:
+                    return "Resource Manipulation";
+                case D3D12_MESSAGE_CATEGORY_EXECUTION:
+                    return "Execution";
+                case D3D12_MESSAGE_CATEGORY_SHADER:
+                    return "Shader";
+            }
+        };
+
+        UINT64 messageCount = s_InfoQueue->GetNumStoredMessages();
+        for (UINT64 i = 0; i < messageCount; ++i)
+        {
+            SIZE_T messageLength = 0;
+            s_InfoQueue->GetMessage(i, nullptr, &messageLength);
+            D3D12_MESSAGE* message = (D3D12_MESSAGE*)malloc(messageLength);
+            s_InfoQueue->GetMessage(i, message, &messageLength);
+
+            switch (message->Severity)
+            {
+                case D3D12_MESSAGE_SEVERITY_CORRUPTION:
+                case D3D12_MESSAGE_SEVERITY_ERROR:
+                    Debug::LogErrorFormat("[GraphicsBackend] [{}] {}", GetMessageCategoryName(message->Category), message->pDescription);
+                    break;
+                case D3D12_MESSAGE_SEVERITY_WARNING:
+                    Debug::LogWarningFormat("[GraphicsBackend] [{}] {}", GetMessageCategoryName(message->Category), message->pDescription);
+                    break;
+                case D3D12_MESSAGE_SEVERITY_INFO:
+                case D3D12_MESSAGE_SEVERITY_MESSAGE:
+                    Debug::LogInfoFormat("[GraphicsBackend] [{}] {}", GetMessageCategoryName(message->Category), message->pDescription);
+                    break;
+            }
+
+            free(message);
+        }
+
+        s_InfoQueue->ClearStoredMessages();
+    }
+
+    PerFrameData& GetCurrentFrameData()
+    {
+        return s_PerFrameData[GraphicsBackend::GetInFlightFrameIndex()];
+    }
+
+    ID3D12Resource* GetCurrentBackbuffer()
+    {
+        return s_RenderTargets[s_SwapChain->GetCurrentBackBufferIndex()];
+    }
+}
+
+inline void ThrowIfFailed(HRESULT result)
+{
+    if (FAILED(result))
+    {
+        DX12Local::PrintInfoQueueMessages();
+
+        const uint32_t resultCode = static_cast<uint32_t>(result);
+        if (resultCode == 0x887A0005)
+        {
+            const uint32_t removeReasonCode = static_cast<uint32_t>(DX12Local::s_Device->GetDeviceRemovedReason());
+            Debug::LogErrorFormat("[GraphicsBackend] Device removed with reason {:#08X}", removeReasonCode);
+        }
+        else
+            Debug::LogErrorFormat("[GraphicsBackend] Failed with HRESULT {:#08X}", resultCode);
+
+        throw std::exception();
     }
 }
 
@@ -60,26 +193,25 @@ void GraphicsBackendDX12::Init(void* data)
 {
     HWND* window = static_cast<HWND*>(data);
 
-    ID3D12Debug* debugController;
+    ID3D12Debug3* debugController;
     if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
-    {
         debugController->EnableDebugLayer();
-    }
 
     IDXGIFactory7* factory;
-    CreateDXGIFactory2(0, IID_PPV_ARGS(&factory));
+    ThrowIfFailed(CreateDXGIFactory2(0, IID_PPV_ARGS(&factory)));
 
     IDXGIAdapter4* adapter;
-    GetHardwareAdapter(factory, &adapter);
+    DX12Local::GetHardwareAdapter(factory, &adapter);
 
-    D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&s_Device));
+    ThrowIfFailed(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&DX12Local::s_Device)));
+    ThrowIfFailed(DX12Local::s_Device->QueryInterface(IID_PPV_ARGS(&DX12Local::s_InfoQueue)));
 
     D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
     commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    s_Device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&s_RenderQueue));
+    ThrowIfFailed(DX12Local::s_Device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&DX12Local::s_RenderQueue)));
 
     commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
-    s_Device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&s_CopyQueue));
+    ThrowIfFailed(DX12Local::s_Device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&DX12Local::s_CopyQueue)));
 
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
     swapChainDesc.BufferCount = GraphicsBackend::GetMaxFramesInFlight();
@@ -91,34 +223,54 @@ void GraphicsBackendDX12::Init(void* data)
     swapChainDesc.SampleDesc.Count = 1;
 
     IDXGISwapChain1* swapChain;
-    factory->CreateSwapChainForHwnd(
-            s_RenderQueue,
+    ThrowIfFailed(factory->CreateSwapChainForHwnd(
+            DX12Local::s_RenderQueue,
             *window,
             &swapChainDesc,
             nullptr,
             nullptr,
             &swapChain
-    );
-    swapChain->QueryInterface(__uuidof(IDXGISwapChain4), reinterpret_cast<void**>(&s_SwapChain));
+    ));
+    ThrowIfFailed(swapChain->QueryInterface(__uuidof(IDXGISwapChain4), reinterpret_cast<void**>(&DX12Local::s_SwapChain)));
     swapChain->Release();
 
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{};
     rtvHeapDesc.NumDescriptors = GraphicsBackend::GetMaxFramesInFlight();
     rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    s_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&s_RenderTargetDescriptorHeap));
-    s_RenderTargetDescriptorSize = s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&DX12Local::s_RenderTargetDescriptorHeap)));
+    DX12Local::s_RenderTargetDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle(s_RenderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-    for (UINT n = 0; n < GraphicsBackend::GetMaxFramesInFlight(); n++)
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle(DX12Local::s_RenderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    for (UINT i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
     {
-        s_SwapChain->GetBuffer(n, IID_PPV_ARGS(&s_RenderTargets[n]));
-        s_Device->CreateRenderTargetView(s_RenderTargets[n], nullptr, rtvHandle);
-        rtvHandle.ptr += s_RenderTargetDescriptorSize;
+        DX12Local::PerFrameData& frameData = DX12Local::s_PerFrameData[i];
+
+        ThrowIfFailed(DX12Local::s_SwapChain->GetBuffer(i, IID_PPV_ARGS(&DX12Local::s_RenderTargets[i])));
+        DX12Local::s_Device->CreateRenderTargetView(DX12Local::s_RenderTargets[i], nullptr, rtvHandle);
+        rtvHandle.ptr += DX12Local::s_RenderTargetDescriptorSize;
+
+        ThrowIfFailed(DX12Local::s_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&frameData.RenderCommandAllocator)));
+        ThrowIfFailed(DX12Local::s_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&frameData.CopyCommandAllocator)));
+
+        ThrowIfFailed(DX12Local::s_Device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&frameData.RenderCommandList)));
+        ThrowIfFailed(DX12Local::s_Device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_COPY, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&frameData.CopyCommandList)));
+
+        DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&frameData.RenderQueueFence));
+        DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&frameData.CopyQueueFence));
+        frameData.RenderQueueFenceEvent = CreateEvent(nullptr, false, false, nullptr);
+        frameData.CopyQueueFenceEvent = CreateEvent(nullptr, false, false, nullptr);
+        frameData.FenceValue = 1;
     }
 
-    s_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&s_RenderCommandAllocator));
-    s_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&s_CopyCommandAllocator));
+    DX12Local::ResetRenderTargetStates();
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    ThrowIfFailed(frameData.RenderCommandList->Reset(frameData.RenderCommandAllocator, nullptr));
+    ThrowIfFailed(frameData.CopyCommandList->Reset(frameData.CopyCommandAllocator, nullptr));
+
+    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
 }
 
 GraphicsBackendName GraphicsBackendDX12::GetName()
@@ -129,6 +281,26 @@ GraphicsBackendName GraphicsBackendDX12::GetName()
 void GraphicsBackendDX12::InitNewFrame()
 {
     GraphicsBackendBase::InitNewFrame();
+
+    DX12Local::PerFrameData frameData = DX12Local::GetCurrentFrameData();
+
+    uint64_t expectedFenceValue = frameData.FenceValue - 1;
+    if (frameData.RenderQueueFence->GetCompletedValue() < expectedFenceValue || frameData.CopyQueueFence->GetCompletedValue() < expectedFenceValue)
+    {
+        ThrowIfFailed(frameData.RenderQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.RenderQueueFenceEvent));
+        ThrowIfFailed(frameData.CopyQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.CopyQueueFenceEvent));
+
+        HANDLE events[2] = {frameData.RenderQueueFenceEvent, frameData.CopyQueueFenceEvent};
+        WaitForMultipleObjects(1, events, true, INFINITE);
+    }
+
+    ThrowIfFailed(frameData.RenderCommandAllocator->Reset());
+    ThrowIfFailed(frameData.CopyCommandAllocator->Reset());
+    ThrowIfFailed(frameData.RenderCommandList->Reset(frameData.RenderCommandAllocator, nullptr));
+    ThrowIfFailed(frameData.CopyCommandList->Reset(frameData.CopyCommandAllocator, nullptr));
+
+    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
 }
 
 void GraphicsBackendDX12::FillImGuiData(void* data)
@@ -171,11 +343,70 @@ void GraphicsBackendDX12::UploadImagePixels(const GraphicsBackendTexture& textur
 
 void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor& descriptor)
 {
+    const int attachmentIndex = static_cast<int>(descriptor.Attachment);
+    DX12Local::RenderTargetState& state = DX12Local::s_RenderTargetStates[attachmentIndex];
+
+//    state.IsBackbuffer = descriptor.IsBackbuffer;
+
+//    if (descriptor.IsBackbuffer)
+//    {
+//        state.Target = 0;
+//        state.IsEnabled = descriptor.Attachment == FramebufferAttachment::COLOR_ATTACHMENT0 ||
+//                          descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT ||
+//                          descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT ||
+//                          descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT;
+//    }
+//    else
+//    {
+//        state.Target = descriptor.Texture.Texture;
+//        state.TextureType = descriptor.Texture.Type;
+//        state.Level = descriptor.Level;
+//        state.Layer = descriptor.Layer;
+//        state.IsEnabled = true;
+//    }
+
+    state.IsEnabled = descriptor.Attachment == FramebufferAttachment::COLOR_ATTACHMENT0;
+    state.NeedClear = descriptor.LoadAction == LoadAction::CLEAR;
+//    if (descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT)
+//    {
+//        state.ClearFlags = needClear ? GL_DEPTH_BUFFER_BIT : 0;
+//        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)].IsEnabled = false;
+//
+//        RenderTargetState& stencilState = s_RenderTargetStates[static_cast<int>(FramebufferAttachment::STENCIL_ATTACHMENT)];
+//        stencilState.IsEnabled = true;
+//        stencilState.Target = 0;
+//    }
+//    else if (descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT)
+//    {
+//        state.ClearFlags = needClear ? GL_STENCIL_BUFFER_BIT : 0;
+//        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)].IsEnabled = false;
+//
+//        RenderTargetState& depthState = s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_ATTACHMENT)];
+//        depthState.IsEnabled = false;
+//        depthState.Target = 0;
+//    }
+//    else if (descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)
+//    {
+//        state.ClearFlags = needClear ? GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT : 0;
+//        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_ATTACHMENT)].IsEnabled = false;
+//        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::STENCIL_ATTACHMENT)].IsEnabled = false;
+//    }
+//    else
+//    {
+//        state.ClearFlags = needClear ? GL_COLOR_BUFFER_BIT : 0;
+//    }
 }
 
 TextureInternalFormat GraphicsBackendDX12::GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear)
 {
-    return TextureInternalFormat::RGBA8;
+    if (outIsLinear)
+        *outIsLinear = true;
+
+    if (attachment == FramebufferAttachment::DEPTH_ATTACHMENT)
+        return TextureInternalFormat::DEPTH_32;
+    if (attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)
+        return TextureInternalFormat::DEPTH_32_STENCIL_8;
+    return TextureInternalFormat::RGBA16F;
 }
 
 GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
@@ -391,7 +622,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<Grap
         throw std::runtime_error(static_cast<const char *>(errorBlob->GetBufferPointer()));
 
     ID3D12RootSignature* rootSignature;
-    s_Device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+    ThrowIfFailed(DX12Local::s_Device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
 
     ID3DBlob* vertexBlob = reinterpret_cast<ID3DBlob*>(shaders[0].ShaderObject);
     ID3DBlob* fragmentBlob = reinterpret_cast<ID3DBlob*>(shaders[1].ShaderObject);
@@ -417,9 +648,9 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<Grap
     psoDesc.SampleDesc.Count = 1;
 
     ID3D12PipelineState* pso;
-    s_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso));
+    ThrowIfFailed(DX12Local::s_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 
-    DX12ShaderObject* shaderObject = new DX12ShaderObject();
+    DX12Local::ShaderObject* shaderObject = new DX12Local::ShaderObject();
     shaderObject->PSO = pso;
     shaderObject->RootSignature = rootSignature;
 
@@ -447,10 +678,15 @@ void GraphicsBackendDX12::UseProgram(GraphicsBackendProgram program)
 
 void GraphicsBackendDX12::SetClearColor(float r, float g, float b, float a)
 {
+    DX12Local::s_ClearColor[0] = r;
+    DX12Local::s_ClearColor[1] = g;
+    DX12Local::s_ClearColor[2] = b;
+    DX12Local::s_ClearColor[3] = a;
 }
 
 void GraphicsBackendDX12::SetClearDepth(double depth)
 {
+    DX12Local::s_ClearDepth = depth;
 }
 
 void GraphicsBackendDX12::DrawArrays(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int firstIndex, int count)
@@ -497,10 +733,47 @@ bool GraphicsBackendDX12::ResolveProfilerMarker(const GraphicsBackendProfilerMar
 
 void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 {
+    bool isBackbuffer = true;
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    for (const DX12Local::RenderTargetState& state : DX12Local::s_RenderTargetStates)
+    {
+        if (!state.IsEnabled)
+            continue;
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(DX12Local::s_RenderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DX12Local::s_SwapChain->GetCurrentBackBufferIndex(), DX12Local::s_RenderTargetDescriptorSize);
+        frameData.RenderCommandList->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
+        frameData.RenderCommandList->ClearRenderTargetView(rtvHandle, DX12Local::s_ClearColor, 0, nullptr);
+    }
+
+    PushDebugGroup(name);
+
+//    if (isBackbuffer)
+//    {
+//        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+//    }
+//    else
+//    {
+//        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][0]);
+//
+//        constexpr int maxAttachments = static_cast<int>(FramebufferAttachment::MAX);
+//        for (int i = 0; i < maxAttachments; ++i)
+//        {
+//            const RenderTargetState& state = s_RenderTargetStates[i];
+//            if (!state.IsEnabled)
+//                continue;
+//
+//            const GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(static_cast<FramebufferAttachment>(i));
+//            AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, state.TextureType, state.Target, state.Level, state.Layer);
+//        }
+//    }
 }
 
 void GraphicsBackendDX12::EndRenderPass()
 {
+    DX12Local::ResetRenderTargetStates();
+    PopDebugGroup();
 }
 
 void GraphicsBackendDX12::BeginCopyPass(const std::string& name)
@@ -543,10 +816,38 @@ void GraphicsBackendDX12::WaitForFence(const GraphicsBackendFence& fence)
 
 void GraphicsBackendDX12::Flush()
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    ThrowIfFailed(frameData.RenderCommandList->Close());
+    ThrowIfFailed(frameData.CopyCommandList->Close());
+
+    ID3D12CommandList* renderCommandLists[] = {frameData.RenderCommandList};
+    DX12Local::s_RenderQueue->ExecuteCommandLists(1, renderCommandLists);
+
+    ID3D12CommandList* copyCommandLists[] = {frameData.CopyCommandList};
+    DX12Local::s_CopyQueue->ExecuteCommandLists(1, copyCommandLists);
+
+    ThrowIfFailed(frameData.RenderCommandList->Reset(frameData.RenderCommandAllocator, nullptr));
+    ThrowIfFailed(frameData.CopyCommandList->Reset(frameData.CopyCommandAllocator, nullptr));
 }
 
 void GraphicsBackendDX12::Present()
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
+
+    Flush();
+    ThrowIfFailed(frameData.RenderCommandList->Close());
+    ThrowIfFailed(frameData.CopyCommandList->Close());
+
+    DX12Local::s_SwapChain->Present(1, 0);
+    DX12Local::PrintInfoQueueMessages();
+
+    uint64_t fenceValue = frameData.FenceValue++;
+    ThrowIfFailed(DX12Local::s_RenderQueue->Signal(frameData.RenderQueueFence, fenceValue));
+    ThrowIfFailed(DX12Local::s_CopyQueue->Signal(frameData.CopyQueueFence, fenceValue));
 }
 
 #endif // RENDER_BACKEND_DX12

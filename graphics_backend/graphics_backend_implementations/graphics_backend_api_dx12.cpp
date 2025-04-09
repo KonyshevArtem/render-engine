@@ -180,7 +180,39 @@ TextureInternalFormat GraphicsBackendDX12::GetRenderTargetFormat(FramebufferAtta
 
 GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
 {
-    return {};
+    ID3D12Resource* dxBuffer;
+//    D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
+
+    D3D12_HEAP_PROPERTIES heapProps;
+    heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+    heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+    heapProps.CreationNodeMask = 1;
+    heapProps.VisibleNodeMask = 1;
+
+    D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
+    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&dxBuffer)));
+
+    if (data)
+    {
+        D3D12_RANGE readRange;
+        readRange.Begin = 0;
+        readRange.End = 0;
+
+        UINT8 *bufferData;
+        ThrowIfFailed(dxBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferData)));
+        memcpy(bufferData, data, size);
+        dxBuffer->Unmap(0, nullptr);
+    }
+
+//    vertexBufferView.BufferLocation = buffer->GetGPUVirtualAddress();
+//    vertexBufferView.StrideInBytes = sizeof(Vertex);
+//    vertexBufferView.SizeInBytes = vertexBufferSize;
+
+    GraphicsBackendBuffer buffer{};
+    buffer.Buffer = reinterpret_cast<uint64_t>(dxBuffer);
+    buffer.Size = size;
+    return buffer;
 }
 
 void GraphicsBackendDX12::DeleteBuffer(const GraphicsBackendBuffer& buffer)
@@ -210,7 +242,7 @@ uint64_t GraphicsBackendDX12::GetMaxConstantBufferSize()
 
 int GraphicsBackendDX12::GetConstantBufferOffsetAlignment()
 {
-    return 0;
+    return 256;
 }
 
 GraphicsBackendGeometry GraphicsBackendDX12::CreateGeometry(const GraphicsBackendBuffer& vertexBuffer, const GraphicsBackendBuffer& indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, const std::string& name)

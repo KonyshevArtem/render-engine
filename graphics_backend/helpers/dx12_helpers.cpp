@@ -291,3 +291,33 @@ D3D12_BLEND DX12Helpers::ToBlendFactor(BlendFactor factor)
             return D3D12_BLEND_ZERO;
     }
 }
+
+D3D12_PRIMITIVE_TOPOLOGY DX12Helpers::ToPrimitiveTopology(PrimitiveType primitiveType)
+{
+    switch (primitiveType)
+    {
+        case PrimitiveType::POINTS:
+            return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+        case PrimitiveType::LINE_STRIP:
+            return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+        case PrimitiveType::LINES:
+            return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+        case PrimitiveType::LINE_STRIP_ADJACENCY:
+            return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ;
+        case PrimitiveType::LINES_ADJACENCY:
+            return D3D_PRIMITIVE_TOPOLOGY_LINELIST_ADJ;
+        case PrimitiveType::TRIANGLE_STRIP:
+            return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+        case PrimitiveType::TRIANGLE_FAN:
+            return D3D_PRIMITIVE_TOPOLOGY_TRIANGLEFAN;
+        case PrimitiveType::TRIANGLES:
+            return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        case PrimitiveType::TRIANGLE_STRIP_ADJACENCY:
+            return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ;
+        case PrimitiveType::TRIANGLES_ADJACENCY:
+            return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ;
+        case PrimitiveType::PATCHES:
+        case PrimitiveType::LINE_LOOP:
+            return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+    }
+}

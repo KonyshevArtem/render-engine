@@ -37,6 +37,12 @@ namespace DX12Local
         ID3D12RootSignature* RootSignature;
     };
 
+    struct GeometryData
+    {
+        D3D12_VERTEX_BUFFER_VIEW* VertexBufferView;
+        D3D12_INDEX_BUFFER_VIEW* IndexBufferView;
+    };
+
     struct PerFrameData
     {
         ID3D12CommandAllocator* RenderCommandAllocator;
@@ -478,11 +484,38 @@ int GraphicsBackendDX12::GetConstantBufferOffsetAlignment()
 
 GraphicsBackendGeometry GraphicsBackendDX12::CreateGeometry(const GraphicsBackendBuffer& vertexBuffer, const GraphicsBackendBuffer& indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, const std::string& name)
 {
-    return {};
+    ID3D12Resource* dxVertexBuffer = reinterpret_cast<ID3D12Resource*>(vertexBuffer.Buffer);
+    ID3D12Resource* dxIndexBuffer = reinterpret_cast<ID3D12Resource*>(indexBuffer.Buffer);
+
+    D3D12_VERTEX_BUFFER_VIEW* vertexBufferView = new D3D12_VERTEX_BUFFER_VIEW;
+    vertexBufferView->BufferLocation = dxVertexBuffer->GetGPUVirtualAddress();
+    vertexBufferView->SizeInBytes = vertexBuffer.Size;
+    vertexBufferView->StrideInBytes = vertexAttributes[0].Stride;
+
+    D3D12_INDEX_BUFFER_VIEW* indexBufferView = nullptr;
+    if (dxIndexBuffer)
+    {
+        indexBufferView = new D3D12_INDEX_BUFFER_VIEW;
+        indexBufferView->BufferLocation = dxIndexBuffer->GetGPUVirtualAddress();
+        indexBufferView->SizeInBytes = indexBuffer.Size;
+        indexBufferView->Format = DXGI_FORMAT_R32_UINT;
+    }
+
+    DX12Local::GeometryData* geometryData = new DX12Local::GeometryData;
+    geometryData->VertexBufferView = vertexBufferView;
+    geometryData->IndexBufferView = indexBufferView;
+
+    GraphicsBackendGeometry geometry;
+    geometry.VertexArrayObject = reinterpret_cast<uint64_t>(geometryData);
+    return geometry;
 }
 
 void GraphicsBackendDX12::DeleteGeometry(const GraphicsBackendGeometry &geometry)
 {
+    DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.VertexArrayObject);
+    delete geometryData->VertexBufferView;
+    delete geometryData->IndexBufferView;
+    delete geometryData;
 }
 
 void GraphicsBackendDX12::SetCullFace(CullFace cullFace)
@@ -674,6 +707,11 @@ bool GraphicsBackendDX12::RequireStrictPSODescriptor()
 
 void GraphicsBackendDX12::UseProgram(GraphicsBackendProgram program)
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    DX12Local::ShaderObject* shaderObject = reinterpret_cast<DX12Local::ShaderObject*>(program.Program);
+    frameData.RenderCommandList->SetGraphicsRootSignature(shaderObject->RootSignature);
+    frameData.RenderCommandList->SetPipelineState(shaderObject->PSO);
 }
 
 void GraphicsBackendDX12::SetClearColor(float r, float g, float b, float a)
@@ -691,18 +729,35 @@ void GraphicsBackendDX12::SetClearDepth(double depth)
 
 void GraphicsBackendDX12::DrawArrays(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int firstIndex, int count)
 {
+    DrawArraysInstanced(geometry, primitiveType, firstIndex, count, 1);
 }
 
 void GraphicsBackendDX12::DrawArraysInstanced(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
+    DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.VertexArrayObject);
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    frameData.RenderCommandList->IASetPrimitiveTopology(DX12Helpers::ToPrimitiveTopology(primitiveType));
+    frameData.RenderCommandList->IASetVertexBuffers(0, 1, geometryData->VertexBufferView);
+    frameData.RenderCommandList->DrawInstanced(indicesCount, instanceCount, firstIndex, 0);
 }
 
 void GraphicsBackendDX12::DrawElements(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType)
 {
+    DrawElementsInstanced(geometry, primitiveType, elementsCount, dataType, 1);
 }
 
 void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
+    DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.VertexArrayObject);
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    frameData.RenderCommandList->IASetPrimitiveTopology(DX12Helpers::ToPrimitiveTopology(primitiveType));
+    frameData.RenderCommandList->IASetVertexBuffers(0, 1, geometryData->VertexBufferView);
+    frameData.RenderCommandList->IASetIndexBuffer(geometryData->IndexBufferView);
+    frameData.RenderCommandList->DrawIndexedInstanced(elementsCount, instanceCount, 0, 0, 0);
 }
 
 void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& source, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)

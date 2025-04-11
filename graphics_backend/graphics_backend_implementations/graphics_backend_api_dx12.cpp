@@ -23,6 +23,8 @@
 #include "helpers/dx12_helpers.h"
 #include "debug.h"
 
+#include <unordered_map>
+
 namespace DX12Local
 {
     struct RenderTargetState
@@ -35,6 +37,7 @@ namespace DX12Local
     {
         ID3D12PipelineState* PSO;
         ID3D12RootSignature* RootSignature;
+        std::unordered_map<size_t, int> ResourceBindingHashToRootParameterIndex;
     };
 
     struct GeometryData
@@ -74,6 +77,8 @@ namespace DX12Local
 
     ID3D12Resource* s_RenderTargets[GraphicsBackend::GetMaxFramesInFlight()];
     PerFrameData s_PerFrameData[GraphicsBackend::GetMaxFramesInFlight()];
+
+    ShaderObject* s_CurrentShaderObject;
 
     void GetHardwareAdapter(IDXGIFactory7* pFactory, IDXGIAdapter4** ppAdapter)
     {
@@ -173,6 +178,36 @@ namespace DX12Local
     ID3D12Resource* GetCurrentBackbuffer()
     {
         return s_RenderTargets[s_SwapChain->GetCurrentBackBufferIndex()];
+    }
+
+    uint32_t GetShaderRegister(const GraphicsBackendResourceBindings& bindings)
+    {
+        return bindings.VertexIndex != -1 ? bindings.VertexIndex : bindings.FragmentIndex;
+    }
+
+    D3D12_SHADER_VISIBILITY GetShaderVisibility(const GraphicsBackendResourceBindings& bindings)
+    {
+        const bool isVertex = bindings.VertexIndex != -1;
+        const bool isFragment = bindings.FragmentIndex != -1;
+
+        if (isVertex && isFragment)
+            return D3D12_SHADER_VISIBILITY_ALL;
+        return isVertex ? D3D12_SHADER_VISIBILITY_VERTEX : D3D12_SHADER_VISIBILITY_PIXEL;
+    }
+
+    size_t HashCombine(size_t hashA, size_t hashB)
+    {
+        // boost::hashCombine
+        return hashA ^ (hashB + 0x9e3779b9 + (hashA << 6) + (hashA >> 2));
+    }
+
+    size_t GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE parameterType, const GraphicsBackendResourceBindings& bindings)
+    {
+        size_t hash = 0;
+        hash = HashCombine(hash, std::hash<D3D12_ROOT_PARAMETER_TYPE>{}(parameterType));
+        hash = HashCombine(hash, std::hash<D3D12_SHADER_VISIBILITY>{}(GetShaderVisibility(bindings)));
+        hash = HashCombine(hash, std::hash<uint32_t>{}(GetShaderRegister(bindings)));
+        return hash;
     }
 }
 
@@ -418,33 +453,23 @@ TextureInternalFormat GraphicsBackendDX12::GetRenderTargetFormat(FramebufferAtta
 GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
 {
     ID3D12Resource* dxBuffer;
-//    D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
 
-    D3D12_HEAP_PROPERTIES heapProps;
-    heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
-    heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    heapProps.CreationNodeMask = 1;
-    heapProps.VisibleNodeMask = 1;
+    CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
 
     D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
     ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&dxBuffer)));
 
+    dxBuffer->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str());
+
     if (data)
     {
-        D3D12_RANGE readRange;
-        readRange.Begin = 0;
-        readRange.End = 0;
+        CD3DX12_RANGE readRange(0, 0);
 
         UINT8 *bufferData;
         ThrowIfFailed(dxBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferData)));
         memcpy(bufferData, data, size);
         dxBuffer->Unmap(0, nullptr);
     }
-
-//    vertexBufferView.BufferLocation = buffer->GetGPUVirtualAddress();
-//    vertexBufferView.StrideInBytes = sizeof(Vertex);
-//    vertexBufferView.SizeInBytes = vertexBufferSize;
 
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(dxBuffer);
@@ -458,14 +483,32 @@ void GraphicsBackendDX12::DeleteBuffer(const GraphicsBackendBuffer& buffer)
 
 void GraphicsBackendDX12::BindBuffer(const GraphicsBackendBuffer& buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
+    ID3D12Resource* dxBuffer = reinterpret_cast<ID3D12Resource*>(buffer.Buffer);
+
+    int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_SRV, bindings)];
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    frameData.RenderCommandList->SetGraphicsRootShaderResourceView(rootParamIndex, dxBuffer->GetGPUVirtualAddress() + offset);
 }
 
 void GraphicsBackendDX12::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
+    ID3D12Resource* dxBuffer = reinterpret_cast<ID3D12Resource*>(buffer.Buffer);
+
+    int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_CBV, bindings)];
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    frameData.RenderCommandList->SetGraphicsRootConstantBufferView(rootParamIndex, dxBuffer->GetGPUVirtualAddress() + offset);
 }
 
 void GraphicsBackendDX12::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void* data)
 {
+    ID3D12Resource* dxBuffer = reinterpret_cast<ID3D12Resource*>(buffer.Buffer);
+
+    CD3DX12_RANGE readRange(0, 0);
+
+    UINT8* bufferData;
+    ThrowIfFailed(dxBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferData)));
+    memcpy(bufferData + offset, data, size);
+    dxBuffer->Unmap(0, nullptr);
 }
 
 void GraphicsBackendDX12::CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size)
@@ -578,22 +621,9 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<Grap
         dxVertexAttributes.push_back(desc);
     }
 
-    auto GetShaderRegister = [](const GraphicsBackendResourceBindings& bindings) -> UINT
-    {
-        return bindings.VertexIndex != -1 ? bindings.VertexIndex : bindings.FragmentIndex;
-    };
+    std::unordered_map<size_t, int> resourceBindingHashToRootParameterIndex;
 
-    auto GetShaderVisibility = [](const GraphicsBackendResourceBindings& bindings) -> D3D12_SHADER_VISIBILITY
-    {
-        const bool isVertex = bindings.VertexIndex != -1;
-        const bool isFragment = bindings.FragmentIndex != -1;
-
-        if (isVertex && isFragment)
-            return D3D12_SHADER_VISIBILITY_ALL;
-        return isVertex ? D3D12_SHADER_VISIBILITY_VERTEX : D3D12_SHADER_VISIBILITY_PIXEL;
-    };
-
-    std::vector<D3D12_ROOT_PARAMETER1> rootParameters;
+    std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
     rootParameters.reserve(textures.size() + buffers.size() + samplers.size());
 
     for (const auto& pair: buffers)
@@ -602,11 +632,14 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<Grap
         const GraphicsBackendResourceBindings& bindings = buffer->GetBinding();
         const bool isConstant = buffer->GetSize() > 0;
 
-        D3D12_ROOT_PARAMETER1 parameter{};
-        parameter.ParameterType = isConstant ? D3D12_ROOT_PARAMETER_TYPE_CBV : D3D12_ROOT_PARAMETER_TYPE_SRV;
-        parameter.Descriptor.ShaderRegister = GetShaderRegister(bindings);
-        parameter.ShaderVisibility = GetShaderVisibility(bindings);
+        CD3DX12_ROOT_PARAMETER1 parameter{};
+        if (isConstant)
+            parameter.InitAsConstantBufferView(DX12Local::GetShaderRegister(bindings), 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, DX12Local::GetShaderVisibility(bindings));
+        else
+            parameter.InitAsShaderResourceView(DX12Local::GetShaderRegister(bindings), 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, DX12Local::GetShaderVisibility(bindings));
         rootParameters.push_back(parameter);
+
+        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(isConstant ? D3D12_ROOT_PARAMETER_TYPE_CBV : D3D12_ROOT_PARAMETER_TYPE_SRV, bindings)] = rootParameters.size() - 1;
     }
 
     for (const auto& pair: textures)
@@ -614,16 +647,14 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<Grap
         const GraphicsBackendTextureInfo& texture = pair.second;
         const GraphicsBackendResourceBindings& bindings = texture.TextureBindings;
 
-        D3D12_DESCRIPTOR_RANGE1* range = new D3D12_DESCRIPTOR_RANGE1();
-        range->RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        range->BaseShaderRegister = GetShaderRegister(bindings);
-        range->NumDescriptors = 1;
+        CD3DX12_DESCRIPTOR_RANGE1* range = new CD3DX12_DESCRIPTOR_RANGE1();
+        range->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, DX12Local::GetShaderRegister(bindings));
 
-        D3D12_ROOT_PARAMETER1 parameter{};
-        parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        parameter.DescriptorTable.pDescriptorRanges = range;
-        parameter.DescriptorTable.NumDescriptorRanges = 1;
+        CD3DX12_ROOT_PARAMETER1 parameter{};
+        parameter.InitAsDescriptorTable(1, range, DX12Local::GetShaderVisibility(bindings));
         rootParameters.push_back(parameter);
+
+        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, bindings)] = rootParameters.size() - 1;
     }
 
     for (const auto& pair: samplers)
@@ -631,16 +662,14 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<Grap
         const GraphicsBackendSamplerInfo& sampler = pair.second;
         const GraphicsBackendResourceBindings& bindings = sampler.Bindings;
 
-        D3D12_DESCRIPTOR_RANGE1* range = new D3D12_DESCRIPTOR_RANGE1();
-        range->RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-        range->BaseShaderRegister = GetShaderRegister(bindings);
-        range->NumDescriptors = 1;
+        CD3DX12_DESCRIPTOR_RANGE1* range = new CD3DX12_DESCRIPTOR_RANGE1();
+        range->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, DX12Local::GetShaderRegister(bindings));
 
-        D3D12_ROOT_PARAMETER1 parameter{};
-        parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        parameter.DescriptorTable.pDescriptorRanges = range;
-        parameter.DescriptorTable.NumDescriptorRanges = 1;
+        CD3DX12_ROOT_PARAMETER1 parameter{};
+        parameter.InitAsDescriptorTable(1, range, DX12Local::GetShaderVisibility(bindings));
         rootParameters.push_back(parameter);
+
+        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, bindings)] = rootParameters.size() - 1;
     }
 
     D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc{};
@@ -683,9 +712,15 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<Grap
     ID3D12PipelineState* pso;
     ThrowIfFailed(DX12Local::s_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 
+    std::string psoName = name + "_PSO";
+    std::string rootSignatureName = name + "_RootSignature";
+    pso->SetPrivateData(WKPDID_D3DDebugObjectName, psoName.size(), psoName.c_str());
+    rootSignature->SetPrivateData(WKPDID_D3DDebugObjectName, rootSignatureName.size(), rootSignatureName.c_str());
+
     DX12Local::ShaderObject* shaderObject = new DX12Local::ShaderObject();
     shaderObject->PSO = pso;
     shaderObject->RootSignature = rootSignature;
+    shaderObject->ResourceBindingHashToRootParameterIndex = std::move(resourceBindingHashToRootParameterIndex);
 
     GraphicsBackendProgram program{};
     program.Program = reinterpret_cast<uint64_t>(shaderObject);
@@ -712,6 +747,8 @@ void GraphicsBackendDX12::UseProgram(GraphicsBackendProgram program)
     DX12Local::ShaderObject* shaderObject = reinterpret_cast<DX12Local::ShaderObject*>(program.Program);
     frameData.RenderCommandList->SetGraphicsRootSignature(shaderObject->RootSignature);
     frameData.RenderCommandList->SetPipelineState(shaderObject->PSO);
+
+    DX12Local::s_CurrentShaderObject = shaderObject;
 }
 
 void GraphicsBackendDX12::SetClearColor(float r, float g, float b, float a)

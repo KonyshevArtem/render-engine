@@ -133,6 +133,7 @@ public:
     bool IsCompressedTextureFormat(TextureInternalFormat format);
     int GetBlockSize(TextureInternalFormat format);
     int GetBlockBytes(TextureInternalFormat format);
+    bool IsDepthFormat(TextureInternalFormat format);
 
 private:
     uint64_t m_FrameCount;

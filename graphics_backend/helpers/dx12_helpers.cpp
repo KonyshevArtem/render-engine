@@ -321,3 +321,31 @@ D3D12_PRIMITIVE_TOPOLOGY DX12Helpers::ToPrimitiveTopology(PrimitiveType primitiv
             return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
     }
 }
+
+D3D12_SRV_DIMENSION DX12Helpers::ToResourceViewDimension(TextureType textureType)
+{
+    switch (textureType)
+    {
+        case TextureType::TEXTURE_1D:
+            return D3D12_SRV_DIMENSION_TEXTURE1D;
+        case TextureType::TEXTURE_1D_ARRAY:
+            return D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+        case TextureType::TEXTURE_2D:
+            return D3D12_SRV_DIMENSION_TEXTURE2D;
+        case TextureType::TEXTURE_2D_MULTISAMPLE:
+            return D3D12_SRV_DIMENSION_TEXTURE2DMS;
+        case TextureType::TEXTURE_2D_ARRAY:
+            return D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+        case TextureType::TEXTURE_2D_MULTISAMPLE_ARRAY:
+            return D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+        case TextureType::TEXTURE_3D:
+            return D3D12_SRV_DIMENSION_TEXTURE3D;
+        case TextureType::TEXTURE_CUBEMAP:
+            return D3D12_SRV_DIMENSION_TEXTURECUBE;
+        case TextureType::TEXTURE_CUBEMAP_ARRAY:
+            return D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+        case TextureType::TEXTURE_RECTANGLE:
+        case TextureType::TEXTURE_BUFFER:
+            return D3D12_SRV_DIMENSION_UNKNOWN;
+    }
+}

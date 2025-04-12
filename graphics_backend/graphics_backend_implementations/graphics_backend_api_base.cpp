@@ -186,3 +186,12 @@ int GraphicsBackendBase::GetBlockBytes(TextureInternalFormat format)
             return 0;
     }
 }
+
+bool GraphicsBackendBase::IsDepthFormat(TextureInternalFormat format)
+{
+    return format == TextureInternalFormat::DEPTH_16 ||
+            format == TextureInternalFormat::DEPTH_24 ||
+            format == TextureInternalFormat::DEPTH_32 ||
+            format == TextureInternalFormat::DEPTH_24_STENCIL_8 ||
+            format == TextureInternalFormat::DEPTH_32_STENCIL_8;
+}

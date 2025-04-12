@@ -8,6 +8,7 @@
 #include "enums/texture_internal_format.h"
 #include "enums/blend_factor.h"
 #include "enums/primitive_type.h"
+#include "enums/texture_type.h"
 
 #include "directx/d3d12.h"
 #include "directx/d3dx12.h"
@@ -21,6 +22,7 @@ namespace DX12Helpers
     DXGI_FORMAT ToTextureInternalFormat(TextureInternalFormat format, bool isLinear);
     D3D12_BLEND ToBlendFactor(BlendFactor factor);
     D3D12_PRIMITIVE_TOPOLOGY ToPrimitiveTopology(PrimitiveType primitiveType);
+    D3D12_SRV_DIMENSION ToResourceViewDimension(TextureType textureType);
 }
 
 #endif

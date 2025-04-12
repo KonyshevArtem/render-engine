@@ -54,6 +54,9 @@ namespace DX12Local
         ID3D12GraphicsCommandList6* RenderCommandList;
         ID3D12GraphicsCommandList* CopyCommandList;
 
+        ID3D12DescriptorHeap* ResourceDescriptorHeap;
+        uint32_t DescriptorHeapIndex;
+
         ID3D12Fence* RenderQueueFence;
         ID3D12Fence* CopyQueueFence;
         HANDLE RenderQueueFenceEvent;
@@ -69,7 +72,9 @@ namespace DX12Local
     ID3D12InfoQueue* s_InfoQueue;
 
     ID3D12DescriptorHeap* s_RenderTargetDescriptorHeap;
+
     UINT s_RenderTargetDescriptorSize;
+    UINT s_ResourceDescriptorSize;
 
     float s_ClearColor[4];
     double s_ClearDepth;
@@ -201,10 +206,11 @@ namespace DX12Local
         return hashA ^ (hashB + 0x9e3779b9 + (hashA << 6) + (hashA >> 2));
     }
 
-    size_t GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE parameterType, const GraphicsBackendResourceBindings& bindings)
+    size_t GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE parameterType, D3D12_DESCRIPTOR_RANGE_TYPE rangeType, const GraphicsBackendResourceBindings& bindings)
     {
         size_t hash = 0;
         hash = HashCombine(hash, std::hash<D3D12_ROOT_PARAMETER_TYPE>{}(parameterType));
+        hash = HashCombine(hash, std::hash<D3D12_DESCRIPTOR_RANGE_TYPE>{}(rangeType));
         hash = HashCombine(hash, std::hash<D3D12_SHADER_VISIBILITY>{}(GetShaderVisibility(bindings)));
         hash = HashCombine(hash, std::hash<uint32_t>{}(GetShaderRegister(bindings)));
         return hash;
@@ -297,6 +303,14 @@ void GraphicsBackendDX12::Init(void* data)
         ThrowIfFailed(DX12Local::s_Device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&frameData.RenderCommandList)));
         ThrowIfFailed(DX12Local::s_Device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_COPY, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&frameData.CopyCommandList)));
 
+        D3D12_DESCRIPTOR_HEAP_DESC resourceHeapDesc{};
+        resourceHeapDesc.NumDescriptors = 1024;
+        resourceHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        resourceHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+        ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&resourceHeapDesc, IID_PPV_ARGS(&frameData.ResourceDescriptorHeap)));
+
+        DX12Local::s_ResourceDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
         DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&frameData.RenderQueueFence));
         DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&frameData.CopyQueueFence));
         frameData.RenderQueueFenceEvent = CreateEvent(nullptr, false, false, nullptr);
@@ -323,7 +337,7 @@ void GraphicsBackendDX12::InitNewFrame()
 {
     GraphicsBackendBase::InitNewFrame();
 
-    DX12Local::PerFrameData frameData = DX12Local::GetCurrentFrameData();
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
     uint64_t expectedFenceValue = frameData.FenceValue - 1;
     if (frameData.RenderQueueFence->GetCompletedValue() < expectedFenceValue || frameData.CopyQueueFence->GetCompletedValue() < expectedFenceValue)
@@ -342,6 +356,10 @@ void GraphicsBackendDX12::InitNewFrame()
 
     CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
+
+    ID3D12DescriptorHeap* heaps[] = {frameData.ResourceDescriptorHeap};
+    frameData.RenderCommandList->SetDescriptorHeaps(1, heaps);
+    frameData.DescriptorHeapIndex = 0;
 }
 
 void GraphicsBackendDX12::FillImGuiData(void* data)
@@ -350,7 +368,71 @@ void GraphicsBackendDX12::FillImGuiData(void* data)
 
 GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
 {
-    return {};
+    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
+    if (isRenderTarget)
+    {
+        if (IsDepthFormat(format))
+            flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+        else
+            flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    }
+
+    depth = max(depth, 1);
+    DXGI_FORMAT dxFormat = DX12Helpers::ToTextureInternalFormat(format, isLinear);
+    switch (dxFormat)
+    {
+        case DXGI_FORMAT_D16_UNORM:
+            dxFormat = DXGI_FORMAT_R16_TYPELESS;
+            break;
+        case DXGI_FORMAT_D32_FLOAT:
+            dxFormat = DXGI_FORMAT_R32_TYPELESS;
+            break;
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+            dxFormat = DXGI_FORMAT_R24G8_TYPELESS;
+            break;
+        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+            dxFormat = DXGI_FORMAT_R32G8X24_TYPELESS;
+            break;
+    }
+
+    D3D12_RESOURCE_DESC desc;
+    switch (type)
+    {
+        case TextureType::TEXTURE_1D:
+        case TextureType::TEXTURE_1D_ARRAY:
+            desc = CD3DX12_RESOURCE_DESC::Tex1D(dxFormat, width, depth, mipLevels, flags);
+            break;
+        case TextureType::TEXTURE_2D:
+        case TextureType::TEXTURE_2D_MULTISAMPLE:
+        case TextureType::TEXTURE_2D_ARRAY:
+        case TextureType::TEXTURE_2D_MULTISAMPLE_ARRAY:
+            desc = CD3DX12_RESOURCE_DESC::Tex2D(dxFormat, width, height, depth, mipLevels, 1, 0, flags);
+            break;
+        case TextureType::TEXTURE_CUBEMAP:
+        case TextureType::TEXTURE_CUBEMAP_ARRAY:
+            desc = CD3DX12_RESOURCE_DESC::Tex2D(dxFormat, width, height, 6 * depth, mipLevels, 1, 0, flags);
+            break;
+        case TextureType::TEXTURE_3D:
+            desc = CD3DX12_RESOURCE_DESC::Tex3D(dxFormat, width, height, depth, mipLevels, flags);
+            break;
+        case TextureType::TEXTURE_RECTANGLE:
+        case TextureType::TEXTURE_BUFFER:
+            break;
+    }
+
+    D3D12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+    ID3D12Resource* dxTexture;
+    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, nullptr, IID_PPV_ARGS(&dxTexture)));
+
+    dxTexture->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str());
+
+    GraphicsBackendTexture texture;
+    texture.Texture = reinterpret_cast<uint64_t>(dxTexture);
+    texture.Format = format;
+    texture.Type = type;
+    texture.IsLinear = isLinear;
+    return texture;
 }
 
 GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name)
@@ -368,6 +450,71 @@ void GraphicsBackendDX12::DeleteSampler(const GraphicsBackendSampler& sampler)
 
 void GraphicsBackendDX12::BindTexture(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendTexture& texture)
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    DXGI_FORMAT dxFormat = DX12Helpers::ToTextureInternalFormat(texture.Format, texture.IsLinear);
+    switch (dxFormat)
+    {
+        case DXGI_FORMAT_D16_UNORM:
+            dxFormat = DXGI_FORMAT_R16_UNORM;
+            break;
+        case DXGI_FORMAT_D32_FLOAT:
+            dxFormat = DXGI_FORMAT_R32_FLOAT;
+            break;
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+            dxFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+            break;
+        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+            dxFormat = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+            break;
+    }
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC resourceViewDesc{};
+    resourceViewDesc.Format = dxFormat;
+    resourceViewDesc.ViewDimension = DX12Helpers::ToResourceViewDimension(texture.Type);
+    resourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+    switch (resourceViewDesc.ViewDimension)
+    {
+        case D3D12_SRV_DIMENSION_TEXTURE1D:
+            resourceViewDesc.Texture1D.MipLevels = -1;
+            break;
+        case D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
+            resourceViewDesc.Texture1DArray.MipLevels = -1;
+            resourceViewDesc.Texture1DArray.ArraySize = -1;
+            break;
+        case D3D12_SRV_DIMENSION_TEXTURE2D:
+            resourceViewDesc.Texture2D.MipLevels = -1;
+            break;
+        case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
+            resourceViewDesc.Texture2DArray.MipLevels = -1;
+            resourceViewDesc.Texture2DArray.ArraySize = -1;
+            break;
+        case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
+            resourceViewDesc.Texture2DMSArray.ArraySize = -1;
+            break;
+        case D3D12_SRV_DIMENSION_TEXTURE3D:
+            resourceViewDesc.Texture3D.MipLevels = -1;
+            break;
+        case D3D12_SRV_DIMENSION_TEXTURECUBE:
+            resourceViewDesc.TextureCube.MipLevels = -1;
+            break;
+        case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
+            resourceViewDesc.TextureCubeArray.MipLevels = -1;
+            resourceViewDesc.TextureCubeArray.NumCubes = -1;
+            break;
+    }
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(frameData.ResourceDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameData.DescriptorHeapIndex, DX12Local::s_ResourceDescriptorSize);
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(frameData.ResourceDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), frameData.DescriptorHeapIndex, DX12Local::s_ResourceDescriptorSize);
+
+    ID3D12Resource* dxTexture = reinterpret_cast<ID3D12Resource*>(texture.Texture);
+    DX12Local::s_Device->CreateShaderResourceView(dxTexture, &resourceViewDesc, cpuHandle);
+
+    int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)];
+    frameData.RenderCommandList->SetGraphicsRootDescriptorTable(rootParamIndex, gpuHandle);
+
+    ++frameData.DescriptorHeapIndex;
 }
 
 void GraphicsBackendDX12::BindSampler(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendSampler& sampler)
@@ -380,6 +527,49 @@ void GraphicsBackendDX12::GenerateMipmaps(const GraphicsBackendTexture& texture)
 
 void GraphicsBackendDX12::UploadImagePixels(const GraphicsBackendTexture& texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void* pixelsData)
 {
+    ID3D12Resource* dxTexture = reinterpret_cast<ID3D12Resource*>(texture.Texture);
+
+    UINT64 uploadBufferSize = GetRequiredIntermediateSize(dxTexture, level, 1);
+    D3D12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+
+    ID3D12Resource* textureUploadHeap;
+    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&textureUploadHeap)));
+
+    int bytesPerRow;
+    if (IsCompressedTextureFormat(texture.Format))
+    {
+        int blockSize = GetBlockSize(texture.Format);
+        int blocksPerRow = (width + (blockSize - 1)) / blockSize;
+        bytesPerRow = blocksPerRow * GetBlockBytes(texture.Format);
+    }
+    else
+    {
+        bytesPerRow = imageSize / height;
+    }
+
+    D3D12_SUBRESOURCE_DATA subresourceData{};
+    subresourceData.pData = pixelsData;
+    subresourceData.RowPitch = bytesPerRow;
+    subresourceData.SlicePitch = imageSize;
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    UINT firstSubresource = level;
+    if (texture.Type == TextureType::TEXTURE_CUBEMAP || texture.Type == TextureType::TEXTURE_CUBEMAP_ARRAY)
+    {
+        int totalSize = width << level;
+        int mipLevels = std::log2(totalSize) + 1;
+        firstSubresource = static_cast<UINT>(cubemapFace) * mipLevels + level;
+    }
+
+    D3D12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(dxTexture, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    frameData.RenderCommandList->ResourceBarrier(1, &transition);
+
+    UpdateSubresources(frameData.RenderCommandList, dxTexture, textureUploadHeap, 0, firstSubresource, 1, &subresourceData);
+
+    transition = CD3DX12_RESOURCE_BARRIER::Transition(dxTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    frameData.RenderCommandList->ResourceBarrier(1, &transition);
 }
 
 void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor& descriptor)
@@ -485,7 +675,7 @@ void GraphicsBackendDX12::BindBuffer(const GraphicsBackendBuffer& buffer, Graphi
 {
     ID3D12Resource* dxBuffer = reinterpret_cast<ID3D12Resource*>(buffer.Buffer);
 
-    int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_SRV, bindings)];
+    int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_SRV, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)];
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
     frameData.RenderCommandList->SetGraphicsRootShaderResourceView(rootParamIndex, dxBuffer->GetGPUVirtualAddress() + offset);
 }
@@ -494,7 +684,7 @@ void GraphicsBackendDX12::BindConstantBuffer(const GraphicsBackendBuffer &buffer
 {
     ID3D12Resource* dxBuffer = reinterpret_cast<ID3D12Resource*>(buffer.Buffer);
 
-    int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_CBV, bindings)];
+    int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_CBV, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)];
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
     frameData.RenderCommandList->SetGraphicsRootConstantBufferView(rootParamIndex, dxBuffer->GetGPUVirtualAddress() + offset);
 }
@@ -639,7 +829,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<Grap
             parameter.InitAsShaderResourceView(DX12Local::GetShaderRegister(bindings), 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, DX12Local::GetShaderVisibility(bindings));
         rootParameters.push_back(parameter);
 
-        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(isConstant ? D3D12_ROOT_PARAMETER_TYPE_CBV : D3D12_ROOT_PARAMETER_TYPE_SRV, bindings)] = rootParameters.size() - 1;
+        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(isConstant ? D3D12_ROOT_PARAMETER_TYPE_CBV : D3D12_ROOT_PARAMETER_TYPE_SRV, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)] = rootParameters.size() - 1;
     }
 
     for (const auto& pair: textures)
@@ -654,7 +844,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<Grap
         parameter.InitAsDescriptorTable(1, range, DX12Local::GetShaderVisibility(bindings));
         rootParameters.push_back(parameter);
 
-        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, bindings)] = rootParameters.size() - 1;
+        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)] = rootParameters.size() - 1;
     }
 
     for (const auto& pair: samplers)
@@ -669,7 +859,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const std::vector<Grap
         parameter.InitAsDescriptorTable(1, range, DX12Local::GetShaderVisibility(bindings));
         rootParameters.push_back(parameter);
 
-        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, bindings)] = rootParameters.size() - 1;
+        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, bindings)] = rootParameters.size() - 1;
     }
 
     D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc{};

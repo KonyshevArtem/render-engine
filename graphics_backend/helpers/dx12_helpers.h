@@ -9,6 +9,8 @@
 #include "enums/blend_factor.h"
 #include "enums/primitive_type.h"
 #include "enums/texture_type.h"
+#include "enums/texture_filtering_mode.h"
+#include "enums/texture_wrap_mode.h"
 
 #include "directx/d3d12.h"
 #include "directx/d3dx12.h"
@@ -25,6 +27,8 @@ namespace DX12Helpers
     D3D12_SRV_DIMENSION ToResourceViewDimension(TextureType textureType);
     D3D12_RTV_DIMENSION ToColorTargetViewDimension(TextureType textureType);
     D3D12_DSV_DIMENSION ToDepthTargetViewDimension(TextureType textureType);
+    D3D12_FILTER ToTextureFilterMode(TextureFilteringMode filteringMode);
+    D3D12_TEXTURE_ADDRESS_MODE ToTextureWrapMode(TextureWrapMode wrapMode);
 }
 
 #endif

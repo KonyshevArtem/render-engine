@@ -400,3 +400,37 @@ D3D12_DSV_DIMENSION DX12Helpers::ToDepthTargetViewDimension(TextureType textureT
             return D3D12_DSV_DIMENSION_UNKNOWN;
     }
 }
+
+D3D12_FILTER DX12Helpers::ToTextureFilterMode(TextureFilteringMode filteringMode)
+{
+    switch (filteringMode)
+    {
+        case TextureFilteringMode::NEAREST:
+            return D3D12_FILTER_MIN_MAG_MIP_POINT;
+        case TextureFilteringMode::LINEAR:
+            return D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+        case TextureFilteringMode::NEAREST_MIPMAP_NEAREST:
+            return D3D12_FILTER_MIN_MAG_MIP_POINT;
+        case TextureFilteringMode::LINEAR_MIPMAP_NEAREST:
+            return D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+        case TextureFilteringMode::NEAREST_MIPMAP_LINEAR:
+            return D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+        case TextureFilteringMode::LINEAR_MIPMAP_LINEAR:
+            return D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    }
+}
+
+D3D12_TEXTURE_ADDRESS_MODE DX12Helpers::ToTextureWrapMode(TextureWrapMode wrapMode)
+{
+    switch (wrapMode)
+    {
+        case TextureWrapMode::CLAMP_TO_EDGE:
+            return D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        case TextureWrapMode::CLAMP_TO_BORDER:
+            return D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+        case TextureWrapMode::MIRRORED_REPEAT:
+            return D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+        case TextureWrapMode::REPEAT:
+            return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    }
+}

@@ -1137,10 +1137,14 @@ void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& sou
 
 void GraphicsBackendDX12::PushDebugGroup(const std::string& name)
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    PIXBeginEvent(frameData.RenderCommandList, 0, name.c_str());
 }
 
 void GraphicsBackendDX12::PopDebugGroup()
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    PIXEndEvent(frameData.RenderCommandList);
 }
 
 GraphicsBackendProfilerMarker GraphicsBackendDX12::PushProfilerMarker()

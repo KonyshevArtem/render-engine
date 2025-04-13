@@ -4,6 +4,7 @@
 #include "graphics_backend_api_dx12.h"
 #include "enums/texture_internal_format.h"
 #include "enums/texture_type.h"
+#include "enums/framebuffer_attachment.h"
 
 GraphicsBackendBase *GraphicsBackendBase::Create(const std::string &backend)
 {
@@ -194,4 +195,11 @@ bool GraphicsBackendBase::IsDepthFormat(TextureInternalFormat format)
             format == TextureInternalFormat::DEPTH_32 ||
             format == TextureInternalFormat::DEPTH_24_STENCIL_8 ||
             format == TextureInternalFormat::DEPTH_32_STENCIL_8;
+}
+
+bool GraphicsBackendBase::IsDepthAttachment(FramebufferAttachment attachment)
+{
+    return attachment == FramebufferAttachment::DEPTH_ATTACHMENT ||
+            attachment == FramebufferAttachment::STENCIL_ATTACHMENT ||
+            attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
 }

@@ -83,6 +83,7 @@ public:
     virtual void SetCullFace(CullFace cullFace) = 0;
     virtual void SetCullFaceOrientation(CullFaceOrientation orientation) = 0;
     virtual void SetViewport(int x, int y, int width, int height, float near, float far) = 0;
+    virtual void SetScissorRect(int x, int y, int width, int height) = 0;
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) = 0;
     virtual GraphicsBackendShaderObject CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name) = 0;
@@ -134,6 +135,7 @@ public:
     int GetBlockSize(TextureInternalFormat format);
     int GetBlockBytes(TextureInternalFormat format);
     bool IsDepthFormat(TextureInternalFormat format);
+    bool IsDepthAttachment(FramebufferAttachment attachment);
 
 private:
     uint64_t m_FrameCount;

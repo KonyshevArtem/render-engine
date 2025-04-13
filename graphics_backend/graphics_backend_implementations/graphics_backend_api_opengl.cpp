@@ -591,6 +591,11 @@ void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, flo
     glDepthRangef(near, far);
 }
 
+void GraphicsBackendOpenGL::SetScissorRect(int x, int y, int width, int height)
+{
+    glScissor(x, y, width, height);
+}
+
 GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string& source, const std::string& name)
 {
     GraphicsBackendShaderObject shaderObject{};

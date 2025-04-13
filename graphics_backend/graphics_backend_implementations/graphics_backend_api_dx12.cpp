@@ -29,6 +29,9 @@ namespace DX12Local
 {
     struct RenderTargetState
     {
+        D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle;
+        TextureInternalFormat Format;
+        bool IsLinear;
         bool IsEnabled;
         bool NeedClear;
     };
@@ -54,6 +57,12 @@ namespace DX12Local
         ID3D12GraphicsCommandList6* RenderCommandList;
         ID3D12GraphicsCommandList* CopyCommandList;
 
+        ID3D12DescriptorHeap* ColorTargetDescriptorHeap;
+        uint32_t ColorTargetHeapIndex;
+
+        ID3D12DescriptorHeap* DepthTargetDescriptorHeap;
+        uint32_t DepthTargetHeapIndex;
+
         ID3D12DescriptorHeap* ResourceDescriptorHeap;
         uint32_t DescriptorHeapIndex;
 
@@ -71,13 +80,14 @@ namespace DX12Local
     ID3D12CommandQueue* s_CopyQueue;
     ID3D12InfoQueue* s_InfoQueue;
 
-    ID3D12DescriptorHeap* s_RenderTargetDescriptorHeap;
+    ID3D12DescriptorHeap* s_BackbufferDescriptorHeap;
 
-    UINT s_RenderTargetDescriptorSize;
+    UINT s_ColorTargetDescriptorSize;
+    UINT s_DepthTargetDescriptorSize;
     UINT s_ResourceDescriptorSize;
 
     float s_ClearColor[4];
-    double s_ClearDepth;
+    float s_ClearDepth;
     RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
 
     ID3D12Resource* s_RenderTargets[GraphicsBackend::GetMaxFramesInFlight()];
@@ -285,17 +295,19 @@ void GraphicsBackendDX12::Init(void* data)
     rtvHeapDesc.NumDescriptors = GraphicsBackend::GetMaxFramesInFlight();
     rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&DX12Local::s_RenderTargetDescriptorHeap)));
-    DX12Local::s_RenderTargetDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&DX12Local::s_BackbufferDescriptorHeap)));
 
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle(DX12Local::s_RenderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    DX12Local::s_ColorTargetDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    DX12Local::s_DepthTargetDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    DX12Local::s_ResourceDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
     for (UINT i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
     {
         DX12Local::PerFrameData& frameData = DX12Local::s_PerFrameData[i];
 
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(DX12Local::s_BackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, DX12Local::s_ColorTargetDescriptorSize);
         ThrowIfFailed(DX12Local::s_SwapChain->GetBuffer(i, IID_PPV_ARGS(&DX12Local::s_RenderTargets[i])));
         DX12Local::s_Device->CreateRenderTargetView(DX12Local::s_RenderTargets[i], nullptr, rtvHandle);
-        rtvHandle.ptr += DX12Local::s_RenderTargetDescriptorSize;
 
         ThrowIfFailed(DX12Local::s_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&frameData.RenderCommandAllocator)));
         ThrowIfFailed(DX12Local::s_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&frameData.CopyCommandAllocator)));
@@ -309,7 +321,17 @@ void GraphicsBackendDX12::Init(void* data)
         resourceHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
         ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&resourceHeapDesc, IID_PPV_ARGS(&frameData.ResourceDescriptorHeap)));
 
-        DX12Local::s_ResourceDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        D3D12_DESCRIPTOR_HEAP_DESC colorTargetHeapDesc{};
+        colorTargetHeapDesc.NumDescriptors = 1024;
+        colorTargetHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+        colorTargetHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&colorTargetHeapDesc, IID_PPV_ARGS(&frameData.ColorTargetDescriptorHeap)));
+
+        D3D12_DESCRIPTOR_HEAP_DESC depthTargetHeapDesc{};
+        colorTargetHeapDesc.NumDescriptors = 1024;
+        colorTargetHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+        colorTargetHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&colorTargetHeapDesc, IID_PPV_ARGS(&frameData.DepthTargetDescriptorHeap)));
 
         DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&frameData.RenderQueueFence));
         DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&frameData.CopyQueueFence));
@@ -360,6 +382,8 @@ void GraphicsBackendDX12::InitNewFrame()
     ID3D12DescriptorHeap* heaps[] = {frameData.ResourceDescriptorHeap};
     frameData.RenderCommandList->SetDescriptorHeaps(1, heaps);
     frameData.DescriptorHeapIndex = 0;
+    frameData.ColorTargetHeapIndex = 0;
+    frameData.DepthTargetHeapIndex = 0;
 }
 
 void GraphicsBackendDX12::FillImGuiData(void* data)
@@ -368,13 +392,20 @@ void GraphicsBackendDX12::FillImGuiData(void* data)
 
 GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
 {
+    D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
     D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
     if (isRenderTarget)
     {
         if (IsDepthFormat(format))
+        {
             flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+            state = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        }
         else
+        {
             flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+            state = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        }
     }
 
     depth = max(depth, 1);
@@ -423,7 +454,7 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(int width, int height,
     D3D12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
     ID3D12Resource* dxTexture;
-    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, nullptr, IID_PPV_ARGS(&dxTexture)));
+    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, state, nullptr, IID_PPV_ARGS(&dxTexture)));
 
     dxTexture->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str());
 
@@ -574,70 +605,106 @@ void GraphicsBackendDX12::UploadImagePixels(const GraphicsBackendTexture& textur
 
 void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor& descriptor)
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
     const int attachmentIndex = static_cast<int>(descriptor.Attachment);
     DX12Local::RenderTargetState& state = DX12Local::s_RenderTargetStates[attachmentIndex];
 
-//    state.IsBackbuffer = descriptor.IsBackbuffer;
+    bool isDepth = IsDepthAttachment(descriptor.Attachment);
 
-//    if (descriptor.IsBackbuffer)
-//    {
-//        state.Target = 0;
-//        state.IsEnabled = descriptor.Attachment == FramebufferAttachment::COLOR_ATTACHMENT0 ||
-//                          descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT ||
-//                          descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT ||
-//                          descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT;
-//    }
-//    else
-//    {
-//        state.Target = descriptor.Texture.Texture;
-//        state.TextureType = descriptor.Texture.Type;
-//        state.Level = descriptor.Level;
-//        state.Layer = descriptor.Layer;
-//        state.IsEnabled = true;
-//    }
+    if (isDepth)
+    {
+        state.DescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(frameData.DepthTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameData.DepthTargetHeapIndex++, DX12Local::s_DepthTargetDescriptorSize);
 
-    state.IsEnabled = descriptor.Attachment == FramebufferAttachment::COLOR_ATTACHMENT0;
+        D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
+        desc.Format = DX12Helpers::ToTextureInternalFormat(descriptor.Texture.Format, descriptor.Texture.IsLinear);
+        desc.ViewDimension = DX12Helpers::ToDepthTargetViewDimension(descriptor.Texture.Type);
+
+        switch (desc.ViewDimension)
+        {
+            case D3D12_DSV_DIMENSION_TEXTURE1D:
+                desc.Texture1D.MipSlice = descriptor.Level;
+                break;
+            case D3D12_DSV_DIMENSION_TEXTURE1DARRAY:
+                desc.Texture1DArray.MipSlice = descriptor.Level;
+                desc.Texture1DArray.ArraySize = -1;
+                desc.Texture1DArray.FirstArraySlice = descriptor.Layer;
+                break;
+            case D3D12_DSV_DIMENSION_TEXTURE2D:
+                desc.Texture2D.MipSlice = descriptor.Level;
+                break;
+            case D3D12_DSV_DIMENSION_TEXTURE2DARRAY:
+                desc.Texture2DArray.MipSlice = descriptor.Level;
+                desc.Texture2DArray.ArraySize = -1;
+                desc.Texture2DArray.FirstArraySlice = descriptor.Layer;
+                break;
+            case D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY:
+                desc.Texture2DMSArray.ArraySize = -1;
+                desc.Texture2DMSArray.FirstArraySlice = descriptor.Layer;
+                break;
+        }
+
+        ID3D12Resource* dxTexture = reinterpret_cast<ID3D12Resource*>(descriptor.Texture.Texture);
+        DX12Local::s_Device->CreateDepthStencilView(dxTexture, &desc, state.DescriptorHandle);
+    }
+    else
+    {
+        if (descriptor.IsBackbuffer)
+            state.DescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(DX12Local::s_BackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DX12Local::s_SwapChain->GetCurrentBackBufferIndex(), DX12Local::s_ColorTargetDescriptorSize);
+        else
+        {
+            state.DescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(frameData.ColorTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameData.ColorTargetHeapIndex++, DX12Local::s_ColorTargetDescriptorSize);
+
+            D3D12_RENDER_TARGET_VIEW_DESC desc{};
+            desc.Format = DX12Helpers::ToTextureInternalFormat(descriptor.Texture.Format, descriptor.Texture.IsLinear);
+            desc.ViewDimension = DX12Helpers::ToColorTargetViewDimension(descriptor.Texture.Type);
+
+            switch (desc.ViewDimension)
+            {
+                case D3D12_RTV_DIMENSION_TEXTURE1D:
+                    desc.Texture1D.MipSlice = descriptor.Level;
+                    break;
+                case D3D12_RTV_DIMENSION_TEXTURE1DARRAY:
+                    desc.Texture1DArray.MipSlice = descriptor.Level;
+                    desc.Texture1DArray.ArraySize = -1;
+                    desc.Texture1DArray.FirstArraySlice = descriptor.Layer;
+                    break;
+                case D3D12_RTV_DIMENSION_TEXTURE2D:
+                    desc.Texture2D.MipSlice = descriptor.Level;
+                    break;
+                case D3D12_RTV_DIMENSION_TEXTURE2DARRAY:
+                    desc.Texture2DArray.MipSlice = descriptor.Level;
+                    desc.Texture2DArray.ArraySize = -1;
+                    desc.Texture2DArray.FirstArraySlice = descriptor.Layer;
+                    break;
+                case D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY:
+                    desc.Texture2DMSArray.ArraySize = -1;
+                    desc.Texture2DMSArray.FirstArraySlice = descriptor.Layer;
+                    break;
+                case D3D12_RTV_DIMENSION_TEXTURE3D:
+                    desc.Texture3D.MipSlice = descriptor.Level;
+                    desc.Texture3D.FirstWSlice = descriptor.Layer;
+                    desc.Texture3D.WSize = -1;
+                    break;
+            }
+
+            ID3D12Resource *dxTexture = reinterpret_cast<ID3D12Resource *>(descriptor.Texture.Texture);
+            DX12Local::s_Device->CreateRenderTargetView(dxTexture, &desc, state.DescriptorHandle);
+        }
+    }
+
+    state.IsEnabled = !descriptor.IsBackbuffer || descriptor.Attachment == FramebufferAttachment::COLOR_ATTACHMENT0 || isDepth;
     state.NeedClear = descriptor.LoadAction == LoadAction::CLEAR;
-//    if (descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT)
-//    {
-//        state.ClearFlags = needClear ? GL_DEPTH_BUFFER_BIT : 0;
-//        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)].IsEnabled = false;
-//
-//        RenderTargetState& stencilState = s_RenderTargetStates[static_cast<int>(FramebufferAttachment::STENCIL_ATTACHMENT)];
-//        stencilState.IsEnabled = true;
-//        stencilState.Target = 0;
-//    }
-//    else if (descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT)
-//    {
-//        state.ClearFlags = needClear ? GL_STENCIL_BUFFER_BIT : 0;
-//        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)].IsEnabled = false;
-//
-//        RenderTargetState& depthState = s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_ATTACHMENT)];
-//        depthState.IsEnabled = false;
-//        depthState.Target = 0;
-//    }
-//    else if (descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)
-//    {
-//        state.ClearFlags = needClear ? GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT : 0;
-//        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_ATTACHMENT)].IsEnabled = false;
-//        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::STENCIL_ATTACHMENT)].IsEnabled = false;
-//    }
-//    else
-//    {
-//        state.ClearFlags = needClear ? GL_COLOR_BUFFER_BIT : 0;
-//    }
+    state.IsLinear = descriptor.Texture.IsLinear;
+    state.Format = descriptor.Texture.Format;
 }
 
 TextureInternalFormat GraphicsBackendDX12::GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear)
 {
+    DX12Local::RenderTargetState& state = DX12Local::s_RenderTargetStates[static_cast<int>(attachment)];
     if (outIsLinear)
-        *outIsLinear = true;
-
-    if (attachment == FramebufferAttachment::DEPTH_ATTACHMENT)
-        return TextureInternalFormat::DEPTH_32;
-    if (attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)
-        return TextureInternalFormat::DEPTH_32_STENCIL_8;
-    return TextureInternalFormat::RGBA16F;
+        *outIsLinear = state.IsLinear;
+    return state.Format;
 }
 
 GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
@@ -759,8 +826,20 @@ void GraphicsBackendDX12::SetCullFaceOrientation(CullFaceOrientation orientation
 {
 }
 
-void GraphicsBackendDX12::SetViewport(int x, int y, int width, int height, float near, float far)
+void GraphicsBackendDX12::SetViewport(int x, int y, int width, int height, float depthNear, float depthFar)
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    CD3DX12_VIEWPORT viewport(x, y, width, height, depthNear, depthFar);
+    frameData.RenderCommandList->RSSetViewports(1, &viewport);
+}
+
+void GraphicsBackendDX12::SetScissorRect(int x, int y, int width, int height)
+{
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    CD3DX12_RECT rect(x, y, width, height);
+    frameData.RenderCommandList->RSSetScissorRects(1, &rect);
 }
 
 GraphicsBackendShaderObject GraphicsBackendDX12::CompileShader(ShaderType shaderType, const std::string& source, const std::string& name)
@@ -1015,41 +1094,51 @@ bool GraphicsBackendDX12::ResolveProfilerMarker(const GraphicsBackendProfilerMar
 
 void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 {
-    bool isBackbuffer = true;
+    PushDebugGroup(name);
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
-    for (const DX12Local::RenderTargetState& state : DX12Local::s_RenderTargetStates)
+    static std::vector<bool> colorTargetNeedsClear;
+    static std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> colorTargetHandles;
+
+    bool hasDepthTarget = false;
+    bool depthTargetNeedsClear = false;
+    D3D12_CPU_DESCRIPTOR_HANDLE depthTargetHandle;
+
+    colorTargetNeedsClear.clear();
+    colorTargetHandles.clear();
+
+    for (int i = 0; i < static_cast<int>(FramebufferAttachment::MAX); ++i)
     {
+        const DX12Local::RenderTargetState& state = DX12Local::s_RenderTargetStates[i];
         if (!state.IsEnabled)
             continue;
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(DX12Local::s_RenderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DX12Local::s_SwapChain->GetCurrentBackBufferIndex(), DX12Local::s_RenderTargetDescriptorSize);
-        frameData.RenderCommandList->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
-        frameData.RenderCommandList->ClearRenderTargetView(rtvHandle, DX12Local::s_ClearColor, 0, nullptr);
+        const FramebufferAttachment attachment = static_cast<FramebufferAttachment>(i);
+
+        if (IsDepthAttachment(attachment))
+        {
+            hasDepthTarget = true;
+            depthTargetHandle = state.DescriptorHandle;
+            depthTargetNeedsClear = state.NeedClear;
+        }
+        else
+        {
+            colorTargetHandles.push_back(state.DescriptorHandle);
+            colorTargetNeedsClear.push_back(state.NeedClear);
+        }
     }
 
-    PushDebugGroup(name);
+    frameData.RenderCommandList->OMSetRenderTargets(1, &colorTargetHandles[0], false, hasDepthTarget ? &depthTargetHandle : nullptr);
 
-//    if (isBackbuffer)
-//    {
-//        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-//    }
-//    else
-//    {
-//        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][0]);
-//
-//        constexpr int maxAttachments = static_cast<int>(FramebufferAttachment::MAX);
-//        for (int i = 0; i < maxAttachments; ++i)
-//        {
-//            const RenderTargetState& state = s_RenderTargetStates[i];
-//            if (!state.IsEnabled)
-//                continue;
-//
-//            const GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(static_cast<FramebufferAttachment>(i));
-//            AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, state.TextureType, state.Target, state.Level, state.Layer);
-//        }
-//    }
+    for (int i = 0; i < colorTargetHandles.size(); ++i)
+    {
+        if (colorTargetNeedsClear[i])
+            frameData.RenderCommandList->ClearRenderTargetView(colorTargetHandles[i], DX12Local::s_ClearColor, 0, nullptr);
+    }
+
+    if (hasDepthTarget && depthTargetNeedsClear)
+        frameData.RenderCommandList->ClearDepthStencilView(depthTargetHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, DX12Local::s_ClearDepth, 0, 0, nullptr);
 }
 
 void GraphicsBackendDX12::EndRenderPass()

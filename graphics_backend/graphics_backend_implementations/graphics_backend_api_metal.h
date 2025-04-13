@@ -59,6 +59,7 @@ public:
     void SetCullFace(CullFace cullFace) override;
     void SetCullFaceOrientation(CullFaceOrientation orientation) override;
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
+    void SetScissorRect(int x, int y, int width, int height) override;
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) override;
     GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) override;

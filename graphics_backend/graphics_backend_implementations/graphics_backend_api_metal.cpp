@@ -464,6 +464,10 @@ void GraphicsBackendMetal::SetViewport(int x, int y, int width, int height, floa
     m_RenderCommandEncoder->setViewport(viewport);
 }
 
+void GraphicsBackendMetal::SetScissorRect(int x, int y, int width, int height)
+{
+}
+
 GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shaderType, const std::string &source, const std::string& name)
 {
     NS::Error* error;

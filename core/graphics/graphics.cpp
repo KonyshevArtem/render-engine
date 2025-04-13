@@ -360,7 +360,7 @@ namespace Graphics
 
         bool isLinear;
         TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
-        TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_ATTACHMENT, nullptr);
+        TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
         GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, isLinear, depthTargetFormat));
 
         SetCullState(shaderPass.GetCullInfo());
@@ -489,6 +489,7 @@ namespace Graphics
     void SetViewport(const Vector4 &viewport)
     {
         GraphicsBackend::Current()->SetViewport(viewport.x, viewport.y, viewport.z, viewport.w, 0, 1);
+        GraphicsBackend::Current()->SetScissorRect(viewport.x, viewport.y, viewport.z, viewport.w);
     }
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture)

@@ -132,7 +132,6 @@ DXGI_FORMAT DX12Helpers::ToTextureInternalFormat(TextureInternalFormat format, b
 {
     switch (format)
     {
-
         case TextureInternalFormat::R8:
             return DXGI_FORMAT_R8_UNORM;
         case TextureInternalFormat::R8_SNORM:

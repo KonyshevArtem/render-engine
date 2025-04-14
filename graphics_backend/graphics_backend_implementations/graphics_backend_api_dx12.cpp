@@ -81,7 +81,13 @@ namespace DX12Local
         uint64_t FenceValue;
     };
 
+    constexpr DXGI_FORMAT s_SwapChainColorFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    constexpr DXGI_FORMAT s_SwapChainDepthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+    HWND s_Window;
     IDXGISwapChain4* s_SwapChain;
+    int s_SwapChainWidth;
+    int s_SwapChainHeight;
 
     ID3D12Device5* s_Device;
     ID3D12CommandQueue* s_RenderQueue;
@@ -236,6 +242,14 @@ namespace DX12Local
         hash = HashCombine(hash, std::hash<uint32_t>{}(GetShaderRegister(bindings)));
         return hash;
     }
+
+    void GetWindowSize(HWND window, int& outWidth, int& outHeight)
+    {
+        RECT rect;
+        GetWindowRect(window, &rect);
+        outWidth = rect.right - rect.left;
+        outHeight = rect.bottom - rect.top;
+    }
 }
 
 inline void ThrowIfFailed(HRESULT result)
@@ -257,10 +271,69 @@ inline void ThrowIfFailed(HRESULT result)
     }
 }
 
+void CreateBackbufferResourcesAndViews()
+{
+    for (UINT i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
+    {
+        CD3DX12_CPU_DESCRIPTOR_HANDLE colorBackbufferHandle(DX12Local::s_ColorBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, DX12Local::s_ColorTargetDescriptorSize);
+        ThrowIfFailed(DX12Local::s_SwapChain->GetBuffer(i, IID_PPV_ARGS(&DX12Local::s_ColorBackbuffers[i])));
+        DX12Local::s_Device->CreateRenderTargetView(DX12Local::s_ColorBackbuffers[i], nullptr, colorBackbufferHandle);
+
+        CD3DX12_CLEAR_VALUE clearValue(DX12Local::s_SwapChainDepthFormat, 1, 0);
+        D3D12_RESOURCE_DESC depthBackbufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(DX12Local::s_SwapChainDepthFormat, DX12Local::s_SwapChainWidth, DX12Local::s_SwapChainHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+        D3D12_HEAP_PROPERTIES depthBackbufferHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+        ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&depthBackbufferHeapProps, D3D12_HEAP_FLAG_NONE, &depthBackbufferDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue, IID_PPV_ARGS(&DX12Local::s_DepthBackbuffers[i])));
+        CD3DX12_CPU_DESCRIPTOR_HANDLE depthBackbufferHandle(DX12Local::s_DepthBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, DX12Local::s_DepthTargetDescriptorSize);
+        DX12Local::s_Device->CreateDepthStencilView(DX12Local::s_DepthBackbuffers[i], nullptr, depthBackbufferHandle);
+
+        std::string depthBackbufferName = "DepthBackbuffer_" + std::to_string(i);
+        DX12Local::s_DepthBackbufferDescriptorHeap->SetPrivateData(WKPDID_D3DDebugObjectName, depthBackbufferName.size(), depthBackbufferName.c_str());
+    }
+}
+
+void CreateSwapChain(HWND window, IDXGIFactory7* factory)
+{
+    DX12Local::GetWindowSize(window, DX12Local::s_SwapChainWidth, DX12Local::s_SwapChainHeight);
+
+    DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
+    swapChainDesc.BufferCount = GraphicsBackend::GetMaxFramesInFlight();
+    swapChainDesc.Width = DX12Local::s_SwapChainWidth;
+    swapChainDesc.Height = DX12Local::s_SwapChainHeight;
+    swapChainDesc.Format = DX12Local::s_SwapChainColorFormat;
+    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    swapChainDesc.SampleDesc.Count = 1;
+
+    IDXGISwapChain1* swapChain;
+    ThrowIfFailed(factory->CreateSwapChainForHwnd(
+            DX12Local::s_RenderQueue,
+            window,
+            &swapChainDesc,
+            nullptr,
+            nullptr,
+            &swapChain
+    ));
+    ThrowIfFailed(swapChain->QueryInterface(__uuidof(IDXGISwapChain4), reinterpret_cast<void**>(&DX12Local::s_SwapChain)));
+    swapChain->Release();
+
+    CreateBackbufferResourcesAndViews();
+}
+
+void WaitForFrameEnd(DX12Local::PerFrameData& frameData)
+{
+    uint64_t expectedFenceValue = frameData.FenceValue - 1;
+    if (frameData.RenderQueueFence->GetCompletedValue() < expectedFenceValue || frameData.CopyQueueFence->GetCompletedValue() < expectedFenceValue)
+    {
+        ThrowIfFailed(frameData.RenderQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.RenderQueueFenceEvent));
+        ThrowIfFailed(frameData.CopyQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.CopyQueueFenceEvent));
+
+        HANDLE events[2] = {frameData.RenderQueueFenceEvent, frameData.CopyQueueFenceEvent};
+        WaitForMultipleObjects(1, events, true, INFINITE);
+    }
+}
+
 void GraphicsBackendDX12::Init(void* data)
 {
-    HWND* window = static_cast<HWND*>(data);
-
     ID3D12Debug3* debugController;
     if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
         debugController->EnableDebugLayer();
@@ -281,27 +354,6 @@ void GraphicsBackendDX12::Init(void* data)
     commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
     ThrowIfFailed(DX12Local::s_Device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&DX12Local::s_CopyQueue)));
 
-    DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-    swapChainDesc.BufferCount = GraphicsBackend::GetMaxFramesInFlight();
-    swapChainDesc.Width = 800; // Match the window's client area
-    swapChainDesc.Height = 600;
-    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    swapChainDesc.SampleDesc.Count = 1;
-
-    IDXGISwapChain1* swapChain;
-    ThrowIfFailed(factory->CreateSwapChainForHwnd(
-            DX12Local::s_RenderQueue,
-            *window,
-            &swapChainDesc,
-            nullptr,
-            nullptr,
-            &swapChain
-    ));
-    ThrowIfFailed(swapChain->QueryInterface(__uuidof(IDXGISwapChain4), reinterpret_cast<void**>(&DX12Local::s_SwapChain)));
-    swapChain->Release();
-
     D3D12_DESCRIPTOR_HEAP_DESC colorBackbufferDescriptorHeapDesc{};
     colorBackbufferDescriptorHeapDesc.NumDescriptors = GraphicsBackend::GetMaxFramesInFlight();
     colorBackbufferDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -319,23 +371,12 @@ void GraphicsBackendDX12::Init(void* data)
     DX12Local::s_ResourceDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     DX12Local::s_SamplerDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
+    DX12Local::s_Window = *static_cast<HWND*>(data);
+    CreateSwapChain(DX12Local::s_Window, factory);
+
     for (UINT i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
     {
         DX12Local::PerFrameData& frameData = DX12Local::s_PerFrameData[i];
-
-        CD3DX12_CPU_DESCRIPTOR_HANDLE colorBackbufferHandle(DX12Local::s_ColorBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, DX12Local::s_ColorTargetDescriptorSize);
-        ThrowIfFailed(DX12Local::s_SwapChain->GetBuffer(i, IID_PPV_ARGS(&DX12Local::s_ColorBackbuffers[i])));
-        DX12Local::s_Device->CreateRenderTargetView(DX12Local::s_ColorBackbuffers[i], nullptr, colorBackbufferHandle);
-
-        CD3DX12_CLEAR_VALUE clearValue(DXGI_FORMAT_D24_UNORM_S8_UINT, 1, 0);
-        D3D12_RESOURCE_DESC depthBackbufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D24_UNORM_S8_UINT, 800, 600, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-        D3D12_HEAP_PROPERTIES depthBackbufferHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-        ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&depthBackbufferHeapProps, D3D12_HEAP_FLAG_NONE, &depthBackbufferDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue, IID_PPV_ARGS(&DX12Local::s_DepthBackbuffers[i])));
-        CD3DX12_CPU_DESCRIPTOR_HANDLE depthBackbufferHandle(DX12Local::s_DepthBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, DX12Local::s_DepthTargetDescriptorSize);
-        DX12Local::s_Device->CreateDepthStencilView(DX12Local::s_DepthBackbuffers[i], nullptr, depthBackbufferHandle);
-
-        std::string depthBackbufferName = "DepthBackbuffer_" + std::to_string(i);
-        DX12Local::s_DepthBackbufferDescriptorHeap->SetPrivateData(WKPDID_D3DDebugObjectName, depthBackbufferName.size(), depthBackbufferName.c_str());
 
         ThrowIfFailed(DX12Local::s_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&frameData.RenderCommandAllocator)));
         ThrowIfFailed(DX12Local::s_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&frameData.CopyCommandAllocator)));
@@ -362,10 +403,10 @@ void GraphicsBackendDX12::Init(void* data)
         ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&colorTargetHeapDesc, IID_PPV_ARGS(&frameData.ColorTargetDescriptorHeap)));
 
         D3D12_DESCRIPTOR_HEAP_DESC depthTargetHeapDesc{};
-        colorTargetHeapDesc.NumDescriptors = 1024;
-        colorTargetHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-        colorTargetHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&colorTargetHeapDesc, IID_PPV_ARGS(&frameData.DepthTargetDescriptorHeap)));
+        depthTargetHeapDesc.NumDescriptors = 1024;
+        depthTargetHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+        depthTargetHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&depthTargetHeapDesc, IID_PPV_ARGS(&frameData.DepthTargetDescriptorHeap)));
 
         DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&frameData.RenderQueueFence));
         DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&frameData.CopyQueueFence));
@@ -394,15 +435,27 @@ void GraphicsBackendDX12::InitNewFrame()
     GraphicsBackendBase::InitNewFrame();
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    WaitForFrameEnd(frameData);
 
-    uint64_t expectedFenceValue = frameData.FenceValue - 1;
-    if (frameData.RenderQueueFence->GetCompletedValue() < expectedFenceValue || frameData.CopyQueueFence->GetCompletedValue() < expectedFenceValue)
+    int windowWidth;
+    int windowHeight;
+    DX12Local::GetWindowSize(DX12Local::s_Window, windowWidth, windowHeight);
+    if (windowWidth != DX12Local::s_SwapChainWidth || windowHeight != DX12Local::s_SwapChainHeight)
     {
-        ThrowIfFailed(frameData.RenderQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.RenderQueueFenceEvent));
-        ThrowIfFailed(frameData.CopyQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.CopyQueueFenceEvent));
+        for (DX12Local::PerFrameData& otherFrameData: DX12Local::s_PerFrameData)
+            WaitForFrameEnd(otherFrameData);
 
-        HANDLE events[2] = {frameData.RenderQueueFenceEvent, frameData.CopyQueueFenceEvent};
-        WaitForMultipleObjects(1, events, true, INFINITE);
+        for (ID3D12Resource* backbuffer: DX12Local::s_ColorBackbuffers)
+            backbuffer->Release();
+
+        for (ID3D12Resource* backbuffer: DX12Local::s_DepthBackbuffers)
+            backbuffer->Release();
+
+        DX12Local::s_SwapChain->ResizeBuffers(GraphicsBackend::GetMaxFramesInFlight(), windowWidth, windowHeight, DX12Local::s_SwapChainColorFormat, 0);
+        DX12Local::s_SwapChainWidth = windowWidth;
+        DX12Local::s_SwapChainHeight = windowHeight;
+
+        CreateBackbufferResourcesAndViews();
     }
 
     ThrowIfFailed(frameData.RenderCommandAllocator->Reset());

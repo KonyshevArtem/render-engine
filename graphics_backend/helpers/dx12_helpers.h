@@ -12,6 +12,7 @@
 #include "enums/texture_filtering_mode.h"
 #include "enums/texture_wrap_mode.h"
 #include "enums/cull_face.h"
+#include "enums/depth_function.h"
 
 #include "directx/d3d12.h"
 #include "directx/d3dx12.h"
@@ -32,6 +33,7 @@ namespace DX12Helpers
     D3D12_FILTER ToTextureFilterMode(TextureFilteringMode filteringMode);
     D3D12_TEXTURE_ADDRESS_MODE ToTextureWrapMode(TextureWrapMode wrapMode);
     D3D12_CULL_MODE ToCullFace(CullFace face);
+    D3D12_COMPARISON_FUNC ToDepthFunction(DepthFunction function);
 }
 
 #endif

@@ -30,6 +30,9 @@ struct GraphicsBackendProgramDescriptor
 
     CullFace CullFace;
     CullFaceOrientation CullFaceOrientation;
+
+    bool DepthWrite;
+    DepthFunction DepthFunction;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_PROGRAM_DESCRIPTOR_H

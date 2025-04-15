@@ -41,7 +41,6 @@ add_library(GraphicsBackend
         enums/load_action.h
         enums/store_action.h
         types/graphics_backend_render_target_descriptor.h
-        types/graphics_backend_depth_stencil_state.h
         types/graphics_backend_color_attachment_descriptor.h
         types/graphics_backend_texture_info.h
         types/graphics_backend_sampler_info.h

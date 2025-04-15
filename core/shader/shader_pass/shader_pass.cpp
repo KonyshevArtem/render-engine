@@ -24,6 +24,7 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendI
         m_Shaders(std::move(shaders)),
         m_CullInfo(cullInfo),
         m_BlendInfo(blendInfo),
+        m_DepthInfo(depthInfo),
         m_Textures(std::move(textures)),
         m_Buffers(std::move(buffers)),
         m_Samplers(std::move(samplers)),
@@ -42,8 +43,6 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendI
     }
 
     CreatePSO(m_Shaders, m_BlendInfo, k_DefaultColorFormat, true, k_DefaultDepthFormat, s_DefaultVertexAttributes, m_Name);
-
-    m_DepthStencilState = GraphicsBackend::Current()->CreateDepthStencilState(depthInfo.WriteDepth, depthInfo.DepthFunction, m_Name + "_DepthStencil");
 }
 
 ShaderPass::~ShaderPass()
@@ -57,8 +56,6 @@ ShaderPass::~ShaderPass()
     {
         GraphicsBackend::Current()->DeleteShader(shader);
     }
-
-    GraphicsBackend::Current()->DeleteDepthStencilState(m_DepthStencilState);
 }
 
 const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat)
@@ -100,6 +97,8 @@ const GraphicsBackendProgram &ShaderPass::CreatePSO(std::vector<GraphicsBackendS
     programDescriptor.DepthFormat = depthFormat;
     programDescriptor.CullFace = m_CullInfo.Face;
     programDescriptor.CullFaceOrientation = m_CullInfo.Orientation;
+    programDescriptor.DepthWrite = m_DepthInfo.WriteDepth;
+    programDescriptor.DepthFunction = m_DepthInfo.DepthFunction;
 
     auto program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
 

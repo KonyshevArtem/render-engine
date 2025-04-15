@@ -15,7 +15,6 @@
 #include "types/graphics_backend_texture_info.h"
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
-#include "types/graphics_backend_depth_stencil_state.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_fence.h"
 #include "types/graphics_backend_profiler_marker.h"
@@ -31,12 +30,6 @@
 
 namespace OpenGLLocal
 {
-    struct DepthStencilState
-    {
-        GLboolean DepthWrite;
-        GLenum DepthFunction;
-    };
-
     struct BlendState
     {
         GLenum SourceFactor;
@@ -50,6 +43,8 @@ namespace OpenGLLocal
         BlendState BlendState;
         GLenum CullFace;
         GLenum CullFaceOrientation;
+        GLenum DepthFunction;
+        GLboolean DepthWrite;
     };
 
     struct DebugMessageType
@@ -673,6 +668,8 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     programData->BlendState = blendState;
     programData->CullFace = OpenGLHelpers::ToCullFace(descriptor.CullFace);
     programData->CullFaceOrientation = OpenGLHelpers::ToCullFaceOrientation(descriptor.CullFaceOrientation);
+    programData->DepthFunction = OpenGLHelpers::ToDepthCompareFunction(descriptor.DepthFunction);
+    programData->DepthWrite = descriptor.DepthWrite ? GL_TRUE : GL_FALSE;
 
     GraphicsBackendProgram program{};
     program.Program = reinterpret_cast<uint64_t>(programData);
@@ -719,6 +716,8 @@ void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
         glDisable(GL_CULL_FACE);
 
     glFrontFace(programData->CullFaceOrientation);
+    glDepthFunc(programData->DepthFunction);
+    glDepthMask(programData->DepthWrite);
 }
 
 void GraphicsBackendOpenGL::SetClearColor(float r, float g, float b, float a)
@@ -924,33 +923,6 @@ void GraphicsBackendOpenGL::BeginCopyPass(const std::string& name)
 void GraphicsBackendOpenGL::EndCopyPass()
 {
     PopDebugGroup();
-}
-
-GraphicsBackendDepthStencilState GraphicsBackendOpenGL::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name)
-{
-    OpenGLLocal::DepthStencilState* glState = new OpenGLLocal::DepthStencilState();
-    glState->DepthFunction = OpenGLHelpers::ToDepthCompareFunction(depthFunction);
-    glState->DepthWrite = depthWrite ? GL_TRUE : GL_FALSE;
-
-    GraphicsBackendDepthStencilState state{};
-    state.m_State = reinterpret_cast<uint64_t>(glState);
-    return state;
-}
-
-void GraphicsBackendOpenGL::DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state)
-{
-    auto glState = reinterpret_cast<OpenGLLocal::DepthStencilState*>(state.m_State);
-    delete glState;
-}
-
-void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStencilState& state)
-{
-    auto glState = reinterpret_cast<OpenGLLocal::DepthStencilState*>(state.m_State);
-    if (glState)
-    {
-        glDepthFunc(glState->DepthFunction);
-        glDepthMask(glState->DepthWrite);
-    }
 }
 
 GraphicsBackendFence GraphicsBackendOpenGL::CreateFence(FenceType fenceType, const std::string& name)

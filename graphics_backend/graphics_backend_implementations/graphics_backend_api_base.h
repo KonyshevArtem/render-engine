@@ -37,7 +37,6 @@ struct GraphicsBackendTextureInfo;
 class GraphicsBackendBufferInfo;
 struct GraphicsBackendResourceBindings;
 struct GraphicsBackendRenderTargetDescriptor;
-struct GraphicsBackendDepthStencilState;
 struct GraphicsBackendColorAttachmentDescriptor;
 struct GraphicsBackendFence;
 struct GraphicsBackendSamplerInfo;
@@ -112,10 +111,6 @@ public:
     virtual void EndRenderPass() = 0;
     virtual void BeginCopyPass(const std::string& name) = 0;
     virtual void EndCopyPass() = 0;
-
-    virtual GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name) = 0;
-    virtual void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
-    virtual void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
 
     virtual GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) = 0;
     virtual void DeleteFence(const GraphicsBackendFence& fence) = 0;

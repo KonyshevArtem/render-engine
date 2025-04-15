@@ -3,7 +3,6 @@
 
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
-#include "types/graphics_backend_depth_stencil_state.h"
 #include "enums/texture_internal_format.h"
 #include "shader/shader_structs.h"
 #include "drawable_geometry/vertex_attributes/vertex_attributes.h"
@@ -35,11 +34,6 @@ public:
 
     const GraphicsBackendProgram &GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat);
 
-    inline const GraphicsBackendDepthStencilState &GetDepthStencilState() const
-    {
-        return m_DepthStencilState;
-    }
-
     inline const std::unordered_map<std::string, GraphicsBackendTextureInfo> &GetTextures() const
     {
         return m_Textures;
@@ -60,8 +54,8 @@ private:
     std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
 
     CullInfo m_CullInfo;
-    GraphicsBackendDepthStencilState m_DepthStencilState;
     BlendInfo m_BlendInfo;
+    DepthInfo m_DepthInfo;
     std::string m_Name;
 
     std::unordered_map<std::string, GraphicsBackendTextureInfo> m_Textures;

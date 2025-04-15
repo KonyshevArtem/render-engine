@@ -357,8 +357,6 @@ namespace Graphics
         TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
         GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, isLinear, depthTargetFormat));
 
-        GraphicsBackend::Current()->SetDepthStencilState(shaderPass.GetDepthStencilState());
-
         BindBuffer(GlobalConstants::LightingBufferName, s_LightingDataBuffer, true, shaderPass);
         BindBuffer(GlobalConstants::CameraDataBufferName, s_CameraDataBuffer, true, shaderPass);
         BindBuffer(GlobalConstants::ShadowsBufferName, s_ShadowsDataBuffer, true, shaderPass);

@@ -15,7 +15,6 @@
 #include "types/graphics_backend_texture_info.h"
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
-#include "types/graphics_backend_depth_stencil_state.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_fence.h"
 #include "types/graphics_backend_profiler_marker.h"
@@ -1154,6 +1153,10 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     rasterizerDesc.CullMode = DX12Helpers::ToCullFace(descriptor.CullFace);
     rasterizerDesc.FrontCounterClockwise = descriptor.CullFaceOrientation == CullFaceOrientation::COUNTER_CLOCKWISE;
 
+    D3D12_DEPTH_STENCIL_DESC depthStencilDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    depthStencilDesc.DepthEnable = descriptor.DepthWrite;
+    depthStencilDesc.DepthFunc = DX12Helpers::ToDepthFunction(descriptor.DepthFunction);
+
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
     psoDesc.InputLayout = { dxVertexAttributes.data(), static_cast<UINT>(dxVertexAttributes.size()) };
     psoDesc.pRootSignature = rootSignature;
@@ -1161,7 +1164,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     psoDesc.PS = { reinterpret_cast<UINT8*>(fragmentBlob->GetBufferPointer()), fragmentBlob->GetBufferSize() };
     psoDesc.RasterizerState = rasterizerDesc;
     psoDesc.BlendState = blendDescriptor;
-    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState = depthStencilDesc;
     psoDesc.SampleMask = UINT_MAX;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     psoDesc.NumRenderTargets = 1;
@@ -1370,19 +1373,6 @@ void GraphicsBackendDX12::BeginCopyPass(const std::string& name)
 }
 
 void GraphicsBackendDX12::EndCopyPass()
-{
-}
-
-GraphicsBackendDepthStencilState GraphicsBackendDX12::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name)
-{
-    return {};
-}
-
-void GraphicsBackendDX12::DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state)
-{
-}
-
-void GraphicsBackendDX12::SetDepthStencilState(const GraphicsBackendDepthStencilState& state)
 {
 }
 

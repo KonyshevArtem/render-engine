@@ -4,6 +4,7 @@
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
+#include "types/graphics_backend_program_descriptor.h"
 #include "utils/utils.h"
 
 #include <vector>
@@ -88,7 +89,17 @@ const GraphicsBackendProgram &ShaderPass::CreatePSO(std::vector<GraphicsBackendS
     colorAttachmentDescriptor.BlendingEnabled = blendInfo.Enabled;
     colorAttachmentDescriptor.IsLinear = isLinear;
 
-    auto program = GraphicsBackend::Current()->CreateProgram(shaders, colorAttachmentDescriptor, depthFormat, vertexAttributes, m_Textures, m_Buffers, m_Samplers, name);
+    GraphicsBackendProgramDescriptor programDescriptor{};
+    programDescriptor.Shaders = &shaders;
+    programDescriptor.ColorAttachmentDescriptor = colorAttachmentDescriptor;
+    programDescriptor.DepthFormat = depthFormat;
+    programDescriptor.VertexAttributes = &vertexAttributes;
+    programDescriptor.Textures = &m_Textures;
+    programDescriptor.Buffers = &m_Buffers;
+    programDescriptor.Samplers = &m_Samplers;
+    programDescriptor.Name = &name;
+
+    auto program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
 
     size_t hash = GetPSOHash(VertexAttributes::GetHash(vertexAttributes), colorFormat, isLinear, depthFormat);
     m_Programs[hash] = program;

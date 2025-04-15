@@ -52,7 +52,8 @@ add_library(GraphicsBackend
         enums/gpu_queue.h
         enums/vertex_attribute_semantic.h
         helpers/dx12_helpers.cpp
-        helpers/dx12_helpers.h)
+        helpers/dx12_helpers.h
+        types/graphics_backend_program_descriptor.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

@@ -41,6 +41,7 @@ struct GraphicsBackendDepthStencilState;
 struct GraphicsBackendColorAttachmentDescriptor;
 struct GraphicsBackendFence;
 struct GraphicsBackendSamplerInfo;
+struct GraphicsBackendProgramDescriptor;
 
 class GraphicsBackendBase
 {
@@ -87,11 +88,7 @@ public:
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) = 0;
     virtual GraphicsBackendShaderObject CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name) = 0;
-    virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                                                 std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
-                                                 std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
-                                                 std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
-                                                 const std::string& name) = 0;
+    virtual GraphicsBackendProgram CreateProgram(const GraphicsBackendProgramDescriptor& descriptor) = 0;
     virtual void DeleteShader(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;

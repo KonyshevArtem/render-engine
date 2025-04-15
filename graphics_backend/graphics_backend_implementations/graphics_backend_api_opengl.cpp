@@ -20,6 +20,7 @@
 #include "types/graphics_backend_fence.h"
 #include "types/graphics_backend_profiler_marker.h"
 #include "types/graphics_backend_sampler_info.h"
+#include "types/graphics_backend_program_descriptor.h"
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 
@@ -631,23 +632,19 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShaderBinary(ShaderTyp
     return {};
 }
 
-GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
-                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes,
-                                                            std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
-                                                            std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
-                                                            std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
-                                                            const std::string& name)
+GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBackendProgramDescriptor& descriptor)
 {
     GraphicsBackendProgram program{};
     program.Program = glCreateProgram();
+
+    const std::vector<GraphicsBackendShaderObject>& shaders = *descriptor.Shaders;
 
     for (auto &shader : shaders)
     {
         bool isShader = glIsShader(shader.ShaderObject);
         if (isShader)
-        {
             glAttachShader(program.Program, shader.ShaderObject);
-        }
+
     }
 
     glLinkProgram(program.Program);
@@ -656,15 +653,13 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<Gr
     {
         bool isShader = glIsShader(shader.ShaderObject);
         if (isShader)
-        {
             glDetachShader(program.Program, shader.ShaderObject);
-        }
+
     }
 
-    if (!name.empty())
-    {
-        glObjectLabel(GL_PROGRAM, program.Program, name.length(), name.c_str());
-    }
+    if (descriptor.Name && !descriptor.Name->empty())
+        glObjectLabel(GL_PROGRAM, program.Program, descriptor.Name->length(), descriptor.Name->c_str());
+
 
     int isLinked;
     glGetProgramiv(program.Program, GL_LINK_STATUS, &isLinked);
@@ -680,9 +675,9 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<Gr
     }
 
     auto blendState = new OpenGLLocal::BlendState();
-    blendState->SourceFactor = OpenGLHelpers::ToBlendFactor(colorAttachmentDescriptor.SourceFactor);
-    blendState->DestinationFactor = OpenGLHelpers::ToBlendFactor(colorAttachmentDescriptor.DestinationFactor);
-    blendState->Enabled = colorAttachmentDescriptor.BlendingEnabled;
+    blendState->SourceFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.SourceFactor);
+    blendState->DestinationFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.DestinationFactor);
+    blendState->Enabled = descriptor.ColorAttachmentDescriptor.BlendingEnabled;
     program.BlendState = reinterpret_cast<uint64_t>(blendState);
 
     return program;

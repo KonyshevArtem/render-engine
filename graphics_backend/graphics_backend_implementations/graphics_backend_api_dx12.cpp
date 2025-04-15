@@ -27,10 +27,17 @@
 
 namespace DX12Local
 {
+    struct ResourceData
+    {
+        ID3D12Resource* Resource;
+        D3D12_RESOURCE_STATES State;
+    };
+
     struct RenderTargetState
     {
         D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle;
         TextureInternalFormat Format;
+        ResourceData* ResourceData;
         bool IsLinear;
         bool IsEnabled;
         bool NeedClear;
@@ -81,8 +88,8 @@ namespace DX12Local
         uint64_t FenceValue;
     };
 
-    constexpr DXGI_FORMAT s_SwapChainColorFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-    constexpr DXGI_FORMAT s_SwapChainDepthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    constexpr TextureInternalFormat k_SwapChainColorFormat = TextureInternalFormat::RGBA8;
+    constexpr TextureInternalFormat k_SwapChainDepthFormat = TextureInternalFormat::DEPTH_24_STENCIL_8;
 
     HWND s_Window;
     IDXGISwapChain4* s_SwapChain;
@@ -279,8 +286,9 @@ void CreateBackbufferResourcesAndViews()
         ThrowIfFailed(DX12Local::s_SwapChain->GetBuffer(i, IID_PPV_ARGS(&DX12Local::s_ColorBackbuffers[i])));
         DX12Local::s_Device->CreateRenderTargetView(DX12Local::s_ColorBackbuffers[i], nullptr, colorBackbufferHandle);
 
-        CD3DX12_CLEAR_VALUE clearValue(DX12Local::s_SwapChainDepthFormat, 1, 0);
-        D3D12_RESOURCE_DESC depthBackbufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(DX12Local::s_SwapChainDepthFormat, DX12Local::s_SwapChainWidth, DX12Local::s_SwapChainHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+        DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainDepthFormat, true);
+        CD3DX12_CLEAR_VALUE clearValue(format, 1, 0);
+        D3D12_RESOURCE_DESC depthBackbufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, DX12Local::s_SwapChainWidth, DX12Local::s_SwapChainHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
         D3D12_HEAP_PROPERTIES depthBackbufferHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
         ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&depthBackbufferHeapProps, D3D12_HEAP_FLAG_NONE, &depthBackbufferDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue, IID_PPV_ARGS(&DX12Local::s_DepthBackbuffers[i])));
         CD3DX12_CPU_DESCRIPTOR_HANDLE depthBackbufferHandle(DX12Local::s_DepthBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, DX12Local::s_DepthTargetDescriptorSize);
@@ -299,7 +307,7 @@ void CreateSwapChain(HWND window, IDXGIFactory7* factory)
     swapChainDesc.BufferCount = GraphicsBackend::GetMaxFramesInFlight();
     swapChainDesc.Width = DX12Local::s_SwapChainWidth;
     swapChainDesc.Height = DX12Local::s_SwapChainHeight;
-    swapChainDesc.Format = DX12Local::s_SwapChainColorFormat;
+    swapChainDesc.Format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.SampleDesc.Count = 1;
@@ -451,7 +459,8 @@ void GraphicsBackendDX12::InitNewFrame()
         for (ID3D12Resource* backbuffer: DX12Local::s_DepthBackbuffers)
             backbuffer->Release();
 
-        DX12Local::s_SwapChain->ResizeBuffers(GraphicsBackend::GetMaxFramesInFlight(), windowWidth, windowHeight, DX12Local::s_SwapChainColorFormat, 0);
+        DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
+        DX12Local::s_SwapChain->ResizeBuffers(GraphicsBackend::GetMaxFramesInFlight(), windowWidth, windowHeight, format, 0);
         DX12Local::s_SwapChainWidth = windowWidth;
         DX12Local::s_SwapChainHeight = windowHeight;
 
@@ -551,8 +560,12 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(int width, int height,
 
     dxTexture->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str());
 
+    DX12Local::ResourceData* resourceData = new DX12Local::ResourceData();
+    resourceData->Resource = dxTexture;
+    resourceData->State = state;
+
     GraphicsBackendTexture texture;
-    texture.Texture = reinterpret_cast<uint64_t>(dxTexture);
+    texture.Texture = reinterpret_cast<uint64_t>(resourceData);
     texture.Format = format;
     texture.Type = type;
     texture.IsLinear = isLinear;
@@ -587,8 +600,9 @@ GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(TextureWrapMode wrapMo
 
 void GraphicsBackendDX12::DeleteTexture(const GraphicsBackendTexture& texture)
 {
-    ID3D12Resource* dxTexture = reinterpret_cast<ID3D12Resource*>(texture.Texture);
-    dxTexture->Release();
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
+    resourceData->Resource->Release();
+    delete resourceData;
 }
 
 void GraphicsBackendDX12::DeleteSampler(const GraphicsBackendSampler& sampler)
@@ -657,8 +671,25 @@ void GraphicsBackendDX12::BindTexture(const GraphicsBackendResourceBindings& bin
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(frameData.ResourceDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameData.ResourceDescriptorHeapIndex, DX12Local::s_ResourceDescriptorSize);
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(frameData.ResourceDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), frameData.ResourceDescriptorHeapIndex, DX12Local::s_ResourceDescriptorSize);
 
-    ID3D12Resource* dxTexture = reinterpret_cast<ID3D12Resource*>(texture.Texture);
-    DX12Local::s_Device->CreateShaderResourceView(dxTexture, &resourceViewDesc, cpuHandle);
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
+
+    D3D12_RESOURCE_STATES state;
+    D3D12_SHADER_VISIBILITY visibility = DX12Local::GetShaderVisibility(bindings);
+    if (visibility == D3D12_SHADER_VISIBILITY_ALL)
+        state = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+    else if (visibility == D3D12_SHADER_VISIBILITY_PIXEL)
+        state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+    else
+        state = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+
+    if (resourceData->State != state)
+    {
+        D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resourceData->Resource, resourceData->State, state);
+        frameData.RenderCommandList->ResourceBarrier(1, &barrier);
+        resourceData->State = state;
+    }
+
+    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &resourceViewDesc, cpuHandle);
 
     int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)];
     frameData.RenderCommandList->SetGraphicsRootDescriptorTable(rootParamIndex, gpuHandle);
@@ -687,7 +718,8 @@ void GraphicsBackendDX12::GenerateMipmaps(const GraphicsBackendTexture& texture)
 
 void GraphicsBackendDX12::UploadImagePixels(const GraphicsBackendTexture& texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void* pixelsData)
 {
-    ID3D12Resource* dxTexture = reinterpret_cast<ID3D12Resource*>(texture.Texture);
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
+    ID3D12Resource* dxTexture = resourceData->Resource;
 
     UINT64 uploadBufferSize = GetRequiredIntermediateSize(dxTexture, level, 1);
     D3D12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -741,11 +773,19 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
 
     bool isDepth = IsDepthAttachment(descriptor.Attachment);
     bool isNullTarget = descriptor.Texture.Texture == 0;
+    bool isColorBackbuffer = descriptor.IsBackbuffer && descriptor.Attachment == FramebufferAttachment::COLOR_ATTACHMENT0;
+    bool isEnabled = isColorBackbuffer || !isNullTarget;
+    TextureInternalFormat backbufferFormat = isDepth ? DX12Local::k_SwapChainDepthFormat : DX12Local::k_SwapChainColorFormat;
 
-    state.IsEnabled = !isNullTarget || descriptor.IsBackbuffer && descriptor.Attachment == FramebufferAttachment::COLOR_ATTACHMENT0;
+    TextureInternalFormat format = descriptor.IsBackbuffer ? backbufferFormat : descriptor.Texture.Format;
+    if (!isEnabled)
+        format = TextureInternalFormat::INVALID;
+
+    state.IsEnabled = isEnabled;
     state.NeedClear = descriptor.LoadAction == LoadAction::CLEAR;
-    state.IsLinear = descriptor.Texture.IsLinear;
-    state.Format = isNullTarget ? TextureInternalFormat::INVALID : descriptor.Texture.Format;
+    state.IsLinear = descriptor.IsBackbuffer || descriptor.Texture.IsLinear;
+    state.Format = format;
+    state.ResourceData = nullptr;
 
     if (!state.IsEnabled)
         return;
@@ -786,8 +826,8 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
                     break;
             }
 
-            ID3D12Resource *dxTexture = reinterpret_cast<ID3D12Resource *>(descriptor.Texture.Texture);
-            DX12Local::s_Device->CreateDepthStencilView(dxTexture, &desc, state.DescriptorHandle);
+            state.ResourceData = reinterpret_cast<DX12Local::ResourceData*>(descriptor.Texture.Texture);
+            DX12Local::s_Device->CreateDepthStencilView(state.ResourceData->Resource, &desc, state.DescriptorHandle);
         }
     }
     else
@@ -831,8 +871,8 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
                     break;
             }
 
-            ID3D12Resource *dxTexture = reinterpret_cast<ID3D12Resource *>(descriptor.Texture.Texture);
-            DX12Local::s_Device->CreateRenderTargetView(dxTexture, &desc, state.DescriptorHandle);
+            state.ResourceData = reinterpret_cast<DX12Local::ResourceData*>(descriptor.Texture.Texture);
+            DX12Local::s_Device->CreateRenderTargetView(state.ResourceData->Resource, &desc, state.DescriptorHandle);
         }
     }
 }
@@ -849,10 +889,11 @@ GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::str
 {
     ID3D12Resource* dxBuffer;
 
+    D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ;
     CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
 
     D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
-    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&dxBuffer)));
+    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, state, nullptr, IID_PPV_ARGS(&dxBuffer)));
 
     dxBuffer->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str());
 
@@ -866,39 +907,45 @@ GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::str
         dxBuffer->Unmap(0, nullptr);
     }
 
+    DX12Local::ResourceData* resourceData = new DX12Local::ResourceData();
+    resourceData->Resource = dxBuffer;
+    resourceData->State = state;
+
     GraphicsBackendBuffer buffer{};
-    buffer.Buffer = reinterpret_cast<uint64_t>(dxBuffer);
+    buffer.Buffer = reinterpret_cast<uint64_t>(resourceData);
     buffer.Size = size;
     return buffer;
 }
 
 void GraphicsBackendDX12::DeleteBuffer(const GraphicsBackendBuffer& buffer)
 {
-    ID3D12Resource* dxBuffer = reinterpret_cast<ID3D12Resource*>(buffer.Buffer);
-    dxBuffer->Release();
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+    resourceData->Resource->Release();
+    delete resourceData;
 }
 
 void GraphicsBackendDX12::BindBuffer(const GraphicsBackendBuffer& buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
-    ID3D12Resource* dxBuffer = reinterpret_cast<ID3D12Resource*>(buffer.Buffer);
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
 
     int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_SRV, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)];
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    frameData.RenderCommandList->SetGraphicsRootShaderResourceView(rootParamIndex, dxBuffer->GetGPUVirtualAddress() + offset);
+    frameData.RenderCommandList->SetGraphicsRootShaderResourceView(rootParamIndex, resourceData->Resource->GetGPUVirtualAddress() + offset);
 }
 
 void GraphicsBackendDX12::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
-    ID3D12Resource* dxBuffer = reinterpret_cast<ID3D12Resource*>(buffer.Buffer);
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
 
     int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_CBV, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)];
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    frameData.RenderCommandList->SetGraphicsRootConstantBufferView(rootParamIndex, dxBuffer->GetGPUVirtualAddress() + offset);
+    frameData.RenderCommandList->SetGraphicsRootConstantBufferView(rootParamIndex, resourceData->Resource->GetGPUVirtualAddress() + offset);
 }
 
 void GraphicsBackendDX12::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void* data)
 {
-    ID3D12Resource* dxBuffer = reinterpret_cast<ID3D12Resource*>(buffer.Buffer);
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+    ID3D12Resource* dxBuffer = resourceData->Resource;
 
     CD3DX12_RANGE readRange(0, 0);
 
@@ -924,8 +971,11 @@ int GraphicsBackendDX12::GetConstantBufferOffsetAlignment()
 
 GraphicsBackendGeometry GraphicsBackendDX12::CreateGeometry(const GraphicsBackendBuffer& vertexBuffer, const GraphicsBackendBuffer& indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, const std::string& name)
 {
-    ID3D12Resource* dxVertexBuffer = reinterpret_cast<ID3D12Resource*>(vertexBuffer.Buffer);
-    ID3D12Resource* dxIndexBuffer = reinterpret_cast<ID3D12Resource*>(indexBuffer.Buffer);
+    DX12Local::ResourceData* vertexResourceData = reinterpret_cast<DX12Local::ResourceData*>(vertexBuffer.Buffer);
+    DX12Local::ResourceData* indexResourceData = reinterpret_cast<DX12Local::ResourceData*>(indexBuffer.Buffer);
+
+    ID3D12Resource* dxVertexBuffer = reinterpret_cast<ID3D12Resource*>(vertexResourceData->Resource);
+    ID3D12Resource* dxIndexBuffer = reinterpret_cast<ID3D12Resource*>(indexResourceData->Resource);
 
     D3D12_VERTEX_BUFFER_VIEW* vertexBufferView = new D3D12_VERTEX_BUFFER_VIEW;
     vertexBufferView->BufferLocation = dxVertexBuffer->GetGPUVirtualAddress();
@@ -1249,6 +1299,7 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 
     static std::vector<bool> colorTargetNeedsClear;
     static std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> colorTargetHandles;
+    static std::vector<D3D12_RESOURCE_BARRIER> transitions;
 
     bool hasDepthTarget = false;
     bool depthTargetNeedsClear = false;
@@ -1256,6 +1307,7 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 
     colorTargetNeedsClear.clear();
     colorTargetHandles.clear();
+    transitions.clear();
 
     for (int i = 0; i < static_cast<int>(FramebufferAttachment::MAX); ++i)
     {
@@ -1265,18 +1317,31 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 
         const FramebufferAttachment attachment = static_cast<FramebufferAttachment>(i);
 
+        D3D12_RESOURCE_STATES resourceState;
         if (IsDepthAttachment(attachment))
         {
             hasDepthTarget = true;
             depthTargetHandle = state.DescriptorHandle;
             depthTargetNeedsClear = state.NeedClear;
+            resourceState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
         }
         else
         {
             colorTargetHandles.push_back(state.DescriptorHandle);
             colorTargetNeedsClear.push_back(state.NeedClear);
+            resourceState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        }
+
+        if (state.ResourceData && state.ResourceData->State != resourceState)
+        {
+            D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(state.ResourceData->Resource, state.ResourceData->State, resourceState);
+            transitions.push_back(barrier);
+            state.ResourceData->State = resourceState;
         }
     }
+
+    if (!transitions.empty())
+        frameData.RenderCommandList->ResourceBarrier(transitions.size(), &transitions[0]);
 
     frameData.RenderCommandList->OMSetRenderTargets(1, &colorTargetHandles[0], false, hasDepthTarget ? &depthTargetHandle : nullptr);
 

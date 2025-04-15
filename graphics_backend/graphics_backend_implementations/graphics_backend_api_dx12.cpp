@@ -257,88 +257,90 @@ namespace DX12Local
         outWidth = rect.right - rect.left;
         outHeight = rect.bottom - rect.top;
     }
-}
 
-inline void ThrowIfFailed(HRESULT result)
-{
-    if (FAILED(result))
+    inline void ThrowIfFailed(HRESULT result)
     {
-        DX12Local::PrintInfoQueueMessages();
-
-        const uint32_t resultCode = static_cast<uint32_t>(result);
-        if (resultCode == 0x887A0005)
+        if (FAILED(result))
         {
-            const uint32_t removeReasonCode = static_cast<uint32_t>(DX12Local::s_Device->GetDeviceRemovedReason());
-            Debug::LogErrorFormat("[GraphicsBackend] Device removed with reason {:#08X}", removeReasonCode);
+            PrintInfoQueueMessages();
+
+            const uint32_t resultCode = static_cast<uint32_t>(result);
+            if (resultCode == 0x887A0005)
+            {
+                const uint32_t removeReasonCode = static_cast<uint32_t>(s_Device->GetDeviceRemovedReason());
+                Debug::LogErrorFormat("[GraphicsBackend] Device removed with reason {:#08X}", removeReasonCode);
+            }
+            else
+                Debug::LogErrorFormat("[GraphicsBackend] Failed with HRESULT {:#08X}", resultCode);
+
+            throw std::exception();
         }
-        else
-            Debug::LogErrorFormat("[GraphicsBackend] Failed with HRESULT {:#08X}", resultCode);
-
-        throw std::exception();
     }
-}
 
-void CreateBackbufferResourcesAndViews()
-{
-    for (UINT i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
+    void CreateBackbufferResourcesAndViews()
     {
-        CD3DX12_CPU_DESCRIPTOR_HANDLE colorBackbufferHandle(DX12Local::s_ColorBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, DX12Local::s_ColorTargetDescriptorSize);
-        ThrowIfFailed(DX12Local::s_SwapChain->GetBuffer(i, IID_PPV_ARGS(&DX12Local::s_ColorBackbuffers[i])));
-        DX12Local::s_Device->CreateRenderTargetView(DX12Local::s_ColorBackbuffers[i], nullptr, colorBackbufferHandle);
+        for (UINT i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
+        {
+            CD3DX12_CPU_DESCRIPTOR_HANDLE colorBackbufferHandle(s_ColorBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, s_ColorTargetDescriptorSize);
+            ThrowIfFailed(s_SwapChain->GetBuffer(i, IID_PPV_ARGS(&s_ColorBackbuffers[i])));
+            s_Device->CreateRenderTargetView(s_ColorBackbuffers[i], nullptr, colorBackbufferHandle);
 
-        DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainDepthFormat, true);
-        CD3DX12_CLEAR_VALUE clearValue(format, 1, 0);
-        D3D12_RESOURCE_DESC depthBackbufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, DX12Local::s_SwapChainWidth, DX12Local::s_SwapChainHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-        D3D12_HEAP_PROPERTIES depthBackbufferHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-        ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&depthBackbufferHeapProps, D3D12_HEAP_FLAG_NONE, &depthBackbufferDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue, IID_PPV_ARGS(&DX12Local::s_DepthBackbuffers[i])));
-        CD3DX12_CPU_DESCRIPTOR_HANDLE depthBackbufferHandle(DX12Local::s_DepthBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, DX12Local::s_DepthTargetDescriptorSize);
-        DX12Local::s_Device->CreateDepthStencilView(DX12Local::s_DepthBackbuffers[i], nullptr, depthBackbufferHandle);
+            DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(k_SwapChainDepthFormat, true);
+            CD3DX12_CLEAR_VALUE clearValue(format, 1, 0);
+            D3D12_RESOURCE_DESC depthBackbufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, s_SwapChainWidth, s_SwapChainHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+            D3D12_HEAP_PROPERTIES depthBackbufferHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+            ThrowIfFailed(s_Device->CreateCommittedResource(&depthBackbufferHeapProps, D3D12_HEAP_FLAG_NONE, &depthBackbufferDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue, IID_PPV_ARGS(&s_DepthBackbuffers[i])));
+            CD3DX12_CPU_DESCRIPTOR_HANDLE depthBackbufferHandle(s_DepthBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, s_DepthTargetDescriptorSize);
+            s_Device->CreateDepthStencilView(s_DepthBackbuffers[i], nullptr, depthBackbufferHandle);
 
-        std::string depthBackbufferName = "DepthBackbuffer_" + std::to_string(i);
-        DX12Local::s_DepthBackbufferDescriptorHeap->SetPrivateData(WKPDID_D3DDebugObjectName, depthBackbufferName.size(), depthBackbufferName.c_str());
+            std::string depthBackbufferName = "DepthBackbuffer_" + std::to_string(i);
+            s_DepthBackbufferDescriptorHeap->SetPrivateData(WKPDID_D3DDebugObjectName, depthBackbufferName.size(), depthBackbufferName.c_str());
+        }
     }
-}
 
-void CreateSwapChain(HWND window, IDXGIFactory7* factory)
-{
-    DX12Local::GetWindowSize(window, DX12Local::s_SwapChainWidth, DX12Local::s_SwapChainHeight);
-
-    DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-    swapChainDesc.BufferCount = GraphicsBackend::GetMaxFramesInFlight();
-    swapChainDesc.Width = DX12Local::s_SwapChainWidth;
-    swapChainDesc.Height = DX12Local::s_SwapChainHeight;
-    swapChainDesc.Format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
-    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    swapChainDesc.SampleDesc.Count = 1;
-
-    IDXGISwapChain1* swapChain;
-    ThrowIfFailed(factory->CreateSwapChainForHwnd(
-            DX12Local::s_RenderQueue,
-            window,
-            &swapChainDesc,
-            nullptr,
-            nullptr,
-            &swapChain
-    ));
-    ThrowIfFailed(swapChain->QueryInterface(__uuidof(IDXGISwapChain4), reinterpret_cast<void**>(&DX12Local::s_SwapChain)));
-    swapChain->Release();
-
-    CreateBackbufferResourcesAndViews();
-}
-
-void WaitForFrameEnd(DX12Local::PerFrameData& frameData)
-{
-    uint64_t expectedFenceValue = frameData.FenceValue - 1;
-    if (frameData.RenderQueueFence->GetCompletedValue() < expectedFenceValue || frameData.CopyQueueFence->GetCompletedValue() < expectedFenceValue)
+    void CreateSwapChain(HWND window, IDXGIFactory7* factory)
     {
-        ThrowIfFailed(frameData.RenderQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.RenderQueueFenceEvent));
-        ThrowIfFailed(frameData.CopyQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.CopyQueueFenceEvent));
+        GetWindowSize(window, s_SwapChainWidth, s_SwapChainHeight);
 
-        HANDLE events[2] = {frameData.RenderQueueFenceEvent, frameData.CopyQueueFenceEvent};
-        WaitForMultipleObjects(1, events, true, INFINITE);
+        DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
+        swapChainDesc.BufferCount = GraphicsBackend::GetMaxFramesInFlight();
+        swapChainDesc.Width = s_SwapChainWidth;
+        swapChainDesc.Height = s_SwapChainHeight;
+        swapChainDesc.Format = DX12Helpers::ToTextureInternalFormat(k_SwapChainColorFormat, true);
+        swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        swapChainDesc.SampleDesc.Count = 1;
+
+        IDXGISwapChain1* swapChain;
+        ThrowIfFailed(factory->CreateSwapChainForHwnd(
+                s_RenderQueue,
+                window,
+                &swapChainDesc,
+                nullptr,
+                nullptr,
+                &swapChain
+        ));
+        ThrowIfFailed(swapChain->QueryInterface(__uuidof(IDXGISwapChain4), reinterpret_cast<void**>(&s_SwapChain)));
+        swapChain->Release();
+
+        CreateBackbufferResourcesAndViews();
+    }
+
+    void WaitForFrameEnd(PerFrameData& frameData)
+    {
+        uint64_t expectedFenceValue = frameData.FenceValue - 1;
+        if (frameData.RenderQueueFence->GetCompletedValue() < expectedFenceValue || frameData.CopyQueueFence->GetCompletedValue() < expectedFenceValue)
+        {
+            ThrowIfFailed(frameData.RenderQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.RenderQueueFenceEvent));
+            ThrowIfFailed(frameData.CopyQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.CopyQueueFenceEvent));
+
+            HANDLE events[2] = {frameData.RenderQueueFenceEvent, frameData.CopyQueueFenceEvent};
+            WaitForMultipleObjects(1, events, true, INFINITE);
+        }
     }
 }
+
+#define ThrowIfFailed DX12Local::ThrowIfFailed
 
 void GraphicsBackendDX12::Init(void* data)
 {
@@ -380,7 +382,7 @@ void GraphicsBackendDX12::Init(void* data)
     DX12Local::s_SamplerDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
     DX12Local::s_Window = *static_cast<HWND*>(data);
-    CreateSwapChain(DX12Local::s_Window, factory);
+    DX12Local::CreateSwapChain(DX12Local::s_Window, factory);
 
     for (UINT i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
     {
@@ -443,7 +445,7 @@ void GraphicsBackendDX12::InitNewFrame()
     GraphicsBackendBase::InitNewFrame();
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    WaitForFrameEnd(frameData);
+    DX12Local::WaitForFrameEnd(frameData);
 
     int windowWidth;
     int windowHeight;
@@ -451,7 +453,7 @@ void GraphicsBackendDX12::InitNewFrame()
     if (windowWidth != DX12Local::s_SwapChainWidth || windowHeight != DX12Local::s_SwapChainHeight)
     {
         for (DX12Local::PerFrameData& otherFrameData: DX12Local::s_PerFrameData)
-            WaitForFrameEnd(otherFrameData);
+            DX12Local::WaitForFrameEnd(otherFrameData);
 
         for (ID3D12Resource* backbuffer: DX12Local::s_ColorBackbuffers)
             backbuffer->Release();
@@ -464,7 +466,7 @@ void GraphicsBackendDX12::InitNewFrame()
         DX12Local::s_SwapChainWidth = windowWidth;
         DX12Local::s_SwapChainHeight = windowHeight;
 
-        CreateBackbufferResourcesAndViews();
+        DX12Local::CreateBackbufferResourcesAndViews();
     }
 
     ThrowIfFailed(frameData.RenderCommandAllocator->Reset());
@@ -1434,5 +1436,7 @@ void GraphicsBackendDX12::Present()
     ThrowIfFailed(DX12Local::s_RenderQueue->Signal(frameData.RenderQueueFence, fenceValue));
     ThrowIfFailed(DX12Local::s_CopyQueue->Signal(frameData.CopyQueueFence, fenceValue));
 }
+
+#undef ThrowIfFailed
 
 #endif // RENDER_BACKEND_DX12

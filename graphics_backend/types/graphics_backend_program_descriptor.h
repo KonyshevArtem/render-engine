@@ -8,6 +8,8 @@
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_sampler_info.h"
 #include "enums/texture_internal_format.h"
+#include "enums/cull_face.h"
+#include "enums/cull_face_orientation.h"
 
 #include <vector>
 #include <unordered_map>
@@ -25,6 +27,9 @@ struct GraphicsBackendProgramDescriptor
 
     GraphicsBackendColorAttachmentDescriptor ColorAttachmentDescriptor;
     TextureInternalFormat DepthFormat;
+
+    CullFace CullFace;
+    CullFaceOrientation CullFaceOrientation;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_PROGRAM_DESCRIPTOR_H

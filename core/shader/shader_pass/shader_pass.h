@@ -35,11 +35,6 @@ public:
 
     const GraphicsBackendProgram &GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat);
 
-    inline const CullInfo &GetCullInfo() const
-    {
-        return m_CullInfo;
-    }
-
     inline const GraphicsBackendDepthStencilState &GetDepthStencilState() const
     {
         return m_DepthStencilState;

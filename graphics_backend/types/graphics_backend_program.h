@@ -7,7 +7,6 @@ class GraphicsBackendProgram
 {
 private:
     uint64_t Program;
-    uint64_t BlendState;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;

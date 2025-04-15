@@ -433,3 +433,16 @@ D3D12_TEXTURE_ADDRESS_MODE DX12Helpers::ToTextureWrapMode(TextureWrapMode wrapMo
             return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
     }
 }
+
+D3D12_CULL_MODE DX12Helpers::ToCullFace(CullFace face)
+{
+    switch (face)
+    {
+        case CullFace::NONE:
+            return D3D12_CULL_MODE_NONE;
+        case CullFace::FRONT:
+            return D3D12_CULL_MODE_FRONT;
+        case CullFace::BACK:
+            return D3D12_CULL_MODE_BACK;
+    }
+}

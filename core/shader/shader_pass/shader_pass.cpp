@@ -91,13 +91,15 @@ const GraphicsBackendProgram &ShaderPass::CreatePSO(std::vector<GraphicsBackendS
 
     GraphicsBackendProgramDescriptor programDescriptor{};
     programDescriptor.Shaders = &shaders;
-    programDescriptor.ColorAttachmentDescriptor = colorAttachmentDescriptor;
-    programDescriptor.DepthFormat = depthFormat;
     programDescriptor.VertexAttributes = &vertexAttributes;
     programDescriptor.Textures = &m_Textures;
     programDescriptor.Buffers = &m_Buffers;
     programDescriptor.Samplers = &m_Samplers;
     programDescriptor.Name = &name;
+    programDescriptor.ColorAttachmentDescriptor = colorAttachmentDescriptor;
+    programDescriptor.DepthFormat = depthFormat;
+    programDescriptor.CullFace = m_CullInfo.Face;
+    programDescriptor.CullFaceOrientation = m_CullInfo.Orientation;
 
     auto program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
 

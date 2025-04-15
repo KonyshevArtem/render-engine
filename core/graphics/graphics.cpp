@@ -261,12 +261,6 @@ namespace Graphics
         s_InstancingMatricesBuffer->SetData(matricesBuffer.data(), 0, matricesSize);
     }
 
-    void SetCullState(const CullInfo &cullInfo)
-    {
-        GraphicsBackend::Current()->SetCullFace(cullInfo.Face);
-        GraphicsBackend::Current()->SetCullFaceOrientation(cullInfo.Orientation);
-    }
-
     void SetTextures(const std::unordered_map<std::string, std::shared_ptr<Texture>> &textures, const ShaderPass &shaderPass)
     {
         const auto &shaderTextures = shaderPass.GetTextures();
@@ -363,7 +357,6 @@ namespace Graphics
         TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
         GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, isLinear, depthTargetFormat));
 
-        SetCullState(shaderPass.GetCullInfo());
         GraphicsBackend::Current()->SetDepthStencilState(shaderPass.GetDepthStencilState());
 
         BindBuffer(GlobalConstants::LightingBufferName, s_LightingDataBuffer, true, shaderPass);

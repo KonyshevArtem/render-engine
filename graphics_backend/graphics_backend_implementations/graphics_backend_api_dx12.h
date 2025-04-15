@@ -40,8 +40,6 @@ public:
     GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) override;
     void DeleteGeometry(const GraphicsBackendGeometry &geometry) override;
 
-    void SetCullFace(CullFace cullFace) override;
-    void SetCullFaceOrientation(CullFaceOrientation orientation) override;
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
     void SetScissorRect(int x, int y, int width, int height) override;
 

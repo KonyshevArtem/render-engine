@@ -1011,14 +1011,6 @@ void GraphicsBackendDX12::DeleteGeometry(const GraphicsBackendGeometry &geometry
     delete geometryData;
 }
 
-void GraphicsBackendDX12::SetCullFace(CullFace cullFace)
-{
-}
-
-void GraphicsBackendDX12::SetCullFaceOrientation(CullFaceOrientation orientation)
-{
-}
-
 void GraphicsBackendDX12::SetViewport(int x, int y, int width, int height, float depthNear, float depthFar)
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
@@ -1158,12 +1150,16 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     blendDescriptor.RenderTarget[0].SrcBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.SourceFactor);
     blendDescriptor.RenderTarget[0].DestBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.DestinationFactor);
 
+    D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    rasterizerDesc.CullMode = DX12Helpers::ToCullFace(descriptor.CullFace);
+    rasterizerDesc.FrontCounterClockwise = descriptor.CullFaceOrientation == CullFaceOrientation::COUNTER_CLOCKWISE;
+
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
     psoDesc.InputLayout = { dxVertexAttributes.data(), static_cast<UINT>(dxVertexAttributes.size()) };
     psoDesc.pRootSignature = rootSignature;
     psoDesc.VS = { reinterpret_cast<UINT8*>(vertexBlob->GetBufferPointer()), vertexBlob->GetBufferSize() };
     psoDesc.PS = { reinterpret_cast<UINT8*>(fragmentBlob->GetBufferPointer()), fragmentBlob->GetBufferSize() };
-    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.RasterizerState = rasterizerDesc;
     psoDesc.BlendState = blendDescriptor;
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.SampleMask = UINT_MAX;

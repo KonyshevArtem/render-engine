@@ -44,6 +44,14 @@ namespace OpenGLLocal
         bool Enabled;
     };
 
+    struct ProgramData
+    {
+        GLuint Program;
+        BlendState BlendState;
+        GLenum CullFace;
+        GLenum CullFaceOrientation;
+    };
+
     struct DebugMessageType
     {
         GLenum Type;
@@ -568,24 +576,6 @@ void GraphicsBackendOpenGL::DeleteGeometry(const GraphicsBackendGeometry &geomet
     DeleteBuffer(geometry.IndexBuffer);
 }
 
-void GraphicsBackendOpenGL::SetCullFace(CullFace cullFace)
-{
-    if (cullFace == CullFace::NONE)
-    {
-        glDisable(GL_CULL_FACE);
-    }
-    else
-    {
-        glEnable(GL_CULL_FACE);
-        glCullFace(OpenGLHelpers::ToCullFace(cullFace));
-    }
-}
-
-void GraphicsBackendOpenGL::SetCullFaceOrientation(CullFaceOrientation orientation)
-{
-    glFrontFace(OpenGLHelpers::ToCullFaceOrientation(orientation));
-}
-
 void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, float near, float far)
 {
     glViewport(x, y, width, height);
@@ -634,8 +624,7 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShaderBinary(ShaderTyp
 
 GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBackendProgramDescriptor& descriptor)
 {
-    GraphicsBackendProgram program{};
-    program.Program = glCreateProgram();
+    GLuint glProgram = glCreateProgram();
 
     const std::vector<GraphicsBackendShaderObject>& shaders = *descriptor.Shaders;
 
@@ -643,43 +632,50 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     {
         bool isShader = glIsShader(shader.ShaderObject);
         if (isShader)
-            glAttachShader(program.Program, shader.ShaderObject);
+            glAttachShader(glProgram, shader.ShaderObject);
 
     }
 
-    glLinkProgram(program.Program);
+    glLinkProgram(glProgram);
 
     for (auto &shader : shaders)
     {
         bool isShader = glIsShader(shader.ShaderObject);
         if (isShader)
-            glDetachShader(program.Program, shader.ShaderObject);
+            glDetachShader(glProgram, shader.ShaderObject);
 
     }
 
     if (descriptor.Name && !descriptor.Name->empty())
-        glObjectLabel(GL_PROGRAM, program.Program, descriptor.Name->length(), descriptor.Name->c_str());
+        glObjectLabel(GL_PROGRAM, glProgram, descriptor.Name->length(), descriptor.Name->c_str());
 
 
     int isLinked;
-    glGetProgramiv(program.Program, GL_LINK_STATUS, &isLinked);
+    glGetProgramiv(glProgram, GL_LINK_STATUS, &isLinked);
     if (!isLinked)
     {
         int infoLogLength;
-        glGetProgramiv(program.Program, GL_INFO_LOG_LENGTH, &infoLogLength);
+        glGetProgramiv(glProgram, GL_INFO_LOG_LENGTH, &infoLogLength);
 
         std::string logMsg(infoLogLength + 1, ' ');
-        glGetProgramInfoLog(program.Program, infoLogLength, nullptr, &logMsg[0]);
+        glGetProgramInfoLog(glProgram, infoLogLength, nullptr, &logMsg[0]);
 
         throw std::runtime_error("Link failed with error:\n" + logMsg);
     }
 
-    auto blendState = new OpenGLLocal::BlendState();
-    blendState->SourceFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.SourceFactor);
-    blendState->DestinationFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.DestinationFactor);
-    blendState->Enabled = descriptor.ColorAttachmentDescriptor.BlendingEnabled;
-    program.BlendState = reinterpret_cast<uint64_t>(blendState);
+    OpenGLLocal::BlendState blendState{};
+    blendState.SourceFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.SourceFactor);
+    blendState.DestinationFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.DestinationFactor);
+    blendState.Enabled = descriptor.ColorAttachmentDescriptor.BlendingEnabled;
 
+    OpenGLLocal::ProgramData* programData = new OpenGLLocal::ProgramData();
+    programData->Program = glProgram;
+    programData->BlendState = blendState;
+    programData->CullFace = OpenGLHelpers::ToCullFace(descriptor.CullFace);
+    programData->CullFaceOrientation = OpenGLHelpers::ToCullFaceOrientation(descriptor.CullFaceOrientation);
+
+    GraphicsBackendProgram program{};
+    program.Program = reinterpret_cast<uint64_t>(programData);
     return program;
 }
 
@@ -690,10 +686,9 @@ void GraphicsBackendOpenGL::DeleteShader(GraphicsBackendShaderObject shader)
 
 void GraphicsBackendOpenGL::DeleteProgram(GraphicsBackendProgram program)
 {
-    glDeleteProgram(program.Program);
-
-    auto blendState = reinterpret_cast<OpenGLLocal::BlendState*>(program.BlendState);
-    delete blendState;
+    OpenGLLocal::ProgramData* programData = reinterpret_cast<OpenGLLocal::ProgramData*>(program.Program);
+    glDeleteProgram(programData->Program);
+    delete programData;
 }
 
 bool GraphicsBackendOpenGL::RequireStrictPSODescriptor()
@@ -703,21 +698,27 @@ bool GraphicsBackendOpenGL::RequireStrictPSODescriptor()
 
 void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
 {
-    glUseProgram(program.Program);
+    OpenGLLocal::ProgramData* programData = reinterpret_cast<OpenGLLocal::ProgramData*>(program.Program);
 
-    auto blendState = reinterpret_cast<OpenGLLocal::BlendState*>(program.BlendState);
-    if (blendState)
+    glUseProgram(programData->Program);
+
+    if (programData->BlendState.Enabled)
     {
-        if (blendState->Enabled)
-        {
-            glEnable(GL_BLEND);
-            glBlendFunc(blendState->SourceFactor, blendState->DestinationFactor);
-        }
-        else
-        {
-            glDisable(GL_BLEND);
-        }
+        glEnable(GL_BLEND);
+        glBlendFunc(programData->BlendState.SourceFactor, programData->BlendState.DestinationFactor);
     }
+    else
+        glDisable(GL_BLEND);
+
+    if (programData->CullFace)
+    {
+        glEnable(GL_CULL_FACE);
+        glCullFace(programData->CullFace);
+    }
+    else
+        glDisable(GL_CULL_FACE);
+
+    glFrontFace(programData->CullFaceOrientation);
 }
 
 void GraphicsBackendOpenGL::SetClearColor(float r, float g, float b, float a)

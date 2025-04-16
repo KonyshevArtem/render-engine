@@ -448,9 +448,9 @@ namespace Graphics
 
     void SetCameraData(const Matrix4x4 &_viewMatrix, Matrix4x4 _projectionMatrix)
     {
-        if (GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL)
+        if (GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL || GraphicsBackend::Current()->GetName() == GraphicsBackendName::DX12)
         {
-            // Projection matrix has OpenGL depth range [-1, 1]. Remap it to [0, 1] for Metal
+            // Projection matrix has OpenGL depth range [-1, 1]. Remap it to [0, 1] for Metal and DX12
             Matrix4x4 depthRemap = Matrix4x4::Identity();
             depthRemap.m22 = 0.5f;
             depthRemap.m32 = 0.5f;

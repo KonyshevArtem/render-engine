@@ -882,6 +882,20 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
 TextureInternalFormat GraphicsBackendDX12::GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear)
 {
     DX12Local::RenderTargetState& state = DX12Local::s_RenderTargetStates[static_cast<int>(attachment)];
+
+    if (!state.IsEnabled && IsDepthAttachment(attachment))
+    {
+        for (int i = static_cast<int>(FramebufferAttachment::DEPTH_ATTACHMENT); i < static_cast<int>(FramebufferAttachment::MAX); ++i)
+        {
+            DX12Local::RenderTargetState& depthState = DX12Local::s_RenderTargetStates[i];
+            if (depthState.IsEnabled)
+            {
+                state = depthState;
+                break;
+            }
+        }
+    }
+
     if (outIsLinear)
         *outIsLinear = state.IsLinear;
     return state.Format;
@@ -1350,7 +1364,7 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
     if (!transitions.empty())
         frameData.RenderCommandList->ResourceBarrier(transitions.size(), &transitions[0]);
 
-    frameData.RenderCommandList->OMSetRenderTargets(1, &colorTargetHandles[0], false, hasDepthTarget ? &depthTargetHandle : nullptr);
+    frameData.RenderCommandList->OMSetRenderTargets(colorTargetHandles.size(), colorTargetHandles.empty() ? nullptr : &colorTargetHandles[0], false, hasDepthTarget ? &depthTargetHandle : nullptr);
 
     for (int i = 0; i < colorTargetHandles.size(); ++i)
     {

@@ -27,6 +27,10 @@
 
 namespace DX12Local
 {
+    inline void ThrowIfFailed(HRESULT result);
+
+    ID3D12Device5* s_Device;
+
     struct ResourceData
     {
         ID3D12Resource* Resource;
@@ -61,13 +65,58 @@ namespace DX12Local
         D3D12_SAMPLER_DESC SamplerDesc;
     };
 
+    struct CommandList
+    {
+        ID3D12GraphicsCommandList6* List;
+        ID3D12CommandAllocator* Allocator;
+        ID3D12CommandQueue* Queue;
+
+        CommandList(){}
+
+        CommandList(ID3D12CommandQueue* commandQueue, D3D12_COMMAND_LIST_TYPE type)
+        {
+            Queue = commandQueue;
+
+            ThrowIfFailed(DX12Local::s_Device->CreateCommandAllocator(type, IID_PPV_ARGS(&Allocator)));
+            ThrowIfFailed(DX12Local::s_Device->CreateCommandList1(0, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&List)));
+        }
+
+        void Execute()
+        {
+            Close();
+
+            ID3D12CommandList* commandLists[] = {List};
+            Queue->ExecuteCommandLists(1, commandLists);
+
+            Reset();
+        }
+
+        void Reset() const
+        {
+            ThrowIfFailed(List->Reset(Allocator, nullptr));
+        }
+
+        void Close() const
+        {
+            ThrowIfFailed(List->Close());
+        }
+
+        void InitNewFrame()
+        {
+            ThrowIfFailed(Allocator->Reset());
+            Reset();
+        }
+
+        ID3D12GraphicsCommandList6* operator->() const
+        {
+            return List;
+        }
+    };
+
     struct PerFrameData
     {
-        ID3D12CommandAllocator* RenderCommandAllocator;
-        ID3D12CommandAllocator* CopyCommandAllocator;
-
-        ID3D12GraphicsCommandList6* RenderCommandList;
-        ID3D12GraphicsCommandList* CopyCommandList;
+        CommandList RenderCommandList;
+        CommandList CopyCommandList;
 
         ID3D12DescriptorHeap* ColorTargetDescriptorHeap;
         uint32_t ColorTargetHeapIndex;
@@ -96,7 +145,6 @@ namespace DX12Local
     int s_SwapChainWidth;
     int s_SwapChainHeight;
 
-    ID3D12Device5* s_Device;
     ID3D12CommandQueue* s_RenderQueue;
     ID3D12CommandQueue* s_CopyQueue;
     ID3D12InfoQueue* s_InfoQueue;
@@ -112,6 +160,9 @@ namespace DX12Local
     float s_ClearColor[4] = {0, 0, 0, 0};
     float s_ClearDepth = 1;
     RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
+
+    D3D12_VIEWPORT s_CurrentViewport;
+    D3D12_RECT s_CurrentScissorsRect;
 
     ID3D12Resource* s_ColorBackbuffers[GraphicsBackend::GetMaxFramesInFlight()];
     ID3D12Resource* s_DepthBackbuffers[GraphicsBackend::GetMaxFramesInFlight()];
@@ -388,11 +439,8 @@ void GraphicsBackendDX12::Init(void* data)
     {
         DX12Local::PerFrameData& frameData = DX12Local::s_PerFrameData[i];
 
-        ThrowIfFailed(DX12Local::s_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&frameData.RenderCommandAllocator)));
-        ThrowIfFailed(DX12Local::s_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&frameData.CopyCommandAllocator)));
-
-        ThrowIfFailed(DX12Local::s_Device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&frameData.RenderCommandList)));
-        ThrowIfFailed(DX12Local::s_Device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_COPY, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&frameData.CopyCommandList)));
+        frameData.RenderCommandList = DX12Local::CommandList(DX12Local::s_RenderQueue, D3D12_COMMAND_LIST_TYPE_DIRECT);
+        frameData.CopyCommandList = DX12Local::CommandList(DX12Local::s_CopyQueue, D3D12_COMMAND_LIST_TYPE_COPY);
 
         D3D12_DESCRIPTOR_HEAP_DESC resourceHeapDesc{};
         resourceHeapDesc.NumDescriptors = 1024;
@@ -428,8 +476,8 @@ void GraphicsBackendDX12::Init(void* data)
     DX12Local::ResetRenderTargetStates();
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    ThrowIfFailed(frameData.RenderCommandList->Reset(frameData.RenderCommandAllocator, nullptr));
-    ThrowIfFailed(frameData.CopyCommandList->Reset(frameData.CopyCommandAllocator, nullptr));
+    frameData.RenderCommandList.Reset();
+    frameData.CopyCommandList.Reset();
 
     CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
@@ -469,16 +517,11 @@ void GraphicsBackendDX12::InitNewFrame()
         DX12Local::CreateBackbufferResourcesAndViews();
     }
 
-    ThrowIfFailed(frameData.RenderCommandAllocator->Reset());
-    ThrowIfFailed(frameData.CopyCommandAllocator->Reset());
-    ThrowIfFailed(frameData.RenderCommandList->Reset(frameData.RenderCommandAllocator, nullptr));
-    ThrowIfFailed(frameData.CopyCommandList->Reset(frameData.CopyCommandAllocator, nullptr));
+    frameData.RenderCommandList.InitNewFrame();
+    frameData.CopyCommandList.InitNewFrame();
 
     CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
-
-    ID3D12DescriptorHeap* heaps[] = {frameData.ResourceDescriptorHeap, frameData.SamplerDescriptorHeap};
-    frameData.RenderCommandList->SetDescriptorHeaps(2, heaps);
 
     frameData.ResourceDescriptorHeapIndex = 0;
     frameData.SamplerDescriptorHeapIndex = 0;
@@ -760,7 +803,7 @@ void GraphicsBackendDX12::UploadImagePixels(const GraphicsBackendTexture& textur
     D3D12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(dxTexture, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
     frameData.RenderCommandList->ResourceBarrier(1, &transition);
 
-    UpdateSubresources(frameData.RenderCommandList, dxTexture, textureUploadHeap, 0, firstSubresource, 1, &subresourceData);
+    UpdateSubresources(frameData.RenderCommandList.List, dxTexture, textureUploadHeap, 0, firstSubresource, 1, &subresourceData);
 
     transition = CD3DX12_RESOURCE_BARRIER::Transition(dxTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     frameData.RenderCommandList->ResourceBarrier(1, &transition);
@@ -964,11 +1007,12 @@ void GraphicsBackendDX12::SetBufferData(const GraphicsBackendBuffer& buffer, lon
     ID3D12Resource* dxBuffer = resourceData->Resource;
 
     CD3DX12_RANGE readRange(0, 0);
+    CD3DX12_RANGE writeRange(offset, offset + size);
 
     UINT8* bufferData;
     ThrowIfFailed(dxBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferData)));
     memcpy(bufferData + offset, data, size);
-    dxBuffer->Unmap(0, nullptr);
+    dxBuffer->Unmap(0, &writeRange);
 }
 
 void GraphicsBackendDX12::CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size)
@@ -1026,18 +1070,12 @@ void GraphicsBackendDX12::DeleteGeometry(const GraphicsBackendGeometry &geometry
 
 void GraphicsBackendDX12::SetViewport(int x, int y, int width, int height, float depthNear, float depthFar)
 {
-    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-
-    CD3DX12_VIEWPORT viewport(x, y, width, height, depthNear, depthFar);
-    frameData.RenderCommandList->RSSetViewports(1, &viewport);
+    DX12Local::s_CurrentViewport = CD3DX12_VIEWPORT(x, y, width, height, depthNear, depthFar);
 }
 
 void GraphicsBackendDX12::SetScissorRect(int x, int y, int width, int height)
 {
-    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-
-    CD3DX12_RECT rect(x, y, width, height);
-    frameData.RenderCommandList->RSSetScissorRects(1, &rect);
+    DX12Local::s_CurrentScissorsRect = CD3DX12_RECT(x, y, width, height);
 }
 
 GraphicsBackendShaderObject GraphicsBackendDX12::CompileShader(ShaderType shaderType, const std::string& source, const std::string& name)
@@ -1260,6 +1298,8 @@ void GraphicsBackendDX12::DrawArraysInstanced(const GraphicsBackendGeometry& geo
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
+    frameData.RenderCommandList->RSSetViewports(1, &DX12Local::s_CurrentViewport);
+    frameData.RenderCommandList->RSSetScissorRects(1, &DX12Local::s_CurrentScissorsRect);
     frameData.RenderCommandList->IASetPrimitiveTopology(DX12Helpers::ToPrimitiveTopology(primitiveType));
     frameData.RenderCommandList->IASetVertexBuffers(0, 1, geometryData->VertexBufferView);
     frameData.RenderCommandList->DrawInstanced(indicesCount, instanceCount, firstIndex, 0);
@@ -1276,6 +1316,8 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
+    frameData.RenderCommandList->RSSetViewports(1, &DX12Local::s_CurrentViewport);
+    frameData.RenderCommandList->RSSetScissorRects(1, &DX12Local::s_CurrentScissorsRect);
     frameData.RenderCommandList->IASetPrimitiveTopology(DX12Helpers::ToPrimitiveTopology(primitiveType));
     frameData.RenderCommandList->IASetVertexBuffers(0, 1, geometryData->VertexBufferView);
     frameData.RenderCommandList->IASetIndexBuffer(geometryData->IndexBufferView);
@@ -1289,13 +1331,13 @@ void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& sou
 void GraphicsBackendDX12::PushDebugGroup(const std::string& name)
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    PIXBeginEvent(frameData.RenderCommandList, 0, name.c_str());
+    PIXBeginEvent(frameData.RenderCommandList.List, 0, name.c_str());
 }
 
 void GraphicsBackendDX12::PopDebugGroup()
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    PIXEndEvent(frameData.RenderCommandList);
+    PIXEndEvent(frameData.RenderCommandList.List);
 }
 
 GraphicsBackendProfilerMarker GraphicsBackendDX12::PushProfilerMarker()
@@ -1361,6 +1403,9 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
         }
     }
 
+    ID3D12DescriptorHeap* heaps[] = {frameData.ResourceDescriptorHeap, frameData.SamplerDescriptorHeap};
+    frameData.RenderCommandList->SetDescriptorHeaps(2, heaps);
+
     if (!transitions.empty())
         frameData.RenderCommandList->ResourceBarrier(transitions.size(), &transitions[0]);
 
@@ -1380,6 +1425,9 @@ void GraphicsBackendDX12::EndRenderPass()
 {
     DX12Local::ResetRenderTargetStates();
     PopDebugGroup();
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    frameData.RenderCommandList.Execute();
 }
 
 void GraphicsBackendDX12::BeginCopyPass(const std::string& name)
@@ -1410,18 +1458,8 @@ void GraphicsBackendDX12::WaitForFence(const GraphicsBackendFence& fence)
 void GraphicsBackendDX12::Flush()
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-
-    ThrowIfFailed(frameData.RenderCommandList->Close());
-    ThrowIfFailed(frameData.CopyCommandList->Close());
-
-    ID3D12CommandList* renderCommandLists[] = {frameData.RenderCommandList};
-    DX12Local::s_RenderQueue->ExecuteCommandLists(1, renderCommandLists);
-
-    ID3D12CommandList* copyCommandLists[] = {frameData.CopyCommandList};
-    DX12Local::s_CopyQueue->ExecuteCommandLists(1, copyCommandLists);
-
-    ThrowIfFailed(frameData.RenderCommandList->Reset(frameData.RenderCommandAllocator, nullptr));
-    ThrowIfFailed(frameData.CopyCommandList->Reset(frameData.CopyCommandAllocator, nullptr));
+    frameData.RenderCommandList.Execute();
+    frameData.CopyCommandList.Execute();
 }
 
 void GraphicsBackendDX12::Present()
@@ -1432,8 +1470,8 @@ void GraphicsBackendDX12::Present()
     frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
 
     Flush();
-    ThrowIfFailed(frameData.RenderCommandList->Close());
-    ThrowIfFailed(frameData.CopyCommandList->Close());
+    frameData.RenderCommandList.Close();
+    frameData.CopyCommandList.Close();
 
     DX12Local::s_SwapChain->Present(1, 0);
     DX12Local::PrintInfoQueueMessages();

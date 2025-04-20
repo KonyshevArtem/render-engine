@@ -12,7 +12,8 @@ public:
     void Init(void* data) override;
     GraphicsBackendName GetName() override;
     void InitNewFrame() override;
-    void FillImGuiData(void* data) override;
+    void FillImGuiInitData(void* data) override;
+    void FillImGuiFrameData(void* data) override;
 
     GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) override;
     GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name) override;

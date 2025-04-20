@@ -50,7 +50,8 @@ public:
     virtual void Init(void *data) = 0;
     virtual GraphicsBackendName GetName() = 0;
     virtual void InitNewFrame();
-    virtual void FillImGuiData(void* data) = 0;
+    virtual void FillImGuiInitData(void* data) = 0;
+    virtual void FillImGuiFrameData(void* data) = 0;
     uint64_t GetFrameNumber() const;
 
     virtual GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) = 0;

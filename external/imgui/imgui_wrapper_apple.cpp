@@ -12,7 +12,7 @@ namespace ImGuiWrapper
     static MTK::View* s_View;
     static MTL::CommandQueue* s_RenderQueue;
 
-    void Init(const std::function<void(void*)>& fillImGuiData)
+    void Init(const std::string& graphicsBackend, const std::function<void(void*)>& fillImGuiData)
     {
         struct ImGuiData
         {
@@ -44,7 +44,7 @@ namespace ImGuiWrapper
         ImGuiWrapperCommon::NewFrame();
     }
 
-    void Render()
+    void Render(const std::function<void(void*)>& fillImGuiData)
     {
         MTL::RenderPassDescriptor* descriptor = s_View->currentRenderPassDescriptor();
         descriptor->colorAttachments()->object(0)->setLoadAction(MTL::LoadActionLoad);
@@ -66,10 +66,10 @@ namespace ImGuiWrapper
 
 namespace ImGuiWrapper
 {
-    void Init(const std::function<void(void*)>& fillImGuiData) {}
+    void Init(const std::string& graphicsBackend, const std::function<void(void*)>& fillImGuiData) {}
     void Shutdown() {}
     void NewFrame() {}
-    void Render() {}
+    void Render(const std::function<void(void*)>& fillImGuiData) {}
     void ProcessMessage(void* data) {}
 }
 

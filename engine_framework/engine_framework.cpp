@@ -31,7 +31,7 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
 {
     FileSystem::Init(fileSystemData);
     GraphicsBackend::Init(graphicsBackendInitData, graphicsBackend);
-    ImGuiWrapper::Init([](void* imGuiData){ GraphicsBackend::Current()->FillImGuiData(imGuiData); });
+    ImGuiWrapper::Init(graphicsBackend, [](void* imGuiData){ GraphicsBackend::Current()->FillImGuiInitData(imGuiData); });
 
     window = new GameWindow(display);
 
@@ -55,7 +55,7 @@ void EngineFramework::TickMainLoop(int width, int height)
         window->TickMainLoop(width, height);
         GraphicsBackend::Current()->Flush();
 
-        ImGuiWrapper::Render();
+        ImGuiWrapper::Render([](void* data){ GraphicsBackend::Current()->FillImGuiFrameData(data); });
 
         GraphicsBackend::Current()->Present();
     }

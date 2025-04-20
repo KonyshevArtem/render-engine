@@ -40,6 +40,8 @@ if (${RENDER_ENGINE_WINDOWS_PLATFORM})
                 imgui/backends/imgui_impl_opengl3.cpp
                 imgui/backends/imgui_impl_win32.h
                 imgui/backends/imgui_impl_win32.cpp
+                imgui/backends/imgui_impl_dx12.h
+                imgui/backends/imgui_impl_dx12.cpp
         )
 
         set(IMGUI_WRAPPER_LIBS ImGui)

@@ -225,7 +225,7 @@ void GraphicsBackendOpenGL::InitNewFrame()
     }
 }
 
-void GraphicsBackendOpenGL::FillImGuiData(void* data)
+void GraphicsBackendOpenGL::FillImGuiInitData(void* data)
 {
     struct ImGuiData
     {
@@ -238,6 +238,10 @@ void GraphicsBackendOpenGL::FillImGuiData(void* data)
     imGuiData->Window = OpenGLLocal::s_Window;
     imGuiData->MajorVersion = OPENGL_MAJOR_VERSION;
     imGuiData->MinorVersion = OPENGL_MINOR_VERSION;
+}
+
+void GraphicsBackendOpenGL::FillImGuiFrameData(void *data)
+{
 }
 
 GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)

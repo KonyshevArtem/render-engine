@@ -2,10 +2,11 @@
 #define RENDER_ENGINE_IMGUI_WRAPPER_H
 
 #include <functional>
+#include <string>
 
 namespace ImGuiWrapper
 {
-    void Init(const char* graphicsBackend, const std::function<void(void*)>& fillImGuiData);
+    void Init(const std::string& graphicsBackend, const std::function<void(void*)>& fillImGuiData);
     void Shutdown();
     void NewFrame();
     void Render(const std::function<void(void*)>& fillImGuiData);

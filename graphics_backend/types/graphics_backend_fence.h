@@ -12,6 +12,7 @@ private:
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;
+    friend class GraphicsBackendDX12;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_FENCE_H

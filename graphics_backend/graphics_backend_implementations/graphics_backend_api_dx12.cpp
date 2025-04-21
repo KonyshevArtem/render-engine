@@ -345,7 +345,7 @@ namespace DX12Local
             CD3DX12_CPU_DESCRIPTOR_HANDLE colorBackbufferHandle(s_ColorBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, s_ColorTargetDescriptorSize);
             ThrowIfFailed(s_SwapChain->GetBuffer(i, IID_PPV_ARGS(&s_ColorBackbuffers[i].Resource)));
             s_Device->CreateRenderTargetView(s_ColorBackbuffers[i].Resource, nullptr, colorBackbufferHandle);
-            s_ColorBackbuffers[i].State = D3D12_RESOURCE_STATE_RENDER_TARGET;
+            s_ColorBackbuffers[i].State = D3D12_RESOURCE_STATE_COMMON;
 
             D3D12_RESOURCE_STATES depthBufferState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
             DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(k_SwapChainDepthFormat, true);
@@ -357,7 +357,9 @@ namespace DX12Local
             s_Device->CreateDepthStencilView(s_DepthBackbuffers[i].Resource, nullptr, depthBackbufferHandle);
             s_DepthBackbuffers[i].State = depthBufferState;
 
+            std::string colorBackbufferName = "ColorBackbuffer_" + std::to_string(i);
             std::string depthBackbufferName = "DepthBackbuffer_" + std::to_string(i);
+            s_ColorBackbuffers[i].Resource->SetPrivateData(WKPDID_D3DDebugObjectName, colorBackbufferName.size(), colorBackbufferName.c_str());
             s_DepthBackbuffers[i].Resource->SetPrivateData(WKPDID_D3DDebugObjectName, depthBackbufferName.size(), depthBackbufferName.c_str());
         }
     }
@@ -414,6 +416,38 @@ namespace DX12Local
             default:
                 return nullptr;
         }
+    }
+
+    void TransitionResources(int transitionsCount, ResourceData** resourcesData, D3D12_RESOURCE_STATES* statesAfter, GPUQueue queue)
+    {
+        PerFrameData &frameData = GetCurrentFrameData();
+
+        for (int i = 0; i < transitionsCount; ++i)
+        {
+            ResourceData* data = resourcesData[i];
+            D3D12_RESOURCE_STATES state = statesAfter[i];
+
+            if (data->State == state)
+                continue;
+
+            D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(data->Resource, data->State, state);
+            data->State = state;
+
+            switch (queue)
+            {
+                case GPUQueue::RENDER:
+                    frameData.RenderCommandList->ResourceBarrier(1, &barrier);
+                    break;
+                case GPUQueue::COPY:
+                    frameData.CopyCommandList->ResourceBarrier(1, &barrier);
+                    break;
+            }
+        }
+    }
+
+    void TransitionResource(ResourceData* resourceData, D3D12_RESOURCE_STATES stateAfter, GPUQueue queue)
+    {
+        TransitionResources(1, &resourceData, &stateAfter, queue);
     }
 }
 
@@ -510,8 +544,7 @@ void GraphicsBackendDX12::Init(void* data)
     frameData.RenderCommandList.Reset();
     frameData.CopyCommandList.Reset();
 
-    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentColorBackbuffer().Resource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
+    DX12Local::TransitionResource(&DX12Local::GetCurrentColorBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, GPUQueue::RENDER);
 }
 
 GraphicsBackendName GraphicsBackendDX12::GetName()
@@ -551,8 +584,7 @@ void GraphicsBackendDX12::InitNewFrame()
     frameData.RenderCommandList.InitNewFrame();
     frameData.CopyCommandList.InitNewFrame();
 
-    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentColorBackbuffer().Resource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
+    DX12Local::TransitionResource(&DX12Local::GetCurrentColorBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, GPUQueue::RENDER);
 
     frameData.ResourceDescriptorHeapIndex = 0;
     frameData.SamplerDescriptorHeapIndex = 0;
@@ -802,13 +834,7 @@ void GraphicsBackendDX12::BindTexture(const GraphicsBackendResourceBindings& bin
     else
         state = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
-    if (resourceData->State != state)
-    {
-        D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resourceData->Resource, resourceData->State, state);
-        frameData.RenderCommandList->ResourceBarrier(1, &barrier);
-        resourceData->State = state;
-    }
-
+    DX12Local::TransitionResource(resourceData, state, GPUQueue::RENDER);
     DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &resourceViewDesc, cpuHandle);
 
     int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)];
@@ -875,13 +901,11 @@ void GraphicsBackendDX12::UploadImagePixels(const GraphicsBackendTexture& textur
         firstSubresource = static_cast<UINT>(cubemapFace) * mipLevels + level;
     }
 
-    D3D12_RESOURCE_BARRIER transition = CD3DX12_RESOURCE_BARRIER::Transition(dxTexture, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-    frameData.RenderCommandList->ResourceBarrier(1, &transition);
+    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_COPY_DEST, GPUQueue::RENDER);
 
     UpdateSubresources(frameData.RenderCommandList.List, dxTexture, textureUploadHeap, 0, firstSubresource, 1, &subresourceData);
 
-    transition = CD3DX12_RESOURCE_BARRIER::Transition(dxTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-    frameData.RenderCommandList->ResourceBarrier(1, &transition);
+    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, GPUQueue::RENDER);
 }
 
 void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor& descriptor)
@@ -1406,6 +1430,34 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
 
 void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& source, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    DX12Local::ResourceData* resourcesData[2];
+    resourcesData[0] = reinterpret_cast<DX12Local::ResourceData*>(source.Texture);
+    resourcesData[1] = nullptr;
+
+    if (destinationDescriptor.IsBackbuffer)
+    {
+        if (IsDepthAttachment(destinationDescriptor.Attachment))
+            resourcesData[1] = &DX12Local::GetCurrentDepthBackbuffer();
+        else
+            resourcesData[1] = &DX12Local::GetCurrentColorBackbuffer();
+    }
+    else
+        resourcesData[1] = reinterpret_cast<DX12Local::ResourceData*>(destinationDescriptor.Texture.Texture);
+
+    D3D12_RESOURCE_STATES states[] = {D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST};
+    DX12Local::TransitionResources(2, resourcesData, states, GPUQueue::COPY);
+
+    D3D12_BOX box = CD3DX12_BOX(sourceX, sourceY, sourceX + width, sourceY + height);
+
+    D3D12_TEXTURE_COPY_LOCATION sourceLocation = CD3DX12_TEXTURE_COPY_LOCATION(resourcesData[0]->Resource);
+    D3D12_TEXTURE_COPY_LOCATION destinationLocation = CD3DX12_TEXTURE_COPY_LOCATION(resourcesData[1]->Resource);
+
+    frameData.CopyCommandList->CopyTextureRegion(&destinationLocation, destinationX, destinationY, 0, &sourceLocation, &box);
+
+    resourcesData[0]->State = D3D12_RESOURCE_STATE_COMMON;
+    resourcesData[1]->State = D3D12_RESOURCE_STATE_COMMON;
 }
 
 void GraphicsBackendDX12::PushDebugGroup(const std::string& name, GPUQueue queue)
@@ -1442,7 +1494,8 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 
     static std::vector<bool> colorTargetNeedsClear;
     static std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> colorTargetHandles;
-    static std::vector<D3D12_RESOURCE_BARRIER> transitions;
+    static std::vector<DX12Local::ResourceData*> resourcesForTransition;
+    static std::vector<D3D12_RESOURCE_STATES> resourceAfterStates;
 
     bool hasDepthTarget = false;
     bool depthTargetNeedsClear = false;
@@ -1450,7 +1503,8 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 
     colorTargetNeedsClear.clear();
     colorTargetHandles.clear();
-    transitions.clear();
+    resourcesForTransition.clear();
+    resourceAfterStates.clear();
 
     for (int i = 0; i < static_cast<int>(FramebufferAttachment::MAX); ++i)
     {
@@ -1477,17 +1531,16 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 
         if (state.ResourceData && state.ResourceData->State != resourceState)
         {
-            D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(state.ResourceData->Resource, state.ResourceData->State, resourceState);
-            transitions.push_back(barrier);
-            state.ResourceData->State = resourceState;
+            resourcesForTransition.push_back(state.ResourceData);
+            resourceAfterStates.push_back(resourceState);
         }
     }
 
     ID3D12DescriptorHeap* heaps[] = {frameData.ResourceDescriptorHeap, frameData.SamplerDescriptorHeap};
     frameData.RenderCommandList->SetDescriptorHeaps(2, heaps);
 
-    if (!transitions.empty())
-        frameData.RenderCommandList->ResourceBarrier(transitions.size(), &transitions[0]);
+    if (!resourcesForTransition.empty())
+        DX12Local::TransitionResources(resourcesForTransition.size(), &resourcesForTransition[0], &resourceAfterStates[0], GPUQueue::RENDER);
 
     frameData.RenderCommandList->OMSetRenderTargets(colorTargetHandles.size(), colorTargetHandles.empty() ? nullptr : &colorTargetHandles[0], false, hasDepthTarget ? &depthTargetHandle : nullptr);
 
@@ -1518,6 +1571,9 @@ void GraphicsBackendDX12::BeginCopyPass(const std::string& name)
 void GraphicsBackendDX12::EndCopyPass()
 {
     PopDebugGroup(GPUQueue::COPY);
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    frameData.CopyCommandList.Execute();
 }
 
 GraphicsBackendFence GraphicsBackendDX12::CreateFence(FenceType fenceType, const std::string& name)
@@ -1548,8 +1604,7 @@ void GraphicsBackendDX12::Present()
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
-    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentColorBackbuffer().Resource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-    frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
+    DX12Local::TransitionResource(&DX12Local::GetCurrentColorBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, GPUQueue::RENDER);
 
     Flush();
     frameData.RenderCommandList.Close();
@@ -1561,6 +1616,34 @@ void GraphicsBackendDX12::Present()
     uint64_t fenceValue = frameData.FenceValue++;
     ThrowIfFailed(DX12Local::s_RenderQueue->Signal(frameData.RenderQueueFence, fenceValue));
     ThrowIfFailed(DX12Local::s_CopyQueue->Signal(frameData.CopyQueueFence, fenceValue));
+}
+
+void GraphicsBackendDX12::TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor, ResourceState state, GPUQueue queue)
+{
+    DX12Local::ResourceData* resourceData = nullptr;
+    if (descriptor.IsBackbuffer)
+    {
+        if (IsDepthAttachment(descriptor.Attachment))
+            resourceData = &DX12Local::GetCurrentDepthBackbuffer();
+        else
+            resourceData = &DX12Local::GetCurrentColorBackbuffer();
+    }
+    else
+        resourceData = reinterpret_cast<DX12Local::ResourceData*>(descriptor.Texture.Texture);
+
+    DX12Local::TransitionResource(resourceData, DX12Helpers::ToResourceState(state), queue);
+}
+
+void GraphicsBackendDX12::TransitionTexture(const GraphicsBackendTexture& texture, ResourceState state, GPUQueue queue)
+{
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
+    DX12Local::TransitionResource(resourceData, DX12Helpers::ToResourceState(state), queue);
+}
+
+void GraphicsBackendDX12::TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue)
+{
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+    DX12Local::TransitionResource(resourceData, DX12Helpers::ToResourceState(state), queue);
 }
 
 #undef ThrowIfFailed

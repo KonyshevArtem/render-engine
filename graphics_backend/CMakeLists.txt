@@ -52,7 +52,8 @@ add_library(GraphicsBackend
         enums/vertex_attribute_semantic.h
         helpers/dx12_helpers.cpp
         helpers/dx12_helpers.h
-        types/graphics_backend_program_descriptor.h)
+        types/graphics_backend_program_descriptor.h
+        enums/resource_state.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

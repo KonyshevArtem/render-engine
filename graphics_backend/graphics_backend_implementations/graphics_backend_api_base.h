@@ -26,6 +26,7 @@ enum class TextureWrapMode;
 enum class TextureFilteringMode;
 enum class CubemapFace;
 enum class FenceType;
+enum class ResourceState : uint64_t;
 
 class GraphicsBackendTexture;
 class GraphicsBackendSampler;
@@ -120,6 +121,10 @@ public:
 
     virtual void Flush() = 0;
     virtual void Present() = 0;
+
+    virtual void TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor& descriptor, ResourceState state, GPUQueue queue) = 0;
+    virtual void TransitionTexture(const GraphicsBackendTexture& texture, ResourceState state, GPUQueue queue) = 0;
+    virtual void TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue) = 0;
 
     bool IsTexture3D(TextureType type);
     bool IsCompressedTextureFormat(TextureInternalFormat format);

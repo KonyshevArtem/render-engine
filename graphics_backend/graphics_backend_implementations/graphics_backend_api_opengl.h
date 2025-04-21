@@ -82,6 +82,10 @@ public:
     void Flush() override;
     void Present() override;
 
+    void TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor& target, ResourceState state, GPUQueue queue) override;
+    void TransitionTexture(const GraphicsBackendTexture& texture, ResourceState state, GPUQueue queue) override;
+    void TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue) override;
+
 private:
     std::set<std::string> m_Extensions;
 };

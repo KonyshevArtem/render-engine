@@ -956,4 +956,16 @@ void GraphicsBackendOpenGL::Present()
     OpenGLLocal::s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 }
 
+void GraphicsBackendOpenGL::TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor &target, ResourceState state, GPUQueue queue)
+{
+}
+
+void GraphicsBackendOpenGL::TransitionTexture(const GraphicsBackendTexture& texture, ResourceState state, GPUQueue queue)
+{
+}
+
+void GraphicsBackendOpenGL::TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue)
+{
+}
+
 #endif // RENDER_BACKEND_OPENGL

@@ -6,6 +6,7 @@
 #include "graphics/graphics.h"
 #include "vector4/vector4.h"
 #include "graphics/context.h"
+#include "enums/resource_state.h"
 
 ForwardRenderPass::ForwardRenderPass(int priority) :
     RenderPass(priority),
@@ -51,6 +52,9 @@ void ForwardRenderPass::Execute(const Context& ctx)
     m_OpaquePass->Execute(ctx);
     m_SkyboxPass->Execute(ctx);
     m_TransparentPass->Execute(ctx);
+
+    GraphicsBackend::Current()->TransitionRenderTarget(m_DepthTargetDescriptor, ResourceState::COMMON, GPUQueue::RENDER);
+    GraphicsBackend::Current()->TransitionRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer(), ResourceState::COMMON, GPUQueue::RENDER);
 
     GraphicsBackend::Current()->EndRenderPass();
     GraphicsBackend::Current()->SignalFence(m_EndFence);

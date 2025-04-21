@@ -1313,18 +1313,21 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     depthStencilDesc.DepthEnable = descriptor.DepthWrite;
     depthStencilDesc.DepthFunc = DX12Helpers::ToDepthFunction(descriptor.DepthFunction);
 
+    DXGI_FORMAT colorTargetFormat = DX12Helpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);
+    bool hasColorTarget = colorTargetFormat != DXGI_FORMAT_UNKNOWN;
+
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
     psoDesc.InputLayout = { dxVertexAttributes.data(), static_cast<UINT>(dxVertexAttributes.size()) };
     psoDesc.pRootSignature = rootSignature;
-    psoDesc.VS = { reinterpret_cast<UINT8*>(vertexBlob->GetBufferPointer()), vertexBlob->GetBufferSize() };
-    psoDesc.PS = { reinterpret_cast<UINT8*>(fragmentBlob->GetBufferPointer()), fragmentBlob->GetBufferSize() };
+    psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexBlob);
+    psoDesc.PS = hasColorTarget ? CD3DX12_SHADER_BYTECODE(fragmentBlob) : CD3DX12_SHADER_BYTECODE(nullptr, 0);
     psoDesc.RasterizerState = rasterizerDesc;
     psoDesc.BlendState = blendDescriptor;
     psoDesc.DepthStencilState = depthStencilDesc;
     psoDesc.SampleMask = UINT_MAX;
     psoDesc.PrimitiveTopologyType = DX12Helpers::ToPrimitiveTopologyType(descriptor.PrimitiveType);
-    psoDesc.NumRenderTargets = 1;
-    psoDesc.RTVFormats[0] = DX12Helpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);
+    psoDesc.NumRenderTargets = hasColorTarget ? 1 : 0;
+    psoDesc.RTVFormats[0] = colorTargetFormat;
     psoDesc.DSVFormat = DX12Helpers::ToTextureInternalFormat(descriptor.DepthFormat, true);
     psoDesc.SampleDesc.Count = 1;
 

@@ -469,3 +469,26 @@ D3D12_COMPARISON_FUNC DX12Helpers::ToDepthFunction(DepthFunction function)
             return D3D12_COMPARISON_FUNC_ALWAYS;
     }
 }
+
+D3D12_PRIMITIVE_TOPOLOGY_TYPE DX12Helpers::ToPrimitiveTopologyType(PrimitiveType primitiveType)
+{
+    switch (primitiveType)
+    {
+        case PrimitiveType::POINTS:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+        case PrimitiveType::LINE_STRIP:
+        case PrimitiveType::LINE_LOOP:
+        case PrimitiveType::LINES:
+        case PrimitiveType::LINE_STRIP_ADJACENCY:
+        case PrimitiveType::LINES_ADJACENCY:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+        case PrimitiveType::TRIANGLE_STRIP:
+        case PrimitiveType::TRIANGLE_FAN:
+        case PrimitiveType::TRIANGLES:
+        case PrimitiveType::TRIANGLE_STRIP_ADJACENCY:
+        case PrimitiveType::TRIANGLES_ADJACENCY:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        case PrimitiveType::PATCHES:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+    }
+}

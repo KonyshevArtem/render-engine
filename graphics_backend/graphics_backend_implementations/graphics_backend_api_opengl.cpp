@@ -798,14 +798,14 @@ void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &s
     glBlitFramebuffer(sourceX, sourceX, sourceX + width, sourceY + height, destinationX, destinationY, destinationX + width, destinationY + height, mask, GL_NEAREST);
 }
 
-void GraphicsBackendOpenGL::PushDebugGroup(const std::string& name)
+void GraphicsBackendOpenGL::PushDebugGroup(const std::string& name, GPUQueue queue)
 {
 #ifdef GL_KHR_debug
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, OpenGLLocal::s_DebugGroupId++, -1, name.c_str());
 #endif
 }
 
-void GraphicsBackendOpenGL::PopDebugGroup()
+void GraphicsBackendOpenGL::PopDebugGroup(GPUQueue queue)
 {
 #ifdef GL_KHR_debug
     assert(OpenGLLocal::s_DebugGroupId > 0);
@@ -881,7 +881,7 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
         clearFlag |= state.ClearFlags;
     }
 
-    PushDebugGroup(name);
+    PushDebugGroup(name, GPUQueue::RENDER);
 
     if (isBackbuffer)
     {
@@ -916,17 +916,17 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
 void GraphicsBackendOpenGL::EndRenderPass()
 {
     OpenGLLocal::ResetRenderTargetStates();
-    PopDebugGroup();
+    PopDebugGroup(GPUQueue::RENDER);
 }
 
 void GraphicsBackendOpenGL::BeginCopyPass(const std::string& name)
 {
-    PushDebugGroup(name);
+    PushDebugGroup(name, GPUQueue::COPY);
 }
 
 void GraphicsBackendOpenGL::EndCopyPass()
 {
-    PopDebugGroup();
+    PopDebugGroup(GPUQueue::COPY);
 }
 
 GraphicsBackendFence GraphicsBackendOpenGL::CreateFence(FenceType fenceType, const std::string& name)

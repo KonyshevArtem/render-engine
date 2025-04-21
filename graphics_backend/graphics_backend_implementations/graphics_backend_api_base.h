@@ -102,8 +102,8 @@ public:
 
     virtual void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) = 0;
 
-    virtual void PushDebugGroup(const std::string& name) = 0;
-    virtual void PopDebugGroup() = 0;
+    virtual void PushDebugGroup(const std::string& name, GPUQueue queue) = 0;
+    virtual void PopDebugGroup(GPUQueue queue) = 0;
     virtual GraphicsBackendProfilerMarker PushProfilerMarker() = 0;
     virtual void PopProfilerMarker(GraphicsBackendProfilerMarker& marker) = 0;
     virtual bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults) = 0;

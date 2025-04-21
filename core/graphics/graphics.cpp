@@ -333,7 +333,7 @@ namespace Graphics
 
     void SetupPerInstanceIndices(const std::vector<uint32_t> &indicesBuffer, uint64_t& outBindOffset)
     {
-        auto debugGroup = GraphicsBackendDebugGroup("Setup PerInstanceIndices");
+        auto debugGroup = GraphicsBackendDebugGroup("Setup PerInstanceIndices", GPUQueue::RENDER);
 
         uint64_t size = indicesBuffer.size() * sizeof(int);
         uint64_t requiredSize = size + s_PerInstanceIndicesOffset;
@@ -345,7 +345,7 @@ namespace Graphics
         s_PerInstanceIndicesOffset = requiredSize;
     }
 
-    void SetupShaderPass(int shaderPassIndex, bool isInstanced, const Material &material, const VertexAttributes &vertexAttributes,
+    void SetupShaderPass(int shaderPassIndex, bool isInstanced, const Material &material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType,
                          const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr, uint64_t perInstanceDataOffset = 0,
                          const std::shared_ptr<GraphicsBuffer> &perInstanceIndices = nullptr, uint64_t perInstanceIndicesOffset = 0)
     {
@@ -355,7 +355,7 @@ namespace Graphics
         bool isLinear;
         TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
         TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
-        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, isLinear, depthTargetFormat));
+        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, isLinear, depthTargetFormat, primitiveType));
 
         BindBuffer(GlobalConstants::LightingBufferName, s_LightingDataBuffer, true, shaderPass);
         BindBuffer(GlobalConstants::CameraDataBufferName, s_CameraDataBuffer, true, shaderPass);
@@ -398,11 +398,11 @@ namespace Graphics
     void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex,
         const std::shared_ptr<GraphicsBuffer> &perInstanceData, uint64_t perInstanceDataOffset)
     {
-        SetupMatrices(modelMatrix);
-        SetupShaderPass(shaderPassIndex, false, material, geometry.GetVertexAttributes(), perInstanceData, perInstanceDataOffset);
-
         auto primitiveType = geometry.GetPrimitiveType();
         auto elementsCount = geometry.GetElementsCount();
+
+        SetupMatrices(modelMatrix);
+        SetupShaderPass(shaderPassIndex, false, material, geometry.GetVertexAttributes(), geometry.GetPrimitiveType(), perInstanceData, perInstanceDataOffset);
 
         if (geometry.HasIndexes())
         {
@@ -418,13 +418,12 @@ namespace Graphics
         const std::shared_ptr<GraphicsBuffer> &perInstanceData, uint64_t perInstanceDataOffset,
         const std::shared_ptr<GraphicsBuffer> &perInstanceIndices, uint64_t perInstanceIndicesOffset)
     {
-        SetupMatrices(modelMatrices);
-        SetupShaderPass(shaderPassIndex, true, material, geometry.GetVertexAttributes(),
-            perInstanceData, perInstanceDataOffset, perInstanceIndices, perInstanceIndicesOffset);
-
         auto primitiveType = geometry.GetPrimitiveType();
         auto elementsCount = geometry.GetElementsCount();
         auto instanceCount = modelMatrices.size();
+
+        SetupMatrices(modelMatrices);
+        SetupShaderPass(shaderPassIndex, true, material, geometry.GetVertexAttributes(), geometry.GetPrimitiveType(), perInstanceData, perInstanceDataOffset, perInstanceIndices, perInstanceIndicesOffset);
 
         if (geometry.HasIndexes())
         {

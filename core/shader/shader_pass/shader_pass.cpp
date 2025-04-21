@@ -9,10 +9,11 @@
 
 #include <vector>
 
-size_t GetPSOHash(size_t vertexAttributesHash, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat)
+size_t GetPSOHash(size_t vertexAttributesHash, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat, PrimitiveType primitiveType)
 {
     size_t targetsHash = Utils::HashCombine(std::hash<TextureInternalFormat>{}(colorTargetFormat), std::hash<TextureInternalFormat>{}(depthTargetFormat));
     targetsHash = Utils::HashCombine(targetsHash, std::hash<bool>{}(isLinear));
+    targetsHash = Utils::HashCombine(targetsHash, std::hash<PrimitiveType>{}(primitiveType));
     return Utils::HashCombine(targetsHash, vertexAttributesHash);
 }
 
@@ -32,6 +33,7 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendI
 {
     const TextureInternalFormat k_DefaultColorFormat = TextureInternalFormat::RGBA16F;
     const TextureInternalFormat k_DefaultDepthFormat = TextureInternalFormat::DEPTH_32_STENCIL_8;
+    const PrimitiveType k_DefaultPrimitiveType = PrimitiveType::TRIANGLES;
 
     static std::vector<GraphicsBackendVertexAttributeDescriptor> s_DefaultVertexAttributes;
     if (s_DefaultVertexAttributes.empty())
@@ -42,7 +44,7 @@ ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendI
         s_DefaultVertexAttributes.push_back({VertexAttributeSemantic::TANGENT, 3, 3, VertexAttributeDataType::FLOAT, 0, 44, 32});
     }
 
-    CreatePSO(m_Shaders, m_BlendInfo, k_DefaultColorFormat, true, k_DefaultDepthFormat, s_DefaultVertexAttributes, m_Name);
+    CreatePSO(m_Shaders, m_BlendInfo, k_DefaultColorFormat, true, k_DefaultDepthFormat, s_DefaultVertexAttributes, k_DefaultPrimitiveType, m_Name);
 }
 
 ShaderPass::~ShaderPass()
@@ -58,14 +60,14 @@ ShaderPass::~ShaderPass()
     }
 }
 
-const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat)
+const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat, PrimitiveType primitiveType)
 {
     if (!GraphicsBackend::Current()->RequireStrictPSODescriptor() && !m_Programs.empty())
     {
         return m_Programs.begin()->second;
     }
 
-    auto hash = GetPSOHash(vertexAttributes.GetHash(), colorTargetFormat, isLinear, depthTargetFormat);
+    auto hash = GetPSOHash(vertexAttributes.GetHash(), colorTargetFormat, isLinear, depthTargetFormat, primitiveType);
 
     auto it = m_Programs.find(hash);
     if (it != m_Programs.end())
@@ -73,11 +75,11 @@ const GraphicsBackendProgram &ShaderPass::GetProgram(const VertexAttributes &ver
         return it->second;
     }
 
-    return CreatePSO(m_Shaders, m_BlendInfo, colorTargetFormat, isLinear, depthTargetFormat, vertexAttributes.GetAttributes(), m_Name);
+    return CreatePSO(m_Shaders, m_BlendInfo, colorTargetFormat, isLinear, depthTargetFormat, vertexAttributes.GetAttributes(), primitiveType, m_Name);
 }
 
 const GraphicsBackendProgram &ShaderPass::CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat, bool isLinear,
-                                                    TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name)
+                                                    TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, PrimitiveType primitiveType, const std::string& name)
 {
     GraphicsBackendColorAttachmentDescriptor colorAttachmentDescriptor{};
     colorAttachmentDescriptor.Format = colorFormat;
@@ -99,10 +101,11 @@ const GraphicsBackendProgram &ShaderPass::CreatePSO(std::vector<GraphicsBackendS
     programDescriptor.CullFaceOrientation = m_CullInfo.Orientation;
     programDescriptor.DepthWrite = m_DepthInfo.WriteDepth;
     programDescriptor.DepthFunction = m_DepthInfo.DepthFunction;
+    programDescriptor.PrimitiveType = primitiveType;
 
     auto program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
 
-    size_t hash = GetPSOHash(VertexAttributes::GetHash(vertexAttributes), colorFormat, isLinear, depthFormat);
+    size_t hash = GetPSOHash(VertexAttributes::GetHash(vertexAttributes), colorFormat, isLinear, depthFormat, primitiveType);
     m_Programs[hash] = program;
 
     return m_Programs[hash];

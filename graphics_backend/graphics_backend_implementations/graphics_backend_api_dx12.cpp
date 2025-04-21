@@ -73,12 +73,16 @@ namespace DX12Local
 
         CommandList(){}
 
-        CommandList(ID3D12CommandQueue* commandQueue, D3D12_COMMAND_LIST_TYPE type)
+        CommandList(ID3D12CommandQueue* commandQueue, D3D12_COMMAND_LIST_TYPE type, const std::string& name)
         {
             Queue = commandQueue;
 
             ThrowIfFailed(DX12Local::s_Device->CreateCommandAllocator(type, IID_PPV_ARGS(&Allocator)));
             ThrowIfFailed(DX12Local::s_Device->CreateCommandList1(0, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&List)));
+
+            std::string allocatorName = name + "_Allocator";
+            ThrowIfFailed(Allocator->SetPrivateData(WKPDID_D3DDebugObjectName, allocatorName.size(), allocatorName.c_str()));
+            ThrowIfFailed(List->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str()));
         }
 
         void Execute()
@@ -165,8 +169,8 @@ namespace DX12Local
     D3D12_VIEWPORT s_CurrentViewport;
     D3D12_RECT s_CurrentScissorsRect;
 
-    ID3D12Resource* s_ColorBackbuffers[GraphicsBackend::GetMaxFramesInFlight()];
-    ID3D12Resource* s_DepthBackbuffers[GraphicsBackend::GetMaxFramesInFlight()];
+    ResourceData s_ColorBackbuffers[GraphicsBackend::GetMaxFramesInFlight()];
+    ResourceData s_DepthBackbuffers[GraphicsBackend::GetMaxFramesInFlight()];
     PerFrameData s_PerFrameData[GraphicsBackend::GetMaxFramesInFlight()];
 
     ShaderObject* s_CurrentShaderObject;
@@ -266,9 +270,14 @@ namespace DX12Local
         return s_PerFrameData[GraphicsBackend::GetInFlightFrameIndex()];
     }
 
-    ID3D12Resource* GetCurrentBackbuffer()
+    ResourceData& GetCurrentColorBackbuffer()
     {
         return s_ColorBackbuffers[s_SwapChain->GetCurrentBackBufferIndex()];
+    }
+
+    ResourceData& GetCurrentDepthBackbuffer()
+    {
+        return s_DepthBackbuffers[s_SwapChain->GetCurrentBackBufferIndex()];
     }
 
     uint32_t GetShaderRegister(const GraphicsBackendResourceBindings& bindings)
@@ -334,19 +343,22 @@ namespace DX12Local
         for (UINT i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
         {
             CD3DX12_CPU_DESCRIPTOR_HANDLE colorBackbufferHandle(s_ColorBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, s_ColorTargetDescriptorSize);
-            ThrowIfFailed(s_SwapChain->GetBuffer(i, IID_PPV_ARGS(&s_ColorBackbuffers[i])));
-            s_Device->CreateRenderTargetView(s_ColorBackbuffers[i], nullptr, colorBackbufferHandle);
+            ThrowIfFailed(s_SwapChain->GetBuffer(i, IID_PPV_ARGS(&s_ColorBackbuffers[i].Resource)));
+            s_Device->CreateRenderTargetView(s_ColorBackbuffers[i].Resource, nullptr, colorBackbufferHandle);
+            s_ColorBackbuffers[i].State = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
+            D3D12_RESOURCE_STATES depthBufferState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
             DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(k_SwapChainDepthFormat, true);
             CD3DX12_CLEAR_VALUE clearValue(format, 1, 0);
             D3D12_RESOURCE_DESC depthBackbufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, s_SwapChainWidth, s_SwapChainHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
             D3D12_HEAP_PROPERTIES depthBackbufferHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-            ThrowIfFailed(s_Device->CreateCommittedResource(&depthBackbufferHeapProps, D3D12_HEAP_FLAG_NONE, &depthBackbufferDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue, IID_PPV_ARGS(&s_DepthBackbuffers[i])));
+            ThrowIfFailed(s_Device->CreateCommittedResource(&depthBackbufferHeapProps, D3D12_HEAP_FLAG_NONE, &depthBackbufferDesc, depthBufferState, &clearValue, IID_PPV_ARGS(&s_DepthBackbuffers[i].Resource)));
             CD3DX12_CPU_DESCRIPTOR_HANDLE depthBackbufferHandle(s_DepthBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, s_DepthTargetDescriptorSize);
-            s_Device->CreateDepthStencilView(s_DepthBackbuffers[i], nullptr, depthBackbufferHandle);
+            s_Device->CreateDepthStencilView(s_DepthBackbuffers[i].Resource, nullptr, depthBackbufferHandle);
+            s_DepthBackbuffers[i].State = depthBufferState;
 
             std::string depthBackbufferName = "DepthBackbuffer_" + std::to_string(i);
-            s_DepthBackbufferDescriptorHeap->SetPrivateData(WKPDID_D3DDebugObjectName, depthBackbufferName.size(), depthBackbufferName.c_str());
+            s_DepthBackbuffers[i].Resource->SetPrivateData(WKPDID_D3DDebugObjectName, depthBackbufferName.size(), depthBackbufferName.c_str());
         }
     }
 
@@ -390,6 +402,19 @@ namespace DX12Local
             WaitForMultipleObjects(1, events, true, INFINITE);
         }
     }
+
+    ID3D12GraphicsCommandList* GetCommandList(PerFrameData& frameData, GPUQueue queue)
+    {
+        switch (queue)
+        {
+            case GPUQueue::RENDER:
+                return frameData.RenderCommandList.List;
+            case GPUQueue::COPY:
+                return frameData.CopyCommandList.List;
+            default:
+                return nullptr;
+        }
+    }
 }
 
 #define ThrowIfFailed DX12Local::ThrowIfFailed
@@ -416,6 +441,11 @@ void GraphicsBackendDX12::Init(void* data)
     commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
     ThrowIfFailed(DX12Local::s_Device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&DX12Local::s_CopyQueue)));
 
+    std::string renderQueueName = "RenderQueue";
+    std::string copyQueueName = "CopyQueue";
+    ThrowIfFailed(DX12Local::s_RenderQueue->SetPrivateData(WKPDID_D3DDebugObjectName, renderQueueName.size(), renderQueueName.c_str()));
+    ThrowIfFailed(DX12Local::s_CopyQueue->SetPrivateData(WKPDID_D3DDebugObjectName, copyQueueName.size(), copyQueueName.c_str()));
+
     D3D12_DESCRIPTOR_HEAP_DESC colorBackbufferDescriptorHeapDesc{};
     colorBackbufferDescriptorHeapDesc.NumDescriptors = GraphicsBackend::GetMaxFramesInFlight();
     colorBackbufferDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -440,8 +470,8 @@ void GraphicsBackendDX12::Init(void* data)
     {
         DX12Local::PerFrameData& frameData = DX12Local::s_PerFrameData[i];
 
-        frameData.RenderCommandList = DX12Local::CommandList(DX12Local::s_RenderQueue, D3D12_COMMAND_LIST_TYPE_DIRECT);
-        frameData.CopyCommandList = DX12Local::CommandList(DX12Local::s_CopyQueue, D3D12_COMMAND_LIST_TYPE_COPY);
+        frameData.RenderCommandList = DX12Local::CommandList(DX12Local::s_RenderQueue, D3D12_COMMAND_LIST_TYPE_DIRECT, "RenderCommandList");
+        frameData.CopyCommandList = DX12Local::CommandList(DX12Local::s_CopyQueue, D3D12_COMMAND_LIST_TYPE_COPY, "CopyCommandList");
 
         D3D12_DESCRIPTOR_HEAP_DESC resourceHeapDesc{};
         resourceHeapDesc.NumDescriptors = 1024;
@@ -480,7 +510,7 @@ void GraphicsBackendDX12::Init(void* data)
     frameData.RenderCommandList.Reset();
     frameData.CopyCommandList.Reset();
 
-    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentColorBackbuffer().Resource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
 }
 
@@ -504,11 +534,11 @@ void GraphicsBackendDX12::InitNewFrame()
         for (DX12Local::PerFrameData& otherFrameData: DX12Local::s_PerFrameData)
             DX12Local::WaitForFrameEnd(otherFrameData);
 
-        for (ID3D12Resource* backbuffer: DX12Local::s_ColorBackbuffers)
-            backbuffer->Release();
+        for (DX12Local::ResourceData& backbuffer: DX12Local::s_ColorBackbuffers)
+            backbuffer.Resource->Release();
 
-        for (ID3D12Resource* backbuffer: DX12Local::s_DepthBackbuffers)
-            backbuffer->Release();
+        for (DX12Local::ResourceData& backbuffer: DX12Local::s_DepthBackbuffers)
+            backbuffer.Resource->Release();
 
         DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
         DX12Local::s_SwapChain->ResizeBuffers(GraphicsBackend::GetMaxFramesInFlight(), windowWidth, windowHeight, format, 0);
@@ -521,7 +551,7 @@ void GraphicsBackendDX12::InitNewFrame()
     frameData.RenderCommandList.InitNewFrame();
     frameData.CopyCommandList.InitNewFrame();
 
-    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentColorBackbuffer().Resource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
 
     frameData.ResourceDescriptorHeapIndex = 0;
@@ -863,8 +893,7 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
 
     bool isDepth = IsDepthAttachment(descriptor.Attachment);
     bool isNullTarget = descriptor.Texture.Texture == 0;
-    bool isColorBackbuffer = descriptor.IsBackbuffer && descriptor.Attachment == FramebufferAttachment::COLOR_ATTACHMENT0;
-    bool isEnabled = isColorBackbuffer || !isNullTarget;
+    bool isEnabled = descriptor.IsBackbuffer || !isNullTarget;
     TextureInternalFormat backbufferFormat = isDepth ? DX12Local::k_SwapChainDepthFormat : DX12Local::k_SwapChainColorFormat;
 
     TextureInternalFormat format = descriptor.IsBackbuffer ? backbufferFormat : descriptor.Texture.Format;
@@ -883,7 +912,10 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
     if (isDepth)
     {
         if (descriptor.IsBackbuffer)
+        {
             state.DescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(DX12Local::s_DepthBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DX12Local::s_SwapChain->GetCurrentBackBufferIndex(), DX12Local::s_DepthTargetDescriptorSize);
+            state.ResourceData = &DX12Local::GetCurrentDepthBackbuffer();
+        }
         else
         {
             state.DescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(frameData.DepthTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameData.DepthTargetHeapIndex++, DX12Local::s_DepthTargetDescriptorSize);
@@ -923,7 +955,10 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
     else
     {
         if (descriptor.IsBackbuffer)
+        {
             state.DescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(DX12Local::s_ColorBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DX12Local::s_SwapChain->GetCurrentBackBufferIndex(), DX12Local::s_ColorTargetDescriptorSize);
+            state.ResourceData = &DX12Local::GetCurrentColorBackbuffer();
+        }
         else
         {
             state.DescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(frameData.ColorTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameData.ColorTargetHeapIndex++, DX12Local::s_ColorTargetDescriptorSize);
@@ -1263,7 +1298,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     psoDesc.BlendState = blendDescriptor;
     psoDesc.DepthStencilState = depthStencilDesc;
     psoDesc.SampleMask = UINT_MAX;
-    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    psoDesc.PrimitiveTopologyType = DX12Helpers::ToPrimitiveTopologyType(descriptor.PrimitiveType);
     psoDesc.NumRenderTargets = 1;
     psoDesc.RTVFormats[0] = DX12Helpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);
     psoDesc.DSVFormat = DX12Helpers::ToTextureInternalFormat(descriptor.DepthFormat, true);
@@ -1373,16 +1408,16 @@ void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& sou
 {
 }
 
-void GraphicsBackendDX12::PushDebugGroup(const std::string& name)
+void GraphicsBackendDX12::PushDebugGroup(const std::string& name, GPUQueue queue)
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    PIXBeginEvent(frameData.RenderCommandList.List, 0, name.c_str());
+    PIXBeginEvent(DX12Local::GetCommandList(frameData, queue), 0, name.c_str());
 }
 
-void GraphicsBackendDX12::PopDebugGroup()
+void GraphicsBackendDX12::PopDebugGroup(GPUQueue queue)
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    PIXEndEvent(frameData.RenderCommandList.List);
+    PIXEndEvent(DX12Local::GetCommandList(frameData, queue));
 }
 
 GraphicsBackendProfilerMarker GraphicsBackendDX12::PushProfilerMarker()
@@ -1401,7 +1436,7 @@ bool GraphicsBackendDX12::ResolveProfilerMarker(const GraphicsBackendProfilerMar
 
 void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 {
-    PushDebugGroup(name);
+    PushDebugGroup(name, GPUQueue::RENDER);
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
@@ -1469,7 +1504,7 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 void GraphicsBackendDX12::EndRenderPass()
 {
     DX12Local::ResetRenderTargetStates();
-    PopDebugGroup();
+    PopDebugGroup(GPUQueue::RENDER);
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
     frameData.RenderCommandList.Execute();
@@ -1477,10 +1512,12 @@ void GraphicsBackendDX12::EndRenderPass()
 
 void GraphicsBackendDX12::BeginCopyPass(const std::string& name)
 {
+    PushDebugGroup(name, GPUQueue::COPY);
 }
 
 void GraphicsBackendDX12::EndCopyPass()
 {
+    PopDebugGroup(GPUQueue::COPY);
 }
 
 GraphicsBackendFence GraphicsBackendDX12::CreateFence(FenceType fenceType, const std::string& name)
@@ -1511,7 +1548,7 @@ void GraphicsBackendDX12::Present()
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
-    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    CD3DX12_RESOURCE_BARRIER backbufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DX12Local::GetCurrentColorBackbuffer().Resource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     frameData.RenderCommandList->ResourceBarrier(1, &backbufferBarrier);
 
     Flush();

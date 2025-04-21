@@ -4,6 +4,7 @@
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
 #include "enums/texture_internal_format.h"
+#include "enums/primitive_type.h"
 #include "shader/shader_structs.h"
 #include "drawable_geometry/vertex_attributes/vertex_attributes.h"
 
@@ -32,7 +33,7 @@ public:
     ShaderPass &operator=(const ShaderPass &) = delete;
     ShaderPass &operator=(ShaderPass &&) = delete;
 
-    const GraphicsBackendProgram &GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat);
+    const GraphicsBackendProgram &GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat, PrimitiveType primitiveType);
 
     inline const std::unordered_map<std::string, GraphicsBackendTextureInfo> &GetTextures() const
     {
@@ -63,7 +64,7 @@ private:
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
 
     const GraphicsBackendProgram &CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat, bool isLinear,
-                                            TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name);
+                                            TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, PrimitiveType primitiveType, const std::string& name);
 };
 
 

@@ -63,8 +63,8 @@ public:
 
     void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) override;
 
-    void PushDebugGroup(const std::string& name) override;
-    void PopDebugGroup() override;
+    void PushDebugGroup(const std::string& name, GPUQueue queue) override;
+    void PopDebugGroup(GPUQueue queue) override;
     GraphicsBackendProfilerMarker PushProfilerMarker() override;
     void PopProfilerMarker(GraphicsBackendProfilerMarker& marker) override;
     bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults) override;

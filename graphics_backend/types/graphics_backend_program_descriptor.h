@@ -10,6 +10,7 @@
 #include "enums/texture_internal_format.h"
 #include "enums/cull_face.h"
 #include "enums/cull_face_orientation.h"
+#include "enums/primitive_type.h"
 
 #include <vector>
 #include <unordered_map>
@@ -33,6 +34,8 @@ struct GraphicsBackendProgramDescriptor
 
     bool DepthWrite;
     DepthFunction DepthFunction;
+
+    PrimitiveType PrimitiveType;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_PROGRAM_DESCRIPTOR_H

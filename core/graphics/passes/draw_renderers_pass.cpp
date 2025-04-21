@@ -25,6 +25,6 @@ void DrawRenderersPass::Execute(const Context& ctx)
 {
     Profiler::Marker marker("DrawRenderersPass::Execute");
 
-    auto debugGroup = GraphicsBackendDebugGroup(m_Name);
+    auto debugGroup = GraphicsBackendDebugGroup(m_Name, GPUQueue::RENDER);
     Graphics::DrawRenderQueue(m_RenderQueue);
 }

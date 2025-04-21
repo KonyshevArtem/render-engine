@@ -1558,9 +1558,6 @@ void GraphicsBackendDX12::EndRenderPass()
 {
     DX12Local::ResetRenderTargetStates();
     PopDebugGroup(GPUQueue::RENDER);
-
-    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    frameData.RenderCommandList.Execute();
 }
 
 void GraphicsBackendDX12::BeginCopyPass(const std::string& name)
@@ -1571,26 +1568,62 @@ void GraphicsBackendDX12::BeginCopyPass(const std::string& name)
 void GraphicsBackendDX12::EndCopyPass()
 {
     PopDebugGroup(GPUQueue::COPY);
-
-    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    frameData.CopyCommandList.Execute();
 }
 
 GraphicsBackendFence GraphicsBackendDX12::CreateFence(FenceType fenceType, const std::string& name)
 {
-    return {};
+    ID3D12Fence* dxFence;
+    DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dxFence));
+
+    if (!name.empty())
+        dxFence->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str());
+
+    GraphicsBackendFence fence;
+    fence.Fence = reinterpret_cast<uint64_t>(dxFence);
+    fence.Type = fenceType;
+    return fence;
 }
 
 void GraphicsBackendDX12::DeleteFence(const GraphicsBackendFence& fence)
 {
+    ID3D12Fence* dxFence = reinterpret_cast<ID3D12Fence*>(fence.Fence);
+    dxFence->Release();
 }
 
 void GraphicsBackendDX12::SignalFence(const GraphicsBackendFence& fence)
 {
+    ID3D12Fence* dxFence = reinterpret_cast<ID3D12Fence*>(fence.Fence);
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    switch (fence.Type)
+    {
+        case FenceType::RENDER_TO_COPY:
+            frameData.RenderCommandList.Execute();
+            DX12Local::s_RenderQueue->Signal(dxFence, GetFrameNumber());
+            break;
+        case FenceType::COPY_TO_RENDER:
+            frameData.CopyCommandList.Execute();
+            DX12Local::s_CopyQueue->Signal(dxFence, GetFrameNumber());
+            break;
+    }
 }
 
 void GraphicsBackendDX12::WaitForFence(const GraphicsBackendFence& fence)
 {
+    ID3D12Fence* dxFence = reinterpret_cast<ID3D12Fence*>(fence.Fence);
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    switch (fence.Type)
+    {
+        case FenceType::RENDER_TO_COPY:
+            frameData.CopyCommandList.Execute();
+            DX12Local::s_CopyQueue->Wait(dxFence, GetFrameNumber());
+            break;
+        case FenceType::COPY_TO_RENDER:
+            frameData.RenderCommandList.Execute();
+            DX12Local::s_RenderQueue->Wait(dxFence, GetFrameNumber());
+            break;
+    }
 }
 
 void GraphicsBackendDX12::Flush()

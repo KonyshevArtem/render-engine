@@ -9,7 +9,6 @@ cbuffer PerMaterialData
 struct Attributes
 {
     float3 PositionOS   : POSITION;
-    float3 Normal       : NORMAL;
     float2 TexCoord     : TEXCOORD;
 };
 

@@ -1,9 +1,9 @@
+#include "../common/global_defines.h"
 #include "../common/shadows.h"
 
 struct Attributes
 {
     float3 vertPositionOS   : POSITION;
-    float3 vertNormalOS     : NORMAL;
     float2 texCoord         : TEXCOORD;
 };
 
@@ -25,6 +25,10 @@ Varyings vertexMain(Attributes attributes)
 
 half4 fragmentMain(Varyings vars) : SV_Target
 {
+#if SCREEN_UV_UPSIDE_DOWN
+    vars.UV.y = 1 - vars.UV.y;
+#endif
+
     half4 depth = _DirLightShadowMap.Sample(sampler_DirLightShadowMap, vars.UV);
     return half4(depth.x, 0, 0, 1.0);
 }

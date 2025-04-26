@@ -24,6 +24,7 @@
 #include "debug.h"
 
 #include <unordered_map>
+#include <chrono>
 
 namespace DX12Local
 {
@@ -117,6 +118,67 @@ namespace DX12Local
         }
     };
 
+    struct TimestampCollector
+    {
+        const int k_MaxPendingTimestamps = 1024;
+
+        ID3D12QueryHeap* Heap = nullptr;
+        uint32_t QueryIndex = 0;
+        ResourceData Buffer{};
+
+        void Init(D3D12_QUERY_HEAP_TYPE heapType)
+        {
+            QueryIndex = 0;
+
+            D3D12_QUERY_HEAP_DESC heapDesc{};
+            heapDesc.Type = heapType;
+            heapDesc.Count = k_MaxPendingTimestamps;
+            ThrowIfFailed(s_Device->CreateQueryHeap(&heapDesc, IID_PPV_ARGS(&Heap)));
+
+            Buffer.State = D3D12_RESOURCE_STATE_COPY_DEST;
+            CD3DX12_HEAP_PROPERTIES bufferHeapProps(D3D12_HEAP_TYPE_READBACK);
+            D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(k_MaxPendingTimestamps * sizeof(uint64_t));
+            ThrowIfFailed(s_Device->CreateCommittedResource(&bufferHeapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, Buffer.State, nullptr, IID_PPV_ARGS(&Buffer.Resource)));
+
+            std::string timestampBufferName = "TimestampBuffer";
+            Buffer.Resource->SetPrivateData(WKPDID_D3DDebugObjectName, timestampBufferName.size(), timestampBufferName.c_str());
+        }
+
+        uint32_t GetNextTimestampIndex()
+        {
+            uint32_t index = QueryIndex;
+            QueryIndex = (QueryIndex + 1) % k_MaxPendingTimestamps;
+            return index;
+        }
+
+        void QueryTimestamp(ID3D12GraphicsCommandList* commandList, uint32_t queryIndex)
+        {
+            commandList->EndQuery(Heap, D3D12_QUERY_TYPE_TIMESTAMP, queryIndex);
+        }
+
+        void ResolveTimestamps(ID3D12GraphicsCommandList* commandList, uint32_t index, uint32_t count)
+        {
+            uint64_t bufferOffset = index * sizeof(uint64_t);
+            commandList->ResolveQueryData(Heap, D3D12_QUERY_TYPE_TIMESTAMP, index, count, Buffer.Resource, bufferOffset);
+        }
+
+        void ReadbackTimestamps(uint32_t index, uint32_t count, uint64_t* outTimestamps)
+        {
+            SIZE_T bufferStart = index * sizeof(uint64_t);
+            SIZE_T bufferEnd = bufferStart + count * sizeof(uint64_t);
+            D3D12_RANGE readbackBufferRange = CD3DX12_RANGE(bufferStart, bufferEnd);
+
+            uint64_t* timestamps;
+            Buffer.Resource->Map(0, &readbackBufferRange, reinterpret_cast<void**>(&timestamps));
+
+            for (int i = 0; i < count; ++i)
+                outTimestamps[i] = timestamps[index + i];
+
+            D3D12_RANGE emptyRange{ 0, 0 };
+            Buffer.Resource->Unmap(0, &emptyRange);
+        }
+    };
+
     struct PerFrameData
     {
         CommandList RenderCommandList;
@@ -174,6 +236,15 @@ namespace DX12Local
     PerFrameData s_PerFrameData[GraphicsBackend::GetMaxFramesInFlight()];
 
     ShaderObject* s_CurrentShaderObject;
+
+    TimestampCollector s_RenderTimestampCollector;
+    TimestampCollector s_CopyTimestampCollector;
+    ID3D12Fence* s_TimestampFence;
+    uint64_t s_GpuStartTimestamp;
+    uint64_t s_CpuStartTimestamp;
+    bool s_RenderTimestampActive;
+    bool s_CopyTimestampActive;
+    bool s_IsCopyTimestampSupported;
 
     void GetHardwareAdapter(IDXGIFactory7* pFactory, IDXGIAdapter4** ppAdapter)
     {
@@ -539,6 +610,23 @@ void GraphicsBackendDX12::Init(void* data)
     }
 
     DX12Local::ResetRenderTargetStates();
+
+    DX12Local::s_RenderTimestampCollector.Init(D3D12_QUERY_HEAP_TYPE_TIMESTAMP);
+
+    D3D12_FEATURE_DATA_D3D12_OPTIONS3 options;
+    ThrowIfFailed(DX12Local::s_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &options, sizeof(options)));
+    DX12Local::s_IsCopyTimestampSupported = options.CopyQueueTimestampQueriesSupported;
+    if (DX12Local::s_IsCopyTimestampSupported)
+        DX12Local::s_CopyTimestampCollector.Init(D3D12_QUERY_HEAP_TYPE_COPY_QUEUE_TIMESTAMP);
+
+    ThrowIfFailed(DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&DX12Local::s_TimestampFence)));
+
+    std::string timestampFenceName = "TimestampFence";
+    DX12Local::s_TimestampFence->SetPrivateData(WKPDID_D3DDebugObjectName, timestampFenceName.size(), timestampFenceName.c_str());
+
+    uint64_t cpuTimestamp;
+    DX12Local::s_CpuStartTimestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    ThrowIfFailed(DX12Local::s_RenderQueue->GetClockCalibration(&DX12Local::s_GpuStartTimestamp, &cpuTimestamp));
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
     frameData.RenderCommandList.Reset();
@@ -1410,6 +1498,8 @@ void GraphicsBackendDX12::DrawArraysInstanced(const GraphicsBackendGeometry& geo
     frameData.RenderCommandList->IASetPrimitiveTopology(DX12Helpers::ToPrimitiveTopology(primitiveType));
     frameData.RenderCommandList->IASetVertexBuffers(0, 1, geometryData->VertexBufferView);
     frameData.RenderCommandList->DrawInstanced(indicesCount, instanceCount, firstIndex, 0);
+
+    DX12Local::s_RenderTimestampActive = true;
 }
 
 void GraphicsBackendDX12::DrawElements(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType)
@@ -1429,6 +1519,8 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
     frameData.RenderCommandList->IASetVertexBuffers(0, 1, geometryData->VertexBufferView);
     frameData.RenderCommandList->IASetIndexBuffer(geometryData->IndexBufferView);
     frameData.RenderCommandList->DrawIndexedInstanced(elementsCount, instanceCount, 0, 0, 0);
+
+    DX12Local::s_RenderTimestampActive = true;
 }
 
 void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& source, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
@@ -1461,6 +1553,8 @@ void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& sou
 
     resourcesData[0]->State = D3D12_RESOURCE_STATE_COMMON;
     resourcesData[1]->State = D3D12_RESOURCE_STATE_COMMON;
+
+    DX12Local::s_CopyTimestampActive = true;
 }
 
 void GraphicsBackendDX12::PushDebugGroup(const std::string& name, GPUQueue queue)
@@ -1477,15 +1571,82 @@ void GraphicsBackendDX12::PopDebugGroup(GPUQueue queue)
 
 GraphicsBackendProfilerMarker GraphicsBackendDX12::PushProfilerMarker()
 {
-    return {};
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    auto FillMarkerInfo = [](GraphicsBackendProfilerMarker::MarkerInfo& info, DX12Local::TimestampCollector& collector, ID3D12GraphicsCommandList* commandList)
+    {
+        info.StartMarker = collector.GetNextTimestampIndex();
+        info.EndMarker = collector.GetNextTimestampIndex();
+
+        collector.QueryTimestamp(commandList, info.StartMarker);
+    };
+
+    GraphicsBackendProfilerMarker marker{};
+    marker.Frame = GetFrameNumber();
+
+    FillMarkerInfo(marker.Info[k_RenderGPUQueueIndex], DX12Local::s_RenderTimestampCollector, frameData.RenderCommandList.List);
+    if (DX12Local::s_IsCopyTimestampSupported)
+        FillMarkerInfo(marker.Info[k_CopyGPUQueueIndex], DX12Local::s_CopyTimestampCollector, frameData.CopyCommandList.List);
+
+    DX12Local::s_RenderTimestampActive = false;
+    DX12Local::s_CopyTimestampActive = false;
+
+    return marker;
 }
 
 void GraphicsBackendDX12::PopProfilerMarker(GraphicsBackendProfilerMarker& marker)
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    auto PopMarker = [](GraphicsBackendProfilerMarker::MarkerInfo& info, DX12Local::TimestampCollector& collector, ID3D12GraphicsCommandList* commandList, bool isActive)
+    {
+        if (isActive)
+        {
+            collector.QueryTimestamp(commandList, info.EndMarker);
+            collector.ResolveTimestamps(commandList, info.StartMarker, 2);
+        }
+        else
+            info.EndMarker = info.StartMarker;
+    };
+
+    PopMarker(marker.Info[k_RenderGPUQueueIndex], DX12Local::s_RenderTimestampCollector, frameData.RenderCommandList.List, DX12Local::s_RenderTimestampActive);
+    if (DX12Local::s_IsCopyTimestampSupported)
+        PopMarker(marker.Info[k_CopyGPUQueueIndex], DX12Local::s_CopyTimestampCollector, frameData.CopyCommandList.List, DX12Local::s_CopyTimestampActive);
 }
 
 bool GraphicsBackendDX12::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults)
 {
+    static uint64_t renderQueueFrequency = 0;
+    if (renderQueueFrequency == 0)
+        ThrowIfFailed(DX12Local::s_RenderQueue->GetTimestampFrequency(&renderQueueFrequency));
+
+    if (DX12Local::s_TimestampFence->GetCompletedValue() < marker.Frame)
+        return false;
+
+    auto ToCPUTimestamp = [](uint64_t gpuTimestamp)
+    {
+        return (static_cast<double>(gpuTimestamp - DX12Local::s_GpuStartTimestamp) / renderQueueFrequency) * 1000000 + DX12Local::s_CpuStartTimestamp;
+    };
+
+    auto FillResults = [&ToCPUTimestamp, &marker, &outResults](int gpuQueueIndex, DX12Local::TimestampCollector& collector)
+    {
+        bool isActive = marker.Info[gpuQueueIndex].StartMarker != marker.Info[gpuQueueIndex].EndMarker;
+        outResults[gpuQueueIndex].IsActive = isActive;
+
+        if (isActive)
+        {
+            uint64_t timestamps[2];
+            collector.ReadbackTimestamps(marker.Info[gpuQueueIndex].StartMarker, 2, &timestamps[0]);
+
+            outResults[gpuQueueIndex].StartTimestamp = ToCPUTimestamp(timestamps[0]);
+            outResults[gpuQueueIndex].EndTimestamp = ToCPUTimestamp(timestamps[1]);
+        }
+    };
+
+    FillResults(k_RenderGPUQueueIndex, DX12Local::s_RenderTimestampCollector);
+    if (DX12Local::s_IsCopyTimestampSupported)
+        FillResults(k_CopyGPUQueueIndex, DX12Local::s_CopyTimestampCollector);
+
     return true;
 }
 
@@ -1652,6 +1813,8 @@ void GraphicsBackendDX12::Present()
     uint64_t fenceValue = frameData.FenceValue++;
     ThrowIfFailed(DX12Local::s_RenderQueue->Signal(frameData.RenderQueueFence, fenceValue));
     ThrowIfFailed(DX12Local::s_CopyQueue->Signal(frameData.CopyQueueFence, fenceValue));
+
+    ThrowIfFailed(DX12Local::s_RenderQueue->Signal(DX12Local::s_TimestampFence, GetFrameNumber()));
 }
 
 void GraphicsBackendDX12::TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor, ResourceState state, GPUQueue queue)

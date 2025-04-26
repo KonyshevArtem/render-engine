@@ -32,6 +32,12 @@ namespace DX12Local
 
     ID3D12Device5* s_Device;
 
+    void SetObjectName(ID3D12Object* object, const std::string& name)
+    {
+        if (!name.empty())
+            ThrowIfFailed(object->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str()));
+    }
+
     struct ResourceData
     {
         ID3D12Resource* Resource;
@@ -81,9 +87,8 @@ namespace DX12Local
             ThrowIfFailed(DX12Local::s_Device->CreateCommandAllocator(type, IID_PPV_ARGS(&Allocator)));
             ThrowIfFailed(DX12Local::s_Device->CreateCommandList1(0, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&List)));
 
-            std::string allocatorName = name + "_Allocator";
-            ThrowIfFailed(Allocator->SetPrivateData(WKPDID_D3DDebugObjectName, allocatorName.size(), allocatorName.c_str()));
-            ThrowIfFailed(List->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str()));
+            SetObjectName(Allocator, name + "_Allocator");
+            SetObjectName(List, name);
         }
 
         void Execute()
@@ -140,8 +145,7 @@ namespace DX12Local
             D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(k_MaxPendingTimestamps * sizeof(uint64_t));
             ThrowIfFailed(s_Device->CreateCommittedResource(&bufferHeapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, Buffer.State, nullptr, IID_PPV_ARGS(&Buffer.Resource)));
 
-            std::string timestampBufferName = "TimestampBuffer";
-            Buffer.Resource->SetPrivateData(WKPDID_D3DDebugObjectName, timestampBufferName.size(), timestampBufferName.c_str());
+            SetObjectName(Buffer.Resource, "TimestampBuffer");
         }
 
         uint32_t GetNextTimestampIndex()
@@ -179,21 +183,51 @@ namespace DX12Local
         }
     };
 
+    struct DescriptorHeap
+    {
+        ID3D12DescriptorHeap* Heap;
+        UINT DescriptorSize;
+
+        DescriptorHeap() : Heap(nullptr), DescriptorSize(0)
+        {}
+
+        DescriptorHeap(uint32_t descriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE type, bool isShaderVisible = false)
+        {
+            D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
+            heapDesc.NumDescriptors = descriptorCount;
+            heapDesc.Type = type;
+            heapDesc.Flags = isShaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+            ThrowIfFailed(s_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&Heap)));
+
+            DescriptorSize = s_Device->GetDescriptorHandleIncrementSize(type);
+        }
+
+        D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(int index)
+        {
+            return CD3DX12_CPU_DESCRIPTOR_HANDLE(Heap->GetCPUDescriptorHandleForHeapStart(), index, DescriptorSize);
+        }
+
+        D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(int index)
+        {
+            return CD3DX12_GPU_DESCRIPTOR_HANDLE(Heap->GetGPUDescriptorHandleForHeapStart(), index, DescriptorSize);
+        }
+    };
+
     struct PerFrameData
     {
         CommandList RenderCommandList;
         CommandList CopyCommandList;
 
-        ID3D12DescriptorHeap* ColorTargetDescriptorHeap;
+        DescriptorHeap ColorTargetDescriptorHeap;
         uint32_t ColorTargetHeapIndex;
 
-        ID3D12DescriptorHeap* DepthTargetDescriptorHeap;
+        DescriptorHeap DepthTargetDescriptorHeap;
         uint32_t DepthTargetHeapIndex;
 
-        ID3D12DescriptorHeap* ResourceDescriptorHeap;
+        DescriptorHeap ResourceDescriptorHeap;
         uint32_t ResourceDescriptorHeapIndex;
 
-        ID3D12DescriptorHeap* SamplerDescriptorHeap;
+        DescriptorHeap SamplerDescriptorHeap;
         uint32_t SamplerDescriptorHeapIndex;
 
         ID3D12Fence* RenderQueueFence;
@@ -215,14 +249,9 @@ namespace DX12Local
     ID3D12CommandQueue* s_CopyQueue;
     ID3D12InfoQueue* s_InfoQueue;
 
-    ID3D12DescriptorHeap* s_ColorBackbufferDescriptorHeap;
-    ID3D12DescriptorHeap* s_DepthBackbufferDescriptorHeap;
-    ID3D12DescriptorHeap* s_ImGuiDescriptorHeap;
-
-    UINT s_ColorTargetDescriptorSize;
-    UINT s_DepthTargetDescriptorSize;
-    UINT s_ResourceDescriptorSize;
-    UINT s_SamplerDescriptorSize;
+    DescriptorHeap s_ColorBackbufferDescriptorHeap;
+    DescriptorHeap s_DepthBackbufferDescriptorHeap;
+    DescriptorHeap s_ImGuiDescriptorHeap;
 
     float s_ClearColor[4] = {0, 0, 0, 0};
     float s_ClearDepth = 1;
@@ -413,9 +442,8 @@ namespace DX12Local
     {
         for (UINT i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
         {
-            CD3DX12_CPU_DESCRIPTOR_HANDLE colorBackbufferHandle(s_ColorBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, s_ColorTargetDescriptorSize);
             ThrowIfFailed(s_SwapChain->GetBuffer(i, IID_PPV_ARGS(&s_ColorBackbuffers[i].Resource)));
-            s_Device->CreateRenderTargetView(s_ColorBackbuffers[i].Resource, nullptr, colorBackbufferHandle);
+            s_Device->CreateRenderTargetView(s_ColorBackbuffers[i].Resource, nullptr, s_ColorBackbufferDescriptorHeap.GetCPUHandle(i));
             s_ColorBackbuffers[i].State = D3D12_RESOURCE_STATE_COMMON;
 
             D3D12_RESOURCE_STATES depthBufferState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
@@ -424,14 +452,11 @@ namespace DX12Local
             D3D12_RESOURCE_DESC depthBackbufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, s_SwapChainWidth, s_SwapChainHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
             D3D12_HEAP_PROPERTIES depthBackbufferHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
             ThrowIfFailed(s_Device->CreateCommittedResource(&depthBackbufferHeapProps, D3D12_HEAP_FLAG_NONE, &depthBackbufferDesc, depthBufferState, &clearValue, IID_PPV_ARGS(&s_DepthBackbuffers[i].Resource)));
-            CD3DX12_CPU_DESCRIPTOR_HANDLE depthBackbufferHandle(s_DepthBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, s_DepthTargetDescriptorSize);
-            s_Device->CreateDepthStencilView(s_DepthBackbuffers[i].Resource, nullptr, depthBackbufferHandle);
+            s_Device->CreateDepthStencilView(s_DepthBackbuffers[i].Resource, nullptr, s_DepthBackbufferDescriptorHeap.GetCPUHandle(i));
             s_DepthBackbuffers[i].State = depthBufferState;
 
-            std::string colorBackbufferName = "ColorBackbuffer_" + std::to_string(i);
-            std::string depthBackbufferName = "DepthBackbuffer_" + std::to_string(i);
-            s_ColorBackbuffers[i].Resource->SetPrivateData(WKPDID_D3DDebugObjectName, colorBackbufferName.size(), colorBackbufferName.c_str());
-            s_DepthBackbuffers[i].Resource->SetPrivateData(WKPDID_D3DDebugObjectName, depthBackbufferName.size(), depthBackbufferName.c_str());
+            SetObjectName(s_ColorBackbuffers[i].Resource, "ColorBackbuffer_" + std::to_string(i));
+            SetObjectName(s_DepthBackbuffers[i].Resource, "DepthBackbuffer_" + std::to_string(i));
         }
     }
 
@@ -546,27 +571,11 @@ void GraphicsBackendDX12::Init(void* data)
     commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
     ThrowIfFailed(DX12Local::s_Device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&DX12Local::s_CopyQueue)));
 
-    std::string renderQueueName = "RenderQueue";
-    std::string copyQueueName = "CopyQueue";
-    ThrowIfFailed(DX12Local::s_RenderQueue->SetPrivateData(WKPDID_D3DDebugObjectName, renderQueueName.size(), renderQueueName.c_str()));
-    ThrowIfFailed(DX12Local::s_CopyQueue->SetPrivateData(WKPDID_D3DDebugObjectName, copyQueueName.size(), copyQueueName.c_str()));
+    DX12Local::SetObjectName(DX12Local::s_RenderQueue, "RenderQueue");
+    DX12Local::SetObjectName(DX12Local::s_CopyQueue, "CopyQueue");
 
-    D3D12_DESCRIPTOR_HEAP_DESC colorBackbufferDescriptorHeapDesc{};
-    colorBackbufferDescriptorHeapDesc.NumDescriptors = GraphicsBackend::GetMaxFramesInFlight();
-    colorBackbufferDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-    colorBackbufferDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&colorBackbufferDescriptorHeapDesc, IID_PPV_ARGS(&DX12Local::s_ColorBackbufferDescriptorHeap)));
-
-    D3D12_DESCRIPTOR_HEAP_DESC depthBackbufferDescriptorHeapDesc{};
-    depthBackbufferDescriptorHeapDesc.NumDescriptors = GraphicsBackend::GetMaxFramesInFlight();
-    depthBackbufferDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-    depthBackbufferDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&depthBackbufferDescriptorHeapDesc, IID_PPV_ARGS(&DX12Local::s_DepthBackbufferDescriptorHeap)));
-
-    DX12Local::s_ColorTargetDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    DX12Local::s_DepthTargetDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    DX12Local::s_ResourceDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    DX12Local::s_SamplerDescriptorSize = DX12Local::s_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+    DX12Local::s_ColorBackbufferDescriptorHeap = DX12Local::DescriptorHeap(GraphicsBackend::GetMaxFramesInFlight(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    DX12Local::s_DepthBackbufferDescriptorHeap = DX12Local::DescriptorHeap(GraphicsBackend::GetMaxFramesInFlight(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
     DX12Local::s_Window = *static_cast<HWND*>(data);
     DX12Local::CreateSwapChain(DX12Local::s_Window, factory);
@@ -578,29 +587,10 @@ void GraphicsBackendDX12::Init(void* data)
         frameData.RenderCommandList = DX12Local::CommandList(DX12Local::s_RenderQueue, D3D12_COMMAND_LIST_TYPE_DIRECT, "RenderCommandList");
         frameData.CopyCommandList = DX12Local::CommandList(DX12Local::s_CopyQueue, D3D12_COMMAND_LIST_TYPE_COPY, "CopyCommandList");
 
-        D3D12_DESCRIPTOR_HEAP_DESC resourceHeapDesc{};
-        resourceHeapDesc.NumDescriptors = 1024;
-        resourceHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        resourceHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&resourceHeapDesc, IID_PPV_ARGS(&frameData.ResourceDescriptorHeap)));
-
-        D3D12_DESCRIPTOR_HEAP_DESC samplerDescriptorHeapDesc{};
-        samplerDescriptorHeapDesc.NumDescriptors = 1024;
-        samplerDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
-        samplerDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&samplerDescriptorHeapDesc, IID_PPV_ARGS(&frameData.SamplerDescriptorHeap)));
-
-        D3D12_DESCRIPTOR_HEAP_DESC colorTargetHeapDesc{};
-        colorTargetHeapDesc.NumDescriptors = 1024;
-        colorTargetHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-        colorTargetHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&colorTargetHeapDesc, IID_PPV_ARGS(&frameData.ColorTargetDescriptorHeap)));
-
-        D3D12_DESCRIPTOR_HEAP_DESC depthTargetHeapDesc{};
-        depthTargetHeapDesc.NumDescriptors = 1024;
-        depthTargetHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-        depthTargetHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&depthTargetHeapDesc, IID_PPV_ARGS(&frameData.DepthTargetDescriptorHeap)));
+        frameData.ResourceDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+        frameData.SamplerDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, true);
+        frameData.ColorTargetDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        frameData.DepthTargetDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
         DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&frameData.RenderQueueFence));
         DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&frameData.CopyQueueFence));
@@ -621,8 +611,7 @@ void GraphicsBackendDX12::Init(void* data)
 
     ThrowIfFailed(DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&DX12Local::s_TimestampFence)));
 
-    std::string timestampFenceName = "TimestampFence";
-    DX12Local::s_TimestampFence->SetPrivateData(WKPDID_D3DDebugObjectName, timestampFenceName.size(), timestampFenceName.c_str());
+    DX12Local::SetObjectName(DX12Local::s_TimestampFence, "TimestampFence");
 
     uint64_t cpuTimestamp;
     DX12Local::s_CpuStartTimestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -699,13 +688,9 @@ void GraphicsBackendDX12::FillImGuiInitData(void* data)
     initData->MaxFramesInFlight = GraphicsBackend::GetMaxFramesInFlight();
     initData->Format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
 
-    D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
-    heapDesc.NumDescriptors = 64;
-    heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    ThrowIfFailed(DX12Local::s_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&DX12Local::s_ImGuiDescriptorHeap)));
+    DX12Local::s_ImGuiDescriptorHeap = DX12Local::DescriptorHeap(64, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
 
-    initData->DescriptorHeap = DX12Local::s_ImGuiDescriptorHeap;
+    initData->DescriptorHeap = DX12Local::s_ImGuiDescriptorHeap.Heap;
     initData->CpuDescriptorHandle = initData->DescriptorHeap->GetCPUDescriptorHandleForHeapStart();
     initData->GpuDescriptorHandle = initData->DescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 }
@@ -719,10 +704,10 @@ void GraphicsBackendDX12::FillImGuiFrameData(void *data)
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
-    D3D12_CPU_DESCRIPTOR_HANDLE backbufferHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(DX12Local::s_ColorBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DX12Local::s_SwapChain->GetCurrentBackBufferIndex(), DX12Local::s_ColorTargetDescriptorSize);
+    D3D12_CPU_DESCRIPTOR_HANDLE backbufferHandle = DX12Local::s_ColorBackbufferDescriptorHeap.GetCPUHandle(DX12Local::s_SwapChain->GetCurrentBackBufferIndex());
 
     frameData.RenderCommandList->OMSetRenderTargets(1, &backbufferHandle, false, nullptr);
-    frameData.RenderCommandList->SetDescriptorHeaps(1, &DX12Local::s_ImGuiDescriptorHeap);
+    frameData.RenderCommandList->SetDescriptorHeaps(1, &DX12Local::s_ImGuiDescriptorHeap.Heap);
 
     FrameDataDX12* imguiData = reinterpret_cast<FrameDataDX12*>(data);
     imguiData->CommandList = frameData.RenderCommandList.List;
@@ -798,7 +783,7 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(int width, int height,
     ID3D12Resource* dxTexture;
     ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, state, isRenderTarget ? &clearValue : nullptr, IID_PPV_ARGS(&dxTexture)));
 
-    dxTexture->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str());
+    DX12Local::SetObjectName(dxTexture, name);
 
     DX12Local::ResourceData* resourceData = new DX12Local::ResourceData();
     resourceData->Resource = dxTexture;
@@ -908,9 +893,6 @@ void GraphicsBackendDX12::BindTexture(const GraphicsBackendResourceBindings& bin
             break;
     }
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(frameData.ResourceDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameData.ResourceDescriptorHeapIndex, DX12Local::s_ResourceDescriptorSize);
-    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(frameData.ResourceDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), frameData.ResourceDescriptorHeapIndex, DX12Local::s_ResourceDescriptorSize);
-
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
 
     D3D12_RESOURCE_STATES state;
@@ -923,10 +905,10 @@ void GraphicsBackendDX12::BindTexture(const GraphicsBackendResourceBindings& bin
         state = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
     DX12Local::TransitionResource(resourceData, state, GPUQueue::RENDER);
-    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &resourceViewDesc, cpuHandle);
+    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &resourceViewDesc, frameData.ResourceDescriptorHeap.GetCPUHandle(frameData.ResourceDescriptorHeapIndex));
 
     int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)];
-    frameData.RenderCommandList->SetGraphicsRootDescriptorTable(rootParamIndex, gpuHandle);
+    frameData.RenderCommandList->SetGraphicsRootDescriptorTable(rootParamIndex, frameData.ResourceDescriptorHeap.GetGPUHandle(frameData.ResourceDescriptorHeapIndex));
 
     ++frameData.ResourceDescriptorHeapIndex;
 }
@@ -936,14 +918,12 @@ void GraphicsBackendDX12::BindSampler(const GraphicsBackendResourceBindings& bin
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
     DX12Local::SamplerData* samplerData = reinterpret_cast<DX12Local::SamplerData*>(sampler.Sampler);
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(frameData.SamplerDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameData.SamplerDescriptorHeapIndex, DX12Local::s_SamplerDescriptorSize);
-    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(frameData.SamplerDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), frameData.SamplerDescriptorHeapIndex, DX12Local::s_SamplerDescriptorSize);
-    ++frameData.SamplerDescriptorHeapIndex;
-
-    DX12Local::s_Device->CreateSampler(&samplerData->SamplerDesc, cpuHandle);
+    DX12Local::s_Device->CreateSampler(&samplerData->SamplerDesc, frameData.SamplerDescriptorHeap.GetCPUHandle(frameData.SamplerDescriptorHeapIndex));
 
     int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, bindings)];
-    frameData.RenderCommandList->SetGraphicsRootDescriptorTable(rootParamIndex, gpuHandle);
+    frameData.RenderCommandList->SetGraphicsRootDescriptorTable(rootParamIndex, frameData.SamplerDescriptorHeap.GetGPUHandle(frameData.SamplerDescriptorHeapIndex));
+
+    ++frameData.SamplerDescriptorHeapIndex;
 }
 
 void GraphicsBackendDX12::GenerateMipmaps(const GraphicsBackendTexture& texture)
@@ -1025,12 +1005,12 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
     {
         if (descriptor.IsBackbuffer)
         {
-            state.DescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(DX12Local::s_DepthBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DX12Local::s_SwapChain->GetCurrentBackBufferIndex(), DX12Local::s_DepthTargetDescriptorSize);
+            state.DescriptorHandle = DX12Local::s_DepthBackbufferDescriptorHeap.GetCPUHandle(DX12Local::s_SwapChain->GetCurrentBackBufferIndex());
             state.ResourceData = &DX12Local::GetCurrentDepthBackbuffer();
         }
         else
         {
-            state.DescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(frameData.DepthTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameData.DepthTargetHeapIndex++, DX12Local::s_DepthTargetDescriptorSize);
+            state.DescriptorHandle = frameData.DepthTargetDescriptorHeap.GetCPUHandle(frameData.DepthTargetHeapIndex++);
 
             D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
             desc.Format = DX12Helpers::ToTextureInternalFormat(descriptor.Texture.Format, descriptor.Texture.IsLinear);
@@ -1068,12 +1048,12 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
     {
         if (descriptor.IsBackbuffer)
         {
-            state.DescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(DX12Local::s_ColorBackbufferDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DX12Local::s_SwapChain->GetCurrentBackBufferIndex(), DX12Local::s_ColorTargetDescriptorSize);
+            state.DescriptorHandle = DX12Local::s_ColorBackbufferDescriptorHeap.GetCPUHandle(DX12Local::s_SwapChain->GetCurrentBackBufferIndex());
             state.ResourceData = &DX12Local::GetCurrentColorBackbuffer();
         }
         else
         {
-            state.DescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(frameData.ColorTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameData.ColorTargetHeapIndex++, DX12Local::s_ColorTargetDescriptorSize);
+            state.DescriptorHandle = frameData.ColorTargetDescriptorHeap.GetCPUHandle(frameData.ColorTargetHeapIndex++);
 
             D3D12_RENDER_TARGET_VIEW_DESC desc{};
             desc.Format = DX12Helpers::ToTextureInternalFormat(descriptor.Texture.Format, descriptor.Texture.IsLinear);
@@ -1146,7 +1126,7 @@ GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::str
     D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
     ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, state, nullptr, IID_PPV_ARGS(&dxBuffer)));
 
-    dxBuffer->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str());
+    DX12Local::SetObjectName(dxBuffer, name);
 
     if (data)
     {
@@ -1424,10 +1404,8 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
 
     if (descriptor.Name && !descriptor.Name->empty())
     {
-        std::string psoName = (*descriptor.Name) + "_PSO";
-        std::string rootSignatureName = (*descriptor.Name) + "_RootSignature";
-        pso->SetPrivateData(WKPDID_D3DDebugObjectName, psoName.size(), psoName.c_str());
-        rootSignature->SetPrivateData(WKPDID_D3DDebugObjectName, rootSignatureName.size(), rootSignatureName.c_str());
+        DX12Local::SetObjectName(pso, (*descriptor.Name) + "_PSO");
+        DX12Local::SetObjectName(rootSignature, (*descriptor.Name) + "_RootSignature");
     }
 
     DX12Local::ShaderObject* shaderObject = new DX12Local::ShaderObject();
@@ -1700,7 +1678,7 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
         }
     }
 
-    ID3D12DescriptorHeap* heaps[] = {frameData.ResourceDescriptorHeap, frameData.SamplerDescriptorHeap};
+    ID3D12DescriptorHeap* heaps[] = {frameData.ResourceDescriptorHeap.Heap, frameData.SamplerDescriptorHeap.Heap};
     frameData.RenderCommandList->SetDescriptorHeaps(2, heaps);
 
     if (!resourcesForTransition.empty())
@@ -1739,8 +1717,7 @@ GraphicsBackendFence GraphicsBackendDX12::CreateFence(FenceType fenceType, const
     ID3D12Fence* dxFence;
     DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dxFence));
 
-    if (!name.empty())
-        dxFence->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str());
+    DX12Local::SetObjectName(dxFence, name);
 
     GraphicsBackendFence fence;
     fence.Fence = reinterpret_cast<uint64_t>(dxFence);

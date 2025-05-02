@@ -102,14 +102,10 @@ void Renderer::SetDataToBuffers(const std::string &name, const void *data, uint6
     const uint64_t requiredBufferSize = m_InstanceDataBufferOffset + m_InstanceDataBufferInfo->GetSize();
     const uint64_t allocatedBufferSize = m_InstanceDataBufferOffset + m_InstanceDataBufferInfo->GetSize() * 2;
 
+    // TODO: rework per-instance data
+
     if (!s_InstanceDataBuffer)
-    {
         s_InstanceDataBuffer = std::make_shared<GraphicsBuffer>(allocatedBufferSize, "PerInstanceData", false);
-    }
-    else if (s_InstanceDataBuffer->GetSize() < requiredBufferSize)
-    {
-        s_InstanceDataBuffer->Resize(allocatedBufferSize);
-    }
 
     auto& variables = m_InstanceDataBufferInfo->GetVariables();
     auto it = variables.find(name);

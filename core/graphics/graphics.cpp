@@ -75,10 +75,10 @@ namespace Graphics
         assert(sizeof(ShadowsData) == 1456);
         assert(sizeof(PerDrawData) == 128);
 
-        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), "CameraData");
+        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), 32, "CameraData");
         s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), "LightingData");
         s_ShadowsDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData");
-        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(sizeof(PerDrawData), "PerDrawData");
+        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(sizeof(PerDrawData), 1024, "PerDrawData");
     }
 
     void InitPasses()
@@ -99,7 +99,7 @@ namespace Graphics
     {
         auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
 
-        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, "PerInstanceMatrices");
+        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, 64, "PerInstanceMatrices");
         s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(4096, "PerInstanceIndices");
     }
 
@@ -161,9 +161,6 @@ namespace Graphics
     void Render(int width, int height)
     {
         s_PerInstanceIndicesOffset = 0;
-        s_InstancingMatricesBuffer->Reset();
-        s_PerDrawDataBuffer->Reset();
-        s_CameraDataBuffer->Reset();
 
         if (width == 0 || height == 0)
             return;

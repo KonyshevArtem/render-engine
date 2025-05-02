@@ -1189,6 +1189,21 @@ void GraphicsBackendDX12::SetBufferData(const GraphicsBackendBuffer& buffer, lon
 
 void GraphicsBackendDX12::CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size)
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    DX12Local::ResourceData* resources[2];
+    resources[0] = reinterpret_cast<DX12Local::ResourceData*>(source.Buffer);
+    resources[1] = reinterpret_cast<DX12Local::ResourceData*>(destination.Buffer);
+
+    D3D12_RESOURCE_STATES states[] = {D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST};
+    DX12Local::TransitionResources(2, resources, states, GPUQueue::COPY);
+
+    frameData.RenderCommandList->CopyBufferRegion(resources[1]->Resource, destinationOffset, resources[0]->Resource, sourceOffset, size);
+
+    resources[0]->State = D3D12_RESOURCE_STATE_COMMON;
+    resources[1]->State = D3D12_RESOURCE_STATE_COMMON;
+
+    DX12Local::s_CopyTimestampActive = true;
 }
 
 uint64_t GraphicsBackendDX12::GetMaxConstantBufferSize()

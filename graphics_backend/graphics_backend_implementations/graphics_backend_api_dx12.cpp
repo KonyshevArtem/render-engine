@@ -545,6 +545,26 @@ namespace DX12Local
     {
         TransitionResources(1, &resourceData, &stateAfter, queue);
     }
+
+    void UploadGPUData(ResourceData* resourceData, uint32_t firstSubresource, uint64_t totalSize, uint64_t rowPitch, uint64_t slicePitch, const void* data)
+    {
+        D3D12_HEAP_PROPERTIES uploadHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+        D3D12_RESOURCE_DESC uploadResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalSize);
+
+        ID3D12Resource* bufferUploadHeap;
+        ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&uploadHeapProps, D3D12_HEAP_FLAG_NONE, &uploadResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&bufferUploadHeap)));
+
+        D3D12_SUBRESOURCE_DATA subresourceData{};
+        subresourceData.pData = data;
+        subresourceData.RowPitch = rowPitch;
+        subresourceData.SlicePitch = slicePitch;
+
+        DX12Local::PerFrameData frameData = DX12Local::GetCurrentFrameData();
+
+        DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_COPY_DEST, GPUQueue::RENDER);
+        UpdateSubresources(frameData.RenderCommandList.List, resourceData->Resource, bufferUploadHeap, 0, firstSubresource, 1, &subresourceData);
+        DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, GPUQueue::RENDER);
+    }
 }
 
 #define ThrowIfFailed DX12Local::ThrowIfFailed
@@ -935,13 +955,6 @@ void GraphicsBackendDX12::UploadImagePixels(const GraphicsBackendTexture& textur
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
     ID3D12Resource* dxTexture = resourceData->Resource;
 
-    UINT64 uploadBufferSize = GetRequiredIntermediateSize(dxTexture, level, 1);
-    D3D12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
-
-    ID3D12Resource* textureUploadHeap;
-    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&textureUploadHeap)));
-
     int bytesPerRow;
     if (IsCompressedTextureFormat(texture.Format))
     {
@@ -954,11 +967,6 @@ void GraphicsBackendDX12::UploadImagePixels(const GraphicsBackendTexture& textur
         bytesPerRow = imageSize / height;
     }
 
-    D3D12_SUBRESOURCE_DATA subresourceData{};
-    subresourceData.pData = pixelsData;
-    subresourceData.RowPitch = bytesPerRow;
-    subresourceData.SlicePitch = imageSize;
-
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
     UINT firstSubresource = level;
@@ -969,11 +977,8 @@ void GraphicsBackendDX12::UploadImagePixels(const GraphicsBackendTexture& textur
         firstSubresource = static_cast<UINT>(cubemapFace) * mipLevels + level;
     }
 
-    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_COPY_DEST, GPUQueue::RENDER);
-
-    UpdateSubresources(frameData.RenderCommandList.List, dxTexture, textureUploadHeap, 0, firstSubresource, 1, &subresourceData);
-
-    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, GPUQueue::RENDER);
+    UINT64 uploadBufferSize = GetRequiredIntermediateSize(dxTexture, level, 1);
+    DX12Local::UploadGPUData(resourceData, firstSubresource, uploadBufferSize, bytesPerRow, imageSize, pixelsData);
 }
 
 void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor& descriptor)
@@ -1120,27 +1125,32 @@ GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::str
 {
     ID3D12Resource* dxBuffer;
 
-    D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ;
-    CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+    D3D12_RESOURCE_STATES state = allowCPUWrites ? D3D12_RESOURCE_STATE_GENERIC_READ : (data ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    CD3DX12_HEAP_PROPERTIES heapProps(allowCPUWrites ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT);
 
     D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
     ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, state, nullptr, IID_PPV_ARGS(&dxBuffer)));
 
     DX12Local::SetObjectName(dxBuffer, name);
 
-    if (data)
-    {
-        CD3DX12_RANGE readRange(0, 0);
-
-        UINT8 *bufferData;
-        ThrowIfFailed(dxBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferData)));
-        memcpy(bufferData, data, size);
-        dxBuffer->Unmap(0, nullptr);
-    }
-
     DX12Local::ResourceData* resourceData = new DX12Local::ResourceData();
     resourceData->Resource = dxBuffer;
     resourceData->State = state;
+
+    if (data)
+    {
+        if (allowCPUWrites)
+        {
+            CD3DX12_RANGE readRange(0, 0);
+
+            UINT8 *bufferData;
+            ThrowIfFailed(dxBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferData)));
+            memcpy(bufferData, data, size);
+            dxBuffer->Unmap(0, nullptr);
+        }
+        else
+            DX12Local::UploadGPUData(resourceData, 0, size, size, size, data);
+    }
 
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(resourceData);
@@ -1229,6 +1239,8 @@ GraphicsBackendGeometry GraphicsBackendDX12::CreateGeometry(const GraphicsBacken
     vertexBufferView->SizeInBytes = vertexBuffer.Size;
     vertexBufferView->StrideInBytes = vertexAttributes[0].Stride;
 
+    DX12Local::TransitionResource(vertexResourceData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, GPUQueue::RENDER);
+
     D3D12_INDEX_BUFFER_VIEW* indexBufferView = nullptr;
     if (dxIndexBuffer)
     {
@@ -1236,6 +1248,8 @@ GraphicsBackendGeometry GraphicsBackendDX12::CreateGeometry(const GraphicsBacken
         indexBufferView->BufferLocation = dxIndexBuffer->GetGPUVirtualAddress();
         indexBufferView->SizeInBytes = indexBuffer.Size;
         indexBufferView->Format = DXGI_FORMAT_R32_UINT;
+
+        DX12Local::TransitionResource(indexResourceData, D3D12_RESOURCE_STATE_INDEX_BUFFER, GPUQueue::RENDER);
     }
 
     DX12Local::GeometryData* geometryData = new DX12Local::GeometryData;

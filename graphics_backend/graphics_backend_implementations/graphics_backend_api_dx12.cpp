@@ -414,7 +414,7 @@ namespace DX12Local
     void GetWindowSize(HWND window, int& outWidth, int& outHeight)
     {
         RECT rect;
-        GetWindowRect(window, &rect);
+        GetClientRect(window, &rect);
         outWidth = rect.right - rect.left;
         outHeight = rect.bottom - rect.top;
     }

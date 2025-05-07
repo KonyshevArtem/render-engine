@@ -28,6 +28,10 @@
 #include <array>
 #include <chrono>
 
+#if __has_include("windows.h")
+#include <windows.h>
+#endif
+
 namespace OpenGLLocal
 {
     struct BlendState
@@ -72,6 +76,8 @@ namespace OpenGLLocal
     };
 
     void* s_Window;
+    void* s_DeviceContext;
+
     GLuint s_Framebuffers[GraphicsBackend::GetMaxFramesInFlight()][2];
     OpenGLLocal::RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
     uint64_t s_DebugGroupId = 0;
@@ -164,9 +170,44 @@ namespace OpenGLLocal
 
 void GraphicsBackendOpenGL::Init(void* data)
 {
+    OpenGLLocal::s_Window = data;
+
+#if RENDER_ENGINE_WINDOWS
+    HDC deviceContext = GetDC(static_cast<HWND>(OpenGLLocal::s_Window));
+
+    PIXELFORMATDESCRIPTOR pixelFormatDescriptor = {};
+    pixelFormatDescriptor.nSize = sizeof(pixelFormatDescriptor);
+    pixelFormatDescriptor.nVersion = 1;
+    pixelFormatDescriptor.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
+    pixelFormatDescriptor.cColorBits = 32;
+    pixelFormatDescriptor.cDepthBits = 24;
+    pixelFormatDescriptor.iLayerType = PFD_MAIN_PLANE;
+    int pixelFormat = ChoosePixelFormat(deviceContext, &pixelFormatDescriptor);
+    SetPixelFormat(deviceContext, pixelFormat, &pixelFormatDescriptor);
+
+    HGLRC tempContext = wglCreateContext(deviceContext);
+    wglMakeCurrent(deviceContext, tempContext);
+
+    OpenGLLocal::s_DeviceContext = static_cast<void*>(deviceContext);
+#endif
+
     OpenGLHelpers::InitBindings();
 
-    OpenGLLocal::s_Window = data;
+#ifdef RENDER_ENGINE_WINDOWS
+    int attribs[] = {
+            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+            WGL_CONTEXT_MINOR_VERSION_ARB, 2,
+            WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+            0
+    };
+
+    HGLRC modernContext = wglCreateContextAttribsARB(deviceContext, 0, attribs);
+    wglMakeCurrent(nullptr, nullptr);
+    wglDeleteContext(tempContext);
+    wglMakeCurrent(deviceContext, modernContext);
+#endif
 
     int extensionsCount;
     glGetIntegerv(GL_NUM_EXTENSIONS, &extensionsCount);
@@ -575,10 +616,10 @@ void GraphicsBackendOpenGL::DeleteGeometry(const GraphicsBackendGeometry &geomet
     DeleteBuffer(geometry.IndexBuffer);
 }
 
-void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, float near, float far)
+void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, float nearDepth, float farDepth)
 {
     glViewport(x, y, width, height);
-    glDepthRangef(near, far);
+    glDepthRangef(nearDepth, farDepth);
 }
 
 void GraphicsBackendOpenGL::SetScissorRect(int x, int y, int width, int height)
@@ -954,6 +995,8 @@ void GraphicsBackendOpenGL::Flush()
 void GraphicsBackendOpenGL::Present()
 {
     OpenGLLocal::s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+    SwapBuffers(static_cast<HDC>(OpenGLLocal::s_DeviceContext));
 }
 
 void GraphicsBackendOpenGL::TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor &target, ResourceState state, GPUQueue queue)

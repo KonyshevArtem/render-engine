@@ -21,8 +21,9 @@
 
 #include <string>
 
-#if __has_include("GL/glew.h")
+#if __has_include("GL/glew.h") && __has_include("GL/wglew.h")
 #include <GL/glew.h>
+#include <GL/wglew.h>
 #define REQUIRE_GLEW_INIT
 #endif
 #if __has_include("OpenGL/glu.h")

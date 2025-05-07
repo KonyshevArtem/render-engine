@@ -597,7 +597,7 @@ void GraphicsBackendDX12::Init(void* data)
     DX12Local::s_ColorBackbufferDescriptorHeap = DX12Local::DescriptorHeap(GraphicsBackend::GetMaxFramesInFlight(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     DX12Local::s_DepthBackbufferDescriptorHeap = DX12Local::DescriptorHeap(GraphicsBackend::GetMaxFramesInFlight(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
-    DX12Local::s_Window = *static_cast<HWND*>(data);
+    DX12Local::s_Window = static_cast<HWND>(data);
     DX12Local::CreateSwapChain(DX12Local::s_Window, factory);
 
     for (UINT i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)

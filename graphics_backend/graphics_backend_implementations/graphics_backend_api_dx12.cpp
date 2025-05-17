@@ -22,6 +22,7 @@
 #include "types/graphics_backend_program_descriptor.h"
 #include "helpers/dx12_helpers.h"
 #include "debug.h"
+#include "hash.h"
 
 #include <unordered_map>
 #include <chrono>
@@ -395,19 +396,13 @@ namespace DX12Local
         return isVertex ? D3D12_SHADER_VISIBILITY_VERTEX : D3D12_SHADER_VISIBILITY_PIXEL;
     }
 
-    size_t HashCombine(size_t hashA, size_t hashB)
-    {
-        // boost::hashCombine
-        return hashA ^ (hashB + 0x9e3779b9 + (hashA << 6) + (hashA >> 2));
-    }
-
     size_t GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE parameterType, D3D12_DESCRIPTOR_RANGE_TYPE rangeType, const GraphicsBackendResourceBindings& bindings)
     {
         size_t hash = 0;
-        hash = HashCombine(hash, std::hash<D3D12_ROOT_PARAMETER_TYPE>{}(parameterType));
-        hash = HashCombine(hash, std::hash<D3D12_DESCRIPTOR_RANGE_TYPE>{}(rangeType));
-        hash = HashCombine(hash, std::hash<D3D12_SHADER_VISIBILITY>{}(GetShaderVisibility(bindings)));
-        hash = HashCombine(hash, std::hash<uint32_t>{}(GetShaderRegister(bindings)));
+        hash = Hash::Combine(hash, std::hash<D3D12_ROOT_PARAMETER_TYPE>{}(parameterType));
+        hash = Hash::Combine(hash, std::hash<D3D12_DESCRIPTOR_RANGE_TYPE>{}(rangeType));
+        hash = Hash::Combine(hash, std::hash<D3D12_SHADER_VISIBILITY>{}(GetShaderVisibility(bindings)));
+        hash = Hash::Combine(hash, std::hash<uint32_t>{}(GetShaderRegister(bindings)));
         return hash;
     }
 

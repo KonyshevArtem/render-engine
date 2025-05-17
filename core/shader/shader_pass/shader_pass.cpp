@@ -5,16 +5,16 @@
 #include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_program_descriptor.h"
-#include "utils/utils.h"
+#include "hash.h"
 
 #include <vector>
 
 size_t GetPSOHash(size_t vertexAttributesHash, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat, PrimitiveType primitiveType)
 {
-    size_t targetsHash = Utils::HashCombine(std::hash<TextureInternalFormat>{}(colorTargetFormat), std::hash<TextureInternalFormat>{}(depthTargetFormat));
-    targetsHash = Utils::HashCombine(targetsHash, std::hash<bool>{}(isLinear));
-    targetsHash = Utils::HashCombine(targetsHash, std::hash<PrimitiveType>{}(primitiveType));
-    return Utils::HashCombine(targetsHash, vertexAttributesHash);
+    size_t targetsHash = Hash::Combine(std::hash<TextureInternalFormat>{}(colorTargetFormat), std::hash<TextureInternalFormat>{}(depthTargetFormat));
+    targetsHash = Hash::Combine(targetsHash, std::hash<bool>{}(isLinear));
+    targetsHash = Hash::Combine(targetsHash, std::hash<PrimitiveType>{}(primitiveType));
+    return Hash::Combine(targetsHash, vertexAttributesHash);
 }
 
 ShaderPass::ShaderPass(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,

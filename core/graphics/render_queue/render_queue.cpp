@@ -2,7 +2,7 @@
 #include "renderer/renderer.h"
 #include "material/material.h"
 #include "shader/shader.h"
-#include "utils/utils.h"
+#include "hash.h"
 #include "global_constants.h"
 #include "graphics/render_settings/render_settings.h"
 
@@ -10,7 +10,7 @@ std::size_t GetDrawCallInstancingHash(const DrawCallInfo& drawCallInfo)
 {
     const std::size_t materialHash = std::hash<const Material*>{}(drawCallInfo.Material);
     const std::size_t geometryHash = std::hash<const DrawableGeometry*>{}(drawCallInfo.Geometry);
-    return Utils::HashCombine(materialHash, geometryHash);
+    return Hash::Combine(materialHash, geometryHash);
 }
 
 void SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& settings, std::vector<DrawCallInfo>& outDrawCalls)

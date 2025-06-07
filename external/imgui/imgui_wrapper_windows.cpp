@@ -6,6 +6,7 @@
 #include "imgui_impl_win32.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_dx12.h"
+#include "graphics_backend_api.h"
 
 #include <windows.h>
 #include <string>
@@ -15,15 +16,9 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 namespace ImGuiWrapper
 {
-    enum GraphicsBackend
-    {
-        OPENGL,
-        DX12
-    };
+    GraphicsBackendName s_Backend;
 
-    GraphicsBackend s_Backend;
-
-    void Init(const std::string& graphicsBackend, const std::function<void(void*)>& fillImGuiData)
+    void Init()
     {
         struct InitDataOpenGL
         {
@@ -43,27 +38,24 @@ namespace ImGuiWrapper
             D3D12_GPU_DESCRIPTOR_HANDLE GpuDescriptorHandle;
         };
 
-        if (graphicsBackend == "OpenGL")
-            s_Backend = OPENGL;
-        else if (graphicsBackend == "DX12")
-            s_Backend = DX12;
+        s_Backend = GraphicsBackend::Current()->GetName();
 
         ImGuiWrapperCommon::Init();
 
-        if (s_Backend == OPENGL)
+        if (s_Backend == GraphicsBackendName::OPENGL)
         {
             InitDataOpenGL data;
-            fillImGuiData(reinterpret_cast<void*>(&data));
+            GraphicsBackend::Current()->FillImGuiInitData(reinterpret_cast<void*>(&data));
 
             std::string glslVersion = "#version " + std::to_string(data.OpenGLMajorVersion * 100 + data.OpenGLMinorVersion * 10);
 
             ImGui_ImplWin32_InitForOpenGL(data.Window);
             ImGui_ImplOpenGL3_Init(glslVersion.c_str());
         }
-        else if (s_Backend == DX12)
+        else if (s_Backend == GraphicsBackendName::DX12)
         {
             InitDataDX12 data;
-            fillImGuiData(reinterpret_cast<void*>(&data));
+            GraphicsBackend::Current()->FillImGuiInitData(reinterpret_cast<void*>(&data));
 
             ImGui_ImplWin32_Init(data.Window);
             ImGui_ImplDX12_Init(data.Device, data.MaxFramesInFlight, data.Format, data.DescriptorHeap, data.CpuDescriptorHandle, data.GpuDescriptorHandle);
@@ -72,9 +64,9 @@ namespace ImGuiWrapper
 
     void Shutdown()
     {
-        if (s_Backend == OPENGL)
+        if (s_Backend == GraphicsBackendName::OPENGL)
             ImGui_ImplOpenGL3_Shutdown();
-        else if (s_Backend == DX12)
+        else if (s_Backend == GraphicsBackendName::DX12)
             ImGui_ImplDX12_Shutdown();
 
         ImGui_ImplWin32_Shutdown();
@@ -83,16 +75,16 @@ namespace ImGuiWrapper
 
     void NewFrame()
     {
-        if (s_Backend == OPENGL)
+        if (s_Backend == GraphicsBackendName::OPENGL)
             ImGui_ImplOpenGL3_NewFrame();
-        else if (s_Backend == DX12)
+        else if (s_Backend == GraphicsBackendName::DX12)
             ImGui_ImplDX12_NewFrame();
 
         ImGui_ImplWin32_NewFrame();
         ImGuiWrapperCommon::NewFrame();
     }
 
-    void Render(const std::function<void(void*)>& fillImGuiData)
+    void Render()
     {
         struct FrameDataDX12
         {
@@ -101,13 +93,13 @@ namespace ImGuiWrapper
 
         ImGuiWrapperCommon::Render();
 
-        if (s_Backend == OPENGL)
+        if (s_Backend == GraphicsBackendName::OPENGL)
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        else if (s_Backend == DX12)
+        else if (s_Backend == GraphicsBackendName::DX12)
         {
             FrameDataDX12 data;
 
-            fillImGuiData(reinterpret_cast<void*>(&data));
+            GraphicsBackend::Current()->FillImGuiFrameData(reinterpret_cast<void*>(&data));
             ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), data.CommandList);
         }
     }
@@ -131,10 +123,10 @@ namespace ImGuiWrapper
 
 namespace ImGuiWrapper
 {
-    void Init(const std::string& graphicsBackend, const std::function<void(void*)>& fillImGuiData) {}
+    void Init() {}
     void Shutdown() {}
     void NewFrame() {}
-    void Render(const std::function<void(void*)>& fillImGuiData) {}
+    void Render() {}
     void ProcessMessage(void* data) {}
 }
 

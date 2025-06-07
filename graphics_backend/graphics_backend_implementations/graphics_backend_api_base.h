@@ -46,7 +46,7 @@ struct GraphicsBackendProgramDescriptor;
 class GraphicsBackendBase
 {
 public:
-    static GraphicsBackendBase *Create(const std::string &backend);
+    static GraphicsBackendBase *Create();
 
     virtual void Init(void *data) = 0;
     virtual GraphicsBackendName GetName() = 0;

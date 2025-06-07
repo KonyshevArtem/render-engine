@@ -5,11 +5,15 @@
 #include "enums/texture_internal_format.h"
 #include "enums/texture_type.h"
 #include "enums/framebuffer_attachment.h"
+#include "arguments.h"
 
-GraphicsBackendBase *GraphicsBackendBase::Create(const std::string &backend)
+GraphicsBackendBase *GraphicsBackendBase::Create()
 {
+    const bool openGL = Arguments::Contains("-opengl");
+    const bool dx12 = Arguments::Contains("-dx12");
+
 #ifdef RENDER_BACKEND_OPENGL
-    if (backend == "OpenGL")
+    if (openGL && !dx12)
     {
         return new GraphicsBackendOpenGL();
     }
@@ -23,10 +27,7 @@ GraphicsBackendBase *GraphicsBackendBase::Create(const std::string &backend)
 #endif
 
 #ifdef RENDER_BACKEND_DX12
-    if (backend == "DX12")
-    {
-        return new GraphicsBackendDX12();
-    }
+    return new GraphicsBackendDX12();
 #endif
 
     return nullptr;

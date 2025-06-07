@@ -6,7 +6,7 @@
 class GraphicsBackend
 {
 public:
-    static void Init(void *data, const std::string &backend);
+    static void Init(void *data);
     static GraphicsBackendBase* Current();
 
     static int GetInFlightFrameIndex();

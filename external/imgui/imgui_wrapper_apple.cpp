@@ -66,10 +66,10 @@ namespace ImGuiWrapper
 
 namespace ImGuiWrapper
 {
-    void Init(const std::string& graphicsBackend, const std::function<void(void*)>& fillImGuiData) {}
+    void Init() {}
     void Shutdown() {}
     void NewFrame() {}
-    void Render(const std::function<void(void*)>& fillImGuiData) {}
+    void Render() {}
     void ProcessMessage(void* data) {}
 }
 

@@ -2,6 +2,7 @@
 #include "serialization.h"
 #include "graphics_backend.h"
 #include "defines.h"
+#include "arguments.h"
 
 CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CComPtr<IDxcUtils>& pUtils, const CComPtr<IDxcCompiler3>& pCompiler,
                                const CComPtr<IDxcIncludeHandler>& pIncludeHandler, GraphicsBackend backend,
@@ -131,14 +132,16 @@ void WriteShaderSource(const std::filesystem::path& outputDirPath, spirv_cross::
 
 int main(int argc, char **argv)
 {
-    if (argc < 4)
+    Arguments::Init(argv, argc);
+
+    if (!Arguments::Contains("-backend") || !Arguments::Contains("-output") || !Arguments::Contains("-input"))
     {
         std::cout << "No HLSL path or no target backend are specified" << std::endl;
         return 1;
     }
 
     GraphicsBackend backend;
-    if (!TryGetBackend(argv[1], backend))
+    if (!TryGetBackend(Arguments::Get("-backend"), backend))
     {
         std::cout << "Unknown target backend. Supported options:";
         for (int i = 0; i < GRAPHICS_BACKEND_MAX; ++i)
@@ -149,10 +152,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    std::filesystem::path hlslPath = std::filesystem::absolute(std::filesystem::path(argv[3]));
+    std::filesystem::path hlslPath = std::filesystem::absolute(std::filesystem::path(Arguments::Get("-input")));
     std::cout << "Compiling shader at path: " << hlslPath << std::endl;
 
-    std::vector<std::wstring> defines = GetDefines(argc, argv);
+    std::vector<std::wstring> defines = GetDefines(Arguments::Get("-defines"));
     std::string definesHash = GetDefinesHash(defines);
     PrintDefines(defines, definesHash);
 
@@ -168,7 +171,7 @@ int main(int argc, char **argv)
     CComPtr<IDxcResult> fragmentDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, defines, false);
 
     Reflection reflection;
-    std::filesystem::path outputDirPath = std::filesystem::path(argv[2]) / GetBackendLiteral(backend) / definesHash;
+    std::filesystem::path outputDirPath = std::filesystem::path(Arguments::Get("-output")) / GetBackendLiteral(backend) / definesHash;
 
     if (backend == GRAPHICS_BACKEND_DX12)
     {

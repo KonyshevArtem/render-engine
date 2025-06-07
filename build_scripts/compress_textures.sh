@@ -26,23 +26,31 @@ OUTPUT_PATH="../build_resources/$PLATFORM/core_resources/textures"
 
 echo "Start compressing textures for ${PLATFORM} ${FORMAT}"
 
-$EXECUTABLE Texture2D $FORMAT 0 1 $OUTPUT_PATH/car/car_albedo   $INPUT_PATH/car/car_albedo.tga
-$EXECUTABLE Texture2D $FORMAT 1 1 $OUTPUT_PATH/car/car_data     $INPUT_PATH/car/car_data.tga
-$EXECUTABLE Texture2D $FORMAT 1 1 $OUTPUT_PATH/car/car_normal   $INPUT_PATH/car/car_normal.tga
+Compress()
+{
+    args="-type $1 -format $2 -output $OUTPUT_PATH/$5 -inputs $6"
+    if [ $3 -gt 0 ]; then
+        args+=" -linear"
+    fi
+    if [ $4 -gt 0 ]; then
+        args+=" -mips"
+    fi
 
-$EXECUTABLE Cubemap $FORMAT 0 1 $OUTPUT_PATH/skybox/skybox $INPUT_PATH/skybox/x_positive.png\
-                                                           $INPUT_PATH/skybox/x_negative.png\
-                                                           $INPUT_PATH/skybox/y_positive.png\
-                                                           $INPUT_PATH/skybox/y_negative.png\
-                                                           $INPUT_PATH/skybox/z_positive.png\
-                                                           $INPUT_PATH/skybox/z_negative.png\
+    $EXECUTABLE $args
+}
 
-$EXECUTABLE Texture2D $FORMAT 0 1 $OUTPUT_PATH/billboard_tree   $INPUT_PATH/billboard_tree.png
-$EXECUTABLE Texture2D $FORMAT 0 1 $OUTPUT_PATH/brick            $INPUT_PATH/brick.png
-$EXECUTABLE Texture2D $FORMAT 1 1 $OUTPUT_PATH/brick_normal     $INPUT_PATH/brick_normal.png
-$EXECUTABLE Texture2D $FORMAT 0 1 $OUTPUT_PATH/water            $INPUT_PATH/water.png
-$EXECUTABLE Texture2D $FORMAT 1 1 $OUTPUT_PATH/water_normal     $INPUT_PATH/water_normal.png
-$EXECUTABLE Texture2D $FORMAT 0 1 $OUTPUT_PATH/window_cube      $INPUT_PATH/window_cube.png
+Compress Texture2D $FORMAT 0 1 car/car_albedo   $INPUT_PATH/car/car_albedo.tga
+Compress Texture2D $FORMAT 1 1 car/car_data     $INPUT_PATH/car/car_data.tga
+Compress Texture2D $FORMAT 1 1 car/car_normal   $INPUT_PATH/car/car_normal.tga
+
+Compress Cubemap $FORMAT 0 1 skybox/skybox $INPUT_PATH/skybox/x_positive.png,$INPUT_PATH/skybox/x_negative.png,$INPUT_PATH/skybox/y_positive.png,$INPUT_PATH/skybox/y_negative.png,$INPUT_PATH/skybox/z_positive.png,$INPUT_PATH/skybox/z_negative.png\
+
+Compress Texture2D $FORMAT 0 1 billboard_tree   $INPUT_PATH/billboard_tree.png
+Compress Texture2D $FORMAT 0 1 brick            $INPUT_PATH/brick.png
+Compress Texture2D $FORMAT 1 1 brick_normal     $INPUT_PATH/brick_normal.png
+Compress Texture2D $FORMAT 0 1 water            $INPUT_PATH/water.png
+Compress Texture2D $FORMAT 1 1 water_normal     $INPUT_PATH/water_normal.png
+Compress Texture2D $FORMAT 0 1 window_cube      $INPUT_PATH/window_cube.png
 
 echo "Finished compressing textures for ${PLATFORM} ${FORMAT}";
 if [ -z "$1" ]; then

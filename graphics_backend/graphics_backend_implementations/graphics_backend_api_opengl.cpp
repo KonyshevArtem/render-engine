@@ -22,6 +22,7 @@
 #include "types/graphics_backend_program_descriptor.h"
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
+#include "arguments.h"
 
 #include <stdexcept>
 #include <cassert>
@@ -225,13 +226,14 @@ void GraphicsBackendOpenGL::Init(void* data)
     glEnable(GL_DEPTH_TEST);
 
 #if RENDER_ENGINE_EDITOR
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(OpenGLLocal::DebugMessageCallback, nullptr);
-
-    for (const OpenGLLocal::DebugMessageType& messageType : OpenGLLocal::s_DebugMessageTypes)
+    if (Arguments::Contains("-debuglayer"))
     {
-        glDebugMessageControl(GL_DONT_CARE, messageType.Type, GL_DONT_CARE, 0, nullptr, messageType.Enabled ? GL_TRUE : GL_FALSE);
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(OpenGLLocal::DebugMessageCallback, nullptr);
+
+        for (const OpenGLLocal::DebugMessageType &messageType: OpenGLLocal::s_DebugMessageTypes)
+            glDebugMessageControl(GL_DONT_CARE, messageType.Type, GL_DONT_CARE, 0, nullptr, messageType.Enabled ? GL_TRUE : GL_FALSE);
     }
 #endif
 

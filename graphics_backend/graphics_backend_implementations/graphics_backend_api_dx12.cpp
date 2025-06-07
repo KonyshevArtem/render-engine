@@ -23,6 +23,7 @@
 #include "helpers/dx12_helpers.h"
 #include "debug.h"
 #include "hash.h"
+#include "arguments.h"
 
 #include <unordered_map>
 #include <chrono>
@@ -566,9 +567,14 @@ namespace DX12Local
 
 void GraphicsBackendDX12::Init(void* data)
 {
-    ID3D12Debug3* debugController;
-    if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
-        debugController->EnableDebugLayer();
+    const bool createDebugLayer = Arguments::Contains("-debuglayer");
+
+    if (createDebugLayer)
+    {
+        ID3D12Debug3* debugController;
+        if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+            debugController->EnableDebugLayer();
+    }
 
     IDXGIFactory7* factory;
     ThrowIfFailed(CreateDXGIFactory2(0, IID_PPV_ARGS(&factory)));
@@ -577,7 +583,9 @@ void GraphicsBackendDX12::Init(void* data)
     DX12Local::GetHardwareAdapter(factory, &adapter);
 
     ThrowIfFailed(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&DX12Local::s_Device)));
-    ThrowIfFailed(DX12Local::s_Device->QueryInterface(IID_PPV_ARGS(&DX12Local::s_InfoQueue)));
+
+    if (createDebugLayer)
+        ThrowIfFailed(DX12Local::s_Device->QueryInterface(IID_PPV_ARGS(&DX12Local::s_InfoQueue)));
 
     D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
     commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;

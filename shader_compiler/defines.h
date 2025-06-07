@@ -4,15 +4,19 @@
 #include <iostream>
 #include <vector>
 
-std::vector<std::wstring> GetDefines(int argc, char** argv)
+#include "string_split.h"
+
+std::vector<std::wstring> GetDefines(const std::string& commaSeparatedDefines)
 {
-    std::vector<std::wstring> defines;
-    for (int i = 4; i < argc; ++i)
+    std::vector<std::string> defines = StringSplit::Split(commaSeparatedDefines, ',');
+
+    std::vector<std::wstring> wideDefines;
+    for (const std::string& d : defines)
     {
-        std::wstring define(argv[i], argv[i] + strlen(argv[i]));
-        defines.emplace_back(std::move(define));
+        std::wstring define(d.c_str(), d.c_str() + d.size());
+        wideDefines.emplace_back(std::move(define));
     }
-    return defines;
+    return wideDefines;
 }
 
 std::string GetDefinesHash(std::vector<std::wstring> defines)

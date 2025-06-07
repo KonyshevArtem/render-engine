@@ -81,4 +81,4 @@ elseif (${RENDER_ENGINE_ANDROID_PLATFORM})
 endif()
 
 target_include_directories(GraphicsBackend PUBLIC .)
-target_link_libraries(GraphicsBackend DebugUtil)
+target_link_libraries(GraphicsBackend DebugUtil Hash Arguments)

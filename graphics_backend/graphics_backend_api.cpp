@@ -3,9 +3,9 @@
 
 GraphicsBackendBase *s_GraphicsBackend;
 
-void GraphicsBackend::Init(void *data, const std::string &backend)
+void GraphicsBackend::Init(void *data)
 {
-    s_GraphicsBackend = GraphicsBackendBase::Create(backend);
+    s_GraphicsBackend = GraphicsBackendBase::Create();
     s_GraphicsBackend->Init(data);
 }
 

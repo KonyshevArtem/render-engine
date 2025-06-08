@@ -41,7 +41,6 @@
 namespace Graphics
 {
     std::shared_ptr<RingBuffer> s_InstancingMatricesBuffer;
-    std::shared_ptr<GraphicsBuffer> s_PerInstanceIndicesBuffer;
     std::shared_ptr<GraphicsBuffer> s_LightingDataBuffer;
     std::shared_ptr<GraphicsBuffer> s_ShadowsDataBuffer;
 
@@ -61,8 +60,6 @@ namespace Graphics
 
     int s_ScreenWidth  = 0;
     int s_ScreenHeight = 0;
-
-    uint64_t s_PerInstanceIndicesOffset;
 
     std::unordered_map<std::string, std::shared_ptr<Texture>> s_GlobalTextures;
 
@@ -99,7 +96,6 @@ namespace Graphics
         auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
 
         s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, 64, "PerInstanceMatrices");
-        s_PerInstanceIndicesBuffer = std::make_shared<GraphicsBuffer>(4096, "PerInstanceIndices");
     }
 
     void Init()
@@ -159,8 +155,6 @@ namespace Graphics
 
     void Render(int width, int height)
     {
-        s_PerInstanceIndicesOffset = 0;
-
         if (width == 0 || height == 0)
             return;
 
@@ -327,23 +321,7 @@ namespace Graphics
         }
     }
 
-    void SetupPerInstanceIndices(const std::vector<uint32_t> &indicesBuffer, uint64_t& outBindOffset)
-    {
-        auto debugGroup = GraphicsBackendDebugGroup("Setup PerInstanceIndices", GPUQueue::RENDER);
-
-        uint64_t size = indicesBuffer.size() * sizeof(int);
-        uint64_t requiredSize = size + s_PerInstanceIndicesOffset;
-        assert(s_PerInstanceIndicesBuffer->GetSize() >= requiredSize);
-
-        s_PerInstanceIndicesBuffer->SetData(indicesBuffer.data(), s_PerInstanceIndicesOffset, size);
-
-        outBindOffset = s_PerInstanceIndicesOffset;
-        s_PerInstanceIndicesOffset = requiredSize;
-    }
-
-    void SetupShaderPass(int shaderPassIndex, bool isInstanced, const Material &material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType,
-                         const std::shared_ptr<GraphicsBuffer> &perInstanceData = nullptr, uint64_t perInstanceDataOffset = 0,
-                         const std::shared_ptr<GraphicsBuffer> &perInstanceIndices = nullptr, uint64_t perInstanceIndicesOffset = 0)
+    void SetupShaderPass(int shaderPassIndex, bool isInstanced, const Material &material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
     {
         auto &shaderPass = *material.GetShader()->GetPass(shaderPassIndex);
         const auto &perMaterialDataBuffer = material.GetPerMaterialDataBuffer(shaderPassIndex);
@@ -358,8 +336,6 @@ namespace Graphics
         BindBuffer(GlobalConstants::ShadowsBufferName, s_ShadowsDataBuffer, true, shaderPass);
         BindBuffer(GlobalConstants::PerDrawDataBufferName, s_PerDrawDataBuffer, true, shaderPass);
         BindBuffer(GlobalConstants::PerMaterialDataBufferName, perMaterialDataBuffer, true, shaderPass);
-        BindBuffer(GlobalConstants::PerInstanceDataBufferName, perInstanceData, !isInstanced, shaderPass, perInstanceDataOffset);
-        BindBuffer(GlobalConstants::PerInstanceIndicesBufferName, perInstanceIndices, false, shaderPass, perInstanceIndicesOffset);
         BindBuffer(GlobalConstants::InstanceMatricesBufferName, s_InstancingMatricesBuffer, false, shaderPass);
 
         SetTextures(s_GlobalTextures, shaderPass);
@@ -376,29 +352,23 @@ namespace Graphics
                 const std::shared_ptr<ShaderPass> pass = shader->GetPass(i);
                 if (drawCall.Instanced)
                 {
-                    uint64_t indicesOffset;
-                    SetupPerInstanceIndices(drawCall.PerInstanceDataIndices, indicesOffset);
-
-                    DrawInstanced(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrices, i,
-                        Renderer::GetInstanceDataBuffer(), 0,
-                        s_PerInstanceIndicesBuffer, indicesOffset);
+                    DrawInstanced(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrices, i);
                 }
                 else
                 {
-                    Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrices[0], i, Renderer::GetInstanceDataBuffer(), drawCall.PerInstanceDataOffset);
+                    Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrices[0], i);
                 }
             }
         }
     }
 
-    void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex,
-        const std::shared_ptr<GraphicsBuffer> &perInstanceData, uint64_t perInstanceDataOffset)
+    void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex)
     {
         auto primitiveType = geometry.GetPrimitiveType();
         auto elementsCount = geometry.GetElementsCount();
 
         SetupMatrices(modelMatrix);
-        SetupShaderPass(shaderPassIndex, false, material, geometry.GetVertexAttributes(), geometry.GetPrimitiveType(), perInstanceData, perInstanceDataOffset);
+        SetupShaderPass(shaderPassIndex, false, material, geometry.GetVertexAttributes(), geometry.GetPrimitiveType());
 
         if (geometry.HasIndexes())
         {
@@ -410,16 +380,14 @@ namespace Graphics
         }
     }
 
-    void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex,
-        const std::shared_ptr<GraphicsBuffer> &perInstanceData, uint64_t perInstanceDataOffset,
-        const std::shared_ptr<GraphicsBuffer> &perInstanceIndices, uint64_t perInstanceIndicesOffset)
+    void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex)
     {
         auto primitiveType = geometry.GetPrimitiveType();
         auto elementsCount = geometry.GetElementsCount();
         auto instanceCount = modelMatrices.size();
 
         SetupMatrices(modelMatrices);
-        SetupShaderPass(shaderPassIndex, true, material, geometry.GetVertexAttributes(), geometry.GetPrimitiveType(), perInstanceData, perInstanceDataOffset, perInstanceIndices, perInstanceIndicesOffset);
+        SetupShaderPass(shaderPassIndex, true, material, geometry.GetVertexAttributes(), geometry.GetPrimitiveType());
 
         if (geometry.HasIndexes())
         {

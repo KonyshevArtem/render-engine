@@ -2,14 +2,6 @@
 #include "common/per_draw_data.h"
 #include "common/lighting.h"
 
-struct PerInstanceDataStruct
-{
-    float4 _Color;
-    float3 _Padding;
-    float _Size;
-};
-PerInstanceDataBuffer(PerInstanceDataStruct);
-
 struct Attributes
 {
     float3 vertPositionOS   : POSITION;
@@ -57,12 +49,7 @@ Varyings vertexMain(Attributes attributes)
     SETUP_INSTANCE_ID(attributes)
     TRANSFER_INSTANCE_ID_VARYING(vars)
 
-    float3 vertPos = attributes.vertPositionOS;
-#ifdef _PER_INSTANCE_DATA
-    vertPos *= GET_PER_INSTANCE_VALUE(_Size);
-#endif
-
-    vars.PositionWS = mul(_ModelMatrix, float4(vertPos, 1)).xyz;
+    vars.PositionWS = mul(_ModelMatrix, float4(attributes.vertPositionOS, 1)).xyz;
     vars.NormalWS = normalize(mul(_ModelNormalMatrix, float4(attributes.vertNormalOS, 0)).xyz);
 #ifdef _NORMAL_MAP
     vars.TangentWS = normalize(mul(_ModelNormalMatrix, float4(attributes.vertTangentOS, 0)).xyz);
@@ -94,9 +81,6 @@ half4 fragmentMain(Varyings vars) : SV_Target
 #endif
 
     float4 albedo = float4(_Albedo.Sample(sampler_Albedo, vars.UV * _Albedo_ST.zw + _Albedo_ST.xy));
-#ifdef _PER_INSTANCE_DATA
-    albedo *= GET_PER_INSTANCE_VALUE(_Color);
-#endif
 
 #ifdef _REFLECTION
     half3 reflection = sampleReflection(_ReflectionCubeLevels, normalWS, vars.PositionWS.xyz, roughness, _CameraPosWS);

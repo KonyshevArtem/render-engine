@@ -31,11 +31,8 @@ void SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& renderers, con
                     material,
                     {renderer->GetModelMatrix()},
                     renderer->GetAABB(),
-                    {renderer->GetInstanceDataIndex()},
-                    renderer->GetInstanceDataOffset(),
                     renderer->CastShadows,
-                    false,
-                    {}
+                    false
                 };
                 outDrawCalls.push_back(info);
             }
@@ -81,7 +78,6 @@ void BatchDrawCalls(std::vector<DrawCallInfo>& outDrawCalls)
 
         DrawCallInfo* instancedDrawCall = it->second;
         instancedDrawCall->ModelMatrices.push_back(drawCall.ModelMatrices[0]);
-        instancedDrawCall->PerInstanceDataIndices.push_back(drawCall.PerInstanceDataIndices[0]);
         instancedDrawCall->AABB = instancedDrawCall->AABB.Combine(drawCall.AABB);
 
         outDrawCalls[i] = outDrawCalls[outDrawCalls.size() - 1];

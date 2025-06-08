@@ -49,14 +49,10 @@ void Material::SetInt(const std::string &name, int value)
 
 void Material::SetDataToConstantBuffer(const std::string &name, const void *data, uint64_t size)
 {
-    int passesCount = m_Shader->PassesCount();
-    for (int i = 0; i < passesCount; ++i)
-    {
-        m_PerMaterialDataBufferWrapper->TrySetVariable(name, data, size);
-    }
+    m_PerMaterialDataBufferWrapper->TrySetVariable(name, data, size);
 }
 
-std::shared_ptr<GraphicsBuffer> Material::GetPerMaterialDataBuffer(int pass) const
+std::shared_ptr<GraphicsBuffer> Material::GetPerMaterialDataBuffer() const
 {
-    return m_PerMaterialDataBufferWrapper->GetBuffer(pass);
+    return m_PerMaterialDataBufferWrapper->GetBuffer();
 }

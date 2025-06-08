@@ -74,11 +74,11 @@ void SelectionOutlinePass::Execute(const Context& ctx)
             {
                 if (material->GetShader()->SupportInstancing())
                 {
-                    Graphics::DrawInstanced(*geometry, *material, {renderer->GetModelMatrix()}, 0);
+                    Graphics::DrawInstanced(*geometry, *material, {renderer->GetModelMatrix()});
                 }
                 else
                 {
-                    Graphics::Draw(*geometry, *silhouetteMaterial, renderer->GetModelMatrix(), 0);
+                    Graphics::Draw(*geometry, *silhouetteMaterial, renderer->GetModelMatrix());
                 }
             }
         }

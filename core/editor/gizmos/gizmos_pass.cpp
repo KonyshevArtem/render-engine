@@ -66,7 +66,7 @@ void GizmosPass::Execute(const Context& ctx)
         {
             const auto end = begin + std::min(GlobalConstants::MaxInstancingCount, totalCount);
             const std::vector<Matrix4x4> matricesSlice(begin, end);
-            Graphics::DrawInstanced(*pair.first, *gizmosMaterial, matricesSlice, 0);
+            Graphics::DrawInstanced(*pair.first, *gizmosMaterial, matricesSlice);
 
             begin = end;
             totalCount -= GlobalConstants::MaxInstancingCount;

@@ -20,7 +20,7 @@ void ShadowMapDebugPass::Execute(const Context& ctx)
     if (s_Enabled)
     {
         GraphicsBackend::Current()->BeginRenderPass("ShadowMap Debug Pass");
-        Graphics::Draw(*m_FullscreenMesh, *material, Matrix4x4::Identity(), 0);
+        Graphics::Draw(*m_FullscreenMesh, *material, Matrix4x4::Identity());
         GraphicsBackend::Current()->EndRenderPass();
     }
 };

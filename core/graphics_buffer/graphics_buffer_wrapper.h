@@ -17,9 +17,9 @@ public:
 
     void TrySetVariable(const std::string &variableName, const void *data, uint64_t size);
 
-    inline const std::shared_ptr<GraphicsBuffer> &GetBuffer(int shaderPass) const
+    inline const std::shared_ptr<GraphicsBuffer>& GetBuffer() const
     {
-        return m_PassBuffers[shaderPass];
+        return m_Buffer;
     }
 
     GraphicsBufferWrapper(const GraphicsBufferWrapper &) = delete;
@@ -29,8 +29,8 @@ public:
     GraphicsBufferWrapper &operator()(GraphicsBufferWrapper &&) = delete;
 
 private:
-    std::vector<std::shared_ptr<GraphicsBuffer>> m_PassBuffers;
-    std::vector<std::shared_ptr<GraphicsBackendBufferInfo>> m_PassBuffersInfo;
+    std::shared_ptr<GraphicsBuffer> m_Buffer;
+    std::shared_ptr<GraphicsBackendBufferInfo> m_BufferInfo;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BUFFER_WRAPPER_H

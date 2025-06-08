@@ -67,8 +67,6 @@ add_library(
 	shader/shader_loader/shader_parser.cpp
 	shader/shader_loader/shader_parser.h
 	shader/shader_structs.h
-	shader/shader_pass/shader_pass.cpp
-	shader/shader_pass/shader_pass.h
 	lines/lines.cpp
 	lines/lines.h
 	graphics/data_structs/shadows_data.h

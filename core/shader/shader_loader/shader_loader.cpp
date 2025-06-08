@@ -7,7 +7,6 @@
 #include "types/graphics_backend_shader_object.h"
 #include "graphics_backend_api.h"
 #include "shader_parser.h"
-#include "shader/shader_pass/shader_pass.h"
 #include "hash.h"
 
 #include <span>
@@ -109,12 +108,7 @@ namespace ShaderLoader
                 shaders.push_back(shader);
             }
 
-            auto passPtr = std::make_shared<ShaderPass>(shaders, blendInfo, cullInfo, depthInfo, textures, buffers, samplers, shaderDebugName);
-
-            std::vector<std::shared_ptr<ShaderPass>> passes;
-            passes.push_back(passPtr);
-
-            return std::make_shared<Shader>(passes, supportInstancing);
+            return std::make_shared<Shader>(shaders, blendInfo, cullInfo, depthInfo, textures, buffers, samplers, shaderDebugName, supportInstancing);
         }
         catch (const std::exception &_exception)
         {

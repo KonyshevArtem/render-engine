@@ -27,7 +27,7 @@ public:
     Material &operator=(const Material &) = delete;
     Material &operator=(Material &&) = delete;
 
-    std::shared_ptr<GraphicsBuffer> GetPerMaterialDataBuffer(int pass) const;
+    std::shared_ptr<GraphicsBuffer> GetPerMaterialDataBuffer() const;
 
     void SetTexture(const std::string &name, std::shared_ptr<Texture> texture);
     void SetVector(const std::string &_name, const Vector4 &_value);

@@ -22,8 +22,8 @@ namespace Graphics
     void                      Shutdown();
     void                      Render(int width, int height);
     void                      DrawRenderQueue(const RenderQueue& renderQueue);
-    void                      Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix, int shaderPassIndex);
-    void                      DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices, int shaderPassIndex);
+    void                      Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix);
+    void                      DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices);
     void                      SetCameraData(const Matrix4x4 &_viewMatrix, Matrix4x4 _projectionMatrix);
     int                       GetScreenWidth();
     int                       GetScreenHeight();

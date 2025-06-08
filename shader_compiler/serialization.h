@@ -11,7 +11,8 @@ void to_json(nlohmann::json& json, const Bindings& bindings)
 {
     json = nlohmann::json{
             {"Vertex",   bindings.Vertex},
-            {"Fragment", bindings.Fragment}
+            {"Fragment", bindings.Fragment},
+            {"Space",    bindings.Space}
     };
 }
 

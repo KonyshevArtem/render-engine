@@ -21,6 +21,7 @@ struct Bindings
 {
     int32_t Vertex = -1;
     int32_t Fragment = -1;
+    int32_t Space = 0;
 };
 
 template<typename T>
@@ -48,20 +49,20 @@ struct Reflection
     std::unordered_map<std::string, GenericDesc> Samplers;
 };
 
-void SetBinding(Bindings& bindings, int bindPoint, bool isVertexShader)
+void SetBinding(Bindings& bindings, int bindPoint, int space, bool isVertexShader)
 {
-    int32_t* binding = isVertexShader ? &bindings.Vertex : &bindings.Fragment;
-    *binding = bindPoint;
+    *(isVertexShader ? &bindings.Vertex : &bindings.Fragment) = bindPoint;
+    bindings.Space = space;
 }
 
 template<HasBindings T>
-bool TrySetBinding(std::unordered_map<std::string, T>& descriptions, const std::string& name, int bindPoint, bool isVertexShader)
+bool TrySetBinding(std::unordered_map<std::string, T>& descriptions, const std::string& name, int bindPoint, int space, bool isVertexShader)
 {
     auto it = descriptions.find(name);
     if (it != descriptions.end())
     {
         T& bufferDesc = it->second;
-        SetBinding(bufferDesc.Bindings, bindPoint, isVertexShader);
+        SetBinding(bufferDesc.Bindings, bindPoint, space, isVertexShader);
         return true;
     }
 
@@ -91,7 +92,7 @@ void GetSPIRVResourceInfo(spirv_cross::Compiler* compiler, const spirv_cross::Re
 void HandleConstantBufferReflection(const _D3D12_SHADER_INPUT_BIND_DESC& inputDesc, const CComPtr<ID3D12ShaderReflection>& reflection,
                                     std::unordered_map<std::string, BufferDesc>& buffers, bool isVertexShader)
 {
-    if (!TrySetBinding(buffers, inputDesc.Name, inputDesc.BindPoint, isVertexShader))
+    if (!TrySetBinding(buffers, inputDesc.Name, inputDesc.BindPoint, inputDesc.Space, isVertexShader))
     {
         ID3D12ShaderReflectionConstantBuffer* bufferReflection = reflection->GetConstantBufferByName(inputDesc.Name);
 
@@ -99,7 +100,7 @@ void HandleConstantBufferReflection(const _D3D12_SHADER_INPUT_BIND_DESC& inputDe
         bufferReflection->GetDesc(&shaderBufferDesc);
 
         BufferDesc bufferDesc{shaderBufferDesc.Size, true};
-        SetBinding(bufferDesc.Bindings, inputDesc.BindPoint, isVertexShader);
+        SetBinding(bufferDesc.Bindings, inputDesc.BindPoint, inputDesc.Space, isVertexShader);
 
         for (int i = 0; i < shaderBufferDesc.Variables; ++i)
         {
@@ -118,10 +119,10 @@ void HandleConstantBufferReflection(const _D3D12_SHADER_INPUT_BIND_DESC& inputDe
 void HandleStructuredBufferReflection(const _D3D12_SHADER_INPUT_BIND_DESC& inputDesc, const CComPtr<ID3D12ShaderReflection>& reflection,
                                       std::unordered_map<std::string, BufferDesc>& buffers, bool isVertexShader)
 {
-    if (!TrySetBinding(buffers, inputDesc.Name, inputDesc.BindPoint, isVertexShader))
+    if (!TrySetBinding(buffers, inputDesc.Name, inputDesc.BindPoint, inputDesc.Space, isVertexShader))
     {
         BufferDesc bufferDesc{0, false};
-        SetBinding(bufferDesc.Bindings, inputDesc.BindPoint, isVertexShader);
+        SetBinding(bufferDesc.Bindings, inputDesc.BindPoint, inputDesc.Space, isVertexShader);
 
         buffers[inputDesc.Name] = std::move(bufferDesc);
     }
@@ -133,13 +134,13 @@ void HandleConstantBufferReflection(spirv_cross::Compiler* compiler, const spirv
     std::string bufferName;
     GetSPIRVResourceInfo(compiler, resource, index, backend, bufferName, bindPoint);
 
-    if (!TrySetBinding(buffers, bufferName, bindPoint, isVertexShader))
+    if (!TrySetBinding(buffers, bufferName, bindPoint, 0, isVertexShader))
     {
         const spirv_cross::SPIRType &bufferType = compiler->get_type(resource.base_type_id);
         uint32_t size = static_cast<uint32_t>(compiler->get_declared_struct_size(bufferType));
 
         BufferDesc bufferDesc{size, true};
-        SetBinding(bufferDesc.Bindings, bindPoint, isVertexShader);
+        SetBinding(bufferDesc.Bindings, bindPoint, 0, isVertexShader);
 
         for (uint32_t i = 0; i < bufferType.member_types.size(); ++i)
         {
@@ -159,14 +160,14 @@ void HandleStructuredBufferReflection(spirv_cross::Compiler* compiler, const spi
     std::string bufferName;
     GetSPIRVResourceInfo(compiler, resource, index, backend, bufferName, bindPoint);
 
-    if (!TrySetBinding(buffers, bufferName, bindPoint, isVertexShader))
+    if (!TrySetBinding(buffers, bufferName, bindPoint, 0, isVertexShader))
     {
         const spirv_cross::SPIRType &bufferType = compiler->get_type(resource.base_type_id);
         const spirv_cross::SPIRType &structType = compiler->get_type(bufferType.member_types[0]);
         uint32_t size = structType.basetype == spirv_cross::SPIRType::Struct ? static_cast<uint32_t>(compiler->get_declared_struct_size(structType)) : 0;
 
         BufferDesc bufferDesc{size, false};
-        SetBinding(bufferDesc.Bindings, bindPoint, isVertexShader);
+        SetBinding(bufferDesc.Bindings, bindPoint, 0, isVertexShader);
 
         for (uint32_t i = 0; i < structType.member_types.size(); ++i)
         {
@@ -182,10 +183,10 @@ void HandleStructuredBufferReflection(spirv_cross::Compiler* compiler, const spi
 
 void HandleGenericReflection(const _D3D12_SHADER_INPUT_BIND_DESC &inputDesc, std::unordered_map<std::string, GenericDesc> &resources, bool isVertexShader)
 {
-    if (!TrySetBinding(resources, inputDesc.Name, inputDesc.BindPoint, isVertexShader))
+    if (!TrySetBinding(resources, inputDesc.Name, inputDesc.BindPoint, inputDesc.Space, isVertexShader))
     {
         GenericDesc desc;
-        SetBinding(desc.Bindings, inputDesc.BindPoint, isVertexShader);
+        SetBinding(desc.Bindings, inputDesc.BindPoint, inputDesc.Space, isVertexShader);
 
         resources[inputDesc.Name] = desc;
     }
@@ -193,10 +194,10 @@ void HandleGenericReflection(const _D3D12_SHADER_INPUT_BIND_DESC &inputDesc, std
 
 void HandleGenericReflection(const std::string& resourceName, int32_t bindPoint, std::unordered_map<std::string, GenericDesc> &resources, bool isVertexShader)
 {
-    if (!TrySetBinding(resources, resourceName, bindPoint, isVertexShader))
+    if (!TrySetBinding(resources, resourceName, bindPoint, 0, isVertexShader))
     {
         GenericDesc desc;
-        SetBinding(desc.Bindings, bindPoint, isVertexShader);
+        SetBinding(desc.Bindings, bindPoint, 0, isVertexShader);
 
         resources[resourceName] = desc;
     }

@@ -5,6 +5,7 @@ void from_json(const nlohmann::json& json, GraphicsBackendResourceBindings& bind
 {
     json.at("Vertex").get_to(bindings.VertexIndex);
     json.at("Fragment").get_to(bindings.FragmentIndex);
+    json.at("Space").get_to(bindings.Space);
 }
 
 void from_json(const nlohmann::json& json, GraphicsBackendTextureInfo& info)

@@ -404,6 +404,7 @@ namespace DX12Local
         hash = Hash::Combine(hash, std::hash<D3D12_DESCRIPTOR_RANGE_TYPE>{}(rangeType));
         hash = Hash::Combine(hash, std::hash<D3D12_SHADER_VISIBILITY>{}(GetShaderVisibility(bindings)));
         hash = Hash::Combine(hash, std::hash<uint32_t>{}(GetShaderRegister(bindings)));
+        hash = Hash::Combine(hash, std::hash<int32_t>{}(bindings.Space));
         return hash;
     }
 
@@ -1344,9 +1345,9 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
 
         CD3DX12_ROOT_PARAMETER1 parameter{};
         if (isConstant)
-            parameter.InitAsConstantBufferView(DX12Local::GetShaderRegister(bindings), 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, DX12Local::GetShaderVisibility(bindings));
+            parameter.InitAsConstantBufferView(DX12Local::GetShaderRegister(bindings), bindings.Space, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, DX12Local::GetShaderVisibility(bindings));
         else
-            parameter.InitAsShaderResourceView(DX12Local::GetShaderRegister(bindings), 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, DX12Local::GetShaderVisibility(bindings));
+            parameter.InitAsShaderResourceView(DX12Local::GetShaderRegister(bindings), bindings.Space, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, DX12Local::GetShaderVisibility(bindings));
         rootParameters.push_back(parameter);
 
         resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(isConstant ? D3D12_ROOT_PARAMETER_TYPE_CBV : D3D12_ROOT_PARAMETER_TYPE_SRV, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)] = rootParameters.size() - 1;
@@ -1358,7 +1359,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
         const GraphicsBackendResourceBindings& bindings = texture.TextureBindings;
 
         CD3DX12_DESCRIPTOR_RANGE1* range = new CD3DX12_DESCRIPTOR_RANGE1();
-        range->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, DX12Local::GetShaderRegister(bindings));
+        range->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, DX12Local::GetShaderRegister(bindings), bindings.Space);
 
         CD3DX12_ROOT_PARAMETER1 parameter{};
         parameter.InitAsDescriptorTable(1, range, DX12Local::GetShaderVisibility(bindings));
@@ -1373,7 +1374,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
         const GraphicsBackendResourceBindings& bindings = sampler.Bindings;
 
         CD3DX12_DESCRIPTOR_RANGE1* range = new CD3DX12_DESCRIPTOR_RANGE1();
-        range->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, DX12Local::GetShaderRegister(bindings));
+        range->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, DX12Local::GetShaderRegister(bindings), bindings.Space);
 
         CD3DX12_ROOT_PARAMETER1 parameter{};
         parameter.InitAsDescriptorTable(1, range, DX12Local::GetShaderVisibility(bindings));

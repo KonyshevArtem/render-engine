@@ -54,20 +54,6 @@ Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blen
     m_Name(std::move(name)),
     m_SupportInstancing(supportInstancing)
 {
-    const TextureInternalFormat k_DefaultColorFormat = TextureInternalFormat::RGBA16F;
-    const TextureInternalFormat k_DefaultDepthFormat = TextureInternalFormat::DEPTH_32_STENCIL_8;
-    const PrimitiveType k_DefaultPrimitiveType = PrimitiveType::TRIANGLES;
-
-    static std::vector<GraphicsBackendVertexAttributeDescriptor> s_DefaultVertexAttributes;
-    if (s_DefaultVertexAttributes.empty())
-    {
-        s_DefaultVertexAttributes.push_back({VertexAttributeSemantic::POSITION, 0, 3, VertexAttributeDataType::FLOAT, 0, 44, 0});
-        s_DefaultVertexAttributes.push_back({VertexAttributeSemantic::NORMAL, 1, 3, VertexAttributeDataType::FLOAT, 0, 44, 12});
-        s_DefaultVertexAttributes.push_back({VertexAttributeSemantic::TEXCOORD, 2, 2, VertexAttributeDataType::FLOAT, 0, 44, 24});
-        s_DefaultVertexAttributes.push_back({VertexAttributeSemantic::TANGENT, 3, 3, VertexAttributeDataType::FLOAT, 0, 44, 32});
-    }
-
-    CreatePSO(m_Shaders, m_BlendInfo, k_DefaultColorFormat, true, k_DefaultDepthFormat, s_DefaultVertexAttributes, k_DefaultPrimitiveType, m_Name);
 }
 
 Shader::~Shader()

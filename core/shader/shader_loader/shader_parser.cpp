@@ -23,14 +23,16 @@ struct nlohmann::adl_serializer<std::shared_ptr<GraphicsBackendBufferInfo>>
     static std::shared_ptr<GraphicsBackendBufferInfo> from_json(const nlohmann::json& json)
     {
         int size;
+        bool isConstant;
         GraphicsBackendResourceBindings bindings;
         std::unordered_map<std::string, int> variables;
 
         json.at("Bindings").get_to(bindings);
         json.at("Size").get_to(size);
+        json.at("IsConstant").get_to(isConstant);
         json.at("Variables").get_to(variables);
 
-        auto info = std::make_shared<GraphicsBackendBufferInfo>(size, variables);
+        auto info = std::make_shared<GraphicsBackendBufferInfo>(size, isConstant, variables);
         info->SetBindings(bindings);
         return info;
     }

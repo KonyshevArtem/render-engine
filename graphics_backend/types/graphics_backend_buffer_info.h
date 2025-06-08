@@ -9,7 +9,7 @@
 class GraphicsBackendBufferInfo
 {
 public:
-    GraphicsBackendBufferInfo(int size, std::unordered_map<std::string, int> variables) : m_Size(size), m_Variables(std::move(variables)) {}
+    GraphicsBackendBufferInfo(int size, bool isConstant, std::unordered_map<std::string, int> variables) : m_Size(size), m_IsConstant(isConstant), m_Variables(std::move(variables)) {}
     ~GraphicsBackendBufferInfo() = default;
 
     inline GraphicsBackendResourceBindings GetBinding() const
@@ -27,6 +27,11 @@ public:
         return m_Size;
     }
 
+    inline bool IsConstant() const
+    {
+        return m_IsConstant;
+    }
+
     inline const std::unordered_map<std::string, int> &GetVariables() const
     {
         return m_Variables;
@@ -41,6 +46,7 @@ public:
 private:
     GraphicsBackendResourceBindings m_Binding;
     int m_Size;
+    bool m_IsConstant;
 
     std::unordered_map<std::string, int> m_Variables;
 };

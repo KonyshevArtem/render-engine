@@ -19,6 +19,7 @@ void to_json(nlohmann::json& json, const BufferDesc& bufferDesc)
 {
     json = nlohmann::json{
             {"Size",      bufferDesc.Size},
+            {"IsConstant", bufferDesc.IsConstant},
             {"Bindings",  nlohmann::json(bufferDesc.Bindings)},
             {"Variables", nlohmann::json(bufferDesc.Variables)},
     };

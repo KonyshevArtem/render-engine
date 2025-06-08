@@ -1340,7 +1340,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     {
         const std::shared_ptr<GraphicsBackendBufferInfo>& buffer = pair.second;
         const GraphicsBackendResourceBindings& bindings = buffer->GetBinding();
-        const bool isConstant = buffer->GetSize() > 0;
+        const bool isConstant = buffer->IsConstant();
 
         CD3DX12_ROOT_PARAMETER1 parameter{};
         if (isConstant)

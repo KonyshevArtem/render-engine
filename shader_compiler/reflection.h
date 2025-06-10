@@ -24,6 +24,13 @@ struct Bindings
     int32_t Space = 0;
 };
 
+enum BufferType
+{
+    RAW_BYTE_BUFFER,
+    STRUCTURED_BUFFER,
+    CONSTANT_BUFFER
+};
+
 template<typename T>
 concept HasBindings = requires(T t) {
     { t.Bindings } -> std::same_as<Bindings&>;
@@ -32,7 +39,7 @@ concept HasBindings = requires(T t) {
 struct BufferDesc
 {
     uint32_t Size;
-    bool IsConstant;
+    BufferType BufferType;
     Bindings Bindings;
     std::unordered_map<std::string, uint32_t> Variables;
 };
@@ -99,7 +106,7 @@ void HandleConstantBufferReflection(const _D3D12_SHADER_INPUT_BIND_DESC& inputDe
         _D3D12_SHADER_BUFFER_DESC shaderBufferDesc{};
         bufferReflection->GetDesc(&shaderBufferDesc);
 
-        BufferDesc bufferDesc{shaderBufferDesc.Size, true};
+        BufferDesc bufferDesc{shaderBufferDesc.Size, BufferType::CONSTANT_BUFFER};
         SetBinding(bufferDesc.Bindings, inputDesc.BindPoint, inputDesc.Space, isVertexShader);
 
         for (int i = 0; i < shaderBufferDesc.Variables; ++i)
@@ -121,7 +128,7 @@ void HandleStructuredBufferReflection(const _D3D12_SHADER_INPUT_BIND_DESC& input
 {
     if (!TrySetBinding(buffers, inputDesc.Name, inputDesc.BindPoint, inputDesc.Space, isVertexShader))
     {
-        BufferDesc bufferDesc{0, false};
+        BufferDesc bufferDesc{inputDesc.NumSamples, BufferType::STRUCTURED_BUFFER};
         SetBinding(bufferDesc.Bindings, inputDesc.BindPoint, inputDesc.Space, isVertexShader);
 
         buffers[inputDesc.Name] = std::move(bufferDesc);
@@ -139,7 +146,7 @@ void HandleConstantBufferReflection(spirv_cross::Compiler* compiler, const spirv
         const spirv_cross::SPIRType &bufferType = compiler->get_type(resource.base_type_id);
         uint32_t size = static_cast<uint32_t>(compiler->get_declared_struct_size(bufferType));
 
-        BufferDesc bufferDesc{size, true};
+        BufferDesc bufferDesc{size, BufferType::CONSTANT_BUFFER};
         SetBinding(bufferDesc.Bindings, bindPoint, 0, isVertexShader);
 
         for (uint32_t i = 0; i < bufferType.member_types.size(); ++i)
@@ -166,7 +173,7 @@ void HandleStructuredBufferReflection(spirv_cross::Compiler* compiler, const spi
         const spirv_cross::SPIRType &structType = compiler->get_type(bufferType.member_types[0]);
         uint32_t size = structType.basetype == spirv_cross::SPIRType::Struct ? static_cast<uint32_t>(compiler->get_declared_struct_size(structType)) : 0;
 
-        BufferDesc bufferDesc{size, false};
+        BufferDesc bufferDesc{size, BufferType::STRUCTURED_BUFFER};
         SetBinding(bufferDesc.Bindings, bindPoint, 0, isVertexShader);
 
         for (uint32_t i = 0; i < structType.member_types.size(); ++i)

@@ -2,6 +2,7 @@
 #define RENDER_ENGINE_BUFFER_INFO_H
 
 #include "types/graphics_backend_resource_bindings.h"
+#include "enums/buffer_type.h"
 
 #include <unordered_map>
 #include <string>
@@ -9,7 +10,8 @@
 class GraphicsBackendBufferInfo
 {
 public:
-    GraphicsBackendBufferInfo(int size, bool isConstant, std::unordered_map<std::string, int> variables) : m_Size(size), m_IsConstant(isConstant), m_Variables(std::move(variables)) {}
+    GraphicsBackendBufferInfo(int size, BufferType bufferType, std::unordered_map<std::string, int> variables) :
+        m_Size(size), m_BufferType(bufferType), m_Variables(std::move(variables)) {}
     ~GraphicsBackendBufferInfo() = default;
 
     inline GraphicsBackendResourceBindings GetBinding() const
@@ -27,9 +29,9 @@ public:
         return m_Size;
     }
 
-    inline bool IsConstant() const
+    inline BufferType GetBufferType() const
     {
-        return m_IsConstant;
+        return m_BufferType;
     }
 
     inline const std::unordered_map<std::string, int> &GetVariables() const
@@ -46,7 +48,7 @@ public:
 private:
     GraphicsBackendResourceBindings m_Binding;
     int m_Size;
-    bool m_IsConstant;
+    BufferType m_BufferType;
 
     std::unordered_map<std::string, int> m_Variables;
 };

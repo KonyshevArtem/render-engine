@@ -53,7 +53,8 @@ add_library(GraphicsBackend
         helpers/dx12_helpers.cpp
         helpers/dx12_helpers.h
         types/graphics_backend_program_descriptor.h
-        enums/resource_state.h)
+        enums/resource_state.h
+        enums/buffer_type.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

@@ -536,6 +536,11 @@ void GraphicsBackendOpenGL::BindBuffer(const GraphicsBackendBuffer &buffer, Grap
     BindBuffer_Internal(GL_SHADER_STORAGE_BUFFER, buffer, bindings, offset, size);
 }
 
+void GraphicsBackendOpenGL::BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount)
+{
+    BindBuffer_Internal(GL_SHADER_STORAGE_BUFFER, buffer, bindings, elementOffset * elementSize, elementSize * elementCount);
+}
+
 void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
     BindBuffer_Internal(GL_UNIFORM_BUFFER, buffer, bindings, offset, size);

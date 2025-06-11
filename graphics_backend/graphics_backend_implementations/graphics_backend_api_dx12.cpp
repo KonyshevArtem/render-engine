@@ -21,12 +21,14 @@
 #include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_program_descriptor.h"
 #include "helpers/dx12_helpers.h"
+#include "math_utils.h"
 #include "debug.h"
 #include "hash.h"
 #include "arguments.h"
 
 #include <unordered_map>
 #include <chrono>
+#include <cassert>
 
 namespace DX12Local
 {
@@ -54,13 +56,6 @@ namespace DX12Local
         bool IsLinear;
         bool IsEnabled;
         bool NeedClear;
-    };
-
-    struct ShaderObject
-    {
-        ID3D12PipelineState* PSO;
-        ID3D12RootSignature* RootSignature;
-        std::unordered_map<size_t, int> ResourceBindingHashToRootParameterIndex;
     };
 
     struct GeometryData
@@ -189,14 +184,18 @@ namespace DX12Local
     {
         ID3D12DescriptorHeap* Heap;
         UINT DescriptorSize;
+        uint32_t DescriptorsCount;
+        uint32_t DescriptorIndex;
 
-        DescriptorHeap() : Heap(nullptr), DescriptorSize(0)
+        DescriptorHeap() : Heap(nullptr), DescriptorSize(0), DescriptorsCount(0), DescriptorIndex(0)
         {}
 
-        DescriptorHeap(uint32_t descriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE type, bool isShaderVisible = false)
+        DescriptorHeap(uint32_t descriptorsCount, D3D12_DESCRIPTOR_HEAP_TYPE type, bool isShaderVisible = false) :
+            DescriptorsCount(descriptorsCount),
+            DescriptorIndex(0)
         {
             D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
-            heapDesc.NumDescriptors = descriptorCount;
+            heapDesc.NumDescriptors = descriptorsCount;
             heapDesc.Type = type;
             heapDesc.Flags = isShaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
             ThrowIfFailed(s_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&Heap)));
@@ -206,12 +205,17 @@ namespace DX12Local
 
         D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(int index)
         {
-            return CD3DX12_CPU_DESCRIPTOR_HANDLE(Heap->GetCPUDescriptorHandleForHeapStart(), index, DescriptorSize);
+            return CD3DX12_CPU_DESCRIPTOR_HANDLE(Heap->GetCPUDescriptorHandleForHeapStart(), DescriptorIndex + index, DescriptorSize);
         }
 
         D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(int index)
         {
-            return CD3DX12_GPU_DESCRIPTOR_HANDLE(Heap->GetGPUDescriptorHandleForHeapStart(), index, DescriptorSize);
+            return CD3DX12_GPU_DESCRIPTOR_HANDLE(Heap->GetGPUDescriptorHandleForHeapStart(), DescriptorIndex + index, DescriptorSize);
+        }
+
+        void AdvanceIndex(int offset)
+        {
+            DescriptorIndex = (DescriptorIndex + offset) % DescriptorsCount;
         }
     };
 
@@ -221,16 +225,9 @@ namespace DX12Local
         CommandList CopyCommandList;
 
         DescriptorHeap ColorTargetDescriptorHeap;
-        uint32_t ColorTargetHeapIndex;
-
         DescriptorHeap DepthTargetDescriptorHeap;
-        uint32_t DepthTargetHeapIndex;
-
         DescriptorHeap ResourceDescriptorHeap;
-        uint32_t ResourceDescriptorHeapIndex;
-
         DescriptorHeap SamplerDescriptorHeap;
-        uint32_t SamplerDescriptorHeapIndex;
 
         ID3D12Fence* RenderQueueFence;
         ID3D12Fence* CopyQueueFence;
@@ -241,6 +238,15 @@ namespace DX12Local
 
     constexpr TextureInternalFormat k_SwapChainColorFormat = TextureInternalFormat::RGBA8;
     constexpr TextureInternalFormat k_SwapChainDepthFormat = TextureInternalFormat::DEPTH_24_STENCIL_8;
+
+    constexpr int k_MaxResourcesPerDraw = 8;
+    constexpr int k_TexturesDescriptorsOffset = 0;
+    constexpr int k_BuffersDescriptorsOffset = k_TexturesDescriptorsOffset + k_MaxResourcesPerDraw;
+    constexpr int k_ConstantBuffersDescriptorsOffset = k_BuffersDescriptorsOffset + k_MaxResourcesPerDraw;
+    constexpr int k_ResourceDescriptorHeapAdvance = k_MaxResourcesPerDraw * 3; // SRV Texture, SRV Buffers, CBV
+    constexpr int k_SamplerDescriptorHeapAdvance = k_MaxResourcesPerDraw;
+    constexpr int k_ResourceDescriptorHeapCapacity = k_ResourceDescriptorHeapAdvance * 512;
+    constexpr int k_SamplerDescriptorHeapCapacity = 2048;
 
     HWND s_Window;
     IDXGISwapChain4* s_SwapChain;
@@ -266,7 +272,7 @@ namespace DX12Local
     ResourceData s_DepthBackbuffers[GraphicsBackend::GetMaxFramesInFlight()];
     PerFrameData s_PerFrameData[GraphicsBackend::GetMaxFramesInFlight()];
 
-    ShaderObject* s_CurrentShaderObject;
+    ID3D12RootSignature* s_RootSignature;
 
     TimestampCollector s_RenderTimestampCollector;
     TimestampCollector s_CopyTimestampCollector;
@@ -562,6 +568,43 @@ namespace DX12Local
         UpdateSubresources(frameData.RenderCommandList.List, resourceData->Resource, bufferUploadHeap, 0, firstSubresource, 1, &subresourceData);
         DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, GPUQueue::RENDER);
     }
+
+    void InitRootSignature()
+    {
+        CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+
+        CD3DX12_DESCRIPTOR_RANGE1 ranges[3];
+        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // textures
+        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // buffers
+        ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV,  k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // constant buffers
+
+        CD3DX12_DESCRIPTOR_RANGE1 samplersRange;
+        samplersRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+
+        CD3DX12_ROOT_PARAMETER1 resourceParameter{};
+        resourceParameter.InitAsDescriptorTable(3, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[0] = resourceParameter;
+
+        CD3DX12_ROOT_PARAMETER1 samplersParameter{};
+        samplersParameter.InitAsDescriptorTable(1, &samplersRange, D3D12_SHADER_VISIBILITY_ALL);
+        rootParameters[1] = samplersParameter;
+
+        D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc{};
+        rootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
+        rootSignatureDesc.Desc_1_1.NumParameters = 2;
+        rootSignatureDesc.Desc_1_1.pParameters = &rootParameters[0];
+        rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+        ID3DBlob* rootSignatureBlob;
+        ID3DBlob* errorBlob;
+        if (!SUCCEEDED(D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &rootSignatureBlob, &errorBlob)))
+        {
+            Debug::LogError(static_cast<const char *>(errorBlob->GetBufferPointer()));
+            throw std::runtime_error(static_cast<const char *>(errorBlob->GetBufferPointer()));
+        }
+
+        ThrowIfFailed(DX12Local::s_Device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&s_RootSignature)));
+    }
 }
 
 #define ThrowIfFailed DX12Local::ThrowIfFailed
@@ -611,8 +654,8 @@ void GraphicsBackendDX12::Init(void* data)
         frameData.RenderCommandList = DX12Local::CommandList(DX12Local::s_RenderQueue, D3D12_COMMAND_LIST_TYPE_DIRECT, "RenderCommandList");
         frameData.CopyCommandList = DX12Local::CommandList(DX12Local::s_CopyQueue, D3D12_COMMAND_LIST_TYPE_COPY, "CopyCommandList");
 
-        frameData.ResourceDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
-        frameData.SamplerDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, true);
+        frameData.ResourceDescriptorHeap = DX12Local::DescriptorHeap(DX12Local::k_ResourceDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+        frameData.SamplerDescriptorHeap = DX12Local::DescriptorHeap(DX12Local::k_SamplerDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, true);
         frameData.ColorTargetDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         frameData.DepthTargetDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
@@ -623,6 +666,7 @@ void GraphicsBackendDX12::Init(void* data)
         frameData.FenceValue = 1;
     }
 
+    DX12Local::InitRootSignature();
     DX12Local::ResetRenderTargetStates();
 
     DX12Local::s_RenderTimestampCollector.Init(D3D12_QUERY_HEAP_TYPE_TIMESTAMP);
@@ -686,11 +730,6 @@ void GraphicsBackendDX12::InitNewFrame()
     frameData.CopyCommandList.InitNewFrame();
 
     DX12Local::TransitionResource(&DX12Local::GetCurrentColorBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, GPUQueue::RENDER);
-
-    frameData.ResourceDescriptorHeapIndex = 0;
-    frameData.SamplerDescriptorHeapIndex = 0;
-    frameData.ColorTargetHeapIndex = 0;
-    frameData.DepthTargetHeapIndex = 0;
 }
 
 void GraphicsBackendDX12::FillImGuiInitData(void* data)
@@ -862,6 +901,8 @@ void GraphicsBackendDX12::DeleteSampler(const GraphicsBackendSampler& sampler)
 
 void GraphicsBackendDX12::BindTexture(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendTexture& texture)
 {
+    assert(bindings.VertexIndex < DX12Local::k_MaxResourcesPerDraw && bindings.FragmentIndex < DX12Local::k_MaxResourcesPerDraw);
+
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
     DXGI_FORMAT dxFormat = DX12Helpers::ToTextureInternalFormat(texture.Format, texture.IsLinear);
@@ -929,25 +970,18 @@ void GraphicsBackendDX12::BindTexture(const GraphicsBackendResourceBindings& bin
         state = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
     DX12Local::TransitionResource(resourceData, state, GPUQueue::RENDER);
-    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &resourceViewDesc, frameData.ResourceDescriptorHeap.GetCPUHandle(frameData.ResourceDescriptorHeapIndex));
 
-    int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)];
-    frameData.RenderCommandList->SetGraphicsRootDescriptorTable(rootParamIndex, frameData.ResourceDescriptorHeap.GetGPUHandle(frameData.ResourceDescriptorHeapIndex));
-
-    ++frameData.ResourceDescriptorHeapIndex;
+    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &resourceViewDesc, frameData.ResourceDescriptorHeap.GetCPUHandle(DX12Local::GetShaderRegister(bindings)));
 }
 
 void GraphicsBackendDX12::BindSampler(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendSampler& sampler)
 {
+    assert(bindings.VertexIndex < DX12Local::k_MaxResourcesPerDraw && bindings.FragmentIndex < DX12Local::k_MaxResourcesPerDraw);
+
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
     DX12Local::SamplerData* samplerData = reinterpret_cast<DX12Local::SamplerData*>(sampler.Sampler);
 
-    DX12Local::s_Device->CreateSampler(&samplerData->SamplerDesc, frameData.SamplerDescriptorHeap.GetCPUHandle(frameData.SamplerDescriptorHeapIndex));
-
-    int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, bindings)];
-    frameData.RenderCommandList->SetGraphicsRootDescriptorTable(rootParamIndex, frameData.SamplerDescriptorHeap.GetGPUHandle(frameData.SamplerDescriptorHeapIndex));
-
-    ++frameData.SamplerDescriptorHeapIndex;
+    DX12Local::s_Device->CreateSampler(&samplerData->SamplerDesc, frameData.SamplerDescriptorHeap.GetCPUHandle(DX12Local::GetShaderRegister(bindings)));
 }
 
 void GraphicsBackendDX12::GenerateMipmaps(const GraphicsBackendTexture& texture)
@@ -1019,7 +1053,8 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
         }
         else
         {
-            state.DescriptorHandle = frameData.DepthTargetDescriptorHeap.GetCPUHandle(frameData.DepthTargetHeapIndex++);
+            state.DescriptorHandle = frameData.DepthTargetDescriptorHeap.GetCPUHandle(0);
+            frameData.DepthTargetDescriptorHeap.AdvanceIndex(1);
 
             D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
             desc.Format = DX12Helpers::ToTextureInternalFormat(descriptor.Texture.Format, descriptor.Texture.IsLinear);
@@ -1062,7 +1097,8 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
         }
         else
         {
-            state.DescriptorHandle = frameData.ColorTargetDescriptorHeap.GetCPUHandle(frameData.ColorTargetHeapIndex++);
+            state.DescriptorHandle = frameData.ColorTargetDescriptorHeap.GetCPUHandle(0);
+            frameData.ColorTargetDescriptorHeap.AdvanceIndex(1);
 
             D3D12_RENDER_TARGET_VIEW_DESC desc{};
             desc.Format = DX12Helpers::ToTextureInternalFormat(descriptor.Texture.Format, descriptor.Texture.IsLinear);
@@ -1171,20 +1207,53 @@ void GraphicsBackendDX12::DeleteBuffer(const GraphicsBackendBuffer& buffer)
 
 void GraphicsBackendDX12::BindBuffer(const GraphicsBackendBuffer& buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
+    assert(bindings.VertexIndex < DX12Local::k_MaxResourcesPerDraw && bindings.FragmentIndex < DX12Local::k_MaxResourcesPerDraw);
+
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
 
-    int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_SRV, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)];
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+    srvDesc.Format = DXGI_FORMAT_R8_UINT;
+    srvDesc.Buffer.FirstElement = offset;
+    srvDesc.Buffer.NumElements = size;
+
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    frameData.RenderCommandList->SetGraphicsRootShaderResourceView(rootParamIndex, resourceData->Resource->GetGPUVirtualAddress() + offset);
+    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, frameData.ResourceDescriptorHeap.GetCPUHandle(DX12Local::GetShaderRegister(bindings) + DX12Local::k_BuffersDescriptorsOffset));
+}
+
+void GraphicsBackendDX12::BindStructuredBuffer(const GraphicsBackendBuffer& buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount)
+{
+    assert(bindings.VertexIndex < DX12Local::k_MaxResourcesPerDraw && bindings.FragmentIndex < DX12Local::k_MaxResourcesPerDraw);
+
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+    srvDesc.Buffer.FirstElement = elementOffset;
+    srvDesc.Buffer.NumElements = elementCount;
+    srvDesc.Buffer.StructureByteStride = elementSize;
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, frameData.ResourceDescriptorHeap.GetCPUHandle(DX12Local::GetShaderRegister(bindings) + DX12Local::k_BuffersDescriptorsOffset));
 }
 
 void GraphicsBackendDX12::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
+    assert(bindings.VertexIndex < DX12Local::k_MaxResourcesPerDraw && bindings.FragmentIndex < DX12Local::k_MaxResourcesPerDraw);
+
+    size = Math::Align(size, GetConstantBufferOffsetAlignment());
+
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
 
-    int rootParamIndex = DX12Local::s_CurrentShaderObject->ResourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_CBV, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)];
+    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+    cbvDesc.BufferLocation = resourceData->Resource->GetGPUVirtualAddress() + offset;
+    cbvDesc.SizeInBytes = size;
+
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    frameData.RenderCommandList->SetGraphicsRootConstantBufferView(rootParamIndex, resourceData->Resource->GetGPUVirtualAddress() + offset);
+    DX12Local::s_Device->CreateConstantBufferView(&cbvDesc, frameData.ResourceDescriptorHeap.GetCPUHandle(DX12Local::GetShaderRegister(bindings) + DX12Local::k_ConstantBuffersDescriptorsOffset));
 }
 
 void GraphicsBackendDX12::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void* data)
@@ -1328,75 +1397,6 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
         dxVertexAttributes.push_back(desc);
     }
 
-    std::unordered_map<size_t, int> resourceBindingHashToRootParameterIndex;
-
-    const std::unordered_map<std::string, GraphicsBackendTextureInfo>& textures = *descriptor.Textures;
-    const std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& buffers = *descriptor.Buffers;
-    const std::unordered_map<std::string, GraphicsBackendSamplerInfo>& samplers = *descriptor.Samplers;
-
-    std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-    rootParameters.reserve(textures.size() + buffers.size() + samplers.size());
-
-    for (const auto& pair: buffers)
-    {
-        const std::shared_ptr<GraphicsBackendBufferInfo>& buffer = pair.second;
-        const GraphicsBackendResourceBindings& bindings = buffer->GetBinding();
-        const bool isConstant = buffer->IsConstant();
-
-        CD3DX12_ROOT_PARAMETER1 parameter{};
-        if (isConstant)
-            parameter.InitAsConstantBufferView(DX12Local::GetShaderRegister(bindings), bindings.Space, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, DX12Local::GetShaderVisibility(bindings));
-        else
-            parameter.InitAsShaderResourceView(DX12Local::GetShaderRegister(bindings), bindings.Space, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, DX12Local::GetShaderVisibility(bindings));
-        rootParameters.push_back(parameter);
-
-        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(isConstant ? D3D12_ROOT_PARAMETER_TYPE_CBV : D3D12_ROOT_PARAMETER_TYPE_SRV, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)] = rootParameters.size() - 1;
-    }
-
-    for (const auto& pair: textures)
-    {
-        const GraphicsBackendTextureInfo& texture = pair.second;
-        const GraphicsBackendResourceBindings& bindings = texture.TextureBindings;
-
-        CD3DX12_DESCRIPTOR_RANGE1* range = new CD3DX12_DESCRIPTOR_RANGE1();
-        range->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, DX12Local::GetShaderRegister(bindings), bindings.Space);
-
-        CD3DX12_ROOT_PARAMETER1 parameter{};
-        parameter.InitAsDescriptorTable(1, range, DX12Local::GetShaderVisibility(bindings));
-        rootParameters.push_back(parameter);
-
-        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, bindings)] = rootParameters.size() - 1;
-    }
-
-    for (const auto& pair: samplers)
-    {
-        const GraphicsBackendSamplerInfo& sampler = pair.second;
-        const GraphicsBackendResourceBindings& bindings = sampler.Bindings;
-
-        CD3DX12_DESCRIPTOR_RANGE1* range = new CD3DX12_DESCRIPTOR_RANGE1();
-        range->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, DX12Local::GetShaderRegister(bindings), bindings.Space);
-
-        CD3DX12_ROOT_PARAMETER1 parameter{};
-        parameter.InitAsDescriptorTable(1, range, DX12Local::GetShaderVisibility(bindings));
-        rootParameters.push_back(parameter);
-
-        resourceBindingHashToRootParameterIndex[DX12Local::GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, bindings)] = rootParameters.size() - 1;
-    }
-
-    D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc{};
-    rootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-    rootSignatureDesc.Desc_1_1.NumParameters = rootParameters.size();
-    rootSignatureDesc.Desc_1_1.pParameters = rootParameters.data();
-    rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-    ID3DBlob* rootSignatureBlob;
-    ID3DBlob* errorBlob;
-    if (!SUCCEEDED(D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &rootSignatureBlob, &errorBlob)))
-        throw std::runtime_error(static_cast<const char *>(errorBlob->GetBufferPointer()));
-
-    ID3D12RootSignature* rootSignature;
-    ThrowIfFailed(DX12Local::s_Device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
-
     const std::vector<GraphicsBackendShaderObject>& shaders = *descriptor.Shaders;
     ID3DBlob* vertexBlob = reinterpret_cast<ID3DBlob*>(shaders[0].ShaderObject);
     ID3DBlob* fragmentBlob = reinterpret_cast<ID3DBlob*>(shaders[1].ShaderObject);
@@ -1419,7 +1419,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
     psoDesc.InputLayout = { dxVertexAttributes.data(), static_cast<UINT>(dxVertexAttributes.size()) };
-    psoDesc.pRootSignature = rootSignature;
+    psoDesc.pRootSignature = DX12Local::s_RootSignature;
     psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexBlob);
     psoDesc.PS = hasColorTarget ? CD3DX12_SHADER_BYTECODE(fragmentBlob) : CD3DX12_SHADER_BYTECODE(nullptr, 0);
     psoDesc.RasterizerState = rasterizerDesc;
@@ -1436,18 +1436,10 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     ThrowIfFailed(DX12Local::s_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 
     if (descriptor.Name && !descriptor.Name->empty())
-    {
         DX12Local::SetObjectName(pso, (*descriptor.Name) + "_PSO");
-        DX12Local::SetObjectName(rootSignature, (*descriptor.Name) + "_RootSignature");
-    }
-
-    DX12Local::ShaderObject* shaderObject = new DX12Local::ShaderObject();
-    shaderObject->PSO = pso;
-    shaderObject->RootSignature = rootSignature;
-    shaderObject->ResourceBindingHashToRootParameterIndex = std::move(resourceBindingHashToRootParameterIndex);
 
     GraphicsBackendProgram program{};
-    program.Program = reinterpret_cast<uint64_t>(shaderObject);
+    program.Program = reinterpret_cast<uint64_t>(pso);
     return program;
 }
 
@@ -1459,9 +1451,8 @@ void GraphicsBackendDX12::DeleteShader(GraphicsBackendShaderObject shader)
 
 void GraphicsBackendDX12::DeleteProgram(GraphicsBackendProgram program)
 {
-    DX12Local::ShaderObject* shaderObject = reinterpret_cast<DX12Local::ShaderObject*>(program.Program);
-    shaderObject->PSO->Release();
-    shaderObject->RootSignature->Release();
+    ID3D12PipelineState* pso = reinterpret_cast<ID3D12PipelineState*>(program.Program);
+    pso->Release();
 }
 
 bool GraphicsBackendDX12::RequireStrictPSODescriptor()
@@ -1473,11 +1464,9 @@ void GraphicsBackendDX12::UseProgram(GraphicsBackendProgram program)
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
-    DX12Local::ShaderObject* shaderObject = reinterpret_cast<DX12Local::ShaderObject*>(program.Program);
-    frameData.RenderCommandList->SetGraphicsRootSignature(shaderObject->RootSignature);
-    frameData.RenderCommandList->SetPipelineState(shaderObject->PSO);
-
-    DX12Local::s_CurrentShaderObject = shaderObject;
+    ID3D12PipelineState* pso = reinterpret_cast<ID3D12PipelineState*>(program.Program);
+    frameData.RenderCommandList->SetGraphicsRootSignature(DX12Local::s_RootSignature);
+    frameData.RenderCommandList->SetPipelineState(pso);
 }
 
 void GraphicsBackendDX12::SetClearColor(float r, float g, float b, float a)
@@ -1504,6 +1493,8 @@ void GraphicsBackendDX12::DrawArraysInstanced(const GraphicsBackendGeometry& geo
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
+    frameData.RenderCommandList->SetGraphicsRootDescriptorTable(0, frameData.ResourceDescriptorHeap.GetGPUHandle(0));
+    frameData.RenderCommandList->SetGraphicsRootDescriptorTable(1, frameData.SamplerDescriptorHeap.GetGPUHandle(0));
     frameData.RenderCommandList->RSSetViewports(1, &DX12Local::s_CurrentViewport);
     frameData.RenderCommandList->RSSetScissorRects(1, &DX12Local::s_CurrentScissorsRect);
     frameData.RenderCommandList->IASetPrimitiveTopology(DX12Helpers::ToPrimitiveTopology(primitiveType));
@@ -1511,6 +1502,9 @@ void GraphicsBackendDX12::DrawArraysInstanced(const GraphicsBackendGeometry& geo
     frameData.RenderCommandList->DrawInstanced(indicesCount, instanceCount, firstIndex, 0);
 
     DX12Local::s_RenderTimestampActive = true;
+
+    frameData.ResourceDescriptorHeap.AdvanceIndex(DX12Local::k_ResourceDescriptorHeapAdvance);
+    frameData.SamplerDescriptorHeap.AdvanceIndex(DX12Local::k_SamplerDescriptorHeapAdvance);
 }
 
 void GraphicsBackendDX12::DrawElements(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType)
@@ -1524,6 +1518,8 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
+    frameData.RenderCommandList->SetGraphicsRootDescriptorTable(0, frameData.ResourceDescriptorHeap.GetGPUHandle(0));
+    frameData.RenderCommandList->SetGraphicsRootDescriptorTable(1, frameData.SamplerDescriptorHeap.GetGPUHandle(0));
     frameData.RenderCommandList->RSSetViewports(1, &DX12Local::s_CurrentViewport);
     frameData.RenderCommandList->RSSetScissorRects(1, &DX12Local::s_CurrentScissorsRect);
     frameData.RenderCommandList->IASetPrimitiveTopology(DX12Helpers::ToPrimitiveTopology(primitiveType));
@@ -1532,6 +1528,9 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
     frameData.RenderCommandList->DrawIndexedInstanced(elementsCount, instanceCount, 0, 0, 0);
 
     DX12Local::s_RenderTimestampActive = true;
+
+    frameData.ResourceDescriptorHeap.AdvanceIndex(DX12Local::k_ResourceDescriptorHeapAdvance);
+    frameData.SamplerDescriptorHeap.AdvanceIndex(DX12Local::k_SamplerDescriptorHeapAdvance);
 }
 
 void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& source, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)

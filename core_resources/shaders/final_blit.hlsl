@@ -21,15 +21,15 @@ struct Varyings
     float2 uv : TEXCOORD0;
 };
 
-cbuffer PerMaterialData
+cbuffer PerMaterialData : register(b4)
 {
     float _OneOverGamma;
     float _Exposure;
     uint _TonemappingMode;
 };
 
-Texture2D _BlitTexture;
-SamplerState sampler_BlitTexture;
+Texture2D _BlitTexture : register(t4);
+SamplerState sampler_BlitTexture : register(t4);
 
 half3 GammaCorrection(half3 color, float oneOverGamma)
 {

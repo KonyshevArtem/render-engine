@@ -1,16 +1,20 @@
 #include "graphics_buffer.h"
+#include "math_utils.h"
 
 #include <algorithm>
 
 GraphicsBuffer::GraphicsBuffer(uint64_t size, std::string name, bool doubleBuffered) :
-        m_Size(size),
+        m_Size(Math::Align(size, GraphicsBackend::Current()->GetConstantBufferOffsetAlignment())),
         m_Name(std::move(name)),
         m_DoubleBuffered(doubleBuffered)
 {
     for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
     {
         if (i == 0 || m_DoubleBuffered)
-            m_Buffer[i] = GraphicsBackend::Current()->CreateBuffer(size, m_Name + "_0", true);
+        {
+            // add extra alignment to the size to handle non-aligned offset
+            m_Buffer[i] = GraphicsBackend::Current()->CreateBuffer(size + GraphicsBackend::Current()->GetConstantBufferOffsetAlignment(), m_Name + "_0", true);
+        }
     }
 }
 

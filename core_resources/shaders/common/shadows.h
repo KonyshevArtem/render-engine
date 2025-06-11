@@ -14,21 +14,21 @@ struct PointLightShadowData
     float4 LightPosWS;
 };
 
-cbuffer Shadows
+cbuffer Shadows : register(b1)
 {
     ShadowData _DirLightShadow;
     ShadowData _SpotLightShadows[MAX_SPOT_LIGHT_SOURCES];
     PointLightShadowData _PointLightShadows[MAX_POINT_LIGHT_SOURCES];
 };
 
-Texture2D<float> _DirLightShadowMap;
-SamplerState sampler_DirLightShadowMap;
+Texture2D<float> _DirLightShadowMap : register(t0);
+SamplerState sampler_DirLightShadowMap : register(s0);
 
-Texture2DArray<float> _SpotLightShadowMapArray;
-SamplerState sampler_SpotLightShadowMapArray;
+Texture2DArray<float> _SpotLightShadowMapArray : register(t1);
+SamplerState sampler_SpotLightShadowMapArray : register(s1);
 
-Texture2DArray<float> _PointLightShadowMapArray;
-SamplerState sampler_PointLightShadowMapArray;
+Texture2DArray<float> _PointLightShadowMapArray : register(t2);
+SamplerState sampler_PointLightShadowMapArray : register(s2);
 
 bool isFragVisible(float fragZ)
 {

@@ -23,7 +23,7 @@ struct Varyings
     DECLARE_INSTANCE_ID_VARYING(4)
 };
 
-cbuffer PerMaterialData
+cbuffer PerMaterialData : register(b4)
 {
     float4 _Albedo_ST;
     float4 _NormalMap_ST;
@@ -33,14 +33,14 @@ cbuffer PerMaterialData
     float _ReflectionCubeLevels;
 };
 
-Texture2D _Albedo;
-SamplerState sampler_Albedo;
+Texture2D _Albedo : register(t4);
+SamplerState sampler_Albedo : register(s4);
 
-Texture2D _NormalMap;
-SamplerState sampler_NormalMap;
+Texture2D _NormalMap : register(t5);
+SamplerState sampler_NormalMap : register(s5);
 
-Texture2D _Data;
-SamplerState sampler_Data;
+Texture2D _Data : register(t6);
+SamplerState sampler_Data : register(s6);
 
 Varyings vertexMain(Attributes attributes)
 {

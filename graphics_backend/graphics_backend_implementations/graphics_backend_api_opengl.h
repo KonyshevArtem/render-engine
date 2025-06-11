@@ -32,6 +32,7 @@ public:
     GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data = nullptr) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
     void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
+    void BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount) override;
     void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
 
     void SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data) override;

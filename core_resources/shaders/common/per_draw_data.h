@@ -11,7 +11,7 @@ struct PerDrawDataStruct
 
     static uint _InstanceID;
 
-    StructuredBuffer<PerDrawDataStruct> InstanceMatricesBuffer;
+    StructuredBuffer<PerDrawDataStruct> InstanceMatricesBuffer : register(t0, space1);
 
     #define _ModelMatrix            InstanceMatricesBuffer[_InstanceID]._ModelMatrix
     #define _ModelNormalMatrix      InstanceMatricesBuffer[_InstanceID]._ModelNormalMatrix
@@ -24,7 +24,7 @@ struct PerDrawDataStruct
 
 #else
 
-    ConstantBuffer<PerDrawDataStruct> PerDrawData;
+    ConstantBuffer<PerDrawDataStruct> PerDrawData : register(b0);
 
     #define _ModelMatrix            PerDrawData._ModelMatrix
     #define _ModelNormalMatrix      PerDrawData._ModelNormalMatrix

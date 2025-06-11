@@ -25,7 +25,7 @@ struct SpotLight
     float CutOffCos;
 };
 
-cbuffer Lighting
+cbuffer Lighting : register(b2)
 {
     float3 _AmbientLight;
     int _PointLightsCount;
@@ -40,8 +40,8 @@ cbuffer Lighting
     SpotLight _SpotLights[MAX_SPOT_LIGHT_SOURCES];
 };
 
-TextureCube _ReflectionCube;
-SamplerState sampler_ReflectionCube;
+TextureCube _ReflectionCube : register(t3);
+SamplerState sampler_ReflectionCube : register(s3);
 
 /// Helpers ///
 

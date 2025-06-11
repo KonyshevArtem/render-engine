@@ -4,6 +4,7 @@
 namespace Math
 {
     float Lerp(float _a, float _b, float _t);
+    int Align(int x, int alignment);
 
     template<typename T>
     int Sign(T _val)

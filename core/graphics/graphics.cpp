@@ -278,46 +278,44 @@ namespace Graphics
         }
     }
 
-    bool TryFindBufferBindings(const std::string &name, const Shader& shader, GraphicsBackendResourceBindings& outBindings)
+    bool TryFindBufferInfo(const std::string &name, const Shader& shader, GraphicsBackendBufferInfo*& outInfo)
     {
         const auto &buffers = shader.GetBuffers();
 
         auto it = buffers.find(name);
         bool found = it != buffers.end();
         if (found)
-        {
-            outBindings = it->second->GetBinding();
-        }
-
+            outInfo = it->second.get();
         return found;
     }
 
-    void BindBuffer(const std::string& name, const GraphicsBackendBuffer& buffer, bool isConstant, const Shader& shader, int offset, int size)
+    void BindBuffer(const std::string& name, const GraphicsBackendBuffer& buffer, const Shader& shader, int offset, int size)
     {
-        GraphicsBackendResourceBindings bindings;
-        if (TryFindBufferBindings(name, shader, bindings))
+        GraphicsBackendBufferInfo* info;
+        if (TryFindBufferInfo(name, shader, info))
         {
-            if (isConstant)
-                GraphicsBackend::Current()->BindConstantBuffer(buffer, bindings, offset, size);
-            else
-                GraphicsBackend::Current()->BindBuffer(buffer, bindings, offset, size);
+            switch (info->GetBufferType())
+            {
+                case BufferType::RAW_BYTE_BUFFER:
+                    GraphicsBackend::Current()->BindBuffer(buffer, info->GetBinding(), offset, size);
+                case BufferType::STRUCTURED_BUFFER:
+                    GraphicsBackend::Current()->BindStructuredBuffer(buffer, info->GetBinding(), offset / info->GetSize(), info->GetSize(), size / info->GetSize());
+                case BufferType::CONSTANT_BUFFER:
+                    GraphicsBackend::Current()->BindConstantBuffer(buffer, info->GetBinding(), offset, size);
+            }
         }
     }
 
-    void BindBuffer(const std::string &name, const std::shared_ptr<GraphicsBuffer> &buffer, bool isConstant, const Shader& shader, int offset = 0)
+    void BindBuffer(const std::string &name, const std::shared_ptr<GraphicsBuffer> &buffer, const Shader& shader, int offset = 0)
     {
         if (buffer)
-        {
-            BindBuffer(name, buffer->GetBackendBuffer(), isConstant, shader, offset, buffer->GetSize());
-        }
+            BindBuffer(name, buffer->GetBackendBuffer(), shader, offset, buffer->GetSize());
     }
 
-    void BindBuffer(const std::string &name, const std::shared_ptr<RingBuffer>& buffer, bool isConstant, const Shader& shader, int offset = 0)
+    void BindBuffer(const std::string &name, const std::shared_ptr<RingBuffer>& buffer, const Shader& shader, int offset = 0)
     {
         if (buffer)
-        {
-            BindBuffer(name, buffer->GetBackendBuffer(), isConstant, shader, buffer->GetCurrentElementOffset() + offset, buffer->GetElementSize());
-        }
+            BindBuffer(name, buffer->GetBackendBuffer(), shader, buffer->GetCurrentElementOffset() + offset, buffer->GetElementSize());
     }
 
     void SetupShaderPass(const Material &material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
@@ -330,12 +328,12 @@ namespace Graphics
         TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
         GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, isLinear, depthTargetFormat, primitiveType));
 
-        BindBuffer(GlobalConstants::LightingBufferName, s_LightingDataBuffer, true, shaderPass);
-        BindBuffer(GlobalConstants::CameraDataBufferName, s_CameraDataBuffer, true, shaderPass);
-        BindBuffer(GlobalConstants::ShadowsBufferName, s_ShadowsDataBuffer, true, shaderPass);
-        BindBuffer(GlobalConstants::PerDrawDataBufferName, s_PerDrawDataBuffer, true, shaderPass);
-        BindBuffer(GlobalConstants::PerMaterialDataBufferName, perMaterialDataBuffer, true, shaderPass);
-        BindBuffer(GlobalConstants::InstanceMatricesBufferName, s_InstancingMatricesBuffer, false, shaderPass);
+        BindBuffer(GlobalConstants::LightingBufferName, s_LightingDataBuffer, shaderPass);
+        BindBuffer(GlobalConstants::CameraDataBufferName, s_CameraDataBuffer, shaderPass);
+        BindBuffer(GlobalConstants::ShadowsBufferName, s_ShadowsDataBuffer, shaderPass);
+        BindBuffer(GlobalConstants::PerDrawDataBufferName, s_PerDrawDataBuffer, shaderPass);
+        BindBuffer(GlobalConstants::PerMaterialDataBufferName, perMaterialDataBuffer, shaderPass);
+        BindBuffer(GlobalConstants::InstanceMatricesBufferName, s_InstancingMatricesBuffer, shaderPass);
 
         SetTextures(s_GlobalTextures, shaderPass);
         SetTextures(material.GetTextures(), shaderPass);

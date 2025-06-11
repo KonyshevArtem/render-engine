@@ -35,6 +35,8 @@ Required for compiling Android builds. Can be downloaded from official website.
 * Android SDK and NDK must also be installed
 * Set `JAVA_HOME` environment variable
   * Example: `setx JAVA_HOME C:\Program Files\Android\Android Studio\jbr`
+* Set `NDK_ROOT` environment variable
+  * Example: `setx NDK_ROOT C:\Program Files (x86)\Android\AndroidNDK\android-ndk-r23c`
 
 ### CMake
 

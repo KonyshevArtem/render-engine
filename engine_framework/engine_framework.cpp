@@ -46,6 +46,7 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
     //ShadowsDemo::Load();
 
     GraphicsBackend::Current()->Flush();
+    GraphicsBackend::Current()->Present();
 }
 
 void EngineFramework::TickMainLoop(int width, int height)

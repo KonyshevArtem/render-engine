@@ -36,7 +36,7 @@ Compress()
         args+=("-mips")
     fi
 
-    $EXECUTABLE $args
+    $EXECUTABLE "${args[@]}"
 }
 
 Compress Texture2D $FORMAT 0 1 car/car_albedo   $INPUT_PATH/car/car_albedo.tga

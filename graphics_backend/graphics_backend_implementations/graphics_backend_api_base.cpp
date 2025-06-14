@@ -11,6 +11,7 @@ GraphicsBackendBase *GraphicsBackendBase::Create()
 {
     const bool openGL = Arguments::Contains("-opengl");
     const bool dx12 = Arguments::Contains("-dx12");
+    const bool metal = Arguments::Contains("-metal");
 
 #ifdef RENDER_BACKEND_OPENGL
     if (openGL && !dx12)
@@ -20,7 +21,7 @@ GraphicsBackendBase *GraphicsBackendBase::Create()
 #endif
 
 #ifdef RENDER_BACKEND_METAL
-    if (backend == "Metal")
+    if (metal)
     {
         return new GraphicsBackendMetal();
     }

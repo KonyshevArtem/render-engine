@@ -28,12 +28,12 @@ echo "Start compressing textures for ${PLATFORM} ${FORMAT}"
 
 Compress()
 {
-    args="-type $1 -format $2 -output $OUTPUT_PATH/$5 -inputs $6"
+    args=("-type" "$1" "-format" "$2" "-output" "$OUTPUT_PATH/$5" "-inputs" "$6")
     if [ $3 -gt 0 ]; then
-        args+=" -linear"
+        args+=("-linear")
     fi
     if [ $4 -gt 0 ]; then
-        args+=" -mips"
+        args+=("-mips")
     fi
 
     $EXECUTABLE $args

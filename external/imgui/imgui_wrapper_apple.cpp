@@ -6,13 +6,14 @@
 #include "imgui_impl_metal.h"
 #include "imgui_impl_osx.h"
 #include "MetalKit/MetalKit.hpp"
+#include "graphics_backend_api.h"
 
 namespace ImGuiWrapper
 {
     static MTK::View* s_View;
     static MTL::CommandQueue* s_RenderQueue;
 
-    void Init(const std::string& graphicsBackend, const std::function<void(void*)>& fillImGuiData)
+    void Init()
     {
         struct ImGuiData
         {
@@ -21,7 +22,7 @@ namespace ImGuiWrapper
         };
 
         ImGuiData data;
-        fillImGuiData(static_cast<void*>(&data));
+        GraphicsBackend::Current()->FillImGuiInitData(static_cast<void*>(&data));
         s_View = data.View;
         s_RenderQueue = data.RenderQueue;
 
@@ -44,7 +45,7 @@ namespace ImGuiWrapper
         ImGuiWrapperCommon::NewFrame();
     }
 
-    void Render(const std::function<void(void*)>& fillImGuiData)
+    void Render()
     {
         MTL::RenderPassDescriptor* descriptor = s_View->currentRenderPassDescriptor();
         descriptor->colorAttachments()->object(0)->setLoadAction(MTL::LoadActionLoad);

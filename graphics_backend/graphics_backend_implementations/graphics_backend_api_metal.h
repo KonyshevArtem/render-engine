@@ -27,7 +27,8 @@ public:
     void Init(void *data) override;
     GraphicsBackendName GetName() override;
     void InitNewFrame() override;
-    void FillImGuiData(void* data) override;
+    void FillImGuiInitData(void* data) override;
+    void FillImGuiFrameData(void* data) override;
 
     GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) override;
     GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name) override;
@@ -46,6 +47,7 @@ public:
     GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data) override;
     void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
     void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
+    void BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount) override;
     void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
 
     void SetBufferData(const GraphicsBackendBuffer &buffer, long offset, long size, const void *data) override;
@@ -56,13 +58,12 @@ public:
     GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) override;
     void DeleteGeometry(const GraphicsBackendGeometry &geometry) override;
 
-    void SetCullFace(CullFace cullFace) override;
-    void SetCullFaceOrientation(CullFaceOrientation orientation) override;
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
     void SetScissorRect(int x, int y, int width, int height) override;
 
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) override;
-    GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) override;
+    GraphicsBackendShaderObject CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name) override;
+    GraphicsBackendProgram CreateProgram(const GraphicsBackendProgramDescriptor& descriptor) override;
     void DeleteShader(GraphicsBackendShaderObject shader) override;
     void DeleteProgram(GraphicsBackendProgram program) override;
     void UseProgram(GraphicsBackendProgram program) override;
@@ -78,8 +79,8 @@ public:
 
     void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) override;
 
-    void PushDebugGroup(const std::string& name) override;
-    void PopDebugGroup() override;
+    void PushDebugGroup(const std::string& name, GPUQueue queue) override;
+    void PopDebugGroup(GPUQueue queue) override;
     GraphicsBackendProfilerMarker PushProfilerMarker() override;
     void PopProfilerMarker(GraphicsBackendProfilerMarker& marker) override;
     bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults) override;
@@ -89,10 +90,6 @@ public:
     void BeginCopyPass(const std::string& name) override;
     void EndCopyPass() override;
 
-    GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name) override;
-    void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
-    void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) override;
-
     GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) override;
     void DeleteFence(const GraphicsBackendFence& fence) override;
     void SignalFence(const GraphicsBackendFence& fence) override;
@@ -100,6 +97,10 @@ public:
 
     void Flush() override;
     void Present() override;
+
+    void TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor& descriptor, ResourceState state, GPUQueue queue) override;
+    void TransitionTexture(const GraphicsBackendTexture& texture, ResourceState state, GPUQueue queue) override;
+    void TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue) override;
 
 private:
     MTL::Device* m_Device = nullptr;

@@ -28,6 +28,10 @@ Required for compiling Windows builds. Can be downloaded from official website.
 
 Required for compiling Mac and iOS builds. Can be downloaded from AppStore.
 
+Additionally, set `DEPLOYMENT_TARGET` to your current MacOS version in:
+* `.idea/cmake.xml` if you are building from CLion
+* `build_scripts/build_executable.sh` if you are building using scripts
+
 ### Android Studio
 
 Required for compiling Android builds. Can be downloaded from official website.

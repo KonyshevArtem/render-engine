@@ -1,3 +1,5 @@
+#ifdef RENDER_BACKEND_DX12
+
 #include "dx12_helpers.h"
 
 const char* DX12Helpers::ToSemanticName(VertexAttributeSemantic semantic)
@@ -549,3 +551,5 @@ D3D12_RESOURCE_STATES DX12Helpers::ToResourceState(ResourceState state)
             return D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE;
     }
 }
+
+#endif

@@ -195,7 +195,7 @@ void GraphicsBackendOpenGL::Init(void* data)
 
     OpenGLHelpers::InitBindings();
 
-#ifdef RENDER_ENGINE_WINDOWS
+#if RENDER_ENGINE_WINDOWS
     int attribs[] = {
             WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
             WGL_CONTEXT_MINOR_VERSION_ARB, 2,
@@ -1003,7 +1003,9 @@ void GraphicsBackendOpenGL::Present()
 {
     OpenGLLocal::s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
+#if RENDER_ENGINE_WINDOWS
     SwapBuffers(static_cast<HDC>(OpenGLLocal::s_DeviceContext));
+#endif
 }
 
 void GraphicsBackendOpenGL::TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor &target, ResourceState state, GPUQueue queue)

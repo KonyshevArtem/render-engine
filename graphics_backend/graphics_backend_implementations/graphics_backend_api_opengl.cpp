@@ -607,10 +607,11 @@ GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBack
         glObjectLabel(GL_VERTEX_ARRAY, geometry.VertexArrayObject, name.length(), name.c_str());
     }
 
-    for (const auto &descriptor : vertexAttributes)
+    for (uint32_t i = 0; i < vertexAttributes.size(); ++i)
     {
-        glEnableVertexAttribArray(descriptor.Index);
-        glVertexAttribPointer(descriptor.Index, descriptor.Dimensions, OpenGLHelpers::ToVertexAttributeDataType(descriptor.DataType), descriptor.IsNormalized ? GL_TRUE : GL_FALSE, descriptor.Stride, reinterpret_cast<const void *>(descriptor.Offset));
+        const GraphicsBackendVertexAttributeDescriptor& descriptor = vertexAttributes[i];
+        glEnableVertexAttribArray(i);
+        glVertexAttribPointer(i, descriptor.Dimensions, OpenGLHelpers::ToVertexAttributeDataType(descriptor.DataType), descriptor.IsNormalized ? GL_TRUE : GL_FALSE, descriptor.Stride, reinterpret_cast<const void *>(descriptor.Offset));
     }
 
     return geometry;

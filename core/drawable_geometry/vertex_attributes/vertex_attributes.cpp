@@ -4,7 +4,6 @@
 size_t GetHash_Internal(const GraphicsBackendVertexAttributeDescriptor &attribute)
 {
     size_t hash = 0;
-    hash = Hash::Combine(hash, std::hash<uint8_t>{}(attribute.Index));
     hash = Hash::Combine(hash, std::hash<uint8_t>{}(attribute.Dimensions));
     hash = Hash::Combine(hash, std::hash<VertexAttributeDataType>{}(attribute.DataType));
     hash = Hash::Combine(hash, std::hash<uint8_t>{}(attribute.IsNormalized));

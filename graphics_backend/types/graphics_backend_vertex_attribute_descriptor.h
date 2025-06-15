@@ -8,7 +8,6 @@
 struct GraphicsBackendVertexAttributeDescriptor
 {
     VertexAttributeSemantic Semantic;
-    uint8_t Index;
     uint8_t Dimensions;
     VertexAttributeDataType DataType;
     uint8_t IsNormalized;

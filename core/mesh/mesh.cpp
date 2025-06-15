@@ -31,18 +31,18 @@ Mesh::Mesh(const std::vector<Vector3>& vertices,
     uint64_t indexSize = sizeof(int) * indexes.size();
     uint64_t vertexSize = posSize + uvSize + normalsSize + tangentsSize;
 
-    m_VertexAttributes.Add({VertexAttributeSemantic::POSITION, 0, 3, VertexAttributeDataType::FLOAT, false, vertexSize, 0});
+    m_VertexAttributes.Add({VertexAttributeSemantic::POSITION, 3, VertexAttributeDataType::FLOAT, false, vertexSize, 0});
     if (hasNormals)
     {
-        m_VertexAttributes.Add({VertexAttributeSemantic::NORMAL, 1, 3, VertexAttributeDataType::FLOAT, false, vertexSize, posSize});
+        m_VertexAttributes.Add({VertexAttributeSemantic::NORMAL, 3, VertexAttributeDataType::FLOAT, false, vertexSize, posSize});
     }
     if (hasUV)
     {
-        m_VertexAttributes.Add({VertexAttributeSemantic::TEXCOORD, 2, 2, VertexAttributeDataType::FLOAT, false, vertexSize, posSize + normalsSize});
+        m_VertexAttributes.Add({VertexAttributeSemantic::TEXCOORD, 2, VertexAttributeDataType::FLOAT, false, vertexSize, posSize + normalsSize});
     }
     if (hasTangents)
     {
-        m_VertexAttributes.Add({VertexAttributeSemantic::TANGENT, 3, 3, VertexAttributeDataType::FLOAT, false, vertexSize, posSize + normalsSize + uvSize});
+        m_VertexAttributes.Add({VertexAttributeSemantic::TANGENT, 3, VertexAttributeDataType::FLOAT, false, vertexSize, posSize + normalsSize + uvSize});
     }
 
     auto vertexData = std::vector<uint8_t>(vertexSize * vertexCount);

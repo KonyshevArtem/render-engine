@@ -123,7 +123,15 @@ void WriteShaderSource(const std::filesystem::path& outputDirPath, spirv_cross::
     std::filesystem::path outputPath = outputDirPath / (isVertexShader ? "vs" : "ps");
     std::filesystem::create_directories(outputPath.parent_path());
 
-    std::string shaderSource = compiler->compile();
+    std::string shaderSource;
+    try
+    {
+        shaderSource = compiler->compile();
+    }
+    catch (std::exception e)
+    {
+        std::cout << e.what() << std::endl;
+    }
 
     FILE *fp = fopen(outputPath.string().c_str(), "w");
     fwrite(shaderSource.c_str(), shaderSource.size(), 1, fp);

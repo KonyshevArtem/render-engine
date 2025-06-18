@@ -135,7 +135,7 @@ namespace Graphics
             {
                 lightingData.PointLightsData[lightingData.PointLightsCount].Position = light->Position.ToVector4(1);
                 lightingData.PointLightsData[lightingData.PointLightsCount].Intensity = light->Intensity;
-                lightingData.PointLightsData[lightingData.PointLightsCount].Attenuation = light->Attenuation;
+                lightingData.PointLightsData[lightingData.PointLightsCount].Range = light->Range;
                 ++lightingData.PointLightsCount;
             }
             else if (light->Type == LightType::SPOT && lightingData.SpotLightsCount < GlobalConstants::MaxSpotLightSources)
@@ -143,7 +143,7 @@ namespace Graphics
                 lightingData.SpotLightsData[lightingData.SpotLightsCount].Position = light->Position.ToVector4(1);
                 lightingData.SpotLightsData[lightingData.SpotLightsCount].Direction = light->Rotation * Vector3(0, 0, 1);
                 lightingData.SpotLightsData[lightingData.SpotLightsCount].Intensity = light->Intensity;
-                lightingData.SpotLightsData[lightingData.SpotLightsCount].Attenuation = light->Attenuation;
+                lightingData.SpotLightsData[lightingData.SpotLightsCount].Range = light->Range;
                 lightingData.SpotLightsData[lightingData.SpotLightsCount].CutOffCosine = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
                 ++lightingData.SpotLightsCount;
             }

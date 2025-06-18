@@ -18,7 +18,7 @@ public:
     Quaternion Rotation;
     LightType  Type;
     Vector3    Intensity;
-    float      Attenuation;
+    float      Range;
     float      CutOffAngle;
 };
 

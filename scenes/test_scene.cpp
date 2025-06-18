@@ -215,12 +215,12 @@ void TestScene::Init()
     auto pointLight         = std::make_shared<Light>();
     pointLight->Position    = Vector3(-3, -3, 4);
     pointLight->Intensity   = Vector3(10, 0, 0);
-    pointLight->Attenuation = 0.3f;
+    pointLight->Range       = 10;
     pointLight->Type        = LightType::POINT;
 
     m_SpotLight              = std::make_shared<Light>();
     m_SpotLight->Intensity   = Vector3(10, 10, 10);
-    m_SpotLight->Attenuation = 0.005f;
+    m_SpotLight->Range       = 40;
     m_SpotLight->CutOffAngle = 15;
     m_SpotLight->Type        = LightType::SPOT;
 
@@ -228,7 +228,7 @@ void TestScene::Init()
     spotLight2->Position    = Vector3(-9, 5, 5.5f);
     spotLight2->Rotation    = Quaternion::AngleAxis(90, Vector3(1, 0, 0));
     spotLight2->Intensity   = Vector3(1, 1, 1);
-    spotLight2->Attenuation = 0.01f;
+    spotLight2->Range       = 15;
     spotLight2->CutOffAngle = 15;
     spotLight2->Type        = LightType::SPOT;
 

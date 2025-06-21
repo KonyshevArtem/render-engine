@@ -127,8 +127,9 @@ float3 getLightBlinnPhong(float3 posWS, float3 normalWS, float3 albedo, float4 s
         float3 lightDirWS = normalize(_PointLights[i].PositionWS - posWS);
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
         float attenuationTerm = saturate(lightAttenuation(dist, _PointLights[i].Range));
+        float shadowTerm = getPointLightShadowTerm(i, posWS, lightAngleCos);
 
-        directLighting += albedo * _PointLights[i].Intensity * lightAngleCos * attenuationTerm;
+        directLighting += albedo * _PointLights[i].Intensity * lightAngleCos * attenuationTerm * shadowTerm;
         directLighting += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
     }
 

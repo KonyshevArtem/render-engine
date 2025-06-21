@@ -14,6 +14,11 @@ CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CCom
     std::vector<LPCWSTR> vszArgs;
     if (backend != GRAPHICS_BACKEND_DX12)
         vszArgs.push_back(L"-spirv");
+    if (Arguments::Contains("-debug"))
+    {
+        vszArgs.push_back(L"-Zi");
+        vszArgs.push_back(L"-Qembed_debug");
+    }
     vszArgs.push_back(L"-E");
     vszArgs.push_back(isVertexShader ? L"vertexMain" : L"fragmentMain");
     vszArgs.push_back(L"-T");

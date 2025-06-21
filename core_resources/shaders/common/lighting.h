@@ -12,7 +12,7 @@ struct PointLight
     float3 PositionWS;
     float Padding0;
     float3 Intensity;
-    float Attenuation;
+    float Range;
 };
 
 struct SpotLight
@@ -20,12 +20,12 @@ struct SpotLight
     float3 PositionWS;
     float Padding0;
     float3 DirectionWS;
-    float Attenuation;
+    float Range;
     float3 Intensity;
     float CutOffCos;
 };
 
-cbuffer Lighting
+cbuffer Lighting : register(b2)
 {
     float3 _AmbientLight;
     int _PointLightsCount;
@@ -40,10 +40,23 @@ cbuffer Lighting
     SpotLight _SpotLights[MAX_SPOT_LIGHT_SOURCES];
 };
 
-TextureCube _ReflectionCube;
-SamplerState sampler_ReflectionCube;
+TextureCube _ReflectionCube : register(t3);
+SamplerState sampler_ReflectionCube : register(s3);
 
 /// Helpers ///
+
+float lightAttenuation(float distance, float range)
+{
+    // https://www.desmos.com/calculator/scz7zhonfw
+    float t = 1 - distance / range;
+    const float p1 = 0;
+    const float p2 = 0;
+    const float p3 = 1;
+
+    float a = p2 + (1 - t) * (p1 - p2);
+    float b = p2 + t * (p3 - p2);
+    return a + t * (b - a);
+}
 
 half3 sampleReflection(float cubeMips, float3 normalWS, float3 posWS, float roughness, float3 cameraPosWS)
 {
@@ -107,23 +120,30 @@ float3 getLightBlinnPhong(float3 posWS, float3 normalWS, float3 albedo, float4 s
 
     for (int i = 0; i < _PointLightsCount; ++i)
     {
+        float dist = distance(_PointLights[i].PositionWS, posWS);
+        if (dist > _PointLights[i].Range)
+            continue;
+
         float3 lightDirWS = normalize(_PointLights[i].PositionWS - posWS);
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
-        float dist = distance(_PointLights[i].PositionWS, posWS);
-        float attenuationTerm = 1 / (1 + _PointLights[i].Attenuation * dist * dist);
+        float attenuationTerm = saturate(lightAttenuation(dist, _PointLights[i].Range));
+        float shadowTerm = getPointLightShadowTerm(i, posWS, lightAngleCos);
 
-        directLighting += albedo * _PointLights[i].Intensity * lightAngleCos * attenuationTerm;
+        directLighting += albedo * _PointLights[i].Intensity * lightAngleCos * attenuationTerm * shadowTerm;
         directLighting += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
     }
 
     for (int i = 0; i < _SpotLightsCount; ++i)
     {
+        float dist = distance(_SpotLights[i].PositionWS, posWS);
+        if (dist > _SpotLights[i].Range)
+            continue;
+
         float3 lightDirWS = normalize(_SpotLights[i].PositionWS - posWS);
         float cutOffCos = clamp(dot(_SpotLights[i].DirectionWS, -lightDirWS), 0.0, 1.0);
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
-        float dist = distance(_SpotLights[i].PositionWS, posWS);
 
-        float attenuationTerm = 1 / (1 + _SpotLights[i].Attenuation * dist * dist);
+        float attenuationTerm = saturate(lightAttenuation(dist, _SpotLights[i].Range));
         attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0.0, 1.0);
         attenuationTerm *= step(_SpotLights[i].CutOffCos, cutOffCos);
 
@@ -222,10 +242,13 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
 
     for (int i = 0; i < _PointLightsCount; ++i)
     {
+        float dist = distance(_PointLights[i].PositionWS, posWS);
+        if (dist > _PointLights[i].Range)
+            continue;
+
         float3 lightDirWS = normalize(_PointLights[i].PositionWS - posWS);
         float NdotL = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
-        float dist = distance(_PointLights[i].PositionWS, posWS);
-        float attenuationTerm = 1 / (1 + _PointLights[i].Attenuation * dist * dist);
+        float attenuationTerm = saturate(lightAttenuation(dist, _PointLights[i].Range));
         float shadowTerm = getPointLightShadowTerm(i, posWS, NdotL);
         float3 radiance = _PointLights[i].Intensity * NdotL * attenuationTerm * shadowTerm;
 
@@ -235,12 +258,15 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
     
     for (int i = 0; i < _SpotLightsCount; ++i)
     {
+        float dist = distance(_SpotLights[i].PositionWS, posWS);
+        if (dist > _SpotLights[i].Range)
+            continue;
+
         float3 lightDirWS = normalize(_SpotLights[i].PositionWS - posWS);
         float cutOffCos = clamp(dot(_SpotLights[i].DirectionWS, -lightDirWS), 0.0, 1.0);
         float NdotL = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
-        float dist = distance(_SpotLights[i].PositionWS, posWS);
-    
-        float attenuationTerm = 1 / (1 + _SpotLights[i].Attenuation * dist * dist);
+
+        float attenuationTerm = saturate(lightAttenuation(dist, _SpotLights[i].Range));
         attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0.0, 1.0);
         attenuationTerm *= step(_SpotLights[i].CutOffCos, cutOffCos);
         float shadowTerm = getSpotLightShadowTerm(i, posWS, NdotL);

@@ -10,7 +10,7 @@
 
 #if defined(OPENGL_SHADER) || defined(GLES_SHADER)
     #define SCREEN_UV_UPSIDE_DOWN 0
-#elif defined(METAL_SHADER)
+#elif defined(METAL_SHADER) || defined(DX12_SHADER)
     #define SCREEN_UV_UPSIDE_DOWN 1
 #endif
 

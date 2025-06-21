@@ -286,7 +286,7 @@ void SceneHierarchyWindow::DrawGameObjectsHierarchy(std::unordered_set<std::shar
 
 bool ShouldSelectAll(std::unordered_set<std::shared_ptr<GameObject>> &selectedGameObjects)
 {
-    if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_A)))
+    if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyDown(ImGuiKey_A))
     {
         selectedGameObjects.clear();
         return true;

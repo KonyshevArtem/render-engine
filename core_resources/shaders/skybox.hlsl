@@ -12,8 +12,8 @@ struct Varyings
     float3 CubemapUV : TEXCOORD0;
 };
 
-TextureCube _Skybox;
-SamplerState sampler_Skybox;
+TextureCube _Skybox : register(t4);
+SamplerState sampler_Skybox : register(s4);
 
 Varyings vertexMain(Attributes attributes)
 {

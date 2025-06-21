@@ -11,7 +11,8 @@ void to_json(nlohmann::json& json, const Bindings& bindings)
 {
     json = nlohmann::json{
             {"Vertex",   bindings.Vertex},
-            {"Fragment", bindings.Fragment}
+            {"Fragment", bindings.Fragment},
+            {"Space",    bindings.Space}
     };
 }
 
@@ -19,6 +20,7 @@ void to_json(nlohmann::json& json, const BufferDesc& bufferDesc)
 {
     json = nlohmann::json{
             {"Size",      bufferDesc.Size},
+            {"BufferType", bufferDesc.BufferType},
             {"Bindings",  nlohmann::json(bufferDesc.Bindings)},
             {"Variables", nlohmann::json(bufferDesc.Variables)},
     };

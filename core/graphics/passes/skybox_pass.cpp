@@ -29,10 +29,10 @@ void SkyboxPass::Execute(const Context& ctx)
     if (m_Mesh == nullptr || ctx.Skybox == nullptr)
         return;
 
-    auto debugGroup = GraphicsBackendDebugGroup("Skybox pass");
+    auto debugGroup = GraphicsBackendDebugGroup("Skybox pass", GPUQueue::RENDER);
 
     const Matrix4x4 modelMatrix = Matrix4x4::Translation(ctx.ViewMatrix.Invert().GetPosition());
     material->SetTexture("_Skybox", ctx.Skybox);
 
-    Graphics::Draw(*m_Mesh, *material, modelMatrix, 0);
+    Graphics::Draw(*m_Mesh, *material, modelMatrix);
 }

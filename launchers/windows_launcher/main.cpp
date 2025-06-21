@@ -86,25 +86,23 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     if (!window)
         return 0;
 
-    HDC deviceContext = GetDC(window);
-
-    PIXELFORMATDESCRIPTOR pixelFormatDescriptor = {};
-    pixelFormatDescriptor.nSize = sizeof(pixelFormatDescriptor);
-    pixelFormatDescriptor.nVersion = 1;
-    pixelFormatDescriptor.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    pixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
-    pixelFormatDescriptor.cColorBits = 32;
-    pixelFormatDescriptor.cDepthBits = 24;
-    pixelFormatDescriptor.iLayerType = PFD_MAIN_PLANE;
-    int pixelFormat = ChoosePixelFormat(deviceContext, &pixelFormatDescriptor);
-    SetPixelFormat(deviceContext, pixelFormat, &pixelFormatDescriptor);
-
-    HGLRC glContext = wglCreateContext(deviceContext);
-    wglMakeCurrent(deviceContext, glContext);
+    int argc;
+    LPWSTR* arguments = CommandLineToArgvW(pCmdLine, &argc);
+    std::vector<char*> argv(argc);
+    for (int i = 0; i < argc; ++i)
+    {
+        size_t argSize;
+        wcstombs_s(&argSize, nullptr, 0, arguments[i], 0);
+        argv[i] = new char[argSize];
+        wcstombs_s(nullptr, argv[i], argSize, arguments[i], argSize);
+    }
 
     ShowWindow(window, nCmdShow);
 
-    EngineFramework::Initialize(nullptr, window, "OpenGL");
+    EngineFramework::Initialize(nullptr, window, argv.data(), argc);
+
+    for (int i = 0; i < argc; ++i)
+        delete[] argv[i];
 
     MSG msg = {};
     while (msg.message != WM_QUIT)
@@ -120,20 +118,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                 PostQuitMessage(0);
 
             RECT rect;
-            if (GetWindowRect(window, &rect))
+            if (GetClientRect(window, &rect))
             {
                 int width = rect.right - rect.left;
                 int height = rect.bottom - rect.top;
                 EngineFramework::TickMainLoop(width, height);
             }
-
-            SwapBuffers(deviceContext);
         }
     }
 
-    wglMakeCurrent(nullptr, nullptr);
-    wglDeleteContext(glContext);
-    ReleaseDC(window, deviceContext);
+    EngineFramework::Shutdown();
     DestroyWindow(window);
 
     return 0;

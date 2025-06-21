@@ -2,14 +2,6 @@
 #include "common/per_draw_data.h"
 #include "common/lighting.h"
 
-struct PerInstanceDataStruct
-{
-    float4 _Color;
-    float3 _Padding;
-    float _Size;
-};
-PerInstanceDataBuffer(PerInstanceDataStruct);
-
 struct Attributes
 {
     float3 vertPositionOS   : POSITION;
@@ -31,7 +23,7 @@ struct Varyings
     DECLARE_INSTANCE_ID_VARYING(4)
 };
 
-cbuffer PerMaterialData
+cbuffer PerMaterialData : register(b4)
 {
     float4 _Albedo_ST;
     float4 _NormalMap_ST;
@@ -41,14 +33,14 @@ cbuffer PerMaterialData
     float _ReflectionCubeLevels;
 };
 
-Texture2D _Albedo;
-SamplerState sampler_Albedo;
+Texture2D _Albedo : register(t4);
+SamplerState sampler_Albedo : register(s4);
 
-Texture2D _NormalMap;
-SamplerState sampler_NormalMap;
+Texture2D _NormalMap : register(t5);
+SamplerState sampler_NormalMap : register(s5);
 
-Texture2D _Data;
-SamplerState sampler_Data;
+Texture2D _Data : register(t6);
+SamplerState sampler_Data : register(s6);
 
 Varyings vertexMain(Attributes attributes)
 {
@@ -57,12 +49,7 @@ Varyings vertexMain(Attributes attributes)
     SETUP_INSTANCE_ID(attributes)
     TRANSFER_INSTANCE_ID_VARYING(vars)
 
-    float3 vertPos = attributes.vertPositionOS;
-#ifdef _PER_INSTANCE_DATA
-    vertPos *= GET_PER_INSTANCE_VALUE(_Size);
-#endif
-
-    vars.PositionWS = mul(_ModelMatrix, float4(vertPos, 1)).xyz;
+    vars.PositionWS = mul(_ModelMatrix, float4(attributes.vertPositionOS, 1)).xyz;
     vars.NormalWS = normalize(mul(_ModelNormalMatrix, float4(attributes.vertNormalOS, 0)).xyz);
 #ifdef _NORMAL_MAP
     vars.TangentWS = normalize(mul(_ModelNormalMatrix, float4(attributes.vertTangentOS, 0)).xyz);
@@ -94,9 +81,6 @@ half4 fragmentMain(Varyings vars) : SV_Target
 #endif
 
     float4 albedo = float4(_Albedo.Sample(sampler_Albedo, vars.UV * _Albedo_ST.zw + _Albedo_ST.xy));
-#ifdef _PER_INSTANCE_DATA
-    albedo *= GET_PER_INSTANCE_VALUE(_Color);
-#endif
 
 #ifdef _REFLECTION
     half3 reflection = sampleReflection(_ReflectionCubeLevels, normalWS, vars.PositionWS.xyz, roughness, _CameraPosWS);

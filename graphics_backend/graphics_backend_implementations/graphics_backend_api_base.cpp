@@ -1,23 +1,34 @@
 #include "graphics_backend_api_base.h"
 #include "graphics_backend_api_opengl.h"
 #include "graphics_backend_api_metal.h"
+#include "graphics_backend_api_dx12.h"
 #include "enums/texture_internal_format.h"
 #include "enums/texture_type.h"
+#include "enums/framebuffer_attachment.h"
+#include "arguments.h"
 
-GraphicsBackendBase *GraphicsBackendBase::Create(const std::string &backend)
+GraphicsBackendBase *GraphicsBackendBase::Create()
 {
+    const bool openGL = Arguments::Contains("-opengl");
+    const bool dx12 = Arguments::Contains("-dx12");
+    const bool metal = Arguments::Contains("-metal");
+
 #ifdef RENDER_BACKEND_OPENGL
-    if (backend == "OpenGL")
+    if (openGL && !dx12)
     {
         return new GraphicsBackendOpenGL();
     }
 #endif
 
 #ifdef RENDER_BACKEND_METAL
-    if (backend == "Metal")
+    if (metal)
     {
         return new GraphicsBackendMetal();
     }
+#endif
+
+#ifdef RENDER_BACKEND_DX12
+    return new GraphicsBackendDX12();
 #endif
 
     return nullptr;
@@ -177,4 +188,20 @@ int GraphicsBackendBase::GetBlockBytes(TextureInternalFormat format)
         default:
             return 0;
     }
+}
+
+bool GraphicsBackendBase::IsDepthFormat(TextureInternalFormat format)
+{
+    return format == TextureInternalFormat::DEPTH_16 ||
+            format == TextureInternalFormat::DEPTH_24 ||
+            format == TextureInternalFormat::DEPTH_32 ||
+            format == TextureInternalFormat::DEPTH_24_STENCIL_8 ||
+            format == TextureInternalFormat::DEPTH_32_STENCIL_8;
+}
+
+bool GraphicsBackendBase::IsDepthAttachment(FramebufferAttachment attachment)
+{
+    return attachment == FramebufferAttachment::DEPTH_ATTACHMENT ||
+            attachment == FramebufferAttachment::STENCIL_ATTACHMENT ||
+            attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
 }

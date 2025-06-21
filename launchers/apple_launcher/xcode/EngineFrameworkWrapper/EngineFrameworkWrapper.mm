@@ -5,7 +5,8 @@
 
 + (void) Initialize:(MTKView*)view
 {
-    EngineFramework::Initialize(nullptr, (__bridge void*)view, "Metal");
+    char* argv = "-metal";
+    EngineFramework::Initialize(nullptr, (__bridge void*)view, &argv, 1);
 }
 
 + (void) TickMainLoop:(int)width height:(int)height

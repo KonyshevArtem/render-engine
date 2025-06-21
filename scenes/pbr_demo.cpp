@@ -65,7 +65,7 @@ void PBRDemo::Init()
     pointLight->Position    = {7.5f, 7.5f, 0};
     pointLight->Intensity   = {0, 1, 0};
     pointLight->Type        = LightType::POINT;
-    pointLight->Attenuation = 0.01f;
+    pointLight->Range       = 15;
     Lights.push_back(pointLight);
 
     auto spotLight         = std::make_shared<Light>();
@@ -73,7 +73,7 @@ void PBRDemo::Init()
     spotLight->Intensity   = {0, 0, 1};
     spotLight->Type        = LightType::SPOT;
     spotLight->CutOffAngle = 30;
-    spotLight->Attenuation = 0.001f;
+    spotLight->Range       = 30;
     Lights.push_back(spotLight);
 
     Camera::Current->SetPosition({7.5f, 7.5f, -15});

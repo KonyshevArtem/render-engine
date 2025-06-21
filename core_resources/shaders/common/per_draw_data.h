@@ -9,15 +9,9 @@ struct PerDrawDataStruct
 
 #ifdef _INSTANCING
 
-    struct PerInstanceIndexStruct
-    {
-        uint Index;
-    };
-
     static uint _InstanceID;
 
-    StructuredBuffer<PerDrawDataStruct> InstanceMatricesBuffer;
-    StructuredBuffer<PerInstanceIndexStruct> PerInstanceIndices;
+    StructuredBuffer<PerDrawDataStruct> InstanceMatricesBuffer : register(t0, space1);
 
     #define _ModelMatrix            InstanceMatricesBuffer[_InstanceID]._ModelMatrix
     #define _ModelNormalMatrix      InstanceMatricesBuffer[_InstanceID]._ModelNormalMatrix
@@ -28,12 +22,9 @@ struct PerDrawDataStruct
     #define SETUP_INSTANCE_ID(input) _InstanceID = input.InstanceID;
     #define TRANSFER_INSTANCE_ID_VARYING(output) output.InstanceID = _InstanceID;
 
-    #define GET_PER_INSTANCE_VALUE(var) PerInstanceData[PerInstanceIndices[_InstanceID].Index].var
-    #define PerInstanceDataBuffer(structType) StructuredBuffer<structType> PerInstanceData
-
 #else
 
-    ConstantBuffer<PerDrawDataStruct> PerDrawData;
+    ConstantBuffer<PerDrawDataStruct> PerDrawData : register(b0);
 
     #define _ModelMatrix            PerDrawData._ModelMatrix
     #define _ModelNormalMatrix      PerDrawData._ModelNormalMatrix
@@ -43,9 +34,6 @@ struct PerDrawDataStruct
 
     #define SETUP_INSTANCE_ID(input)
     #define TRANSFER_INSTANCE_ID_VARYING(output)
-
-    #define GET_PER_INSTANCE_VALUE(var) PerInstanceData.var
-    #define PerInstanceDataBuffer(structType) ConstantBuffer<structType> PerInstanceData
 
 #endif
 

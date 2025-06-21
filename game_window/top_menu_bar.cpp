@@ -7,6 +7,25 @@
 #include "windows/scene_hierarchy_window.h"
 #include "windows/graphics_settings_window.h"
 #include "windows/profiler_window.h"
+#include "graphics_backend_api.h"
+
+namespace TopMenuBarLocal
+{
+    std::string GetBackendName(GraphicsBackendName name)
+    {
+        switch (name)
+        {
+            case GraphicsBackendName::OPENGL:
+                return "OpenGL";
+            case GraphicsBackendName::GLES:
+                return "GLES";
+            case GraphicsBackendName::METAL:
+                return "Metal";
+            case GraphicsBackendName::DX12:
+                return "DX12";
+        }
+    }
+}
 
 void DrawEngineMenu(std::function<void()> &closeWindow)
 {
@@ -67,9 +86,17 @@ void TopMenuBar::Draw(std::function<void()> closeWindow)
 {
     if (ImGui::BeginMainMenuBar())
     {
+        const float menuWidth = ImGui::GetContentRegionAvail().x;
+
         DrawEngineMenu(closeWindow);
         DrawDebugMenu();
         DrawWindowsMenu();
+
+        const std::string backendName = TopMenuBarLocal::GetBackendName(GraphicsBackend::Current()->GetName());
+        const float textWidth = ImGui::CalcTextSize(backendName.c_str()).x;
+
+        ImGui::SetCursorPosX(menuWidth - textWidth);
+        ImGui::Text("%s", backendName.c_str());
 
         ImGui::EndMainMenuBar();
     }

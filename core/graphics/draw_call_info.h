@@ -16,11 +16,8 @@ struct DrawCallInfo
     const Material* Material = nullptr;
     std::vector<Matrix4x4> ModelMatrices;
     Bounds AABB{};
-    std::vector<uint32_t> PerInstanceDataIndices;
-    uint32_t PerInstanceDataOffset = 0;
     bool CastShadows = false;
     bool Instanced = false;
-    size_t InstancesDataIndex = 0;
 };
 
 #endif

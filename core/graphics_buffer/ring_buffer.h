@@ -13,7 +13,7 @@ class GraphicsBackendBuffer;
 class RingBuffer
 {
 public:
-    RingBuffer(uint64_t elementSize, const std::string& name);
+    RingBuffer(uint64_t elementSize, uint64_t elementsCount, const std::string& name);
     ~RingBuffer() = default;
 
     const GraphicsBackendBuffer& GetBackendBuffer() const
@@ -22,7 +22,6 @@ public:
     }
 
     void SetData(const void *data, uint64_t offset, uint64_t size);
-    void Reset();
 
     inline uint64_t GetCurrentElementOffset() const
     {

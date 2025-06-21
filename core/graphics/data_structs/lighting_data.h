@@ -14,14 +14,14 @@ struct LightingData
     {
         Vector4 Position{};
         Vector3 Intensity{};
-        float Attenuation = 0;
+        float Range = 0;
     };
 
     struct SpotLightData
     {
         Vector4 Position{};
         Vector3 Direction{};
-        float Attenuation = 0;
+        float Range = 0;
         Vector3 Intensity{};
         float CutOffCosine = 0;
     };

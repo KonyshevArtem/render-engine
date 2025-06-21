@@ -9,7 +9,6 @@ cbuffer PerMaterialData
 struct Attributes
 {
     float3 PositionOS   : POSITION;
-    float3 Normal       : NORMAL;
     float2 TexCoord     : TEXCOORD;
 };
 
@@ -19,8 +18,8 @@ struct Varyings
     float2 Uv             : TEXCOORD0;
 };
 
-Texture2D _BlitTexture;
-SamplerState sampler_BlitTexture;
+Texture2D _BlitTexture : register(t4);
+SamplerState sampler_BlitTexture : register(s4);
 
 Varyings vertexMain(Attributes attributes)
 {

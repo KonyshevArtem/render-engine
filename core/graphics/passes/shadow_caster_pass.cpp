@@ -81,7 +81,7 @@ void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& ren
             Profiler::Marker marker("Prepare Spot Light");
 
             const Matrix4x4 view = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
-            const Matrix4x4 proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, shadowsDistance);
+            const Matrix4x4 proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, std::min(light->Range, shadowsDistance));
 
             m_SpotLightMatrices[spotLightIndex] = {view, proj};
             m_SpotLightRenderQueues[spotLightIndex].Prepare(light->Position, renderers, renderSettings);
@@ -93,7 +93,7 @@ void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& ren
         {
             Profiler::Marker marker("Prepare Point Light");
 
-            const Matrix4x4 proj = Matrix4x4::Perspective(90, 1, 0.01f, shadowsDistance);
+            const Matrix4x4 proj = Matrix4x4::Perspective(90, 1, 0.01f, std::min(light->Range, shadowsDistance));
             for (int i = 0; i < 6; ++i)
             {
                 const Matrix4x4 view = pointLightViewMatrices[i] * Matrix4x4::Translation(-light->Position);
@@ -132,7 +132,7 @@ void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& ren
             const Bounds boundsViewSpace = viewMatrix * shadowCastersBounds;
             const Vector3 extentsViewSpace = boundsViewSpace.GetExtents();
             const float maxExtentViewSpace = std::max(extentsViewSpace.x, extentsViewSpace.y);
-            const Matrix4x4 projMatrix = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0, shadowsDistance);
+            const Matrix4x4 projMatrix = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0.01, shadowsDistance);
 
             m_DirectionLightMatrices = {viewMatrix, projMatrix};
             m_ShadowsGPUData.DirectionalLightViewProjMatrix = biasMatrix * projMatrix * viewMatrix;

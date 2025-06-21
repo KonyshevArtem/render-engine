@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 enum class TextureType;
 enum class TextureInternalFormat : uint16_t;
@@ -25,6 +26,7 @@ enum class TextureWrapMode;
 enum class TextureFilteringMode;
 enum class CubemapFace;
 enum class FenceType;
+enum class ResourceState : uint64_t;
 
 class GraphicsBackendTexture;
 class GraphicsBackendSampler;
@@ -36,19 +38,21 @@ struct GraphicsBackendTextureInfo;
 class GraphicsBackendBufferInfo;
 struct GraphicsBackendResourceBindings;
 struct GraphicsBackendRenderTargetDescriptor;
-struct GraphicsBackendDepthStencilState;
 struct GraphicsBackendColorAttachmentDescriptor;
 struct GraphicsBackendFence;
+struct GraphicsBackendSamplerInfo;
+struct GraphicsBackendProgramDescriptor;
 
 class GraphicsBackendBase
 {
 public:
-    static GraphicsBackendBase *Create(const std::string &backend);
+    static GraphicsBackendBase *Create();
 
     virtual void Init(void *data) = 0;
     virtual GraphicsBackendName GetName() = 0;
     virtual void InitNewFrame();
-    virtual void FillImGuiData(void* data) = 0;
+    virtual void FillImGuiInitData(void* data) = 0;
+    virtual void FillImGuiFrameData(void* data) = 0;
     uint64_t GetFrameNumber() const;
 
     virtual GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) = 0;
@@ -68,6 +72,7 @@ public:
     virtual GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data = nullptr) = 0;
     virtual void DeleteBuffer(const GraphicsBackendBuffer &buffer) = 0;
     virtual void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;
+    virtual void BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount) = 0;
     virtual void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;
 
     virtual void SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data) = 0;
@@ -78,12 +83,12 @@ public:
     virtual GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) = 0;
     virtual void DeleteGeometry(const GraphicsBackendGeometry &geometry) = 0;
 
-    virtual void SetCullFace(CullFace cullFace) = 0;
-    virtual void SetCullFaceOrientation(CullFaceOrientation orientation) = 0;
     virtual void SetViewport(int x, int y, int width, int height, float near, float far) = 0;
+    virtual void SetScissorRect(int x, int y, int width, int height) = 0;
 
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) = 0;
-    virtual GraphicsBackendProgram CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) = 0;
+    virtual GraphicsBackendShaderObject CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name) = 0;
+    virtual GraphicsBackendProgram CreateProgram(const GraphicsBackendProgramDescriptor& descriptor) = 0;
     virtual void DeleteShader(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
     virtual void UseProgram(GraphicsBackendProgram program) = 0;
@@ -99,8 +104,8 @@ public:
 
     virtual void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) = 0;
 
-    virtual void PushDebugGroup(const std::string& name) = 0;
-    virtual void PopDebugGroup() = 0;
+    virtual void PushDebugGroup(const std::string& name, GPUQueue queue) = 0;
+    virtual void PopDebugGroup(GPUQueue queue) = 0;
     virtual GraphicsBackendProfilerMarker PushProfilerMarker() = 0;
     virtual void PopProfilerMarker(GraphicsBackendProfilerMarker& marker) = 0;
     virtual bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults) = 0;
@@ -110,10 +115,6 @@ public:
     virtual void BeginCopyPass(const std::string& name) = 0;
     virtual void EndCopyPass() = 0;
 
-    virtual GraphicsBackendDepthStencilState CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name) = 0;
-    virtual void DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
-    virtual void SetDepthStencilState(const GraphicsBackendDepthStencilState& state) = 0;
-
     virtual GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) = 0;
     virtual void DeleteFence(const GraphicsBackendFence& fence) = 0;
     virtual void SignalFence(const GraphicsBackendFence& fence) = 0;
@@ -122,10 +123,16 @@ public:
     virtual void Flush() = 0;
     virtual void Present() = 0;
 
+    virtual void TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor& descriptor, ResourceState state, GPUQueue queue) = 0;
+    virtual void TransitionTexture(const GraphicsBackendTexture& texture, ResourceState state, GPUQueue queue) = 0;
+    virtual void TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue) = 0;
+
     bool IsTexture3D(TextureType type);
     bool IsCompressedTextureFormat(TextureInternalFormat format);
     int GetBlockSize(TextureInternalFormat format);
     int GetBlockBytes(TextureInternalFormat format);
+    bool IsDepthFormat(TextureInternalFormat format);
+    bool IsDepthAttachment(FramebufferAttachment attachment);
 
 private:
     uint64_t m_FrameCount;

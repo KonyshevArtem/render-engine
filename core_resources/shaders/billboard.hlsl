@@ -12,13 +12,13 @@ struct Varyings
     float2 Uv             : TEXCOORD;
 };
 
-cbuffer PerMaterialData
+cbuffer PerMaterialData : register(b4)
 {
     float2 _Size;
 };
 
-Texture2D _Texture;
-SamplerState sampler_Texture;
+Texture2D _Texture : register(t4);
+SamplerState sampler_Texture : register(s4);
 
 Varyings vertexMain(Attributes input, uint vid : SV_VertexID)
 {

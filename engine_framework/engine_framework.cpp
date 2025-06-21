@@ -10,6 +10,7 @@
 #include "editor/profiler/profiler.h"
 #include "imgui_wrapper.h"
 #include "file_system/file_system.h"
+#include "arguments.h"
 
 GameWindow* window = nullptr;
 
@@ -27,11 +28,13 @@ void display(int width, int height)
     Input::CleanUp();
 }
 
-void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInitData, const char* graphicsBackend)
+void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInitData, char** argv, int argc)
 {
+    Arguments::Init(argv, argc);
+
     FileSystem::Init(fileSystemData);
-    GraphicsBackend::Init(graphicsBackendInitData, graphicsBackend);
-    ImGuiWrapper::Init([](void* imGuiData){ GraphicsBackend::Current()->FillImGuiData(imGuiData); });
+    GraphicsBackend::Init(graphicsBackendInitData);
+    ImGuiWrapper::Init();
 
     window = new GameWindow(display);
 
@@ -43,6 +46,7 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
     //ShadowsDemo::Load();
 
     GraphicsBackend::Current()->Flush();
+    GraphicsBackend::Current()->Present();
 }
 
 void EngineFramework::TickMainLoop(int width, int height)

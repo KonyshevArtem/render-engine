@@ -13,6 +13,8 @@ set(
         OpenFBX
         RenderEngine
         RenderEngineLauncher
+        Arguments
+        Hash
 )
 
 foreach (LIB ${DEPENDENCIES})

@@ -3,11 +3,13 @@
 
 #include "texture_compressor_backend.h"
 #include "texture_compressor_formats.h"
+#include "arguments.h"
+#include "string_split.h"
 
 void PrintHelp()
 {
-    std::cout << "Parameters: <texture type STRING> <texture format STRING> <is linear BOOL>"
-                 "<generate mipmaps BOOL> <output path STRING> <texture paths STRING>\n";
+    std::cout << "Parameters: -type <texture type STRING> -format <texture format STRING> -linear <is linear BOOL>"
+                 "-mips <generate mipmaps BOOL> -output <output path STRING> -inputs <texture paths STRING>\n";
 
     std::cout << "\nAvailable texture types:\n";
     for (const auto &typeInfo: TextureCompressorFormats::GetTextureTypesInfo())
@@ -26,23 +28,23 @@ void PrintHelp()
 
 int main(int argc, char **argv)
 {
-    if (argc < 7)
+    Arguments::Init(argv, argc);
+
+    if (!Arguments::Contains("-type") ||
+        !Arguments::Contains("-format") ||
+        !Arguments::Contains("-output") ||
+        !Arguments::Contains("-inputs"))
     {
         PrintHelp();
         return 0;
     }
 
-    std::string textureType = argv[1];
-    std::string textureFormat = argv[2];
-    bool isLinear = std::stoi(argv[3]) == 1;
-    bool generateMips = std::stoi(argv[4]) == 1;
-    std::string outputPath = argv[5];
-
-    std::vector<std::string> texturePaths;
-    for (int i = 6; i < argc; ++i)
-    {
-        texturePaths.emplace_back(argv[i]);
-    }
+    std::string textureType = Arguments::Get("-type");
+    std::string textureFormat = Arguments::Get("-format");
+    bool isLinear = Arguments::Contains("-linear");
+    bool generateMips = Arguments::Contains("-mips");
+    std::string outputPath = Arguments::Get("-output");
+    std::vector<std::string> texturePaths = StringSplit::Split(Arguments::Get("-inputs"), ',');
 
     TextureCompressorBackend::CompressTexture(texturePaths, textureType, textureFormat, isLinear, generateMips, outputPath);
 

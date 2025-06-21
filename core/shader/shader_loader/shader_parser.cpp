@@ -5,6 +5,7 @@ void from_json(const nlohmann::json& json, GraphicsBackendResourceBindings& bind
 {
     json.at("Vertex").get_to(bindings.VertexIndex);
     json.at("Fragment").get_to(bindings.FragmentIndex);
+    json.at("Space").get_to(bindings.Space);
 }
 
 void from_json(const nlohmann::json& json, GraphicsBackendTextureInfo& info)
@@ -23,14 +24,16 @@ struct nlohmann::adl_serializer<std::shared_ptr<GraphicsBackendBufferInfo>>
     static std::shared_ptr<GraphicsBackendBufferInfo> from_json(const nlohmann::json& json)
     {
         int size;
+        BufferType bufferType;
         GraphicsBackendResourceBindings bindings;
         std::unordered_map<std::string, int> variables;
 
         json.at("Bindings").get_to(bindings);
         json.at("Size").get_to(size);
+        json.at("BufferType").get_to(bufferType);
         json.at("Variables").get_to(variables);
 
-        auto info = std::make_shared<GraphicsBackendBufferInfo>(size, variables);
+        auto info = std::make_shared<GraphicsBackendBufferInfo>(size, bufferType, variables);
         info->SetBindings(bindings);
         return info;
     }

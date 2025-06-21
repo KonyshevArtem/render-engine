@@ -7,10 +7,10 @@ class GraphicsBackendProgram
 {
 private:
     uint64_t Program;
-    uint64_t BlendState;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;
+    friend class GraphicsBackendDX12;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_PROGRAM_H

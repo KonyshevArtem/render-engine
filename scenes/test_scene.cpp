@@ -66,7 +66,7 @@ void TestScene::Init()
     auto standardOpaqueShader = Shader::Load("core_resources/shaders/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
     auto standardOpaqueDataMapShader = Shader::Load("core_resources/shaders/standard", {"_DATA_MAP", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
     auto standardTransparentShader = Shader::Load("core_resources/shaders/standard", {"_RECEIVE_SHADOWS"}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA}, {}, {});
-    auto standardInstancingShader = Shader::Load("core_resources/shaders/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_PER_INSTANCE_DATA", "_INSTANCING"}, {}, {}, {});
+    auto standardInstancingShader = Shader::Load("core_resources/shaders/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_INSTANCING"}, {}, {}, {});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("core_resources/models/cube.fbx");
@@ -202,8 +202,6 @@ void TestScene::Init()
         instancedCube->Renderer = std::make_shared<MeshRenderer>(instancedCube, cubeMesh, sphereMaterial);
         instancedCube->SetLocalPosition({-40.0f + 80.0f * x / gridSize, -15.0f - 2.5f * y, -40.0f + 80.0f * z / gridSize});
         instancedCube->Renderer->CastShadows = false;
-        instancedCube->Renderer->SetVector("_Color", {colorDistribution(random), colorDistribution(random), colorDistribution(random), 1});
-        instancedCube->Renderer->SetFloat("_Size", sizeDistribution(random));
 
         instancedCube->SetParent(spheresParent);
     }
@@ -217,12 +215,12 @@ void TestScene::Init()
     auto pointLight         = std::make_shared<Light>();
     pointLight->Position    = Vector3(-3, -3, 4);
     pointLight->Intensity   = Vector3(10, 0, 0);
-    pointLight->Attenuation = 0.3f;
+    pointLight->Range       = 10;
     pointLight->Type        = LightType::POINT;
 
     m_SpotLight              = std::make_shared<Light>();
     m_SpotLight->Intensity   = Vector3(10, 10, 10);
-    m_SpotLight->Attenuation = 0.005f;
+    m_SpotLight->Range       = 40;
     m_SpotLight->CutOffAngle = 15;
     m_SpotLight->Type        = LightType::SPOT;
 
@@ -230,7 +228,7 @@ void TestScene::Init()
     spotLight2->Position    = Vector3(-9, 5, 5.5f);
     spotLight2->Rotation    = Quaternion::AngleAxis(90, Vector3(1, 0, 0));
     spotLight2->Intensity   = Vector3(1, 1, 1);
-    spotLight2->Attenuation = 0.01f;
+    spotLight2->Range       = 15;
     spotLight2->CutOffAngle = 15;
     spotLight2->Type        = LightType::SPOT;
 

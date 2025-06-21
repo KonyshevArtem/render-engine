@@ -2,6 +2,20 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Cuttlefish" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/FreeImage" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/ISPCTextureCompressor" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/PVRTexToolLib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/astc-encoder" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/astc-encoder/Source/GoogleTest" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/bc7enc_rdo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/compressonator" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/etc2comp" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/glm" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/libsquish" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/DirectX-Headers" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/SPIRV-Cross" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/imgui/imgui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/json" vcs="Git" />
   </component>
 </project>

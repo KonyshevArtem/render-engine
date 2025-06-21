@@ -2,7 +2,7 @@
 #include "renderer/renderer.h"
 #include "material/material.h"
 #include "shader/shader.h"
-#include "utils/utils.h"
+#include "hash.h"
 #include "global_constants.h"
 #include "graphics/render_settings/render_settings.h"
 
@@ -10,7 +10,7 @@ std::size_t GetDrawCallInstancingHash(const DrawCallInfo& drawCallInfo)
 {
     const std::size_t materialHash = std::hash<const Material*>{}(drawCallInfo.Material);
     const std::size_t geometryHash = std::hash<const DrawableGeometry*>{}(drawCallInfo.Geometry);
-    return Utils::HashCombine(materialHash, geometryHash);
+    return Hash::Combine(materialHash, geometryHash);
 }
 
 void SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& settings, std::vector<DrawCallInfo>& outDrawCalls)
@@ -31,11 +31,8 @@ void SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& renderers, con
                     material,
                     {renderer->GetModelMatrix()},
                     renderer->GetAABB(),
-                    {renderer->GetInstanceDataIndex()},
-                    renderer->GetInstanceDataOffset(),
                     renderer->CastShadows,
-                    false,
-                    {}
+                    false
                 };
                 outDrawCalls.push_back(info);
             }
@@ -81,7 +78,6 @@ void BatchDrawCalls(std::vector<DrawCallInfo>& outDrawCalls)
 
         DrawCallInfo* instancedDrawCall = it->second;
         instancedDrawCall->ModelMatrices.push_back(drawCall.ModelMatrices[0]);
-        instancedDrawCall->PerInstanceDataIndices.push_back(drawCall.PerInstanceDataIndices[0]);
         instancedDrawCall->AABB = instancedDrawCall->AABB.Combine(drawCall.AABB);
 
         outDrawCalls[i] = outDrawCalls[outDrawCalls.size() - 1];

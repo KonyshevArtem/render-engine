@@ -1,52 +1,39 @@
 #include "graphics_buffer_wrapper.h"
 #include "graphics_buffer.h"
 #include "shader/shader.h"
-#include "shader/shader_pass/shader_pass.h"
 #include "types/graphics_backend_buffer_info.h"
 
 GraphicsBufferWrapper::GraphicsBufferWrapper(const std::shared_ptr<Shader>& shader, const std::string& bufferName, const std::string& debugName)
 {
-    int passesCount = shader->PassesCount();
-    m_PassBuffers.resize(passesCount);
-    m_PassBuffersInfo.resize(passesCount);
+    const auto &buffers = shader->GetBuffers();
 
-    for (int i = 0; i < passesCount; ++i)
+    auto it = buffers.find(bufferName);
+    if (it != buffers.end())
     {
-        const auto &shaderPass = shader->GetPass(i);
-        const auto &buffers = shaderPass->GetBuffers();
+        std::string name = debugName;
+        name.append("_");
+        name.append(bufferName);
 
-        auto it = buffers.find(bufferName);
-        if (it != buffers.end())
-        {
-            std::string name = debugName;
-            name.append("_");
-            name.append(bufferName);
-
-            const auto &bufferInfo = it->second;
-            m_PassBuffers[i] = std::make_shared<GraphicsBuffer>(bufferInfo->GetSize(), name, false);
-            m_PassBuffersInfo[i] = bufferInfo;
-        }
-        else
-        {
-            m_PassBuffers[i] = nullptr;
-            m_PassBuffersInfo[i] = nullptr;
-        }
+        const auto &bufferInfo = it->second;
+        m_Buffer = std::make_shared<GraphicsBuffer>(bufferInfo->GetSize(), name, false);
+        m_BufferInfo = bufferInfo;
+    }
+    else
+    {
+        m_Buffer = nullptr;
+        m_BufferInfo = nullptr;
     }
 }
 
 void GraphicsBufferWrapper::TrySetVariable(const std::string &variableName, const void *data, uint64_t size)
 {
-    for (int i = 0; i < m_PassBuffersInfo.size(); ++i)
+    if (m_BufferInfo)
     {
-        const auto &bufferInfo = m_PassBuffersInfo[i];
-        if (bufferInfo)
+        const auto &bufferVariables = m_BufferInfo->GetVariables();
+        auto it = bufferVariables.find(variableName);
+        if (it != bufferVariables.end())
         {
-            const auto &bufferVariables = bufferInfo->GetVariables();
-            auto it = bufferVariables.find(variableName);
-            if (it != bufferVariables.end())
-            {
-                m_PassBuffers[i]->SetData(data, it->second, size);
-            }
+            m_Buffer->SetData(data, it->second, size);
         }
     }
 }

@@ -15,150 +15,200 @@
 #include "types/graphics_backend_texture_info.h"
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
-#include "types/graphics_backend_depth_stencil_state.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_fence.h"
 #include "types/graphics_backend_profiler_marker.h"
+#include "types/graphics_backend_sampler_info.h"
+#include "types/graphics_backend_program_descriptor.h"
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
+#include "arguments.h"
 
 #include <stdexcept>
 #include <cassert>
 #include <array>
 #include <chrono>
 
-struct DepthStencilState
+#if __has_include("windows.h")
+#include <windows.h>
+#endif
+
+namespace OpenGLLocal
 {
-    GLboolean DepthWrite;
-    GLenum DepthFunction;
-};
-
-struct BlendState
-{
-    GLenum SourceFactor;
-    GLenum DestinationFactor;
-    bool Enabled;
-};
-
-struct DebugMessageType
-{
-    GLenum Type;
-    bool Enabled;
-};
-
-struct BufferData
-{
-    uint64_t GLBuffer;
-    uint8_t* Data;
-};
-
-struct RenderTargetState
-{
-    GLuint Target;
-    GLbitfield ClearFlags;
-    bool IsBackbuffer;
-    bool IsEnabled;
-
-    TextureType TextureType;
-    int Level;
-    int Layer;
-};
-
-void* s_Window;
-GLuint s_Framebuffers[GraphicsBackend::GetMaxFramesInFlight()][2];
-RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
-uint64_t s_DebugGroupId = 0;
-uint64_t s_TimestampDifference = 0;
-GLsync s_FrameFinishFence[GraphicsBackend::GetMaxFramesInFlight()];
-
-std::array s_DebugMessageTypes =
-{
-    DebugMessageType{GL_DEBUG_TYPE_ERROR, true},
-    DebugMessageType{GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, true},
-    DebugMessageType{GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, true},
-    DebugMessageType{GL_DEBUG_TYPE_PORTABILITY, true},
-    DebugMessageType{GL_DEBUG_TYPE_PERFORMANCE, true},
-    DebugMessageType{GL_DEBUG_TYPE_MARKER, false},
-    DebugMessageType{GL_DEBUG_TYPE_PUSH_GROUP, false},
-    DebugMessageType{GL_DEBUG_TYPE_POP_GROUP, false},
-    DebugMessageType{GL_DEBUG_TYPE_OTHER, false}
-};
-
-void DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
-{
-    auto GetSourceName = [source]() -> std::string
+    struct BlendState
     {
-        switch (source)
-        {
-            case GL_DEBUG_SOURCE_API:
-                return "OpenGL API";
-            case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-                return "Window System";
-            case GL_DEBUG_SOURCE_SHADER_COMPILER:
-                return "Shader Compiler";
-            case GL_DEBUG_SOURCE_THIRD_PARTY:
-                return "Third Party";
-            case GL_DEBUG_SOURCE_APPLICATION:
-                return "Application";
-            case GL_DEBUG_SOURCE_OTHER:
-                return "Other";
-        }
+        GLenum SourceFactor;
+        GLenum DestinationFactor;
+        bool Enabled;
     };
 
-    auto GetTypeName = [type]() -> std::string
+    struct ProgramData
     {
+        GLuint Program;
+        BlendState BlendState;
+        GLenum CullFace;
+        GLenum CullFaceOrientation;
+        GLenum DepthFunction;
+        GLboolean DepthWrite;
+    };
+
+    struct DebugMessageType
+    {
+        GLenum Type;
+        bool Enabled;
+    };
+
+    struct BufferData
+    {
+        uint64_t GLBuffer;
+        uint8_t* Data;
+    };
+
+    struct RenderTargetState
+    {
+        GLuint Target;
+        GLbitfield ClearFlags;
+        bool IsBackbuffer;
+        bool IsEnabled;
+
+        TextureType TextureType;
+        int Level;
+        int Layer;
+    };
+
+    void* s_Window;
+    void* s_DeviceContext;
+
+    GLuint s_Framebuffers[GraphicsBackend::GetMaxFramesInFlight()][2];
+    OpenGLLocal::RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
+    uint64_t s_DebugGroupId = 0;
+    uint64_t s_TimestampDifference = 0;
+    GLsync s_FrameFinishFence[GraphicsBackend::GetMaxFramesInFlight()];
+
+    std::array s_DebugMessageTypes =
+    {
+        DebugMessageType{GL_DEBUG_TYPE_ERROR, true},
+        DebugMessageType{GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, true},
+        DebugMessageType{GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, true},
+        DebugMessageType{GL_DEBUG_TYPE_PORTABILITY, true},
+        DebugMessageType{GL_DEBUG_TYPE_PERFORMANCE, true},
+        DebugMessageType{GL_DEBUG_TYPE_MARKER, false},
+        DebugMessageType{GL_DEBUG_TYPE_PUSH_GROUP, false},
+        DebugMessageType{GL_DEBUG_TYPE_POP_GROUP, false},
+        DebugMessageType{GL_DEBUG_TYPE_OTHER, false}
+    };
+
+    void DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+    {
+        auto GetSourceName = [source]() -> std::string
+        {
+            switch (source)
+            {
+                case GL_DEBUG_SOURCE_API:
+                    return "OpenGL API";
+                case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+                    return "Window System";
+                case GL_DEBUG_SOURCE_SHADER_COMPILER:
+                    return "Shader Compiler";
+                case GL_DEBUG_SOURCE_THIRD_PARTY:
+                    return "Third Party";
+                case GL_DEBUG_SOURCE_APPLICATION:
+                    return "Application";
+                case GL_DEBUG_SOURCE_OTHER:
+                    return "Other";
+            }
+        };
+
+        auto GetTypeName = [type]() -> std::string
+        {
+            switch (type)
+            {
+                case GL_DEBUG_TYPE_ERROR:
+                    return "Error";
+                case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+                    return "Undefined Behaviour";
+                case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+                    return "Deprecated Behaviour";
+                case GL_DEBUG_TYPE_PORTABILITY:
+                    return "Portability";
+                case GL_DEBUG_TYPE_PERFORMANCE:
+                    return "Performance";
+            }
+        };
+
         switch (type)
         {
             case GL_DEBUG_TYPE_ERROR:
-                return "Error";
             case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-                return "Undefined Behaviour";
+                Debug::LogErrorFormat("[GraphicsBackend] [{}] [{}] {}", GetSourceName(), GetTypeName(), std::string(message, length));
+                break;
             case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-                return "Deprecated Behaviour";
             case GL_DEBUG_TYPE_PORTABILITY:
-                return "Portability";
             case GL_DEBUG_TYPE_PERFORMANCE:
-                return "Performance";
+                Debug::LogWarningFormat("[GraphicsBackend] [{}] [{}] {}", GetSourceName(), GetTypeName(), std::string(message, length));
+                break;
         }
-    };
-
-    switch (type)
-    {
-        case GL_DEBUG_TYPE_ERROR:
-        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-            Debug::LogErrorFormat("[GraphicsBackend] [{}] [{}] {}", GetSourceName(), GetTypeName(), std::string(message, length));
-            break;
-        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        case GL_DEBUG_TYPE_PORTABILITY:
-        case GL_DEBUG_TYPE_PERFORMANCE:
-            Debug::LogWarningFormat("[GraphicsBackend] [{}] [{}] {}", GetSourceName(), GetTypeName(), std::string(message, length));
-            break;
     }
-}
 
-void ResetRenderTargetStates()
-{
-    constexpr int max = static_cast<int>(FramebufferAttachment::MAX);
-    for (int i = 0; i < max; ++i)
+    void ResetRenderTargetStates()
     {
-        const FramebufferAttachment attachment = static_cast<FramebufferAttachment>(i);
+        constexpr int max = static_cast<int>(FramebufferAttachment::MAX);
+        for (int i = 0; i < max; ++i)
+        {
+            const FramebufferAttachment attachment = static_cast<FramebufferAttachment>(i);
 
-        RenderTargetState& state = s_RenderTargetStates[i];
-        state.Target = 0;
-        state.ClearFlags = 0;
-        state.IsBackbuffer = true;
-        state.IsEnabled = attachment == FramebufferAttachment::COLOR_ATTACHMENT0 || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
-        state.TextureType = TextureType::TEXTURE_2D;
-        state.Level = 0;
-        state.Layer = 0;
+            OpenGLLocal::RenderTargetState& state = s_RenderTargetStates[i];
+            state.Target = 0;
+            state.ClearFlags = 0;
+            state.IsBackbuffer = true;
+            state.IsEnabled = attachment == FramebufferAttachment::COLOR_ATTACHMENT0 || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+            state.TextureType = TextureType::TEXTURE_2D;
+            state.Level = 0;
+            state.Layer = 0;
+        }
     }
 }
 
 void GraphicsBackendOpenGL::Init(void* data)
 {
+    OpenGLLocal::s_Window = data;
+
+#if RENDER_ENGINE_WINDOWS
+    HDC deviceContext = GetDC(static_cast<HWND>(OpenGLLocal::s_Window));
+
+    PIXELFORMATDESCRIPTOR pixelFormatDescriptor = {};
+    pixelFormatDescriptor.nSize = sizeof(pixelFormatDescriptor);
+    pixelFormatDescriptor.nVersion = 1;
+    pixelFormatDescriptor.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
+    pixelFormatDescriptor.cColorBits = 32;
+    pixelFormatDescriptor.cDepthBits = 24;
+    pixelFormatDescriptor.iLayerType = PFD_MAIN_PLANE;
+    int pixelFormat = ChoosePixelFormat(deviceContext, &pixelFormatDescriptor);
+    SetPixelFormat(deviceContext, pixelFormat, &pixelFormatDescriptor);
+
+    HGLRC tempContext = wglCreateContext(deviceContext);
+    wglMakeCurrent(deviceContext, tempContext);
+
+    OpenGLLocal::s_DeviceContext = static_cast<void*>(deviceContext);
+#endif
+
     OpenGLHelpers::InitBindings();
 
-    s_Window = data;
+#if RENDER_ENGINE_WINDOWS
+    int attribs[] = {
+            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+            WGL_CONTEXT_MINOR_VERSION_ARB, 2,
+            WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+            0
+    };
+
+    HGLRC modernContext = wglCreateContextAttribsARB(deviceContext, 0, attribs);
+    wglMakeCurrent(nullptr, nullptr);
+    wglDeleteContext(tempContext);
+    wglMakeCurrent(deviceContext, modernContext);
+#endif
 
     int extensionsCount;
     glGetIntegerv(GL_NUM_EXTENSIONS, &extensionsCount);
@@ -168,7 +218,7 @@ void GraphicsBackendOpenGL::Init(void* data)
         m_Extensions.insert(std::string(reinterpret_cast<const char *>(ext)));
     }
 
-    glGenFramebuffers(2 * GraphicsBackend::GetMaxFramesInFlight(), &s_Framebuffers[0][0]);
+    glGenFramebuffers(2 * GraphicsBackend::GetMaxFramesInFlight(), &OpenGLLocal::s_Framebuffers[0][0]);
 
 #ifdef GL_ARB_seamless_cube_map
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -176,24 +226,25 @@ void GraphicsBackendOpenGL::Init(void* data)
     glEnable(GL_DEPTH_TEST);
 
 #if RENDER_ENGINE_EDITOR
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(DebugMessageCallback, nullptr);
-
-    for (const DebugMessageType& messageType : s_DebugMessageTypes)
+    if (Arguments::Contains("-debuglayer"))
     {
-        glDebugMessageControl(GL_DONT_CARE, messageType.Type, GL_DONT_CARE, 0, nullptr, messageType.Enabled ? GL_TRUE : GL_FALSE);
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(OpenGLLocal::DebugMessageCallback, nullptr);
+
+        for (const OpenGLLocal::DebugMessageType &messageType: OpenGLLocal::s_DebugMessageTypes)
+            glDebugMessageControl(GL_DONT_CARE, messageType.Type, GL_DONT_CARE, 0, nullptr, messageType.Enabled ? GL_TRUE : GL_FALSE);
     }
 #endif
 
-    ResetRenderTargetStates();
+    OpenGLLocal::ResetRenderTargetStates();
 
     int64_t glTimestamp;
     glGetInteger64v(GL_TIMESTAMP, &glTimestamp);
     glTimestamp /= 1000;
 
     const auto cpuTimestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    s_TimestampDifference = cpuTimestamp - glTimestamp;
+    OpenGLLocal::s_TimestampDifference = cpuTimestamp - glTimestamp;
 }
 
 GraphicsBackendName GraphicsBackendOpenGL::GetName()
@@ -209,7 +260,7 @@ void GraphicsBackendOpenGL::InitNewFrame()
 {
     GraphicsBackendBase::InitNewFrame();
 
-    GLsync currentFence = s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()];
+    GLsync currentFence = OpenGLLocal::s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()];
     if (glIsSync(currentFence))
     {
         glClientWaitSync(currentFence, GL_SYNC_FLUSH_COMMANDS_BIT, 160000000);
@@ -217,7 +268,7 @@ void GraphicsBackendOpenGL::InitNewFrame()
     }
 }
 
-void GraphicsBackendOpenGL::FillImGuiData(void* data)
+void GraphicsBackendOpenGL::FillImGuiInitData(void* data)
 {
     struct ImGuiData
     {
@@ -227,9 +278,13 @@ void GraphicsBackendOpenGL::FillImGuiData(void* data)
     };
 
     ImGuiData* imGuiData = static_cast<ImGuiData*>(data);
-    imGuiData->Window = s_Window;
+    imGuiData->Window = OpenGLLocal::s_Window;
     imGuiData->MajorVersion = OPENGL_MAJOR_VERSION;
     imGuiData->MinorVersion = OPENGL_MINOR_VERSION;
+}
+
+void GraphicsBackendOpenGL::FillImGuiFrameData(void *data)
+{
 }
 
 GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
@@ -373,7 +428,7 @@ void AttachTextureToFramebuffer(GLenum framebuffer, GLenum attachment, TextureTy
 void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor)
 {
     const int attachmentIndex = static_cast<int>(descriptor.Attachment);
-    RenderTargetState& state = s_RenderTargetStates[attachmentIndex];
+    OpenGLLocal::RenderTargetState& state = OpenGLLocal::s_RenderTargetStates[attachmentIndex];
 
     state.IsBackbuffer = descriptor.IsBackbuffer;
 
@@ -398,26 +453,26 @@ void GraphicsBackendOpenGL::AttachRenderTarget(const GraphicsBackendRenderTarget
     if (descriptor.Attachment == FramebufferAttachment::DEPTH_ATTACHMENT)
     {
         state.ClearFlags = needClear ? GL_DEPTH_BUFFER_BIT : 0;
-        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)].IsEnabled = false;
+        OpenGLLocal::s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)].IsEnabled = false;
 
-        RenderTargetState& stencilState = s_RenderTargetStates[static_cast<int>(FramebufferAttachment::STENCIL_ATTACHMENT)];
+        OpenGLLocal::RenderTargetState& stencilState = OpenGLLocal::s_RenderTargetStates[static_cast<int>(FramebufferAttachment::STENCIL_ATTACHMENT)];
         stencilState.IsEnabled = true;
         stencilState.Target = 0;
     }
     else if (descriptor.Attachment == FramebufferAttachment::STENCIL_ATTACHMENT)
     {
         state.ClearFlags = needClear ? GL_STENCIL_BUFFER_BIT : 0;
-        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)].IsEnabled = false;
+        OpenGLLocal::s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)].IsEnabled = false;
 
-        RenderTargetState& depthState = s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_ATTACHMENT)];
+        OpenGLLocal::RenderTargetState& depthState = OpenGLLocal::s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_ATTACHMENT)];
         depthState.IsEnabled = false;
         depthState.Target = 0;
     }
     else if (descriptor.Attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT)
     {
         state.ClearFlags = needClear ? GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT : 0;
-        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_ATTACHMENT)].IsEnabled = false;
-        s_RenderTargetStates[static_cast<int>(FramebufferAttachment::STENCIL_ATTACHMENT)].IsEnabled = false;
+        OpenGLLocal::s_RenderTargetStates[static_cast<int>(FramebufferAttachment::DEPTH_ATTACHMENT)].IsEnabled = false;
+        OpenGLLocal::s_RenderTargetStates[static_cast<int>(FramebufferAttachment::STENCIL_ATTACHMENT)].IsEnabled = false;
     }
     else
     {
@@ -444,7 +499,7 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::s
         glObjectLabel(GL_BUFFER, glBuffer, name.length(), name.c_str());
     }
 
-    BufferData* bufferData = new BufferData();
+    OpenGLLocal::BufferData* bufferData = new OpenGLLocal::BufferData();
     bufferData->GLBuffer = glBuffer;
     bufferData->Data = allowCPUWrites ? static_cast<uint8_t*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, bufferFlags)) : nullptr;
 
@@ -456,7 +511,7 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::s
 
 void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 {
-    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+    const OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
     if (bufferData->Data)
     {
         glBindBuffer(GL_UNIFORM_BUFFER, bufferData->GLBuffer);
@@ -469,7 +524,7 @@ void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
 
 void BindBuffer_Internal(GLenum bindTarget, const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
-    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+    const OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
 
     auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
     glBindBuffer(bindTarget, bufferData->GLBuffer);
@@ -481,6 +536,11 @@ void GraphicsBackendOpenGL::BindBuffer(const GraphicsBackendBuffer &buffer, Grap
     BindBuffer_Internal(GL_SHADER_STORAGE_BUFFER, buffer, bindings, offset, size);
 }
 
+void GraphicsBackendOpenGL::BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount)
+{
+    BindBuffer_Internal(GL_SHADER_STORAGE_BUFFER, buffer, bindings, elementOffset * elementSize, elementSize * elementCount);
+}
+
 void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
 {
     BindBuffer_Internal(GL_UNIFORM_BUFFER, buffer, bindings, offset, size);
@@ -488,15 +548,15 @@ void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buff
 
 void GraphicsBackendOpenGL::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data)
 {
-    const BufferData* bufferData = reinterpret_cast<BufferData*>(buffer.Buffer);
+    const OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
     assert(bufferData->Data);
     memcpy(bufferData->Data + offset, data, size);
 }
 
 void GraphicsBackendOpenGL::CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size)
 {
-    const BufferData* sourceBufferData = reinterpret_cast<BufferData*>(source.Buffer);
-    const BufferData* destinationBufferData = reinterpret_cast<BufferData*>(destination.Buffer);
+    const OpenGLLocal::BufferData* sourceBufferData = reinterpret_cast<OpenGLLocal::BufferData*>(source.Buffer);
+    const OpenGLLocal::BufferData* destinationBufferData = reinterpret_cast<OpenGLLocal::BufferData*>(destination.Buffer);
 
     glBindBuffer(GL_COPY_READ_BUFFER, sourceBufferData->GLBuffer);
     glBindBuffer(GL_COPY_WRITE_BUFFER, destinationBufferData->GLBuffer);
@@ -535,8 +595,8 @@ GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBack
     geometry.VertexBuffer = vertexBuffer;
     geometry.IndexBuffer = indexBuffer;
 
-    const BufferData* vertexBufferData = reinterpret_cast<BufferData*>(vertexBuffer.Buffer);
-    const BufferData* indexBufferData = reinterpret_cast<BufferData*>(indexBuffer.Buffer);
+    const OpenGLLocal::BufferData* vertexBufferData = reinterpret_cast<OpenGLLocal::BufferData*>(vertexBuffer.Buffer);
+    const OpenGLLocal::BufferData* indexBufferData = reinterpret_cast<OpenGLLocal::BufferData*>(indexBuffer.Buffer);
 
     glGenVertexArrays(1, reinterpret_cast<GLuint *>(&geometry.VertexArrayObject));
     glBindVertexArray(geometry.VertexArrayObject);
@@ -547,10 +607,11 @@ GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBack
         glObjectLabel(GL_VERTEX_ARRAY, geometry.VertexArrayObject, name.length(), name.c_str());
     }
 
-    for (const auto &descriptor : vertexAttributes)
+    for (uint32_t i = 0; i < vertexAttributes.size(); ++i)
     {
-        glEnableVertexAttribArray(descriptor.Index);
-        glVertexAttribPointer(descriptor.Index, descriptor.Dimensions, OpenGLHelpers::ToVertexAttributeDataType(descriptor.DataType), descriptor.IsNormalized ? GL_TRUE : GL_FALSE, descriptor.Stride, reinterpret_cast<const void *>(descriptor.Offset));
+        const GraphicsBackendVertexAttributeDescriptor& descriptor = vertexAttributes[i];
+        glEnableVertexAttribArray(i);
+        glVertexAttribPointer(i, descriptor.Dimensions, OpenGLHelpers::ToVertexAttributeDataType(descriptor.DataType), descriptor.IsNormalized ? GL_TRUE : GL_FALSE, descriptor.Stride, reinterpret_cast<const void *>(descriptor.Offset));
     }
 
     return geometry;
@@ -563,28 +624,15 @@ void GraphicsBackendOpenGL::DeleteGeometry(const GraphicsBackendGeometry &geomet
     DeleteBuffer(geometry.IndexBuffer);
 }
 
-void GraphicsBackendOpenGL::SetCullFace(CullFace cullFace)
-{
-    if (cullFace == CullFace::NONE)
-    {
-        glDisable(GL_CULL_FACE);
-    }
-    else
-    {
-        glEnable(GL_CULL_FACE);
-        glCullFace(OpenGLHelpers::ToCullFace(cullFace));
-    }
-}
-
-void GraphicsBackendOpenGL::SetCullFaceOrientation(CullFaceOrientation orientation)
-{
-    glFrontFace(OpenGLHelpers::ToCullFaceOrientation(orientation));
-}
-
-void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, float near, float far)
+void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, float nearDepth, float farDepth)
 {
     glViewport(x, y, width, height);
-    glDepthRangef(near, far);
+    glDepthRangef(nearDepth, farDepth);
+}
+
+void GraphicsBackendOpenGL::SetScissorRect(int x, int y, int width, int height)
+{
+    glScissor(x, y, width, height);
 }
 
 GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string& source, const std::string& name)
@@ -617,56 +665,67 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
     return shaderObject;
 }
 
-GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const std::vector<GraphicsBackendShaderObject> &shaders, const GraphicsBackendColorAttachmentDescriptor &colorAttachmentDescriptor, TextureInternalFormat depthFormat,
-                                                            const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name)
+GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name)
 {
-    GraphicsBackendProgram program{};
-    program.Program = glCreateProgram();
+    return {};
+}
+
+GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBackendProgramDescriptor& descriptor)
+{
+    GLuint glProgram = glCreateProgram();
+
+    const std::vector<GraphicsBackendShaderObject>& shaders = *descriptor.Shaders;
 
     for (auto &shader : shaders)
     {
         bool isShader = glIsShader(shader.ShaderObject);
         if (isShader)
-        {
-            glAttachShader(program.Program, shader.ShaderObject);
-        }
+            glAttachShader(glProgram, shader.ShaderObject);
+
     }
 
-    glLinkProgram(program.Program);
+    glLinkProgram(glProgram);
 
     for (auto &shader : shaders)
     {
         bool isShader = glIsShader(shader.ShaderObject);
         if (isShader)
-        {
-            glDetachShader(program.Program, shader.ShaderObject);
-        }
+            glDetachShader(glProgram, shader.ShaderObject);
+
     }
 
-    if (!name.empty())
-    {
-        glObjectLabel(GL_PROGRAM, program.Program, name.length(), name.c_str());
-    }
+    if (descriptor.Name && !descriptor.Name->empty())
+        glObjectLabel(GL_PROGRAM, glProgram, descriptor.Name->length(), descriptor.Name->c_str());
+
 
     int isLinked;
-    glGetProgramiv(program.Program, GL_LINK_STATUS, &isLinked);
+    glGetProgramiv(glProgram, GL_LINK_STATUS, &isLinked);
     if (!isLinked)
     {
         int infoLogLength;
-        glGetProgramiv(program.Program, GL_INFO_LOG_LENGTH, &infoLogLength);
+        glGetProgramiv(glProgram, GL_INFO_LOG_LENGTH, &infoLogLength);
 
         std::string logMsg(infoLogLength + 1, ' ');
-        glGetProgramInfoLog(program.Program, infoLogLength, nullptr, &logMsg[0]);
+        glGetProgramInfoLog(glProgram, infoLogLength, nullptr, &logMsg[0]);
 
         throw std::runtime_error("Link failed with error:\n" + logMsg);
     }
 
-    auto blendState = new BlendState();
-    blendState->SourceFactor = OpenGLHelpers::ToBlendFactor(colorAttachmentDescriptor.SourceFactor);
-    blendState->DestinationFactor = OpenGLHelpers::ToBlendFactor(colorAttachmentDescriptor.DestinationFactor);
-    blendState->Enabled = colorAttachmentDescriptor.BlendingEnabled;
-    program.BlendState = reinterpret_cast<uint64_t>(blendState);
+    OpenGLLocal::BlendState blendState{};
+    blendState.SourceFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.SourceFactor);
+    blendState.DestinationFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.DestinationFactor);
+    blendState.Enabled = descriptor.ColorAttachmentDescriptor.BlendingEnabled;
 
+    OpenGLLocal::ProgramData* programData = new OpenGLLocal::ProgramData();
+    programData->Program = glProgram;
+    programData->BlendState = blendState;
+    programData->CullFace = OpenGLHelpers::ToCullFace(descriptor.CullFace);
+    programData->CullFaceOrientation = OpenGLHelpers::ToCullFaceOrientation(descriptor.CullFaceOrientation);
+    programData->DepthFunction = OpenGLHelpers::ToDepthCompareFunction(descriptor.DepthFunction);
+    programData->DepthWrite = descriptor.DepthWrite ? GL_TRUE : GL_FALSE;
+
+    GraphicsBackendProgram program{};
+    program.Program = reinterpret_cast<uint64_t>(programData);
     return program;
 }
 
@@ -677,10 +736,9 @@ void GraphicsBackendOpenGL::DeleteShader(GraphicsBackendShaderObject shader)
 
 void GraphicsBackendOpenGL::DeleteProgram(GraphicsBackendProgram program)
 {
-    glDeleteProgram(program.Program);
-
-    auto blendState = reinterpret_cast<BlendState*>(program.BlendState);
-    delete blendState;
+    OpenGLLocal::ProgramData* programData = reinterpret_cast<OpenGLLocal::ProgramData*>(program.Program);
+    glDeleteProgram(programData->Program);
+    delete programData;
 }
 
 bool GraphicsBackendOpenGL::RequireStrictPSODescriptor()
@@ -690,21 +748,29 @@ bool GraphicsBackendOpenGL::RequireStrictPSODescriptor()
 
 void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
 {
-    glUseProgram(program.Program);
+    OpenGLLocal::ProgramData* programData = reinterpret_cast<OpenGLLocal::ProgramData*>(program.Program);
 
-    auto blendState = reinterpret_cast<BlendState*>(program.BlendState);
-    if (blendState)
+    glUseProgram(programData->Program);
+
+    if (programData->BlendState.Enabled)
     {
-        if (blendState->Enabled)
-        {
-            glEnable(GL_BLEND);
-            glBlendFunc(blendState->SourceFactor, blendState->DestinationFactor);
-        }
-        else
-        {
-            glDisable(GL_BLEND);
-        }
+        glEnable(GL_BLEND);
+        glBlendFunc(programData->BlendState.SourceFactor, programData->BlendState.DestinationFactor);
     }
+    else
+        glDisable(GL_BLEND);
+
+    if (programData->CullFace)
+    {
+        glEnable(GL_CULL_FACE);
+        glCullFace(programData->CullFace);
+    }
+    else
+        glDisable(GL_CULL_FACE);
+
+    glFrontFace(programData->CullFaceOrientation);
+    glDepthFunc(programData->DepthFunction);
+    glDepthMask(programData->DepthWrite);
 }
 
 void GraphicsBackendOpenGL::SetClearColor(float r, float g, float b, float a)
@@ -768,10 +834,10 @@ void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &s
         mask |= GL_COLOR_BUFFER_BIT;
     }
 
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][0]);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, OpenGLLocal::s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][0]);
     AttachTextureToFramebuffer(GL_READ_FRAMEBUFFER, glAttachment, source.Type, source.Texture, 0, 0);
 
-    GLuint destinationFramebuffer = destinationDescriptor.IsBackbuffer ? 0 : s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][1];
+    GLuint destinationFramebuffer = destinationDescriptor.IsBackbuffer ? 0 : OpenGLLocal::s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][1];
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destinationFramebuffer);
     if (!destinationDescriptor.IsBackbuffer)
     {
@@ -781,19 +847,19 @@ void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &s
     glBlitFramebuffer(sourceX, sourceX, sourceX + width, sourceY + height, destinationX, destinationY, destinationX + width, destinationY + height, mask, GL_NEAREST);
 }
 
-void GraphicsBackendOpenGL::PushDebugGroup(const std::string& name)
+void GraphicsBackendOpenGL::PushDebugGroup(const std::string& name, GPUQueue queue)
 {
 #ifdef GL_KHR_debug
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, s_DebugGroupId++, -1, name.c_str());
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, OpenGLLocal::s_DebugGroupId++, -1, name.c_str());
 #endif
 }
 
-void GraphicsBackendOpenGL::PopDebugGroup()
+void GraphicsBackendOpenGL::PopDebugGroup(GPUQueue queue)
 {
 #ifdef GL_KHR_debug
-    assert(s_DebugGroupId > 0);
+    assert(OpenGLLocal::s_DebugGroupId > 0);
     glPopDebugGroup();
-    --s_DebugGroupId;
+    --OpenGLLocal::s_DebugGroupId;
 #endif
 }
 
@@ -837,7 +903,7 @@ bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerM
             outTimestamp /= 1000;
 
             // GL_TIMESTAMP is counted from implementation-defined point of time, that might not match with system clock
-            outTimestamp += s_TimestampDifference;
+            outTimestamp += OpenGLLocal::s_TimestampDifference;
         };
 
         resolveQuery(glQueryStart, outResults[k_RenderGPUQueueIndex].StartTimestamp);
@@ -855,7 +921,7 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
     bool isBackbuffer = true;
     GLbitfield clearFlag = 0;
 
-    for (const RenderTargetState& state : s_RenderTargetStates)
+    for (const OpenGLLocal::RenderTargetState& state : OpenGLLocal::s_RenderTargetStates)
     {
         if (!state.IsEnabled)
             continue;
@@ -864,7 +930,7 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
         clearFlag |= state.ClearFlags;
     }
 
-    PushDebugGroup(name);
+    PushDebugGroup(name, GPUQueue::RENDER);
 
     if (isBackbuffer)
     {
@@ -872,12 +938,12 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
     }
     else
     {
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][0]);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, OpenGLLocal::s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][0]);
 
         constexpr int maxAttachments = static_cast<int>(FramebufferAttachment::MAX);
         for (int i = 0; i < maxAttachments; ++i)
         {
-            const RenderTargetState& state = s_RenderTargetStates[i];
+            const OpenGLLocal::RenderTargetState& state = OpenGLLocal::s_RenderTargetStates[i];
             if (!state.IsEnabled)
                 continue;
 
@@ -898,45 +964,18 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
 
 void GraphicsBackendOpenGL::EndRenderPass()
 {
-    ResetRenderTargetStates();
-    PopDebugGroup();
+    OpenGLLocal::ResetRenderTargetStates();
+    PopDebugGroup(GPUQueue::RENDER);
 }
 
 void GraphicsBackendOpenGL::BeginCopyPass(const std::string& name)
 {
-    PushDebugGroup(name);
+    PushDebugGroup(name, GPUQueue::COPY);
 }
 
 void GraphicsBackendOpenGL::EndCopyPass()
 {
-    PopDebugGroup();
-}
-
-GraphicsBackendDepthStencilState GraphicsBackendOpenGL::CreateDepthStencilState(bool depthWrite, DepthFunction depthFunction, const std::string& name)
-{
-    auto glState = new DepthStencilState();
-    glState->DepthFunction = OpenGLHelpers::ToDepthCompareFunction(depthFunction);
-    glState->DepthWrite = depthWrite ? GL_TRUE : GL_FALSE;
-
-    GraphicsBackendDepthStencilState state{};
-    state.m_State = reinterpret_cast<uint64_t>(glState);
-    return state;
-}
-
-void GraphicsBackendOpenGL::DeleteDepthStencilState(const GraphicsBackendDepthStencilState& state)
-{
-    auto glState = reinterpret_cast<DepthStencilState*>(state.m_State);
-    delete glState;
-}
-
-void GraphicsBackendOpenGL::SetDepthStencilState(const GraphicsBackendDepthStencilState& state)
-{
-    auto glState = reinterpret_cast<DepthStencilState*>(state.m_State);
-    if (glState)
-    {
-        glDepthFunc(glState->DepthFunction);
-        glDepthMask(glState->DepthWrite);
-    }
+    PopDebugGroup(GPUQueue::COPY);
 }
 
 GraphicsBackendFence GraphicsBackendOpenGL::CreateFence(FenceType fenceType, const std::string& name)
@@ -963,7 +1002,23 @@ void GraphicsBackendOpenGL::Flush()
 
 void GraphicsBackendOpenGL::Present()
 {
-    s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    OpenGLLocal::s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+#if RENDER_ENGINE_WINDOWS
+    SwapBuffers(static_cast<HDC>(OpenGLLocal::s_DeviceContext));
+#endif
+}
+
+void GraphicsBackendOpenGL::TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor &target, ResourceState state, GPUQueue queue)
+{
+}
+
+void GraphicsBackendOpenGL::TransitionTexture(const GraphicsBackendTexture& texture, ResourceState state, GPUQueue queue)
+{
+}
+
+void GraphicsBackendOpenGL::TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue)
+{
 }
 
 #endif // RENDER_BACKEND_OPENGL

@@ -84,13 +84,13 @@ void ShadowsDemo::Init()
     auto pointLight1 = std::make_shared<Light>();
     pointLight1->Position = Vector3(2, 2, 12);
     pointLight1->Intensity = Vector3(1, 1, 1);
-    pointLight1->Attenuation = 0.001f;
+    pointLight1->Range = 30;
     pointLight1->Type = LightType::POINT;
 
     auto pointLight2 = std::make_shared<Light>();
     pointLight2->Position = Vector3(-2, -2, 8);
     pointLight2->Intensity = Vector3(1, 1, 1);
-    pointLight2->Attenuation = 0.001f;
+    pointLight2->Range = 30;
     pointLight2->Type = LightType::POINT;
 
     Lights.push_back(pointLight1);

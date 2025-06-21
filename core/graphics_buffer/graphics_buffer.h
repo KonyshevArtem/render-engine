@@ -14,7 +14,6 @@ public:
     ~GraphicsBuffer();
 
     void SetData(const void *data, uint64_t offset, uint64_t size);
-    void Resize(uint64_t size);
 
     inline uint64_t GetSize() const
     {

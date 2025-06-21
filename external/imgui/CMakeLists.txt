@@ -40,9 +40,10 @@ if (${RENDER_ENGINE_WINDOWS_PLATFORM})
                 imgui/backends/imgui_impl_opengl3.cpp
                 imgui/backends/imgui_impl_win32.h
                 imgui/backends/imgui_impl_win32.cpp
+                imgui/backends/imgui_impl_dx12.h
+                imgui/backends/imgui_impl_dx12.cpp
         )
 
-        set(IMGUI_WRAPPER_LIBS ImGui)
         set(IMGUI_WRAPPER_DEFINES ENABLE_IMGUI)
     endif ()
 
@@ -64,7 +65,6 @@ elseif (${RENDER_ENGINE_APPLE_PLATFORM})
                 imgui/backends/imgui_impl_osx.mm
         )
 
-        set(IMGUI_WRAPPER_LIBS ImGui metal-cpp)
         set(IMGUI_WRAPPER_DEFINES IMGUI_IMPL_METAL_CPP IMGUI_IMPL_METAL_CPP_EXTENSIONS ENABLE_IMGUI)
     endif ()
 
@@ -79,6 +79,6 @@ elseif (${RENDER_ENGINE_ANDROID_PLATFORM})
 endif ()
 
 add_library(ImGuiWrapper STATIC ${IMGUI_WRAPPER_SOURCES})
-target_link_libraries(ImGuiWrapper ${IMGUI_WRAPPER_LIBS})
+target_link_libraries(ImGuiWrapper ImGui GraphicsBackend)
 target_compile_definitions(ImGuiWrapper PRIVATE ${IMGUI_WRAPPER_DEFINES})
 target_include_directories(ImGuiWrapper PUBLIC ./ imgui/backends)

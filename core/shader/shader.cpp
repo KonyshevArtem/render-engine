@@ -1,11 +1,30 @@
 #include "shader.h"
-#include "shader_pass/shader_pass.h"
 #include "shader_loader/shader_loader.h"
+#include "graphics_backend_api.h"
+#include "types/graphics_backend_texture_info.h"
+#include "types/graphics_backend_buffer_info.h"
+#include "types/graphics_backend_sampler_info.h"
+#include "types/graphics_backend_color_attachment_descriptor.h"
+#include "types/graphics_backend_program_descriptor.h"
+#include "hash.h"
 
-std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
+#include <vector>
+
+namespace ShaderLocal
+{
+    size_t GetPSOHash(size_t vertexAttributesHash, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat, PrimitiveType primitiveType)
+    {
+        size_t targetsHash = Hash::Combine(std::hash<TextureInternalFormat>{}(colorTargetFormat), std::hash<TextureInternalFormat>{}(depthTargetFormat));
+        targetsHash = Hash::Combine(targetsHash, std::hash<bool>{}(isLinear));
+        targetsHash = Hash::Combine(targetsHash, std::hash<PrimitiveType>{}(primitiveType));
+        return Hash::Combine(targetsHash, vertexAttributesHash);
+    }
+}
+
+std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &path, const std::initializer_list<std::string> &keywords,
     BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo)
 {
-    auto shader = ShaderLoader::Load(_path, _keywords, blendInfo, cullInfo, depthInfo);
+    auto shader = ShaderLoader::Load(path, keywords, blendInfo, cullInfo, depthInfo);
 
     if (!shader)
     {
@@ -20,16 +39,80 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &_path, const s
     return shader;
 }
 
-Shader::Shader(std::vector<std::shared_ptr<ShaderPass>> _passes, bool _supportInstancing) :
-    m_Passes(std::move(_passes)),
-    m_SupportInstancing(_supportInstancing)
+Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
+               std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
+               std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
+               std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
+               std::string name, bool supportInstancing) :
+    m_Shaders(std::move(shaders)),
+    m_CullInfo(cullInfo),
+    m_BlendInfo(blendInfo),
+    m_DepthInfo(depthInfo),
+    m_Textures(std::move(textures)),
+    m_Buffers(std::move(buffers)),
+    m_Samplers(std::move(samplers)),
+    m_Name(std::move(name)),
+    m_SupportInstancing(supportInstancing)
 {
 }
 
-std::shared_ptr<ShaderPass> Shader::GetPass(int passIndex) const
+Shader::~Shader()
 {
-    if (passIndex < 0 || passIndex >= m_Passes.size())
-        throw std::out_of_range("[Shader] Pass Index out of range");
+    for (auto &pair : m_Programs)
+    {
+        GraphicsBackend::Current()->DeleteProgram(pair.second);
+    }
 
-    return m_Passes.at(passIndex);
+    for (auto &shader : m_Shaders)
+    {
+        GraphicsBackend::Current()->DeleteShader(shader);
+    }
+}
+
+const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat, PrimitiveType primitiveType)
+{
+    if (!GraphicsBackend::Current()->RequireStrictPSODescriptor() && !m_Programs.empty())
+    {
+        return m_Programs.begin()->second;
+    }
+
+    auto hash = ShaderLocal::GetPSOHash(vertexAttributes.GetHash(), colorTargetFormat, isLinear, depthTargetFormat, primitiveType);
+
+    auto it = m_Programs.find(hash);
+    if (it != m_Programs.end())
+    {
+        return it->second;
+    }
+
+    return CreatePSO(m_Shaders, m_BlendInfo, colorTargetFormat, isLinear, depthTargetFormat, vertexAttributes.GetAttributes(), primitiveType, m_Name);
+}
+
+const GraphicsBackendProgram& Shader::CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat, bool isLinear,
+                                                    TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, PrimitiveType primitiveType, const std::string& name)
+{
+    GraphicsBackendColorAttachmentDescriptor colorAttachmentDescriptor{};
+    colorAttachmentDescriptor.Format = colorFormat;
+    colorAttachmentDescriptor.SourceFactor = blendInfo.SourceFactor;
+    colorAttachmentDescriptor.DestinationFactor = blendInfo.DestinationFactor;
+    colorAttachmentDescriptor.BlendingEnabled = blendInfo.Enabled;
+    colorAttachmentDescriptor.IsLinear = isLinear;
+
+    GraphicsBackendProgramDescriptor programDescriptor{};
+    programDescriptor.Shaders = &shaders;
+    programDescriptor.VertexAttributes = &vertexAttributes;
+    programDescriptor.Name = &name;
+    programDescriptor.ColorAttachmentDescriptor = colorAttachmentDescriptor;
+    programDescriptor.DepthFormat = depthFormat;
+    programDescriptor.CullFace = m_CullInfo.Face;
+    programDescriptor.CullFaceOrientation = m_CullInfo.Orientation;
+    programDescriptor.DepthWrite = m_DepthInfo.WriteDepth;
+    programDescriptor.DepthFunction = m_DepthInfo.DepthFunction;
+    programDescriptor.PrimitiveType = primitiveType;
+
+    auto program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
+
+    size_t hash = ShaderLocal::GetPSOHash(VertexAttributes::GetHash(vertexAttributes), colorFormat, isLinear, depthFormat, primitiveType);
+    m_Programs[hash] = program;
+
+    return m_Programs[hash];
 }

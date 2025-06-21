@@ -7,8 +7,7 @@
 #include "types/graphics_backend_shader_object.h"
 #include "graphics_backend_api.h"
 #include "shader_parser.h"
-#include "shader/shader_pass/shader_pass.h"
-#include "utils/utils.h"
+#include "hash.h"
 
 #include <span>
 
@@ -39,6 +38,8 @@ namespace ShaderLoader
                 return "gles";
             case GraphicsBackendName::METAL:
                 return "metal";
+            case GraphicsBackendName::DX12:
+                return "dx12";
             default:
                 return "";
         }
@@ -56,7 +57,7 @@ namespace ShaderLoader
             outSupportInstancing |= keyword == INSTANCING_KEYWORD;
         }
 
-        return std::to_string(Utils::HashFNV1a(keywordsDirectives));
+        return std::to_string(Hash::FNV1a(keywordsDirectives));
     }
 
     std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
@@ -92,17 +93,22 @@ namespace ShaderLoader
                 shaderFunctionDebugName.append("_");
                 shaderFunctionDebugName.append(SHADER_SOURCE_FILE_NAME[i]);
 
-                std::string shaderSource = FileSystem::ReadFile(sourcePath);
-                auto shader = GraphicsBackend::Current()->CompileShader(SHADER_TYPES[i], shaderSource, shaderFunctionDebugName);
+                GraphicsBackendShaderObject shader{};
+                if (GraphicsBackend::Current()->GetName() == GraphicsBackendName::DX12)
+                {
+                    std::vector<uint8_t> shaderBinary;
+                    FileSystem::ReadFileBytes(sourcePath, shaderBinary);
+                    shader = GraphicsBackend::Current()->CompileShaderBinary(SHADER_TYPES[i], shaderBinary, shaderFunctionDebugName);
+                }
+                else
+                {
+                    std::string shaderSource = FileSystem::ReadFile(sourcePath);
+                    shader = GraphicsBackend::Current()->CompileShader(SHADER_TYPES[i], shaderSource, shaderFunctionDebugName);
+                }
                 shaders.push_back(shader);
             }
 
-            auto passPtr = std::make_shared<ShaderPass>(shaders, blendInfo, cullInfo, depthInfo, textures, buffers, samplers, shaderDebugName);
-
-            std::vector<std::shared_ptr<ShaderPass>> passes;
-            passes.push_back(passPtr);
-
-            return std::make_shared<Shader>(passes, supportInstancing);
+            return std::make_shared<Shader>(shaders, blendInfo, cullInfo, depthInfo, textures, buffers, samplers, shaderDebugName, supportInstancing);
         }
         catch (const std::exception &_exception)
         {

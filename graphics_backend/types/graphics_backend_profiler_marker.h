@@ -14,9 +14,11 @@ private:
     };
 
     MarkerInfo Info[static_cast<int>(GPUQueue::MAX)];
+    uint64_t Frame;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;
+    friend class GraphicsBackendDX12;
 };
 
 struct ProfilerMarkerResolveResult

@@ -29,24 +29,22 @@ void PBRDemo::Init()
     auto sphereAsset = FBXAsset::Load("core_resources/models/sphere.fbx");
     auto sphereMesh  = sphereAsset->GetMesh(0);
 
-    //init shader
-    auto shader = Shader::Load("core_resources/shaders/standard", {"_REFLECTION"}, {}, {}, {});
-
     //init skybox
     Skybox = Cubemap::Load("core_resources/textures/skybox/skybox");
+
+    std::shared_ptr<Material> baseMaterial = Material::Load("core_resources/materials/pbr_demo/pbr_demo.material");
 
     for (float i = 0; i < 6; ++i)
     {
         for (float j = 0; j < 6; ++j)
         {
             //init material
-            auto material = std::make_shared<Material>(shader, "PBRDemo_" + std::to_string(i * 6 + j));
-            material->SetTexture("_Albedo", Texture2D::White());
+            std::shared_ptr<Material> material = baseMaterial->Copy();
             material->SetFloat("_Roughness", 1 - j / 5);
             material->SetFloat("_Metallness", i / 5);
 
             //init gameObject
-            auto sphere      = GameObject::Create("Sphere");
+            auto sphere  = GameObject::Create("Sphere");
             sphere->Renderer = std::make_shared<MeshRenderer>(sphere, sphereMesh, material);
             sphere->SetLocalPosition({3 * j, 3 * i, 0});
         }

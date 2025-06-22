@@ -22,18 +22,12 @@ void ShadowsDemo::Init()
     //init camera
     Camera::Init(60, 0.5f, 100, 100);
 
-    // init shaders
-    auto standardOpaqueShader = Shader::Load("core_resources/shaders/standard", {"_RECEIVE_SHADOWS"}, {}, {}, {});
-
     // init meshes
     auto cubeMesh = FBXAsset::Load("core_resources/models/cube.fbx")->GetMesh(0);
     auto sphereMesh = FBXAsset::Load("core_resources/models/sphere.fbx")->GetMesh(0);
 
     // init materials
-    auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader, "ShadowsDemo");
-    standardOpaqueMaterial->SetTexture("_Albedo", Texture2D::White());
-    standardOpaqueMaterial->SetFloat("_Roughness", 0.5f);
-    standardOpaqueMaterial->SetFloat("_Metallness", 1);
+    auto standardOpaqueMaterial = Material::Load("core_resources/materials/shadows_demo/shadows_demo.material");
 
     // init walls
     {

@@ -3,13 +3,31 @@
 #include "texture/texture.h"
 #include "graphics_buffer/graphics_buffer_wrapper.h"
 #include "global_constants.h"
+#include "material_parser.h"
 
 #include <utility>
 
+std::shared_ptr<Material> Material::Load(const std::string& path)
+{
+    return MaterialParser::Parse(path);
+}
+
 Material::Material(std::shared_ptr<Shader> shader, const std::string& name) :
-        m_Shader(std::move(shader))
+    m_Name(name),
+    m_Shader(std::move(shader))
 {
     m_PerMaterialDataBufferWrapper = std::make_shared<GraphicsBufferWrapper>(m_Shader, GlobalConstants::PerMaterialDataBufferName, name);
+}
+
+std::shared_ptr<Material> Material::Copy()
+{
+    std::shared_ptr<Material> material = std::shared_ptr<Material>(new Material());
+    material->m_Name = m_Name;
+    material->m_Shader = m_Shader;
+    material->m_RenderQueue = m_RenderQueue;
+    material->m_Textures = m_Textures;
+    material->m_PerMaterialDataBufferWrapper = m_PerMaterialDataBufferWrapper->Copy();
+    return material;
 }
 
 void Material::SetTexture(const std::string &name, std::shared_ptr<Texture> texture)

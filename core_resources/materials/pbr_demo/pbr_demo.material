@@ -1,0 +1,25 @@
+{
+  "Shader": {
+    "Path": "core_resources/shaders/standard",
+    "Keywords": [
+      "_REFLECTION"
+    ]
+  },
+  "Textures": [
+    {
+      "Name": "_Albedo",
+      "Type": "2D",
+      "Path": "White"
+    }
+  ],
+  "Floats": [
+    {
+      "Name": "_Roughness",
+      "Value": 0
+    },
+    {
+      "Name": "_Metallness",
+      "Value": 0
+    }
+  ]
+}

@@ -113,7 +113,9 @@ add_library(
 	editor/debug_pass/shadow_map_debug_pass.cpp
 	editor/debug_pass/shadow_map_debug_pass.h
 	component/component.h
-	component/component.cpp)
+	component/component.cpp
+	material/material_parser.h
+	material/material_parser.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash OpenFBX GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)

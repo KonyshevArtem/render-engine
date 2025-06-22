@@ -21,7 +21,7 @@ namespace ShaderLocal
     }
 }
 
-std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &path, const std::initializer_list<std::string> &keywords,
+std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &path, const std::vector<std::string> &keywords,
     BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo)
 {
     auto shader = ShaderLoader::Load(path, keywords, blendInfo, cullInfo, depthInfo);

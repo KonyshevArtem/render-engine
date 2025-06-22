@@ -19,11 +19,6 @@
 #include <memory>
 #include <random>
 
-#if RENDER_ENGINE_EDITOR
-int debugBaseMipLevel = 0;
-std::vector<std::shared_ptr<Texture>> textures;
-#endif
-
 void TestScene::Load()
 {
     auto scene     = std::make_shared<TestScene>();
@@ -37,36 +32,10 @@ void TestScene::Init()
     Camera::Init(75, 0.5f, 100, 100);
 
     // init textures
-    auto brickTexture  = Texture2D::Load("core_resources/textures/brick");
-    auto brickNormal   = Texture2D::Load("core_resources/textures/brick_normal");
-    auto waterTexture  = Texture2D::Load("core_resources/textures/water");
-    auto waterNormal   = Texture2D::Load("core_resources/textures/water_normal");
     auto billboardTree = Texture2D::Load("core_resources/textures/billboard_tree");
-    auto windowTexture = Texture2D::Load("core_resources/textures/window_cube");
-    auto carAlbedo     = Texture2D::Load("core_resources/textures/car/car_albedo");
-    auto carNormal     = Texture2D::Load("core_resources/textures/car/car_normal");
-    auto carData       = Texture2D::Load("core_resources/textures/car/car_data");
-
-#ifdef RENDER_ENGINE_EDITOR
-    textures.push_back(brickTexture);
-    textures.push_back(brickNormal);
-    textures.push_back(waterTexture);
-    textures.push_back(waterNormal);
-    textures.push_back(billboardTree);
-    textures.push_back(windowTexture);
-    textures.push_back(carAlbedo);
-    textures.push_back(carNormal);
-    textures.push_back(carData);
-#endif
 
     // init skybox cubemap
     Skybox = Cubemap::Load("core_resources/textures/skybox/skybox");
-
-    // init shaders
-    auto standardOpaqueShader = Shader::Load("core_resources/shaders/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
-    auto standardOpaqueDataMapShader = Shader::Load("core_resources/shaders/standard", {"_DATA_MAP", "_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP"}, {}, {}, {});
-    auto standardTransparentShader = Shader::Load("core_resources/shaders/standard", {"_RECEIVE_SHADOWS"}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA}, {}, {});
-    auto standardInstancingShader = Shader::Load("core_resources/shaders/standard", {"_REFLECTION", "_RECEIVE_SHADOWS", "_NORMAL_MAP", "_INSTANCING"}, {}, {}, {});
 
     // init meshes
     auto cubeAsset     = FBXAsset::Load("core_resources/models/cube.fbx");
@@ -80,43 +49,12 @@ void TestScene::Init()
     auto carMesh      = carAsset->GetMesh(0);
 
     // init materials
-    auto standardOpaqueMaterial = std::make_shared<Material>(standardOpaqueShader, "StandardOpaque");
-    standardOpaqueMaterial->SetTexture("_Albedo", Texture2D::White());
-    standardOpaqueMaterial->SetTexture("_NormalMap", Texture2D::Normal());
-    standardOpaqueMaterial->SetFloat("_NormalIntensity", 1);
-    standardOpaqueMaterial->SetFloat("_Roughness", 0.5f);
-    standardOpaqueMaterial->SetFloat("_Metallness", 1);
-
-    auto brickMaterial = std::make_shared<Material>(standardOpaqueShader, "Brick");
-    brickMaterial->SetTexture("_Albedo", brickTexture);
-    brickMaterial->SetTexture("_NormalMap", brickNormal);
-    brickMaterial->SetFloat("_Roughness", 0.5f);
-    brickMaterial->SetFloat("_Metallness", 0);
-    brickMaterial->SetFloat("_NormalIntensity", 3);
-
-    m_WaterMaterial = std::make_shared<Material>(standardOpaqueShader, "Water");
-    m_WaterMaterial->SetTexture("_Albedo", waterTexture);
-    m_WaterMaterial->SetTexture("_NormalMap", waterNormal);
-    m_WaterMaterial->SetFloat("_Roughness", 0.1f);
-    m_WaterMaterial->SetFloat("_Metallness", 0.2f);
-    m_WaterMaterial->SetFloat("_NormalIntensity", 3);
-
-    auto transparentMaterial = std::make_shared<Material>(standardTransparentShader, "StandardTransparent");
-    transparentMaterial->SetTexture("_Albedo", windowTexture);
-    transparentMaterial->SetFloat("_Roughness", 0.8f);
-    transparentMaterial->SetFloat("_Metallness", 0);
-    transparentMaterial->SetRenderQueue(3000);
-
-    auto carMaterial = std::make_shared<Material>(standardOpaqueDataMapShader, "Car");
-    carMaterial->SetTexture("_Albedo", carAlbedo);
-    carMaterial->SetTexture("_NormalMap", carNormal);
-    carMaterial->SetTexture("_Data", carData);
-    carMaterial->SetFloat("_NormalIntensity", 1);
-
-    auto sphereMaterial = std::make_shared<Material>(standardInstancingShader, "Sphere");
-    sphereMaterial->SetTexture("_Albedo", Texture2D::White());
-    sphereMaterial->SetTexture("_NormalMap", Texture2D::Normal());
-    sphereMaterial->SetFloat("_NormalIntensity", 1);
+    auto standardOpaqueMaterial = Material::Load("core_resources/materials/test_scene/standard_opaque.material");
+    auto brickMaterial = Material::Load("core_resources/materials/test_scene/brick.material");
+    m_WaterMaterial = Material::Load("core_resources/materials/test_scene/water.material");
+    auto transparentMaterial = Material::Load("core_resources/materials/test_scene/standard_transparent.material");
+    auto carMaterial = Material::Load("core_resources/materials/test_scene/car.material");
+    auto sphereMaterial = Material::Load("core_resources/materials/test_scene/sphere_instanced.material");
 
     // init gameObjects
     auto rotatingCube      = GameObject::Create("Rotating Cube");
@@ -283,24 +221,4 @@ void TestScene::UpdateInternal()
     m_DirectionalLight->Rotation = Quaternion::AngleAxis(50.0f * Time::GetDeltaTime(), Vector3 {0, 1, 0}) * m_DirectionalLight->Rotation;
     m_SpotLight->Position        = Camera::Current->GetPosition() + Camera::Current->GetRotation() * Vector3(-3, 0, 0);
     m_SpotLight->Rotation        = Camera::Current->GetRotation();
-
-// gizmos and cheats
-#if RENDER_ENGINE_EDITOR
-    int baseMipLevel = debugBaseMipLevel;
-    if (Input::GetKeyDown('P'))
-        ++baseMipLevel;
-    if (Input::GetKeyDown('O'))
-        baseMipLevel = std::max(baseMipLevel - 1, 0);
-
-    if (baseMipLevel != debugBaseMipLevel)
-    {
-        debugBaseMipLevel = baseMipLevel;
-
-        Skybox->SetMinMipLevel(debugBaseMipLevel);
-        for (const auto& t: textures)
-        {
-            t->SetMinMipLevel(debugBaseMipLevel);
-        }
-    }
-#endif
 }

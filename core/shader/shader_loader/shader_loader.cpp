@@ -60,7 +60,7 @@ namespace ShaderLoader
         return std::to_string(Hash::FNV1a(keywordsDirectives));
     }
 
-    std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
+    std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords,
         BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo)
     {
         bool supportInstancing = false;

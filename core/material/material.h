@@ -18,6 +18,8 @@ class GraphicsBufferWrapper;
 class Material
 {
 public:
+    static std::shared_ptr<Material> Load(const std::string& path);
+
     Material(std::shared_ptr<Shader> shader, const std::string& name);
     ~Material() = default;
 
@@ -27,6 +29,7 @@ public:
     Material &operator=(const Material &) = delete;
     Material &operator=(Material &&) = delete;
 
+    std::shared_ptr<Material> Copy();
     std::shared_ptr<GraphicsBuffer> GetPerMaterialDataBuffer() const;
 
     void SetTexture(const std::string &name, std::shared_ptr<Texture> texture);
@@ -57,11 +60,14 @@ public:
     }
 
 private:
+    Material() = default;
+
     void SetDataToConstantBuffer(const std::string &name, const void *data, uint64_t size);
 
     std::shared_ptr<GraphicsBufferWrapper> m_PerMaterialDataBufferWrapper;
     std::shared_ptr<Shader> m_Shader;
     std::unordered_map<std::string, std::shared_ptr<Texture>> m_Textures;
+    std::string m_Name;
     int m_RenderQueue = 2000;
 };
 

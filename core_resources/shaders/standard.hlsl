@@ -30,7 +30,6 @@ cbuffer PerMaterialData : register(b4)
     float _Roughness;
     float _Metallness;
     float _NormalIntensity;
-    float _ReflectionCubeLevels;
 };
 
 Texture2D _Albedo : register(t4);
@@ -83,7 +82,7 @@ half4 fragmentMain(Varyings vars) : SV_Target
     float4 albedo = float4(_Albedo.Sample(sampler_Albedo, vars.UV * _Albedo_ST.zw + _Albedo_ST.xy));
 
 #ifdef _REFLECTION
-    half3 reflection = sampleReflection(_ReflectionCubeLevels, normalWS, vars.PositionWS.xyz, roughness, _CameraPosWS);
+    half3 reflection = sampleReflection(normalWS, vars.PositionWS.xyz, roughness, _CameraPosWS);
 #else
     half3 reflection = (half3) 0.0h;
 #endif

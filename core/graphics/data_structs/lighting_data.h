@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-// Keep this in-sync with shaders/common/lighting.cg
+// Keep this in-sync with shaders/common/lighting.h
 struct LightingData
 {
     struct PointLightData
@@ -37,6 +37,9 @@ struct LightingData
 
     PointLightData PointLightsData[GlobalConstants::MaxPointLightSources]{};
     SpotLightData SpotLightsData[GlobalConstants::MaxSpotLightSources]{};
+
+    Vector3 Padding0;
+    float ReflectionCubeMips;
 };
 
 #endif //RENDER_ENGINE_LIGHTING_DATA_H

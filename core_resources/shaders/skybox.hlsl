@@ -1,5 +1,6 @@
 #include "common/camera_data.h"
 #include "common/per_draw_data.h"
+#include "common/lighting.h"
 
 struct Attributes
 {
@@ -11,9 +12,6 @@ struct Varyings
     float4 positionCS : SV_POSITION;
     float3 CubemapUV : TEXCOORD0;
 };
-
-TextureCube _Skybox : register(t4);
-SamplerState sampler_Skybox : register(s4);
 
 Varyings vertexMain(Attributes attributes)
 {
@@ -28,5 +26,5 @@ Varyings vertexMain(Attributes attributes)
 
 half4 fragmentMain(Varyings vars) : SV_Target
 {
-    return _Skybox.SampleLevel(sampler_Skybox, vars.CubemapUV, 0);
+    return _ReflectionCube.SampleLevel(sampler_ReflectionCube, vars.CubemapUV, 0);
 }

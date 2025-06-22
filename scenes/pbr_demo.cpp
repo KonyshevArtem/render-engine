@@ -44,8 +44,6 @@ void PBRDemo::Init()
             material->SetTexture("_Albedo", Texture2D::White());
             material->SetFloat("_Roughness", 1 - j / 5);
             material->SetFloat("_Metallness", i / 5);
-            material->SetTexture("_ReflectionCube", Skybox);
-            material->SetFloat("_ReflectionCubeLevels", static_cast<float>(Skybox->GetMipLevels() - 1));
 
             //init gameObject
             auto sphere      = GameObject::Create("Sphere");

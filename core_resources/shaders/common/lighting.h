@@ -38,6 +38,9 @@ cbuffer Lighting : register(b2)
 
     PointLight _PointLights[MAX_POINT_LIGHT_SOURCES];
     SpotLight _SpotLights[MAX_SPOT_LIGHT_SOURCES];
+
+    float3 _Padding0;
+    float _ReflectionCubeMips;
 };
 
 TextureCube _ReflectionCube : register(t3);
@@ -58,12 +61,12 @@ float lightAttenuation(float distance, float range)
     return a + t * (b - a);
 }
 
-half3 sampleReflection(float cubeMips, float3 normalWS, float3 posWS, float roughness, float3 cameraPosWS)
+half3 sampleReflection(float3 normalWS, float3 posWS, float roughness, float3 cameraPosWS)
 {
     #if defined(_REFLECTION)
     float3 viewDirWS = normalize(posWS - cameraPosWS);
     float3 reflectedViewWS = reflect(viewDirWS, normalWS);
-    return _ReflectionCube.SampleLevel(sampler_ReflectionCube, reflectedViewWS, roughness * cubeMips).rgb;
+    return _ReflectionCube.SampleLevel(sampler_ReflectionCube, reflectedViewWS, roughness * _ReflectionCubeMips).rgb;
     #else
     return (half3) 0.0h;
     #endif

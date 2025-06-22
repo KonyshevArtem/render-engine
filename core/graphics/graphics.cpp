@@ -34,6 +34,7 @@
 #include "render_queue/render_queue.h"
 #include "editor/profiler/profiler.h"
 #include "editor/debug_pass/shadow_map_debug_pass.h"
+#include "cubemap/cubemap.h"
 
 #include <cassert>
 
@@ -66,7 +67,7 @@ namespace Graphics
     {
         // C++ struct memory layout must match GPU side struct
         assert(sizeof(CameraData) == 96);
-        assert(sizeof(LightingData) == 288);
+        assert(sizeof(LightingData) == 304);
         assert(sizeof(ShadowsData) == 1456);
         assert(sizeof(PerDrawData) == 128);
 
@@ -112,13 +113,14 @@ namespace Graphics
     {
     }
 
-    void SetLightingData(const std::vector<std::shared_ptr<Light>>& lights)
+    void SetLightingData(const std::vector<std::shared_ptr<Light>>& lights, const std::shared_ptr<Texture>& skybox)
     {
         LightingData lightingData{};
         lightingData.AmbientLight = GraphicsSettings::GetAmbientLightColor() * GraphicsSettings::GetAmbientLightIntensity();
         lightingData.PointLightsCount = 0;
         lightingData.SpotLightsCount = 0;
         lightingData.HasDirectionalLight = -1;
+        lightingData.ReflectionCubeMips = skybox ? skybox->GetMipLevels() : 1;
 
         for (const std::shared_ptr<Light>& light : lights)
         {
@@ -149,6 +151,7 @@ namespace Graphics
             }
         }
 
+        SetGlobalTexture("_ReflectionCube", skybox ? skybox : Cubemap::White());
         s_LightingDataBuffer->SetData(&lightingData, 0, sizeof(lightingData));
     }
 
@@ -185,7 +188,7 @@ namespace Graphics
             GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
             GraphicsBackend::Current()->SetClearDepth(1);
 
-            SetLightingData(ctx.Lights);
+            SetLightingData(ctx.Lights, ctx.Skybox);
 
             s_ShadowCasterPass->Prepare(ctx.Renderers, ctx.Lights, Camera::Current->GetShadowDistance());
             s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor, Camera::Current->GetPosition(), ctx.Renderers);

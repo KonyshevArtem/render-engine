@@ -9,6 +9,7 @@
 #include <vector>
 
 class Renderer;
+class Component;
 
 class GameObject: public std::enable_shared_from_this<GameObject>
 {
@@ -19,6 +20,7 @@ public:
     std::string                              Name;
     std::vector<std::shared_ptr<GameObject>> Children;
     std::shared_ptr<Renderer>                Renderer;
+    std::vector<std::shared_ptr<Component>>  Components;
 
     std::shared_ptr<GameObject> GetParent() const;
     void                        SetParent(const std::shared_ptr<GameObject> &newParent, int _index = -1);

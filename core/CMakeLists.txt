@@ -111,7 +111,9 @@ add_library(
 	file_system/file_system_implementations/file_system_android.cpp
 	file_system/file_system_implementations/file_system_android.h
 	editor/debug_pass/shadow_map_debug_pass.cpp
-	editor/debug_pass/shadow_map_debug_pass.h)
+	editor/debug_pass/shadow_map_debug_pass.h
+	component/component.h
+	component/component.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash OpenFBX GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)

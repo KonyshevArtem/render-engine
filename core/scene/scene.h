@@ -18,6 +18,7 @@ public:
     std::shared_ptr<Cubemap>             Skybox;
 
     static void Update();
+    static void Load(const std::string& scenePath);
 
     inline std::vector<std::shared_ptr<GameObject>> &GetRootGameObjects()
     {
@@ -27,7 +28,7 @@ public:
 private:
     std::vector<std::shared_ptr<GameObject>> m_GameObjects;
 
-    virtual void UpdateInternal() = 0;
+    virtual void UpdateInternal() {};
 };
 
 #endif //RENDER_ENGINE_SCENE_H

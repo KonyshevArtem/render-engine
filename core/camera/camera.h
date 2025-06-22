@@ -4,14 +4,17 @@
 #include "matrix4x4/matrix4x4.h"
 #include "quaternion/quaternion.h"
 #include "vector3/vector3.h"
+#include "component/component.h"
 #include <memory>
 
-class Camera
+class Camera : public Component
 {
 public:
+    Camera();
+
     static void Init(float _fov, float _nearClipPlane, float _farClipPlane, float _shadowDistance);
 
-    static std::unique_ptr<Camera> Current;
+    static std::shared_ptr<Camera> Current;
 
     const Matrix4x4 &GetViewMatrix();
     const Matrix4x4 &GetProjectionMatrix();
@@ -46,7 +49,6 @@ public:
     ~Camera() = default;
 
 private:
-    Camera(float _fov, float _nearClipPlane, float _farClipPlane, float _shadowDistance);
     Camera(const Camera &) = delete;
     Camera(Camera &&)      = delete;
 
@@ -64,6 +66,8 @@ private:
     bool       m_DirtyView;
     int        m_ScreenWidth;
     int        m_ScreenHeight;
+
+    friend class CameraComponentFactory;
 };
 
 #endif //RENDER_ENGINE_CAMERA_H

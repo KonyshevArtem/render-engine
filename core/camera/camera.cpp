@@ -1,13 +1,33 @@
 #include "camera.h"
 #include "graphics/graphics.h"
 
-std::unique_ptr<Camera> Camera::Current = nullptr;
+#include <memory>
 
-Camera::Camera(float _fov, float _nearClipPlane, float _farClipPlane, float _shadowDistance) :
-    m_Fov(_fov),
-    m_NearClipPlane(_nearClipPlane),
-    m_FarClipPlane(_farClipPlane),
-    m_ShadowDistance(_shadowDistance),
+REGISTER_COMPONENT(Camera)
+
+std::shared_ptr<Component> CameraComponentFactory::CreateComponent(const nlohmann::json& componentData)
+{
+    std::shared_ptr<Camera> camera = std::make_shared<Camera>();
+    if (componentData.contains("Fov"))
+        componentData.at("Fov").get_to(camera->m_Fov);
+    if (componentData.contains("NearClip"))
+        componentData.at("NearClip").get_to(camera->m_NearClipPlane);
+    if (componentData.contains("FarClip"))
+        componentData.at("FarClip").get_to(camera->m_FarClipPlane);
+    if (componentData.contains("ShadowDistance"))
+        componentData.at("ShadowDistance").get_to(camera->m_ShadowDistance);
+
+    Camera::Current = camera;
+    return camera;
+}
+
+std::shared_ptr<Camera> Camera::Current = nullptr;
+
+Camera::Camera() :
+    m_Fov(80),
+    m_NearClipPlane(0.01),
+    m_FarClipPlane(100),
+    m_ShadowDistance(100),
     m_Position(Vector3()),
     m_Rotation(Quaternion()),
     m_ViewMatrix(Matrix4x4::Identity()),
@@ -20,7 +40,11 @@ Camera::Camera(float _fov, float _nearClipPlane, float _farClipPlane, float _sha
 
 void Camera::Init(float _fov, float _nearClipPlane, float _farClipPlane, float _shadowDistance)
 {
-    Current = std::unique_ptr<Camera>(new Camera(_fov, _nearClipPlane, _farClipPlane, _shadowDistance));
+    Current = std::make_shared<Camera>();
+    Current->m_Fov = _fov;
+    Current->m_NearClipPlane = _nearClipPlane;
+    Current->m_FarClipPlane = _farClipPlane;
+    Current->m_ShadowDistance = _shadowDistance;
 }
 
 const Matrix4x4 &Camera::GetViewMatrix()

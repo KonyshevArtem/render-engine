@@ -7,6 +7,8 @@
 #include <string>
 #include <unordered_map>
 
+class GameObject;
+
 class Component
 {
 public:
@@ -19,8 +21,15 @@ public:
     static void RegisterComponentFactory(const std::string& componentName, Factory* factory);
     static std::shared_ptr<Component> CreateComponent(const std::string& componentName, const nlohmann::json& componentData);
 
+protected:
+    std::weak_ptr<GameObject> m_GameObject;
+
+    virtual void Stub(){}; // needed for a class to be polymorphic
+
 private:
     static std::unordered_map<std::string, Factory*>& GetFactories();
+
+    friend class GameObject;
 };
 
 #ifndef REGISTER_COMPONENT

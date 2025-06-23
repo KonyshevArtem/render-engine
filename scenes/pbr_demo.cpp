@@ -45,7 +45,7 @@ void PBRDemo::Init()
 
             //init gameObject
             auto sphere  = GameObject::Create("Sphere");
-            sphere->Renderer = std::make_shared<MeshRenderer>(sphere, sphereMesh, material);
+            sphere->AddComponent(std::make_shared<MeshRenderer>(sphereMesh, material));
             sphere->SetLocalPosition({3 * j, 3 * i, 0});
         }
     }

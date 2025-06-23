@@ -61,12 +61,12 @@ void SelectionOutlinePass::Execute(const Context& ctx)
         GraphicsBackend::Current()->BeginRenderPass("Selection Outline Pass");
         for (const auto &go: selectedGameObjects)
         {
-            if (!go || !go->Renderer)
+            if (!go || !go->GetRenderer())
             {
                 continue;
             }
 
-            const auto &renderer = go->Renderer;
+            const auto &renderer = go->GetRenderer();
             const auto &geometry = renderer->GetGeometry();
             const auto &material = renderer->GetMaterial();
 

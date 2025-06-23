@@ -1,17 +1,20 @@
 #include "gameObject.h"
 #include "scene/scene.h"
 #include "vector4/vector4.h"
+#include "component/component.h"
+#include "renderer/renderer.h"
 #if RENDER_ENGINE_EDITOR
 #include "editor/hierarchy.h"
 #endif
 
-std::shared_ptr<GameObject> GameObject::Create(const std::string &_name)
+std::shared_ptr<GameObject> GameObject::Create(const std::string &name, std::shared_ptr<Scene> scene)
 {
-    if (!Scene::Current)
+    scene = scene ? scene : Scene::Current;
+    if (!scene)
         return nullptr;
 
-    auto ptr = std::shared_ptr<GameObject>(new GameObject(_name));
-    Scene::Current->GetRootGameObjects().push_back(ptr);
+    auto ptr = std::shared_ptr<GameObject>(new GameObject(name, scene));
+    scene->GetRootGameObjects().push_back(ptr);
     return ptr;
 }
 
@@ -33,7 +36,7 @@ int RemoveGameObjectFromCollection(GameObject *_go, std::vector<std::shared_ptr<
 void GameObject::Destroy()
 {
     auto parent = GetParent();
-    if (!parent && !Scene::Current)
+    if (!parent && m_Scene.expired())
         return;
 
 #if RENDER_ENGINE_EDITOR
@@ -48,12 +51,13 @@ void GameObject::Destroy()
     }
 #endif
 
-    auto &collection = parent ? parent->Children : Scene::Current->GetRootGameObjects();
+    auto &collection = parent ? parent->Children : m_Scene.lock()->GetRootGameObjects();
     RemoveGameObjectFromCollection(this, collection);
 }
 
-GameObject::GameObject(std::string _name) :
-    Name(std::move(_name))
+GameObject::GameObject(std::string name, std::shared_ptr<Scene> scene) :
+    Name(std::move(name)),
+    m_Scene(scene)
 {
     static int uniqueIdCounter = 0;
 
@@ -78,7 +82,7 @@ void GameObject::SetParent(const std::shared_ptr<GameObject> &newParent, int _in
     auto pos = GetPosition();
     auto rot = GetRotation();
 
-    auto &oldCollection = oldParent ? oldParent->Children : Scene::Current->GetRootGameObjects();
+    auto &oldCollection = oldParent ? oldParent->Children : m_Scene.lock()->GetRootGameObjects();
     int oldIndex = RemoveGameObjectFromCollection(this, oldCollection);
     if (oldParent == newParent && _index > oldIndex)
     {
@@ -87,7 +91,7 @@ void GameObject::SetParent(const std::shared_ptr<GameObject> &newParent, int _in
 
     m_Parent = newParent;
 
-    auto &newCollection = newParent ? newParent->Children : Scene::Current->GetRootGameObjects();
+    auto &newCollection = newParent ? newParent->Children : m_Scene.lock()->GetRootGameObjects();
     if (_index < 0 || _index >= newCollection.size())
     {
         newCollection.push_back(thisPtr);
@@ -100,6 +104,16 @@ void GameObject::SetParent(const std::shared_ptr<GameObject> &newParent, int _in
 
     SetPosition(pos);
     SetRotation(rot);
+}
+
+void GameObject::AddComponent(std::shared_ptr<Component> component)
+{
+    m_Components.push_back(component);
+    component->m_GameObject = shared_from_this();
+
+    std::shared_ptr<Renderer> renderer = std::dynamic_pointer_cast<Renderer>(component);
+    if (renderer)
+        m_Renderer = renderer;
 }
 
 // global

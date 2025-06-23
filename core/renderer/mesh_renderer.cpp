@@ -3,10 +3,9 @@
 #include "mesh/mesh.h"
 #include "shader/shader.h"
 
-MeshRenderer::MeshRenderer(const std::shared_ptr<GameObject> &_gameObject,
-                           std::shared_ptr<Mesh>              _mesh,
+MeshRenderer::MeshRenderer(std::shared_ptr<Mesh>              _mesh,
                            const std::shared_ptr<Material>   &_material) :
-    Renderer(_gameObject, _material),
+    Renderer(_material),
     m_Mesh(std::move(_mesh))
 {
 }

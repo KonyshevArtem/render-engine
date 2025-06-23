@@ -2,9 +2,22 @@
   "GameObjects": [
     {
       "Name": "Camera",
-      "Position": {"x": 0, "y": 0, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
+      "Position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
       "Components": [
         {
           "Name": "Camera",
@@ -19,255 +32,1047 @@
     },
     {
       "Name": "PBRDemo_0",
-      "Position": {"x": 0, "y": 0, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_1",
-      "Position": {"x": 3, "y": 0, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 3,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_2",
-      "Position": {"x": 6, "y": 0, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 6,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_3",
-      "Position": {"x": 9, "y": 0, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 9,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_4",
-      "Position": {"x": 12, "y": 0, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 12,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_5",
-      "Position": {"x": 15, "y": 0, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 15,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_6",
-      "Position": {"x": 0, "y": 3, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 0,
+        "y": 3,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_7",
-      "Position": {"x": 3, "y": 3, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 3,
+        "y": 3,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_8",
-      "Position": {"x": 6, "y": 3, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 6,
+        "y": 3,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_9",
-      "Position": {"x": 9, "y": 3, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 9,
+        "y": 3,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_10",
-      "Position": {"x": 12, "y": 3, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 12,
+        "y": 3,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_11",
-      "Position": {"x": 15, "y": 3, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 15,
+        "y": 3,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_12",
-      "Position": {"x": 0, "y": 6, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 0,
+        "y": 6,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_13",
-      "Position": {"x": 3, "y": 6, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 3,
+        "y": 6,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_14",
-      "Position": {"x": 6, "y": 6, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 6,
+        "y": 6,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_15",
-      "Position": {"x": 9, "y": 6, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 9,
+        "y": 6,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_16",
-      "Position": {"x": 12, "y": 6, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 12,
+        "y": 6,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_17",
-      "Position": {"x": 15, "y": 6, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 15,
+        "y": 6,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_18",
-      "Position": {"x": 0, "y": 9, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 0,
+        "y": 9,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_19",
-      "Position": {"x": 3, "y": 9, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 3,
+        "y": 9,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_20",
-      "Position": {"x": 6, "y": 9, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 6,
+        "y": 9,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_21",
-      "Position": {"x": 9, "y": 9, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 9,
+        "y": 9,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_22",
-      "Position": {"x": 12, "y": 9, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 12,
+        "y": 9,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_23",
-      "Position": {"x": 15, "y": 9, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 15,
+        "y": 9,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_24",
-      "Position": {"x": 0, "y": 12, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 0,
+        "y": 12,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_25",
-      "Position": {"x": 3, "y": 12, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 3,
+        "y": 12,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_26",
-      "Position": {"x": 6, "y": 12, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 6,
+        "y": 12,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_27",
-      "Position": {"x": 9, "y": 12, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 9,
+        "y": 12,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_28",
-      "Position": {"x": 12, "y": 12, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 12,
+        "y": 12,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_29",
-      "Position": {"x": 15, "y": 12, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 15,
+        "y": 12,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_30",
-      "Position": {"x": 0, "y": 15, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 0,
+        "y": 15,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_31",
-      "Position": {"x": 3, "y": 15, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 3,
+        "y": 15,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_32",
-      "Position": {"x": 6, "y": 15, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 6,
+        "y": 15,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_33",
-      "Position": {"x": 9, "y": 15, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 9,
+        "y": 15,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_34",
-      "Position": {"x": 12, "y": 15, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 12,
+        "y": 15,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     },
     {
       "Name": "PBRDemo_35",
-      "Position": {"x": 15, "y": 15, "z": 0},
-      "Rotation": {"x": 0, "y": 0, "z": 0, "w":  1},
-      "Scale": {"x": 1, "y": 1, "z": 1},
-      "Components": []
+      "Position": {
+        "x": 15,
+        "y": 15,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/sphere.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
+          }
+        }
+      ]
     }
   ]
 }

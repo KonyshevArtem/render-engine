@@ -31,7 +31,7 @@ void Context::CollectRenderers(const std::shared_ptr<GameObject> &gameObject)
     if (!gameObject)
         return;
 
-    const std::shared_ptr<Renderer>& renderer = gameObject->Renderer;
+    const std::shared_ptr<Renderer>& renderer = gameObject->GetRenderer();
     if (renderer)
     {
         Renderers.push_back(renderer);

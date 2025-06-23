@@ -1,6 +1,8 @@
 #ifndef RENDER_ENGINE_RENDERER_H
 #define RENDER_ENGINE_RENDERER_H
 
+#include "component/component.h"
+
 #include <memory>
 #include <string>
 
@@ -13,7 +15,7 @@ struct Matrix4x4;
 struct Bounds;
 struct DrawableGeometry;
 
-class Renderer
+class Renderer : public Component
 {
 public:
     virtual ~Renderer() = default;
@@ -27,12 +29,10 @@ public:
     bool CastShadows = true;
 
 protected:
-    Renderer(const std::shared_ptr<GameObject> &_gameObject, const std::shared_ptr<Material> &_material);
+    Renderer() = default;
+    Renderer(const std::shared_ptr<Material> &_material);
 
     std::shared_ptr<Material> m_Material;
-
-private:
-    std::weak_ptr<GameObject> m_GameObject;
 };
 
 #endif //RENDER_ENGINE_RENDERER_H

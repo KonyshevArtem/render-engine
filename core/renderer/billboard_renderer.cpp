@@ -6,8 +6,8 @@
 
 std::shared_ptr<Mesh> s_BillboardMesh = nullptr;
 
-BillboardRenderer::BillboardRenderer(const std::shared_ptr<GameObject>& gameObject, const std::shared_ptr<Texture2D>& texture, const std::string& name) :
-    Renderer(gameObject, nullptr)
+BillboardRenderer::BillboardRenderer(const std::shared_ptr<Texture2D>& texture, const std::string& name) :
+    Renderer(nullptr)
 {
     static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/billboard", {}, {}, {CullFace::NONE}, {});
     static std::vector<Vector3> points(4);

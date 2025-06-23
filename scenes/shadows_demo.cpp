@@ -32,27 +32,27 @@ void ShadowsDemo::Init()
     // init walls
     {
         auto wall = GameObject::Create("");
-        wall->Renderer = std::make_shared<MeshRenderer>(wall, cubeMesh, standardOpaqueMaterial);
+        wall->AddComponent(std::make_shared<MeshRenderer>(cubeMesh, standardOpaqueMaterial));
         wall->SetLocalPosition({0, 0, 15});
         wall->SetLocalScale({5, 5, 1});
 
         wall = GameObject::Create("");
-        wall->Renderer = std::make_shared<MeshRenderer>(wall, cubeMesh, standardOpaqueMaterial);
+        wall->AddComponent(std::make_shared<MeshRenderer>(cubeMesh, standardOpaqueMaterial));
         wall->SetLocalPosition({-5, 0, 10});
         wall->SetLocalScale({1, 5, 5});
 
         wall = GameObject::Create("");
-        wall->Renderer = std::make_shared<MeshRenderer>(wall, cubeMesh, standardOpaqueMaterial);
+        wall->AddComponent(std::make_shared<MeshRenderer>(cubeMesh, standardOpaqueMaterial));
         wall->SetLocalPosition({5, 0, 10});
         wall->SetLocalScale({1, 5, 5});
 
         wall = GameObject::Create("");
-        wall->Renderer = std::make_shared<MeshRenderer>(wall, cubeMesh, standardOpaqueMaterial);
+        wall->AddComponent(std::make_shared<MeshRenderer>(cubeMesh, standardOpaqueMaterial));
         wall->SetLocalPosition({0, 5, 10});
         wall->SetLocalScale({5, 1, 5});
 
         wall = GameObject::Create("");
-        wall->Renderer = std::make_shared<MeshRenderer>(wall, cubeMesh, standardOpaqueMaterial);
+        wall->AddComponent(std::make_shared<MeshRenderer>(cubeMesh, standardOpaqueMaterial));
         wall->SetLocalPosition({0, -5, 10});
         wall->SetLocalScale({5, 1, 5});
     }
@@ -60,17 +60,17 @@ void ShadowsDemo::Init()
     // init spheres
     {
         auto sphere = GameObject::Create("");
-        sphere->Renderer = std::make_shared<MeshRenderer>(sphere, sphereMesh, standardOpaqueMaterial);
+        sphere->AddComponent(std::make_shared<MeshRenderer>(sphereMesh, standardOpaqueMaterial));
         sphere->SetLocalPosition({-3, 1, 13});
         sphere->SetLocalScale({0.5f, 0.5f, 0.5f});
 
         sphere = GameObject::Create("");
-        sphere->Renderer = std::make_shared<MeshRenderer>(sphere, sphereMesh, standardOpaqueMaterial);
+        sphere->AddComponent(std::make_shared<MeshRenderer>(sphereMesh, standardOpaqueMaterial));
         sphere->SetLocalPosition({2, -3, 9});
         sphere->SetLocalScale({0.5f, 0.5f, 0.5f});
 
         sphere = GameObject::Create("");
-        sphere->Renderer = std::make_shared<MeshRenderer>(sphere, sphereMesh, standardOpaqueMaterial);
+        sphere->AddComponent(std::make_shared<MeshRenderer>(sphereMesh, standardOpaqueMaterial));
         sphere->SetLocalPosition({1, 3, 13 });
         sphere->SetLocalScale({0.5f, 0.5f, 0.5f});
     }

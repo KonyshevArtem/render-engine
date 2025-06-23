@@ -9,8 +9,7 @@ class Mesh;
 class MeshRenderer: public Renderer
 {
 public:
-    MeshRenderer(const std::shared_ptr<GameObject> &_gameObject,
-                 std::shared_ptr<Mesh>              _mesh,
+    MeshRenderer(std::shared_ptr<Mesh>              _mesh,
                  const std::shared_ptr<Material>    &_material);
     ~MeshRenderer() override = default;
 
@@ -24,7 +23,11 @@ public:
     MeshRenderer &operator=(MeshRenderer &&) = delete;
 
 private:
+    MeshRenderer() = default;
+
     std::shared_ptr<Mesh> m_Mesh;
+
+    friend class MeshRendererComponentFactory;
 };
 
 #endif //RENDER_ENGINE_MESH_RENDERER_H

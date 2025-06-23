@@ -58,40 +58,40 @@ void TestScene::Init()
 
     // init gameObjects
     auto rotatingCube      = GameObject::Create("Rotating Cube");
-    rotatingCube->Renderer = std::make_shared<MeshRenderer>(rotatingCube, cubeMesh, brickMaterial);
+    rotatingCube->AddComponent(std::make_shared<MeshRenderer>(cubeMesh, brickMaterial));
     m_RotatingCube         = rotatingCube;
 
     auto rotatingCylinder      = GameObject::Create("Rotating Cylinder");
-    rotatingCylinder->Renderer = std::make_shared<MeshRenderer>(rotatingCylinder, cylinderMesh, standardOpaqueMaterial);
+    rotatingCylinder->AddComponent(std::make_shared<MeshRenderer>(cylinderMesh, standardOpaqueMaterial));
     rotatingCylinder->SetLocalPosition(Vector3(0, -3, 4));
     rotatingCylinder->SetLocalScale(Vector3(2, 1, 0.5f));
     m_RotatingCylinder1 = rotatingCylinder;
 
     auto cylinderFragmentLit      = GameObject::Create("Cylinder");
-    cylinderFragmentLit->Renderer = std::make_shared<MeshRenderer>(cylinderFragmentLit, cylinderMesh, standardOpaqueMaterial);
+    cylinderFragmentLit->AddComponent(std::make_shared<MeshRenderer>(cylinderMesh, standardOpaqueMaterial));
     cylinderFragmentLit->SetLocalPosition(Vector3(-3, -3, 6));
     cylinderFragmentLit->SetLocalScale(Vector3(2, 1, 0.5f));
     m_RotatingCylinder2 = cylinderFragmentLit;
 
     auto floorVertexLit      = GameObject::Create("Floor");
-    floorVertexLit->Renderer = std::make_shared<MeshRenderer>(floorVertexLit, cubeMesh, standardOpaqueMaterial);
+    floorVertexLit->AddComponent(std::make_shared<MeshRenderer>(cubeMesh, standardOpaqueMaterial));
     floorVertexLit->SetLocalPosition(Vector3(3, -5, 5.5f));
     floorVertexLit->SetLocalRotation(Quaternion::AngleAxis(-10, Vector3(0, 1, 0)));
     floorVertexLit->SetLocalScale(Vector3(5, 1, 2));
 
     auto floorFragmentLit      = GameObject::Create("Bricks");
-    floorFragmentLit->Renderer = std::make_shared<MeshRenderer>(floorFragmentLit, cubeMesh, brickMaterial);
+    floorFragmentLit->AddComponent(std::make_shared<MeshRenderer>(cubeMesh, brickMaterial));
     floorFragmentLit->SetLocalPosition(Vector3(-9, -5, 5.5f));
     floorFragmentLit->SetLocalRotation(Quaternion::AngleAxis(10, Vector3(0, 1, 0)));
     floorFragmentLit->SetLocalScale(Vector3(5, 1, 2));
 
     auto water      = GameObject::Create("Water");
-    water->Renderer = std::make_shared<MeshRenderer>(water, planeMesh, m_WaterMaterial);
+    water->AddComponent(std::make_shared<MeshRenderer>(planeMesh, m_WaterMaterial));
     water->SetLocalPosition(Vector3(0, -10, 10));
     water->SetLocalScale(Vector3(20, 1, 20));
 
     auto car      = GameObject::Create("Car");
-    car->Renderer = std::make_shared<MeshRenderer>(car, carMesh, carMaterial);
+    car->AddComponent(std::make_shared<MeshRenderer>(carMesh, carMaterial));
     car->SetLocalPosition(Vector3 {11, -8.5f, -2});
     car->SetLocalRotation(Quaternion::AngleAxis(135, Vector3 {0, -1, 0}));
     car->SetLocalScale(Vector3 {0.02f, 0.02f, 0.02f});
@@ -100,16 +100,16 @@ void TestScene::Init()
     {
         std::string name = "TreeBillboard_" + std::to_string(i);
         auto billboard = GameObject::Create(name);
-        auto billboardRenderer = std::make_shared<BillboardRenderer>(billboard, billboardTree, name);
+        auto billboardRenderer = std::make_shared<BillboardRenderer>(billboardTree, name);
         billboardRenderer->SetSize(5);
         billboard->SetLocalPosition(Vector3 {-20.0f + 10 * i, -10, 20});
-        billboard->Renderer = std::move(billboardRenderer);
+        billboard->AddComponent(billboardRenderer);
     }
 
     for (int i = 0; i < 3; ++i)
     {
         auto transparentCube      = GameObject::Create("Transparent Cube " + std::to_string(i));
-        transparentCube->Renderer = std::make_shared<MeshRenderer>(transparentCube, cubeMesh, transparentMaterial);
+        transparentCube->AddComponent(std::make_shared<MeshRenderer>(cubeMesh, transparentMaterial));
         transparentCube->SetLocalPosition(Vector3(-10.0f + 5 * i, -5, 12));
         transparentCube->SetLocalRotation(Quaternion::AngleAxis(30, {0, 1, 0}));
     }
@@ -127,9 +127,9 @@ void TestScene::Init()
         float x = (i % (gridSize * gridSize)) % gridSize;
         int y = i / (gridSize * gridSize);
         float z = (i % (gridSize * gridSize)) / gridSize;
-        instancedCube->Renderer = std::make_shared<MeshRenderer>(instancedCube, cubeMesh, sphereMaterial);
+        instancedCube->AddComponent(std::make_shared<MeshRenderer>(cubeMesh, sphereMaterial));
         instancedCube->SetLocalPosition({-40.0f + 80.0f * x / gridSize, -15.0f - 2.5f * y, -40.0f + 80.0f * z / gridSize});
-        instancedCube->Renderer->CastShadows = false;
+        instancedCube->GetRenderer()->CastShadows = false;
 
         instancedCube->SetParent(spheresParent);
     }

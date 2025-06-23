@@ -1,5 +1,6 @@
 #include "camera.h"
 #include "graphics/graphics.h"
+#include "gameObject/gameObject.h"
 
 #include <memory>
 
@@ -7,55 +8,41 @@ REGISTER_COMPONENT(Camera)
 
 std::shared_ptr<Component> CameraComponentFactory::CreateComponent(const nlohmann::json& componentData)
 {
-    std::shared_ptr<Camera> camera = std::make_shared<Camera>();
-    if (componentData.contains("Fov"))
-        componentData.at("Fov").get_to(camera->m_Fov);
-    if (componentData.contains("NearClip"))
-        componentData.at("NearClip").get_to(camera->m_NearClipPlane);
-    if (componentData.contains("FarClip"))
-        componentData.at("FarClip").get_to(camera->m_FarClipPlane);
-    if (componentData.contains("ShadowDistance"))
-        componentData.at("ShadowDistance").get_to(camera->m_ShadowDistance);
+    float fov = 80;
+    float nearClipPlane = 0.01;
+    float farClipPlane = 100;
+    float shadowDistance = 100;
 
+    if (componentData.contains("Fov"))
+        componentData.at("Fov").get_to(fov);
+    if (componentData.contains("NearClip"))
+        componentData.at("NearClip").get_to(nearClipPlane);
+    if (componentData.contains("FarClip"))
+        componentData.at("FarClip").get_to(farClipPlane);
+    if (componentData.contains("ShadowDistance"))
+        componentData.at("ShadowDistance").get_to(shadowDistance);
+
+    std::shared_ptr<Camera> camera = std::make_shared<Camera>(fov, nearClipPlane, farClipPlane, shadowDistance);
     Camera::Current = camera;
     return camera;
 }
 
 std::shared_ptr<Camera> Camera::Current = nullptr;
 
-Camera::Camera() :
-    m_Fov(80),
-    m_NearClipPlane(0.01),
-    m_FarClipPlane(100),
-    m_ShadowDistance(100),
-    m_Position(Vector3()),
-    m_Rotation(Quaternion()),
-    m_ViewMatrix(Matrix4x4::Identity()),
+Camera::Camera(float fov, float nearClipPlane, float farClipPlane, float shadowDistance) :
+    m_Fov(fov),
+    m_NearClipPlane(nearClipPlane),
+    m_FarClipPlane(farClipPlane),
+    m_ShadowDistance(shadowDistance),
     m_ProjectionMatrix(Matrix4x4::Identity()),
-    m_DirtyView(true),
     m_ScreenWidth(0),
     m_ScreenHeight(0)
 {
 }
 
-void Camera::Init(float _fov, float _nearClipPlane, float _farClipPlane, float _shadowDistance)
-{
-    Current = std::make_shared<Camera>();
-    Current->m_Fov = _fov;
-    Current->m_NearClipPlane = _nearClipPlane;
-    Current->m_FarClipPlane = _farClipPlane;
-    Current->m_ShadowDistance = _shadowDistance;
-}
-
 const Matrix4x4 &Camera::GetViewMatrix()
 {
-    if (m_DirtyView)
-    {
-        m_DirtyView  = false;
-        m_ViewMatrix = Matrix4x4::Rotation(m_Rotation.Inverse()) * Matrix4x4::Translation(-m_Position);
-    }
-
-    return m_ViewMatrix;
+    return m_GameObject.lock()->GetWorldToLocalMatrix();
 }
 
 const Matrix4x4 &Camera::GetProjectionMatrix()
@@ -69,16 +56,4 @@ const Matrix4x4 &Camera::GetProjectionMatrix()
     }
 
     return m_ProjectionMatrix;
-}
-
-void Camera::SetPosition(const Vector3 &_position)
-{
-    m_Position  = _position;
-    m_DirtyView = true;
-}
-
-void Camera::SetRotation(const Quaternion &_rotation)
-{
-    m_Rotation  = _rotation;
-    m_DirtyView = true;
 }

@@ -23,7 +23,9 @@ std::shared_ptr<Light> light;
 void PBRDemo::Init()
 {
     //init camera
-    Camera::Init(80, 0.5f, 100, 100);
+    std::shared_ptr<GameObject> cameraGameObject = GameObject::Create("Camera");
+    Camera::Current = std::make_shared<Camera>(80, 0.5f, 100, 100);
+    cameraGameObject->AddComponent(Camera::Current);
 
     //init mesh
     auto sphereAsset = FBXAsset::Load("core_resources/models/sphere.fbx");
@@ -72,7 +74,7 @@ void PBRDemo::Init()
     spotLight->Range       = 30;
     Lights.push_back(spotLight);
 
-    Camera::Current->SetPosition({7.5f, 7.5f, -15});
+    Camera::Current->GetGameObject()->SetPosition({7.5f, 7.5f, -15});
 }
 
 void PBRDemo::UpdateInternal()

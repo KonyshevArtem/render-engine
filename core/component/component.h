@@ -21,6 +21,11 @@ public:
     static void RegisterComponentFactory(const std::string& componentName, Factory* factory);
     static std::shared_ptr<Component> CreateComponent(const std::string& componentName, const nlohmann::json& componentData);
 
+    std::shared_ptr<GameObject> GetGameObject()
+    {
+        return !m_GameObject.expired() ? m_GameObject.lock() : nullptr;
+    }
+
 protected:
     std::weak_ptr<GameObject> m_GameObject;
 

@@ -3,6 +3,7 @@
 #include "graphics/graphics.h"
 #include "input/input.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
+#include "gameObject/gameObject.h"
 
 #include <algorithm>
 
@@ -38,7 +39,7 @@ void CameraFlyController::Update()
     const Quaternion yRot = Quaternion::AngleAxis(m_CameraEulerAngles.x, Vector3(0, -1, 0));
     const Quaternion cameraRotation = yRot * xRot;
 
-    Vector3 cameraPosition = Camera::Current->GetPosition();
+    Vector3 cameraPosition = Camera::Current->GetGameObject()->GetPosition();
 
     float cameraMoveDelta = CAMERA_MOVE_SPEED * Time::GetDeltaTime();
     const Vector3 cameraFwd = cameraRotation * Vector3(0, 0, 1) * cameraMoveDelta;
@@ -70,8 +71,8 @@ void CameraFlyController::Update()
 
     UpdateTouchInputs();
 
-    Camera::Current->SetPosition(cameraPosition);
-    Camera::Current->SetRotation(cameraRotation);
+    Camera::Current->GetGameObject()->SetPosition(cameraPosition);
+    Camera::Current->GetGameObject()->SetRotation(cameraRotation);
 }
 
 void CameraFlyController::UpdateTouchInputs()

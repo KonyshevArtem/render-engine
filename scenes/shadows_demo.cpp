@@ -20,7 +20,9 @@ void ShadowsDemo::Load()
 void ShadowsDemo::Init()
 {
     //init camera
-    Camera::Init(60, 0.5f, 100, 100);
+    std::shared_ptr<GameObject> cameraGameObject = GameObject::Create("Camera");
+    Camera::Current = std::make_shared<Camera>(60, 0.5f, 100, 100);
+    cameraGameObject->AddComponent(Camera::Current);
 
     // init meshes
     auto cubeMesh = FBXAsset::Load("core_resources/models/cube.fbx")->GetMesh(0);

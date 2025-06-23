@@ -35,6 +35,7 @@
 #include "editor/profiler/profiler.h"
 #include "editor/debug_pass/shadow_map_debug_pass.h"
 #include "cubemap/cubemap.h"
+#include "gameObject/gameObject.h"
 
 #include <cassert>
 
@@ -191,7 +192,7 @@ namespace Graphics
             SetLightingData(ctx.Lights, ctx.Skybox);
 
             s_ShadowCasterPass->Prepare(ctx.Renderers, ctx.Lights, Camera::Current->GetShadowDistance());
-            s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor, Camera::Current->GetPosition(), ctx.Renderers);
+            s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor, Camera::Current->GetGameObject()->GetPosition(), ctx.Renderers);
             s_FinalBlitPass->Prepare(cameraColorTarget);
 
             renderPasses.push_back(s_ShadowCasterPass);
@@ -416,7 +417,7 @@ namespace Graphics
         cameraData.NearClipPlane = Camera::Current->GetNearClipPlane();
         cameraData.FarClipPlane = Camera::Current->GetFarClipPlane();
         cameraData.ViewProjectionMatrix = _projectionMatrix * _viewMatrix;
-        cameraData.CameraDirection = Camera::Current->GetRotation() * Vector3{0, 0, 1};
+        cameraData.CameraDirection = Camera::Current->GetGameObject()->GetRotation() * Vector3{0, 0, 1};
 
         s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
     }

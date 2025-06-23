@@ -29,7 +29,9 @@ void TestScene::Load()
 void TestScene::Init()
 {
     // init camera
-    Camera::Init(75, 0.5f, 100, 100);
+    std::shared_ptr<GameObject> cameraGameObject = GameObject::Create("Camera");
+    Camera::Current = std::make_shared<Camera>(75, 0.5f, 100, 100);
+    cameraGameObject->AddComponent(Camera::Current);
 
     // init textures
     auto billboardTree = Texture2D::Load("core_resources/textures/billboard_tree");
@@ -166,7 +168,7 @@ void TestScene::Init()
     Lights.push_back(spotLight2);
 
     // init camera
-    Camera::Current->SetPosition(Vector3(-10, 0.5f, -5));
+    Camera::Current->GetGameObject()->SetPosition(Vector3(-10, 0.5f, -5));
     m_CameraFlyControl = std::make_unique<CameraFlyController>();
 }
 
@@ -219,6 +221,6 @@ void TestScene::UpdateInternal()
 
     // animate light
     m_DirectionalLight->Rotation = Quaternion::AngleAxis(50.0f * Time::GetDeltaTime(), Vector3 {0, 1, 0}) * m_DirectionalLight->Rotation;
-    m_SpotLight->Position        = Camera::Current->GetPosition() + Camera::Current->GetRotation() * Vector3(-3, 0, 0);
-    m_SpotLight->Rotation        = Camera::Current->GetRotation();
+    m_SpotLight->Position        = Camera::Current->GetGameObject()->GetPosition() + Camera::Current->GetGameObject()->GetRotation() * Vector3(-3, 0, 0);
+    m_SpotLight->Rotation        = Camera::Current->GetGameObject()->GetRotation();
 }

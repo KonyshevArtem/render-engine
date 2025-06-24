@@ -4,6 +4,7 @@
 #include "quaternion/quaternion.h"
 #include "component/component.h"
 #include "nlohmann/json.hpp"
+#include "cubemap/cubemap.h"
 
 void from_json(const nlohmann::json& json, Vector3& vector)
 {
@@ -37,8 +38,14 @@ namespace SceneParser
         std::vector<ComponentInfo> Components;
     };
 
+    struct SceneSettings
+    {
+        std::string Skybox;
+    };
+
     struct SceneInfo
     {
+        SceneSettings Settings;
         std::vector<GameObjectInfo> GameObjects;
     };
 
@@ -58,8 +65,16 @@ namespace SceneParser
             json.at("Components").get_to(info.Components);
     }
 
+    void from_json(const nlohmann::json& json, SceneSettings& settings)
+    {
+        if (json.contains("Skybox"))
+            json.at("Skybox").get_to(settings.Skybox);
+    }
+
     void from_json(const nlohmann::json& json, SceneInfo& info)
     {
+        if (json.contains("Settings"))
+            json.at("Settings").get_to(info.Settings);
         json.at("GameObjects").get_to(info.GameObjects);
     }
 
@@ -87,6 +102,9 @@ namespace SceneParser
                 go->AddComponent(component);
             }
         }
+
+        if (!sceneInfo.Settings.Skybox.empty())
+            scene->Skybox = Cubemap::Load(sceneInfo.Settings.Skybox);
 
         return scene;
     }

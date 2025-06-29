@@ -14,7 +14,6 @@ class Scene
 {
 public:
     inline static std::shared_ptr<Scene> Current = nullptr;
-    std::vector<std::shared_ptr<Light>>  Lights;
     std::shared_ptr<Cubemap>             Skybox;
 
     static void Update();

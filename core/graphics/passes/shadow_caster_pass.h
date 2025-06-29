@@ -24,7 +24,7 @@ public:
     ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer, int priority);
     ~ShadowCasterPass() override = default;
 
-    void Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers, const std::vector<std::shared_ptr<Light>>& lights, float shadowsDistance);
+    void Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers, const std::vector<Light*>& lights, float shadowsDistance);
     void Execute(const Context &ctx) override;
 
     ShadowCasterPass(const ShadowCasterPass&) = delete;

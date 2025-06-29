@@ -114,7 +114,7 @@ namespace Graphics
     {
     }
 
-    void SetLightingData(const std::vector<std::shared_ptr<Light>>& lights, const std::shared_ptr<Texture>& skybox)
+    void SetLightingData(const std::vector<Light*>& lights, const std::shared_ptr<Texture>& skybox)
     {
         LightingData lightingData{};
         lightingData.AmbientLight = GraphicsSettings::GetAmbientLightColor() * GraphicsSettings::GetAmbientLightIntensity();
@@ -123,28 +123,29 @@ namespace Graphics
         lightingData.HasDirectionalLight = -1;
         lightingData.ReflectionCubeMips = skybox ? skybox->GetMipLevels() : 1;
 
-        for (const std::shared_ptr<Light>& light : lights)
+        for (Light* light : lights)
         {
             if (light == nullptr)
                 continue;
 
+            std::shared_ptr<GameObject> lightGo = light->GetGameObject();
             if (light->Type == LightType::DIRECTIONAL && lightingData.HasDirectionalLight <= 0)
             {
                 lightingData.HasDirectionalLight = 1;
-                lightingData.DirLightDirection = light->Rotation * Vector3(0, 0, 1);
+                lightingData.DirLightDirection = lightGo->GetRotation() * Vector3(0, 0, 1);
                 lightingData.DirLightIntensity = GraphicsSettings::GetSunLightColor() * GraphicsSettings::GetSunLightIntensity();
             }
             else if (light->Type == LightType::POINT && lightingData.PointLightsCount < GlobalConstants::MaxPointLightSources)
             {
-                lightingData.PointLightsData[lightingData.PointLightsCount].Position = light->Position.ToVector4(1);
+                lightingData.PointLightsData[lightingData.PointLightsCount].Position = lightGo->GetPosition().ToVector4(1);
                 lightingData.PointLightsData[lightingData.PointLightsCount].Intensity = light->Intensity;
                 lightingData.PointLightsData[lightingData.PointLightsCount].Range = light->Range;
                 ++lightingData.PointLightsCount;
             }
             else if (light->Type == LightType::SPOT && lightingData.SpotLightsCount < GlobalConstants::MaxSpotLightSources)
             {
-                lightingData.SpotLightsData[lightingData.SpotLightsCount].Position = light->Position.ToVector4(1);
-                lightingData.SpotLightsData[lightingData.SpotLightsCount].Direction = light->Rotation * Vector3(0, 0, 1);
+                lightingData.SpotLightsData[lightingData.SpotLightsCount].Position = lightGo->GetPosition().ToVector4(1);
+                lightingData.SpotLightsData[lightingData.SpotLightsCount].Direction = lightGo->GetRotation() * Vector3(0, 0, 1);
                 lightingData.SpotLightsData[lightingData.SpotLightsCount].Intensity = light->Intensity;
                 lightingData.SpotLightsData[lightingData.SpotLightsCount].Range = light->Range;
                 lightingData.SpotLightsData[lightingData.SpotLightsCount].CutOffCosine = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);

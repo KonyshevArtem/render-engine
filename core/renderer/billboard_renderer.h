@@ -31,8 +31,6 @@ private:
 
     float m_Aspect;
     Bounds m_Bounds;
-
-    friend class BillboardRendererComponentFactory;
 };
 
 #endif //RENDER_ENGINE_BILLBOARD_RENDERER_H

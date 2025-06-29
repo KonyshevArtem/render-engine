@@ -53,31 +53,34 @@ void PBRDemo::Init()
     }
 
     //init light
-    light            = std::make_shared<Light>();
-    light->Rotation  = Quaternion::AngleAxis(-50, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(1, 0, 0));
+    std::shared_ptr<GameObject> dirLightGo = GameObject::Create("DirectionalLight");
+    dirLightGo->SetRotation(Quaternion::AngleAxis(-50, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(1, 0, 0)));
+    light = std::make_shared<Light>();
     light->Intensity = Vector3(0.8f, 0.8f, 0.8f);
-    light->Type      = LightType::DIRECTIONAL;
-    Lights.push_back(light);
+    light->Type = LightType::DIRECTIONAL;
+    dirLightGo->AddComponent(light);
 
-    auto pointLight         = std::make_shared<Light>();
-    pointLight->Position    = {7.5f, 7.5f, 0};
-    pointLight->Intensity   = {0, 1, 0};
-    pointLight->Type        = LightType::POINT;
-    pointLight->Range       = 15;
-    Lights.push_back(pointLight);
+    std::shared_ptr<GameObject> pointLightGo = GameObject::Create("PointLight");
+    pointLightGo->SetPosition({7.5f, 7.5f, 0});
+    std::shared_ptr<Light> pointLight = std::make_shared<Light>();
+    pointLight->Intensity = {0, 1, 0};
+    pointLight->Type = LightType::POINT;
+    pointLight->Range = 15;
+    pointLightGo->AddComponent(pointLight);
 
-    auto spotLight         = std::make_shared<Light>();
-    spotLight->Position    = {7.5f, 7.5f, -16};
-    spotLight->Intensity   = {0, 0, 1};
-    spotLight->Type        = LightType::SPOT;
+    std::shared_ptr<GameObject> spotLightGo = GameObject::Create("SpotLight");
+    spotLightGo->SetPosition({7.5f, 7.5f, -16});
+    std::shared_ptr<Light> spotLight = std::make_shared<Light>();
+    spotLight->Intensity = {0, 0, 1};
+    spotLight->Type = LightType::SPOT;
     spotLight->CutOffAngle = 30;
-    spotLight->Range       = 30;
-    Lights.push_back(spotLight);
+    spotLight->Range = 30;
+    spotLightGo->AddComponent(spotLight);
 
     Camera::Current->GetGameObject()->SetPosition({7.5f, 7.5f, -15});
 }
 
 void PBRDemo::UpdateInternal()
 {
-    light->Rotation = Quaternion::AngleAxis(80.0f * Time::GetDeltaTime(), Vector3 {0, 1, 0}) * light->Rotation;
+    light->GetGameObject()->SetRotation(Quaternion::AngleAxis(80.0f * Time::GetDeltaTime(), Vector3 {0, 1, 0}) * light->GetGameObject()->GetRotation());
 }

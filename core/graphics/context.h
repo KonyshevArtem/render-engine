@@ -17,7 +17,7 @@ struct Context
 {
     Context();
 
-    std::vector<std::shared_ptr<Light>> Lights;
+    std::vector<Light*> Lights;
 
     std::vector<std::shared_ptr<Renderer>> Renderers;
 

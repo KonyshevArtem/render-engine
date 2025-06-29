@@ -138,35 +138,38 @@ void TestScene::Init()
     }
 
     // init lights
-    m_DirectionalLight            = std::make_shared<Light>();
-    m_DirectionalLight->Position  = Vector3(0, -0.3f, -1);
-    m_DirectionalLight->Rotation  = Quaternion::AngleAxis(-150, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(1, 0, 0));
-    m_DirectionalLight->Type      = LightType::DIRECTIONAL;
+    std::shared_ptr<GameObject> dirLightGo = GameObject::Create("DirectionalLight");
+    dirLightGo->SetPosition(Vector3(0, -0.3f, -1));
+    dirLightGo->SetRotation(Quaternion::AngleAxis(-150, Vector3(0, 1, 0)) * Quaternion::AngleAxis(30, Vector3(1, 0, 0)));
+    m_DirectionalLight = std::make_shared<Light>();
+    m_DirectionalLight->Type = LightType::DIRECTIONAL;
+    dirLightGo->AddComponent(m_DirectionalLight);
 
-    auto pointLight         = std::make_shared<Light>();
-    pointLight->Position    = Vector3(-3, -3, 4);
-    pointLight->Intensity   = Vector3(10, 0, 0);
-    pointLight->Range       = 10;
-    pointLight->Type        = LightType::POINT;
+    std::shared_ptr<GameObject> pointLightGo = GameObject::Create("PointLight");
+    pointLightGo->SetPosition(Vector3(-3, -3, 4));
+    std::shared_ptr<Light> pointLight = std::make_shared<Light>();
+    pointLight->Intensity = Vector3(10, 0, 0);
+    pointLight->Range = 10;
+    pointLight->Type = LightType::POINT;
+    pointLightGo->AddComponent(pointLight);
 
-    m_SpotLight              = std::make_shared<Light>();
-    m_SpotLight->Intensity   = Vector3(10, 10, 10);
-    m_SpotLight->Range       = 40;
+    std::shared_ptr<GameObject> spotLightGo1 = GameObject::Create("SpotLight1");
+    m_SpotLight = std::make_shared<Light>();
+    m_SpotLight->Intensity = Vector3(10, 10, 10);
+    m_SpotLight->Range = 40;
     m_SpotLight->CutOffAngle = 15;
-    m_SpotLight->Type        = LightType::SPOT;
+    m_SpotLight->Type = LightType::SPOT;
+    spotLightGo1->AddComponent(m_SpotLight);
 
-    auto spotLight2         = std::make_shared<Light>();
-    spotLight2->Position    = Vector3(-9, 5, 5.5f);
-    spotLight2->Rotation    = Quaternion::AngleAxis(90, Vector3(1, 0, 0));
-    spotLight2->Intensity   = Vector3(1, 1, 1);
-    spotLight2->Range       = 15;
+    std::shared_ptr<GameObject> spotLightGo2 = GameObject::Create("SpotLight2");
+    spotLightGo2->SetPosition(Vector3(-9, 5, 5.5f));
+    spotLightGo2->SetRotation(Quaternion::AngleAxis(90, Vector3(1, 0, 0)));
+    std::shared_ptr<Light> spotLight2 = std::make_shared<Light>();
+    spotLight2->Intensity = Vector3(1, 1, 1);
+    spotLight2->Range = 15;
     spotLight2->CutOffAngle = 15;
-    spotLight2->Type        = LightType::SPOT;
-
-    Lights.push_back(m_DirectionalLight);
-    Lights.push_back(pointLight);
-    Lights.push_back(m_SpotLight);
-    Lights.push_back(spotLight2);
+    spotLight2->Type = LightType::SPOT;
+    spotLightGo2->AddComponent(spotLight2);
 
     // init camera
     Camera::Current->GetGameObject()->SetPosition(Vector3(-10, 0.5f, -5));
@@ -218,7 +221,7 @@ void TestScene::UpdateInternal()
     m_WaterMaterial->SetVector("_NormalMap_ST", Vector4(offset, offset, 3, 3));
 
     // animate light
-    m_DirectionalLight->Rotation = Quaternion::AngleAxis(50.0f * Time::GetDeltaTime(), Vector3 {0, 1, 0}) * m_DirectionalLight->Rotation;
-    m_SpotLight->Position        = Camera::Current->GetGameObject()->GetPosition() + Camera::Current->GetGameObject()->GetRotation() * Vector3(-3, 0, 0);
-    m_SpotLight->Rotation        = Camera::Current->GetGameObject()->GetRotation();
+    m_DirectionalLight->GetGameObject()->SetRotation(Quaternion::AngleAxis(50.0f * Time::GetDeltaTime(), Vector3 {0, 1, 0}) * m_DirectionalLight->GetGameObject()->GetRotation());
+    m_SpotLight->GetGameObject()->SetPosition(Camera::Current->GetGameObject()->GetPosition() + Camera::Current->GetGameObject()->GetRotation() * Vector3(-3, 0, 0));
+    m_SpotLight->GetGameObject()->SetRotation(Camera::Current->GetGameObject()->GetRotation());
 }

@@ -50,8 +50,6 @@ private:
     Matrix4x4  m_ProjectionMatrix;
     int        m_ScreenWidth;
     int        m_ScreenHeight;
-
-    friend class CameraComponentFactory;
 };
 
 #endif //RENDER_ENGINE_CAMERA_H

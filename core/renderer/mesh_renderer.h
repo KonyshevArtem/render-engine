@@ -28,8 +28,6 @@ private:
     MeshRenderer() = default;
 
     std::shared_ptr<Mesh> m_Mesh;
-
-    friend class MeshRendererComponentFactory;
 };
 
 #endif //RENDER_ENGINE_MESH_RENDERER_H

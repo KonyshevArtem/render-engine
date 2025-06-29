@@ -78,18 +78,19 @@ void ShadowsDemo::Init()
         sphere->SetLocalScale({0.5f, 0.5f, 0.5f});
     }
 
-    auto pointLight1 = std::make_shared<Light>();
-    pointLight1->Position = Vector3(2, 2, 12);
+    std::shared_ptr<GameObject> pointLight1Go = GameObject::Create("PointLight1");
+    pointLight1Go->SetPosition(Vector3(2, 2, 12));
+    std::shared_ptr<Light> pointLight1 = std::make_shared<Light>();
     pointLight1->Intensity = Vector3(1, 1, 1);
     pointLight1->Range = 30;
     pointLight1->Type = LightType::POINT;
+    pointLight1Go->AddComponent(pointLight1);
 
-    auto pointLight2 = std::make_shared<Light>();
-    pointLight2->Position = Vector3(-2, -2, 8);
+    std::shared_ptr<GameObject> pointLight2Go = GameObject::Create("PointLight2");
+    pointLight2Go->SetPosition(Vector3(-2, -2, 8));
+    std::shared_ptr<Light> pointLight2 = std::make_shared<Light>();
     pointLight2->Intensity = Vector3(1, 1, 1);
     pointLight2->Range = 30;
     pointLight2->Type = LightType::POINT;
-
-    Lights.push_back(pointLight1);
-    Lights.push_back(pointLight2);
+    pointLight2Go->AddComponent(pointLight2);
 }

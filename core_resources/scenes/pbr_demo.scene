@@ -4,6 +4,105 @@
   },
   "GameObjects": [
     {
+      "Name": "Directional Light",
+      "Position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0.234,
+        "y": -0.408,
+        "z": 0.109,
+        "w": 0.875
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "Light",
+          "Data": {
+            "Type": "DIRECTIONAL",
+            "Intensity": {
+              "x": 0.8,
+              "y": 0.8,
+              "z": 0.8
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Point Light",
+      "Position": {
+        "x": 7.5,
+        "y": 7.5,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "Light",
+          "Data": {
+            "Type": "POINT",
+            "Intensity": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            },
+            "Range": 15
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Spot Light",
+      "Position": {
+        "x": 7.5,
+        "y": 7.5,
+        "z": -16
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "Light",
+          "Data": {
+            "Type": "SPOT",
+            "Intensity": {
+              "x": 0,
+              "y": 0,
+              "z": 1
+            },
+            "Range": 30,
+            "CutOffAngle": 30
+          }
+        }
+      ]
+    },
+    {
       "Name": "Camera",
       "Position": {
         "x": 7.5,

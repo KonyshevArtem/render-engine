@@ -4,6 +4,7 @@ add_library(
 	gameObject/gameObject.cpp
 	mesh/mesh.cpp
 	mesh/mesh.h
+	light/light.cpp
 	light/light.h
 	shader/shader.h
 	shader/shader.cpp
@@ -119,7 +120,9 @@ add_library(
 	scene/scene_parser.h
 	scene/scene_parser.cpp
 	core_components_register.h
-	core_components_register.cpp)
+	core_components_register.cpp
+	json_common/json_common.h
+	json_common/json_common.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash OpenFBX GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)

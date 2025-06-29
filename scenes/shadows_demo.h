@@ -11,10 +11,6 @@ public:
 
 private:
     void Init();
-
-    void UpdateInternal() override;
-
-    std::unique_ptr<CameraFlyController> m_CameraFlyControl;
 };
 
 #endif //RENDER_ENGINE_SHADOWS_DEMO_H

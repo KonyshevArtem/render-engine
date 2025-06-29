@@ -117,7 +117,9 @@ add_library(
 	material/material_parser.h
 	material/material_parser.cpp
 	scene/scene_parser.h
-	scene/scene_parser.cpp)
+	scene/scene_parser.cpp
+	core_components_register.h
+	core_components_register.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash OpenFBX GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)

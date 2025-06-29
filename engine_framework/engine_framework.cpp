@@ -11,6 +11,8 @@
 #include "imgui_wrapper.h"
 #include "file_system/file_system.h"
 #include "arguments.h"
+#include "../scripts/game_components_register.h"
+#include "core_components_register.h"
 
 GameWindow* window = nullptr;
 
@@ -31,6 +33,9 @@ void display(int width, int height)
 void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInitData, char** argv, int argc)
 {
     Arguments::Init(argv, argc);
+
+    CoreComponents::Register();
+    GameComponents::Register();
 
     FileSystem::Init(fileSystemData);
     GraphicsBackend::Init(graphicsBackendInitData);

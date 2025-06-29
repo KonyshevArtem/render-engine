@@ -21,6 +21,8 @@ public:
     static void RegisterComponentFactory(const std::string& componentName, Factory* factory);
     static std::shared_ptr<Component> CreateComponent(const std::string& componentName, const nlohmann::json& componentData);
 
+    virtual void Update(){};
+
     std::shared_ptr<GameObject> GetGameObject()
     {
         return !m_GameObject.expired() ? m_GameObject.lock() : nullptr;
@@ -42,7 +44,10 @@ private:
 class Name##ComponentFactory : public Component::Factory \
 { \
 public: \
-    std::shared_ptr<Component> CreateComponent(const nlohmann::json& componentData) override; \
+    std::shared_ptr<Component> CreateComponent(const nlohmann::json& componentData) override \
+    { \
+        return Name::Create(componentData); \
+    } \
     static class Name##ComponentFactoryInitializer \
     { \
     public: \

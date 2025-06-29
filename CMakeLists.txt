@@ -55,6 +55,8 @@ add_library(
     scenes/shadows_demo.h
     scripts/camera_fly_controller/camera_fly_controller.cpp
 	scripts/camera_fly_controller/camera_fly_controller.h
+	scripts/game_components_register.h
+	scripts/game_components_register.cpp
 )
 
 # TODO add non-editor compile target

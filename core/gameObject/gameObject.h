@@ -94,6 +94,8 @@ private:
 
     void InvalidateTransform();
     void ValidateTransform();
+
+    friend class Scene;
 };
 
 #endif //RENDER_ENGINE_GAMEOBJECT_H

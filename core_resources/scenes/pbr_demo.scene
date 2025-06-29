@@ -6,9 +6,9 @@
     {
       "Name": "Camera",
       "Position": {
-        "x": 0,
-        "y": 0,
-        "z": 0
+        "x": 7.5,
+        "y": 7.5,
+        "z": -15
       },
       "Rotation": {
         "x": 0,
@@ -30,6 +30,10 @@
             "FarClip": 100,
             "ShadowDistance": 100
           }
+        },
+        {
+          "Name": "CameraFlyController",
+          "Data": {}
         }
       ]
     },

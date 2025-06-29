@@ -1,0 +1,9 @@
+#ifndef RENDER_ENGINE_GAME_COMPONENTS_REGISTER_H
+#define RENDER_ENGINE_GAME_COMPONENTS_REGISTER_H
+
+namespace GameComponents
+{
+    void Register();
+}
+
+#endif //RENDER_ENGINE_GAME_COMPONENTS_REGISTER_H

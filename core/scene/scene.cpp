@@ -1,11 +1,18 @@
 #include "scene.h"
 #include "arguments.h"
 #include "scene_parser.h"
+#include "component/component.h"
 
 void Scene::Update()
 {
     if (Current != nullptr)
     {
+        for (const std::shared_ptr<GameObject>& go : Current->m_GameObjects)
+        {
+            for (const std::shared_ptr<Component>& component: go->m_Components)
+                component->Update();
+        }
+
         Current->UpdateInternal();
     }
     else

@@ -32,6 +32,7 @@ void TestScene::Init()
     std::shared_ptr<GameObject> cameraGameObject = GameObject::Create("Camera");
     Camera::Current = std::make_shared<Camera>(75, 0.5f, 100, 100);
     cameraGameObject->AddComponent(Camera::Current);
+    cameraGameObject->AddComponent(std::make_shared<CameraFlyController>());
 
     // init textures
     auto billboardTree = Texture2D::Load("core_resources/textures/billboard_tree");
@@ -169,7 +170,6 @@ void TestScene::Init()
 
     // init camera
     Camera::Current->GetGameObject()->SetPosition(Vector3(-10, 0.5f, -5));
-    m_CameraFlyControl = std::make_unique<CameraFlyController>();
 }
 
 Vector3 TestScene::CalcTranslation(float _phase)
@@ -196,8 +196,6 @@ Vector3 TestScene::CalcScale(float _phase)
 
 void TestScene::UpdateInternal()
 {
-    m_CameraFlyControl->Update();
-
     float phase = fmodf(fmodf(Time::GetElapsedTime(), LOOP_DURATION) / LOOP_DURATION, 1.0f);
 
     if (!m_RotatingCube.expired())

@@ -9,6 +9,8 @@ class Mesh;
 class MeshRenderer: public Renderer
 {
 public:
+    static std::shared_ptr<MeshRenderer> Create(const nlohmann::json& componentData);
+
     MeshRenderer(std::shared_ptr<Mesh>              _mesh,
                  const std::shared_ptr<Material>    &_material);
     ~MeshRenderer() override = default;

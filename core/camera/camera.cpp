@@ -6,7 +6,7 @@
 
 REGISTER_COMPONENT(Camera)
 
-std::shared_ptr<Component> CameraComponentFactory::CreateComponent(const nlohmann::json& componentData)
+std::shared_ptr<Camera> Camera::Create(const nlohmann::json& componentData)
 {
     float fov = 80;
     float nearClipPlane = 0.01;

@@ -4,6 +4,15 @@
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
 
+std::shared_ptr<BillboardRenderer> BillboardRenderer::Create(const nlohmann::json& componentData)
+{
+    std::string texturePath;
+    componentData.at("Texture").get_to(texturePath);
+    std::shared_ptr<Texture2D> texture = Texture2D::Load(texturePath);
+
+    return std::make_shared<BillboardRenderer>(texture, "BillboardRenderer_" + texturePath);
+}
+
 std::shared_ptr<Mesh> s_BillboardMesh = nullptr;
 
 BillboardRenderer::BillboardRenderer(const std::shared_ptr<Texture2D>& texture, const std::string& name) :

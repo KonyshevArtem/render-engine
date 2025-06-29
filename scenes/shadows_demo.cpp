@@ -23,6 +23,7 @@ void ShadowsDemo::Init()
     std::shared_ptr<GameObject> cameraGameObject = GameObject::Create("Camera");
     Camera::Current = std::make_shared<Camera>(60, 0.5f, 100, 100);
     cameraGameObject->AddComponent(Camera::Current);
+    cameraGameObject->AddComponent(std::make_shared<CameraFlyController>());
 
     // init meshes
     auto cubeMesh = FBXAsset::Load("core_resources/models/cube.fbx")->GetMesh(0);
@@ -91,11 +92,4 @@ void ShadowsDemo::Init()
 
     Lights.push_back(pointLight1);
     Lights.push_back(pointLight2);
-
-    m_CameraFlyControl = std::make_unique<CameraFlyController>();
-}
-
-void ShadowsDemo::UpdateInternal()
-{
-    m_CameraFlyControl->Update();
 }

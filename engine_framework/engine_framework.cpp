@@ -3,7 +3,6 @@
 #include "graphics/graphics.h"
 #include "input/input.h"
 #include "../scenes/test_scene.h"
-#include "../scenes/pbr_demo.h"
 #include "../scenes/shadows_demo.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "graphics_backend_api.h"
@@ -47,7 +46,6 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
     Time::Init();
 
     TestScene::Load();
-    //PBRDemo::Load();
     //ShadowsDemo::Load();
 
     GraphicsBackend::Current()->Flush();

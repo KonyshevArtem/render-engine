@@ -62,7 +62,7 @@ public:
         return m_UniqueId;
     }
 
-    inline std::shared_ptr<Renderer> GetRenderer()
+    inline std::shared_ptr<Renderer> GetRenderer() const
     {
         return m_Renderer.expired() ? nullptr : m_Renderer.lock();
     }

@@ -26,6 +26,8 @@ public:
     Matrix4x4                 GetModelMatrix() const;
     std::shared_ptr<Material> GetMaterial() const;
 
+    void SetMaterial(std::shared_ptr<Material> material);
+
     bool CastShadows = true;
 
 protected:

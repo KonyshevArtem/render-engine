@@ -49,14 +49,14 @@ add_library(
 	engine_framework/engine_framework.cpp
     scenes/test_scene.cpp
     scenes/test_scene.h
-    scenes/pbr_demo.cpp
-    scenes/pbr_demo.h
-    scenes/shadows_demo.cpp
+	scenes/shadows_demo.cpp
     scenes/shadows_demo.h
     scripts/camera_fly_controller/camera_fly_controller.cpp
 	scripts/camera_fly_controller/camera_fly_controller.h
 	scripts/game_components_register.h
 	scripts/game_components_register.cpp
+	scripts/pbr_demo/pbr_demo_updater.h
+	scripts/pbr_demo/pbr_demo_updater.cpp
 )
 
 # TODO add non-editor compile target

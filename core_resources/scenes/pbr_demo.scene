@@ -133,6 +133,10 @@
         {
           "Name": "CameraFlyController",
           "Data": {}
+        },
+        {
+          "Name": "PBRDemoUpdater",
+          "Data": {}
         }
       ]
     },

@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
 
 class Light;
 class Cubemap;
@@ -18,6 +19,9 @@ public:
 
     static void Update();
     static void Load(const std::string& scenePath);
+
+    std::shared_ptr<GameObject> FindGameObject(const std::function<bool(const GameObject*)>& predicate);
+    std::vector<std::shared_ptr<GameObject>> FindGameObjects(const std::function<bool(const GameObject*)>& predicate);
 
     inline std::vector<std::shared_ptr<GameObject>> &GetRootGameObjects()
     {

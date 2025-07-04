@@ -30,13 +30,13 @@ public:
 
 protected:
     std::weak_ptr<GameObject> m_GameObject;
-
-    virtual void Stub(){}; // needed for a class to be polymorphic
+    uint64_t m_LastUpdatedFrame;
 
 private:
     static std::unordered_map<std::string, Factory*>& GetFactories();
 
     friend class GameObject;
+    friend class Scene;
 };
 
 #ifndef REGISTER_COMPONENT

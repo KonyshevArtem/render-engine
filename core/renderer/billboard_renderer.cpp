@@ -7,15 +7,17 @@
 std::shared_ptr<BillboardRenderer> BillboardRenderer::Create(const nlohmann::json& componentData)
 {
     std::string texturePath;
+    float size;
     componentData.at("Texture").get_to(texturePath);
+    componentData.at("Size").get_to(size);
     std::shared_ptr<Texture2D> texture = Texture2D::Load(texturePath);
 
-    return std::make_shared<BillboardRenderer>(texture, "BillboardRenderer_" + texturePath);
+    return std::make_shared<BillboardRenderer>(texture, size, "BillboardRenderer_" + texturePath);
 }
 
 std::shared_ptr<Mesh> s_BillboardMesh = nullptr;
 
-BillboardRenderer::BillboardRenderer(const std::shared_ptr<Texture2D>& texture, const std::string& name) :
+BillboardRenderer::BillboardRenderer(const std::shared_ptr<Texture2D>& texture, float size, const std::string& name) :
     Renderer(nullptr)
 {
     static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/billboard", {}, {}, {CullFace::NONE}, {});
@@ -31,6 +33,8 @@ BillboardRenderer::BillboardRenderer(const std::shared_ptr<Texture2D>& texture, 
     m_Material->SetTexture("_Texture", texture);
 
     m_Aspect = static_cast<float>(texture->GetWidth()) / texture->GetHeight();
+
+    SetSize(size);
 }
 
 Bounds BillboardRenderer::GetAABB() const

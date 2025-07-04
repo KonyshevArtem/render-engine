@@ -31,7 +31,7 @@ public:
 private:
     std::vector<std::shared_ptr<GameObject>> m_GameObjects;
 
-    virtual void UpdateInternal() {};
+    static void UpdateComponents(std::vector<std::shared_ptr<GameObject>>& gameObjects);
 };
 
 #endif //RENDER_ENGINE_SCENE_H

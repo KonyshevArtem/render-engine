@@ -2,6 +2,7 @@
 #include "arguments.h"
 #include "scene_parser.h"
 #include "component/component.h"
+#include "graphics_backend_api.h"
 
 namespace SceneLocal
 {
@@ -30,25 +31,33 @@ namespace SceneLocal
             FindGameObjects(go->Children, predicate, result);
         }
     }
+
+    template<typename T, typename Func>
+    void UpdateCollection(std::vector<std::shared_ptr<T>>& collection, const Func& updateFunction)
+    {
+        for (int i = 0; i < collection.size(); ++i)
+        {
+            int originalSize = collection.size();
+                updateFunction(collection[i].get());
+
+            if (originalSize != collection.size())
+                i = -1;
+        }
+    }
 }
 
 void Scene::Update()
 {
     if (Current != nullptr)
     {
-        for (const std::shared_ptr<GameObject>& go : Current->m_GameObjects)
-        {
-            for (const std::shared_ptr<Component>& component: go->m_Components)
-                component->Update();
-        }
-
-        Current->UpdateInternal();
+        UpdateComponents(Current->m_GameObjects);
     }
     else
     {
-        Load("core_resources/scenes/pbr_demo.scene");
+        Load("core_resources/scenes/test_scene.scene");
     }
 }
+
 void Scene::Load(const std::string& scenePath)
 {
     Current = SceneParser::Parse(scenePath);
@@ -64,4 +73,25 @@ std::vector<std::shared_ptr<GameObject>> Scene::FindGameObjects(const std::funct
     std::vector<std::shared_ptr<GameObject>> result;
     SceneLocal::FindGameObjects(m_GameObjects, predicate, result);
     return result;
+}
+
+void Scene::UpdateComponents(std::vector<std::shared_ptr<GameObject>> &gameObjects)
+{
+    uint64_t frame = GraphicsBackend::Current()->GetFrameNumber();
+
+    auto updateComponent = [frame](Component* component)
+    {
+        if (component->m_LastUpdatedFrame < frame)
+        {
+            component->Update();
+            component->m_LastUpdatedFrame = frame;
+        }
+    };
+
+    SceneLocal::UpdateCollection(gameObjects, [&updateComponent](GameObject* go)
+    {
+        SceneLocal::UpdateCollection(go->m_Components, updateComponent);
+
+        UpdateComponents(go->Children);
+    });
 }

@@ -2,7 +2,7 @@
 #include "game_window.h"
 #include "graphics/graphics.h"
 #include "input/input.h"
-#include "../scenes/test_scene.h"
+#include "scene/scene.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
@@ -43,8 +43,6 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
 
     Graphics::Init();
     Time::Init();
-
-    TestScene::Load();
 
     GraphicsBackend::Current()->Flush();
     GraphicsBackend::Current()->Present();

@@ -29,8 +29,11 @@ public:
     }
 
 private:
+    static std::string s_PendingScenePath;
+
     std::vector<std::shared_ptr<GameObject>> m_GameObjects;
 
+    static void LoadInternal();
     static void UpdateComponents(std::vector<std::shared_ptr<GameObject>>& gameObjects);
 };
 

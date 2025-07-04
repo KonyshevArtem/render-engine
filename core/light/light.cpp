@@ -32,4 +32,5 @@ Light::~Light()
 {
     s_Lights.back()->m_Index = m_Index;
     std::swap(s_Lights[m_Index], s_Lights.back());
+    s_Lights.pop_back();
 }

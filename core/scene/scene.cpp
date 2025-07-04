@@ -46,21 +46,20 @@ namespace SceneLocal
     }
 }
 
+std::string Scene::s_PendingScenePath = "";
+
 void Scene::Update()
 {
+    if (!s_PendingScenePath.empty())
+        LoadInternal();
+
     if (Current != nullptr)
-    {
         UpdateComponents(Current->m_GameObjects);
-    }
-    else
-    {
-        Load("core_resources/scenes/test_scene.scene");
-    }
 }
 
 void Scene::Load(const std::string& scenePath)
 {
-    Current = SceneParser::Parse(scenePath);
+    s_PendingScenePath = scenePath;
 }
 
 std::shared_ptr<GameObject> Scene::FindGameObject(const std::function<bool(const GameObject *)>& predicate)
@@ -73,6 +72,12 @@ std::vector<std::shared_ptr<GameObject>> Scene::FindGameObjects(const std::funct
     std::vector<std::shared_ptr<GameObject>> result;
     SceneLocal::FindGameObjects(m_GameObjects, predicate, result);
     return result;
+}
+
+void Scene::LoadInternal()
+{
+    Current = SceneParser::Parse(s_PendingScenePath);
+    s_PendingScenePath = "";
 }
 
 void Scene::UpdateComponents(std::vector<std::shared_ptr<GameObject>> &gameObjects)

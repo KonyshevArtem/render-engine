@@ -165,7 +165,10 @@ void Profiler::AddMarkerInfo(MarkerContext context, const MarkerInfo& markerInfo
 
     FrameInfo* frameInfo = nullptr;
     if (frame == 0)
-        frameInfo = &contextFrames.back();
+    {
+        if (!contextFrames.empty())
+            frameInfo = &contextFrames.back();
+    }
     else
     {
         for (FrameInfo& info : contextFrames)

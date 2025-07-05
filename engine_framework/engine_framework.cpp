@@ -16,8 +16,7 @@ GameWindow* window = nullptr;
 
 void display(int width, int height)
 {
-    Profiler::BeginNewFrame();
-    Profiler::Marker marker("Process Frame");
+    Profiler::Marker marker("Tick Main Loop");
 
     Time::Update();
     Input::Update();
@@ -57,13 +56,30 @@ void EngineFramework::TickMainLoop(int width, int height)
 {
     if (window)
     {
-        ImGuiWrapper::NewFrame();
-        GraphicsBackend::Current()->InitNewFrame();
+        Profiler::BeginNewFrame();
+        Profiler::Marker _("EngineFramework::TickMainLoop");
+
+        {
+            Profiler::Marker _("ImGuiWrapper::NewFrame");
+            ImGuiWrapper::NewFrame();
+        }
+
+        {
+            Profiler::Marker _("GraphicsBackend::InitNewFrame");
+            GraphicsBackend::Current()->InitNewFrame();
+        }
 
         window->TickMainLoop(width, height);
-        GraphicsBackend::Current()->Flush();
 
-        ImGuiWrapper::Render();
+        {
+            Profiler::Marker _("GraphicsBackend::Flush");
+            GraphicsBackend::Current()->Flush();
+        }
+
+        {
+            Profiler::Marker _("ImGuiWrapper::Render");
+            ImGuiWrapper::Render();
+        }
 
         GraphicsBackend::Current()->Present();
     }

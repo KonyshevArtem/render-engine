@@ -2,6 +2,7 @@
 #include "graphics_buffer.h"
 #include "shader/shader.h"
 #include "types/graphics_backend_buffer_info.h"
+#include <cassert>
 
 GraphicsBufferWrapper::GraphicsBufferWrapper(const std::shared_ptr<Shader>& shader, const std::string& bufferName, const std::string& debugName) :
     m_Name(debugName)
@@ -53,6 +54,7 @@ void GraphicsBufferWrapper::TrySetVariable(const std::string &variableName, cons
         auto it = bufferVariables.find(variableName);
         if (it != bufferVariables.end())
         {
+            assert(it->second + size <= m_Data.size());
             m_Buffer->SetData(data, it->second, size);
             memcpy(&m_Data[it->second], data, size);
         }

@@ -15,6 +15,7 @@ struct Varyings
 cbuffer PerMaterialData : register(b4)
 {
     float2 _Size;
+    float2 _Padding0;
 };
 
 Texture2D _Texture : register(t4);

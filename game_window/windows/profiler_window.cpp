@@ -21,7 +21,7 @@ int64_t GetMicroseconds(const std::chrono::system_clock::time_point& begin, cons
     return std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
 }
 
-void DrawSeparator(const Profiler::MarkerInfo& marker, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth)
+void DrawSeparator(const Profiler::MarkerInfo& marker, const std::chrono::system_clock::time_point& rangeBegin, double rangeToWidth)
 {
     assert(marker.Type == Profiler::MarkerType::SEPARATOR);
 
@@ -32,7 +32,7 @@ void DrawSeparator(const Profiler::MarkerInfo& marker, std::chrono::system_clock
     ImGui::GetWindowDrawList()->AddLine({linePosX, lineStartPosY}, {linePosX, lineEndPosY}, IM_COL32(255, 0, 0, 255), 1);
 }
 
-void DrawMarker(const Profiler::MarkerInfo& marker, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth, int depthOffset)
+void DrawMarker(const Profiler::MarkerInfo& marker, const std::chrono::system_clock::time_point& rangeBegin, double rangeToWidth, int depthOffset)
 {
     assert(marker.Type == Profiler::MarkerType::MARKER);
 
@@ -126,7 +126,7 @@ void ProfilerWindow::DrawInternal()
         for (int i = 0; i < static_cast<int>(Profiler::MarkerContext::MAX); ++i)
         {
             const Profiler::MarkerContext context = static_cast<Profiler::MarkerContext>(i);
-            DrawMarkers(GetContextLabel(context), context, rangeBegin, rangeToWidth);
+            DrawMarkers(GetContextLabel(context), context, rangeBegin, rangeEnd, rangeToWidth);
         }
     }
 }
@@ -170,7 +170,7 @@ void ProfilerWindow::AddOffset(int offset)
         m_Offset = std::chrono::microseconds(0);
 }
 
-void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerContext context, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth)
+void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerContext context, const std::chrono::system_clock::time_point& rangeBegin, const std::chrono::system_clock::time_point& rangeEnd, double rangeToWidth)
 {
     static int maxDepths[static_cast<int>(Profiler::MarkerContext::MAX)];
 
@@ -198,6 +198,9 @@ void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerConte
         {
             for (const Profiler::MarkerInfo& marker : frameInfo.Markers)
             {
+                if (marker.Begin > rangeEnd || marker.End < rangeBegin)
+                    continue;
+
                 int depthOffset = 0;
                 if (handleOverlap)
                 {

@@ -34,7 +34,7 @@ private:
     void HandleZoom();
     void HandleDrag(double rangeToWidth);
     void AddOffset(int offset);
-    void DrawMarkers(const std::string& label, Profiler::MarkerContext context, std::chrono::system_clock::time_point rangeBegin, double rangeToWidth);
+    void DrawMarkers(const std::string& label, Profiler::MarkerContext context, const std::chrono::system_clock::time_point& rangeBegin, const std::chrono::system_clock::time_point& rangeEnd, double rangeToWidth);
 };
 
 #endif

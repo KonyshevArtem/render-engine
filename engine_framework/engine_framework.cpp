@@ -78,6 +78,7 @@ void EngineFramework::TickMainLoop(int width, int height)
 
         {
             Profiler::Marker _("ImGuiWrapper::Render");
+            Profiler::GPUMarker gpuMarker("ImGuiWrapper::Render");
             ImGuiWrapper::Render();
         }
 

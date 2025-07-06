@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 
-constexpr int k_MaxFrames = 10;
+constexpr int k_MaxFrames = 1000;
 
 bool s_IsEnabled = false;
 
@@ -35,11 +35,12 @@ void SortMarkers(Profiler::MarkerContext context)
     }
 }
 
-Profiler::MarkerInfo::MarkerInfo(MarkerType type, const char* name, int depth, uint64_t frame) :
+Profiler::MarkerInfo::MarkerInfo(MarkerType type, const char* name, std::optional<std::string> additionalInfo, int depth, uint64_t frame) :
     Type(type),
     Begin(std::chrono::system_clock::now()),
     End(Begin),
     Name(name),
+    AdditionalInfo(std::move(additionalInfo)),
     Depth(depth),
     Frame(frame)
 {
@@ -64,9 +65,9 @@ Profiler::GPUMarkerInfo& Profiler::GPUMarkerInfo::operator=(const GPUMarkerInfo&
     return *this;
 }
 
-Profiler::Marker::Marker(const char* name) :
+Profiler::Marker::Marker(const char* name, std::optional<std::string> additionalInfo) :
     m_Context(MarkerContext::MAIN_THREAD),
-    m_Info(MarkerType::MARKER, name, IncrementDepth(m_Context), GraphicsBackend::Current()->GetFrameNumber())
+    m_Info(MarkerType::MARKER, name, std::move(additionalInfo), IncrementDepth(m_Context), GraphicsBackend::Current()->GetFrameNumber())
 {
 }
 
@@ -140,7 +141,7 @@ void Profiler::BeginNewFrame()
                 if (!result.IsActive)
                     continue;
 
-                MarkerInfo markerInfo(MarkerType::MARKER, gpuMarker.Name, gpuMarker.Depth, gpuMarker.Frame);
+                MarkerInfo markerInfo(MarkerType::MARKER, gpuMarker.Name, std::nullopt, gpuMarker.Depth, gpuMarker.Frame);
                 markerInfo.Begin = std::chrono::system_clock::time_point(std::chrono::microseconds(result.StartTimestamp));
                 markerInfo.End = std::chrono::system_clock::time_point(std::chrono::microseconds(result.EndTimestamp));
                 AddMarkerInfo(queueToContext(gpuQueue), markerInfo, gpuMarker.Frame);
@@ -156,7 +157,7 @@ void Profiler::BeginNewFrame()
     SortMarkers(MarkerContext::GPU_COPY);
 }
 
-void Profiler::AddMarkerInfo(MarkerContext context, const MarkerInfo& markerInfo, uint64_t frame)
+void Profiler::AddMarkerInfo(MarkerContext context, MarkerInfo& markerInfo, uint64_t frame)
 {
     if (!s_IsEnabled)
         return;
@@ -183,7 +184,7 @@ void Profiler::AddMarkerInfo(MarkerContext context, const MarkerInfo& markerInfo
 
     if (frameInfo)
     {
-        frameInfo->Markers.push_back(markerInfo);
+        frameInfo->Markers.push_back(std::move(markerInfo));
         frameInfo->IsSorted = false;
     }
 }

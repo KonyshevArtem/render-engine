@@ -1,5 +1,6 @@
 #include "texture_2d.h"
 #include "texture/texture_binary_reader.h"
+#include "editor/profiler/profiler.h"
 
 #include <vector>
 
@@ -15,6 +16,8 @@ std::shared_ptr<Texture2D> Texture2D::Create(uint32_t _width, uint32_t _height, 
 
 std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path& path)
 {
+    Profiler::Marker _("Texture2D::Load", path.string());
+
     TextureBinaryReader reader;
     if (!reader.ReadTexture(path))
     {

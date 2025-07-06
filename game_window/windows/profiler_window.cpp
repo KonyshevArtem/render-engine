@@ -55,7 +55,10 @@ void DrawMarker(const Profiler::MarkerInfo& marker, const std::chrono::system_cl
     ImGui::Button(marker.Name, {width, k_MarkerHeight});
     if (ImGui::IsItemHovered())
     {
-        ImGui::SetTooltip("%s\n%0.2f ms\nFrame %llu", marker.Name, duration / 1000.0, marker.Frame);
+        if (marker.AdditionalInfo)
+            ImGui::SetTooltip("%s\n%s\n%0.2f ms\nFrame %llu", marker.Name, marker.AdditionalInfo->c_str(), duration / 1000.0, marker.Frame);
+        else
+            ImGui::SetTooltip("%s\n%0.2f ms\nFrame %llu", marker.Name, duration / 1000.0, marker.Frame);
     }
     ImGui::PopStyleColor(3);
 }

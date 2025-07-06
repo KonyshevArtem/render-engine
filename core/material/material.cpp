@@ -4,11 +4,13 @@
 #include "graphics_buffer/graphics_buffer_wrapper.h"
 #include "global_constants.h"
 #include "material_parser.h"
+#include "editor/profiler/profiler.h"
 
 #include <utility>
 
 std::shared_ptr<Material> Material::Load(const std::string& path)
 {
+    Profiler::Marker _("Material::Load", path);
     return MaterialParser::Parse(path);
 }
 

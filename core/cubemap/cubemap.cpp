@@ -1,6 +1,7 @@
 #include "cubemap.h"
 #include "debug.h"
 #include "texture/texture_binary_reader.h"
+#include "editor/profiler/profiler.h"
 
 Cubemap::Cubemap(TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, bool isLinear, const std::string& name) :
         Texture(TextureType::TEXTURE_CUBEMAP, format, width, height, 0, mipLevels, isLinear, false, name)
@@ -9,6 +10,8 @@ Cubemap::Cubemap(TextureInternalFormat format, uint32_t width, uint32_t height, 
 
 std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path& path)
 {
+    Profiler::Marker _("Cubemap::Load", path.string());
+
     TextureBinaryReader reader;
     if (!reader.ReadTexture(path))
     {

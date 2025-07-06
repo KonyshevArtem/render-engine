@@ -3,6 +3,7 @@
 #include "scene_parser.h"
 #include "component/component.h"
 #include "graphics_backend_api.h"
+#include "editor/profiler/profiler.h"
 
 namespace SceneLocal
 {
@@ -54,7 +55,10 @@ void Scene::Update()
         LoadInternal();
 
     if (Current != nullptr)
+    {
+        Profiler::Marker _("Scene::UpdateComponents");
         UpdateComponents(Current->m_GameObjects);
+    }
 }
 
 void Scene::Load(const std::string& scenePath)
@@ -76,6 +80,8 @@ std::vector<std::shared_ptr<GameObject>> Scene::FindGameObjects(const std::funct
 
 void Scene::LoadInternal()
 {
+    Profiler::Marker _("Scene::LoadInternal");
+
     Current = SceneParser::Parse(s_PendingScenePath);
     s_PendingScenePath = "";
 }

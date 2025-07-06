@@ -84,6 +84,8 @@ void DrawWindowsMenu()
 
 void TopMenuBar::Draw(std::function<void()> closeWindow)
 {
+    Profiler::Marker _("TopMenuBar::Draw");
+
     if (ImGui::BeginMainMenuBar())
     {
         const float menuWidth = ImGui::GetContentRegionAvail().x;

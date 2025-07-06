@@ -81,7 +81,10 @@ void EngineFramework::TickMainLoop(int width, int height)
             ImGuiWrapper::Render();
         }
 
-        GraphicsBackend::Current()->Present();
+        {
+            Profiler::Marker _("GraphicsBackend::Present");
+            GraphicsBackend::Current()->Present();
+        }
     }
 }
 

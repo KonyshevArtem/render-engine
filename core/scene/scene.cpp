@@ -47,7 +47,7 @@ namespace SceneLocal
     }
 }
 
-std::string Scene::s_PendingScenePath = "";
+std::filesystem::path Scene::s_PendingScenePath = "";
 
 void Scene::Update()
 {

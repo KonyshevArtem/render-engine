@@ -5,7 +5,7 @@
 
 namespace SceneParser
 {
-    std::shared_ptr<Scene> Parse(const std::string& path);
+    std::shared_ptr<Scene> Parse(const std::filesystem::path& path);
 }
 
 #endif //RENDER_ENGINE_SCENE_PARSER_H

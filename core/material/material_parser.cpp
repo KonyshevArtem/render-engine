@@ -97,9 +97,9 @@ namespace MaterialParser
             json.at("RenderQueue").get_to(info.RenderQueue);
     }
 
-    std::shared_ptr<Material> Parse(const std::string &path)
+    std::shared_ptr<Material> Parse(const std::filesystem::path& path)
     {
-        std::string materialText = FileSystem::ReadFile(path);
+        std::string materialText = FileSystem::ReadFile(FileSystem::GetResourcesPath() / path);
         nlohmann::json materialJson = nlohmann::json::parse(materialText);
 
         MaterialInfo materialInfo;

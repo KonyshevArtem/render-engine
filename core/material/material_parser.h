@@ -5,7 +5,7 @@
 
 namespace MaterialParser
 {
-    std::shared_ptr<Material> Parse(const std::string& path);
+    std::shared_ptr<Material> Parse(const std::filesystem::path& path);
 }
 
 #endif //RENDER_ENGINE_MATERIAL_PARSER_H

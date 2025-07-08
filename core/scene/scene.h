@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <filesystem>
 
 class Light;
 class Cubemap;
@@ -29,7 +30,7 @@ public:
     }
 
 private:
-    static std::string s_PendingScenePath;
+    static std::filesystem::path s_PendingScenePath;
 
     std::vector<std::shared_ptr<GameObject>> m_GameObjects;
 

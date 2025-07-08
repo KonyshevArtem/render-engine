@@ -507,7 +507,7 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShaderBinary(ShaderType
 
 GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackendProgramDescriptor& descriptor)
 {
-    assert(shaders.size() == 2);
+    assert(descriptor.Shaders->size() == 2);
 
     MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
 
@@ -541,9 +541,10 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
     auto *vertDesc = desc->vertexDescriptor();
 
     const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes = *descriptor.VertexAttributes;
-    for (const auto & attr : vertexAttributes)
+    for (int i = 0; i < vertexAttributes.size(); ++i)
     {
-        auto *attrDesc = vertDesc->attributes()->object(attr.Index);
+        const GraphicsBackendVertexAttributeDescriptor& attr = vertexAttributes[i];
+        auto *attrDesc = vertDesc->attributes()->object(i);
         attrDesc->setFormat(MetalHelpers::ToVertexFormat(attr.DataType, attr.Dimensions, attr.IsNormalized));
         attrDesc->setBufferIndex(MetalLocal::k_MaxBuffers - 1);
         attrDesc->setOffset(attr.Offset);

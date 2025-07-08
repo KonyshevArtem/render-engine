@@ -64,9 +64,9 @@ namespace SceneParser
         json.at("GameObjects").get_to(info.GameObjects);
     }
 
-    std::shared_ptr<Scene> Parse(const std::string& path)
+    std::shared_ptr<Scene> Parse(const std::filesystem::path& path)
     {
-        std::string sceneText = FileSystem::ReadFile(path);
+        std::string sceneText = FileSystem::ReadFile(FileSystem::GetResourcesPath() / path);
         nlohmann::json sceneJson = nlohmann::json::parse(sceneText);
 
         SceneInfo sceneInfo;

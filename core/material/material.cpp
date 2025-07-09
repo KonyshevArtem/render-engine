@@ -10,7 +10,7 @@
 
 std::shared_ptr<Material> Material::Load(const std::filesystem::path& path)
 {
-    Profiler::Marker _("Material::Load", path);
+    Profiler::Marker _("Material::Load", path.string());
     return MaterialParser::Parse(path);
 }
 

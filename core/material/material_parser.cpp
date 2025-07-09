@@ -106,7 +106,7 @@ namespace MaterialParser
         materialJson.get_to(materialInfo);
 
         std::shared_ptr<Shader> shader = Shader::Load(materialInfo.Shader.Path, materialInfo.Shader.Keywords, materialInfo.Shader.BlendInfo, {}, {});
-        std::shared_ptr<Material> material = std::make_shared<Material>(shader, path);
+        std::shared_ptr<Material> material = std::make_shared<Material>(shader, path.string());
 
         for (const TextureInfo& textureInfo: materialInfo.Textures)
         {

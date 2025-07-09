@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
-#include <filesystem>
 
 class Texture;
 class Shader;
@@ -19,8 +18,6 @@ class GraphicsBufferWrapper;
 class Material
 {
 public:
-    static std::shared_ptr<Material> Load(const std::filesystem::path& path);
-
     Material(std::shared_ptr<Shader> shader, const std::string& name);
     ~Material() = default;
 

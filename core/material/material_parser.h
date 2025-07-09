@@ -2,6 +2,7 @@
 #define RENDER_ENGINE_MATERIAL_PARSER_H
 
 #include "material.h"
+#include <filesystem>
 
 namespace MaterialParser
 {

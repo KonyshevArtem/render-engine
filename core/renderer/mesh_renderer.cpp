@@ -3,6 +3,7 @@
 #include "mesh/mesh.h"
 #include "shader/shader.h"
 #include "fbx_asset/fbx_asset.h"
+#include "resources/resources.h"
 
 std::shared_ptr<MeshRenderer> MeshRenderer::Create(const nlohmann::json& componentData)
 {
@@ -12,11 +13,11 @@ std::shared_ptr<MeshRenderer> MeshRenderer::Create(const nlohmann::json& compone
     std::string assetPath;
     componentData.at("MeshIndex").get_to(meshIndex);
     componentData.at("FBXAsset").get_to(assetPath);
-    renderer->m_Mesh = FBXAsset::Load(assetPath)->GetMesh(meshIndex);
+    renderer->m_Mesh = Resources::Load<FBXAsset>(assetPath)->GetMesh(meshIndex);
 
     std::string materialPath;
     componentData.at("Material").get_to(materialPath);
-    renderer->m_Material = Material::Load(materialPath);
+    renderer->m_Material = Resources::Load<Material>(materialPath);
 
     if (componentData.contains("CastShadows"))
         componentData.at("CastShadows").get_to(renderer->CastShadows);

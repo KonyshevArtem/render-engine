@@ -1,32 +1,12 @@
 #include "fbx_asset.h"
 #include "vector2/vector2.h"
 #include "vector3/vector3.h"
-#include "file_system/file_system.h"
 #include "mesh/mesh.h"
-#include "editor/profiler/profiler.h"
-
-std::shared_ptr<FBXAsset> FBXAsset::Load(const std::filesystem::path &_path)
-{
-    Profiler::Marker _("FXBAsset::Load", _path.string());
-
-    std::vector<uint8_t> content;
-    FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / _path, content);
-
-    auto *scene = ofbx::load(&content[0], content.size(), static_cast<ofbx::u64>(ofbx::LoadFlags::TRIANGULATE)); // NOLINT(cppcoreguidelines-narrowing-conversions)
-    if (!scene)
-        return nullptr;
-
-    auto asset = std::shared_ptr<FBXAsset>(new FBXAsset(scene, _path.string()));
-
-    scene->destroy();
-    return asset;
-}
+#include <cassert>
 
 std::shared_ptr<Mesh> FBXAsset::GetMesh(unsigned int _index) const
 {
-    if (_index >= m_Meshes.size())
-        throw std::out_of_range("Index " + std::to_string(_index) + " out of range of m_Meshes.size()");
-
+    assert(_index < m_Meshes.size());
     return m_Meshes.at(_index);
 }
 

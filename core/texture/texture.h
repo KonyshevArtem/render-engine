@@ -76,6 +76,8 @@ private:
     Vector4 m_BorderColor;
     int m_MinLod;
     bool m_DoubleBuffered;
+
+    friend class Resources;
 };
 
 #endif //RENDER_ENGINE_TEXTURE_H

@@ -32,7 +32,5 @@ void SkyboxPass::Execute(const Context& ctx)
     auto debugGroup = GraphicsBackendDebugGroup("Skybox pass", GPUQueue::RENDER);
 
     const Matrix4x4 modelMatrix = Matrix4x4::Translation(ctx.ViewMatrix.Invert().GetPosition());
-    material->SetTexture("_Skybox", ctx.Skybox);
-
     Graphics::Draw(*m_Mesh, *material, modelMatrix);
 }

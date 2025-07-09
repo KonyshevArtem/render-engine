@@ -7,6 +7,7 @@
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_program_descriptor.h"
 #include "hash.h"
+#include "editor/profiler/profiler.h"
 
 #include <vector>
 
@@ -21,9 +22,11 @@ namespace ShaderLocal
     }
 }
 
-std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &path, const std::initializer_list<std::string> &keywords,
+std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &path, const std::vector<std::string> &keywords,
     BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo)
 {
+    Profiler::Marker _("Shader::Load", path.string());
+
     auto shader = ShaderLoader::Load(path, keywords, blendInfo, cullInfo, depthInfo);
 
     if (!shader)

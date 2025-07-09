@@ -9,19 +9,22 @@
 #include <vector>
 
 class Renderer;
+class Component;
+class Scene;
 
 class GameObject: public std::enable_shared_from_this<GameObject>
 {
 public:
-    static std::shared_ptr<GameObject> Create(const std::string &_name);
-    void                               Destroy();
+    static std::shared_ptr<GameObject> Create(const std::string& name, std::shared_ptr<Scene> scene = nullptr);
+    void Destroy();
 
-    std::string                              Name;
+    std::string Name;
     std::vector<std::shared_ptr<GameObject>> Children;
-    std::shared_ptr<Renderer>                Renderer;
 
     std::shared_ptr<GameObject> GetParent() const;
     void                        SetParent(const std::shared_ptr<GameObject> &newParent, int _index = -1);
+
+    void AddComponent(std::shared_ptr<Component> component);
 
     // global
     void SetPosition(const Vector3 &_position);
@@ -59,6 +62,11 @@ public:
         return m_UniqueId;
     }
 
+    inline std::shared_ptr<Renderer> GetRenderer() const
+    {
+        return m_Renderer.expired() ? nullptr : m_Renderer.lock();
+    }
+
     // helpers
     bool IsParent(const std::shared_ptr<GameObject> &_child) const;
 
@@ -69,9 +77,12 @@ public:
     GameObject &operator=(GameObject &&) = delete;
 
 private:
-    explicit GameObject(std::string _name);
+    explicit GameObject(std::string name, std::shared_ptr<Scene> scene);
 
     std::weak_ptr<GameObject> m_Parent;
+    std::weak_ptr<Scene> m_Scene;
+    std::weak_ptr<Renderer> m_Renderer;
+    std::vector<std::shared_ptr<Component>> m_Components;
     Vector3 m_LocalPosition;
     Quaternion m_LocalRotation = Quaternion();
     Quaternion m_Rotation = Quaternion();
@@ -83,6 +94,8 @@ private:
 
     void InvalidateTransform();
     void ValidateTransform();
+
+    friend class Scene;
 };
 
 #endif //RENDER_ENGINE_GAMEOBJECT_H

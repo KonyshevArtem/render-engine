@@ -3,11 +3,23 @@
 
 #include <cstdint>
 #include "vector2/vector2.h"
+#include "component/component.h"
 
-class CameraFlyController
+class CameraFlyController : public Component
 {
 public:
-    void Update();
+    static std::shared_ptr<CameraFlyController> Create(const nlohmann::json& json);
+
+    void Update() override;
+
+    CameraFlyController() = default;
+    ~CameraFlyController() = default;
+
+    CameraFlyController(const CameraFlyController &) = delete;
+    CameraFlyController(CameraFlyController &&)      = delete;
+
+    CameraFlyController &operator=(const CameraFlyController &) = delete;
+    CameraFlyController &operator=(CameraFlyController &&) = delete;
 
 private:
     void UpdateTouchInputs();

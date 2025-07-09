@@ -7,7 +7,7 @@ static const MTLPixelFormat AAPLColorFormat = MTLPixelFormatBGRA8Unorm;
 /// Main class that performs the rendering.
 @implementation AAPLMetalRenderer
 
-CGSize s_ViewSize;
+bool s_FirstFrame = true;
 
 /// Initialize the renderer with the MetalKit view that references the Metal device you render with.
 /// You also use the MetalKit view to set the pixel format and other properties of the drawable.
@@ -33,7 +33,6 @@ CGSize s_ViewSize;
 /// Called whenever the view orientation, layout, or size changes.
 - (void) mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size
 {
-    s_ViewSize = size;
 }
 
 /// Called whenever the view needs to render.
@@ -46,8 +45,23 @@ CGSize s_ViewSize;
         return;
     }
 #endif
+
+    if (!s_FirstFrame)
+    {
+#if defined(TARGET_IOS) || defined(TARGET_TVOS)
+        CGSize size = view.drawableSize;
+#else
+        CGFloat scale = view.window.backingScaleFactor ?: NSScreen.mainScreen.backingScaleFactor;
+        CGSize size = view.bounds.size;
+        size.width *= scale;
+        size.height *= scale;
+        view.drawableSize =CGSizeMake(size.width, size.height);
+#endif
+        
+        [EngineFrameworkWrapper TickMainLoop:size.width height:size.height];
+    }
     
-    [EngineFrameworkWrapper TickMainLoop:s_ViewSize.width height:s_ViewSize.height];
+    s_FirstFrame = false;
 }
 
 @end

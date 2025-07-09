@@ -15,6 +15,7 @@
 #include "material/material.h"
 #include "shader/shader.h"
 #include "types/graphics_backend_render_target_descriptor.h"
+#include "gameObject/gameObject.h"
 
 constexpr int k_SpotLightShadowMapSize = 1024;
 constexpr int k_DirLightShadowMapSize = 2048;
@@ -44,7 +45,7 @@ ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConsta
     m_PointLightShadowMap->SetFilteringMode(TextureFilteringMode::NEAREST);
 }
 
-void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers, const std::vector<std::shared_ptr<Light>>& lights, float shadowsDistance)
+void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers, const std::vector<Light*>& lights, float shadowsDistance)
 {
     static const Matrix4x4 biasMatrix = Matrix4x4::TRS(Vector3{0.5f, 0.5f, 0.5f}, Quaternion(), Vector3{0.5f, 0.5f, 0.5f});
     static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/shadowCaster", {}, {}, {}, {});
@@ -71,20 +72,21 @@ void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& ren
 
     uint8_t spotLightIndex = 0;
     uint8_t pointLightsIndex = 0;
-    for (const std::shared_ptr<Light>& light : lights)
+    for (Light* light : lights)
     {
         if (light == nullptr)
             continue;
 
+        std::shared_ptr<GameObject> lightGo = light->GetGameObject();
         if (light->Type == LightType::SPOT)
         {
             Profiler::Marker marker("Prepare Spot Light");
 
-            const Matrix4x4 view = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-light->Position);
+            const Matrix4x4 view = Matrix4x4::Rotation(lightGo->GetRotation().Inverse()) * Matrix4x4::Translation(-lightGo->GetPosition());
             const Matrix4x4 proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, std::min(light->Range, shadowsDistance));
 
             m_SpotLightMatrices[spotLightIndex] = {view, proj};
-            m_SpotLightRenderQueues[spotLightIndex].Prepare(light->Position, renderers, renderSettings);
+            m_SpotLightRenderQueues[spotLightIndex].Prepare(lightGo->GetPosition(), renderers, renderSettings);
             m_ShadowsGPUData.SpotLightsViewProjMatrices[spotLightIndex] = biasMatrix * proj * view;
 
             ++spotLightIndex;
@@ -96,14 +98,14 @@ void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& ren
             const Matrix4x4 proj = Matrix4x4::Perspective(90, 1, 0.01f, std::min(light->Range, shadowsDistance));
             for (int i = 0; i < 6; ++i)
             {
-                const Matrix4x4 view = pointLightViewMatrices[i] * Matrix4x4::Translation(-light->Position);
+                const Matrix4x4 view = pointLightViewMatrices[i] * Matrix4x4::Translation(-lightGo->GetPosition());
 
                 m_PointLightMatrices[pointLightsIndex * 6 + i] = {view, proj};
-                m_PointLightsRenderQueues[pointLightsIndex].Prepare(light->Position, renderers, renderSettings);
+                m_PointLightsRenderQueues[pointLightsIndex].Prepare(lightGo->GetPosition(), renderers, renderSettings);
                 m_ShadowsGPUData.PointLightShadows[pointLightsIndex].ViewProjMatrices[i] = biasMatrix * proj * view;
             }
 
-            m_ShadowsGPUData.PointLightShadows[pointLightsIndex].Position = light->Position.ToVector4(0);
+            m_ShadowsGPUData.PointLightShadows[pointLightsIndex].Position = lightGo->GetPosition().ToVector4(0);
 
             ++pointLightsIndex;
         }
@@ -125,9 +127,9 @@ void ShadowCasterPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& ren
 
             const Vector3 sizeWorldSpace = shadowCastersBounds.GetSize();
             const float maxExtentWorldSpace = std::max({sizeWorldSpace.x, sizeWorldSpace.y, sizeWorldSpace.z});
-            const Vector3 lightDir = light->Rotation * Vector3{0, 0, 1};
+            const Vector3 lightDir = lightGo->GetRotation() * Vector3{0, 0, 1};
             const Vector3 viewPos = shadowCastersBounds.GetCenter() - lightDir * maxExtentWorldSpace;
-            const Matrix4x4 viewMatrix = Matrix4x4::Rotation(light->Rotation.Inverse()) * Matrix4x4::Translation(-viewPos);
+            const Matrix4x4 viewMatrix = Matrix4x4::Rotation(lightGo->GetRotation().Inverse()) * Matrix4x4::Translation(-viewPos);
 
             const Bounds boundsViewSpace = viewMatrix * shadowCastersBounds;
             const Vector3 extentsViewSpace = boundsViewSpace.GetExtents();

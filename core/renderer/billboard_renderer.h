@@ -10,7 +10,9 @@ class Mesh;
 class BillboardRenderer: public Renderer
 {
 public:
-    BillboardRenderer(const std::shared_ptr<GameObject>& gameObject, const std::shared_ptr<Texture2D>& texture, const std::string& name);
+    static std::shared_ptr<BillboardRenderer> Create(const nlohmann::json& componentData);
+
+    BillboardRenderer(const std::shared_ptr<Texture2D>& texture, float size, const std::string& name);
     ~BillboardRenderer() override = default;
 
     Bounds                            GetAABB() const override;
@@ -25,6 +27,8 @@ public:
     BillboardRenderer &operator=(BillboardRenderer &&) = delete;
 
 private:
+    BillboardRenderer() = default;
+
     float m_Aspect;
     Bounds m_Bounds;
 };

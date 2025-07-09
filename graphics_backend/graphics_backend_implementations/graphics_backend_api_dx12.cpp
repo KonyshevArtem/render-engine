@@ -315,8 +315,6 @@ namespace DX12Local
     ID3D12Fence* s_TimestampFence;
     uint64_t s_GpuStartTimestamp;
     uint64_t s_CpuStartTimestamp;
-    bool s_RenderTimestampActive;
-    bool s_CopyTimestampActive;
     bool s_IsCopyTimestampSupported;
 
     void GetHardwareAdapter(IDXGIFactory7* pFactory, IDXGIAdapter4** ppAdapter)
@@ -1320,8 +1318,6 @@ void GraphicsBackendDX12::CopyBufferSubData(const GraphicsBackendBuffer& source,
 
     resources[0]->State = D3D12_RESOURCE_STATE_COMMON;
     resources[1]->State = D3D12_RESOURCE_STATE_COMMON;
-
-    DX12Local::s_CopyTimestampActive = true;
 }
 
 uint64_t GraphicsBackendDX12::GetMaxConstantBufferSize()
@@ -1536,8 +1532,6 @@ void GraphicsBackendDX12::DrawArraysInstanced(const GraphicsBackendGeometry& geo
     frameData.RenderCommandList->IASetVertexBuffers(0, 1, geometryData->VertexBufferView);
     frameData.RenderCommandList->DrawInstanced(indicesCount, instanceCount, firstIndex, 0);
 
-    DX12Local::s_RenderTimestampActive = true;
-
     frameData.BoundResourceDescriptorHeap.AdvanceIndex(DX12Local::k_ResourceDescriptorHeapAdvance);
     frameData.BoundSamplerDescriptorHeap.AdvanceIndex(DX12Local::k_SamplerDescriptorHeapAdvance);
 }
@@ -1561,8 +1555,6 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
     frameData.RenderCommandList->IASetVertexBuffers(0, 1, geometryData->VertexBufferView);
     frameData.RenderCommandList->IASetIndexBuffer(geometryData->IndexBufferView);
     frameData.RenderCommandList->DrawIndexedInstanced(elementsCount, instanceCount, 0, 0, 0);
-
-    DX12Local::s_RenderTimestampActive = true;
 
     frameData.BoundResourceDescriptorHeap.AdvanceIndex(DX12Local::k_ResourceDescriptorHeapAdvance);
     frameData.BoundSamplerDescriptorHeap.AdvanceIndex(DX12Local::k_SamplerDescriptorHeapAdvance);
@@ -1598,8 +1590,6 @@ void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& sou
 
     resourcesData[0]->State = D3D12_RESOURCE_STATE_COMMON;
     resourcesData[1]->State = D3D12_RESOURCE_STATE_COMMON;
-
-    DX12Local::s_CopyTimestampActive = true;
 }
 
 void GraphicsBackendDX12::PushDebugGroup(const std::string& name, GPUQueue queue)
@@ -1633,9 +1623,6 @@ GraphicsBackendProfilerMarker GraphicsBackendDX12::PushProfilerMarker()
     if (DX12Local::s_IsCopyTimestampSupported)
         FillMarkerInfo(marker.Info[k_CopyGPUQueueIndex], DX12Local::s_CopyTimestampCollector, frameData.CopyCommandList.List);
 
-    DX12Local::s_RenderTimestampActive = false;
-    DX12Local::s_CopyTimestampActive = false;
-
     return marker;
 }
 
@@ -1643,20 +1630,15 @@ void GraphicsBackendDX12::PopProfilerMarker(GraphicsBackendProfilerMarker& marke
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
-    auto PopMarker = [](GraphicsBackendProfilerMarker::MarkerInfo& info, DX12Local::TimestampCollector& collector, ID3D12GraphicsCommandList* commandList, bool isActive)
+    auto PopMarker = [](GraphicsBackendProfilerMarker::MarkerInfo& info, DX12Local::TimestampCollector& collector, ID3D12GraphicsCommandList* commandList)
     {
-        if (isActive)
-        {
-            collector.QueryTimestamp(commandList, info.EndMarker);
-            collector.ResolveTimestamps(commandList, info.StartMarker, 2);
-        }
-        else
-            info.EndMarker = info.StartMarker;
+        collector.QueryTimestamp(commandList, info.EndMarker);
+        collector.ResolveTimestamps(commandList, info.StartMarker, 2);
     };
 
-    PopMarker(marker.Info[k_RenderGPUQueueIndex], DX12Local::s_RenderTimestampCollector, frameData.RenderCommandList.List, DX12Local::s_RenderTimestampActive);
+    PopMarker(marker.Info[k_RenderGPUQueueIndex], DX12Local::s_RenderTimestampCollector, frameData.RenderCommandList.List);
     if (DX12Local::s_IsCopyTimestampSupported)
-        PopMarker(marker.Info[k_CopyGPUQueueIndex], DX12Local::s_CopyTimestampCollector, frameData.CopyCommandList.List, DX12Local::s_CopyTimestampActive);
+        PopMarker(marker.Info[k_CopyGPUQueueIndex], DX12Local::s_CopyTimestampCollector, frameData.CopyCommandList.List);
 }
 
 bool GraphicsBackendDX12::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults)

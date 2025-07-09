@@ -2,22 +2,21 @@
 #include "game_window.h"
 #include "graphics/graphics.h"
 #include "input/input.h"
-#include "../scenes/test_scene.h"
-#include "../scenes/pbr_demo.h"
-#include "../scenes/shadows_demo.h"
+#include "scene/scene.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
 #include "imgui_wrapper.h"
 #include "file_system/file_system.h"
 #include "arguments.h"
+#include "../scripts/game_components_register.h"
+#include "core_components_register.h"
 
 GameWindow* window = nullptr;
 
 void display(int width, int height)
 {
-    Profiler::BeginNewFrame();
-    Profiler::Marker marker("Process Frame");
+    Profiler::Marker marker("Tick Main Loop");
 
     Time::Update();
     Input::Update();
@@ -32,6 +31,9 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
 {
     Arguments::Init(argv, argc);
 
+    CoreComponents::Register();
+    GameComponents::Register();
+
     FileSystem::Init(fileSystemData);
     GraphicsBackend::Init(graphicsBackendInitData);
     ImGuiWrapper::Init();
@@ -41,9 +43,10 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
     Graphics::Init();
     Time::Init();
 
-    TestScene::Load();
-    //PBRDemo::Load();
-    //ShadowsDemo::Load();
+    std::string scenePath = "core_resources/scenes/test_scene.scene";
+    if (Arguments::Contains("scene"))
+        scenePath = Arguments::Get("scene");
+    Scene::Load(scenePath);
 
     GraphicsBackend::Current()->Flush();
     GraphicsBackend::Current()->Present();
@@ -53,15 +56,36 @@ void EngineFramework::TickMainLoop(int width, int height)
 {
     if (window)
     {
-        ImGuiWrapper::NewFrame();
-        GraphicsBackend::Current()->InitNewFrame();
+        Profiler::BeginNewFrame();
+        Profiler::Marker _("EngineFramework::TickMainLoop");
+
+        {
+            Profiler::Marker _("ImGuiWrapper::NewFrame");
+            ImGuiWrapper::NewFrame();
+        }
+
+        {
+            Profiler::Marker _("GraphicsBackend::InitNewFrame");
+            GraphicsBackend::Current()->InitNewFrame();
+        }
 
         window->TickMainLoop(width, height);
-        GraphicsBackend::Current()->Flush();
 
-        ImGuiWrapper::Render();
+        {
+            Profiler::Marker _("GraphicsBackend::Flush");
+            GraphicsBackend::Current()->Flush();
+        }
 
-        GraphicsBackend::Current()->Present();
+        {
+            Profiler::Marker _("ImGuiWrapper::Render");
+            Profiler::GPUMarker gpuMarker("ImGuiWrapper::Render");
+            ImGuiWrapper::Render();
+        }
+
+        {
+            Profiler::Marker _("GraphicsBackend::Present");
+            GraphicsBackend::Current()->Present();
+        }
     }
 }
 

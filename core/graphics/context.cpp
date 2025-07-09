@@ -3,6 +3,7 @@
 #include "gameObject/gameObject.h"
 #include "renderer/renderer.h"
 #include "scene/scene.h"
+#include "light/light.h"
 
 Context::Context()
 {
@@ -19,7 +20,7 @@ Context::Context()
     for (const std::shared_ptr<GameObject>& go : gameObjects)
         CollectRenderers(go);
 
-    for (const std::shared_ptr<Light>& light : scene->Lights)
+    for (Light* light : Light::s_Lights)
     {
         if (light != nullptr)
             Lights.push_back(light);
@@ -31,7 +32,7 @@ void Context::CollectRenderers(const std::shared_ptr<GameObject> &gameObject)
     if (!gameObject)
         return;
 
-    const std::shared_ptr<Renderer>& renderer = gameObject->Renderer;
+    const std::shared_ptr<Renderer>& renderer = gameObject->GetRenderer();
     if (renderer)
     {
         Renderers.push_back(renderer);

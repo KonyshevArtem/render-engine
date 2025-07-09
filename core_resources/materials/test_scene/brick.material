@@ -1,0 +1,36 @@
+{
+  "Shader": {
+    "Path": "core_resources/shaders/standard",
+    "Keywords": [
+      "_REFLECTION",
+      "_RECEIVE_SHADOWS",
+      "_NORMAL_MAP"
+    ]
+  },
+  "Textures": [
+    {
+      "Name": "_Albedo",
+      "Type": "2D",
+      "Path": "core_resources/textures/brick"
+    },
+    {
+      "Name": "_NormalMap",
+      "Type": "2D",
+      "Path": "core_resources/textures/brick_normal"
+    }
+  ],
+  "Floats": [
+    {
+      "Name": "_NormalIntensity",
+      "Value": 3
+    },
+    {
+      "Name": "_Roughness",
+      "Value": 0.5
+    },
+    {
+      "Name": "_Metallness",
+      "Value": 0
+    }
+  ]
+}

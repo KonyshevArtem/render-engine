@@ -4,6 +4,7 @@ add_library(
 	gameObject/gameObject.cpp
 	mesh/mesh.cpp
 	mesh/mesh.h
+	light/light.cpp
 	light/light.h
 	shader/shader.h
 	shader/shader.cpp
@@ -111,7 +112,17 @@ add_library(
 	file_system/file_system_implementations/file_system_android.cpp
 	file_system/file_system_implementations/file_system_android.h
 	editor/debug_pass/shadow_map_debug_pass.cpp
-	editor/debug_pass/shadow_map_debug_pass.h)
+	editor/debug_pass/shadow_map_debug_pass.h
+	component/component.h
+	component/component.cpp
+	material/material_parser.h
+	material/material_parser.cpp
+	scene/scene_parser.h
+	scene/scene_parser.cpp
+	core_components_register.h
+	core_components_register.cpp
+	json_common/json_common.h
+	json_common/json_common.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash OpenFBX GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)

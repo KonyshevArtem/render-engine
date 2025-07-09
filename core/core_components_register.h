@@ -1,0 +1,9 @@
+#ifndef RENDER_ENGINE_CORE_COMPONENTS_REGISTER_H
+#define RENDER_ENGINE_CORE_COMPONENTS_REGISTER_H
+
+namespace CoreComponents
+{
+    void Register();
+}
+
+#endif //RENDER_ENGINE_CORE_COMPONENTS_REGISTER_H

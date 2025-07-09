@@ -1,0 +1,584 @@
+{
+  "Settings": {
+    "Skybox": "core_resources/textures/skybox/skybox"
+  },
+  "GameObjects": [
+    {
+      "Name": "Camera",
+      "Position": {
+        "x": -10,
+        "y": 0.5,
+        "z": -5
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "Camera",
+          "Data": {
+            "Fov": 75,
+            "NearClip": 0.5,
+            "FarClip": 100,
+            "ShadowDistance": 100
+          }
+        },
+        {
+          "Name": "CameraFlyController",
+          "Data": {}
+        },
+        {
+          "Name": "TestSceneUpdater",
+          "Data": {}
+        }
+      ]
+    },
+    {
+      "Name": "Rotating Cube",
+      "Position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/cube.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/test_scene/brick.material"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Rotating Cylinder 1",
+      "Position": {
+        "x": 0,
+        "y": -3,
+        "z": 4
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 2,
+        "y": 1,
+        "z": 0.5
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/cylinder.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/test_scene/standard_opaque.material"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Rotating Cylinder 2",
+      "Position": {
+        "x": -3,
+        "y": -3,
+        "z": 6
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 2,
+        "y": 1,
+        "z": 0.5
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/cylinder.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/test_scene/standard_opaque.material"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Floor",
+      "Position": {
+        "x": 3,
+        "y": -5,
+        "z": 5.5
+      },
+      "Rotation": {
+        "x": 0,
+        "y": -0.087,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 5,
+        "y": 1,
+        "z": 2
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/cube.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/test_scene/standard_opaque.material"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Bricks",
+      "Position": {
+        "x": -9,
+        "y": -5,
+        "z": 5.5
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0.087,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 5,
+        "y": 1,
+        "z": 2
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/cube.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/test_scene/brick.material"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Water",
+      "Position": {
+        "x": 0,
+        "y": -10,
+        "z": 10
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 20,
+        "y": 1,
+        "z": 20
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/plane.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/test_scene/water.material"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Car",
+      "Position": {
+        "x": 11,
+        "y": -8.5,
+        "z": -2
+      },
+      "Rotation": {
+        "x": 0,
+        "y": -0.923,
+        "z": 0,
+        "w": 0.382
+      },
+      "Scale": {
+        "x": 0.02,
+        "y": 0.02,
+        "z": 0.02
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/car.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/test_scene/car.material"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "TreeBillboard_0",
+      "Position": {
+        "x": -20,
+        "y": -10,
+        "z": 20
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "BillboardRenderer",
+          "Data": {
+            "Texture": "core_resources/textures/billboard_tree",
+            "Size": 5
+          }
+        }
+      ]
+    },
+    {
+      "Name": "TreeBillboard_1",
+      "Position": {
+        "x": -10,
+        "y": -10,
+        "z": 20
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "BillboardRenderer",
+          "Data": {
+            "Texture": "core_resources/textures/billboard_tree",
+            "Size": 5
+          }
+        }
+      ]
+    },
+    {
+      "Name": "TreeBillboard_2",
+      "Position": {
+        "x": 0,
+        "y": -10,
+        "z": 20
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "BillboardRenderer",
+          "Data": {
+            "Texture": "core_resources/textures/billboard_tree",
+            "Size": 5
+          }
+        }
+      ]
+    },
+    {
+      "Name": "TreeBillboard_3",
+      "Position": {
+        "x": 10,
+        "y": -10,
+        "z": 20
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "BillboardRenderer",
+          "Data": {
+            "Texture": "core_resources/textures/billboard_tree",
+            "Size": 5
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Transparent Cube 0",
+      "Position": {
+        "x": -10,
+        "y": -5,
+        "z": 12
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/cube.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/test_scene/standard_transparent.material"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Transparent Cube 1",
+      "Position": {
+        "x": -5,
+        "y": -5,
+        "z": 12
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/cube.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/test_scene/standard_transparent.material"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Transparent Cube 2",
+      "Position": {
+        "x": 0,
+        "y": -5,
+        "z": 12
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "FBXAsset": "core_resources/models/cube.fbx",
+            "MeshIndex": 0,
+            "Material": "core_resources/materials/test_scene/standard_transparent.material"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Directional Light",
+      "Position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0.067,
+        "y":-0.933,
+        "z": 0.25,
+        "w": 0.25
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "Light",
+          "Data": {
+            "Type": "DIRECTIONAL",
+            "Intensity": {
+              "x": 1,
+              "y": 1,
+              "z": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Point Light",
+      "Position": {
+        "x": -3,
+        "y": -3,
+        "z": 4
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "Light",
+          "Data": {
+            "Type": "POINT",
+            "Intensity": {
+              "x": 10,
+              "y": 0,
+              "z": 0
+            },
+            "Range": 10
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Spot Light 1",
+      "Position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "Light",
+          "Data": {
+            "Type": "SPOT",
+            "Intensity": {
+              "x": 10,
+              "y": 10,
+              "z": 10
+            },
+            "Range": 40,
+            "CutOffAngle": 15
+          }
+        },
+        {
+          "Name": "Flashlight",
+          "Data": {}
+        }
+      ]
+    },
+    {
+      "Name": "Spot Light 2",
+      "Position": {
+        "x": -9,
+        "y": 5,
+        "z": 5.5
+      },
+      "Rotation": {
+        "x": 0.707,
+        "y": 0,
+        "z": 0,
+        "w": 0.707
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "Light",
+          "Data": {
+            "Type": "SPOT",
+            "Intensity": {
+              "x": 1,
+              "y": 1,
+              "z": 1
+            },
+            "Range": 15,
+            "CutOffAngle": 15
+          }
+        }
+      ]
+    }
+  ]
+}

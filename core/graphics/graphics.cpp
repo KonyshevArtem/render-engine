@@ -34,6 +34,8 @@
 #include "render_queue/render_queue.h"
 #include "editor/profiler/profiler.h"
 #include "editor/debug_pass/shadow_map_debug_pass.h"
+#include "cubemap/cubemap.h"
+#include "gameObject/gameObject.h"
 
 #include <cassert>
 
@@ -66,7 +68,7 @@ namespace Graphics
     {
         // C++ struct memory layout must match GPU side struct
         assert(sizeof(CameraData) == 96);
-        assert(sizeof(LightingData) == 288);
+        assert(sizeof(LightingData) == 304);
         assert(sizeof(ShadowsData) == 1456);
         assert(sizeof(PerDrawData) == 128);
 
@@ -112,36 +114,38 @@ namespace Graphics
     {
     }
 
-    void SetLightingData(const std::vector<std::shared_ptr<Light>>& lights)
+    void SetLightingData(const std::vector<Light*>& lights, const std::shared_ptr<Texture>& skybox)
     {
         LightingData lightingData{};
         lightingData.AmbientLight = GraphicsSettings::GetAmbientLightColor() * GraphicsSettings::GetAmbientLightIntensity();
         lightingData.PointLightsCount = 0;
         lightingData.SpotLightsCount = 0;
         lightingData.HasDirectionalLight = -1;
+        lightingData.ReflectionCubeMips = skybox ? skybox->GetMipLevels() : 1;
 
-        for (const std::shared_ptr<Light>& light : lights)
+        for (Light* light : lights)
         {
             if (light == nullptr)
                 continue;
 
+            std::shared_ptr<GameObject> lightGo = light->GetGameObject();
             if (light->Type == LightType::DIRECTIONAL && lightingData.HasDirectionalLight <= 0)
             {
                 lightingData.HasDirectionalLight = 1;
-                lightingData.DirLightDirection = light->Rotation * Vector3(0, 0, 1);
+                lightingData.DirLightDirection = lightGo->GetRotation() * Vector3(0, 0, 1);
                 lightingData.DirLightIntensity = GraphicsSettings::GetSunLightColor() * GraphicsSettings::GetSunLightIntensity();
             }
             else if (light->Type == LightType::POINT && lightingData.PointLightsCount < GlobalConstants::MaxPointLightSources)
             {
-                lightingData.PointLightsData[lightingData.PointLightsCount].Position = light->Position.ToVector4(1);
+                lightingData.PointLightsData[lightingData.PointLightsCount].Position = lightGo->GetPosition().ToVector4(1);
                 lightingData.PointLightsData[lightingData.PointLightsCount].Intensity = light->Intensity;
                 lightingData.PointLightsData[lightingData.PointLightsCount].Range = light->Range;
                 ++lightingData.PointLightsCount;
             }
             else if (light->Type == LightType::SPOT && lightingData.SpotLightsCount < GlobalConstants::MaxSpotLightSources)
             {
-                lightingData.SpotLightsData[lightingData.SpotLightsCount].Position = light->Position.ToVector4(1);
-                lightingData.SpotLightsData[lightingData.SpotLightsCount].Direction = light->Rotation * Vector3(0, 0, 1);
+                lightingData.SpotLightsData[lightingData.SpotLightsCount].Position = lightGo->GetPosition().ToVector4(1);
+                lightingData.SpotLightsData[lightingData.SpotLightsCount].Direction = lightGo->GetRotation() * Vector3(0, 0, 1);
                 lightingData.SpotLightsData[lightingData.SpotLightsCount].Intensity = light->Intensity;
                 lightingData.SpotLightsData[lightingData.SpotLightsCount].Range = light->Range;
                 lightingData.SpotLightsData[lightingData.SpotLightsCount].CutOffCosine = cosf(light->CutOffAngle * static_cast<float>(M_PI) / 180);
@@ -149,6 +153,7 @@ namespace Graphics
             }
         }
 
+        SetGlobalTexture("_ReflectionCube", skybox ? skybox : Cubemap::White());
         s_LightingDataBuffer->SetData(&lightingData, 0, sizeof(lightingData));
     }
 
@@ -185,10 +190,10 @@ namespace Graphics
             GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
             GraphicsBackend::Current()->SetClearDepth(1);
 
-            SetLightingData(ctx.Lights);
+            SetLightingData(ctx.Lights, ctx.Skybox);
 
             s_ShadowCasterPass->Prepare(ctx.Renderers, ctx.Lights, Camera::Current->GetShadowDistance());
-            s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor, Camera::Current->GetPosition(), ctx.Renderers);
+            s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor, Camera::Current->GetGameObject()->GetPosition(), ctx.Renderers);
             s_FinalBlitPass->Prepare(cameraColorTarget);
 
             renderPasses.push_back(s_ShadowCasterPass);
@@ -413,7 +418,7 @@ namespace Graphics
         cameraData.NearClipPlane = Camera::Current->GetNearClipPlane();
         cameraData.FarClipPlane = Camera::Current->GetFarClipPlane();
         cameraData.ViewProjectionMatrix = _projectionMatrix * _viewMatrix;
-        cameraData.CameraDirection = Camera::Current->GetRotation() * Vector3{0, 0, 1};
+        cameraData.CameraDirection = Camera::Current->GetGameObject()->GetRotation() * Vector3{0, 0, 1};
 
         s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
     }

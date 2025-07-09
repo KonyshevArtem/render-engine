@@ -3,9 +3,12 @@
 #include "vector3/vector3.h"
 #include "file_system/file_system.h"
 #include "mesh/mesh.h"
+#include "editor/profiler/profiler.h"
 
 std::shared_ptr<FBXAsset> FBXAsset::Load(const std::filesystem::path &_path)
 {
+    Profiler::Marker _("FXBAsset::Load", _path.string());
+
     std::vector<uint8_t> content;
     FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / _path, content);
 

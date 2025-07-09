@@ -20,7 +20,7 @@ class GraphicsBackendBufferInfo;
 class Shader
 {
 public:
-    static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::initializer_list<std::string> &_keywords,
+    static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords,
         BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo);
 
     Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,

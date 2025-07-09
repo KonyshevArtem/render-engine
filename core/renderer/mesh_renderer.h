@@ -9,8 +9,9 @@ class Mesh;
 class MeshRenderer: public Renderer
 {
 public:
-    MeshRenderer(const std::shared_ptr<GameObject> &_gameObject,
-                 std::shared_ptr<Mesh>              _mesh,
+    static std::shared_ptr<MeshRenderer> Create(const nlohmann::json& componentData);
+
+    MeshRenderer(std::shared_ptr<Mesh>              _mesh,
                  const std::shared_ptr<Material>    &_material);
     ~MeshRenderer() override = default;
 
@@ -24,6 +25,8 @@ public:
     MeshRenderer &operator=(MeshRenderer &&) = delete;
 
 private:
+    MeshRenderer() = default;
+
     std::shared_ptr<Mesh> m_Mesh;
 };
 

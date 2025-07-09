@@ -1,8 +1,8 @@
 #include "camera_fly_controller.h"
-#include "camera/camera.h"
 #include "graphics/graphics.h"
 #include "input/input.h"
 #include "time/time.h" // NOLINT(modernize-deprecated-headers)
+#include "gameObject/gameObject.h"
 
 #include <algorithm>
 
@@ -10,6 +10,11 @@ constexpr float CAMERA_ROT_SPEED  = 10.0f;
 constexpr float CAMERA_MOVE_SPEED = 15.0f;
 constexpr float TOUCH_MOVE_MAX_DELTA = 100.0f;
 constexpr float TOUCH_ROTATE_MIN_DELTA = 0.001f;
+
+std::shared_ptr<CameraFlyController> CameraFlyController::Create(const nlohmann::json& json)
+{
+    return std::make_shared<CameraFlyController>();
+}
 
 void CameraFlyController::Update()
 {
@@ -38,7 +43,7 @@ void CameraFlyController::Update()
     const Quaternion yRot = Quaternion::AngleAxis(m_CameraEulerAngles.x, Vector3(0, -1, 0));
     const Quaternion cameraRotation = yRot * xRot;
 
-    Vector3 cameraPosition = Camera::Current->GetPosition();
+    Vector3 cameraPosition = GetGameObject()->GetPosition();
 
     float cameraMoveDelta = CAMERA_MOVE_SPEED * Time::GetDeltaTime();
     const Vector3 cameraFwd = cameraRotation * Vector3(0, 0, 1) * cameraMoveDelta;
@@ -70,8 +75,8 @@ void CameraFlyController::Update()
 
     UpdateTouchInputs();
 
-    Camera::Current->SetPosition(cameraPosition);
-    Camera::Current->SetRotation(cameraRotation);
+    GetGameObject()->SetPosition(cameraPosition);
+    GetGameObject()->SetRotation(cameraRotation);
 }
 
 void CameraFlyController::UpdateTouchInputs()

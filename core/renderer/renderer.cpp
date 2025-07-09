@@ -1,10 +1,13 @@
 #include "renderer.h"
+#include "billboard_renderer.h"
 #include "gameObject/gameObject.h"
 #include "graphics/graphics.h"
 #include "material/material.h"
+#include "texture_2d/texture_2d.h"
 
-Renderer::Renderer(const std::shared_ptr<GameObject> &_gameObject, const std::shared_ptr<Material> &_material) :
-    m_GameObject(_gameObject),
+#include <utility>
+
+Renderer::Renderer(const std::shared_ptr<Material> &_material) :
     m_Material(_material)
 {
 }
@@ -21,4 +24,9 @@ Matrix4x4 Renderer::GetModelMatrix() const
 std::shared_ptr<Material> Renderer::GetMaterial() const
 {
     return m_Material;
+}
+
+void Renderer::SetMaterial(std::shared_ptr<Material> material)
+{
+    m_Material = std::move(material);
 }

@@ -1,4 +1,5 @@
 #import "AAPLAppDelegate.h"
+#import "EngineFrameworkWrapper.h"
 
 @implementation AAPLAppDelegate
 
@@ -10,6 +11,11 @@
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed:(PlatformApplication *)sender
 {
     return YES;
+}
+
+- (void) applicationWillTerminate:(NSNotification *)notification
+{
+    [EngineFrameworkWrapper Shutdown];
 }
 
 @end

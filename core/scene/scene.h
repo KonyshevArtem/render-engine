@@ -20,6 +20,7 @@ public:
 
     static void Update();
     static void Load(const std::string& scenePath);
+    static void Unload();
 
     std::shared_ptr<GameObject> FindGameObject(const std::function<bool(const GameObject*)>& predicate);
     std::vector<std::shared_ptr<GameObject>> FindGameObjects(const std::function<bool(const GameObject*)>& predicate);

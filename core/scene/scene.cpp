@@ -66,6 +66,11 @@ void Scene::Load(const std::string& scenePath)
     s_PendingScenePath = scenePath;
 }
 
+void Scene::Unload()
+{
+    Current = nullptr;
+}
+
 std::shared_ptr<GameObject> Scene::FindGameObject(const std::function<bool(const GameObject *)>& predicate)
 {
     return SceneLocal::FindGameObject(m_GameObjects, predicate);

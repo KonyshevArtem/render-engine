@@ -11,6 +11,7 @@
 #include "arguments.h"
 #include "../scripts/game_components_register.h"
 #include "core_components_register.h"
+#include "resources/resources.h"
 
 GameWindow* window = nullptr;
 
@@ -97,6 +98,9 @@ bool EngineFramework::ShouldCloseWindow()
 void EngineFramework::Shutdown()
 {
     delete window;
+
+    Scene::Unload();
+    Resources::UnloadAllResources();
 
     ImGuiWrapper::Shutdown();
     Graphics::Shutdown();

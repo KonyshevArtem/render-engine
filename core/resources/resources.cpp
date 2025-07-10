@@ -76,6 +76,11 @@ std::shared_ptr<Material> Resources::Load(const std::filesystem::path& path)
     return material;
 }
 
+void Resources::UnloadAllResources()
+{
+    s_LoadedResources.clear();
+}
+
 template<>
 std::shared_ptr<FBXAsset> Resources::Load(const std::filesystem::path& path)
 {

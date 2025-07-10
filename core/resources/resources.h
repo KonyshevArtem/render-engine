@@ -15,6 +15,8 @@ public:
     template<typename T>
     static std::shared_ptr<T> Load(const std::filesystem::path& path);
 
+    static void UnloadAllResources();
+
 private:
     static void UploadPixels(Texture& texture, int facesCount, int mipCount, TextureBinaryReader& reader);
 

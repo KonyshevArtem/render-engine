@@ -3,7 +3,9 @@
 
 #include <memory>
 #include <filesystem>
+#include <unordered_map>
 
+class Resource;
 class Texture;
 class TextureBinaryReader;
 
@@ -15,6 +17,8 @@ public:
 
 private:
     static void UploadPixels(Texture& texture, int facesCount, int mipCount, TextureBinaryReader& reader);
+
+    static std::unordered_map<std::filesystem::path, std::shared_ptr<Resource>> s_LoadedResources;
 };
 
 #endif //RENDER_ENGINE_RESOURCES_H

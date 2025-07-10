@@ -4,6 +4,7 @@
 #include "matrix4x4/matrix4x4.h"
 #include "vector4/vector4.h"
 #include "types/graphics_backend_texture_info.h"
+#include "resources/resource.h"
 
 #include <vector>
 #include <unordered_map>
@@ -15,7 +16,7 @@ class Shader;
 class GraphicsBuffer;
 class GraphicsBufferWrapper;
 
-class Material
+class Material : public Resource
 {
 public:
     Material(std::shared_ptr<Shader> shader, const std::string& name);

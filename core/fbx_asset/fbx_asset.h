@@ -2,13 +2,15 @@
 #define RENDER_ENGINE_FBX_ASSET_H
 
 #include "ofbx.h"
+#include "resources/resource.h"
+
 #include <memory>
 #include <vector>
 #include <string>
 
 class Mesh;
 
-class FBXAsset
+class FBXAsset : public Resource
 {
 public:
     ~FBXAsset() = default;

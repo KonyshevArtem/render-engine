@@ -124,7 +124,8 @@ add_library(
 	json_common/json_common.h
 	json_common/json_common.cpp
 	resources/resources.h
-	resources/resources.cpp)
+	resources/resources.cpp
+	resources/resource.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash OpenFBX GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)

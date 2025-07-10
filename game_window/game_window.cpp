@@ -13,6 +13,13 @@ GameWindow::GameWindow(RenderHandler renderHandler):
 {
 }
 
+GameWindow::~GameWindow()
+{
+#ifdef ENABLE_IMGUI
+    WindowManager::CloseAllWindows();
+#endif
+}
+
 void GameWindow::TickMainLoop(int width, int height)
 {
     if (m_RenderHandler)

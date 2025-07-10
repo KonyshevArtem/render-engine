@@ -27,6 +27,11 @@ void WindowManager::DrawAllWindows()
     }
 }
 
+void WindowManager::CloseAllWindows()
+{
+    s_Windows.clear();
+}
+
 void WindowManager::AddWindow(const std::shared_ptr<BaseWindow> &window)
 {
     s_Windows.push_back(window);

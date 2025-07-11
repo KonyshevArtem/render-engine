@@ -1,8 +1,4 @@
 #include "texture_2d.h"
-#include "texture/texture_binary_reader.h"
-#include "editor/profiler/profiler.h"
-
-#include <vector>
 
 Texture2D::Texture2D(TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) :
         Texture(TextureType::TEXTURE_2D, format, width, height, 0, mipLevels, isLinear, isRenderTarget, name)
@@ -12,28 +8,6 @@ Texture2D::Texture2D(TextureInternalFormat format, uint32_t width, uint32_t heig
 std::shared_ptr<Texture2D> Texture2D::Create(uint32_t _width, uint32_t _height, TextureInternalFormat textureFormat, bool isLinear, bool isRenderTarget, const std::string& name)
 {
     return Create_Internal(nullptr, 0, _width, _height, textureFormat, isLinear, isRenderTarget, name);
-}
-
-std::shared_ptr<Texture2D> Texture2D::Load(const std::filesystem::path& path)
-{
-    Profiler::Marker _("Texture2D::Load", path.string());
-
-    TextureBinaryReader reader;
-    if (!reader.ReadTexture(path))
-    {
-        return nullptr;
-    }
-
-    const auto &header = reader.GetHeader();
-
-    auto t = std::shared_ptr<Texture2D>(new Texture2D(header.TextureFormat, header.Width, header.Height, header.MipCount, header.IsLinear, false, path.string()));
-    for (int mip = 0; mip < header.MipCount; ++mip)
-    {
-        auto pixels = reader.GetPixels(0, mip);
-        t->UploadPixels(pixels.data(), pixels.size(), 0, mip);
-    }
-
-    return t;
 }
 
 const std::shared_ptr<Texture2D> &Texture2D::White()

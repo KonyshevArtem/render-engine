@@ -112,6 +112,25 @@ namespace Graphics
 
     void Shutdown()
     {
+        s_InstancingMatricesBuffer = nullptr;
+        s_LightingDataBuffer = nullptr;
+        s_ShadowsDataBuffer = nullptr;
+
+        s_PerDrawDataBuffer = nullptr;
+        s_CameraDataBuffer = nullptr;
+
+        s_ForwardRenderPass = nullptr;
+        s_ShadowCasterPass = nullptr;
+        s_FinalBlitPass = nullptr;
+
+#if RENDER_ENGINE_EDITOR
+        s_CopyDepthPass = nullptr;
+        s_GizmosPass = nullptr;
+        s_SelectionOutlinePass = nullptr;
+        s_ShadowMapDebugPass = nullptr;
+#endif
+
+        s_GlobalTextures.clear();
     }
 
     void SetLightingData(const std::vector<Light*>& lights, const std::shared_ptr<Texture>& skybox)

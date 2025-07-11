@@ -4,23 +4,21 @@
 #include "matrix4x4/matrix4x4.h"
 #include "vector4/vector4.h"
 #include "types/graphics_backend_texture_info.h"
+#include "resources/resource.h"
 
 #include <vector>
 #include <unordered_map>
 #include <memory>
 #include <string>
-#include <filesystem>
 
 class Texture;
 class Shader;
 class GraphicsBuffer;
 class GraphicsBufferWrapper;
 
-class Material
+class Material : public Resource
 {
 public:
-    static std::shared_ptr<Material> Load(const std::filesystem::path& path);
-
     Material(std::shared_ptr<Shader> shader, const std::string& name);
     ~Material() = default;
 

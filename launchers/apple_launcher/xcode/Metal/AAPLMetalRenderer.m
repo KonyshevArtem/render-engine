@@ -25,11 +25,6 @@ bool s_FirstFrame = true;
     return self;
 }
 
-- (void) dealloc
-{
-    [EngineFrameworkWrapper Shutdown];
-}
-
 /// Called whenever the view orientation, layout, or size changes.
 - (void) mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size
 {

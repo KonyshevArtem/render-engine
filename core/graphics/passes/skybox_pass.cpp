@@ -7,6 +7,7 @@
 #include "graphics_backend_debug_group.h"
 #include "material/material.h"
 #include "shader/shader.h"
+#include "resources/resources.h"
 
 std::shared_ptr<Mesh> SkyboxPass::m_Mesh = nullptr;
 
@@ -18,7 +19,7 @@ SkyboxPass::SkyboxPass(int priority) :
 void SkyboxPass::Prepare()
 {
     if (!m_Mesh)
-        m_Mesh = FBXAsset::Load("core_resources/models/cube.fbx")->GetMesh(0);
+        m_Mesh = Resources::Load<FBXAsset>("core_resources/models/cube.fbx")->GetMesh(0);
 }
 
 void SkyboxPass::Execute(const Context& ctx)

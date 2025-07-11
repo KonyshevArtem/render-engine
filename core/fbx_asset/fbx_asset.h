@@ -2,18 +2,17 @@
 #define RENDER_ENGINE_FBX_ASSET_H
 
 #include "ofbx.h"
-#include <filesystem>
+#include "resources/resource.h"
+
 #include <memory>
 #include <vector>
 #include <string>
 
 class Mesh;
 
-class FBXAsset
+class FBXAsset : public Resource
 {
 public:
-    static std::shared_ptr<FBXAsset> Load(const std::filesystem::path &_path);
-
     ~FBXAsset() = default;
 
     std::shared_ptr<Mesh> GetMesh(unsigned int _index) const;
@@ -28,6 +27,8 @@ private:
     explicit FBXAsset(ofbx::IScene* scene, const std::string& name);
 
     std::vector<std::shared_ptr<Mesh>> m_Meshes;
+
+    friend class Resources;
 };
 
 #endif //RENDER_ENGINE_FBX_ASSET_H

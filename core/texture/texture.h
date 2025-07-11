@@ -10,10 +10,11 @@
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "vector4/vector4.h"
+#include "resources/resource.h"
 
 #include <string>
 
-class Texture
+class Texture : public Resource
 {
 public:
     virtual ~Texture();
@@ -76,6 +77,8 @@ private:
     Vector4 m_BorderColor;
     int m_MinLod;
     bool m_DoubleBuffered;
+
+    friend class Resources;
 };
 
 #endif //RENDER_ENGINE_TEXTURE_H

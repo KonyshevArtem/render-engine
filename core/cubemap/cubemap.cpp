@@ -1,43 +1,8 @@
 #include "cubemap.h"
-#include "debug.h"
-#include "texture/texture_binary_reader.h"
-#include "editor/profiler/profiler.h"
 
 Cubemap::Cubemap(TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, bool isLinear, const std::string& name) :
         Texture(TextureType::TEXTURE_CUBEMAP, format, width, height, 0, mipLevels, isLinear, false, name)
 {
-}
-
-std::shared_ptr<Cubemap> Cubemap::Load(const std::filesystem::path& path)
-{
-    Profiler::Marker _("Cubemap::Load", path.string());
-
-    TextureBinaryReader reader;
-    if (!reader.ReadTexture(path))
-    {
-        return nullptr;
-    }
-
-    const auto &header = reader.GetHeader();
-
-    constexpr int facesCount = static_cast<int>(CubemapFace::MAX);
-    if (header.Depth != facesCount)
-    {
-        Debug::LogErrorFormat("Number of slices in texture file is {}, expected {}", std::to_string(header.Depth), std::to_string(facesCount));
-        return nullptr;
-    }
-
-    std::shared_ptr<Cubemap> cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.TextureFormat, header.Width, header.Height, header.MipCount, header.IsLinear, path.string()));
-    for (int face = 0; face < facesCount; ++face)
-    {
-        for (int mip = 0; mip < header.MipCount; ++mip)
-        {
-            auto pixels = reader.GetPixels(face, mip);
-            cubemap->UploadPixels(pixels.data(), pixels.size(), 0, mip, static_cast<CubemapFace>(face));
-        }
-    }
-
-    return cubemap;
 }
 
 std::shared_ptr<Cubemap> &Cubemap::White()

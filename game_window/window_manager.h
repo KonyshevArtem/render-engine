@@ -17,6 +17,7 @@ namespace WindowManager
     concept DerivesBaseWindow = std::is_base_of_v<BaseWindow, T>;
 
     void DrawAllWindows();
+    void CloseAllWindows();
     void AddWindow(const std::shared_ptr<BaseWindow> &window);
 
     template<DerivesBaseWindow TWindow>

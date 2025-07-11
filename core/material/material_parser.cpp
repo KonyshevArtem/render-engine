@@ -4,6 +4,7 @@
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
 #include "cubemap/cubemap.h"
+#include "resources/resources.h"
 
 NLOHMANN_JSON_SERIALIZE_ENUM(BlendFactor, {
     {BlendFactor::ZERO, "ZERO"},
@@ -121,14 +122,14 @@ namespace MaterialParser
                 else if (isNormal)
                     texture = Texture2D::Normal();
                 else
-                    texture = Texture2D::Load(textureInfo.Path);
+                    texture = Resources::Load<Texture2D>(textureInfo.Path);
             }
             else if (textureInfo.Type == "Cube")
             {
                 if (isWhite)
                     texture = Cubemap::White();
                 else
-                    texture = Cubemap::Load(textureInfo.Path);
+                    texture = Resources::Load<Cubemap>(textureInfo.Path);
             }
 
             material->SetTexture(textureInfo.Name, texture);

@@ -3,6 +3,7 @@
 #include "mesh/mesh.h"
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
+#include "resources/resources.h"
 
 std::shared_ptr<BillboardRenderer> BillboardRenderer::Create(const nlohmann::json& componentData)
 {
@@ -10,7 +11,7 @@ std::shared_ptr<BillboardRenderer> BillboardRenderer::Create(const nlohmann::jso
     float size;
     componentData.at("Texture").get_to(texturePath);
     componentData.at("Size").get_to(size);
-    std::shared_ptr<Texture2D> texture = Texture2D::Load(texturePath);
+    std::shared_ptr<Texture2D> texture = Resources::Load<Texture2D>(texturePath);
 
     return std::make_shared<BillboardRenderer>(texture, size, "BillboardRenderer_" + texturePath);
 }

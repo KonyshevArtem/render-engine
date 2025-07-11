@@ -9,7 +9,7 @@ class GameWindow
 {
 public:
     explicit GameWindow(RenderHandler renderHandler);
-    ~GameWindow() = default;
+    ~GameWindow();
 
     void TickMainLoop(int width, int height);
 

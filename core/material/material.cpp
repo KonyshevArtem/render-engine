@@ -3,16 +3,8 @@
 #include "texture/texture.h"
 #include "graphics_buffer/graphics_buffer_wrapper.h"
 #include "global_constants.h"
-#include "material_parser.h"
-#include "editor/profiler/profiler.h"
 
 #include <utility>
-
-std::shared_ptr<Material> Material::Load(const std::filesystem::path& path)
-{
-    Profiler::Marker _("Material::Load", path.string());
-    return MaterialParser::Parse(path);
-}
 
 Material::Material(std::shared_ptr<Shader> shader, const std::string& name) :
     m_Name(name),

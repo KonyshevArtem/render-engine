@@ -1,11 +1,10 @@
 #include "scene_parser.h"
 #include "file_system/file_system.h"
-#include "vector3/vector3.h"
-#include "quaternion/quaternion.h"
 #include "component/component.h"
 #include "nlohmann/json.hpp"
 #include "cubemap/cubemap.h"
 #include "json_common/json_common.h"
+#include "resources/resources.h"
 
 namespace SceneParser
 {
@@ -90,7 +89,7 @@ namespace SceneParser
         }
 
         if (!sceneInfo.Settings.Skybox.empty())
-            scene->Skybox = Cubemap::Load(sceneInfo.Settings.Skybox);
+            scene->Skybox = Resources::Load<Cubemap>(sceneInfo.Settings.Skybox);
 
         return scene;
     }

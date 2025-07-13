@@ -189,13 +189,17 @@ namespace DX12Local
         UINT DescriptorSize;
         uint32_t DescriptorsCount;
         uint32_t DescriptorIndex;
+        uint32_t DescriptorsInUse;
+        bool IsResizable;
 
-        DescriptorHeap() : Heap(nullptr), DescriptorSize(0), DescriptorsCount(0), DescriptorIndex(0)
+        DescriptorHeap() : Heap(nullptr), DescriptorSize(0), DescriptorsCount(0), DescriptorIndex(0), DescriptorsInUse(0), IsResizable(false)
         {}
 
-        DescriptorHeap(uint32_t descriptorsCount, D3D12_DESCRIPTOR_HEAP_TYPE type, bool isShaderVisible = false) :
+        DescriptorHeap(uint32_t descriptorsCount, D3D12_DESCRIPTOR_HEAP_TYPE type, bool isShaderVisible = false, bool resizable = false) :
             DescriptorsCount(descriptorsCount),
-            DescriptorIndex(0)
+            DescriptorIndex(0),
+            DescriptorsInUse(0),
+            IsResizable(resizable)
         {
             D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
             heapDesc.NumDescriptors = descriptorsCount;
@@ -216,9 +220,26 @@ namespace DX12Local
             return CD3DX12_GPU_DESCRIPTOR_HANDLE(Heap->GetGPUDescriptorHandleForHeapStart(), DescriptorIndex + index, DescriptorSize);
         }
 
+        void CheckSize()
+        {
+            if (DescriptorsInUse > DescriptorsCount && IsResizable)
+            {
+                DescriptorsCount = DescriptorsInUse * 2;
+
+                ID3D12DescriptorHeap* oldHeap = Heap;
+                D3D12_DESCRIPTOR_HEAP_DESC heapDesc = oldHeap->GetDesc();
+                heapDesc.NumDescriptors = DescriptorsCount;
+                ThrowIfFailed(s_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&Heap)));
+                oldHeap->Release();
+            }
+
+            DescriptorsInUse = 0;
+        }
+
         void AdvanceIndex(int offset)
         {
             DescriptorIndex = (DescriptorIndex + offset) % DescriptorsCount;
+            DescriptorsInUse += offset;
         }
     };
 
@@ -691,7 +712,7 @@ void GraphicsBackendDX12::Init(void* data)
         frameData.RenderCommandList = DX12Local::CommandList(DX12Local::s_RenderQueue, D3D12_COMMAND_LIST_TYPE_DIRECT, "RenderCommandList");
         frameData.CopyCommandList = DX12Local::CommandList(DX12Local::s_CopyQueue, D3D12_COMMAND_LIST_TYPE_COPY, "CopyCommandList");
 
-        frameData.BoundResourceDescriptorHeap = DX12Local::DescriptorHeap(DX12Local::k_ResourceDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+        frameData.BoundResourceDescriptorHeap = DX12Local::DescriptorHeap(DX12Local::k_ResourceDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true, true);
         frameData.BoundSamplerDescriptorHeap  = DX12Local::DescriptorHeap(DX12Local::k_SamplerDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, true);
         frameData.ColorTargetDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         frameData.DepthTargetDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
@@ -740,6 +761,11 @@ void GraphicsBackendDX12::InitNewFrame()
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
     DX12Local::WaitForFrameEnd(frameData);
+
+    frameData.BoundResourceDescriptorHeap.CheckSize();
+    frameData.BoundSamplerDescriptorHeap.CheckSize();
+    frameData.ColorTargetDescriptorHeap.CheckSize();
+    frameData.DepthTargetDescriptorHeap.CheckSize();
 
     int windowWidth;
     int windowHeight;

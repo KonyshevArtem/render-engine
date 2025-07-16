@@ -1,7 +1,6 @@
 #include "skybox_pass.h"
 #include "graphics/context.h"
 #include "cubemap/cubemap.h"
-#include "fbx_asset/fbx_asset.h"
 #include "graphics/graphics.h"
 #include "mesh/mesh.h"
 #include "graphics_backend_debug_group.h"
@@ -19,7 +18,7 @@ SkyboxPass::SkyboxPass(int priority) :
 void SkyboxPass::Prepare()
 {
     if (!m_Mesh)
-        m_Mesh = Resources::Load<FBXAsset>("core_resources/models/cube.fbx")->GetMesh(0);
+        m_Mesh = Resources::Load<Mesh>("core_resources/models/Cube");
 }
 
 void SkyboxPass::Execute(const Context& ctx)

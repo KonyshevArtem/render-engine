@@ -36,8 +36,6 @@ add_library(
 	cubemap/cubemap.h
 	graphics/passes/skybox_pass.cpp
 	graphics/passes/skybox_pass.h
-	fbx_asset/fbx_asset.cpp
-	fbx_asset/fbx_asset.h
 	texture/texture.cpp
 	texture/texture.h
 	texture/texture_header.h
@@ -125,7 +123,10 @@ add_library(
 	json_common/json_common.cpp
 	resources/resources.h
 	resources/resources.cpp
-	resources/resource.h)
+	resources/resource.h
+	mesh/mesh_binary_reader.cpp
+	mesh/mesh_binary_reader.h
+	mesh/mesh_header.h)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math DebugUtil Hash OpenFBX GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)
+target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)

@@ -63,8 +63,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cube.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cube",
             "Material": "core_resources/materials/test_scene/brick.material"
           }
         }
@@ -92,8 +91,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cylinder.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cylinder",
             "Material": "core_resources/materials/test_scene/standard_opaque.material"
           }
         }
@@ -121,8 +119,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cylinder.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cylinder",
             "Material": "core_resources/materials/test_scene/standard_opaque.material"
           }
         }
@@ -150,8 +147,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cube.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cube",
             "Material": "core_resources/materials/test_scene/standard_opaque.material"
           }
         }
@@ -179,8 +175,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cube.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cube",
             "Material": "core_resources/materials/test_scene/brick.material"
           }
         }
@@ -208,8 +203,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/plane.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Plane",
             "Material": "core_resources/materials/test_scene/water.material"
           }
         }
@@ -237,8 +231,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/car.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Renault_12TL",
             "Material": "core_resources/materials/test_scene/car.material"
           }
         }
@@ -378,8 +371,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cube.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cube",
             "Material": "core_resources/materials/test_scene/standard_transparent.material"
           }
         }
@@ -407,8 +399,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cube.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cube",
             "Material": "core_resources/materials/test_scene/standard_transparent.material"
           }
         }
@@ -436,8 +427,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cube.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cube",
             "Material": "core_resources/materials/test_scene/standard_transparent.material"
           }
         }
@@ -452,7 +442,7 @@
       },
       "Rotation": {
         "x": 0.067,
-        "y":-0.933,
+        "y": -0.933,
         "z": 0.25,
         "w": 0.25
       },

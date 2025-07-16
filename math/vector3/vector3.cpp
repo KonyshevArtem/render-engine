@@ -2,6 +2,7 @@
 #include "vector4/vector4.h"
 #include <cmath>
 #include <limits>
+#include <algorithm>
 
 const Vector3 &Vector3::One()
 {
@@ -97,4 +98,14 @@ float Vector3::Dot(const Vector3 &_a, const Vector3 &_b)
 Vector3 Vector3::Cross(const Vector3 &_a, const Vector3 &_b)
 {
     return {_a.y * _b.z - _a.z * _b.y, _a.z * _b.x - _a.x * _b.z, _a.x * _b.y - _a.y * _b.x};
+}
+
+Vector3 Vector3::Min(const Vector3& a, const Vector3& b)
+{
+    return {std::min(a.x, b.x), std::min(a.y, b.y), std::min(a.z, b.z)};
+}
+
+Vector3 Vector3::Max(const Vector3& a, const Vector3& b)
+{
+    return {std::max(a.x, b.x), std::max(a.y, b.y), std::max(a.z, b.z)};
 }

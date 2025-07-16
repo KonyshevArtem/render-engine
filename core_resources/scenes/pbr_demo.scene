@@ -162,8 +162,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -191,8 +190,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -220,8 +218,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -249,8 +246,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -278,8 +274,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -307,8 +302,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -336,8 +330,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -365,8 +358,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -394,8 +386,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -423,8 +414,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -452,8 +442,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -481,8 +470,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -510,8 +498,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -539,8 +526,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -568,8 +554,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -597,8 +582,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -626,8 +610,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -655,8 +638,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -684,8 +666,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -713,8 +694,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -742,8 +722,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -771,8 +750,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -800,8 +778,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -829,8 +806,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -858,8 +834,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -887,8 +862,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -916,8 +890,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -945,8 +918,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -974,8 +946,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -1003,8 +974,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -1032,8 +1002,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -1061,8 +1030,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -1090,8 +1058,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -1119,8 +1086,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -1148,8 +1114,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }
@@ -1177,8 +1142,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/pbr_demo/pbr_demo.material"
           }
         }

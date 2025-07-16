@@ -11,7 +11,7 @@ fi
 
 source compile_shaders.sh $PLATFORM
 source compress_textures.sh $PLATFORM
-source copy_models.sh $PLATFORM
+source compile_models.sh $PLATFORM
 source copy_scenes.sh $PLATFORM
 source copy_materials.sh $PLATFORM
 

@@ -5,7 +5,8 @@
 #include "texture/texture_binary_reader.h"
 #include "material/material.h"
 #include "material/material_parser.h"
-#include "fbx_asset/fbx_asset.h"
+#include "mesh/mesh.h"
+#include "mesh/mesh_binary_reader.h"
 #include "file_system/file_system.h"
 #include "resource.h"
 #include "debug.h"
@@ -82,26 +83,27 @@ void Resources::UnloadAllResources()
 }
 
 template<>
-std::shared_ptr<FBXAsset> Resources::Load(const std::filesystem::path& path)
+std::shared_ptr<Mesh> Resources::Load(const std::filesystem::path& path)
 {
     Profiler::Marker _("Resources::Load<FBXAsset>", path.string());
 
     if (s_LoadedResources.contains(path))
-        return std::dynamic_pointer_cast<FBXAsset>(s_LoadedResources.at(path));
+        return std::dynamic_pointer_cast<Mesh>(s_LoadedResources.at(path));
+
+    MeshBinaryReader reader;
+    if (!reader.ReadMesh(path))
+        return nullptr;
 
     std::vector<uint8_t> content;
     FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / path, content);
 
-    ofbx::IScene* scene = ofbx::load(&content[0], content.size(), static_cast<ofbx::u64>(ofbx::LoadFlags::TRIANGULATE)); // NOLINT(cppcoreguidelines-narrowing-conversions)
-    if (!scene)
-        return nullptr;
+    const MeshHeader& header = reader.GetHeader();
+    std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(reader.GetVertexData(), reader.GetIndices(), header.HasUV, header.HasNormals, header.HasTangents,
+                                                        header.MinPoint, header.MaxPoint, header.Name);
 
-    std::shared_ptr<FBXAsset> asset = std::shared_ptr<FBXAsset>(new FBXAsset(scene, path.string()));
-    scene->destroy();
+    s_LoadedResources[path] = mesh;
 
-    s_LoadedResources[path] = asset;
-
-    return asset;
+    return mesh;
 }
 
 void Resources::UploadPixels(Texture& texture, int facesCount, int mipCount, TextureBinaryReader& reader)

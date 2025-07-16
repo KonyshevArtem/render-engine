@@ -78,7 +78,7 @@ float3 unpackNormal(float3 normalTS, float3 normalWS, float3 tangentWS, float no
     tangentWS = normalize(tangentWS);
     // Gramm-Schmidt process to ensure that tangent and normal are still orthogonal after interpolation
     tangentWS = normalize(tangentWS - dot(tangentWS, normalWS) * normalWS);
-    float3 bitangentWS = cross(tangentWS, normalWS);
+    float3 bitangentWS = cross(normalWS, tangentWS);
 
     normalTS = normalTS * 2.0 - 1.0;
     normalTS *= float3(normalIntensity, normalIntensity, 1);

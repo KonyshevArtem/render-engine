@@ -43,6 +43,9 @@ public:
     static float Dot(const Vector3 &_a, const Vector3 &_b);
 
     static Vector3 Cross(const Vector3 &_a, const Vector3 &_b);
+
+    static Vector3 Min(const Vector3& a, const Vector3& b);
+    static Vector3 Max(const Vector3& a, const Vector3& b);
 };
 
 #endif //RENDER_ENGINE_VECTOR3_H

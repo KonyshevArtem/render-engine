@@ -5,7 +5,6 @@
 #include "time/time.h"
 #include "math_utils.h"
 #include "renderer/mesh_renderer.h"
-#include "fbx_asset/fbx_asset.h"
 #include "resources/resources.h"
 
 std::shared_ptr<TestSceneUpdater> TestSceneUpdater::Create(const nlohmann::json& componentData)
@@ -51,7 +50,7 @@ void TestSceneUpdater::Update()
         m_WaterMaterial = Scene::Current->FindGameObject([](const GameObject* go){return go->Name == "Water";})->GetRenderer()->GetMaterial();
 
 
-        std::shared_ptr<Mesh> cubeMesh = Resources::Load<FBXAsset>("core_resources/models/cube.fbx")->GetMesh(0);
+        std::shared_ptr<Mesh> cubeMesh = Resources::Load<Mesh>("core_resources/models/Cube");
         std::shared_ptr<Material> sphereMaterial = Resources::Load<Material>("core_resources/materials/test_scene/sphere_instanced.material");
 
         constexpr int spheresCount = 500;

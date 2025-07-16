@@ -56,8 +56,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cube.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cube",
             "Material": "core_resources/materials/shadows_demo/shadows_demo.material"
           }
         }
@@ -85,8 +84,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cube.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cube",
             "Material": "core_resources/materials/shadows_demo/shadows_demo.material"
           }
         }
@@ -114,8 +112,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cube.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cube",
             "Material": "core_resources/materials/shadows_demo/shadows_demo.material"
           }
         }
@@ -143,8 +140,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cube.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cube",
             "Material": "core_resources/materials/shadows_demo/shadows_demo.material"
           }
         }
@@ -172,8 +168,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/cube.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Cube",
             "Material": "core_resources/materials/shadows_demo/shadows_demo.material"
           }
         }
@@ -201,8 +196,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/shadows_demo/shadows_demo.material"
           }
         }
@@ -230,8 +224,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/shadows_demo/shadows_demo.material"
           }
         }
@@ -259,8 +252,7 @@
         {
           "Name": "MeshRenderer",
           "Data": {
-            "FBXAsset": "core_resources/models/sphere.fbx",
-            "MeshIndex": 0,
+            "Mesh": "core_resources/models/Sphere",
             "Material": "core_resources/materials/shadows_demo/shadows_demo.material"
           }
         }

@@ -2,51 +2,25 @@
 #include <iostream>
 
 #include "texture_compressor_backend.h"
-#include "texture_compressor_formats.h"
 #include "arguments.h"
-#include "string_split.h"
-
-void PrintHelp()
-{
-    std::cout << "Parameters: -type <texture type STRING> -format <texture format STRING> -linear <is linear BOOL>"
-                 "-mips <generate mipmaps BOOL> -output <output path STRING> -inputs <texture paths STRING>\n";
-
-    std::cout << "\nAvailable texture types:\n";
-    for (const auto &typeInfo: TextureCompressorFormats::GetTextureTypesInfo())
-    {
-        std::cout << "\t" << typeInfo.Name << "\n";
-    }
-
-    std::cout << "\nAvailable texture formats:\n";
-    for (const auto &formatInfo: TextureCompressorFormats::GetTextureFormatsInfo())
-    {
-        std::cout << "\t" << formatInfo.Name << "\n";
-    }
-
-    std::cout << std::endl;
-}
 
 int main(int argc, char **argv)
 {
     Arguments::Init(argv, argc);
 
-    if (!Arguments::Contains("-type") ||
-        !Arguments::Contains("-format") ||
-        !Arguments::Contains("-output") ||
-        !Arguments::Contains("-inputs"))
+    if (!Arguments::Contains("-output") ||
+        !Arguments::Contains("-input") ||
+        !Arguments::Contains("-platform"))
     {
-        PrintHelp();
+        std::cout << "Parameters: -input -output -platform\n" << std::endl;
         return 0;
     }
 
-    std::string textureType = Arguments::Get("-type");
-    std::string textureFormat = Arguments::Get("-format");
-    bool isLinear = Arguments::Contains("-linear");
-    bool generateMips = Arguments::Contains("-mips");
     std::string outputPath = Arguments::Get("-output");
-    std::vector<std::string> texturePaths = StringSplit::Split(Arguments::Get("-inputs"), ',');
+    std::string inputPath = Arguments::Get("-input");
+    std::string platform = Arguments::Get("-platform");
 
-    TextureCompressorBackend::CompressTexture(texturePaths, textureType, textureFormat, isLinear, generateMips, outputPath);
+    TextureCompressorBackend::CompressTextures(inputPath, outputPath, platform);
 
     return 0;
 }

@@ -6,7 +6,7 @@ namespace TextureCompressorFormats
 {
     std::vector<TextureTypeInfo> textureTypesInfo =
             {
-                    {"Texture2D", TextureType::TEXTURE_2D, cuttlefish::Texture::Dimension::Dim2D, 1},
+                    {"2D", TextureType::TEXTURE_2D, cuttlefish::Texture::Dimension::Dim2D, 1},
                     {"Cubemap", TextureType::TEXTURE_CUBEMAP, cuttlefish::Texture::Dimension::Cube, 6},
             };
 
@@ -108,15 +108,5 @@ namespace TextureCompressorFormats
         }
 
         return invalid;
-    }
-
-    const std::vector<TextureTypeInfo> &GetTextureTypesInfo()
-    {
-        return textureTypesInfo;
-    }
-
-    const std::vector<TextureFormatInfo> &GetTextureFormatsInfo()
-    {
-        return textureFormatsInfo;
     }
 }

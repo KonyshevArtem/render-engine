@@ -28,9 +28,6 @@ namespace TextureCompressorFormats
 {
     const TextureFormatInfo& GetTextureFormatInfo(const std::string& format);
     const TextureTypeInfo& GetTextureTypeInfo(const std::string& textureType);
-
-    const std::vector<TextureTypeInfo>& GetTextureTypesInfo();
-    const std::vector<TextureFormatInfo>& GetTextureFormatsInfo();
 }
 
 #endif //RENDER_ENGINE_TEXTURE_COMPRESSOR_FORMATS_H

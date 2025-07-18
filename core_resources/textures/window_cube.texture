@@ -1,0 +1,14 @@
+{
+  "Paths": [
+    "window_cube.png"
+  ],
+  "Type": "2D",
+  "Formats": {
+    "Windows": "BC7",
+    "Android": "ASTC_6X6",
+    "Mac": "ASTC_6X6",
+    "iOS": "ASTC_6X6"
+  },
+  "Linear": false,
+  "Mips": true
+}

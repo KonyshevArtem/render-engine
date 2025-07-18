@@ -11,11 +11,47 @@
 #include "cuttlefish/Image.h"
 #include "cuttlefish/Texture.h"
 
+#include "nlohmann/json.hpp"
+
 #include "../core/texture/texture_header.h"
 #include "debug.h"
 
 namespace TextureCompressorBackend
 {
+    struct FormatsData
+    {
+        std::string Windows;
+        std::string Android;
+        std::string Mac;
+        std::string iOS;
+    };
+
+    struct TextureData
+    {
+        std::vector<std::string> Paths;
+        std::string Type;
+        FormatsData Formats;
+        bool Linear;
+        bool Mips;
+    };
+
+    void from_json(const nlohmann::json& json, FormatsData& formats)
+    {
+        json.at("Windows").get_to(formats.Windows);
+        json.at("Android").get_to(formats.Android);
+        json.at("Mac").get_to(formats.Mac);
+        json.at("iOS").get_to(formats.iOS);
+    }
+
+    void from_json(const nlohmann::json& json, TextureData& data)
+    {
+        json.at("Paths").get_to(data.Paths);
+        json.at("Type").get_to(data.Type);
+        json.at("Formats").get_to(data.Formats);
+        json.at("Linear").get_to(data.Linear);
+        json.at("Mips").get_to(data.Mips);
+    }
+
     std::string GetReadableSize(uint32_t bytes)
     {
         std::stringstream stream;
@@ -171,21 +207,37 @@ namespace TextureCompressorBackend
         return texture;
     }
 
-    void CompressTexture(const std::vector<std::string>& paths, const std::string& textureType, const std::string& textureFormat,
-                        bool isLinear, bool generateMips, const std::filesystem::path& outputPath)
+    std::string GetFormat(const TextureData& data, const std::string& platform)
+    {
+        if (platform == "windows")
+            return data.Formats.Windows;
+        if (platform == "android")
+            return data.Formats.Android;
+        if (platform == "mac")
+            return data.Formats.Mac;
+        if (platform == "ios")
+            return data.Formats.iOS;
+
+        std::cout << "Unknown platform: " << platform << std::endl;
+        return "";
+    }
+
+    void CompressTexture(const TextureData& data, const std::filesystem::path& outputPath, const std::string& platform)
     {
         constexpr uint32_t headerSize = sizeof(TextureHeader);
+
+        std::string textureFormat = GetFormat(data, platform);
 
         TextureTypeInfo typeInfo;
         TextureFormatInfo formatInfo;
         if (!TryGetTextureFormatInfo(textureFormat, formatInfo) ||
-            !TryGetTextureTypeInfo(textureType, paths.size(), typeInfo))
+            !TryGetTextureTypeInfo(data.Type, data.Paths.size(), typeInfo))
         {
             return;
         }
 
         std::vector<cuttlefish::Image*> images;
-        if (!TryLoadImages(paths, isLinear, typeInfo.Count, images))
+        if (!TryLoadImages(data.Paths, data.Linear, typeInfo.Count, images))
         {
             return;
         }
@@ -194,12 +246,12 @@ namespace TextureCompressorBackend
         header.Depth = typeInfo.Count;
         header.Width = images[0]->width();
         header.Height = images[0]->height();
-        header.MipCount = GetMipsCount(generateMips, header.Width, header.Height);
+        header.MipCount = GetMipsCount(data.Mips, header.Width, header.Height);
         header.TextureFormat = formatInfo.Format;
-        header.IsLinear = isLinear;
+        header.IsLinear = data.Linear;
 
         bool isCubemap = typeInfo.CuttlefishDimensions == cuttlefish::Texture::Dimension::Cube;
-        cuttlefish::Texture* texture = CreateTexture(typeInfo, formatInfo, header, images, generateMips, isCubemap);
+        cuttlefish::Texture* texture = CreateTexture(typeInfo, formatInfo, header, images, data.Mips, isCubemap);
 
         uint32_t totalCompressedSize;
         std::vector<uint32_t> compressedSizes = ExtractSizes(texture, header, isCubemap, totalCompressedSize);
@@ -224,6 +276,35 @@ namespace TextureCompressorBackend
         for (int i = 0; i < images.size(); ++i)
         {
             delete images[i];
+        }
+    }
+
+    void CompressTextures(const std::filesystem::path& inputPath, const std::filesystem::path& outputPath, const std::string& platform)
+    {
+        for (const std::filesystem::directory_entry& entry: std::filesystem::recursive_directory_iterator(inputPath))
+        {
+            if (!entry.is_regular_file() || entry.path().extension() != ".texture")
+                continue;
+
+            std::ifstream file(entry.path());
+            if (!file)
+            {
+                std::cout << "Cannot read texture: " << entry.path() << std::endl;
+                continue;
+            }
+
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+
+            TextureData data;
+            nlohmann::json textureJson = nlohmann::json::parse(buffer.str());
+            textureJson.get_to(data);
+
+            for (std::string& path : data.Paths)
+                path = (entry.path().parent_path() / path).string();
+
+            CompressTexture(data, outputPath, platform);
+            file.close();
         }
     }
 }

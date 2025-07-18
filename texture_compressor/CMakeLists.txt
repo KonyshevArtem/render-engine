@@ -16,7 +16,7 @@ if (${RENDER_ENGINE_BUILD_TOOLS})
     )
 
     add_executable(TextureCompressor ${TEXTURE_COMPRESSOR_SOURCES})
-    target_link_libraries(TextureCompressor GraphicsBackend Arguments StringSplit Cuttlefish::lib)
+    target_link_libraries(TextureCompressor GraphicsBackend Arguments Cuttlefish::lib nlohmann_json::nlohmann_json)
     target_include_directories(TextureCompressor PUBLIC ${Cuttlefish_INCLUDE_DIRS})
 
 endif ()

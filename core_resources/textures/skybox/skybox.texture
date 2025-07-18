@@ -1,0 +1,19 @@
+{
+  "Paths": [
+    "x_positive.png",
+    "x_negative.png",
+    "y_positive.png",
+    "y_negative.png",
+    "z_positive.png",
+    "z_negative.png"
+  ],
+  "Type": "Cubemap",
+  "Formats": {
+    "Windows": "BC7",
+    "Android": "ASTC_6X6",
+    "Mac": "ASTC_6X6",
+    "iOS": "ASTC_6X6"
+  },
+  "Linear": false,
+  "Mips": true
+}

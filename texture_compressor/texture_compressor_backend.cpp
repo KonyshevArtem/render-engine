@@ -125,7 +125,10 @@ namespace TextureCompressorBackend
         {
             images[i] = new cuttlefish::Image();
             if (!images[i]->load(pathStrings[i].c_str(), colorSpace))
+            {
+                Debug::LogErrorFormat("Cannot load texture: {}", pathStrings[i].c_str());
                 return false;
+            }
         }
 
         return true;
@@ -218,7 +221,7 @@ namespace TextureCompressorBackend
         if (platform == "ios")
             return data.Formats.iOS;
 
-        std::cout << "Unknown platform: " << platform << std::endl;
+        Debug::LogErrorFormat("Unknown platform: {}", platform);
         return "";
     }
 
@@ -289,7 +292,8 @@ namespace TextureCompressorBackend
             std::ifstream file(entry.path());
             if (!file)
             {
-                std::cout << "Cannot read texture: " << entry.path() << std::endl;
+                std::string pathStr = entry.path().string();
+                Debug::LogErrorFormat("Cannot read texture: {}", pathStr);
                 continue;
             }
 
@@ -303,7 +307,10 @@ namespace TextureCompressorBackend
             for (std::string& path : data.Paths)
                 path = (entry.path().parent_path() / path).string();
 
-            CompressTexture(data, outputPath, platform);
+            std::filesystem::path relativePath = std::filesystem::relative(entry.path(), inputPath);
+            std::filesystem::path outputTexturePath = outputPath / relativePath.parent_path() / relativePath.stem();
+
+            CompressTexture(data, outputTexturePath, platform);
             file.close();
         }
     }

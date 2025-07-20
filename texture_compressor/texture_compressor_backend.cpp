@@ -33,6 +33,7 @@ namespace TextureCompressorBackend
         FormatsData Formats;
         bool Linear;
         bool Mips;
+        bool FlipY;
     };
 
     void from_json(const nlohmann::json& json, FormatsData& formats)
@@ -50,6 +51,11 @@ namespace TextureCompressorBackend
         json.at("Formats").get_to(data.Formats);
         json.at("Linear").get_to(data.Linear);
         json.at("Mips").get_to(data.Mips);
+
+        if (json.contains("FlipY"))
+            json.at("FlipY").get_to(data.FlipY);
+        else
+            data.FlipY = false;
     }
 
     std::string GetReadableSize(uint32_t bytes)
@@ -116,19 +122,22 @@ namespace TextureCompressorBackend
         return true;
     }
 
-    bool TryLoadImages(const std::vector<std::string>& pathStrings, bool isLinear, uint32_t slices, std::vector<cuttlefish::Image*> &images)
+    bool TryLoadImages(const TextureData& data, uint32_t slices, std::vector<cuttlefish::Image*> &images)
     {
         images.resize(slices);
 
-        cuttlefish::ColorSpace colorSpace = isLinear ? cuttlefish::ColorSpace::Linear : cuttlefish::ColorSpace::sRGB;
+        cuttlefish::ColorSpace colorSpace = data.Linear ? cuttlefish::ColorSpace::Linear : cuttlefish::ColorSpace::sRGB;
         for (int i = 0; i < slices; i++)
         {
             images[i] = new cuttlefish::Image();
-            if (!images[i]->load(pathStrings[i].c_str(), colorSpace))
+            if (!images[i]->load(data.Paths[i].c_str(), colorSpace))
             {
-                Debug::LogErrorFormat("Cannot load texture: {}", pathStrings[i].c_str());
+                Debug::LogErrorFormat("Cannot load texture: {}", data.Paths[i].c_str());
                 return false;
             }
+
+            if (data.FlipY)
+                images[i]->flipVertical();
         }
 
         return true;
@@ -240,7 +249,7 @@ namespace TextureCompressorBackend
         }
 
         std::vector<cuttlefish::Image*> images;
-        if (!TryLoadImages(data.Paths, data.Linear, typeInfo.Count, images))
+        if (!TryLoadImages(data, typeInfo.Count, images))
         {
             return;
         }
@@ -269,17 +278,11 @@ namespace TextureCompressorBackend
         ExtractPixelsAndWriteToFile(texture, compressedSizes, header, isCubemap, fout);
         fout.close();
 
-        std::cout << "\tTexture successfully compressed: " << outputPath
-                  << "\n\tFormat: " << formatInfo.Name << " (" << static_cast<int>(header.TextureFormat) << ")"
-                  << "\n\tCompressed Size: " << GetReadableSize(headerSize + totalCompressedSize)
-                  << "\n\tMipmaps: " << static_cast<int>(header.MipCount)
-                  << "\n" << std::endl;
+        Debug::LogInfoFormat("Compressed: {} {} {}", outputPath.string(), formatInfo.Name, GetReadableSize(headerSize + totalCompressedSize));
 
         delete texture;
         for (int i = 0; i < images.size(); ++i)
-        {
             delete images[i];
-        }
     }
 
     void CompressTextures(const std::filesystem::path& inputPath, const std::filesystem::path& outputPath, const std::string& platform)

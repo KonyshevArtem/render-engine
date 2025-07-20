@@ -1,12 +1,12 @@
 #include "texture_compressor_backend.h"
 #include "texture_compressor_formats.h"
 
-#include <iostream>
 #include <vector>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include <execution>
 
 #include "cuttlefish/Image.h"
 #include "cuttlefish/Texture.h"
@@ -287,17 +287,22 @@ namespace TextureCompressorBackend
 
     void CompressTextures(const std::filesystem::path& inputPath, const std::filesystem::path& outputPath, const std::string& platform)
     {
+        std::vector<std::filesystem::path> textureFilePaths;
+
         for (const std::filesystem::directory_entry& entry: std::filesystem::recursive_directory_iterator(inputPath))
         {
-            if (!entry.is_regular_file() || entry.path().extension() != ".texture")
-                continue;
+            if (entry.is_regular_file() && entry.path().extension() == ".texture")
+                textureFilePaths.push_back(entry.path());
+        }
 
-            std::ifstream file(entry.path());
+        std::for_each(std::execution::par, textureFilePaths.begin(), textureFilePaths.end(), [&inputPath, &outputPath, &platform](std::filesystem::path& path)
+        {
+            std::ifstream file(path);
             if (!file)
             {
-                std::string pathStr = entry.path().string();
+                std::string pathStr = path.string();
                 Debug::LogErrorFormat("Cannot read texture: {}", pathStr);
-                continue;
+                return;
             }
 
             std::stringstream buffer;
@@ -307,14 +312,14 @@ namespace TextureCompressorBackend
             nlohmann::json textureJson = nlohmann::json::parse(buffer.str());
             textureJson.get_to(data);
 
-            for (std::string& path : data.Paths)
-                path = (entry.path().parent_path() / path).string();
+            for (std::string& texturePath : data.Paths)
+                texturePath = (path.parent_path() / texturePath).string();
 
-            std::filesystem::path relativePath = std::filesystem::relative(entry.path(), inputPath);
+            std::filesystem::path relativePath = std::filesystem::relative(path, inputPath);
             std::filesystem::path outputTexturePath = outputPath / relativePath.parent_path() / relativePath.stem();
 
             CompressTexture(data, outputTexturePath, platform);
             file.close();
-        }
+        });
     }
 }

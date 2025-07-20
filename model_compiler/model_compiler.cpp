@@ -81,13 +81,13 @@ void ExtractMeshesFromFbx(const std::filesystem::path& input, const std::filesys
         uint64_t normalsSize = hasNormals ? sizeof(float) * 3 : 0;
         uint64_t tangentsSize = hasTangents ? sizeof(float) * 3: 0;
 
-        Vector3 minPoint = ToVector3(geom->getVertices()[0]);
-        Vector3 maxPoint = ToVector3(geom->getVertices()[0]);
-
         Matrix4x4 localToWorld = ToMatrix4x4(geom->getGlobalTransform());
         Matrix4x4 scaleMatrix = Matrix4x4::Scale({isRightHanded ? -1.0f : 1.0f, 1.0f, 1.0f });
         Matrix4x4 worldToLocal = localToWorld.Invert();
         Matrix4x4 combinedTransformation = worldToLocal * scaleMatrix * localToWorld;
+
+        Vector3 minPoint = combinedTransformation * ToVector3(geom->getVertices()[0]).ToVector4(1);
+        Vector3 maxPoint = minPoint;
 
         uint64_t vertexSize = posSize + uvSize + normalsSize + tangentsSize;
         std::vector<uint8_t> vertexData(vertexSize * geom->getVertexCount());

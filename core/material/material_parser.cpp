@@ -28,11 +28,40 @@ NLOHMANN_JSON_SERIALIZE_ENUM(BlendFactor, {
     {BlendFactor::ONE_MINUS_SRC1_ALPHA, "ONE_MINUS_SRC1_ALPHA"},
 })
 
+NLOHMANN_JSON_SERIALIZE_ENUM(CullFace, {
+    {CullFace::NONE, "NONE"},
+    {CullFace::FRONT, "FRONT"},
+    {CullFace::BACK, "BACK"}
+})
+
+NLOHMANN_JSON_SERIALIZE_ENUM(DepthFunction, {
+    {DepthFunction::NEVER, "NEVER"},
+    {DepthFunction::LESS, "LESS"},
+    {DepthFunction::EQUAL, "EQUAL"},
+    {DepthFunction::LEQUAL, "LEQUAL"},
+    {DepthFunction::GREATER, "GREATER"},
+    {DepthFunction::NOTEQUAL, "NOTEQUAL"},
+    {DepthFunction::GEQUAL, "GEQUAL"},
+    {DepthFunction::ALWAYS, "ALWAYS"}
+})
+
 void from_json(const nlohmann::json& json, BlendInfo& info)
 {
     json.at("Enabled").get_to(info.Enabled);
     json.at("SourceFactor").get_to(info.SourceFactor);
     json.at("DestinationFactor").get_to(info.DestinationFactor);
+}
+
+void from_json(const nlohmann::json& json, CullInfo& info)
+{
+    json.at("Face").get_to(info.Face);
+}
+
+void from_json(const nlohmann::json& json, DepthInfo& info)
+{
+    json.at("WriteDepth").get_to(info.WriteDepth);
+    if (json.contains("DepthFunction"))
+        json.at("DepthFunction").get_to(info.DepthFunction);
 }
 
 namespace MaterialParser
@@ -42,6 +71,8 @@ namespace MaterialParser
         std::string Path;
         std::vector<std::string> Keywords;
         BlendInfo BlendInfo;
+        CullInfo CullInfo;
+        DepthInfo DepthInfo;
     };
 
     struct TextureInfo
@@ -72,6 +103,10 @@ namespace MaterialParser
             json.at("Keywords").get_to(info.Keywords);
         if (json.contains("BlendInfo"))
             json.at("BlendInfo").get_to(info.BlendInfo);
+        if (json.contains("CullInfo"))
+            json.at("CullInfo").get_to(info.CullInfo);
+        if (json.contains("DepthInfo"))
+            json.at("DepthInfo").get_to(info.DepthInfo);
     }
 
     void from_json(const nlohmann::json& json, TextureInfo& info)
@@ -106,7 +141,7 @@ namespace MaterialParser
         MaterialInfo materialInfo;
         materialJson.get_to(materialInfo);
 
-        std::shared_ptr<Shader> shader = Shader::Load(materialInfo.Shader.Path, materialInfo.Shader.Keywords, materialInfo.Shader.BlendInfo, {}, {});
+        std::shared_ptr<Shader> shader = Shader::Load(materialInfo.Shader.Path, materialInfo.Shader.Keywords, materialInfo.Shader.BlendInfo, materialInfo.Shader.CullInfo, materialInfo.Shader.DepthInfo);
         std::shared_ptr<Material> material = std::make_shared<Material>(shader, path.string());
 
         for (const TextureInfo& textureInfo: materialInfo.Textures)

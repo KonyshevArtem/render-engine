@@ -1468,7 +1468,8 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     rasterizerDesc.FrontCounterClockwise = descriptor.CullFaceOrientation == CullFaceOrientation::COUNTER_CLOCKWISE;
 
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    depthStencilDesc.DepthEnable = descriptor.DepthWrite;
+    depthStencilDesc.DepthEnable = true;
+    depthStencilDesc.DepthWriteMask = descriptor.DepthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
     depthStencilDesc.DepthFunc = DX12Helpers::ToDepthFunction(descriptor.DepthFunction);
 
     DXGI_FORMAT colorTargetFormat = DX12Helpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);

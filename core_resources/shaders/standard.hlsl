@@ -30,6 +30,9 @@ cbuffer PerMaterialData : register(b4)
     float _Roughness;
     float _Metallness;
     float _NormalIntensity;
+#ifdef _ALPHA_CLIP
+    float _AlphaClip;
+#endif
 };
 
 Texture2D _Albedo : register(t4);
@@ -80,6 +83,10 @@ half4 fragmentMain(Varyings vars) : SV_Target
 #endif
 
     float4 albedo = float4(_Albedo.Sample(sampler_Albedo, vars.UV * _Albedo_ST.zw + _Albedo_ST.xy));
+#ifdef _ALPHA_CLIP
+    if (albedo.a < _AlphaClip)
+        discard;
+#endif
 
 #ifdef _REFLECTION
     half3 reflection = sampleReflection(normalWS, vars.PositionWS.xyz, roughness, _CameraPosWS);

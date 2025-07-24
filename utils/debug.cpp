@@ -2,10 +2,13 @@
 
 #include <iostream>
 #include <map>
+#include <shared_mutex>
 
 #if __has_include("android/log.h")
 #include <android/log.h>
 #endif
+
+std::shared_mutex s_LogMutex;
 
 std::map<int, std::function<void(std::string)>> *GetListeners()
 {
@@ -24,6 +27,8 @@ void NotifyListeners(const std::string& string)
 
 void Debug::LogInfo(const std::string& string)
 {
+    std::unique_lock lock(s_LogMutex);
+
 #if RENDER_ENGINE_ANDROID
     __android_log_write(ANDROID_LOG_INFO, "RenderEngine", string.c_str());
 #else
@@ -35,6 +40,8 @@ void Debug::LogInfo(const std::string& string)
 
 void Debug::LogWarning(const std::string& string)
 {
+    std::unique_lock lock(s_LogMutex);
+
 #if RENDER_ENGINE_ANDROID
     __android_log_write(ANDROID_LOG_WARN, "RenderEngine", string.c_str());
 #else
@@ -46,6 +53,8 @@ void Debug::LogWarning(const std::string& string)
 
 void Debug::LogError(const std::string& string)
 {
+    std::unique_lock lock(s_LogMutex);
+
 #if RENDER_ENGINE_ANDROID
     __android_log_write(ANDROID_LOG_ERROR, "RenderEngine", string.c_str());
 #else

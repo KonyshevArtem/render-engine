@@ -13,6 +13,7 @@
 
 #include "nlohmann/json.hpp"
 
+#include "graphics_backend_api.h"
 #include "../core/texture/texture_header.h"
 #include "debug.h"
 
@@ -74,16 +75,16 @@ namespace TextureCompressorBackend
         return stream.str();
     }
 
-    int GetMipsCount(bool generateMips, uint32_t width, uint32_t height)
+    int GetMipsCount(bool generateMips, uint32_t width, uint32_t height, const std::string& texturePath)
     {
-        if (!generateMips)
+        if (!generateMips || width == 1 && height == 1)
         {
             return 1;
         }
 
         if (width % 2 != 0 || height % 2 != 0)
         {
-            Debug::LogError("Texture size is not power of 2");
+            Debug::LogErrorFormat("Texture size is not power of 2: {}", texturePath);
             return 1;
         }
 
@@ -122,7 +123,7 @@ namespace TextureCompressorBackend
         return true;
     }
 
-    bool TryLoadImages(const TextureData& data, uint32_t slices, std::vector<cuttlefish::Image*> &images)
+    bool TryLoadImages(const TextureData& data, TextureInternalFormat format, uint32_t slices, std::vector<cuttlefish::Image*>& images)
     {
         images.resize(slices);
 
@@ -138,6 +139,18 @@ namespace TextureCompressorBackend
 
             if (data.FlipY)
                 images[i]->flipVertical();
+
+            uint32_t blockSize = GraphicsBackend::Current()->GetBlockSize(format);
+            if (blockSize > 0 && images[i]->width() < blockSize || images[i]->height() < blockSize)
+            {
+                uint32_t blockSizePow2 = std::bit_ceil(blockSize);
+                uint32_t newWidth = std::max(blockSizePow2, images[i]->width());
+                uint32_t newHeight = std::max(blockSizePow2, images[i]->height());
+
+                cuttlefish::Image* resizedImage = new cuttlefish::Image(images[i]->resize(newWidth, newHeight, cuttlefish::Image::ResizeFilter::Linear));
+                delete images[i];
+                images[i] = resizedImage;
+            }
         }
 
         return true;
@@ -249,7 +262,7 @@ namespace TextureCompressorBackend
         }
 
         std::vector<cuttlefish::Image*> images;
-        if (!TryLoadImages(data, typeInfo.Count, images))
+        if (!TryLoadImages(data, formatInfo.Format, typeInfo.Count, images))
         {
             return;
         }
@@ -258,7 +271,7 @@ namespace TextureCompressorBackend
         header.Depth = typeInfo.Count;
         header.Width = images[0]->width();
         header.Height = images[0]->height();
-        header.MipCount = GetMipsCount(data.Mips, header.Width, header.Height);
+        header.MipCount = GetMipsCount(data.Mips, header.Width, header.Height, outputPath.string());
         header.TextureFormat = formatInfo.Format;
         header.IsLinear = data.Linear;
 

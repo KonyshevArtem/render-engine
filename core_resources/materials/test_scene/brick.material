@@ -21,10 +21,6 @@
   ],
   "Floats": [
     {
-      "Name": "_NormalIntensity",
-      "Value": 3
-    },
-    {
       "Name": "_Roughness",
       "Value": 0.5
     },

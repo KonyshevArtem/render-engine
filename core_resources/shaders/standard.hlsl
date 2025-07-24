@@ -29,7 +29,6 @@ cbuffer PerMaterialData : register(b4)
     float4 _NormalMap_ST;
     float _Roughness;
     float _Metallness;
-    float _NormalIntensity;
 #ifdef _ALPHA_CLIP
     float _AlphaClip;
 #endif
@@ -67,8 +66,8 @@ half4 fragmentMain(Varyings vars) : SV_Target
     SETUP_INSTANCE_ID(vars)
 
 #ifdef _NORMAL_MAP
-    float3 normalTS = (float3) _NormalMap.Sample(sampler_NormalMap, vars.UV * _NormalMap_ST.zw + _NormalMap_ST.xy).rgb;
-    float3 normalWS = unpackNormal(normalTS, vars.NormalWS, vars.TangentWS, _NormalIntensity);
+    float2 normalTS = (float2) _NormalMap.Sample(sampler_NormalMap, vars.UV * _NormalMap_ST.zw + _NormalMap_ST.xy).rg;
+    float3 normalWS = unpackNormal(normalTS, vars.NormalWS, vars.TangentWS);
 #else
     float3 normalWS = normalize(vars.NormalWS);
 #endif

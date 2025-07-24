@@ -72,7 +72,7 @@ half3 sampleReflection(float3 normalWS, float3 posWS, float roughness, float3 ca
     #endif
 }
 
-float3 unpackNormal(float3 normalTS, float3 normalWS, float3 tangentWS, float normalIntensity)
+float3 unpackNormal(float2 normalTS, float3 normalWS, float3 tangentWS)
 {
     normalWS = normalize(normalWS);
     tangentWS = normalize(tangentWS);
@@ -81,12 +81,14 @@ float3 unpackNormal(float3 normalTS, float3 normalWS, float3 tangentWS, float no
     float3 bitangentWS = cross(normalWS, tangentWS);
 
     normalTS = normalTS * 2.0 - 1.0;
-    normalTS *= float3(normalIntensity, normalIntensity, 1);
-    normalTS = normalize(normalTS);
+    float3 normal = float3(normalTS.xy, 0);
+    normal.z = sqrt(1 - normalTS.x * normalTS.x - normalTS.y * normalTS.y);
+    normal = normalize(normal);
+
     float3x3 TBN = float3x3(tangentWS.x, bitangentWS.x, normalWS.x,
                             tangentWS.y, bitangentWS.y, normalWS.y,
                             tangentWS.z, bitangentWS.z, normalWS.z);
-    normalWS = normalize(mul(TBN, normalTS));
+    normalWS = normalize(mul(TBN, normal));
     return normalWS;
 }
 

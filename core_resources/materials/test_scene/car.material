@@ -24,11 +24,5 @@
       "Type": "2D",
       "Path": "core_resources/textures/car/car_data"
     }
-  ],
-  "Floats": [
-    {
-      "Name": "_NormalIntensity",
-      "Value": 1
-    }
   ]
 }

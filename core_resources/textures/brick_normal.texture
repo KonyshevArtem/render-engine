@@ -4,7 +4,7 @@
   ],
   "Type": "2D",
   "Formats": {
-    "Windows": "BC7",
+    "Windows": "BC5",
     "Android": "ASTC_6X6",
     "Mac": "ASTC_6X6",
     "iOS": "ASTC_6X6"

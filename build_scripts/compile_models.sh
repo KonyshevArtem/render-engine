@@ -16,17 +16,7 @@ OUTPUT_PATH="../build_resources/$PLATFORM/core_resources/models"
 
 echo "Start compiling models to $OUTPUT_PATH"
 
-Compile()
-{
-    inputPath="$INPUT_PATH/$1"
-    $EXECUTABLE "-input" $inputPath "-output" $OUTPUT_PATH
-}
-
-Compile car.fbx
-Compile cube.fbx
-Compile cylinder.fbx
-Compile plane.fbx
-Compile sphere.fbx
+$EXECUTABLE "-input" $INPUT_PATH "-output" $OUTPUT_PATH
 
 echo "Finished compiling models to $OUTPUT_PATH";
 if [ -z "$1" ]; then

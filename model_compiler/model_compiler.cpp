@@ -9,6 +9,7 @@
 #include <iterator>
 #include <iostream>
 #include <filesystem>
+#include <execution>
 
 Vector3 ToVector3(const ofbx::Vec3& vec3)
 {
@@ -178,7 +179,16 @@ int main(int argc, char** argv)
     std::filesystem::path inputPath = Arguments::Get("-input");
     std::filesystem::path outputPath = Arguments::Get("-output");
 
-    ExtractMeshesFromFbx(inputPath, outputPath);
+    std::vector<std::filesystem::path> modelFilePaths;
+
+    for (const std::filesystem::directory_entry& entry: std::filesystem::recursive_directory_iterator(inputPath))
+    {
+        if (entry.is_regular_file() && entry.path().extension() == ".fbx")
+            modelFilePaths.push_back(entry.path());
+    }
+
+    std::for_each(std::execution::par, modelFilePaths.begin(), modelFilePaths.end(), [&inputPath, &outputPath](std::filesystem::path &path)
+                  { ExtractMeshesFromFbx(path, outputPath); });
 
     return 0;
 }

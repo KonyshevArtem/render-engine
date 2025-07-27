@@ -85,7 +85,7 @@ void Resources::UnloadAllResources()
 template<>
 std::shared_ptr<Mesh> Resources::Load(const std::filesystem::path& path)
 {
-    Profiler::Marker _("Resources::Load<FBXAsset>", path.string());
+    Profiler::Marker _("Resources::Load<Mesh>", path.string());
 
     if (s_LoadedResources.contains(path))
         return std::dynamic_pointer_cast<Mesh>(s_LoadedResources.at(path));
@@ -93,9 +93,6 @@ std::shared_ptr<Mesh> Resources::Load(const std::filesystem::path& path)
     MeshBinaryReader reader;
     if (!reader.ReadMesh(path))
         return nullptr;
-
-    std::vector<uint8_t> content;
-    FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / path, content);
 
     const MeshHeader& header = reader.GetHeader();
     std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(reader.GetVertexData(), reader.GetIndices(), header.HasUV, header.HasNormals, header.HasTangents,

@@ -3,6 +3,7 @@
 #include "file_system_implementations/file_system_windows.h"
 #include "file_system_implementations/file_system_apple.h"
 #include "file_system_implementations/file_system_android.h"
+#include "editor/profiler/profiler.h"
 
 namespace FileSystem
 {
@@ -21,16 +22,19 @@ namespace FileSystem
 
     bool FileExists(const std::filesystem::path& path)
     {
+        Profiler::Marker _("FileSystem::FileExists");
         return s_FileSystem->FileExists(path);
     }
 
     std::string ReadFile(const std::filesystem::path& path)
     {
+        Profiler::Marker _("FileSystem::ReadFile");
         return s_FileSystem->ReadFile(path);
     }
 
     bool ReadFileBytes(const std::filesystem::path& relativePath, std::vector<uint8_t>& bytes)
     {
+        Profiler::Marker _("FileSystem::ReadFileBytes");
         return s_FileSystem->ReadFileBytes(relativePath, bytes);
     }
 

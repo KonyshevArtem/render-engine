@@ -171,6 +171,8 @@ namespace OpenGLLocal
 
 void GraphicsBackendOpenGL::Init(void* data)
 {
+    GraphicsBackendBase::Init(data);
+
     OpenGLLocal::s_Window = data;
 
 #if RENDER_ENGINE_WINDOWS
@@ -347,12 +349,12 @@ GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrap
     return sampler;
 }
 
-void GraphicsBackendOpenGL::DeleteTexture(const GraphicsBackendTexture &texture)
+void GraphicsBackendOpenGL::DeleteTexture_Internal(const GraphicsBackendTexture &texture)
 {
     glDeleteTextures(1, reinterpret_cast<const GLuint *>(&texture.Texture));
 }
 
-void GraphicsBackendOpenGL::DeleteSampler(const GraphicsBackendSampler &sampler)
+void GraphicsBackendOpenGL::DeleteSampler_Internal(const GraphicsBackendSampler &sampler)
 {
     glDeleteSamplers(1, reinterpret_cast<const GLuint *>(&sampler.Sampler));
 }
@@ -509,7 +511,7 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::s
     return buffer;
 }
 
-void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
+void GraphicsBackendOpenGL::DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer)
 {
     const OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
     if (bufferData->Data)
@@ -617,7 +619,7 @@ GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBack
     return geometry;
 }
 
-void GraphicsBackendOpenGL::DeleteGeometry(const GraphicsBackendGeometry &geometry)
+void GraphicsBackendOpenGL::DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry)
 {
     glDeleteVertexArrays(1, reinterpret_cast<const GLuint *>(&geometry.VertexArrayObject));
     DeleteBuffer(geometry.VertexBuffer);
@@ -729,12 +731,12 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     return program;
 }
 
-void GraphicsBackendOpenGL::DeleteShader(GraphicsBackendShaderObject shader)
+void GraphicsBackendOpenGL::DeleteShader_Internal(GraphicsBackendShaderObject shader)
 {
     glDeleteShader(shader.ShaderObject);
 }
 
-void GraphicsBackendOpenGL::DeleteProgram(GraphicsBackendProgram program)
+void GraphicsBackendOpenGL::DeleteProgram_Internal(GraphicsBackendProgram program)
 {
     OpenGLLocal::ProgramData* programData = reinterpret_cast<OpenGLLocal::ProgramData*>(program.Program);
     glDeleteProgram(programData->Program);

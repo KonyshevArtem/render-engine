@@ -666,6 +666,8 @@ namespace DX12Local
 
 void GraphicsBackendDX12::Init(void* data)
 {
+    GraphicsBackendBase::Init(data);
+
     const bool createDebugLayer = Arguments::Contains("-debuglayer");
 
     if (createDebugLayer)
@@ -994,7 +996,7 @@ GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(TextureWrapMode wrapMo
     return sampler;
 }
 
-void GraphicsBackendDX12::DeleteTexture(const GraphicsBackendTexture& texture)
+void GraphicsBackendDX12::DeleteTexture_Internal(const GraphicsBackendTexture& texture)
 {
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
     DX12Local::s_AllocatedResourcesDescriptorPool.ReturnCPUHandle(resourceData->DescriptorIndex);
@@ -1002,7 +1004,7 @@ void GraphicsBackendDX12::DeleteTexture(const GraphicsBackendTexture& texture)
     delete resourceData;
 }
 
-void GraphicsBackendDX12::DeleteSampler(const GraphicsBackendSampler& sampler)
+void GraphicsBackendDX12::DeleteSampler_Internal(const GraphicsBackendSampler& sampler)
 {
     DX12Local::SamplerData* samplerData = reinterpret_cast<DX12Local::SamplerData*>(sampler.Sampler);
     DX12Local::s_AllocatedSamplersDescriptorPool.ReturnCPUHandle(samplerData->DescriptorIndex);
@@ -1257,7 +1259,7 @@ GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::str
     return buffer;
 }
 
-void GraphicsBackendDX12::DeleteBuffer(const GraphicsBackendBuffer& buffer)
+void GraphicsBackendDX12::DeleteBuffer_Internal(const GraphicsBackendBuffer& buffer)
 {
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
     resourceData->Resource->Release();
@@ -1391,7 +1393,7 @@ GraphicsBackendGeometry GraphicsBackendDX12::CreateGeometry(const GraphicsBacken
     return geometry;
 }
 
-void GraphicsBackendDX12::DeleteGeometry(const GraphicsBackendGeometry &geometry)
+void GraphicsBackendDX12::DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry)
 {
     DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.VertexArrayObject);
     delete geometryData->VertexBufferView;
@@ -1501,13 +1503,13 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     return program;
 }
 
-void GraphicsBackendDX12::DeleteShader(GraphicsBackendShaderObject shader)
+void GraphicsBackendDX12::DeleteShader_Internal(GraphicsBackendShaderObject shader)
 {
     ID3DBlob* blob = reinterpret_cast<ID3DBlob*>(shader.ShaderObject);
     blob->Release();
 }
 
-void GraphicsBackendDX12::DeleteProgram(GraphicsBackendProgram program)
+void GraphicsBackendDX12::DeleteProgram_Internal(GraphicsBackendProgram program)
 {
     ID3D12PipelineState* pso = reinterpret_cast<ID3D12PipelineState*>(program.Program);
     pso->Release();

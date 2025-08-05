@@ -5,7 +5,35 @@
 #include "enums/texture_internal_format.h"
 #include "enums/texture_type.h"
 #include "enums/framebuffer_attachment.h"
+#include "types/graphics_backend_texture.h"
+#include "types/graphics_backend_sampler.h"
+#include "types/graphics_backend_buffer.h"
+#include "types/graphics_backend_geometry.h"
+#include "types/graphics_backend_shader_object.h"
+#include "types/graphics_backend_program.h"
 #include "arguments.h"
+
+#include <functional>
+
+namespace BaseBackendLocal
+{
+    constexpr int k_DeleteResourceDelay = 2;
+
+    template<typename T>
+    void DeleteResources(std::vector<std::pair<T, int>>& deletedResources, const std::function<void(T&)>& deleteFunction)
+    {
+        for (int i = deletedResources.size() - 1; i >= 0; --i)
+        {
+            auto& pair = deletedResources[i];
+            if (--pair.second == 0)
+            {
+                deleteFunction(pair.first);
+                std::swap(deletedResources[i], deletedResources.back());
+                deletedResources.pop_back();
+            }
+        }
+    }
+}
 
 GraphicsBackendBase *GraphicsBackendBase::Create()
 {
@@ -34,14 +62,56 @@ GraphicsBackendBase *GraphicsBackendBase::Create()
     return nullptr;
 }
 
+void GraphicsBackendBase::Init(void* data)
+{
+    m_MainThreadId = std::this_thread::get_id();
+}
+
 void GraphicsBackendBase::InitNewFrame()
 {
     ++m_FrameCount;
+
+    BaseBackendLocal::DeleteResources<GraphicsBackendTexture>(m_DeletedTextures, [this](GraphicsBackendTexture& texture){ DeleteTexture_Internal(texture); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendSampler>(m_DeletedSamplers, [this](GraphicsBackendSampler& sampler){ DeleteSampler_Internal(sampler); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendBuffer>(m_DeletedBuffers, [this](GraphicsBackendBuffer& buffer){ DeleteBuffer_Internal(buffer); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendGeometry>(m_DeletedGeometries, [this](GraphicsBackendGeometry& geometry){ DeleteGeometry_Internal(geometry); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendShaderObject>(m_DeletedShaders, [this](GraphicsBackendShaderObject& shader){ DeleteShader_Internal(shader); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendProgram>(m_DeletedPrograms, [this](GraphicsBackendProgram& program){ DeleteProgram_Internal(program); });
 }
 
 uint64_t GraphicsBackendBase::GetFrameNumber() const
 {
     return m_FrameCount;
+}
+
+void GraphicsBackendBase::DeleteTexture(const GraphicsBackendTexture& texture)
+{
+    m_DeletedTextures.emplace_back(texture, BaseBackendLocal::k_DeleteResourceDelay);
+}
+
+void GraphicsBackendBase::DeleteSampler(const GraphicsBackendSampler& sampler)
+{
+    m_DeletedSamplers.emplace_back(sampler, BaseBackendLocal::k_DeleteResourceDelay);
+}
+
+void GraphicsBackendBase::DeleteBuffer(const GraphicsBackendBuffer& buffer)
+{
+    m_DeletedBuffers.emplace_back(buffer, BaseBackendLocal::k_DeleteResourceDelay);
+}
+
+void GraphicsBackendBase::DeleteGeometry(const GraphicsBackendGeometry &geometry)
+{
+    m_DeletedGeometries.emplace_back(geometry, BaseBackendLocal::k_DeleteResourceDelay);
+}
+
+void GraphicsBackendBase::DeleteShader(GraphicsBackendShaderObject shader)
+{
+    m_DeletedShaders.emplace_back(shader, BaseBackendLocal::k_DeleteResourceDelay);
+}
+
+void GraphicsBackendBase::DeleteProgram(GraphicsBackendProgram program)
+{
+    m_DeletedPrograms.emplace_back(program, BaseBackendLocal::k_DeleteResourceDelay);
 }
 
 bool GraphicsBackendBase::IsTexture3D(TextureType type)
@@ -204,4 +274,9 @@ bool GraphicsBackendBase::IsDepthAttachment(FramebufferAttachment attachment)
     return attachment == FramebufferAttachment::DEPTH_ATTACHMENT ||
             attachment == FramebufferAttachment::STENCIL_ATTACHMENT ||
             attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
+}
+
+bool GraphicsBackendBase::IsMainThread()
+{
+    return std::this_thread::get_id() == m_MainThreadId;
 }

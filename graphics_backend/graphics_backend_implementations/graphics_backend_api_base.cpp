@@ -69,14 +69,17 @@ void GraphicsBackendBase::Init(void* data)
 
 void GraphicsBackendBase::InitNewFrame()
 {
-    ++m_FrameCount;
-
     BaseBackendLocal::DeleteResources<GraphicsBackendTexture>(m_DeletedTextures, [this](GraphicsBackendTexture& texture){ DeleteTexture_Internal(texture); });
     BaseBackendLocal::DeleteResources<GraphicsBackendSampler>(m_DeletedSamplers, [this](GraphicsBackendSampler& sampler){ DeleteSampler_Internal(sampler); });
     BaseBackendLocal::DeleteResources<GraphicsBackendBuffer>(m_DeletedBuffers, [this](GraphicsBackendBuffer& buffer){ DeleteBuffer_Internal(buffer); });
     BaseBackendLocal::DeleteResources<GraphicsBackendGeometry>(m_DeletedGeometries, [this](GraphicsBackendGeometry& geometry){ DeleteGeometry_Internal(geometry); });
     BaseBackendLocal::DeleteResources<GraphicsBackendShaderObject>(m_DeletedShaders, [this](GraphicsBackendShaderObject& shader){ DeleteShader_Internal(shader); });
     BaseBackendLocal::DeleteResources<GraphicsBackendProgram>(m_DeletedPrograms, [this](GraphicsBackendProgram& program){ DeleteProgram_Internal(program); });
+}
+
+void GraphicsBackendBase::IncrementFrameNumber()
+{
+    ++m_FrameCount;
 }
 
 uint64_t GraphicsBackendBase::GetFrameNumber() const

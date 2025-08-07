@@ -54,6 +54,8 @@ public:
     virtual void InitNewFrame();
     virtual void FillImGuiInitData(void* data) = 0;
     virtual void FillImGuiFrameData(void* data) = 0;
+
+    void IncrementFrameNumber();
     uint64_t GetFrameNumber() const;
 
     virtual GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) = 0;

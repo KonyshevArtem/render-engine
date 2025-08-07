@@ -59,6 +59,8 @@ void EngineFramework::TickMainLoop(int width, int height)
 {
     if (window)
     {
+        GraphicsBackend::Current()->IncrementFrameNumber();
+
         Profiler::BeginNewFrame();
         Profiler::Marker _("EngineFramework::TickMainLoop");
 

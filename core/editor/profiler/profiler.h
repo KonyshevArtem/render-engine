@@ -5,6 +5,8 @@
 
 #include <chrono>
 #include <vector>
+#include <mutex>
+#include <map>
 
 class Profiler
 {
@@ -20,6 +22,11 @@ public:
         MAIN_THREAD,
         GPU_RENDER,
         GPU_COPY,
+        WORKER_1,
+        WORKER_2,
+        WORKER_3,
+        WORKER_4,
+        WORKER_5,
 
         MAX
     };
@@ -33,6 +40,7 @@ public:
         std::optional<std::string> AdditionalInfo = std::nullopt;
         int Depth = 0;
         uint64_t Frame = 0;
+        bool Finished = false;
 
         explicit MarkerInfo(MarkerType type, const char* name = nullptr, std::optional<std::string> additionalInfo = std::nullopt, int depth = 0, uint64_t frame = 0);
 
@@ -86,7 +94,8 @@ public:
 
     private:
         MarkerContext m_Context;
-        MarkerInfo m_Info;
+        uint32_t m_MarkerIndex;
+        uint64_t m_Frame;
     };
 
     struct GPUMarker
@@ -108,10 +117,12 @@ public:
 
     static void SetEnabled(bool enabled);
     static void BeginNewFrame();
-    static std::vector<FrameInfo>& GetContextFrames(MarkerContext context);
+    static std::map<uint64_t, FrameInfo>& GetContextFrames(MarkerContext context);
+    static std::mutex& GetContextMutex(MarkerContext context);
 
 private:
-    static void AddMarkerInfo(MarkerContext context, MarkerInfo& markerInfo, uint64_t frame = 0);
+    static int32_t AddMarkerInfo(MarkerContext context, MarkerInfo& markerInfo, uint64_t frame);
+    static void SetMarkerEndTime(MarkerContext context, uint64_t frame, int32_t frameIndex, std::chrono::system_clock::time_point endTime);
 };
 
 #endif //PROFILER_MARKERS_H

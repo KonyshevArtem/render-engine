@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+std::unordered_map<std::thread::id, uint32_t> Worker::s_WorkerIds;
 std::vector<std::shared_ptr<Worker>> Worker::s_Workers;
 std::queue<std::function<void()>> Worker::s_Tasks;
 std::mutex Worker::s_TasksMutex;
@@ -21,9 +22,13 @@ Worker::~Worker()
 
 void Worker::Init()
 {
-    uint32_t cores = std::thread::hardware_concurrency();
+    uint32_t cores = std::min(std::thread::hardware_concurrency() - 1, 6U);
     for (uint32_t i = 0; i < cores - 1; ++i)
-        s_Workers.push_back(std::make_shared<Worker>());
+    {
+        std::shared_ptr<Worker> worker = std::make_shared<Worker>();
+        s_Workers.push_back(worker);
+        s_WorkerIds[worker->m_Thread.get_id()] = i;
+    }
 }
 
 void Worker::Shutdown()
@@ -35,6 +40,19 @@ void Worker::Shutdown()
     }
 
     s_Workers.clear();
+}
+
+void Worker::CreateTask(const std::function<void()>& task)
+{
+    std::lock_guard<std::mutex> lock(s_TasksMutex);
+    s_Tasks.push(task);
+}
+
+uint32_t Worker::GetWorkerId()
+{
+    std::thread::id threadId = std::this_thread::get_id();
+    auto it = s_WorkerIds.find(threadId);
+    return it != s_WorkerIds.end() ? it->second : -1;
 }
 
 void Worker::Run()

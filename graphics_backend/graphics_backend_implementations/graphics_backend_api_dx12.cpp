@@ -407,18 +407,19 @@ namespace DX12Local
             D3D12_MESSAGE* message = (D3D12_MESSAGE*)malloc(messageLength);
             s_InfoQueue->GetMessage(i, message, &messageLength);
 
+            const char* description = message->pDescription ? message->pDescription : "";
             switch (message->Severity)
             {
                 case D3D12_MESSAGE_SEVERITY_CORRUPTION:
                 case D3D12_MESSAGE_SEVERITY_ERROR:
-                    Debug::LogErrorFormat("[GraphicsBackend] [{}] {}", GetMessageCategoryName(message->Category), message->pDescription);
+                    Debug::LogErrorFormat("[GraphicsBackend] [{}] {}", GetMessageCategoryName(message->Category), description);
                     break;
                 case D3D12_MESSAGE_SEVERITY_WARNING:
-                    Debug::LogWarningFormat("[GraphicsBackend] [{}] {}", GetMessageCategoryName(message->Category), message->pDescription);
+                    Debug::LogWarningFormat("[GraphicsBackend] [{}] {}", GetMessageCategoryName(message->Category), description);
                     break;
                 case D3D12_MESSAGE_SEVERITY_INFO:
                 case D3D12_MESSAGE_SEVERITY_MESSAGE:
-                    Debug::LogInfoFormat("[GraphicsBackend] [{}] {}", GetMessageCategoryName(message->Category), message->pDescription);
+                    Debug::LogInfoFormat("[GraphicsBackend] [{}] {}", GetMessageCategoryName(message->Category), description);
                     break;
             }
 

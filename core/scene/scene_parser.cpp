@@ -89,7 +89,10 @@ namespace SceneParser
         }
 
         if (!sceneInfo.Settings.Skybox.empty())
-            scene->Skybox = Resources::Load<Cubemap>(sceneInfo.Settings.Skybox);
+        {
+            Resources::LoadAsync<Cubemap>(sceneInfo.Settings.Skybox, [scene](std::shared_ptr<Cubemap> skybox)
+                                          { scene->SetSkybox(skybox); });
+        }
 
         return scene;
     }

@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <string>
+#include <shared_mutex>
 
 class GameObject;
 class Shader;
@@ -20,11 +21,11 @@ class Renderer : public Component
 public:
     virtual ~Renderer() = default;
 
-    virtual Bounds                            GetAABB() const     = 0;
-    virtual std::shared_ptr<DrawableGeometry> GetGeometry() const = 0;
+    virtual Bounds GetAABB() const = 0;
+    virtual std::shared_ptr<DrawableGeometry> GetGeometry() = 0;
 
-    Matrix4x4                 GetModelMatrix() const;
-    std::shared_ptr<Material> GetMaterial() const;
+    Matrix4x4 GetModelMatrix() const;
+    std::shared_ptr<Material> GetMaterial();
 
     void SetMaterial(std::shared_ptr<Material> material);
 
@@ -35,6 +36,7 @@ protected:
     Renderer(const std::shared_ptr<Material> &_material);
 
     std::shared_ptr<Material> m_Material;
+    std::shared_mutex m_MaterialMutex;
 };
 
 #endif //RENDER_ENGINE_RENDERER_H

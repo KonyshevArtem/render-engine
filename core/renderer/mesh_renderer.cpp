@@ -10,11 +10,13 @@ std::shared_ptr<MeshRenderer> MeshRenderer::Create(const nlohmann::json& compone
 
     std::string assetPath;
     componentData.at("Mesh").get_to(assetPath);
-    renderer->m_Mesh = Resources::Load<Mesh>(assetPath);
+    Resources::LoadAsync<Mesh>(assetPath, [renderer](std::shared_ptr<Mesh> mesh)
+                               { renderer->SetMesh(mesh); });
 
     std::string materialPath;
     componentData.at("Material").get_to(materialPath);
-    renderer->m_Material = Resources::Load<Material>(materialPath);
+    Resources::LoadAsync<Material>(materialPath, [renderer](std::shared_ptr<Material> material)
+                                   { renderer->SetMaterial(material); });
 
     if (componentData.contains("CastShadows"))
         componentData.at("CastShadows").get_to(renderer->CastShadows);
@@ -34,7 +36,14 @@ Bounds MeshRenderer::GetAABB() const
     return m_Mesh ? GetModelMatrix() * m_Mesh->GetBounds() : Bounds();
 }
 
-std::shared_ptr<DrawableGeometry> MeshRenderer::GetGeometry() const
+std::shared_ptr<DrawableGeometry> MeshRenderer::GetGeometry()
 {
+    std::shared_lock lock(m_MeshMutex);
     return m_Mesh;
+}
+
+void MeshRenderer::SetMesh(const std::shared_ptr<Mesh> &mesh)
+{
+    std::unique_lock lock(m_MeshMutex);
+    m_Mesh = mesh;
 }

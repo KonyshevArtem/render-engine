@@ -133,7 +133,22 @@ namespace MaterialParser
             json.at("RenderQueue").get_to(info.RenderQueue);
     }
 
-    std::shared_ptr<Material> Parse(const std::filesystem::path& path)
+    template<typename T>
+    void LoadTexture(std::shared_ptr<Material> material, const TextureInfo& textureInfo, bool async)
+    {
+        if (async)
+        {
+            material->SetTexture(textureInfo.Name, Texture2D::White());
+
+            const std::string& name = textureInfo.Name;
+            Resources::LoadAsync<T>(textureInfo.Path, [material, name](std::shared_ptr<T> texture)
+                                            { material->SetTexture(name, texture); });
+        }
+        else
+            material->SetTexture(textureInfo.Name, Resources::Load<T>(textureInfo.Path));
+    }
+
+    std::shared_ptr<Material> Parse(const std::filesystem::path& path, bool asyncTextureLoads)
     {
         std::string materialText = FileSystem::ReadFile(FileSystem::GetResourcesPath() / path);
         nlohmann::json materialJson = nlohmann::json::parse(materialText);
@@ -149,25 +164,22 @@ namespace MaterialParser
             bool isWhite = textureInfo.Path == "White";
             bool isNormal = textureInfo.Path == "Normal";
 
-            std::shared_ptr<Texture> texture;
             if (textureInfo.Type == "2D")
             {
                 if (isWhite)
-                    texture = Texture2D::White();
+                    material->SetTexture(textureInfo.Name, Texture2D::White());
                 else if (isNormal)
-                    texture = Texture2D::Normal();
+                    material->SetTexture(textureInfo.Name, Texture2D::Normal());
                 else
-                    texture = Resources::Load<Texture2D>(textureInfo.Path);
+                    LoadTexture<Texture2D>(material, textureInfo, asyncTextureLoads);
             }
             else if (textureInfo.Type == "Cube")
             {
                 if (isWhite)
-                    texture = Cubemap::White();
+                    material->SetTexture(textureInfo.Name, Cubemap::White());
                 else
-                    texture = Resources::Load<Cubemap>(textureInfo.Path);
+                    LoadTexture<Cubemap>(material, textureInfo, asyncTextureLoads);
             }
-
-            material->SetTexture(textureInfo.Name, texture);
         }
 
         for (const FloatInfo& floatInfo : materialInfo.Floats)

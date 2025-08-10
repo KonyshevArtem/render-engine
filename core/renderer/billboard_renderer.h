@@ -15,10 +15,11 @@ public:
     BillboardRenderer(const std::shared_ptr<Texture2D>& texture, float size, const std::string& name);
     ~BillboardRenderer() override = default;
 
-    Bounds                            GetAABB() const override;
-    std::shared_ptr<DrawableGeometry> GetGeometry() const override;
-    void                              SetRenderQueue(int _renderQueue);
-    void                              SetSize(float _size);
+    Bounds GetAABB() const override;
+    std::shared_ptr<DrawableGeometry> GetGeometry() override;
+    void SetRenderQueue(int _renderQueue);
+    void SetSize(float _size);
+    void SetTexture(const std::shared_ptr<Texture2D>& texture);
 
     BillboardRenderer(const BillboardRenderer &) = delete;
     BillboardRenderer(BillboardRenderer &&)      = delete;

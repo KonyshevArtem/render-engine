@@ -11,9 +11,13 @@ std::shared_ptr<BillboardRenderer> BillboardRenderer::Create(const nlohmann::jso
     float size;
     componentData.at("Texture").get_to(texturePath);
     componentData.at("Size").get_to(size);
-    std::shared_ptr<Texture2D> texture = Resources::Load<Texture2D>(texturePath);
 
-    return std::make_shared<BillboardRenderer>(texture, size, "BillboardRenderer_" + texturePath);
+    std::shared_ptr<BillboardRenderer> renderer = std::make_shared<BillboardRenderer>(nullptr, size, "BillboardRenderer_" + texturePath);
+
+    Resources::LoadAsync<Texture2D>(texturePath, [renderer](std::shared_ptr<Texture2D> texture)
+                                    {renderer->SetTexture(texture);});
+
+    return renderer;
 }
 
 std::shared_ptr<Mesh> s_BillboardMesh = nullptr;
@@ -31,10 +35,8 @@ BillboardRenderer::BillboardRenderer(const std::shared_ptr<Texture2D>& texture, 
     }
 
     m_Material = std::make_shared<Material>(shader, name);
-    m_Material->SetTexture("_Texture", texture);
 
-    m_Aspect = static_cast<float>(texture->GetWidth()) / texture->GetHeight();
-
+    SetTexture(texture);
     SetSize(size);
 }
 
@@ -43,7 +45,7 @@ Bounds BillboardRenderer::GetAABB() const
     return GetModelMatrix() * m_Bounds;
 }
 
-std::shared_ptr<DrawableGeometry> BillboardRenderer::GetGeometry() const
+std::shared_ptr<DrawableGeometry> BillboardRenderer::GetGeometry()
 {
     return s_BillboardMesh;
 }
@@ -56,6 +58,15 @@ void BillboardRenderer::SetSize(float _size)
 
     Vector4 size {_size, _size / m_Aspect, 0, 0};
     m_Material->SetVector("_Size", size);
+}
+
+void BillboardRenderer::SetTexture(const std::shared_ptr<Texture2D>& texture)
+{
+    std::shared_lock lock(m_MaterialMutex);
+
+    const std::shared_ptr<Texture2D>& t = texture ? texture : Texture2D::White();
+    m_Material->SetTexture("_Texture", t);
+    m_Aspect = static_cast<float>(t->GetWidth()) / t->GetHeight();
 }
 
 void BillboardRenderer::SetRenderQueue(int _renderQueue)

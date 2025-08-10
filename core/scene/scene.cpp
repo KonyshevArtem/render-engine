@@ -71,6 +71,18 @@ void Scene::Unload()
     Current = nullptr;
 }
 
+void Scene::SetSkybox(const std::shared_ptr<Cubemap>& skybox)
+{
+    std::unique_lock lock(m_SkyboxMutex);
+    m_Skybox = skybox;
+}
+
+std::shared_ptr<Cubemap> Scene::GetSkybox()
+{
+    std::shared_lock lock(m_SkyboxMutex);
+    return m_Skybox;
+}
+
 std::shared_ptr<GameObject> Scene::FindGameObject(const std::function<bool(const GameObject *)>& predicate)
 {
     return SceneLocal::FindGameObject(m_GameObjects, predicate);

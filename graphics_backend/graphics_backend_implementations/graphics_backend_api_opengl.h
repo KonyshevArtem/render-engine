@@ -5,6 +5,7 @@
 
 #include "graphics_backend_api_base.h"
 #include <set>
+#include <shared_mutex>
 
 class GraphicsBackendOpenGL : public GraphicsBackendBase
 {
@@ -91,6 +92,16 @@ protected:
 
 private:
     std::set<std::string> m_Extensions;
+    std::vector<std::thread::id> m_PendingContextCreation;
+    std::shared_mutex m_ThreadContextsMutex;
+
+    void CreateVAO(const GraphicsBackendGeometry& geometry, const GraphicsBackendVertexAttributeDescriptor* vertexAttributes, uint32_t vertexAttributesCount);
+    void BindGeometry(const GraphicsBackendGeometry& geometry);
+
+    void InitContext();
+    void CreatePendingContexts();
+
+    static void LogContextError(const std::string& tag);
 };
 
 #endif // RENDER_BACKEND_OPENGL

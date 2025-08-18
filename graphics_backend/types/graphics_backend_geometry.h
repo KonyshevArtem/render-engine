@@ -7,7 +7,7 @@
 class GraphicsBackendGeometry
 {
 private:
-    uint64_t VertexArrayObject;
+    uint64_t Geometry;
     GraphicsBackendBuffer VertexBuffer;
     GraphicsBackendBuffer IndexBuffer;
 

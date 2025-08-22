@@ -41,7 +41,7 @@ void SortMarkers(Profiler::MarkerContext context)
 
 Profiler::MarkerContext GetCPUContext()
 {
-    uint32_t workerId = Worker::GetWorkerId();
+    int32_t workerId = Worker::GetWorkerId();
     return workerId == -1 ? Profiler::MarkerContext::MAIN_THREAD : static_cast<Profiler::MarkerContext>(static_cast<uint32_t>(Profiler::MarkerContext::WORKER_1) + workerId);
 }
 

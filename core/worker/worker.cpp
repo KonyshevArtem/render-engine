@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-std::unordered_map<std::thread::id, uint32_t> Worker::s_WorkerIds;
+std::unordered_map<std::thread::id, int32_t> Worker::s_WorkerIds;
 std::vector<std::shared_ptr<Worker>> Worker::s_Workers;
 std::queue<std::function<void()>> Worker::s_Tasks;
 std::mutex Worker::s_TasksMutex;
@@ -23,7 +23,7 @@ Worker::~Worker()
 void Worker::Init()
 {
     uint32_t cores = std::min(std::thread::hardware_concurrency() - 1, 6U);
-    for (uint32_t i = 0; i < cores - 1; ++i)
+    for (int32_t i = 0; i < cores - 1; ++i)
     {
         std::shared_ptr<Worker> worker = std::make_shared<Worker>();
         s_Workers.push_back(worker);
@@ -48,7 +48,7 @@ void Worker::CreateTask(const std::function<void()>& task)
     s_Tasks.push(task);
 }
 
-uint32_t Worker::GetWorkerId()
+int32_t Worker::GetWorkerId()
 {
     std::thread::id threadId = std::this_thread::get_id();
     auto it = s_WorkerIds.find(threadId);

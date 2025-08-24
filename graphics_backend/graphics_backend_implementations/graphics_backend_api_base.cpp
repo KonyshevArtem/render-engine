@@ -42,7 +42,9 @@ GraphicsBackendBase *GraphicsBackendBase::Create()
     const bool metal = Arguments::Contains("-metal");
 
 #ifdef RENDER_BACKEND_OPENGL
+#if RENDER_ENGINE_WINDOWS
     if (openGL && !dx12)
+#endif
     {
         return new GraphicsBackendOpenGL();
     }

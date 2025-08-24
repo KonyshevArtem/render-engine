@@ -1,13 +1,13 @@
 #include <jni.h>
+#include <android/native_window_jni.h>
 #include <android/asset_manager_jni.h>
 
 #include "engine_framework.h"
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_artemkonyshev_engineframework_EngineFramework_Initialize(JNIEnv* env, jobject /* this */, jobject assetManager)
+Java_com_artemkonyshev_engineframework_EngineFramework_Initialize(JNIEnv* env, jobject /* this */, jobject surface, jobject assetManager)
 {
-    char* argv = "-opengl";
-    EngineFramework::Initialize(AAssetManager_fromJava(env, assetManager), nullptr, &argv, 1);
+    EngineFramework::Initialize(AAssetManager_fromJava(env, assetManager), ANativeWindow_fromSurface(env, surface), nullptr, 0);
 }
 
 extern "C" JNIEXPORT void JNICALL

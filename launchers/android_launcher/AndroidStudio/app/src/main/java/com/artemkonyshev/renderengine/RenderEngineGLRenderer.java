@@ -13,18 +13,18 @@ public class RenderEngineGLRenderer implements GLSurfaceView.Renderer
     private int m_Width;
     private int m_Height;
     private EngineFramework m_EngineFramework;
-    private AssetManager m_AssetManager;
+    private GLSurfaceView m_SurfaceView;
 
-    public RenderEngineGLRenderer(AssetManager assetManager, EngineFramework engineFramework)
+    public RenderEngineGLRenderer(GLSurfaceView surfaceView, EngineFramework engineFramework)
     {
-        m_AssetManager = assetManager;
+        m_SurfaceView = surfaceView;
         m_EngineFramework = engineFramework;
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config)
     {
-        m_EngineFramework.Initialize(m_AssetManager);
+        m_EngineFramework.Initialize(m_SurfaceView.getHolder().getSurface(), m_SurfaceView.getContext().getAssets());
     }
 
     @Override

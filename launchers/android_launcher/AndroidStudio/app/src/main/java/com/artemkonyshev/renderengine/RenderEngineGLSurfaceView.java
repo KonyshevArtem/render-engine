@@ -15,7 +15,7 @@ public class RenderEngineGLSurfaceView extends GLSurfaceView
 
         setEGLContextClientVersion(3);
 
-        m_Renderer = new RenderEngineGLRenderer(getContext().getAssets(), engineFramework);
+        m_Renderer = new RenderEngineGLRenderer(this, engineFramework);
         setRenderer(m_Renderer);
     }
 }

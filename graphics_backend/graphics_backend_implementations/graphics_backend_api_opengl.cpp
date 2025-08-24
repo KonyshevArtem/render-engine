@@ -33,14 +33,18 @@
 #include <windows.h>
 #endif
 
+#if __has_include("android/native_window_jni.h")
+#include <android/native_window_jni.h>
+#endif
+
 #if RENDER_ENGINE_WINDOWS
 typedef HWND Window;
 typedef HDC DeviceContext;
 typedef HGLRC GLContext;
 #elif RENDER_ENGINE_ANDROID
-typedef void* Window;
-typedef void* DeviceContext;
-typedef void* GLContext;
+typedef ANativeWindow* Window;
+typedef EGLDisplay DeviceContext;
+typedef EGLContext GLContext;
 #endif
 
 namespace OpenGLLocal
@@ -210,6 +214,10 @@ void GraphicsBackendOpenGL::Init(void* data)
 
     HGLRC tempContext = wglCreateContext(OpenGLLocal::s_DeviceContext);
     wglMakeCurrent(OpenGLLocal::s_DeviceContext, tempContext);
+#elif RENDER_ENGINE_ANDROID
+    OpenGLLocal::s_DeviceContext = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (OpenGLLocal::s_DeviceContext == EGL_NO_DISPLAY)
+        LogContextError("eglGetDisplay");
 #endif
 
     OpenGLHelpers::InitBindings();
@@ -227,6 +235,10 @@ void GraphicsBackendOpenGL::Init(void* data)
     wglMakeCurrent(nullptr, nullptr);
     wglDeleteContext(tempContext);
     wglMakeCurrent(OpenGLLocal::s_DeviceContext, OpenGLLocal::s_MainThreadContext);
+#elif RENDER_ENGINE_ANDROID
+    OpenGLLocal::s_MainThreadContext = eglGetCurrentContext();
+    if (OpenGLLocal::s_MainThreadContext == EGL_NO_CONTEXT)
+        LogContextError("eglGetCurrentContext");
 #endif
 
     int extensionsCount;
@@ -1127,8 +1139,14 @@ void GraphicsBackendOpenGL::InitContext()
     {
         std::shared_lock readLock(m_ThreadContextsMutex);
 
-        if (!wglMakeCurrent(OpenGLLocal::s_DeviceContext, OpenGLLocal::s_ThreadContexts[threadId]))
+        GLContext context = OpenGLLocal::s_ThreadContexts[threadId];
+#if RENDER_ENGINE_WINDOWS
+        if (!wglMakeCurrent(OpenGLLocal::s_DeviceContext, context))
             LogContextError("wglMakeCurrent");
+#elif RENDER_ENGINE_ANDROID
+        if (!eglMakeCurrent(OpenGLLocal::s_DeviceContext, EGL_NO_SURFACE, EGL_NO_SURFACE, context))
+            LogContextError("eglMakeCurrent");
+#endif
     }
 }
 
@@ -1138,16 +1156,22 @@ void GraphicsBackendOpenGL::CreatePendingContexts()
 
     for (std::thread::id threadId : m_PendingContextCreation)
     {
+        GLContext workerContext;
 #if RENDER_ENGINE_WINDOWS
-        HGLRC workerContext = wglCreateContext(OpenGLLocal::s_DeviceContext);
+        workerContext = wglCreateContext(OpenGLLocal::s_DeviceContext);
         if (!workerContext)
             LogContextError("wglCreateContext");
 
         if (!wglShareLists(OpenGLLocal::s_MainThreadContext, workerContext))
             LogContextError("wglShareLists");
+#elif RENDER_ENGINE_ANDROID
+        EGLint attributes[5] = {EGL_CONTEXT_MAJOR_VERSION, OPENGL_MAJOR_VERSION, EGL_CONTEXT_MINOR_VERSION, OPENGL_MINOR_VERSION, EGL_NONE};
+        workerContext = eglCreateContext(OpenGLLocal::s_DeviceContext, nullptr, OpenGLLocal::s_MainThreadContext, attributes);
+        if (workerContext == EGL_NO_CONTEXT)
+            LogContextError("eglCreateContext");
+#endif
 
         OpenGLLocal::s_ThreadContexts[threadId] = workerContext;
-#endif
     }
 
     m_PendingContextCreation.clear();
@@ -1170,6 +1194,36 @@ void GraphicsBackendOpenGL::LogContextError(const std::string& tag)
 
     if (success)
         Debug::LogErrorFormat("[{}] {}", tag, static_cast<LPCTSTR>(lpMsgBuf));
+#elif RENDER_ENGINE_ANDROID
+    auto GetErrorString = [](EGLint error)
+    {
+        switch (error)
+        {
+            case EGL_SUCCESS:
+                return "No error occurred";
+            case EGL_NOT_INITIALIZED:
+                return "EGL not initialized or failed to initialize";
+            case EGL_BAD_ACCESS:
+                return "Resource is already in use";
+            case EGL_BAD_ALLOC:
+                return "Memory allocation failed";
+            case EGL_BAD_ATTRIBUTE:
+                return "Invalid attribute or value";
+            case EGL_BAD_CONTEXT:
+                return "Invalid rendering context";
+            case EGL_BAD_CONFIG:
+                return "Invalid framebuffer configuration";
+            case EGL_BAD_DISPLAY:
+                return "Invalid display";
+            case EGL_BAD_SURFACE:
+                return "Invalid surface";
+            case EGL_CONTEXT_LOST:
+                return "Context lost due to power management";
+        }
+    };
+
+    EGLint error = eglGetError();
+    Debug::LogErrorFormat("[{}] {}", tag, GetErrorString(error));
 #endif
 }
 

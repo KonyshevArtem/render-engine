@@ -82,6 +82,7 @@ namespace DX12Local
         ID3D12CommandQueue* Queue;
         ID3D12Fence* Fence;
         uint64_t FenceValue;
+        HANDLE FenceEvent;
 
         CommandList(){}
 
@@ -96,6 +97,8 @@ namespace DX12Local
             SetObjectName(Allocator, name + "_Allocator");
             SetObjectName(List, name);
             SetObjectName(Fence, name + "_Fence");
+
+            FenceEvent = CreateEvent(nullptr, false, false, nullptr);
         }
 
         void Execute()
@@ -128,6 +131,12 @@ namespace DX12Local
         bool IsFinished()
         {
             return Fence->GetCompletedValue() >= FenceValue;
+        }
+
+        void Wait()
+        {
+            Fence->SetEventOnCompletion(FenceValue, FenceEvent);
+            WaitForSingleObject(FenceEvent, INFINITE);
         }
 
         ID3D12GraphicsCommandList6* operator->() const
@@ -577,7 +586,7 @@ namespace DX12Local
             ThrowIfFailed(frameData.CopyQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.CopyQueueFenceEvent));
 
             HANDLE events[2] = {frameData.RenderQueueFenceEvent, frameData.CopyQueueFenceEvent};
-            WaitForMultipleObjects(1, events, true, INFINITE);
+            WaitForMultipleObjects(2, events, true, INFINITE);
         }
     }
 
@@ -658,6 +667,7 @@ namespace DX12Local
         {
             commandList.Execute();
             commandList.Close();
+            commandList.Wait();
         }
     }
 

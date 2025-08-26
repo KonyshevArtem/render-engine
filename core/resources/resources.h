@@ -22,23 +22,24 @@ public:
     static std::shared_ptr<T> Load(const std::filesystem::path& path, bool asyncSubresourceLoads = false);
 
     template<typename T>
-    static void LoadAsync(const std::filesystem::path& path, const std::function<void(std::shared_ptr<T>)>& callback)
+    static std::shared_ptr<Worker::Task> LoadAsync(const std::filesystem::path& path, const std::function<void(std::shared_ptr<T>)>& callback)
     {
         static bool syncLoading = Arguments::Contains("-resources_sync_load");
         if (syncLoading)
         {
             std::shared_ptr<T> resource = Load<T>(path);
             callback(resource);
-            return;
+            return Worker::Noop();
         }
 
         std::shared_ptr<T> cachedResource;
         if (TryGetFromCache(path, cachedResource))
         {
             callback(cachedResource);
-            return;
+            return Worker::Noop();
         }
 
+        std::shared_ptr<Worker::Task> task;
         {
             auto AddCallback = [&callback](AsyncLoadRequest& request)
             {
@@ -50,15 +51,19 @@ public:
             if (it != s_AsyncLoadRequests.end())
             {
                 AddCallback(it->second);
-                return;
+                task = it->second.Task;
             }
+            else
+            {
+                task = Worker::CreateTask([path](){ LoadTask<T>(path); });
 
-            AsyncLoadRequest request;
-            AddCallback(request);
-            s_AsyncLoadRequests[path] = std::move(request);
+                AsyncLoadRequest request {task};
+                AddCallback(request);
+                s_AsyncLoadRequests[path] = std::move(request);
+            }
         }
 
-        Worker::CreateTask([path](){ LoadTask<T>(path); });
+        return task;
     }
 
     static void UnloadAllResources();
@@ -66,6 +71,7 @@ public:
 private:
     struct AsyncLoadRequest
     {
+        std::shared_ptr<Worker::Task> Task;
         std::vector<std::function<void(std::shared_ptr<Resource>)>> Callbacks;
     };
 

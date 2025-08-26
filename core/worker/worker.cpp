@@ -4,7 +4,7 @@
 
 std::unordered_map<std::thread::id, int32_t> Worker::s_WorkerIds;
 std::vector<std::shared_ptr<Worker>> Worker::s_Workers;
-std::queue<std::function<void()>> Worker::s_Tasks;
+std::queue<std::shared_ptr<Worker::Task>> Worker::s_Tasks;
 std::mutex Worker::s_TasksMutex;
 
 Worker::Worker() :
@@ -42,10 +42,28 @@ void Worker::Shutdown()
     s_Workers.clear();
 }
 
-void Worker::CreateTask(const std::function<void()>& task)
+std::shared_ptr<Worker::Task> Worker::CreateTask(const std::function<void()>& taskFunc)
 {
+    std::shared_ptr<Worker::Task> task = std::make_shared<Worker::Task>();
+    task->Func = taskFunc;
+    task->IsFinished = false;
+
     std::lock_guard<std::mutex> lock(s_TasksMutex);
     s_Tasks.push(task);
+    return task;
+}
+
+std::shared_ptr<Worker::Task> Worker::Noop()
+{
+    std::shared_ptr<Worker::Task> task = std::make_shared<Worker::Task>();
+    task->IsFinished = true;
+    return task;
+}
+
+void Worker::WaitForTask(const std::shared_ptr<Task>& task)
+{
+    while (!task->IsFinished)
+        continue;
 }
 
 int32_t Worker::GetWorkerId()
@@ -59,7 +77,7 @@ void Worker::Run()
 {
     while (m_Running)
     {
-        std::function<void()> task;
+        std::shared_ptr<Worker::Task> task;
         {
             std::lock_guard<std::mutex> lock(s_TasksMutex);
             if (!s_Tasks.empty())
@@ -70,7 +88,10 @@ void Worker::Run()
         }
 
         if (task)
-            task();
+        {
+            task->Func();
+            task->IsFinished = true;
+        }
         else
             std::this_thread::sleep_for(std::chrono::microseconds(1));
     }

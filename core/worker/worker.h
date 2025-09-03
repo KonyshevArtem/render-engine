@@ -12,10 +12,22 @@
 class Worker
 {
 public:
-    struct Task
+    class Task : public std::enable_shared_from_this<Task>
     {
-        std::function<void()> Func;
+    public:
         std::atomic<bool> IsFinished;
+
+        void Schedule();
+        void Wait();
+        void AddDependency(const std::shared_ptr<Task>& task);
+
+    private:
+        std::function<void()> Func;
+        std::vector<std::shared_ptr<Task>> Dependencies;
+
+        bool DependenciesFinished();
+
+        friend class Worker;
     };
 
     Worker();
@@ -26,14 +38,13 @@ public:
 
     static std::shared_ptr<Task> CreateTask(const std::function<void()>& taskFunc);
     static std::shared_ptr<Task> Noop();
-    static void WaitForTask(const std::shared_ptr<Task>& task);
 
     static int32_t GetWorkerId();
 
 private:
     static std::unordered_map<std::thread::id, int32_t> s_WorkerIds;
     static std::vector<std::shared_ptr<Worker>> s_Workers;
-    static std::queue<std::shared_ptr<Task>> s_Tasks;
+    static std::vector<std::shared_ptr<Task>> s_Tasks;
     static std::mutex s_TasksMutex;
 
     std::thread m_Thread;

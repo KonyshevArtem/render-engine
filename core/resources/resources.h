@@ -56,6 +56,7 @@ public:
             else
             {
                 task = Worker::CreateTask([path](){ LoadTask<T>(path); });
+                task->Schedule();
 
                 AsyncLoadRequest request {task};
                 AddCallback(request);

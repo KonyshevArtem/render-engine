@@ -4,7 +4,7 @@
 
 std::unordered_map<std::thread::id, int32_t> Worker::s_WorkerIds;
 std::vector<std::shared_ptr<Worker>> Worker::s_Workers;
-std::queue<std::shared_ptr<Worker::Task>> Worker::s_Tasks;
+std::vector<std::shared_ptr<Worker::Task>> Worker::s_Tasks;
 std::mutex Worker::s_TasksMutex;
 
 Worker::Worker() :
@@ -35,8 +35,7 @@ void Worker::Shutdown()
 {
     {
         std::lock_guard<std::mutex> lock(s_TasksMutex);
-        while (!s_Tasks.empty())
-            s_Tasks.pop();
+        s_Tasks.clear();
     }
 
     s_Workers.clear();
@@ -47,9 +46,6 @@ std::shared_ptr<Worker::Task> Worker::CreateTask(const std::function<void()>& ta
     std::shared_ptr<Worker::Task> task = std::make_shared<Worker::Task>();
     task->Func = taskFunc;
     task->IsFinished = false;
-
-    std::lock_guard<std::mutex> lock(s_TasksMutex);
-    s_Tasks.push(task);
     return task;
 }
 
@@ -58,12 +54,6 @@ std::shared_ptr<Worker::Task> Worker::Noop()
     std::shared_ptr<Worker::Task> task = std::make_shared<Worker::Task>();
     task->IsFinished = true;
     return task;
-}
-
-void Worker::WaitForTask(const std::shared_ptr<Task>& task)
-{
-    while (!task->IsFinished)
-        continue;
 }
 
 int32_t Worker::GetWorkerId()
@@ -82,8 +72,21 @@ void Worker::Run()
             std::lock_guard<std::mutex> lock(s_TasksMutex);
             if (!s_Tasks.empty())
             {
-                task = s_Tasks.front();
-                s_Tasks.pop();
+                int taskIndex = -1;
+                for (int i = 0; i < s_Tasks.size(); ++i)
+                {
+                    if (s_Tasks[i]->DependenciesFinished())
+                    {
+                        taskIndex = i;
+                        break;
+                    }
+                }
+
+                if (taskIndex >= 0)
+                {
+                    task = s_Tasks[taskIndex];
+                    s_Tasks.erase(s_Tasks.begin() + taskIndex);
+                }
             }
         }
 
@@ -95,4 +98,33 @@ void Worker::Run()
         else
             std::this_thread::sleep_for(std::chrono::microseconds(1));
     }
+}
+
+void Worker::Task::Schedule()
+{
+    std::lock_guard<std::mutex> lock(s_TasksMutex);
+    s_Tasks.push_back(shared_from_this());
+}
+
+void Worker::Task::Wait()
+{
+    while (!IsFinished)
+        continue;
+}
+
+void Worker::Task::AddDependency(const std::shared_ptr<Task> &task)
+{
+    Dependencies.push_back(task);
+}
+
+bool Worker::Task::DependenciesFinished()
+{
+    for (const std::shared_ptr<Task>& dependency : Dependencies)
+    {
+        if (!dependency->IsFinished)
+            return false;
+    }
+
+    Dependencies.clear();
+    return true;
 }

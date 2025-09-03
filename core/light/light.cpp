@@ -20,6 +20,8 @@ std::shared_ptr<Light> Light::Create(const nlohmann::json& componentData)
     return light;
 }
 
+DEFINE_COMPONENT_DEFAULT_ASYNC_CONSTRUCTOR(Light)
+
 std::vector<Light*> Light::s_Lights;
 
 Light::Light()

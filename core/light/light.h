@@ -15,7 +15,7 @@ enum class LightType
 class Light : public Component
 {
 public:
-    static std::shared_ptr<Light> Create(const nlohmann::json& componentData);
+    DECLARE_COMPONENT_CONSTRUCTORS(Light)
 
     Light();
     ~Light();

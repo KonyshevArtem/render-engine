@@ -4,8 +4,6 @@
 
 #include <memory>
 
-REGISTER_COMPONENT(Camera)
-
 std::shared_ptr<Camera> Camera::Create(const nlohmann::json& componentData)
 {
     float fov = 80;
@@ -26,6 +24,8 @@ std::shared_ptr<Camera> Camera::Create(const nlohmann::json& componentData)
     Camera::Current = camera;
     return camera;
 }
+
+DEFINE_COMPONENT_DEFAULT_ASYNC_CONSTRUCTOR(Camera)
 
 std::shared_ptr<Camera> Camera::Current = nullptr;
 

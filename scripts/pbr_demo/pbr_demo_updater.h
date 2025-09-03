@@ -6,7 +6,7 @@
 class PBRDemoUpdater : public Component
 {
 public:
-    static std::shared_ptr<PBRDemoUpdater> Create(const nlohmann::json& componentData);
+    DECLARE_COMPONENT_CONSTRUCTORS(PBRDemoUpdater)
 
     PBRDemoUpdater() = default;
     ~PBRDemoUpdater() = default;

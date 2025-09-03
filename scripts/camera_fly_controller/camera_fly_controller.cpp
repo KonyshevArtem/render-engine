@@ -16,6 +16,8 @@ std::shared_ptr<CameraFlyController> CameraFlyController::Create(const nlohmann:
     return std::make_shared<CameraFlyController>();
 }
 
+DEFINE_COMPONENT_DEFAULT_ASYNC_CONSTRUCTOR(CameraFlyController)
+
 void CameraFlyController::Update()
 {
     float cameraRotationDelta = CAMERA_ROT_SPEED * Time::GetDeltaTime();

@@ -13,6 +13,8 @@ std::shared_ptr<TestSceneUpdater> TestSceneUpdater::Create(const nlohmann::json&
     return std::make_shared<TestSceneUpdater>();
 }
 
+DEFINE_COMPONENT_DEFAULT_ASYNC_CONSTRUCTOR(TestSceneUpdater)
+
 namespace TestSceneUpdaterLocal
 {
     constexpr float k_LoopDuration = 3;

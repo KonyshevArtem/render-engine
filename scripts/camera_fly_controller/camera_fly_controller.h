@@ -8,7 +8,7 @@
 class CameraFlyController : public Component
 {
 public:
-    static std::shared_ptr<CameraFlyController> Create(const nlohmann::json& json);
+    DECLARE_COMPONENT_CONSTRUCTORS(CameraFlyController)
 
     void Update() override;
 

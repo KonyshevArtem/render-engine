@@ -10,7 +10,7 @@ class Mesh;
 class BillboardRenderer: public Renderer
 {
 public:
-    static std::shared_ptr<BillboardRenderer> Create(const nlohmann::json& componentData);
+    DECLARE_COMPONENT_CONSTRUCTORS(BillboardRenderer)
 
     BillboardRenderer(const std::shared_ptr<Texture2D>& texture, float size, const std::string& name);
     ~BillboardRenderer() override = default;

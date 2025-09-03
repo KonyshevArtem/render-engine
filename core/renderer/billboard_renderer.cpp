@@ -13,11 +13,27 @@ std::shared_ptr<BillboardRenderer> BillboardRenderer::Create(const nlohmann::jso
     componentData.at("Size").get_to(size);
 
     std::shared_ptr<BillboardRenderer> renderer = std::make_shared<BillboardRenderer>(nullptr, size, "BillboardRenderer_" + texturePath);
-
-    Resources::LoadAsync<Texture2D>(texturePath, [renderer](std::shared_ptr<Texture2D> texture)
-                                    {renderer->SetTexture(texture);});
-
+    renderer->SetTexture(Resources::Load<Texture2D>(texturePath));
     return renderer;
+}
+
+std::shared_ptr<Worker::Task> BillboardRenderer::CreateAsync(const nlohmann::json &componentData, const std::function<void(std::shared_ptr<BillboardRenderer>)> &callback)
+{
+    std::string texturePath;
+    float size;
+    componentData.at("Texture").get_to(texturePath);
+    componentData.at("Size").get_to(size);
+
+    std::shared_ptr<BillboardRenderer> renderer = std::make_shared<BillboardRenderer>(nullptr, size, "BillboardRenderer_" + texturePath);
+
+    std::shared_ptr<Worker::Task> textureTask = Resources::LoadAsync<Texture2D>(texturePath, [renderer](std::shared_ptr<Texture2D> texture)
+                                                                                { renderer->SetTexture(texture); });
+
+    std::shared_ptr<Worker::Task> task = Worker::CreateTask([callback, renderer]{ callback(renderer); });
+    task->AddDependency(textureTask);
+    task->Schedule();
+
+    return task;
 }
 
 std::shared_ptr<Mesh> s_BillboardMesh = nullptr;

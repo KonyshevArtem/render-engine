@@ -8,7 +8,7 @@ class Material;
 class TestSceneUpdater : public Component
 {
 public:
-    static std::shared_ptr<TestSceneUpdater> Create(const nlohmann::json& componentData);
+    DECLARE_COMPONENT_CONSTRUCTORS(TestSceneUpdater)
 
     TestSceneUpdater() = default;
     ~TestSceneUpdater() = default;

@@ -10,7 +10,7 @@
 class Camera : public Component
 {
 public:
-    static std::shared_ptr<Camera> Create(const nlohmann::json& componentData);
+    DECLARE_COMPONENT_CONSTRUCTORS(Camera)
 
     Camera(float _fov, float _nearClipPlane, float _farClipPlane, float _shadowDistance);
 

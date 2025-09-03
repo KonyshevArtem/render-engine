@@ -6,7 +6,7 @@
 class Flashlight : public Component
 {
 public:
-    static std::shared_ptr<Flashlight> Create(const nlohmann::json& componentData);
+    DECLARE_COMPONENT_CONSTRUCTORS(Flashlight)
 
     Flashlight() = default;
     ~Flashlight() = default;

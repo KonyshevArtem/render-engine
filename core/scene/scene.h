@@ -33,6 +33,9 @@ public:
         return m_GameObjects;
     }
 
+    bool IsLoading();
+    void SetLoading(bool isLoading);
+
 private:
     static std::filesystem::path s_PendingScenePath;
 
@@ -40,6 +43,8 @@ private:
 
     std::shared_mutex m_SkyboxMutex;
     std::shared_ptr<Cubemap> m_Skybox;
+
+    std::atomic<bool> m_IsLoading;
 
     static void LoadInternal();
     static void UpdateComponents(std::vector<std::shared_ptr<GameObject>>& gameObjects);

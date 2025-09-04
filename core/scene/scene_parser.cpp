@@ -73,6 +73,9 @@ namespace SceneParser
 
         std::shared_ptr<Scene> scene = std::make_shared<Scene>();
 
+        scene->SetLoading(true);
+        std::shared_ptr<Worker::Task> loadingTask = Worker::CreateTask([scene](){ scene->SetLoading(false); });
+
         for (const GameObjectInfo& info : sceneInfo.GameObjects)
         {
             std::shared_ptr<GameObject> go = GameObject::Create(info.Name, scene);
@@ -83,16 +86,20 @@ namespace SceneParser
 
             for (const ComponentInfo& componentInfo: info.Components)
             {
-                std::shared_ptr<Component> component = Component::CreateComponent(componentInfo.Name, componentInfo.Data);
-                go->AddComponent(component);
+                std::shared_ptr<Worker::Task> componentTask = Component::CreateComponentAsync(componentInfo.Name, componentInfo.Data, [go](std::shared_ptr<Component> component)
+                                                                                              { go->AddComponent(component); });
+                loadingTask->AddDependency(componentTask);
             }
         }
 
         if (!sceneInfo.Settings.Skybox.empty())
         {
-            Resources::LoadAsync<Cubemap>(sceneInfo.Settings.Skybox, [scene](std::shared_ptr<Cubemap> skybox)
-                                          { scene->SetSkybox(skybox); });
+            std::shared_ptr<Worker::Task> skyboxTask = Resources::LoadAsync<Cubemap>(sceneInfo.Settings.Skybox, [scene](std::shared_ptr<Cubemap> skybox)
+                                                                                     { scene->SetSkybox(skybox); });
+            loadingTask->AddDependency(skyboxTask);
         }
+
+        loadingTask->Schedule();
 
         return scene;
     }

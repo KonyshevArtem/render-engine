@@ -54,7 +54,7 @@ void Scene::Update()
     if (!s_PendingScenePath.empty())
         LoadInternal();
 
-    if (Current != nullptr)
+    if (Current != nullptr && !Current->IsLoading())
     {
         Profiler::Marker _("Scene::UpdateComponents");
         UpdateComponents(Current->m_GameObjects);
@@ -93,6 +93,16 @@ std::vector<std::shared_ptr<GameObject>> Scene::FindGameObjects(const std::funct
     std::vector<std::shared_ptr<GameObject>> result;
     SceneLocal::FindGameObjects(m_GameObjects, predicate, result);
     return result;
+}
+
+bool Scene::IsLoading()
+{
+    return m_IsLoading;
+}
+
+void Scene::SetLoading(bool isLoading)
+{
+    m_IsLoading = isLoading;
 }
 
 void Scene::LoadInternal()

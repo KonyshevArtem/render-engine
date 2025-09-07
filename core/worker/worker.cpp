@@ -1,4 +1,5 @@
 #include "worker.h"
+#include "editor/profiler/profiler.h"
 
 #include <chrono>
 
@@ -108,6 +109,7 @@ void Worker::Task::Schedule()
 
 void Worker::Task::Wait()
 {
+    Profiler::Marker _("Worker::Task::Wait");
     while (!IsFinished)
         continue;
 }

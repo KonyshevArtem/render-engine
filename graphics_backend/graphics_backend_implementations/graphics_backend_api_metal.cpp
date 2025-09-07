@@ -64,6 +64,8 @@ namespace MetalLocal
 
 void GraphicsBackendMetal::Init(void *data)
 {
+    GraphicsBackendBase::Init(data);
+
     m_View = static_cast<MTK::View*>(data);
     m_Device = m_View->device();
 
@@ -223,13 +225,13 @@ GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapM
     return sampler;
 }
 
-void GraphicsBackendMetal::DeleteTexture(const GraphicsBackendTexture &texture)
+void GraphicsBackendMetal::DeleteTexture_Internal(const GraphicsBackendTexture &texture)
 {
     auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
     metalTexture->release();
 }
 
-void GraphicsBackendMetal::DeleteSampler(const GraphicsBackendSampler &sampler)
+void GraphicsBackendMetal::DeleteSampler_Internal(const GraphicsBackendSampler &sampler)
 {
     auto metalSampler = reinterpret_cast<MTL::SamplerState*>(sampler.Sampler);
     metalSampler->release();
@@ -387,7 +389,7 @@ GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, const std::st
     return buffer;
 }
 
-void GraphicsBackendMetal::DeleteBuffer(const GraphicsBackendBuffer &buffer)
+void GraphicsBackendMetal::DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer)
 {
     const MetalLocal::BufferData* bufferData = reinterpret_cast<MetalLocal::BufferData*>(buffer.Buffer);
     bufferData->Buffer->release();
@@ -464,7 +466,7 @@ GraphicsBackendGeometry GraphicsBackendMetal::CreateGeometry(const GraphicsBacke
     return geometry;
 }
 
-void GraphicsBackendMetal::DeleteGeometry(const GraphicsBackendGeometry &geometry)
+void GraphicsBackendMetal::DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry)
 {
     DeleteBuffer(geometry.VertexBuffer);
     DeleteBuffer(geometry.IndexBuffer);
@@ -589,12 +591,12 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
     return program;
 }
 
-void GraphicsBackendMetal::DeleteShader(GraphicsBackendShaderObject shader)
+void GraphicsBackendMetal::DeleteShader_Internal(GraphicsBackendShaderObject shader)
 {
     reinterpret_cast<MTL::Library*>(shader.ShaderObject)->release();
 }
 
-void GraphicsBackendMetal::DeleteProgram(GraphicsBackendProgram program)
+void GraphicsBackendMetal::DeleteProgram_Internal(GraphicsBackendProgram program)
 {
     MetalLocal::PSOData* psoData = reinterpret_cast<MetalLocal::PSOData*>(program.Program);
     psoData->PSO->release();

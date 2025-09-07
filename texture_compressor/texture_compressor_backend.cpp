@@ -308,7 +308,11 @@ namespace TextureCompressorBackend
                 textureFilePaths.push_back(entry.path());
         }
 
+#if RENDER_ENGINE_APPLE
+        for (std::filesystem::path& path : textureFilePaths)
+#else
         std::for_each(std::execution::par, textureFilePaths.begin(), textureFilePaths.end(), [&inputPath, &outputPath, &platform](std::filesystem::path& path)
+#endif
         {
             std::ifstream file(path);
             if (!file)
@@ -333,6 +337,10 @@ namespace TextureCompressorBackend
 
             CompressTexture(data, outputTexturePath, platform);
             file.close();
+#if RENDER_ENGINE_APPLE
+        }
+#else
         });
+#endif
     }
 }

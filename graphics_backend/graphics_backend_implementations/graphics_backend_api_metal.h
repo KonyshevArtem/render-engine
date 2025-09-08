@@ -5,6 +5,8 @@
 
 #include "graphics_backend_api_base.h"
 
+#include <shared_mutex>
+
 namespace MTL
 {
     class Device;
@@ -114,13 +116,24 @@ private:
     MTL::RenderPassDescriptor* m_BackbufferDescriptor = nullptr;
     MTL::RenderPassDescriptor* m_RenderPassDescriptor = nullptr;
     MTL::RenderCommandEncoder* m_RenderCommandEncoder = nullptr;
-    MTL::BlitCommandEncoder* m_BlitCommandEncoder = nullptr;
+
+    std::shared_mutex m_UploadCommandBuffersMutex;
+    std::unordered_map<std::thread::id, MTL::CommandBuffer*> m_UploadCommandBuffers;
+
+    std::shared_mutex m_BlitCommandEncodersMutex;
+    std::unordered_map<std::thread::id, MTL::BlitCommandEncoder*> m_BlitCommandEncoders;
 
     bool m_SupportTimestampCounters = false;
     bool m_ProfilerMarkerActive = false;
 
     MTL::Texture* GetTextureFromDescriptor(const GraphicsBackendRenderTargetDescriptor& descriptor);
     void SetCommandBuffers(MTL::CommandBuffer* renderCommandBuffer, MTL::CommandBuffer* copyCommandBuffer);
+
+    MTL::CommandBuffer* GetOrCreateUploadCommandBuffer();
+    void SetUploadCommandBuffer(MTL::CommandBuffer* buffer);
+
+    MTL::BlitCommandEncoder* GetBlitCommandEncoder();
+    void SetBlitCommandEncoder(MTL::BlitCommandEncoder* encoder);
 };
 
 

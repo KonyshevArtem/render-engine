@@ -271,13 +271,14 @@ void GraphicsBackendMetal::BindSampler(const GraphicsBackendResourceBindings &bi
 
 void GraphicsBackendMetal::GenerateMipmaps(const GraphicsBackendTexture &texture)
 {
-    assert(m_BlitCommandEncoder != nullptr);
+    MTL::BlitCommandEncoder* encoder = GetBlitCommandEncoder();
+    assert(encoder != nullptr);
 
     auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
     if (!metalTexture)
         return;
 
-    m_BlitCommandEncoder->generateMipmaps(metalTexture);
+    encoder->generateMipmaps(metalTexture);
 }
 
 void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData)
@@ -297,7 +298,7 @@ void GraphicsBackendMetal::UploadImagePixels(const GraphicsBackendTexture &textu
     MTL::Texture* metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
     MTL::Buffer* tempBuffer = m_Device->newBuffer(pixelsData, imageSize, MetalLocal::s_DefaultBufferStorageMode);
     BeginCopyPass("Upload Texture Data");
-    m_BlitCommandEncoder->copyFromBuffer(tempBuffer, 0, bytesPerRow, imageSize, MTL::Size::Make(width, height, 1), metalTexture, static_cast<NS::UInteger>(cubemapFace), level, MTL::Origin::Make(0, 0, depth));
+    GetBlitCommandEncoder()->copyFromBuffer(tempBuffer, 0, bytesPerRow, imageSize, MTL::Size::Make(width, height, 1), metalTexture, static_cast<NS::UInteger>(cubemapFace), level, MTL::Origin::Make(0, 0, depth));
     EndCopyPass();
 
     tempBuffer->release();
@@ -368,7 +369,7 @@ GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, const std::st
     {
         MTL::Buffer* tempBuffer = m_Device->newBuffer(data, size, MetalLocal::s_DefaultBufferStorageMode);
         BeginCopyPass("Init Buffer " + name);
-        m_BlitCommandEncoder->copyFromBuffer(tempBuffer, 0, metalBuffer, 0, size);
+        GetBlitCommandEncoder()->copyFromBuffer(tempBuffer, 0, metalBuffer, 0, size);
         EndCopyPass();
 
         tempBuffer->release();
@@ -433,11 +434,12 @@ void GraphicsBackendMetal::SetBufferData(const GraphicsBackendBuffer& buffer, lo
 
 void GraphicsBackendMetal::CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size)
 {
-    assert(m_BlitCommandEncoder != nullptr);
+    MTL::BlitCommandEncoder* encoder = GetBlitCommandEncoder();
+    assert(encoder != nullptr);
 
     const MetalLocal::BufferData* sourceBufferData = reinterpret_cast<MetalLocal::BufferData*>(source.Buffer);
     const MetalLocal::BufferData* destinationBufferData = reinterpret_cast<MetalLocal::BufferData*>(destination.Buffer);
-    m_BlitCommandEncoder->copyFromBuffer(sourceBufferData->Buffer, sourceOffset, destinationBufferData->Buffer, destinationOffset, size);
+    encoder->copyFromBuffer(sourceBufferData->Buffer, sourceOffset, destinationBufferData->Buffer, destinationOffset, size);
 }
 
 uint64_t GraphicsBackendMetal::GetMaxConstantBufferSize()
@@ -672,7 +674,8 @@ void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &
 
 void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
 {
-    assert(m_BlitCommandEncoder != nullptr);
+    MTL::BlitCommandEncoder* encoder = GetBlitCommandEncoder();
+    assert(encoder != nullptr);
 
     auto metalSource = reinterpret_cast<MTL::Texture*>(source.Texture);
     auto metalDestination = GetTextureFromDescriptor(destinationDescriptor);
@@ -683,7 +686,7 @@ void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &so
     MTL::Origin sourceOrigin(sourceX, sourceY, 0);
     MTL::Origin destinationOrigin(destinationX, destinationY, 0);
     MTL::Size size(width, height, 1);
-    m_BlitCommandEncoder->copyFromTexture(metalSource, 0, 0, sourceOrigin, size, metalDestination, 0, 0, destinationOrigin);
+    encoder->copyFromTexture(metalSource, 0, 0, sourceOrigin, size, metalDestination, 0, 0, destinationOrigin);
 }
 
 void GraphicsBackendMetal::PushDebugGroup(const std::string& name, GPUQueue queue)
@@ -695,8 +698,9 @@ void GraphicsBackendMetal::PushDebugGroup(const std::string& name, GPUQueue queu
             m_RenderCommandEncoder->pushDebugGroup(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
             break;
         case GPUQueue::COPY:
-            assert(m_BlitCommandEncoder != nullptr);
-            m_BlitCommandEncoder->pushDebugGroup(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+            MTL::BlitCommandEncoder* encoder = GetBlitCommandEncoder();
+            assert(encoder != nullptr);
+            encoder->pushDebugGroup(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
             break;
     }
 }
@@ -710,8 +714,9 @@ void GraphicsBackendMetal::PopDebugGroup(GPUQueue queue)
             m_RenderCommandEncoder->popDebugGroup();
             break;
         case GPUQueue::COPY:
-            assert(m_BlitCommandEncoder != nullptr);
-            m_BlitCommandEncoder->popDebugGroup();
+            MTL::BlitCommandEncoder* encoder = GetBlitCommandEncoder();
+            assert(encoder != nullptr);
+            encoder->popDebugGroup();
             break;
     }
 }
@@ -847,11 +852,14 @@ void GraphicsBackendMetal::EndRenderPass()
 
 void GraphicsBackendMetal::BeginCopyPass(const std::string& name)
 {
-    assert(m_CopyCommandBuffer != nullptr);
-    assert(m_BlitCommandEncoder == nullptr);
+    const bool isMainThread = IsMainThread();
+    MTL::CommandBuffer* buffer = isMainThread ? m_CopyCommandBuffer : GetOrCreateUploadCommandBuffer();
+
+    assert(buffer != nullptr);
+    assert(GetBlitCommandEncoder() == nullptr);
 
     MTL::BlitPassDescriptor* passDescriptor = MTL::BlitPassDescriptor::alloc()->init();
-    if (m_ProfilerMarkerActive)
+    if (m_ProfilerMarkerActive && isMainThread)
     {
         uint64_t counterSamplerIndex = MetalLocal::s_CurrentCounterSampleOffsets[k_CopyGPUQueueIndex];
         MetalLocal::SetCounterSampleFinished(counterSamplerIndex, k_CopyGPUQueueIndex, false);
@@ -861,7 +869,7 @@ void GraphicsBackendMetal::BeginCopyPass(const std::string& name)
         descriptor->setStartOfEncoderSampleIndex(counterSamplerIndex);
         descriptor->setEndOfEncoderSampleIndex(counterSamplerIndex + 1);
 
-        m_CopyCommandBuffer->addCompletedHandler([counterSamplerIndex](class MTL::CommandBuffer*)
+        buffer->addCompletedHandler([counterSamplerIndex](class MTL::CommandBuffer*)
         {
             MetalLocal::SetCounterSampleFinished(counterSamplerIndex, k_CopyGPUQueueIndex, true);
         });
@@ -869,20 +877,31 @@ void GraphicsBackendMetal::BeginCopyPass(const std::string& name)
         MetalLocal::s_CurrentCounterSampleOffsets[k_CopyGPUQueueIndex] = (MetalLocal::s_CurrentCounterSampleOffsets[k_CopyGPUQueueIndex] + 2) % MetalLocal::k_MaxTimestampSamples;
     }
 
-    m_BlitCommandEncoder = m_CopyCommandBuffer->blitCommandEncoder(passDescriptor);
+    MTL::BlitCommandEncoder* encoder = buffer->blitCommandEncoder(passDescriptor);
     passDescriptor->release();
 
     if (!name.empty())
     {
-        m_BlitCommandEncoder->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+        encoder->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
     }
+
+    SetBlitCommandEncoder(encoder);
 }
 
 void GraphicsBackendMetal::EndCopyPass()
 {
-    assert(m_BlitCommandEncoder != nullptr);
-    m_BlitCommandEncoder->endEncoding();
-    m_BlitCommandEncoder = nullptr;
+    MTL::BlitCommandEncoder* encoder = GetBlitCommandEncoder();
+    assert(encoder != nullptr);
+    encoder->endEncoding();
+    SetBlitCommandEncoder(nullptr);
+
+    if (!IsMainThread())
+    {
+        MTL::CommandBuffer* buffer = GetOrCreateUploadCommandBuffer();
+        buffer->commit();
+        buffer->waitUntilCompleted();
+        SetUploadCommandBuffer(nullptr);
+    }
 }
 
 GraphicsBackendFence GraphicsBackendMetal::CreateFence(FenceType fenceType, const std::string& name)
@@ -962,6 +981,39 @@ void GraphicsBackendMetal::SetCommandBuffers(class MTL::CommandBuffer* renderCom
 
     m_RenderCommandBuffer->setLabel(NS::String::string("Render Command Buffer", NS::UTF8StringEncoding));
     m_CopyCommandBuffer->setLabel(NS::String::string("Copy Command Buffer", NS::UTF8StringEncoding));
+}
+
+MTL::CommandBuffer* GraphicsBackendMetal::GetOrCreateUploadCommandBuffer()
+{
+    std::thread::id threadId = std::this_thread::get_id();
+
+    std::unique_lock lock(m_UploadCommandBuffersMutex);
+    auto it = m_UploadCommandBuffers.find(threadId);
+    if (it != m_UploadCommandBuffers.end() && it->second)
+        return it->second;
+
+    MTL::CommandBuffer* buffer = m_CopyCommandQueue->commandBuffer();
+    m_UploadCommandBuffers[threadId] = buffer;
+    return buffer;
+}
+
+void GraphicsBackendMetal::SetUploadCommandBuffer(MTL::CommandBuffer* buffer)
+{
+    std::unique_lock lock(m_UploadCommandBuffersMutex);
+    m_UploadCommandBuffers[std::this_thread::get_id()] = buffer;
+}
+
+MTL::BlitCommandEncoder* GraphicsBackendMetal::GetBlitCommandEncoder()
+{
+    std::shared_lock lock(m_BlitCommandEncodersMutex);
+    auto it = m_BlitCommandEncoders.find(std::this_thread::get_id());
+    return it != m_BlitCommandEncoders.end() ? it->second : nullptr;
+}
+
+void GraphicsBackendMetal::SetBlitCommandEncoder(MTL::BlitCommandEncoder* encoder)
+{
+    std::unique_lock lock(m_BlitCommandEncodersMutex);
+    m_BlitCommandEncoders[std::this_thread::get_id()] = encoder;
 }
 
 void GraphicsBackendMetal::Present()

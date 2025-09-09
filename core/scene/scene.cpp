@@ -54,7 +54,7 @@ void Scene::Update()
     if (!s_PendingScenePath.empty())
         LoadInternal();
 
-    if (Current != nullptr)
+    if (Current != nullptr && !Current->IsLoading())
     {
         Profiler::Marker _("Scene::UpdateComponents");
         UpdateComponents(Current->m_GameObjects);
@@ -71,6 +71,18 @@ void Scene::Unload()
     Current = nullptr;
 }
 
+void Scene::SetSkybox(const std::shared_ptr<Cubemap>& skybox)
+{
+    std::unique_lock lock(m_SkyboxMutex);
+    m_Skybox = skybox;
+}
+
+std::shared_ptr<Cubemap> Scene::GetSkybox()
+{
+    std::shared_lock lock(m_SkyboxMutex);
+    return m_Skybox;
+}
+
 std::shared_ptr<GameObject> Scene::FindGameObject(const std::function<bool(const GameObject *)>& predicate)
 {
     return SceneLocal::FindGameObject(m_GameObjects, predicate);
@@ -81,6 +93,16 @@ std::vector<std::shared_ptr<GameObject>> Scene::FindGameObjects(const std::funct
     std::vector<std::shared_ptr<GameObject>> result;
     SceneLocal::FindGameObjects(m_GameObjects, predicate, result);
     return result;
+}
+
+bool Scene::IsLoading()
+{
+    return m_IsLoading;
+}
+
+void Scene::SetLoading(bool isLoading)
+{
+    m_IsLoading = isLoading;
 }
 
 void Scene::LoadInternal()

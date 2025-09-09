@@ -12,7 +12,7 @@ Context::Context()
 
     const std::shared_ptr<Scene>& scene = Scene::Current;
 
-    Skybox = scene->Skybox;
+    Skybox = scene->GetSkybox();
     ViewMatrix = Camera::Current->GetViewMatrix();
     ProjectionMatrix = Camera::Current->GetProjectionMatrix();
 

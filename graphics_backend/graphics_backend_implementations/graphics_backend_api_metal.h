@@ -5,6 +5,8 @@
 
 #include "graphics_backend_api_base.h"
 
+#include <shared_mutex>
+
 namespace MTL
 {
     class Device;
@@ -32,8 +34,6 @@ public:
 
     GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) override;
     GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name) override;
-    void DeleteTexture(const GraphicsBackendTexture &texture) override;
-    void DeleteSampler(const GraphicsBackendSampler &sampler) override;
 
     void BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture) override;
     void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) override;
@@ -45,7 +45,6 @@ public:
     TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear) override;
 
     GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data) override;
-    void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
     void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
     void BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount) override;
     void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
@@ -56,7 +55,6 @@ public:
     int GetConstantBufferOffsetAlignment() override;
 
     GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) override;
-    void DeleteGeometry(const GraphicsBackendGeometry &geometry) override;
 
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
     void SetScissorRect(int x, int y, int width, int height) override;
@@ -64,8 +62,6 @@ public:
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) override;
     GraphicsBackendShaderObject CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name) override;
     GraphicsBackendProgram CreateProgram(const GraphicsBackendProgramDescriptor& descriptor) override;
-    void DeleteShader(GraphicsBackendShaderObject shader) override;
-    void DeleteProgram(GraphicsBackendProgram program) override;
     void UseProgram(GraphicsBackendProgram program) override;
     bool RequireStrictPSODescriptor() override;
 
@@ -102,6 +98,14 @@ public:
     void TransitionTexture(const GraphicsBackendTexture& texture, ResourceState state, GPUQueue queue) override;
     void TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue) override;
 
+protected:
+    void DeleteTexture_Internal(const GraphicsBackendTexture &texture) override;
+    void DeleteSampler_Internal(const GraphicsBackendSampler &sampler) override;
+    void DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer) override;
+    void DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry) override;
+    void DeleteShader_Internal(GraphicsBackendShaderObject shader) override;
+    void DeleteProgram_Internal(GraphicsBackendProgram program) override;
+
 private:
     MTL::Device* m_Device = nullptr;
     MTK::View* m_View = nullptr;
@@ -112,13 +116,24 @@ private:
     MTL::RenderPassDescriptor* m_BackbufferDescriptor = nullptr;
     MTL::RenderPassDescriptor* m_RenderPassDescriptor = nullptr;
     MTL::RenderCommandEncoder* m_RenderCommandEncoder = nullptr;
-    MTL::BlitCommandEncoder* m_BlitCommandEncoder = nullptr;
+
+    std::shared_mutex m_UploadCommandBuffersMutex;
+    std::unordered_map<std::thread::id, MTL::CommandBuffer*> m_UploadCommandBuffers;
+
+    std::shared_mutex m_BlitCommandEncodersMutex;
+    std::unordered_map<std::thread::id, MTL::BlitCommandEncoder*> m_BlitCommandEncoders;
 
     bool m_SupportTimestampCounters = false;
     bool m_ProfilerMarkerActive = false;
 
     MTL::Texture* GetTextureFromDescriptor(const GraphicsBackendRenderTargetDescriptor& descriptor);
     void SetCommandBuffers(MTL::CommandBuffer* renderCommandBuffer, MTL::CommandBuffer* copyCommandBuffer);
+
+    MTL::CommandBuffer* GetOrCreateUploadCommandBuffer();
+    void SetUploadCommandBuffer(MTL::CommandBuffer* buffer);
+
+    MTL::BlitCommandEncoder* GetBlitCommandEncoder();
+    void SetBlitCommandEncoder(MTL::BlitCommandEncoder* encoder);
 };
 
 

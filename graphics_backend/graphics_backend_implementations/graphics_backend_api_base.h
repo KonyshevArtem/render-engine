@@ -9,6 +9,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <thread>
 
 enum class TextureType;
 enum class TextureInternalFormat : uint16_t;
@@ -48,17 +49,19 @@ class GraphicsBackendBase
 public:
     static GraphicsBackendBase *Create();
 
-    virtual void Init(void *data) = 0;
+    virtual void Init(void *data);
     virtual GraphicsBackendName GetName() = 0;
     virtual void InitNewFrame();
     virtual void FillImGuiInitData(void* data) = 0;
     virtual void FillImGuiFrameData(void* data) = 0;
+
+    void IncrementFrameNumber();
     uint64_t GetFrameNumber() const;
 
     virtual GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) = 0;
     virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name) = 0;
-    virtual void DeleteTexture(const GraphicsBackendTexture &texture) = 0;
-    virtual void DeleteSampler(const GraphicsBackendSampler &sampler) = 0;
+    void DeleteTexture(const GraphicsBackendTexture& texture);
+    void DeleteSampler(const GraphicsBackendSampler& sampler);
 
     virtual void BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture) = 0;
     virtual void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) = 0;
@@ -70,7 +73,7 @@ public:
     virtual TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool *outIsLinear) = 0;
 
     virtual GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data = nullptr) = 0;
-    virtual void DeleteBuffer(const GraphicsBackendBuffer &buffer) = 0;
+    void DeleteBuffer(const GraphicsBackendBuffer& buffer);
     virtual void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;
     virtual void BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount) = 0;
     virtual void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;
@@ -81,7 +84,7 @@ public:
     virtual int GetConstantBufferOffsetAlignment() = 0;
 
     virtual GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) = 0;
-    virtual void DeleteGeometry(const GraphicsBackendGeometry &geometry) = 0;
+    void DeleteGeometry(const GraphicsBackendGeometry &geometry);
 
     virtual void SetViewport(int x, int y, int width, int height, float near, float far) = 0;
     virtual void SetScissorRect(int x, int y, int width, int height) = 0;
@@ -89,8 +92,8 @@ public:
     virtual GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) = 0;
     virtual GraphicsBackendShaderObject CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name) = 0;
     virtual GraphicsBackendProgram CreateProgram(const GraphicsBackendProgramDescriptor& descriptor) = 0;
-    virtual void DeleteShader(GraphicsBackendShaderObject shader) = 0;
-    virtual void DeleteProgram(GraphicsBackendProgram program) = 0;
+    void DeleteShader(GraphicsBackendShaderObject shader);
+    void DeleteProgram(GraphicsBackendProgram program);
     virtual void UseProgram(GraphicsBackendProgram program) = 0;
     virtual bool RequireStrictPSODescriptor() = 0;
 
@@ -134,8 +137,26 @@ public:
     bool IsDepthFormat(TextureInternalFormat format);
     bool IsDepthAttachment(FramebufferAttachment attachment);
 
+protected:
+    bool IsMainThread();
+
+    virtual void DeleteTexture_Internal(const GraphicsBackendTexture &texture) = 0;
+    virtual void DeleteSampler_Internal(const GraphicsBackendSampler &sampler) = 0;
+    virtual void DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer) = 0;
+    virtual void DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry) = 0;
+    virtual void DeleteShader_Internal(GraphicsBackendShaderObject shader) = 0;
+    virtual void DeleteProgram_Internal(GraphicsBackendProgram program) = 0;
+
 private:
     uint64_t m_FrameCount;
+    std::thread::id m_MainThreadId;
+
+    std::vector<std::pair<GraphicsBackendTexture, int>> m_DeletedTextures;
+    std::vector<std::pair<GraphicsBackendSampler, int>> m_DeletedSamplers;
+    std::vector<std::pair<GraphicsBackendBuffer, int>> m_DeletedBuffers;
+    std::vector<std::pair<GraphicsBackendGeometry, int>> m_DeletedGeometries;
+    std::vector<std::pair<GraphicsBackendShaderObject, int>> m_DeletedShaders;
+    std::vector<std::pair<GraphicsBackendProgram, int>> m_DeletedPrograms;
 };
 
 

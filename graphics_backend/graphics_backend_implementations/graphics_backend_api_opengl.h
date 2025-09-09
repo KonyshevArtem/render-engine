@@ -5,6 +5,7 @@
 
 #include "graphics_backend_api_base.h"
 #include <set>
+#include <shared_mutex>
 
 class GraphicsBackendOpenGL : public GraphicsBackendBase
 {
@@ -17,8 +18,6 @@ public:
 
     GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) override;
     GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name) override;
-    void DeleteTexture(const GraphicsBackendTexture &texture) override;
-    void DeleteSampler(const GraphicsBackendSampler &sampler) override;
 
     void BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture) override;
     void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) override;
@@ -30,7 +29,6 @@ public:
     TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear) override;
 
     GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data = nullptr) override;
-    void DeleteBuffer(const GraphicsBackendBuffer &buffer) override;
     void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
     void BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount) override;
     void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
@@ -41,7 +39,6 @@ public:
     int GetConstantBufferOffsetAlignment() override;
 
     GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) override;
-    void DeleteGeometry(const GraphicsBackendGeometry &geometry) override;
 
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
     void SetScissorRect(int x, int y, int width, int height) override;
@@ -49,8 +46,6 @@ public:
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) override;
     GraphicsBackendShaderObject CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name) override;
     GraphicsBackendProgram CreateProgram(const GraphicsBackendProgramDescriptor& descriptor) override;
-    void DeleteShader(GraphicsBackendShaderObject shader) override;
-    void DeleteProgram(GraphicsBackendProgram program) override;
     void UseProgram(GraphicsBackendProgram program) override;
     bool RequireStrictPSODescriptor() override;
 
@@ -87,8 +82,26 @@ public:
     void TransitionTexture(const GraphicsBackendTexture& texture, ResourceState state, GPUQueue queue) override;
     void TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue) override;
 
+protected:
+    void DeleteTexture_Internal(const GraphicsBackendTexture &texture) override;
+    void DeleteSampler_Internal(const GraphicsBackendSampler &sampler) override;
+    void DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer) override;
+    void DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry) override;
+    void DeleteShader_Internal(GraphicsBackendShaderObject shader) override;
+    void DeleteProgram_Internal(GraphicsBackendProgram program) override;
+
 private:
     std::set<std::string> m_Extensions;
+    std::vector<std::thread::id> m_PendingContextCreation;
+    std::shared_mutex m_ThreadContextsMutex;
+
+    void CreateVAO(const GraphicsBackendGeometry& geometry, const GraphicsBackendVertexAttributeDescriptor* vertexAttributes, uint32_t vertexAttributesCount);
+    void BindGeometry(const GraphicsBackendGeometry& geometry);
+
+    void InitContext();
+    void CreatePendingContexts();
+
+    static void LogContextError(const std::string& tag);
 };
 
 #endif // RENDER_BACKEND_OPENGL

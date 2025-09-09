@@ -9,6 +9,8 @@ std::shared_ptr<PBRDemoUpdater> PBRDemoUpdater::Create(const nlohmann::json& com
     return std::make_shared<PBRDemoUpdater>();
 }
 
+DEFINE_COMPONENT_DEFAULT_ASYNC_CONSTRUCTOR(PBRDemoUpdater)
+
 void PBRDemoUpdater::Update()
 {
     if (!m_Initialized)

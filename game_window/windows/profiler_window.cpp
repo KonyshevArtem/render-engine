@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "editor/profiler/profiler.h"
+#include "graphics_backend_api.h"
 
 #include <typeinfo>
 #include <vector>
@@ -32,11 +33,12 @@ void DrawSeparator(const Profiler::MarkerInfo& marker, const std::chrono::system
     ImGui::GetWindowDrawList()->AddLine({linePosX, lineStartPosY}, {linePosX, lineEndPosY}, IM_COL32(255, 0, 0, 255), 1);
 }
 
-void DrawMarker(const Profiler::MarkerInfo& marker, const std::chrono::system_clock::time_point& rangeBegin, double rangeToWidth, int depthOffset)
+void DrawMarker(const Profiler::MarkerInfo& marker, const std::chrono::system_clock::time_point& rangeBegin, const std::chrono::system_clock::time_point& rangeEnd, double rangeToWidth, int depthOffset)
 {
     assert(marker.Type == Profiler::MarkerType::MARKER);
 
-    const double duration = std::max(GetMicroseconds(marker.Begin, marker.End), int64_t(1));
+    const std::chrono::system_clock::time_point& end = marker.Finished ? marker.End : rangeEnd;
+    const double duration = std::max(GetMicroseconds(marker.Begin, end), int64_t(1));
     const float posX = GetMicroseconds(rangeBegin, marker.Begin) * rangeToWidth;
     const float posY = ImGui::GetWindowContentRegionMin().y + (marker.Depth + depthOffset) * k_MarkerHeight;
     const float width = duration * rangeToWidth;
@@ -102,11 +104,15 @@ void ProfilerWindow::DrawTopBar()
 
 void ProfilerWindow::DrawInternal()
 {
-    const std::vector<Profiler::FrameInfo>& mainThreadFrames = Profiler::GetContextFrames(Profiler::MarkerContext::MAIN_THREAD);
-    if (mainThreadFrames.empty() || mainThreadFrames.back().Markers.empty())
+    const std::map<uint64_t, Profiler::FrameInfo>& mainThreadFrames = Profiler::GetContextFrames(Profiler::MarkerContext::MAIN_THREAD);
+    if (mainThreadFrames.empty())
         return;
 
-    const std::chrono::system_clock::time_point rangeEnd = mainThreadFrames.back().Markers.back().End - m_Offset;
+    const Profiler::FrameInfo& mainThreadFrameInfo = (--mainThreadFrames.end())->second;
+    if (mainThreadFrameInfo.Markers.empty())
+        return;
+
+    const std::chrono::system_clock::time_point rangeEnd = mainThreadFrameInfo.Markers.front().End - m_Offset;
     const std::chrono::system_clock::time_point rangeBegin = rangeEnd - m_CurrentRange;
 
     const double rangeToWidth = ImGui::GetWindowContentRegionMax().x / static_cast<double>(m_CurrentRange.count());
@@ -121,6 +127,16 @@ void ProfilerWindow::DrawInternal()
                 return "GPU Render";
             case Profiler::MarkerContext::GPU_COPY:
                 return "GPU Copy";
+            case Profiler::MarkerContext::WORKER_1:
+                return "Worker 1";
+            case Profiler::MarkerContext::WORKER_2:
+                return "Worker 2";
+            case Profiler::MarkerContext::WORKER_3:
+                return "Worker 3";
+            case Profiler::MarkerContext::WORKER_4:
+                return "Worker 4";
+            case Profiler::MarkerContext::WORKER_5:
+                return "Worker 5";
         }
     };
 
@@ -177,7 +193,8 @@ void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerConte
 {
     static int maxDepths[static_cast<int>(Profiler::MarkerContext::MAX)];
 
-    const std::vector<Profiler::FrameInfo>& profilerFrames = Profiler::GetContextFrames(context);
+    std::lock_guard<std::mutex> lock(Profiler::GetContextMutex(context));
+    const std::map<uint64_t, Profiler::FrameInfo>& profilerFrames = Profiler::GetContextFrames(context);
     if (profilerFrames.empty())
         return;
 
@@ -197,11 +214,12 @@ void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerConte
 
     DraggableContentRegion region(label.c_str(), rangeToWidth, 0, markerLines * k_MarkerHeight + k_MarkerContentMargin, this);
     {
-        for (const Profiler::FrameInfo& frameInfo : profilerFrames)
+        for (auto& pair : profilerFrames)
         {
+            const Profiler::FrameInfo& frameInfo = pair.second;
             for (const Profiler::MarkerInfo& marker : frameInfo.Markers)
             {
-                if (marker.Begin > rangeEnd || marker.End < rangeBegin)
+                if (marker.Finished && (marker.Begin > rangeEnd || marker.End < rangeBegin))
                     continue;
 
                 int depthOffset = 0;
@@ -235,7 +253,7 @@ void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerConte
                 switch (marker.Type)
                 {
                     case Profiler::MarkerType::MARKER:
-                        DrawMarker(marker, rangeBegin, rangeToWidth, depthOffset);
+                        DrawMarker(marker, rangeBegin, rangeEnd, rangeToWidth, depthOffset);
                         break;
                     case Profiler::MarkerType::SEPARATOR:
                         DrawSeparator(marker, rangeBegin, rangeToWidth);

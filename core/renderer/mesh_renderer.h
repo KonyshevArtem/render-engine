@@ -9,14 +9,15 @@ class Mesh;
 class MeshRenderer: public Renderer
 {
 public:
-    static std::shared_ptr<MeshRenderer> Create(const nlohmann::json& componentData);
+    DECLARE_COMPONENT_CONSTRUCTORS(MeshRenderer)
 
     MeshRenderer(std::shared_ptr<Mesh>              _mesh,
                  const std::shared_ptr<Material>    &_material);
     ~MeshRenderer() override = default;
 
-    Bounds                            GetAABB() const override;
-    std::shared_ptr<DrawableGeometry> GetGeometry() const override;
+    Bounds GetAABB() const override;
+    std::shared_ptr<DrawableGeometry> GetGeometry() override;
+    void SetMesh(const std::shared_ptr<Mesh>& mesh);
 
     MeshRenderer(const MeshRenderer &) = delete;
     MeshRenderer(MeshRenderer &&)      = delete;
@@ -28,6 +29,7 @@ private:
     MeshRenderer() = default;
 
     std::shared_ptr<Mesh> m_Mesh;
+    std::shared_mutex m_MeshMutex;
 };
 
 #endif //RENDER_ENGINE_MESH_RENDERER_H

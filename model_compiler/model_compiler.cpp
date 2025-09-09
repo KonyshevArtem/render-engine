@@ -187,8 +187,18 @@ int main(int argc, char** argv)
             modelFilePaths.push_back(entry.path());
     }
 
+#if RENDER_ENGINE_APPLE
+    for (std::filesystem::path& path : modelFilePaths)
+#else
     std::for_each(std::execution::par, modelFilePaths.begin(), modelFilePaths.end(), [&inputPath, &outputPath](std::filesystem::path &path)
-                  { ExtractMeshesFromFbx(path, outputPath); });
+#endif
+    {
+        ExtractMeshesFromFbx(path, outputPath);
+#if RENDER_ENGINE_APPLE
+    }
+#else
+    });
+#endif
 
     return 0;
 }

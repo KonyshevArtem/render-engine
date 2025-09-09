@@ -31,6 +31,9 @@ cbuffer PerMaterialData : register(b4)
     float _Metallness;
 #ifdef _ALPHA_CLIP
     float _AlphaClip;
+    float _Unused0;
+#else
+    float2 _Unused0;
 #endif
 };
 

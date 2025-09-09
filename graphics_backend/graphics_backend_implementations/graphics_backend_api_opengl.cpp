@@ -33,6 +33,20 @@
 #include <windows.h>
 #endif
 
+#if __has_include("android/native_window_jni.h")
+#include <android/native_window_jni.h>
+#endif
+
+#if RENDER_ENGINE_WINDOWS
+typedef HWND Window;
+typedef HDC DeviceContext;
+typedef HGLRC GLContext;
+#elif RENDER_ENGINE_ANDROID
+typedef ANativeWindow* Window;
+typedef EGLDisplay DeviceContext;
+typedef EGLContext GLContext;
+#endif
+
 namespace OpenGLLocal
 {
     struct BlendState
@@ -76,8 +90,17 @@ namespace OpenGLLocal
         int Layer;
     };
 
-    void* s_Window;
-    void* s_DeviceContext;
+    struct GeometryData
+    {
+        GLuint VAO;
+        GraphicsBackendVertexAttributeDescriptor* VertexAttributes;
+        uint32_t VertexAttributesCount;
+    };
+
+    Window s_Window;
+    DeviceContext s_DeviceContext;
+    GLContext s_MainThreadContext;
+    std::unordered_map<std::thread::id, GLContext> s_ThreadContexts;
 
     GLuint s_Framebuffers[GraphicsBackend::GetMaxFramesInFlight()][2];
     OpenGLLocal::RenderTargetState s_RenderTargetStates[static_cast<int>(FramebufferAttachment::MAX)];
@@ -171,10 +194,12 @@ namespace OpenGLLocal
 
 void GraphicsBackendOpenGL::Init(void* data)
 {
-    OpenGLLocal::s_Window = data;
+    GraphicsBackendBase::Init(data);
+
+    OpenGLLocal::s_Window = reinterpret_cast<Window>(data);
 
 #if RENDER_ENGINE_WINDOWS
-    HDC deviceContext = GetDC(static_cast<HWND>(OpenGLLocal::s_Window));
+    OpenGLLocal::s_DeviceContext = GetDC(OpenGLLocal::s_Window);
 
     PIXELFORMATDESCRIPTOR pixelFormatDescriptor = {};
     pixelFormatDescriptor.nSize = sizeof(pixelFormatDescriptor);
@@ -184,13 +209,15 @@ void GraphicsBackendOpenGL::Init(void* data)
     pixelFormatDescriptor.cColorBits = 32;
     pixelFormatDescriptor.cDepthBits = 24;
     pixelFormatDescriptor.iLayerType = PFD_MAIN_PLANE;
-    int pixelFormat = ChoosePixelFormat(deviceContext, &pixelFormatDescriptor);
-    SetPixelFormat(deviceContext, pixelFormat, &pixelFormatDescriptor);
+    int pixelFormat = ChoosePixelFormat(OpenGLLocal::s_DeviceContext, &pixelFormatDescriptor);
+    SetPixelFormat(OpenGLLocal::s_DeviceContext, pixelFormat, &pixelFormatDescriptor);
 
-    HGLRC tempContext = wglCreateContext(deviceContext);
-    wglMakeCurrent(deviceContext, tempContext);
-
-    OpenGLLocal::s_DeviceContext = static_cast<void*>(deviceContext);
+    HGLRC tempContext = wglCreateContext(OpenGLLocal::s_DeviceContext);
+    wglMakeCurrent(OpenGLLocal::s_DeviceContext, tempContext);
+#elif RENDER_ENGINE_ANDROID
+    OpenGLLocal::s_DeviceContext = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (OpenGLLocal::s_DeviceContext == EGL_NO_DISPLAY)
+        LogContextError("eglGetDisplay");
 #endif
 
     OpenGLHelpers::InitBindings();
@@ -204,10 +231,14 @@ void GraphicsBackendOpenGL::Init(void* data)
             0
     };
 
-    HGLRC modernContext = wglCreateContextAttribsARB(deviceContext, 0, attribs);
+    OpenGLLocal::s_MainThreadContext = wglCreateContextAttribsARB(OpenGLLocal::s_DeviceContext, 0, attribs);
     wglMakeCurrent(nullptr, nullptr);
     wglDeleteContext(tempContext);
-    wglMakeCurrent(deviceContext, modernContext);
+    wglMakeCurrent(OpenGLLocal::s_DeviceContext, OpenGLLocal::s_MainThreadContext);
+#elif RENDER_ENGINE_ANDROID
+    OpenGLLocal::s_MainThreadContext = eglGetCurrentContext();
+    if (OpenGLLocal::s_MainThreadContext == EGL_NO_CONTEXT)
+        LogContextError("eglGetCurrentContext");
 #endif
 
     int extensionsCount;
@@ -266,6 +297,8 @@ void GraphicsBackendOpenGL::InitNewFrame()
         glClientWaitSync(currentFence, GL_SYNC_FLUSH_COMMANDS_BIT, 160000000);
         glDeleteSync(currentFence);
     }
+
+    CreatePendingContexts();
 }
 
 void GraphicsBackendOpenGL::FillImGuiInitData(void* data)
@@ -289,6 +322,8 @@ void GraphicsBackendOpenGL::FillImGuiFrameData(void *data)
 
 GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
 {
+    InitContext();
+
     GraphicsBackendTexture texture{};
     glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture));
 
@@ -319,6 +354,8 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
 
 GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name)
 {
+    InitContext();
+
     GraphicsBackendSampler sampler{};
     glGenSamplers(1, reinterpret_cast<GLuint *>(&sampler.Sampler));
 
@@ -347,12 +384,12 @@ GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrap
     return sampler;
 }
 
-void GraphicsBackendOpenGL::DeleteTexture(const GraphicsBackendTexture &texture)
+void GraphicsBackendOpenGL::DeleteTexture_Internal(const GraphicsBackendTexture &texture)
 {
     glDeleteTextures(1, reinterpret_cast<const GLuint *>(&texture.Texture));
 }
 
-void GraphicsBackendOpenGL::DeleteSampler(const GraphicsBackendSampler &sampler)
+void GraphicsBackendOpenGL::DeleteSampler_Internal(const GraphicsBackendSampler &sampler)
 {
     glDeleteSamplers(1, reinterpret_cast<const GLuint *>(&sampler.Sampler));
 }
@@ -381,6 +418,8 @@ void GraphicsBackendOpenGL::GenerateMipmaps(const GraphicsBackendTexture &textur
 
 void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData)
 {
+    InitContext();
+
     const GLenum type = OpenGLHelpers::ToTextureType(texture.Type);
     const GLenum target = OpenGLHelpers::ToTextureTarget(texture.Type, cubemapFace);
     const GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(texture.Format, texture.IsLinear);
@@ -411,6 +450,9 @@ void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &text
             glTexSubImage2D(target, level, 0, 0, width, height, pixelFormat, dataType, pixelsData);
         }
     }
+
+    if (!IsMainThread())
+        glFinish();
 }
 
 void AttachTextureToFramebuffer(GLenum framebuffer, GLenum attachment, TextureType type, GLuint texture, int level, int layer)
@@ -488,6 +530,8 @@ TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAt
 
 GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
 {
+    InitContext();
+
     const GLbitfield bufferFlags = allowCPUWrites ? GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT : 0;
 
     GLuint glBuffer;
@@ -509,7 +553,7 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::s
     return buffer;
 }
 
-void GraphicsBackendOpenGL::DeleteBuffer(const GraphicsBackendBuffer &buffer)
+void GraphicsBackendOpenGL::DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer)
 {
     const OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
     if (bufferData->Data)
@@ -591,37 +635,42 @@ int GraphicsBackendOpenGL::GetConstantBufferOffsetAlignment()
 
 GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name)
 {
+    OpenGLLocal::GeometryData* geometryData = new OpenGLLocal::GeometryData();
+
     GraphicsBackendGeometry geometry{};
     geometry.VertexBuffer = vertexBuffer;
     geometry.IndexBuffer = indexBuffer;
+    geometry.Geometry = reinterpret_cast<uint64_t>(geometryData);
 
-    const OpenGLLocal::BufferData* vertexBufferData = reinterpret_cast<OpenGLLocal::BufferData*>(vertexBuffer.Buffer);
-    const OpenGLLocal::BufferData* indexBufferData = reinterpret_cast<OpenGLLocal::BufferData*>(indexBuffer.Buffer);
-
-    glGenVertexArrays(1, reinterpret_cast<GLuint *>(&geometry.VertexArrayObject));
-    glBindVertexArray(geometry.VertexArrayObject);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferData->GLBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferData->GLBuffer);
-    if (!name.empty())
+    if (IsMainThread())
     {
-        glObjectLabel(GL_VERTEX_ARRAY, geometry.VertexArrayObject, name.length(), name.c_str());
+        CreateVAO(geometry, vertexAttributes.data(), vertexAttributes.size());
+
+        geometryData->VertexAttributes = nullptr;
+        geometryData->VertexAttributesCount = 0;
     }
-
-    for (uint32_t i = 0; i < vertexAttributes.size(); ++i)
+    else
     {
-        const GraphicsBackendVertexAttributeDescriptor& descriptor = vertexAttributes[i];
-        glEnableVertexAttribArray(i);
-        glVertexAttribPointer(i, descriptor.Dimensions, OpenGLHelpers::ToVertexAttributeDataType(descriptor.DataType), descriptor.IsNormalized ? GL_TRUE : GL_FALSE, descriptor.Stride, reinterpret_cast<const void *>(descriptor.Offset));
+        geometryData->VAO = 0;
+        geometryData->VertexAttributes = new GraphicsBackendVertexAttributeDescriptor[vertexAttributes.size()];
+        geometryData->VertexAttributesCount = vertexAttributes.size();
+        memcpy(geometryData->VertexAttributes, vertexAttributes.data(), vertexAttributes.size() * sizeof(GraphicsBackendVertexAttributeDescriptor));
     }
 
     return geometry;
 }
 
-void GraphicsBackendOpenGL::DeleteGeometry(const GraphicsBackendGeometry &geometry)
+void GraphicsBackendOpenGL::DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry)
 {
-    glDeleteVertexArrays(1, reinterpret_cast<const GLuint *>(&geometry.VertexArrayObject));
+    OpenGLLocal::GeometryData* geometryData = reinterpret_cast<OpenGLLocal::GeometryData*>(geometry.Geometry);
+    if (geometryData->VAO)
+        glDeleteVertexArrays(1, &geometryData->VAO);
+
     DeleteBuffer(geometry.VertexBuffer);
     DeleteBuffer(geometry.IndexBuffer);
+
+    delete[] geometryData->VertexAttributes;
+    delete geometryData;
 }
 
 void GraphicsBackendOpenGL::SetViewport(int x, int y, int width, int height, float nearDepth, float farDepth)
@@ -637,6 +686,8 @@ void GraphicsBackendOpenGL::SetScissorRect(int x, int y, int width, int height)
 
 GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shaderType, const std::string& source, const std::string& name)
 {
+    InitContext();
+
     GraphicsBackendShaderObject shaderObject{};
     shaderObject.ShaderObject = glCreateShader(OpenGLHelpers::ToShaderType(shaderType));
 
@@ -672,6 +723,8 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShaderBinary(ShaderTyp
 
 GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBackendProgramDescriptor& descriptor)
 {
+    InitContext();
+
     GLuint glProgram = glCreateProgram();
 
     const std::vector<GraphicsBackendShaderObject>& shaders = *descriptor.Shaders;
@@ -729,12 +782,12 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     return program;
 }
 
-void GraphicsBackendOpenGL::DeleteShader(GraphicsBackendShaderObject shader)
+void GraphicsBackendOpenGL::DeleteShader_Internal(GraphicsBackendShaderObject shader)
 {
     glDeleteShader(shader.ShaderObject);
 }
 
-void GraphicsBackendOpenGL::DeleteProgram(GraphicsBackendProgram program)
+void GraphicsBackendOpenGL::DeleteProgram_Internal(GraphicsBackendProgram program)
 {
     OpenGLLocal::ProgramData* programData = reinterpret_cast<OpenGLLocal::ProgramData*>(program.Program);
     glDeleteProgram(programData->Program);
@@ -785,25 +838,25 @@ void GraphicsBackendOpenGL::SetClearDepth(double depth)
 
 void GraphicsBackendOpenGL::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
 {
-    glBindVertexArray(geometry.VertexArrayObject);
+    BindGeometry(geometry);
     glDrawArrays(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
 }
 
 void GraphicsBackendOpenGL::DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
-    glBindVertexArray(geometry.VertexArrayObject);
+    BindGeometry(geometry);
     glDrawArraysInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, instanceCount);
 }
 
 void GraphicsBackendOpenGL::DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType)
 {
-    glBindVertexArray(geometry.VertexArrayObject);
+    BindGeometry(geometry);
     glDrawElements(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr);
 }
 
 void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
-    glBindVertexArray(geometry.VertexArrayObject);
+    BindGeometry(geometry);
     glDrawElementsInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr, instanceCount);
 }
 
@@ -1005,7 +1058,7 @@ void GraphicsBackendOpenGL::Present()
     OpenGLLocal::s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
 #if RENDER_ENGINE_WINDOWS
-    SwapBuffers(static_cast<HDC>(OpenGLLocal::s_DeviceContext));
+    SwapBuffers(OpenGLLocal::s_DeviceContext);
 #endif
 }
 
@@ -1019,6 +1072,159 @@ void GraphicsBackendOpenGL::TransitionTexture(const GraphicsBackendTexture& text
 
 void GraphicsBackendOpenGL::TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue)
 {
+}
+
+void GraphicsBackendOpenGL::CreateVAO(const GraphicsBackendGeometry& geometry, const GraphicsBackendVertexAttributeDescriptor* vertexAttributes, uint32_t vertexAttributesCount)
+{
+    OpenGLLocal::GeometryData* geometryData = reinterpret_cast<OpenGLLocal::GeometryData*>(geometry.Geometry);
+    const OpenGLLocal::BufferData* vertexBufferData = reinterpret_cast<OpenGLLocal::BufferData*>(geometry.VertexBuffer.Buffer);
+    const OpenGLLocal::BufferData* indexBufferData = reinterpret_cast<OpenGLLocal::BufferData*>(geometry.IndexBuffer.Buffer);
+
+    glGenVertexArrays(1, &geometryData->VAO);
+    glBindVertexArray(geometryData->VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferData->GLBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferData->GLBuffer);
+
+    for (uint32_t i = 0; i < vertexAttributesCount; ++i)
+    {
+        const GraphicsBackendVertexAttributeDescriptor& descriptor = vertexAttributes[i];
+        glEnableVertexAttribArray(i);
+        glVertexAttribPointer(i, descriptor.Dimensions, OpenGLHelpers::ToVertexAttributeDataType(descriptor.DataType), descriptor.IsNormalized ? GL_TRUE : GL_FALSE, descriptor.Stride, reinterpret_cast<const void *>(descriptor.Offset));
+    }
+}
+
+void GraphicsBackendOpenGL::BindGeometry(const GraphicsBackendGeometry& geometry)
+{
+    OpenGLLocal::GeometryData* geometryData = reinterpret_cast<OpenGLLocal::GeometryData*>(geometry.Geometry);
+    if (!geometryData->VAO)
+    {
+        CreateVAO(geometry, geometryData->VertexAttributes, geometryData->VertexAttributesCount);
+
+        delete[] geometryData->VertexAttributes;
+        geometryData->VertexAttributes = nullptr;
+    }
+
+    glBindVertexArray(geometryData->VAO);
+}
+
+void GraphicsBackendOpenGL::InitContext()
+{
+    if (IsMainThread())
+        return;
+
+    bool contextReady;
+    std::thread::id threadId = std::this_thread::get_id();
+
+    {
+        std::shared_lock readLock(m_ThreadContextsMutex);
+        contextReady = OpenGLLocal::s_ThreadContexts.contains(threadId);
+    }
+
+    if (!contextReady)
+    {
+        {
+            std::unique_lock writeLock(m_ThreadContextsMutex);
+            m_PendingContextCreation.push_back(threadId);
+        }
+
+        while (!contextReady)
+        {
+            std::unique_lock readLock(m_ThreadContextsMutex);
+            contextReady = OpenGLLocal::s_ThreadContexts.contains(threadId);
+        }
+    }
+    else
+        return;
+
+    {
+        std::shared_lock readLock(m_ThreadContextsMutex);
+
+        GLContext context = OpenGLLocal::s_ThreadContexts[threadId];
+#if RENDER_ENGINE_WINDOWS
+        if (!wglMakeCurrent(OpenGLLocal::s_DeviceContext, context))
+            LogContextError("wglMakeCurrent");
+#elif RENDER_ENGINE_ANDROID
+        if (!eglMakeCurrent(OpenGLLocal::s_DeviceContext, EGL_NO_SURFACE, EGL_NO_SURFACE, context))
+            LogContextError("eglMakeCurrent");
+#endif
+    }
+}
+
+void GraphicsBackendOpenGL::CreatePendingContexts()
+{
+    std::unique_lock lock(m_ThreadContextsMutex);
+
+    for (std::thread::id threadId : m_PendingContextCreation)
+    {
+        GLContext workerContext;
+#if RENDER_ENGINE_WINDOWS
+        workerContext = wglCreateContext(OpenGLLocal::s_DeviceContext);
+        if (!workerContext)
+            LogContextError("wglCreateContext");
+
+        if (!wglShareLists(OpenGLLocal::s_MainThreadContext, workerContext))
+            LogContextError("wglShareLists");
+#elif RENDER_ENGINE_ANDROID
+        EGLint attributes[5] = {EGL_CONTEXT_MAJOR_VERSION, OPENGL_MAJOR_VERSION, EGL_CONTEXT_MINOR_VERSION, OPENGL_MINOR_VERSION, EGL_NONE};
+        workerContext = eglCreateContext(OpenGLLocal::s_DeviceContext, nullptr, OpenGLLocal::s_MainThreadContext, attributes);
+        if (workerContext == EGL_NO_CONTEXT)
+            LogContextError("eglCreateContext");
+#endif
+
+        OpenGLLocal::s_ThreadContexts[threadId] = workerContext;
+    }
+
+    m_PendingContextCreation.clear();
+}
+
+void GraphicsBackendOpenGL::LogContextError(const std::string& tag)
+{
+#if RENDER_ENGINE_WINDOWS
+    LPVOID lpMsgBuf;
+    DWORD dw = GetLastError();
+
+    bool success = FormatMessage(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+            nullptr,
+            dw,
+            MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+            (LPTSTR) &lpMsgBuf,
+            0,
+            nullptr);
+
+    if (success)
+        Debug::LogErrorFormat("[{}] {}", tag, static_cast<LPCTSTR>(lpMsgBuf));
+#elif RENDER_ENGINE_ANDROID
+    auto GetErrorString = [](EGLint error)
+    {
+        switch (error)
+        {
+            case EGL_SUCCESS:
+                return "No error occurred";
+            case EGL_NOT_INITIALIZED:
+                return "EGL not initialized or failed to initialize";
+            case EGL_BAD_ACCESS:
+                return "Resource is already in use";
+            case EGL_BAD_ALLOC:
+                return "Memory allocation failed";
+            case EGL_BAD_ATTRIBUTE:
+                return "Invalid attribute or value";
+            case EGL_BAD_CONTEXT:
+                return "Invalid rendering context";
+            case EGL_BAD_CONFIG:
+                return "Invalid framebuffer configuration";
+            case EGL_BAD_DISPLAY:
+                return "Invalid display";
+            case EGL_BAD_SURFACE:
+                return "Invalid surface";
+            case EGL_CONTEXT_LOST:
+                return "Context lost due to power management";
+        }
+    };
+
+    EGLint error = eglGetError();
+    Debug::LogErrorFormat("[{}] {}", tag, GetErrorString(error));
+#endif
 }
 
 #endif // RENDER_BACKEND_OPENGL

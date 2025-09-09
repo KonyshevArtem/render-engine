@@ -1,6 +1,7 @@
 #include "mesh.h"
 #include "vector2/vector2.h"
 #include "graphics_backend_api.h"
+#include "editor/profiler/profiler.h"
 
 #include <span>
 
@@ -26,6 +27,8 @@ namespace MeshLocal
 
     GraphicsBackendGeometry CreateGeometry(const VertexAttributes& attributes, const uint8_t* vertexData, uint64_t vertexDataSize, const int* indices, uint64_t indicesCount, const std::string& name)
     {
+        Profiler::Marker _("MeshLocal::CreateGeometry");
+
         GraphicsBackendBuffer vertexBuffer = GraphicsBackend::Current()->CreateBuffer(vertexDataSize, name + "_Vertices", false, vertexData);
         GraphicsBackendBuffer indexBuffer = GraphicsBackend::Current()->CreateBuffer(indicesCount * sizeof(int), name + "_Indices", false, indices);
 

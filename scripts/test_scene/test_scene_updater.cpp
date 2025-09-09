@@ -1,4 +1,5 @@
 #include "test_scene_updater.h"
+#include "input/input.h"
 #include "material/material.h"
 #include "renderer/renderer.h"
 #include "scene/scene.h"
@@ -11,6 +12,8 @@ std::shared_ptr<TestSceneUpdater> TestSceneUpdater::Create(const nlohmann::json&
 {
     return std::make_shared<TestSceneUpdater>();
 }
+
+DEFINE_COMPONENT_DEFAULT_ASYNC_CONSTRUCTOR(TestSceneUpdater)
 
 namespace TestSceneUpdaterLocal
 {
@@ -98,4 +101,9 @@ void TestSceneUpdater::Update()
 
     if (!m_RotatingCylinder2.expired())
         m_RotatingCylinder2.lock()->SetLocalRotation(TestSceneUpdaterLocal::CalcRotation(phase, 1));
+
+    if (Input::GetKeyDown('G'))
+    {
+        Scene::Load("core_resources/scenes/test_scene.scene");
+    }
 }

@@ -12,6 +12,7 @@
 #include "../scripts/game_components_register.h"
 #include "core_components_register.h"
 #include "resources/resources.h"
+#include "worker/worker.h"
 
 GameWindow* window = nullptr;
 
@@ -38,6 +39,7 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
     FileSystem::Init(fileSystemData);
     GraphicsBackend::Init(graphicsBackendInitData);
     ImGuiWrapper::Init();
+    Worker::Init();
 
     window = new GameWindow(display);
 
@@ -57,6 +59,8 @@ void EngineFramework::TickMainLoop(int width, int height)
 {
     if (window)
     {
+        GraphicsBackend::Current()->IncrementFrameNumber();
+
         Profiler::BeginNewFrame();
         Profiler::Marker _("EngineFramework::TickMainLoop");
 
@@ -102,6 +106,7 @@ void EngineFramework::Shutdown()
     Scene::Unload();
     Resources::UnloadAllResources();
 
+    Worker::Shutdown();
     ImGuiWrapper::Shutdown();
     Graphics::Shutdown();
 }

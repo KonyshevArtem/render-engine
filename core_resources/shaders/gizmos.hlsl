@@ -11,7 +11,12 @@ float4 vertexMain(Attributes input) : SV_Position
 {
     SETUP_INSTANCE_ID(input)
 
-    return mul(_VPMatrix, mul(_ModelMatrix, float4(input.PositionOS, 1)));
+    float4 worldPos = mul(_ModelMatrix, float4(input.PositionOS, 1));
+#ifdef _FRUSTUM_GIZMO
+    worldPos /= worldPos.w;
+#endif
+
+    return mul(_VPMatrix, worldPos);
 }
 
 half4 fragmentMain() : SV_Target

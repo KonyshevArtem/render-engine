@@ -12,10 +12,18 @@ class DrawableGeometry;
 
 namespace Gizmos
 {
-    void DrawWireCube(const Matrix4x4 &_matrix);
+    enum class GizmoType
+    {
+        WIRE_CUBE,
+        FRUSTUM
+    };
+
+    void DrawWireCube(const Matrix4x4& matrix);
+    void DrawFrustum(const Matrix4x4& matrix);
 
     void Init();
-    const std::unordered_map<std::shared_ptr<DrawableGeometry>, std::vector<Matrix4x4>> &GetGizmosToDraw();
+    const std::unordered_map<GizmoType, std::vector<Matrix4x4>>& GetGizmosToDraw();
+    std::shared_ptr<DrawableGeometry> GetGizmosGeometry(GizmoType gizmoType);
     void ClearGizmos();
 
     bool IsEnabled();

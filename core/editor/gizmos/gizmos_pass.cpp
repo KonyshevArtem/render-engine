@@ -44,8 +44,11 @@ bool GizmosPass::Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers
 
 void GizmosPass::Execute(const Context& ctx)
 {
-    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {});
-    static const std::shared_ptr<Material> gizmosMaterial = std::make_shared<Material>(shader, "Gizmos");
+    static const std::unordered_map<Gizmos::GizmoType, std::shared_ptr<Material>> gizmoMaterials
+    {
+        {Gizmos::GizmoType::WIRE_CUBE, std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {}), "Wire Cube Gizmo")},
+        {Gizmos::GizmoType::FRUSTUM, std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING", "_FRUSTUM_GIZMO"}, {}, {}, {}), "Frustum Gizmo")},
+    };
 
     Profiler::Marker marker("GizmosPass::Execute");
     Profiler::GPUMarker gpuMarker("GizmosPass::Execute");
@@ -56,7 +59,7 @@ void GizmosPass::Execute(const Context& ctx)
     Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
 
     GraphicsBackend::Current()->BeginRenderPass("Gizmos pass");
-    const auto& gizmos = Gizmos::GetGizmosToDraw();
+    const std::unordered_map<Gizmos::GizmoType, std::vector<Matrix4x4>>& gizmos = Gizmos::GetGizmosToDraw();
     for (const auto& pair : gizmos)
     {
         const std::vector<Matrix4x4>& matrices = pair.second;
@@ -66,7 +69,7 @@ void GizmosPass::Execute(const Context& ctx)
         {
             const auto end = begin + std::min(GlobalConstants::MaxInstancingCount, totalCount);
             const std::vector<Matrix4x4> matricesSlice(begin, end);
-            Graphics::DrawInstanced(*pair.first, *gizmosMaterial, matricesSlice);
+            Graphics::DrawInstanced(*Gizmos::GetGizmosGeometry(pair.first), *gizmoMaterials.at(pair.first), matricesSlice);
 
             begin = end;
             totalCount -= GlobalConstants::MaxInstancingCount;

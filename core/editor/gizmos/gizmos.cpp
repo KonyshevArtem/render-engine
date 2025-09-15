@@ -7,14 +7,18 @@
 
 bool m_IsEnabled;
 std::shared_ptr<Lines> m_WireCubePrimitive;
-std::unordered_map<std::shared_ptr<DrawableGeometry>, std::vector<Matrix4x4>> m_GizmosToDraw;
+std::unordered_map<Gizmos::GizmoType, std::vector<Matrix4x4>> m_GizmosToDraw;
 
-void Gizmos::DrawWireCube(const Matrix4x4 &_matrix)
+void Gizmos::DrawWireCube(const Matrix4x4& matrix)
 {
     if (m_IsEnabled)
-    {
-        m_GizmosToDraw[m_WireCubePrimitive].push_back(_matrix);
-    }
+        m_GizmosToDraw[GizmoType::WIRE_CUBE].push_back(matrix);
+}
+
+void Gizmos::DrawFrustum(const Matrix4x4& matrix)
+{
+    if (m_IsEnabled)
+        m_GizmosToDraw[GizmoType::FRUSTUM].push_back(matrix);
 }
 
 void Gizmos::Init()
@@ -38,21 +42,30 @@ void Gizmos::Init()
         };
 
         m_WireCubePrimitive = std::make_shared<Lines>(wireCubePoints, wireCubeIndices, "WireCube");
-        m_GizmosToDraw[m_WireCubePrimitive] = {};
+        m_GizmosToDraw[GizmoType::WIRE_CUBE] = {};
+        m_GizmosToDraw[GizmoType::FRUSTUM] = {};
     }
 }
 
-const std::unordered_map<std::shared_ptr<DrawableGeometry>, std::vector<Matrix4x4>> &Gizmos::GetGizmosToDraw()
+const std::unordered_map<Gizmos::GizmoType, std::vector<Matrix4x4>>& Gizmos::GetGizmosToDraw()
 {
     return m_GizmosToDraw;
 }
 
+std::shared_ptr<DrawableGeometry> Gizmos::GetGizmosGeometry(Gizmos::GizmoType gizmoType)
+{
+    switch (gizmoType)
+    {
+        case GizmoType::WIRE_CUBE:
+        case GizmoType::FRUSTUM:
+            return m_WireCubePrimitive;
+    }
+}
+
 void Gizmos::ClearGizmos()
 {
-    for (auto &pair : m_GizmosToDraw)
-    {
+    for (auto& pair: m_GizmosToDraw)
         pair.second.clear();
-    }
 }
 
 bool Gizmos::IsEnabled()

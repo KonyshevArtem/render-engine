@@ -116,6 +116,7 @@ Compile silhouette
 Compile billboard
 
 Compile gizmos _INSTANCING
+Compile gizmos _INSTANCING,_FRUSTUM_GIZMO
 
 Compile editor/shadowMapDebug
 

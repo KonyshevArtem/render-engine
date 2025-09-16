@@ -9,7 +9,6 @@ std::shared_ptr<Camera> Camera::Create(const nlohmann::json& componentData)
     float fov = 80;
     float nearClipPlane = 0.01;
     float farClipPlane = 100;
-    float shadowDistance = 100;
 
     if (componentData.contains("Fov"))
         componentData.at("Fov").get_to(fov);
@@ -17,10 +16,8 @@ std::shared_ptr<Camera> Camera::Create(const nlohmann::json& componentData)
         componentData.at("NearClip").get_to(nearClipPlane);
     if (componentData.contains("FarClip"))
         componentData.at("FarClip").get_to(farClipPlane);
-    if (componentData.contains("ShadowDistance"))
-        componentData.at("ShadowDistance").get_to(shadowDistance);
 
-    std::shared_ptr<Camera> camera = std::make_shared<Camera>(fov, nearClipPlane, farClipPlane, shadowDistance);
+    std::shared_ptr<Camera> camera = std::make_shared<Camera>(fov, nearClipPlane, farClipPlane);
     Camera::Current = camera;
     return camera;
 }
@@ -29,11 +26,10 @@ DEFINE_COMPONENT_DEFAULT_ASYNC_CONSTRUCTOR(Camera)
 
 std::shared_ptr<Camera> Camera::Current = nullptr;
 
-Camera::Camera(float fov, float nearClipPlane, float farClipPlane, float shadowDistance) :
+Camera::Camera(float fov, float nearClipPlane, float farClipPlane) :
     m_Fov(fov),
     m_NearClipPlane(nearClipPlane),
     m_FarClipPlane(farClipPlane),
-    m_ShadowDistance(shadowDistance),
     m_ProjectionMatrix(Matrix4x4::Identity()),
     m_ScreenWidth(0),
     m_ScreenHeight(0)

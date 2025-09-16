@@ -15,4 +15,6 @@ namespace GraphicsSettings
     DEFINE_GRAPHICS_SETTING(float, Gamma, 2.2f)
     DEFINE_GRAPHICS_SETTING(float, Exposure, 1.0f)
     DEFINE_GRAPHICS_SETTING(TonemappingMode, TonemappingMode, TonemappingMode::ACES_APPROXIMATE)
+
+    DEFINE_GRAPHICS_SETTING(float, ShadowDistance, 50)
 }

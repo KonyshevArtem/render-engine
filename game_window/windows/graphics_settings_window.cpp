@@ -69,10 +69,18 @@ void DrawTonemappingSettings()
     GraphicsSettings::SetTonemappingMode(static_cast<GraphicsSettings::TonemappingMode>(selectedTonemapping));
 }
 
+void DrawShadowsSettings()
+{
+    ImGui::SeparatorText("Shadows");
+
+    DrawFloatSetting("Shadow Distance", GraphicsSettings::GetShadowDistance, GraphicsSettings::SetShadowDistance, 0.1f);
+}
+
 void GraphicsSettingsWindow::DrawInternal()
 {
     DrawLightingSettings();
     DrawTonemappingSettings();
+    DrawShadowsSettings();
 }
 
 #endif

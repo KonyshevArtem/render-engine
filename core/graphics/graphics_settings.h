@@ -30,6 +30,8 @@ namespace GraphicsSettings
     DECLARE_GRAPHICS_SETTING(float, Gamma)
     DECLARE_GRAPHICS_SETTING(float, Exposure)
     DECLARE_GRAPHICS_SETTING(TonemappingMode, TonemappingMode)
+
+    DECLARE_GRAPHICS_SETTING(float, ShadowDistance)
 }
 
 #endif //RENDER_ENGINE_GRAPHICS_SETTINGS_H

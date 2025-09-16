@@ -215,7 +215,7 @@ namespace Graphics
 
             SetLightingData(ctx.Lights, ctx.Skybox);
 
-            s_ShadowCasterPass->Prepare(ctx.Renderers, ctx.Lights, Camera::Current->GetShadowDistance());
+            s_ShadowCasterPass->Prepare(ctx.Renderers, ctx.Lights, GraphicsSettings::GetShadowDistance());
             s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor, Camera::Current->GetGameObject()->GetPosition(), ctx.Renderers);
             s_FinalBlitPass->Prepare(cameraColorTarget);
 

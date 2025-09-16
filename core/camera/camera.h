@@ -12,7 +12,7 @@ class Camera : public Component
 public:
     DECLARE_COMPONENT_CONSTRUCTORS(Camera)
 
-    Camera(float _fov, float _nearClipPlane, float _farClipPlane, float _shadowDistance);
+    Camera(float _fov, float _nearClipPlane, float _farClipPlane);
 
     static std::shared_ptr<Camera> Current;
 
@@ -29,9 +29,9 @@ public:
         return m_FarClipPlane;
     }
 
-    inline float GetShadowDistance() const
+    inline float GetFov() const
     {
-        return m_ShadowDistance;
+        return m_Fov;
     }
 
     ~Camera() = default;
@@ -46,7 +46,6 @@ private:
     float      m_Fov            = 0;
     float      m_NearClipPlane  = 0;
     float      m_FarClipPlane   = 0;
-    float      m_ShadowDistance = 0;
     Matrix4x4  m_ProjectionMatrix;
     int        m_ScreenWidth;
     int        m_ScreenHeight;

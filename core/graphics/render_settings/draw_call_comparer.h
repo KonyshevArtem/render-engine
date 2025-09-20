@@ -16,7 +16,7 @@ enum class DrawCallSortMode
 struct DrawCallComparer
 {
     DrawCallSortMode SortMode = DrawCallSortMode::FRONT_TO_BACK;
-    Vector3 CameraPosition = Vector3();
+    Vector3 CameraDirection = Vector3();
 
     bool operator()(const DrawCallInfo &drawCallA, const DrawCallInfo &drawCallB);
 };

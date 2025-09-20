@@ -35,21 +35,3 @@ Camera::Camera(float fov, float nearClipPlane, float farClipPlane) :
     m_ScreenHeight(0)
 {
 }
-
-const Matrix4x4 &Camera::GetViewMatrix()
-{
-    return m_GameObject.lock()->GetWorldToLocalMatrix();
-}
-
-const Matrix4x4 &Camera::GetProjectionMatrix()
-{
-    int width  = Graphics::GetScreenWidth();
-    int height = Graphics::GetScreenHeight();
-    if (width != m_ScreenWidth || height != m_ScreenHeight)
-    {
-        float aspect       = static_cast<float>(width) / static_cast<float>(height);
-        m_ProjectionMatrix = Matrix4x4::Perspective(m_Fov, aspect, m_NearClipPlane, m_FarClipPlane);
-    }
-
-    return m_ProjectionMatrix;
-}

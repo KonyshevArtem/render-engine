@@ -24,8 +24,8 @@ public:
     ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer, int priority);
     ~ShadowCasterPass() override = default;
 
-    void Prepare(const std::vector<std::shared_ptr<Renderer>>& renderers, const std::vector<Light*>& lights, float shadowsDistance);
-    void Execute(const Context &ctx) override;
+    void Prepare(const Context& ctx);
+    void Execute(const Context& ctx) override;
 
     ShadowCasterPass(const ShadowCasterPass&) = delete;
     ShadowCasterPass(ShadowCasterPass&&) = delete;
@@ -34,10 +34,11 @@ public:
     ShadowCasterPass &operator=(ShadowCasterPass&&) = delete;
 
 private:
-    struct ShadowsMatrices
+    struct ShadowsCameraData
     {
         Matrix4x4 ViewMatrix;
         Matrix4x4 ProjectionMatrix;
+        float FarPlane;
     };
 
     std::shared_ptr<GraphicsBuffer> m_ShadowsConstantBuffer;
@@ -47,14 +48,14 @@ private:
 
     RenderQueue m_DirectionalLightRenderQueue;
     RenderQueue m_SpotLightRenderQueues[GlobalConstants::MaxSpotLightSources];
-    RenderQueue m_PointLightsRenderQueues[GlobalConstants::MaxPointLightSources];
+    RenderQueue m_PointLightsRenderQueues[GlobalConstants::MaxPointLightSources * 6];
 
     ShadowsData m_ShadowsGPUData{};
-    ShadowsMatrices m_DirectionLightMatrices;
-    ShadowsMatrices m_SpotLightMatrices[GlobalConstants::MaxSpotLightSources];
-    ShadowsMatrices m_PointLightMatrices[GlobalConstants::MaxPointLightSources * 6];
+    ShadowsCameraData m_DirectionLightCameraData;
+    ShadowsCameraData m_SpotLightCameraData[GlobalConstants::MaxSpotLightSources];
+    ShadowsCameraData m_PointLightCameraData[GlobalConstants::MaxPointLightSources * 6];
 
-    static void Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsMatrices& matrices, const std::string& passName);
+    static void Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData &cameraData, const std::string& passName);
 };
 
 #endif //RENDER_ENGINE_SHADOW_CASTER_PASS_H

@@ -39,3 +39,11 @@ Vector4 Vector4::Normalize() const
             this->w / length,
     };
 }
+
+void Vector4::operator/=(float a)
+{
+    x /= a;
+    y /= a;
+    z /= a;
+    w /= a;
+}

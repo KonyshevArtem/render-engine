@@ -3,6 +3,7 @@
 
 #include "draw_call_comparer.h"
 #include "draw_call_filter.h"
+#include "culling/frustum.h"
 
 #include <memory>
 
@@ -13,6 +14,7 @@ struct RenderSettings
     DrawCallSortMode Sorting = DrawCallSortMode::NO_SORTING;
     DrawCallFilter Filter = DrawCallFilter::All();
     std::shared_ptr<Material> OverrideMaterial;
+    uint32_t FrustumCullingPlanesBits = Frustum::AllPlanesBits;
 };
 
 #endif

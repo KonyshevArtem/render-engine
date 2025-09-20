@@ -16,9 +16,6 @@ public:
 
     static std::shared_ptr<Camera> Current;
 
-    const Matrix4x4 &GetViewMatrix();
-    const Matrix4x4 &GetProjectionMatrix();
-
     inline float GetNearClipPlane() const
     {
         return m_NearClipPlane;

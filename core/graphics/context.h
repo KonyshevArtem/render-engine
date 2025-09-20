@@ -2,7 +2,7 @@
 #define RENDER_ENGINE_CONTEXT_H
 
 #include "matrix4x4/matrix4x4.h"
-#include "bounds/bounds.h"
+#include "vector2/vector2.h"
 
 #include <vector>
 #include <memory>
@@ -20,6 +20,11 @@ struct Context
     std::vector<Light*> Lights;
 
     std::vector<std::shared_ptr<Renderer>> Renderers;
+
+    Vector2 Viewport;
+    float FoV;
+    float NearPlane;
+    float FarPlane;
 
     Matrix4x4 ViewMatrix = Matrix4x4();
     Matrix4x4 ProjectionMatrix = Matrix4x4();

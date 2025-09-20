@@ -14,11 +14,11 @@ DrawRenderersPass::DrawRenderersPass(std::string name, DrawCallSortMode sorting,
 {
 }
 
-void DrawRenderersPass::Prepare(const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers)
+void DrawRenderersPass::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers)
 {
     Profiler::Marker marker("DrawRenderersPass::Prepare");
 
-    m_RenderQueue.Prepare(cameraPosition, renderers, m_RenderSettings);
+    m_RenderQueue.Prepare(viewProjectionMatrix, renderers, m_RenderSettings);
 }
 
 void DrawRenderersPass::Execute(const Context& ctx)

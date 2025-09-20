@@ -61,6 +61,7 @@ namespace Graphics
 
     int s_ScreenWidth  = 0;
     int s_ScreenHeight = 0;
+    int s_DrawCallCount = 0;
 
     std::unordered_map<std::string, std::shared_ptr<Texture>> s_GlobalTextures;
 
@@ -193,6 +194,7 @@ namespace Graphics
 
         s_ScreenWidth  = width;
         s_ScreenHeight = height;
+        s_DrawCallCount = 0;
 
         const Context ctx;
         std::vector<std::shared_ptr<RenderPass>> renderPasses;
@@ -215,8 +217,8 @@ namespace Graphics
 
             SetLightingData(ctx.Lights, ctx.Skybox);
 
-            s_ShadowCasterPass->Prepare(ctx.Renderers, ctx.Lights, GraphicsSettings::GetShadowDistance());
-            s_ForwardRenderPass->Prepare(colorTargetDescriptor, depthTargetDescriptor, Camera::Current->GetGameObject()->GetPosition(), ctx.Renderers);
+            s_ShadowCasterPass->Prepare(ctx);
+            s_ForwardRenderPass->Prepare(ctx, colorTargetDescriptor, depthTargetDescriptor);
             s_FinalBlitPass->Prepare(cameraColorTarget);
 
             renderPasses.push_back(s_ShadowCasterPass);
@@ -394,6 +396,8 @@ namespace Graphics
         {
             GraphicsBackend::Current()->DrawArrays(geometry.GetGraphicsBackendGeometry(), primitiveType, 0, elementsCount);
         }
+
+        ++s_DrawCallCount;
     }
 
     void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices)
@@ -425,7 +429,7 @@ namespace Graphics
         return s_ScreenHeight;
     }
 
-    void SetCameraData(const Matrix4x4 &_viewMatrix, Matrix4x4 _projectionMatrix)
+    void SetCameraData(const Matrix4x4& viewMatrix, Matrix4x4 projectionMatrix, float nearPlane, float farPlane)
     {
         if (GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL || GraphicsBackend::Current()->GetName() == GraphicsBackendName::DX12)
         {
@@ -433,15 +437,17 @@ namespace Graphics
             Matrix4x4 depthRemap = Matrix4x4::Identity();
             depthRemap.m22 = 0.5f;
             depthRemap.m32 = 0.5f;
-            _projectionMatrix = depthRemap * _projectionMatrix;
+            projectionMatrix = depthRemap * projectionMatrix;
         }
 
+        const Matrix4x4 invViewMatrix = viewMatrix.Invert();
+
         CameraData cameraData{};
-        cameraData.CameraPosition = _viewMatrix.Invert().GetPosition();
-        cameraData.NearClipPlane = Camera::Current->GetNearClipPlane();
-        cameraData.FarClipPlane = Camera::Current->GetFarClipPlane();
-        cameraData.ViewProjectionMatrix = _projectionMatrix * _viewMatrix;
-        cameraData.CameraDirection = Camera::Current->GetGameObject()->GetRotation() * Vector3{0, 0, 1};
+        cameraData.CameraPosition = invViewMatrix.GetPosition();
+        cameraData.NearClipPlane = nearPlane;
+        cameraData.FarClipPlane = farPlane;
+        cameraData.ViewProjectionMatrix = projectionMatrix * viewMatrix;
+        cameraData.CameraDirection = invViewMatrix * Vector4{0, 0, 1, 0};
 
         s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
     }
@@ -501,5 +507,10 @@ namespace Graphics
         }
 
         GraphicsBackend::Current()->CopyTextureToTexture(source->GetBackendTexture(), destinationDescriptor, 0, 0, 0, 0, source->GetWidth(), source->GetHeight());
+    }
+
+    int GetDrawCallCount()
+    {
+        return s_DrawCallCount;
     }
 } // namespace Graphics

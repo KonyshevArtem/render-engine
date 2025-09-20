@@ -24,16 +24,17 @@ ForwardRenderPass::~ForwardRenderPass()
     GraphicsBackend::Current()->DeleteFence(m_EndFence);
 }
 
-void ForwardRenderPass::Prepare(const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor, const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers)
+void ForwardRenderPass::Prepare(const Context& ctx, const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor)
 {
     Profiler::Marker marker("ForwardRenderPass::Prepare");
 
     m_ColorTargetDescriptor = colorTargetDescriptor;
     m_DepthTargetDescriptor = depthTargetDescriptor;
 
-    m_OpaquePass->Prepare(cameraPosition, renderers);
+    const Matrix4x4 viewProj = ctx.ProjectionMatrix * ctx.ViewMatrix;
+    m_OpaquePass->Prepare(viewProj, ctx.Renderers);
     m_SkyboxPass->Prepare();
-    m_TransparentPass->Prepare(cameraPosition, renderers);
+    m_TransparentPass->Prepare(viewProj, ctx.Renderers);
 }
 
 void ForwardRenderPass::Execute(const Context& ctx)
@@ -44,7 +45,7 @@ void ForwardRenderPass::Execute(const Context& ctx)
     GraphicsBackend::Current()->AttachRenderTarget(m_ColorTargetDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(m_DepthTargetDescriptor);
 
-    Graphics::SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix);
+    Graphics::SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix, ctx.NearPlane, ctx.FarPlane);
 
     GraphicsBackend::Current()->BeginRenderPass("Forward Render Pass");
     Graphics::SetViewport({0, 0, static_cast<float>(Graphics::GetScreenWidth()), static_cast<float>(Graphics::GetScreenHeight())});

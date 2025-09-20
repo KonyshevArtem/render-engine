@@ -6,7 +6,10 @@
 #include "imgui.h"
 #endif
 
+#include "graphics/graphics.h"
+
 #include <utility>
+#include <string>
 
 GameWindow::GameWindow(RenderHandler renderHandler):
     m_RenderHandler(std::move(renderHandler))
@@ -30,6 +33,10 @@ void GameWindow::TickMainLoop(int width, int height)
 #ifdef ENABLE_IMGUI
     TopMenuBar::Draw([this](){ m_CloseFlag = true; });
     WindowManager::DrawAllWindows();
+
+    const std::string stats = "Draw Calls: " + std::to_string(Graphics::GetDrawCallCount());
+    const float statsHeight = ImGui::CalcTextSize(stats.c_str()).y;
+    ImGui::GetForegroundDrawList()->AddText(ImVec2(0, ImGui::GetIO().DisplaySize.y - statsHeight), IM_COL32(255, 255, 255, 255), stats.c_str());
 #endif
 }
 

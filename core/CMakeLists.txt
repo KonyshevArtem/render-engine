@@ -128,7 +128,9 @@ add_library(
 	mesh/mesh_binary_reader.h
 	mesh/mesh_header.h
 	worker/worker.h
-	worker/worker.cpp)
+	worker/worker.cpp
+	culling/frustum.h
+	culling/frustum.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)

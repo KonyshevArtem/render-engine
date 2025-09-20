@@ -10,7 +10,7 @@ bool DrawCallComparer::operator()(const DrawCallInfo &drawCallA, const DrawCallI
     if (renderQueue1 != renderQueue2)
         return renderQueue1 <= renderQueue2;
 
-    float distance1 = (drawCallA.AABB.GetCenter() - CameraPosition).Length();
-    float distance2 = (drawCallB.AABB.GetCenter() - CameraPosition).Length();
+    float distance1 = Vector3::Dot(drawCallA.AABB.GetCenter(), CameraDirection);
+    float distance2 = Vector3::Dot(drawCallB.AABB.GetCenter(), CameraDirection);
     return SortMode == DrawCallSortMode::FRONT_TO_BACK ? distance1 < distance2 : distance1 > distance2;
 }

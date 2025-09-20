@@ -4,6 +4,7 @@
 #include "renderer/renderer.h"
 #include "scene/scene.h"
 #include "light/light.h"
+#include "graphics/graphics.h"
 
 Context::Context()
 {
@@ -11,10 +12,16 @@ Context::Context()
         return;
 
     const std::shared_ptr<Scene>& scene = Scene::Current;
+    const std::shared_ptr<Camera> camera = Camera::Current;
+
+    Viewport = Vector2(Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
+    FoV = camera->GetFov();
+    NearPlane = camera->GetNearClipPlane();
+    FarPlane = camera->GetFarClipPlane();
 
     Skybox = scene->GetSkybox();
-    ViewMatrix = Camera::Current->GetViewMatrix();
-    ProjectionMatrix = Camera::Current->GetProjectionMatrix();
+    ViewMatrix = camera->GetGameObject()->GetWorldToLocalMatrix();
+    ProjectionMatrix = Matrix4x4::Perspective(FoV, Viewport.x / Viewport.y, camera->GetNearClipPlane(), camera->GetFarClipPlane());
 
     const std::vector<std::shared_ptr<GameObject>>& gameObjects = Scene::Current->GetRootGameObjects();
     for (const std::shared_ptr<GameObject>& go : gameObjects)

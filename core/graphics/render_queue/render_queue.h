@@ -2,6 +2,7 @@
 #define RENDER_QUEUE_H
 
 #include "graphics/draw_call_info.h"
+#include "culling/frustum.h"
 
 #include <vector>
 #include <memory>
@@ -15,14 +16,18 @@ public:
     RenderQueue() = default;
     ~RenderQueue() = default;
 
-    void Prepare(const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& renderSettings);
+    void Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& renderSettings);
     void Clear();
 
     bool IsEmpty() const;
     const std::vector<DrawCallInfo>& GetDrawCalls() const;
 
+    static bool EnableFrustumCulling;
+    static bool FreezeFrustumCulling;
+
 private:
     std::vector<DrawCallInfo> m_DrawCalls;
+    Frustum m_Frustum;
 };
 
 #endif //RENDER_QUEUE_H

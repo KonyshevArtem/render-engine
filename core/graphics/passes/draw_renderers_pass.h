@@ -21,7 +21,7 @@ public:
     DrawRenderersPass(std::string name, DrawCallSortMode sorting, DrawCallFilter filter, int priority);
     ~DrawRenderersPass() override = default;
 
-    void Prepare(const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers);
+    void Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers);
     void Execute(const Context& ctx) override;
 
     DrawRenderersPass(const DrawRenderersPass&) = delete;

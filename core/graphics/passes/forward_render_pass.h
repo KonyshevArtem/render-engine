@@ -4,6 +4,7 @@
 #include "render_pass.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "types/graphics_backend_fence.h"
+#include "matrix4x4/matrix4x4.h"
 
 #include <memory>
 #include <vector>
@@ -19,7 +20,7 @@ public:
     explicit ForwardRenderPass(int priority);
     ~ForwardRenderPass() override;
 
-    void Prepare(const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor, const Vector3& cameraPosition, const std::vector<std::shared_ptr<Renderer>>& renderers);
+    void Prepare(const Context& ctx, const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor);
     void Execute(const Context& ctx) override;
     const GraphicsBackendFence& GetEndFence() const;
 

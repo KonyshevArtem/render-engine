@@ -8,6 +8,7 @@
 #include "windows/graphics_settings_window.h"
 #include "windows/profiler_window.h"
 #include "graphics_backend_api.h"
+#include "graphics/render_queue/render_queue.h"
 
 namespace TopMenuBarLocal
 {
@@ -49,6 +50,9 @@ void DrawDebugMenu()
         {
             Gizmos::SetEnabled(!gizmosEnabled);
         }
+
+        ImGui::MenuItem("Enable Frustum Culling", nullptr, &RenderQueue::EnableFrustumCulling);
+        ImGui::MenuItem("Freeze Frustum Culling", nullptr, &RenderQueue::FreezeFrustumCulling);
 
         ImGui::EndMenu();
     }

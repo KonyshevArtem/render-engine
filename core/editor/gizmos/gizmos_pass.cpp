@@ -13,6 +13,7 @@
 #include "quaternion/quaternion.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "editor/profiler/profiler.h"
+#include "bounds/bounds.h"
 
 #include <cmath>
 

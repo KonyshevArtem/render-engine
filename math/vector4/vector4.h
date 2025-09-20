@@ -18,6 +18,8 @@ public:
     Vector4 Normalize() const;
 
     static const Vector4 &Zero();
+
+    void operator /=(float a);
 };
 
 #endif //RENDER_ENGINE_VECTOR4_H

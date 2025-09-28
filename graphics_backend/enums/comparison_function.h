@@ -1,0 +1,16 @@
+#ifndef RENDER_ENGINE_COMPARISON_FUNCTION_H
+#define RENDER_ENGINE_COMPARISON_FUNCTION_H
+
+enum class ComparisonFunction
+{
+    NEVER,
+    LESS,
+    EQUAL,
+    LEQUAL,
+    GREATER,
+    NOTEQUAL,
+    GEQUAL,
+    ALWAYS,
+};
+
+#endif //RENDER_ENGINE_COMPARISON_FUNCTION_H

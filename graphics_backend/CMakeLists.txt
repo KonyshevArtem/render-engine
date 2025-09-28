@@ -12,7 +12,7 @@ add_library(GraphicsBackend
         enums/vertex_attribute_data_type.h
         enums/blend_factor.h
         enums/cull_face.h
-        enums/depth_function.h
+        enums/comparison_function.h
         enums/shader_type.h
         enums/texture_data_type.h
         enums/cull_face_orientation.h

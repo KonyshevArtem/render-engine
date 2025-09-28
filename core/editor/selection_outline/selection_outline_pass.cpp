@@ -38,8 +38,8 @@ bool SelectionOutlinePass::Prepare()
 
 void SelectionOutlinePass::Execute(const Context& ctx)
 {
-    static std::shared_ptr<Material>  blitMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/outlineBlit", {}, {}, {}, {false, DepthFunction::ALWAYS}), "OutlineBlit");
-    static std::shared_ptr<Material>  silhouetteMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/silhouette", {}, {}, {}, {false, DepthFunction::ALWAYS}), "Silhouette");
+    static std::shared_ptr<Material>  blitMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/outlineBlit", {}, {}, {}, {false, ComparisonFunction::ALWAYS}), "OutlineBlit");
+    static std::shared_ptr<Material>  silhouetteMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/silhouette", {}, {}, {}, {false, ComparisonFunction::ALWAYS}), "Silhouette");
     static std::shared_ptr<Texture2D> silhouetteRenderTarget  = nullptr;
     static Vector4                    outlineColor {1, 0.73f, 0, 1};
     static GraphicsBackendRenderTargetDescriptor colorTarget { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };

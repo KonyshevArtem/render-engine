@@ -848,25 +848,25 @@ GLenum OpenGLHelpers::ToFramebufferAttachment(FramebufferAttachment attachment)
     }
 }
 
-GLenum OpenGLHelpers::ToDepthCompareFunction(DepthFunction function)
+GLenum OpenGLHelpers::ToComparisonFunction(ComparisonFunction function)
 {
     switch (function)
     {
-        case DepthFunction::NEVER:
+        case ComparisonFunction::NEVER:
             return GL_NEVER;
-        case DepthFunction::LESS:
+        case ComparisonFunction::LESS:
             return GL_LESS;
-        case DepthFunction::EQUAL:
+        case ComparisonFunction::EQUAL:
             return GL_EQUAL;
-        case DepthFunction::LEQUAL:
+        case ComparisonFunction::LEQUAL:
             return GL_LEQUAL;
-        case DepthFunction::GREATER:
+        case ComparisonFunction::GREATER:
             return GL_GREATER;
-        case DepthFunction::NOTEQUAL:
+        case ComparisonFunction::NOTEQUAL:
             return GL_NOTEQUAL;
-        case DepthFunction::GEQUAL:
+        case ComparisonFunction::GEQUAL:
             return GL_GEQUAL;
-        case DepthFunction::ALWAYS:
+        case ComparisonFunction::ALWAYS:
             return GL_ALWAYS;
     }
 }

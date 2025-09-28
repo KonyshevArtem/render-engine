@@ -34,15 +34,15 @@ NLOHMANN_JSON_SERIALIZE_ENUM(CullFace, {
     {CullFace::BACK, "BACK"}
 })
 
-NLOHMANN_JSON_SERIALIZE_ENUM(DepthFunction, {
-    {DepthFunction::NEVER, "NEVER"},
-    {DepthFunction::LESS, "LESS"},
-    {DepthFunction::EQUAL, "EQUAL"},
-    {DepthFunction::LEQUAL, "LEQUAL"},
-    {DepthFunction::GREATER, "GREATER"},
-    {DepthFunction::NOTEQUAL, "NOTEQUAL"},
-    {DepthFunction::GEQUAL, "GEQUAL"},
-    {DepthFunction::ALWAYS, "ALWAYS"}
+NLOHMANN_JSON_SERIALIZE_ENUM(ComparisonFunction, {
+    {ComparisonFunction::NEVER, "NEVER"},
+    {ComparisonFunction::LESS, "LESS"},
+    {ComparisonFunction::EQUAL, "EQUAL"},
+    {ComparisonFunction::LEQUAL, "LEQUAL"},
+    {ComparisonFunction::GREATER, "GREATER"},
+    {ComparisonFunction::NOTEQUAL, "NOTEQUAL"},
+    {ComparisonFunction::GEQUAL, "GEQUAL"},
+    {ComparisonFunction::ALWAYS, "ALWAYS"}
 })
 
 void from_json(const nlohmann::json& json, BlendInfo& info)

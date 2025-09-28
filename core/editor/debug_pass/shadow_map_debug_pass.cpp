@@ -28,7 +28,7 @@ void ShadowMapDebugPass::DrawCascades(const Context& ctx)
         Matrix4x4 InvCameraVP;
     };
 
-    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowCascadeVisualize", {}, {true, BlendFactor::ONE, BlendFactor::ONE_MINUS_SRC_ALPHA}, {CullFace::NONE, CullFaceOrientation::CLOCKWISE}, {false, DepthFunction::ALWAYS});
+    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowCascadeVisualize", {}, {true, BlendFactor::ONE, BlendFactor::ONE_MINUS_SRC_ALPHA}, {CullFace::NONE, CullFaceOrientation::CLOCKWISE}, {false, ComparisonFunction::ALWAYS});
     static std::shared_ptr<Material> material = std::make_shared<Material>(shader, "Shadow Cascade Visualize");
     static std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(DebugData), "ShadowCascadeVisualizeData");
     static GraphicsBackendResourceBindings dataBindings = shader->GetBuffers().at("DebugData")->GetBinding();
@@ -63,7 +63,7 @@ void ShadowMapDebugPass::DrawOverlay(const Context& ctx)
         float Padding0;
     };
 
-    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowMapOverlay", {}, {}, {CullFace::NONE, CullFaceOrientation::CLOCKWISE}, {false, DepthFunction::ALWAYS});
+    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowMapOverlay", {}, {}, {CullFace::NONE, CullFaceOrientation::CLOCKWISE}, {false, ComparisonFunction::ALWAYS});
     static std::shared_ptr<Material> material = std::make_shared<Material>(shader, "ShadowMap Overlay");
     static std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(DebugData), "ShadowMapOverlayData");
     static GraphicsBackendResourceBindings bindings = shader->GetBuffers().at("DebugData")->GetBinding();

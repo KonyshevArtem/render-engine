@@ -449,25 +449,25 @@ D3D12_CULL_MODE DX12Helpers::ToCullFace(CullFace face)
     }
 }
 
-D3D12_COMPARISON_FUNC DX12Helpers::ToDepthFunction(DepthFunction function)
+D3D12_COMPARISON_FUNC DX12Helpers::ToComparisonFunction(ComparisonFunction function)
 {
     switch (function)
     {
-        case DepthFunction::NEVER:
+        case ComparisonFunction::NEVER:
             return D3D12_COMPARISON_FUNC_NEVER;
-        case DepthFunction::LESS:
+        case ComparisonFunction::LESS:
             return D3D12_COMPARISON_FUNC_LESS;
-        case DepthFunction::EQUAL:
+        case ComparisonFunction::EQUAL:
             return D3D12_COMPARISON_FUNC_EQUAL;
-        case DepthFunction::LEQUAL:
+        case ComparisonFunction::LEQUAL:
             return D3D12_COMPARISON_FUNC_LESS_EQUAL;
-        case DepthFunction::GREATER:
+        case ComparisonFunction::GREATER:
             return D3D12_COMPARISON_FUNC_GREATER;
-        case DepthFunction::NOTEQUAL:
+        case ComparisonFunction::NOTEQUAL:
             return D3D12_COMPARISON_FUNC_NOT_EQUAL;
-        case DepthFunction::GEQUAL:
+        case ComparisonFunction::GEQUAL:
             return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
-        case DepthFunction::ALWAYS:
+        case ComparisonFunction::ALWAYS:
             return D3D12_COMPARISON_FUNC_ALWAYS;
     }
 }

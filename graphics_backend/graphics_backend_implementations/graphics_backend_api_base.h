@@ -18,7 +18,7 @@ enum class PrimitiveType;
 enum class VertexAttributeDataType;
 enum class BlendFactor;
 enum class CullFace;
-enum class DepthFunction;
+enum class ComparisonFunction;
 enum class ShaderType;
 enum class TextureDataType;
 enum class CullFaceOrientation;

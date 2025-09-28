@@ -14,7 +14,7 @@ struct ShadowsData
         Vector4 Position{};
     };
 
-    Matrix4x4 DirectionalLightViewProjMatrix{};
+    Matrix4x4 DirectionalLightViewProjMatrix[GlobalConstants::ShadowCascadeCount];
     Matrix4x4 SpotLightsViewProjMatrices[GlobalConstants::MaxSpotLightSources]{};
     PointLightShadowData PointLightShadows[GlobalConstants::MaxPointLightSources]{};
 };

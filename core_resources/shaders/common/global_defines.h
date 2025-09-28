@@ -3,6 +3,7 @@
 
 // Keep in-sync with core/global_constants.h
 
+#define SHADOW_CASCADE_COUNT       4
 #define MAX_POINT_LIGHT_SOURCES    3
 #define MAX_SPOT_LIGHT_SOURCES     3
 

@@ -16,12 +16,12 @@ struct PointLightShadowData
 
 cbuffer Shadows : register(b1)
 {
-    ShadowData _DirLightShadow;
+    ShadowData _DirLightShadow[SHADOW_CASCADE_COUNT];
     ShadowData _SpotLightShadows[MAX_SPOT_LIGHT_SOURCES];
     PointLightShadowData _PointLightShadows[MAX_POINT_LIGHT_SOURCES];
 };
 
-Texture2D<float> _DirLightShadowMap : register(t0);
+Texture2DArray<float> _DirLightShadowMap : register(t0);
 SamplerState sampler_DirLightShadowMap : register(s0);
 
 Texture2DArray<float> _SpotLightShadowMapArray : register(t1);
@@ -30,9 +30,14 @@ SamplerState sampler_SpotLightShadowMapArray : register(s1);
 Texture2DArray<float> _PointLightShadowMapArray : register(t2);
 SamplerState sampler_PointLightShadowMapArray : register(s2);
 
-bool isFragVisible(float fragZ)
+bool isFragVisibleZ(float fragZ)
 {
     return fragZ >= 0 && fragZ <= 1;
+}
+
+bool isFragVisibleXY(float2 fragXY)
+{
+    return all(fragXY >= 0) && all(fragXY <= 1);
 }
 
 float getShadowTerm(float fragZ, float shadowMapDepth, float lightAngleCos, bool isLinearDepth)
@@ -51,15 +56,28 @@ float getShadowTerm(float fragZ, float shadowMapDepth, float lightAngleCos, bool
     return shadowMapDepth > biasedFragZ ? 1 : 0;
 }
 
-float getDirLightShadowTerm(float3 posWS, float lightAngleCos)
+float getDirLightShadowTerm(float3 posWS, float lightAngleCos, float fragDistance)
 {
     #ifdef _RECEIVE_SHADOWS
-    float4 shadowCoord = mul(_DirLightShadow.LightViewProjMatrix, float4(posWS, 1));
+    float3 shadowCoord;
+    int cascadeIndex = -1;
+    for (int i = 0; i < SHADOW_CASCADE_COUNT; ++i)
+    {
+        shadowCoord = mul(_DirLightShadow[i].LightViewProjMatrix, float4(posWS, 1)).xyz;
+        if (isFragVisibleXY(shadowCoord.xy))
+        {
+            cascadeIndex = i;
+            break;
+        }
+    }
+    if (cascadeIndex < 0)
+        return 1;
+
     #if SCREEN_UV_UPSIDE_DOWN
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
-    float depth = _DirLightShadowMap.Sample(sampler_DirLightShadowMap, shadowCoord.xy).x;
-    return isFragVisible(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos, true) : 1;
+    float depth = _DirLightShadowMap.Sample(sampler_DirLightShadowMap, float3(shadowCoord.xy, cascadeIndex)).x;
+    return getShadowTerm(saturate(shadowCoord.z), depth, lightAngleCos, true);
     #else
     return 1;
     #endif
@@ -74,7 +92,7 @@ float getSpotLightShadowTerm(int index, float3 posWS, float lightAngleCos)
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
     float depth = _SpotLightShadowMapArray.Sample(sampler_SpotLightShadowMapArray, float3(shadowCoord.xy, index)).x;
-    return isFragVisible(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos, false) : 1;
+    return isFragVisibleZ(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos, false) : 1;
     #else
     return 1;
     #endif
@@ -107,7 +125,7 @@ float getPointLightShadowTerm(int index, float3 posWS, float lightAngleCos)
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
     float depth = _PointLightShadowMapArray.Sample(sampler_PointLightShadowMapArray, float3(shadowCoord.xy, index * 6 + slice)).x;
-    return isFragVisible(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos, false) : 1;
+    return isFragVisibleZ(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos, false) : 1;
     #else
     return 1;
     #endif

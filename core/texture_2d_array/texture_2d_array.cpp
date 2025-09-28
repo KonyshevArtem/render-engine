@@ -5,9 +5,7 @@ Texture2DArray::Texture2DArray(TextureInternalFormat format, uint32_t width, uin
 {
 }
 
-std::shared_ptr<Texture2DArray> Texture2DArray::ShadowMapArray(uint32_t size, uint32_t count, const std::string& name)
+std::shared_ptr<Texture2DArray> Texture2DArray::Create(uint32_t width, uint32_t height, uint32_t slices, TextureInternalFormat format, bool isLinear, const std::string& name)
 {
-    auto texture = std::shared_ptr<Texture2DArray>(new Texture2DArray(TextureInternalFormat::DEPTH_32, size, size, count, 1, true, name));
-    texture->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
-    return texture;
+    return std::shared_ptr<Texture2DArray>(new Texture2DArray(format, width, height, slices, 1, isLinear, name));
 }

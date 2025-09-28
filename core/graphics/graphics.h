@@ -24,7 +24,7 @@ namespace Graphics
     void DrawRenderQueue(const RenderQueue& renderQueue);
     void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix);
     void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices);
-    void SetCameraData(const Matrix4x4& viewMatrix, Matrix4x4 projectionMatrix, float nearPlane, float farPlane);
+    void SetCameraData(const Matrix4x4& viewMatrix, const Matrix4x4& projectionMatrix, float nearPlane, float farPlane);
     int  GetScreenWidth();
     int  GetScreenHeight();
     void SetRenderTarget(GraphicsBackendRenderTargetDescriptor descriptor, const std::shared_ptr<Texture> &target = nullptr);
@@ -32,6 +32,7 @@ namespace Graphics
     void CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size);
     void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material, const std::string &name);
     void CopyTextureToTexture(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, GraphicsBackendRenderTargetDescriptor destinationDescriptor);
+    Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix);
 
     void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture);
 

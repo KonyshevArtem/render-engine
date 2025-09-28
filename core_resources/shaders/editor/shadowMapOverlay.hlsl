@@ -53,7 +53,7 @@ float4 fragmentMain(Varyings vars) : SV_Target
 
     float depth = 0;
     if (_LightType == DIRECTIONAL)
-        depth = _DirLightShadowMap.Sample(sampler_DirLightShadowMap, vars.UV).x;
+        depth = _DirLightShadowMap.Sample(sampler_DirLightShadowMap, float3(vars.UV, _LightIndex)).x;
     else if (_LightType == POINT)
         depth = _PointLightShadowMapArray.Sample(sampler_PointLightShadowMapArray, float3(vars.UV, _LightIndex * 6 + _PointLightSide)).x;
     else if (_LightType == SPOT)

@@ -109,7 +109,9 @@ float3 getSpecularTermBlinnPhong(float4 specular, float smoothness, float3 light
 
 float3 getLightBlinnPhong(float3 posWS, float3 normalWS, float3 albedo, float4 specular, float roughness, float3 cameraPosWS)
 {
-    float3 viewDirWS = normalize(cameraPosWS - posWS);
+    float3 fragToCamera = cameraPosWS - posWS;
+    float fragDistance = length(fragToCamera);
+    float3 viewDirWS = fragToCamera / fragDistance;
     float smoothness = 1 - roughness;
 
     float3 directLighting = (float3) 0.0;
@@ -117,7 +119,7 @@ float3 getLightBlinnPhong(float3 posWS, float3 normalWS, float3 albedo, float4 s
     {
         float3 lightDirWS = normalize(-_DirLightDirectionWS);
         float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
-        float shadowTerm = getDirLightShadowTerm(posWS, lightAngleCos);
+        float shadowTerm = getDirLightShadowTerm(posWS, lightAngleCos, fragDistance);
 
         directLighting += albedo * _DirLightIntensity * lightAngleCos * shadowTerm;
         directLighting += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS);
@@ -226,7 +228,9 @@ void getLightSourcePBR(float3 normalWS, float3 viewDirWS, float3 lightDirWS, flo
 
 float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, half3 reflectionIrradiance, float3 cameraPosWS)
 {
-    float3 viewDirWS = normalize(cameraPosWS - posWS);
+    float3 fragToCamera = cameraPosWS - posWS;
+    float fragDistance = length(fragToCamera);
+    float3 viewDirWS = fragToCamera / fragDistance;
     float3 F0 = lerp((float3) 0.04, albedo, metallness);
     roughness =  clamp(roughness, 0.01, 1.0);
 
@@ -238,7 +242,7 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
         float3 lightDirWS = normalize(-_DirLightDirectionWS);
         
         float NdotL = max(dot(normalWS, lightDirWS), 0.0);
-        float shadowTerm = getDirLightShadowTerm(posWS, NdotL);
+        float shadowTerm = getDirLightShadowTerm(posWS, NdotL, fragDistance);
         float3 radiance = _DirLightIntensity * NdotL * shadowTerm;
 
         getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness, diffuse, specular);

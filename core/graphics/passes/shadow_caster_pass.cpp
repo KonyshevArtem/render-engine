@@ -17,6 +17,8 @@
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "gameObject/gameObject.h"
 #include "graphics/graphics_settings.h"
+#include "editor/gizmos/gizmos.h"
+#include "input/input.h"
 
 constexpr int k_SpotLightShadowMapSize = 1024;
 constexpr int k_DirLightShadowMapSize = 2048;
@@ -25,9 +27,9 @@ constexpr int k_PointLightShadowMapSize = 512;
 ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer, int priority) :
     RenderPass(priority),
     m_ShadowsConstantBuffer(std::move(shadowsConstantBuffer)),
-    m_SpotLightShadowMapArray(Texture2DArray::ShadowMapArray(k_SpotLightShadowMapSize, GlobalConstants::MaxSpotLightSources, "SpotLightShadowMap")),
-    m_DirectionLightShadowMap(Texture2D::Create(k_DirLightShadowMapSize, k_DirLightShadowMapSize, TextureInternalFormat::DEPTH_32, true, true, "DirectionalShadowMap")),
-    m_PointLightShadowMap(Texture2DArray::ShadowMapArray(k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, "PointLightShadowMap"))
+    m_SpotLightShadowMapArray(Texture2DArray::Create(k_SpotLightShadowMapSize, k_SpotLightShadowMapSize, GlobalConstants::MaxSpotLightSources, TextureInternalFormat::DEPTH_32, true, "SpotLightShadowMap")),
+    m_DirectionLightShadowMap(Texture2DArray::Create(k_DirLightShadowMapSize, k_DirLightShadowMapSize, GlobalConstants::ShadowCascadeCount, TextureInternalFormat::DEPTH_32, true, "DirectionalShadowMap")),
+    m_PointLightShadowMap(Texture2DArray::Create(k_PointLightShadowMapSize, k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, "PointLightShadowMap"))
 {
     Graphics::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
     Graphics::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
@@ -51,7 +53,7 @@ void ShadowCasterPass::Prepare(const Context& ctx)
     static const Matrix4x4 biasMatrix = Matrix4x4::TRS(Vector3{0.5f, 0.5f, 0.5f}, Quaternion(), Vector3{0.5f, 0.5f, 0.5f});
     static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/shadowCaster", {}, {}, {}, {});
     static const std::shared_ptr<Material> material = std::make_shared<Material>(shader, "ShadowCaster");
-    static const RenderSettings dirLightShadowRenderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material, Frustum::AllExceptNearPlaneBits};
+    static const RenderSettings dirLightShadowRenderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material, Frustum::SidePlanesBits};
     static const RenderSettings renderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material};
 
     static Matrix4x4 pointLightViewMatrices[6]
@@ -66,7 +68,8 @@ void ShadowCasterPass::Prepare(const Context& ctx)
 
     Profiler::Marker marker("ShadowCasterPass::Prepare");
 
-    m_DirectionalLightRenderQueue.Clear();
+    for (RenderQueue& queue : m_DirectionalLightRenderQueues)
+        queue.Clear();
     for (RenderQueue& queue : m_PointLightsRenderQueues)
         queue.Clear();
     for (RenderQueue& queue : m_SpotLightRenderQueues)
@@ -134,43 +137,51 @@ void ShadowCasterPass::Prepare(const Context& ctx)
             };
 
             const Matrix4x4 rotationViewMatrix = Matrix4x4::Rotation(lightGo->GetRotation().Inverse());
-            const Matrix4x4 invCameraVP = (Matrix4x4::Perspective(ctx.FoV, ctx.Viewport.x / ctx.Viewport.y, ctx.NearPlane, shadowsDistance) * ctx.ViewMatrix).Invert();
 
-            Vector3 viewMin(FLT_MAX, FLT_MAX, FLT_MAX);
-            Vector3 viewMax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-
-            for (int i = 0; i < 8; ++i)
+            for (int i = 0; i < GlobalConstants::ShadowCascadeCount; ++i)
             {
-                Vector4 worldPos = invCameraVP * corners[i].ToVector4(1);
-                worldPos /= worldPos.w;
+                const float cascadeNear = i > 0 ? shadowsDistance * GraphicsSettings::GetShadowCascadeBounds(i - 1) : ctx.NearPlane;
+                const float cascadeFar = shadowsDistance * GraphicsSettings::GetShadowCascadeBounds(i);
 
-                Vector4 viewPos = rotationViewMatrix * worldPos;
-                viewMin = Vector3::Min(viewMin, viewPos);
-                viewMax = Vector3::Max(viewMax, viewPos);
+                const Matrix4x4 invCameraVP = (Matrix4x4::Perspective(ctx.FoV, ctx.Viewport.x / ctx.Viewport.y, cascadeNear, cascadeFar) * ctx.ViewMatrix).Invert();
+
+                Vector3 viewMin(FLT_MAX, FLT_MAX, FLT_MAX);
+                Vector3 viewMax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+                for (int j = 0; j < 8; ++j)
+                {
+                    Vector4 worldPos = invCameraVP * corners[j].ToVector4(1);
+                    worldPos /= worldPos.w;
+
+                    Vector4 viewPos = rotationViewMatrix * worldPos;
+                    viewMin = Vector3::Min(viewMin, viewPos);
+                    viewMax = Vector3::Max(viewMax, viewPos);
+                }
+
+                const Vector3 viewOffset = (viewMin + viewMax) * 0.5f;
+                const Matrix4x4 cullingViewMatrix = Matrix4x4::Translation({-viewOffset.x, -viewOffset.y, -viewMin.z}) * rotationViewMatrix;
+
+                const Vector3 viewExtents = (viewMax - viewMin) * 0.5f;
+                const float maxExtentViewSpace = std::max(viewExtents.x, viewExtents.y);
+                const Matrix4x4 cullingProjMatrix = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0.01, viewMax.z - viewMin.z);
+
+                m_DirectionalLightRenderQueues[i].Prepare(cullingProjMatrix * cullingViewMatrix, ctx.Renderers, dirLightShadowRenderSettings);
+
+                const std::vector<DrawCallInfo> &dirLightShadowDrawCalls = m_DirectionalLightRenderQueues[i].GetDrawCalls();
+                for (int j = 0; j < dirLightShadowDrawCalls.size(); ++j)
+                {
+                    Bounds projectedBounds = rotationViewMatrix * dirLightShadowDrawCalls[j].AABB;
+                    viewMin.z = std::min(viewMin.z, projectedBounds.Min.z);
+                    viewMax.z = std::max(viewMax.z, projectedBounds.Max.z);
+                }
+
+                const float renderFarPlane = viewMax.z - viewMin.z;
+                const Matrix4x4 renderViewMatrix = Matrix4x4::Translation({-viewOffset.x, -viewOffset.y, -viewMin.z}) * rotationViewMatrix;
+                const Matrix4x4 renderProjMatrix = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0.01, renderFarPlane);
+
+                m_DirectionLightCameraData[i] = {renderViewMatrix, renderProjMatrix, renderFarPlane};
+                m_ShadowsGPUData.DirectionalLightViewProjMatrix[i] = biasMatrix * renderProjMatrix * renderViewMatrix;
             }
-
-            const Vector3 viewOffset = (viewMin + viewMax) * 0.5f;
-            const Matrix4x4 cullingViewMatrix = Matrix4x4::Translation({-viewOffset.x, -viewOffset.y, -viewMin.z}) * rotationViewMatrix;
-
-            const Vector3 viewExtents = (viewMax - viewMin) * 0.5f;
-            const float maxExtentViewSpace = std::max(viewExtents.x, viewExtents.y);
-            const Matrix4x4 cullingProjMatrix = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0.01, viewMax.z - viewMin.z);
-
-            m_DirectionalLightRenderQueue.Prepare(cullingProjMatrix * cullingViewMatrix, ctx.Renderers, dirLightShadowRenderSettings);
-
-            const std::vector<DrawCallInfo>& dirLightShadowDrawCalls = m_DirectionalLightRenderQueue.GetDrawCalls();
-            for (int i = 0; i < dirLightShadowDrawCalls.size(); ++i)
-            {
-                Bounds projectedBounds = rotationViewMatrix * dirLightShadowDrawCalls[i].AABB;
-                viewMin.z = std::min(viewMin.z, projectedBounds.Min.z);
-            }
-
-            const float renderFarPlane = viewMax.z - viewMin.z;
-            const Matrix4x4 renderViewMatrix = Matrix4x4::Translation({-viewOffset.x, -viewOffset.y, -viewMin.z}) * rotationViewMatrix;
-            const Matrix4x4 renderProjMatrix = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0.01, renderFarPlane);
-
-            m_DirectionLightCameraData = {renderViewMatrix, renderProjMatrix, renderFarPlane};
-            m_ShadowsGPUData.DirectionalLightViewProjMatrix = biasMatrix * renderProjMatrix * renderViewMatrix;
         }
     }
 
@@ -199,8 +210,11 @@ void ShadowCasterPass::Execute(const Context& ctx)
         }
     }
 
-    if (!m_DirectionalLightRenderQueue.IsEmpty())
-        Render(m_DirectionalLightRenderQueue, m_DirectionLightShadowMap, 0, m_DirectionLightCameraData, "Directional Light Shadow Pass");
+    for (int i = 0; i < GlobalConstants::ShadowCascadeCount; ++i)
+    {
+        if (!m_DirectionalLightRenderQueues[i].IsEmpty())
+            Render(m_DirectionalLightRenderQueues[i], m_DirectionLightShadowMap, i, m_DirectionLightCameraData[i], "Directional Light Shadow Pass " + std::to_string(i));
+    }
 }
 
 void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData& cameraData, const std::string& passName)

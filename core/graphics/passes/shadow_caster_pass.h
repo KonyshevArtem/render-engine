@@ -43,15 +43,15 @@ private:
 
     std::shared_ptr<GraphicsBuffer> m_ShadowsConstantBuffer;
     std::shared_ptr<Texture2DArray> m_SpotLightShadowMapArray;
-    std::shared_ptr<Texture2D> m_DirectionLightShadowMap;
+    std::shared_ptr<Texture2DArray> m_DirectionLightShadowMap;
     std::shared_ptr<Texture2DArray> m_PointLightShadowMap;
 
-    RenderQueue m_DirectionalLightRenderQueue;
+    RenderQueue m_DirectionalLightRenderQueues[GlobalConstants::ShadowCascadeCount];
     RenderQueue m_SpotLightRenderQueues[GlobalConstants::MaxSpotLightSources];
     RenderQueue m_PointLightsRenderQueues[GlobalConstants::MaxPointLightSources * 6];
 
     ShadowsData m_ShadowsGPUData{};
-    ShadowsCameraData m_DirectionLightCameraData;
+    ShadowsCameraData m_DirectionLightCameraData[GlobalConstants::ShadowCascadeCount];
     ShadowsCameraData m_SpotLightCameraData[GlobalConstants::MaxSpotLightSources];
     ShadowsCameraData m_PointLightCameraData[GlobalConstants::MaxPointLightSources * 6];
 

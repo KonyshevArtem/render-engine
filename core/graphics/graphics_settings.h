@@ -6,6 +6,9 @@
 #define DECLARE_GRAPHICS_SETTING(type, name)    void Set##name(type value); \
                                                 type Get##name();
 
+#define DECLARE_GRAPHICS_SETTING_ARRAY(type, name)  void Set##name(type value, int index); \
+                                                    type Get##name(int index);
+
 namespace GraphicsSettings
 {
     enum class TonemappingMode
@@ -32,6 +35,7 @@ namespace GraphicsSettings
     DECLARE_GRAPHICS_SETTING(TonemappingMode, TonemappingMode)
 
     DECLARE_GRAPHICS_SETTING(float, ShadowDistance)
+    DECLARE_GRAPHICS_SETTING_ARRAY(float, ShadowCascadeBounds)
 }
 
 #endif //RENDER_ENGINE_GRAPHICS_SETTINGS_H

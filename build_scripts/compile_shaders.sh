@@ -118,7 +118,8 @@ Compile billboard
 Compile gizmos _INSTANCING
 Compile gizmos _INSTANCING,_FRUSTUM_GIZMO
 
-Compile editor/shadowMapDebug
+Compile editor/shadowMapOverlay
+Compile editor/shadowCascadeVisualize
 
 echo "Finished compiling shaders for ${PLATFORM} ${BACKENDS}";
 if [ -z "$1" ]; then

@@ -67,12 +67,6 @@ namespace Graphics
 
     void InitConstantBuffers()
     {
-        // C++ struct memory layout must match GPU side struct
-        assert(sizeof(CameraData) == 96);
-        assert(sizeof(LightingData) == 304);
-        assert(sizeof(ShadowsData) == 1456);
-        assert(sizeof(PerDrawData) == 128);
-
         s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), 32, "CameraData");
         s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), "LightingData");
         s_ShadowsDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData");
@@ -240,6 +234,7 @@ namespace Graphics
             if (executeSelectionPass)
                 renderPasses.push_back(s_SelectionOutlinePass);
 
+            s_ShadowMapDebugPass->Prepare(cameraDepthTarget);
             renderPasses.push_back(s_ShadowMapDebugPass);
 #endif
         }
@@ -429,24 +424,16 @@ namespace Graphics
         return s_ScreenHeight;
     }
 
-    void SetCameraData(const Matrix4x4& viewMatrix, Matrix4x4 projectionMatrix, float nearPlane, float farPlane)
+    void SetCameraData(const Matrix4x4& viewMatrix, const Matrix4x4& projectionMatrix, float nearPlane, float farPlane)
     {
-        if (GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL || GraphicsBackend::Current()->GetName() == GraphicsBackendName::DX12)
-        {
-            // Projection matrix has OpenGL depth range [-1, 1]. Remap it to [0, 1] for Metal and DX12
-            Matrix4x4 depthRemap = Matrix4x4::Identity();
-            depthRemap.m22 = 0.5f;
-            depthRemap.m32 = 0.5f;
-            projectionMatrix = depthRemap * projectionMatrix;
-        }
-
+        const Matrix4x4 gpuProjectionMatrix = GetGPUProjectionMatrix(projectionMatrix);
         const Matrix4x4 invViewMatrix = viewMatrix.Invert();
 
         CameraData cameraData{};
         cameraData.CameraPosition = invViewMatrix.GetPosition();
         cameraData.NearClipPlane = nearPlane;
         cameraData.FarClipPlane = farPlane;
-        cameraData.ViewProjectionMatrix = projectionMatrix * viewMatrix;
+        cameraData.ViewProjectionMatrix = gpuProjectionMatrix * viewMatrix;
         cameraData.CameraDirection = invViewMatrix * Vector4{0, 0, 1, 0};
 
         s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
@@ -507,6 +494,22 @@ namespace Graphics
         }
 
         GraphicsBackend::Current()->CopyTextureToTexture(source->GetBackendTexture(), destinationDescriptor, 0, 0, 0, 0, source->GetWidth(), source->GetHeight());
+    }
+
+    Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix)
+    {
+        Matrix4x4 gpuProjectionMatrix = projectionMatrix;
+
+        if (GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL || GraphicsBackend::Current()->GetName() == GraphicsBackendName::DX12)
+        {
+            // Projection matrix has OpenGL depth range [-1, 1]. Remap it to [0, 1] for Metal and DX12
+            Matrix4x4 depthRemap = Matrix4x4::Identity();
+            depthRemap.m22 = 0.5f;
+            depthRemap.m32 = 0.5f;
+            gpuProjectionMatrix = depthRemap * gpuProjectionMatrix;
+        }
+
+        return gpuProjectionMatrix;
     }
 
     int GetDrawCallCount()

@@ -9,6 +9,7 @@
 #include "windows/profiler_window.h"
 #include "graphics_backend_api.h"
 #include "graphics/render_queue/render_queue.h"
+#include "editor/debug_pass/shadow_map_debug_pass.h"
 
 namespace TopMenuBarLocal
 {
@@ -53,6 +54,9 @@ void DrawDebugMenu()
 
         ImGui::MenuItem("Enable Frustum Culling", nullptr, &RenderQueue::EnableFrustumCulling);
         ImGui::MenuItem("Freeze Frustum Culling", nullptr, &RenderQueue::FreezeFrustumCulling);
+
+        ImGui::MenuItem("Shadow Map Overlay", nullptr, &ShadowMapDebugPass::DrawShadowMapOverlay);
+        ImGui::MenuItem("Shadow Cascades", nullptr, &ShadowMapDebugPass::DrawShadowCascades);
 
         ImGui::EndMenu();
     }

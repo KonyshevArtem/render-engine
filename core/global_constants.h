@@ -13,6 +13,7 @@ namespace GlobalConstants
 
     constexpr int MaxInstancingCount = 256;
 
+    constexpr int ShadowCascadeCount = 4;
     constexpr int MaxSpotLightSources = 3;
     constexpr int MaxPointLightSources = 3;
 

@@ -2,6 +2,7 @@
 
 #include "graphics_settings_window.h"
 #include "graphics/graphics_settings.h"
+#include "global_constants.h"
 #include "imgui.h"
 
 #include <vector>
@@ -69,11 +70,25 @@ void DrawTonemappingSettings()
     GraphicsSettings::SetTonemappingMode(static_cast<GraphicsSettings::TonemappingMode>(selectedTonemapping));
 }
 
+void DrawShadowCascadeBoundsSettings()
+{
+    float bounds[GlobalConstants::ShadowCascadeCount];
+    for (int i = 0; i < GlobalConstants::ShadowCascadeCount; ++i)
+        bounds[i] = GraphicsSettings::GetShadowCascadeBounds(i);
+
+    ImGui::SliderFloat4("Shadow Cascade Bounds", bounds, 0.01f, 1.0f);
+
+    bounds[GlobalConstants::ShadowCascadeCount - 1] = 1.0f;
+    for (int i = 0; i < GlobalConstants::ShadowCascadeCount - 1; ++i)
+        GraphicsSettings::SetShadowCascadeBounds(std::min(bounds[i], bounds[i + 1]), i);
+}
+
 void DrawShadowsSettings()
 {
     ImGui::SeparatorText("Shadows");
 
     DrawFloatSetting("Shadow Distance", GraphicsSettings::GetShadowDistance, GraphicsSettings::SetShadowDistance, 0.1f);
+    DrawShadowCascadeBoundsSettings();
 }
 
 void GraphicsSettingsWindow::DrawInternal()

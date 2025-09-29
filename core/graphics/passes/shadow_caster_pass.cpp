@@ -20,6 +20,8 @@
 #include "editor/gizmos/gizmos.h"
 #include "input/input.h"
 
+#include <cfloat>
+
 constexpr int k_SpotLightShadowMapSize = 1024;
 constexpr int k_DirLightShadowMapSize = 2048;
 constexpr int k_PointLightShadowMapSize = 512;

@@ -190,7 +190,7 @@ GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name)
+GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name)
 {
     auto descriptor = MTL::SamplerDescriptor::alloc()->init();
 
@@ -212,10 +212,14 @@ GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapM
     descriptor->setLodMinClamp(minLod);
     descriptor->setMipFilter(MTL::SamplerMipFilter::SamplerMipFilterNearest);
 
-    if (!name.empty())
+    if (comparisonFunction != ComparisonFunction::NONE)
     {
-        descriptor->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+        const MTL::CompareFunction function = MetalHelpers::ToComparisonFunction(comparisonFunction);
+        descriptor->setCompareFunction(function);
     }
+
+    if (!name.empty())
+        descriptor->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
 
     auto metalSampler = m_Device->newSamplerState(descriptor);
     descriptor->release();

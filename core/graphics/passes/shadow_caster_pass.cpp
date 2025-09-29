@@ -37,15 +37,18 @@ ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConsta
 
     m_DirectionLightShadowMap->SetBorderColor({1, 1, 1, 1});
     m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
-    m_DirectionLightShadowMap->SetFilteringMode(TextureFilteringMode::NEAREST);
+    m_DirectionLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
+    m_DirectionLightShadowMap->SetComparisonFunction(ComparisonFunction::LEQUAL);
 
     m_SpotLightShadowMapArray->SetBorderColor({1, 1, 1, 1});
     m_SpotLightShadowMapArray->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
-    m_SpotLightShadowMapArray->SetFilteringMode(TextureFilteringMode::NEAREST);
+    m_SpotLightShadowMapArray->SetFilteringMode(TextureFilteringMode::LINEAR);
+    m_SpotLightShadowMapArray->SetComparisonFunction(ComparisonFunction::LEQUAL);
 
     m_PointLightShadowMap->SetBorderColor({1, 1, 1, 1});
     m_PointLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
-    m_PointLightShadowMap->SetFilteringMode(TextureFilteringMode::NEAREST);
+    m_PointLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
+    m_PointLightShadowMap->SetComparisonFunction(ComparisonFunction::LEQUAL);
 }
 
 void ShadowCasterPass::Prepare(const Context& ctx)

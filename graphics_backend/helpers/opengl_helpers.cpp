@@ -852,6 +852,8 @@ GLenum OpenGLHelpers::ToComparisonFunction(ComparisonFunction function)
 {
     switch (function)
     {
+        case ComparisonFunction::NONE:
+            return 0;
         case ComparisonFunction::NEVER:
             return GL_NEVER;
         case ComparisonFunction::LESS:

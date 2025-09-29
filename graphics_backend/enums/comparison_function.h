@@ -3,6 +3,7 @@
 
 enum class ComparisonFunction
 {
+    NONE,
     NEVER,
     LESS,
     EQUAL,

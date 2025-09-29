@@ -1010,17 +1010,18 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(int width, int height,
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name)
+GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name)
 {
     D3D12_TEXTURE_ADDRESS_MODE dxWrapMode = DX12Helpers::ToTextureWrapMode(wrapMode);
 
     D3D12_SAMPLER_DESC samplerDesc{};
-    samplerDesc.Filter = DX12Helpers::ToTextureFilterMode(filteringMode);
+    samplerDesc.Filter = DX12Helpers::ToTextureFilterMode(filteringMode, comparisonFunction);
     samplerDesc.AddressU = dxWrapMode;
     samplerDesc.AddressV = dxWrapMode;
     samplerDesc.AddressW = dxWrapMode;
     samplerDesc.MipLODBias = 0;
     samplerDesc.MaxAnisotropy = 1;
+    samplerDesc.ComparisonFunc = DX12Helpers::ToComparisonFunction(comparisonFunction);
     samplerDesc.BorderColor[0] = borderColor[0];
     samplerDesc.BorderColor[1] = borderColor[1];
     samplerDesc.BorderColor[2] = borderColor[2];

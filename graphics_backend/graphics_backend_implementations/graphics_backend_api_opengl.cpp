@@ -352,7 +352,7 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name)
+GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name)
 {
     InitContext();
 

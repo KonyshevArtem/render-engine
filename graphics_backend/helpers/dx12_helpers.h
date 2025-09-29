@@ -32,7 +32,7 @@ namespace DX12Helpers
     D3D12_SRV_DIMENSION ToResourceViewDimension(TextureType textureType);
     D3D12_RTV_DIMENSION ToColorTargetViewDimension(TextureType textureType);
     D3D12_DSV_DIMENSION ToDepthTargetViewDimension(TextureType textureType);
-    D3D12_FILTER ToTextureFilterMode(TextureFilteringMode filteringMode);
+    D3D12_FILTER ToTextureFilterMode(TextureFilteringMode filteringMode, ComparisonFunction comparisonFunction);
     D3D12_TEXTURE_ADDRESS_MODE ToTextureWrapMode(TextureWrapMode wrapMode);
     D3D12_CULL_MODE ToCullFace(CullFace face);
     D3D12_COMPARISON_FUNC ToComparisonFunction(ComparisonFunction function);

@@ -402,22 +402,23 @@ D3D12_DSV_DIMENSION DX12Helpers::ToDepthTargetViewDimension(TextureType textureT
     }
 }
 
-D3D12_FILTER DX12Helpers::ToTextureFilterMode(TextureFilteringMode filteringMode)
+D3D12_FILTER DX12Helpers::ToTextureFilterMode(TextureFilteringMode filteringMode, ComparisonFunction comparisonFunction)
 {
+    const bool isComparison = comparisonFunction != ComparisonFunction::NONE;
     switch (filteringMode)
     {
         case TextureFilteringMode::NEAREST:
-            return D3D12_FILTER_MIN_MAG_MIP_POINT;
+            return isComparison ? D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT : D3D12_FILTER_MIN_MAG_MIP_POINT;
         case TextureFilteringMode::LINEAR:
-            return D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+            return isComparison ? D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT : D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
         case TextureFilteringMode::NEAREST_MIPMAP_NEAREST:
-            return D3D12_FILTER_MIN_MAG_MIP_POINT;
+            return isComparison ? D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT : D3D12_FILTER_MIN_MAG_MIP_POINT;
         case TextureFilteringMode::LINEAR_MIPMAP_NEAREST:
-            return D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+            return isComparison ? D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT : D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
         case TextureFilteringMode::NEAREST_MIPMAP_LINEAR:
-            return D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+            return isComparison ? D3D12_FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR : D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
         case TextureFilteringMode::LINEAR_MIPMAP_LINEAR:
-            return D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+            return isComparison ? D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR : D3D12_FILTER_MIN_MAG_MIP_LINEAR;
     }
 }
 
@@ -453,6 +454,8 @@ D3D12_COMPARISON_FUNC DX12Helpers::ToComparisonFunction(ComparisonFunction funct
 {
     switch (function)
     {
+        case ComparisonFunction::NONE:
+            return D3D12_COMPARISON_FUNC_NONE;
         case ComparisonFunction::NEVER:
             return D3D12_COMPARISON_FUNC_NEVER;
         case ComparisonFunction::LESS:

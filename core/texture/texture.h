@@ -7,6 +7,7 @@
 #include "enums/texture_filtering_mode.h"
 #include "enums/texture_internal_format.h"
 #include "enums/cubemap_face.h"
+#include "enums/comparison_function.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "vector4/vector4.h"
@@ -23,6 +24,7 @@ public:
     void SetWrapMode(TextureWrapMode wrapMode);
     void SetBorderColor(const Vector4 &color);
     void SetFilteringMode(TextureFilteringMode mode);
+    void SetComparisonFunction(ComparisonFunction function);
 
     inline const GraphicsBackendTexture& GetBackendTexture() const
     {
@@ -74,6 +76,7 @@ private:
 
     TextureWrapMode m_WrapMode;
     TextureFilteringMode m_FilteringMode;
+    ComparisonFunction m_ComparisonFunction;
     Vector4 m_BorderColor;
     int m_MinLod;
     bool m_DoubleBuffered;

@@ -139,8 +139,9 @@ float getPointLightShadowTerm(int index, float3 posWS, float lightAngleCos)
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
 
+    index = index * 6 + slice; // keep this on a separate line, otherwise SPIRV-Cross does not declare _PointLightShadowMapArray as sampler2DArrayShadow
     shadowCoord.z = applyDepthBias(saturate(shadowCoord.z), lightAngleCos, false);
-    return _PointLightShadowMapArray.SampleCmpLevelZero(sampler_PointLightShadowMapArray, float3(shadowCoord.xy, index * 6 + slice), shadowCoord.z).x;
+    return _PointLightShadowMapArray.SampleCmpLevelZero(sampler_PointLightShadowMapArray, float3(shadowCoord.xy, index), shadowCoord.z).x;
     #else
     return 1;
     #endif

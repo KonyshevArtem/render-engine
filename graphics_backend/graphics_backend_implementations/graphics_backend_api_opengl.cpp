@@ -370,16 +370,19 @@ GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrap
     glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MAG_FILTER, magFilter);
 
     if (borderColor != nullptr)
-    {
         glSamplerParameterfv(sampler.Sampler, GL_TEXTURE_BORDER_COLOR, borderColor);
-    }
 
     glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_LOD, minLod);
 
-    if (!name.empty())
+    if (comparisonFunction != ComparisonFunction::NONE)
     {
-        glObjectLabel(GL_SAMPLER, sampler.Sampler, name.length(), name.c_str());
+        const GLenum function = OpenGLHelpers::ToComparisonFunction(comparisonFunction);
+        glSamplerParameteri(sampler.Sampler, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+        glSamplerParameteri(sampler.Sampler, GL_TEXTURE_COMPARE_FUNC, function);
     }
+
+    if (!name.empty())
+        glObjectLabel(GL_SAMPLER, sampler.Sampler, name.length(), name.c_str());
 
     return sampler;
 }

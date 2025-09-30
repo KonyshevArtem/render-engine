@@ -12,7 +12,7 @@
 #include "enums/vertex_attribute_data_type.h"
 #include "enums/load_action.h"
 #include "enums/store_action.h"
-#include "enums/depth_function.h"
+#include "enums/comparison_function.h"
 #include "enums/cull_face_orientation.h"
 #include "enums/cull_face.h"
 #include "enums/blend_factor.h"
@@ -52,7 +52,7 @@ namespace MetalHelpers
     MTL::VertexFormat ToVertexFormat(VertexAttributeDataType dataType, int dimensions, bool normalized);
     MTL::LoadAction ToLoadAction(LoadAction loadAction);
     MTL::StoreAction ToStoreAction(StoreAction storeAction);
-    MTL::CompareFunction ToDepthCompareFunction(DepthFunction function);
+    MTL::CompareFunction ToComparisonFunction(ComparisonFunction function);
     MTL::Winding ToCullFaceOrientation(CullFaceOrientation orientation);
     MTL::CullMode ToCullFace(CullFace face);
     MTL::BlendFactor ToBlendFactor(BlendFactor factor);

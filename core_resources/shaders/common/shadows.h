@@ -22,13 +22,13 @@ cbuffer Shadows : register(b1)
 };
 
 Texture2DArray<float> _DirLightShadowMap : register(t0);
-SamplerState sampler_DirLightShadowMap : register(s0);
+SamplerComparisonState sampler_DirLightShadowMap : register(s0);
 
 Texture2DArray<float> _SpotLightShadowMapArray : register(t1);
-SamplerState sampler_SpotLightShadowMapArray : register(s1);
+SamplerComparisonState sampler_SpotLightShadowMapArray : register(s1);
 
 Texture2DArray<float> _PointLightShadowMapArray : register(t2);
-SamplerState sampler_PointLightShadowMapArray : register(s2);
+SamplerComparisonState sampler_PointLightShadowMapArray : register(s2);
 
 bool isFragVisibleZ(float fragZ)
 {
@@ -38,6 +38,18 @@ bool isFragVisibleZ(float fragZ)
 bool isFragVisibleXY(float2 fragXY)
 {
     return all(fragXY >= 0) && all(fragXY <= 1);
+}
+
+float applyDepthBias(float fragZ, float lightAngleCos, bool isLinearDepth)
+{
+    const float depthBias = 0.005;
+    const float slopeDepthBias = 0.05;
+
+    float bias = lerp(slopeDepthBias, depthBias, saturate(abs(lightAngleCos)));
+    if (!isLinearDepth)
+        bias *= 1 - fragZ;
+
+    return fragZ - bias;
 }
 
 float getShadowTerm(float fragZ, float shadowMapDepth, float lightAngleCos, bool isLinearDepth)
@@ -76,8 +88,9 @@ float getDirLightShadowTerm(float3 posWS, float lightAngleCos, float fragDistanc
     #if SCREEN_UV_UPSIDE_DOWN
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
-    float depth = _DirLightShadowMap.Sample(sampler_DirLightShadowMap, float3(shadowCoord.xy, cascadeIndex)).x;
-    return getShadowTerm(saturate(shadowCoord.z), depth, lightAngleCos, true);
+
+    shadowCoord.z = applyDepthBias(saturate(shadowCoord.z), lightAngleCos, true);
+    return _DirLightShadowMap.SampleCmpLevelZero(sampler_DirLightShadowMap, float3(shadowCoord.xy, cascadeIndex), shadowCoord.z).x;
     #else
     return 1;
     #endif
@@ -91,8 +104,9 @@ float getSpotLightShadowTerm(int index, float3 posWS, float lightAngleCos)
     #if SCREEN_UV_UPSIDE_DOWN
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
-    float depth = _SpotLightShadowMapArray.Sample(sampler_SpotLightShadowMapArray, float3(shadowCoord.xy, index)).x;
-    return isFragVisibleZ(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos, false) : 1;
+
+    shadowCoord.z = applyDepthBias(saturate(shadowCoord.z), lightAngleCos, false);
+    return _SpotLightShadowMapArray.SampleCmpLevelZero(sampler_SpotLightShadowMapArray, float3(shadowCoord.xy, index), shadowCoord.z).x;
     #else
     return 1;
     #endif
@@ -124,8 +138,10 @@ float getPointLightShadowTerm(int index, float3 posWS, float lightAngleCos)
     #if SCREEN_UV_UPSIDE_DOWN
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
-    float depth = _PointLightShadowMapArray.Sample(sampler_PointLightShadowMapArray, float3(shadowCoord.xy, index * 6 + slice)).x;
-    return isFragVisibleZ(shadowCoord.z) ? getShadowTerm(shadowCoord.z, depth, lightAngleCos, false) : 1;
+
+    index = index * 6 + slice; // keep this on a separate line, otherwise SPIRV-Cross does not declare _PointLightShadowMapArray as sampler2DArrayShadow
+    shadowCoord.z = applyDepthBias(saturate(shadowCoord.z), lightAngleCos, false);
+    return _PointLightShadowMapArray.SampleCmpLevelZero(sampler_PointLightShadowMapArray, float3(shadowCoord.xy, index), shadowCoord.z).x;
     #else
     return 1;
     #endif

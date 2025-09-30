@@ -1010,21 +1010,25 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(int width, int height,
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name)
+GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name)
 {
     D3D12_TEXTURE_ADDRESS_MODE dxWrapMode = DX12Helpers::ToTextureWrapMode(wrapMode);
 
     D3D12_SAMPLER_DESC samplerDesc{};
-    samplerDesc.Filter = DX12Helpers::ToTextureFilterMode(filteringMode);
+    samplerDesc.Filter = DX12Helpers::ToTextureFilterMode(filteringMode, comparisonFunction);
     samplerDesc.AddressU = dxWrapMode;
     samplerDesc.AddressV = dxWrapMode;
     samplerDesc.AddressW = dxWrapMode;
     samplerDesc.MipLODBias = 0;
     samplerDesc.MaxAnisotropy = 1;
-    samplerDesc.BorderColor[0] = borderColor[0];
-    samplerDesc.BorderColor[1] = borderColor[1];
-    samplerDesc.BorderColor[2] = borderColor[2];
-    samplerDesc.BorderColor[3] = borderColor[3];
+    samplerDesc.ComparisonFunc = DX12Helpers::ToComparisonFunction(comparisonFunction);
+    if (borderColor)
+    {
+        samplerDesc.BorderColor[0] = borderColor[0];
+        samplerDesc.BorderColor[1] = borderColor[1];
+        samplerDesc.BorderColor[2] = borderColor[2];
+        samplerDesc.BorderColor[3] = borderColor[3];
+    }
     samplerDesc.MinLOD = minLod;
     samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
 
@@ -1509,7 +1513,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     depthStencilDesc.DepthEnable = true;
     depthStencilDesc.DepthWriteMask = descriptor.DepthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
-    depthStencilDesc.DepthFunc = DX12Helpers::ToDepthFunction(descriptor.DepthFunction);
+    depthStencilDesc.DepthFunc = DX12Helpers::ToComparisonFunction(descriptor.DepthComparisonFunction);
 
     DXGI_FORMAT colorTargetFormat = DX12Helpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);
     bool hasColorTarget = colorTargetFormat != DXGI_FORMAT_UNKNOWN;

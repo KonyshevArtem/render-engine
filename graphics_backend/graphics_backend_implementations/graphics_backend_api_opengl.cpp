@@ -62,7 +62,7 @@ namespace OpenGLLocal
         BlendState BlendState;
         GLenum CullFace;
         GLenum CullFaceOrientation;
-        GLenum DepthFunction;
+        GLenum DepthComparisonFunction;
         GLboolean DepthWrite;
     };
 
@@ -352,7 +352,7 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name)
+GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name)
 {
     InitContext();
 
@@ -370,16 +370,19 @@ GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrap
     glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MAG_FILTER, magFilter);
 
     if (borderColor != nullptr)
-    {
         glSamplerParameterfv(sampler.Sampler, GL_TEXTURE_BORDER_COLOR, borderColor);
-    }
 
     glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_LOD, minLod);
 
-    if (!name.empty())
+    if (comparisonFunction != ComparisonFunction::NONE)
     {
-        glObjectLabel(GL_SAMPLER, sampler.Sampler, name.length(), name.c_str());
+        const GLenum function = OpenGLHelpers::ToComparisonFunction(comparisonFunction);
+        glSamplerParameteri(sampler.Sampler, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+        glSamplerParameteri(sampler.Sampler, GL_TEXTURE_COMPARE_FUNC, function);
     }
+
+    if (!name.empty())
+        glObjectLabel(GL_SAMPLER, sampler.Sampler, name.length(), name.c_str());
 
     return sampler;
 }
@@ -774,7 +777,7 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     programData->BlendState = blendState;
     programData->CullFace = OpenGLHelpers::ToCullFace(descriptor.CullFace);
     programData->CullFaceOrientation = OpenGLHelpers::ToCullFaceOrientation(descriptor.CullFaceOrientation);
-    programData->DepthFunction = OpenGLHelpers::ToDepthCompareFunction(descriptor.DepthFunction);
+    programData->DepthComparisonFunction = OpenGLHelpers::ToComparisonFunction(descriptor.DepthComparisonFunction);
     programData->DepthWrite = descriptor.DepthWrite ? GL_TRUE : GL_FALSE;
 
     GraphicsBackendProgram program{};
@@ -822,7 +825,7 @@ void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
         glDisable(GL_CULL_FACE);
 
     glFrontFace(programData->CullFaceOrientation);
-    glDepthFunc(programData->DepthFunction);
+    glDepthFunc(programData->DepthComparisonFunction);
     glDepthMask(programData->DepthWrite);
 }
 

@@ -10,6 +10,7 @@ Texture::Texture(TextureType textureType, TextureInternalFormat format, uint32_t
         m_MipLevels(mipLevels),
         m_WrapMode(TextureWrapMode::REPEAT),
         m_FilteringMode(mipLevels > 1 ? TextureFilteringMode::LINEAR_MIPMAP_NEAREST : TextureFilteringMode::LINEAR),
+        m_ComparisonFunction(ComparisonFunction::NONE),
         m_BorderColor(Vector4::Zero()),
         m_MinLod(0),
         m_SamplerName(name + "_Sampler"),
@@ -59,6 +60,12 @@ void Texture::SetFilteringMode(TextureFilteringMode mode)
     RecreateSampler(true);
 }
 
+void Texture::SetComparisonFunction(ComparisonFunction function)
+{
+    m_ComparisonFunction = function;
+    RecreateSampler(true);
+}
+
 void Texture::UploadPixels(void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace) const
 {
     Profiler::Marker _("Texture::UploadPixels");
@@ -73,9 +80,7 @@ void Texture::UploadPixels(void *pixels, int size, int depth, int mipLevel, Cube
 void Texture::RecreateSampler(bool deleteOld)
 {
     if (deleteOld)
-    {
         GraphicsBackend::Current()->DeleteSampler(m_Sampler);
-    }
 
-    m_Sampler = GraphicsBackend::Current()->CreateSampler(m_WrapMode, m_FilteringMode, &m_BorderColor.x, m_MinLod, m_SamplerName);
+    m_Sampler = GraphicsBackend::Current()->CreateSampler(m_WrapMode, m_FilteringMode, &m_BorderColor.x, m_MinLod, m_ComparisonFunction, m_SamplerName);
 }

@@ -20,7 +20,7 @@ void FinalBlitPass::Prepare(const std::shared_ptr<Texture2D>& source)
 
 void FinalBlitPass::Execute(const Context& ctx)
 {
-    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/final_blit", {}, {}, {}, {false, DepthFunction::ALWAYS});
+    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/final_blit", {}, {}, {}, {false, ComparisonFunction::ALWAYS});
     static const std::shared_ptr<Material> material = std::make_shared<Material>(shader, "FinalBlit");
 
     Profiler::Marker marker("FinalBlitPass::Execute");

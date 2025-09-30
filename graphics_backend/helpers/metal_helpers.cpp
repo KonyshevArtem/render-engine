@@ -555,25 +555,25 @@ MTL::StoreAction MetalHelpers::ToStoreAction(StoreAction storeAction)
     }
 }
 
-MTL::CompareFunction MetalHelpers::ToDepthCompareFunction(DepthFunction function)
+MTL::CompareFunction MetalHelpers::ToComparisonFunction(ComparisonFunction function)
 {
     switch (function)
     {
-        case DepthFunction::NEVER:
+        case ComparisonFunction::NEVER:
             return MTL::CompareFunction::CompareFunctionNever;
-        case DepthFunction::LESS:
+        case ComparisonFunction::LESS:
             return MTL::CompareFunction::CompareFunctionLess;
-        case DepthFunction::EQUAL:
+        case ComparisonFunction::EQUAL:
             return MTL::CompareFunction::CompareFunctionEqual;
-        case DepthFunction::LEQUAL:
+        case ComparisonFunction::LEQUAL:
             return MTL::CompareFunction::CompareFunctionLessEqual;
-        case DepthFunction::GREATER:
+        case ComparisonFunction::GREATER:
             return MTL::CompareFunction::CompareFunctionGreater;
-        case DepthFunction::NOTEQUAL:
+        case ComparisonFunction::NOTEQUAL:
             return MTL::CompareFunction::CompareFunctionNotEqual;
-        case DepthFunction::GEQUAL:
+        case ComparisonFunction::GEQUAL:
             return MTL::CompareFunction::CompareFunctionGreaterEqual;
-        case DepthFunction::ALWAYS:
+        case ComparisonFunction::ALWAYS:
             return MTL::CompareFunction::CompareFunctionAlways;
     }
 }

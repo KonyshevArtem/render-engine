@@ -30,7 +30,7 @@ struct GraphicsBackendProgramDescriptor
     CullFaceOrientation CullFaceOrientation;
 
     bool DepthWrite;
-    DepthFunction DepthFunction;
+    ComparisonFunction DepthComparisonFunction;
 
     PrimitiveType PrimitiveType;
 };

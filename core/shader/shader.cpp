@@ -109,7 +109,7 @@ const GraphicsBackendProgram& Shader::CreatePSO(std::vector<GraphicsBackendShade
     programDescriptor.CullFace = m_CullInfo.Face;
     programDescriptor.CullFaceOrientation = m_CullInfo.Orientation;
     programDescriptor.DepthWrite = m_DepthInfo.WriteDepth;
-    programDescriptor.DepthFunction = m_DepthInfo.DepthFunction;
+    programDescriptor.DepthComparisonFunction = m_DepthInfo.DepthFunction;
     programDescriptor.PrimitiveType = primitiveType;
 
     auto program = GraphicsBackend::Current()->CreateProgram(programDescriptor);

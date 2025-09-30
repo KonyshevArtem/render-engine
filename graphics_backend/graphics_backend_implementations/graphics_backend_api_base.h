@@ -18,7 +18,7 @@ enum class PrimitiveType;
 enum class VertexAttributeDataType;
 enum class BlendFactor;
 enum class CullFace;
-enum class DepthFunction;
+enum class ComparisonFunction;
 enum class ShaderType;
 enum class TextureDataType;
 enum class CullFaceOrientation;
@@ -59,7 +59,7 @@ public:
     uint64_t GetFrameNumber() const;
 
     virtual GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) = 0;
-    virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, const std::string& name) = 0;
+    virtual GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name) = 0;
     void DeleteTexture(const GraphicsBackendTexture& texture);
     void DeleteSampler(const GraphicsBackendSampler& sampler);
 

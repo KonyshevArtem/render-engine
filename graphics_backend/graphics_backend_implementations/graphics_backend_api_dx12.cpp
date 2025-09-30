@@ -1022,10 +1022,13 @@ GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(TextureWrapMode wrapMo
     samplerDesc.MipLODBias = 0;
     samplerDesc.MaxAnisotropy = 1;
     samplerDesc.ComparisonFunc = DX12Helpers::ToComparisonFunction(comparisonFunction);
-    samplerDesc.BorderColor[0] = borderColor[0];
-    samplerDesc.BorderColor[1] = borderColor[1];
-    samplerDesc.BorderColor[2] = borderColor[2];
-    samplerDesc.BorderColor[3] = borderColor[3];
+    if (borderColor)
+    {
+        samplerDesc.BorderColor[0] = borderColor[0];
+        samplerDesc.BorderColor[1] = borderColor[1];
+        samplerDesc.BorderColor[2] = borderColor[2];
+        samplerDesc.BorderColor[3] = borderColor[3];
+    }
     samplerDesc.MinLOD = minLod;
     samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
 

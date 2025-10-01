@@ -46,8 +46,6 @@ cbuffer Lighting : register(b2)
 TextureCube _ReflectionCube : register(t3);
 SamplerState sampler_ReflectionCube : register(s3);
 
-/// Helpers ///
-
 float lightAttenuation(float distance, float range)
 {
     // https://www.desmos.com/calculator/scz7zhonfw
@@ -91,82 +89,6 @@ float3 unpackNormal(float2 normalTS, float3 normalWS, float3 tangentWS)
     normalWS = normalize(mul(TBN, normal));
     return normalWS;
 }
-
-
-/// Blinn-Phong ///
-
-
-float3 getSpecularTermBlinnPhong(float4 specular, float smoothness, float3 lightDirWS, float3 viewDirWS, float3 normalWS){
-    #if defined(_SPECULAR)
-    float3 halfAngle = normalize(lightDirWS + viewDirWS);
-    float blinnTerm = clamp(dot(normalWS, halfAngle), 0.0, 1.0);
-    blinnTerm = pow(blinnTerm, smoothness) * specular.a;
-    return specular.rgb * max(blinnTerm, 0.0);
-    #else
-    return (float3) 0.0;
-    #endif
-}
-
-float3 getLightBlinnPhong(float3 posWS, float3 normalWS, float3 albedo, float4 specular, float roughness, float3 cameraPosWS)
-{
-    float3 fragToCamera = cameraPosWS - posWS;
-    float fragDistance = length(fragToCamera);
-    float3 viewDirWS = fragToCamera / fragDistance;
-    float smoothness = 1 - roughness;
-
-    float3 directLighting = (float3) 0.0;
-    if (_HasDirectionalLight > 0)
-    {
-        float3 lightDirWS = normalize(-_DirLightDirectionWS);
-        float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
-        float shadowTerm = getDirLightShadowTerm(posWS, lightAngleCos, fragDistance);
-
-        directLighting += albedo * _DirLightIntensity * lightAngleCos * shadowTerm;
-        directLighting += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS);
-    }
-
-    for (int i = 0; i < _PointLightsCount; ++i)
-    {
-        float dist = distance(_PointLights[i].PositionWS, posWS);
-        if (dist > _PointLights[i].Range)
-            continue;
-
-        float3 lightDirWS = normalize(_PointLights[i].PositionWS - posWS);
-        float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
-        float attenuationTerm = saturate(lightAttenuation(dist, _PointLights[i].Range));
-        float shadowTerm = getPointLightShadowTerm(i, posWS, lightAngleCos);
-
-        directLighting += albedo * _PointLights[i].Intensity * lightAngleCos * attenuationTerm * shadowTerm;
-        directLighting += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
-    }
-
-    for (int i = 0; i < _SpotLightsCount; ++i)
-    {
-        float dist = distance(_SpotLights[i].PositionWS, posWS);
-        if (dist > _SpotLights[i].Range)
-            continue;
-
-        float3 lightDirWS = normalize(_SpotLights[i].PositionWS - posWS);
-        float cutOffCos = clamp(dot(_SpotLights[i].DirectionWS, -lightDirWS), 0.0, 1.0);
-        float lightAngleCos = clamp(dot(normalWS, lightDirWS), 0.0, 1.0);
-
-        float attenuationTerm = saturate(lightAttenuation(dist, _SpotLights[i].Range));
-        attenuationTerm *= clamp((cutOffCos - _SpotLights[i].CutOffCos) / (1 - _SpotLights[i].CutOffCos), 0.0, 1.0);
-        attenuationTerm *= step(_SpotLights[i].CutOffCos, cutOffCos);
-
-        float shadowTerm = getSpotLightShadowTerm(i, posWS, lightAngleCos);
-
-        directLighting += albedo * _SpotLights[i].Intensity * lightAngleCos * attenuationTerm * shadowTerm;
-        directLighting += getSpecularTermBlinnPhong(specular, smoothness, lightDirWS, viewDirWS, normalWS) * attenuationTerm;
-    }
-
-    return _AmbientLight * albedo + directLighting;
-}
-
-
-
-/// PBR ///
-
 
 float DistributionGGX(float3 N, float3 H, float roughness)
 {

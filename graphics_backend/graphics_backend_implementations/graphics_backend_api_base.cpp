@@ -93,16 +93,35 @@ uint64_t GraphicsBackendBase::GetFrameNumber() const
 void GraphicsBackendBase::DeleteTexture(const GraphicsBackendTexture& texture)
 {
     m_DeletedTextures.emplace_back(texture, BaseBackendLocal::k_DeleteResourceDelay);
+
+    std::erase_if(m_BoundTextures, [&texture](const auto& pair)
+    {
+        return pair.second.Texture == texture.Texture;
+    });
 }
 
 void GraphicsBackendBase::DeleteSampler(const GraphicsBackendSampler& sampler)
 {
     m_DeletedSamplers.emplace_back(sampler, BaseBackendLocal::k_DeleteResourceDelay);
+
+    std::erase_if(m_BoundSamplers, [&sampler](const auto& pair)
+    {
+        return pair.second.Sampler == sampler.Sampler;
+    });
 }
 
 void GraphicsBackendBase::DeleteBuffer(const GraphicsBackendBuffer& buffer)
 {
     m_DeletedBuffers.emplace_back(buffer, BaseBackendLocal::k_DeleteResourceDelay);
+
+    auto Predicate = [&buffer](const std::pair<uint32_t, BufferBindInfo>& pair)
+    {
+        return pair.second.Buffer.Buffer == buffer.Buffer;
+    };
+
+    std::erase_if(m_BoundBuffers, Predicate);
+    std::erase_if(m_BoundStructuredBuffers, Predicate);
+    std::erase_if(m_BoundConstantBuffers, Predicate);
 }
 
 void GraphicsBackendBase::DeleteGeometry(const GraphicsBackendGeometry &geometry)

@@ -4,6 +4,7 @@
 #include "enums/graphics_backend_name.h"
 #include "types/graphics_backend_vertex_attribute_descriptor.h"
 #include "types/graphics_backend_profiler_marker.h"
+#include "types/graphics_backend_buffer.h"
 
 #include <string>
 #include <vector>
@@ -31,7 +32,6 @@ enum class ResourceState : uint64_t;
 
 class GraphicsBackendTexture;
 class GraphicsBackendSampler;
-class GraphicsBackendBuffer;
 class GraphicsBackendProgram;
 class GraphicsBackendShaderObject;
 class GraphicsBackendGeometry;
@@ -63,8 +63,8 @@ public:
     void DeleteTexture(const GraphicsBackendTexture& texture);
     void DeleteSampler(const GraphicsBackendSampler& sampler);
 
-    virtual void BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture) = 0;
-    virtual void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) = 0;
+    void BindTexture(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendTexture& texture);
+    void BindSampler(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendSampler& sampler);
 
     virtual void GenerateMipmaps(const GraphicsBackendTexture &texture) = 0;
     virtual void UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData) = 0;
@@ -74,9 +74,9 @@ public:
 
     virtual GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data = nullptr) = 0;
     void DeleteBuffer(const GraphicsBackendBuffer& buffer);
-    virtual void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;
-    virtual void BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount) = 0;
-    virtual void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) = 0;
+    void BindBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int offset, int size);
+    void BindStructuredBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int elementOffset, int elementSize, int elementCount);
+    void BindConstantBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int offset, int size);
 
     virtual void SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data) = 0;
     virtual void CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size) = 0;
@@ -147,7 +147,22 @@ protected:
     virtual void DeleteShader_Internal(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram_Internal(GraphicsBackendProgram program) = 0;
 
+    void BindResources();
+    virtual void BindTexture_Internal(const GraphicsBackendTexture &texture, uint32_t index) = 0;
+    virtual void BindSampler_Internal(const GraphicsBackendSampler &sampler, uint32_t index) = 0;
+    virtual void BindBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) = 0;
+    virtual void BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int elementOffset, int elementSize, int elementCount) = 0;
+    virtual void BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) = 0;
+
 private:
+    struct BufferBindInfo
+    {
+        GraphicsBackendBuffer Buffer;
+        int Offset;
+        int Size;
+        int ElementsCount;
+    };
+
     uint64_t m_FrameCount;
     std::thread::id m_MainThreadId;
 
@@ -157,6 +172,12 @@ private:
     std::vector<std::pair<GraphicsBackendGeometry, int>> m_DeletedGeometries;
     std::vector<std::pair<GraphicsBackendShaderObject, int>> m_DeletedShaders;
     std::vector<std::pair<GraphicsBackendProgram, int>> m_DeletedPrograms;
+
+    std::unordered_map<uint32_t, GraphicsBackendTexture> m_BoundTextures;
+    std::unordered_map<uint32_t, GraphicsBackendSampler> m_BoundSamplers;
+    std::unordered_map<uint32_t, BufferBindInfo> m_BoundBuffers;
+    std::unordered_map<uint32_t, BufferBindInfo> m_BoundConstantBuffers;
+    std::unordered_map<uint32_t, BufferBindInfo> m_BoundStructuredBuffers;
 };
 
 

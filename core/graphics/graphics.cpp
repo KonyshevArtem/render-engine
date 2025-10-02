@@ -348,11 +348,6 @@ namespace Graphics
         Shader& shaderPass = *material.GetShader();
         const auto &perMaterialDataBuffer = material.GetPerMaterialDataBuffer();
 
-        bool isLinear;
-        TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
-        TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
-        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, isLinear, depthTargetFormat, primitiveType));
-
         BindBuffer(GlobalConstants::LightingBufferName, s_LightingDataBuffer, shaderPass);
         BindBuffer(GlobalConstants::CameraDataBufferName, s_CameraDataBuffer, shaderPass);
         BindBuffer(GlobalConstants::ShadowsBufferName, s_ShadowsDataBuffer, shaderPass);
@@ -362,6 +357,11 @@ namespace Graphics
 
         SetTextures(s_GlobalTextures, shaderPass);
         SetTextures(material.GetTextures(), shaderPass);
+
+        bool isLinear;
+        TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
+        TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
+        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, isLinear, depthTargetFormat, primitiveType));
     }
 
     void DrawRenderQueue(const RenderQueue& renderQueue)

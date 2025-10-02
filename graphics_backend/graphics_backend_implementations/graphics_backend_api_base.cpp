@@ -12,6 +12,7 @@
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_program.h"
 #include "arguments.h"
+#include "types/graphics_backend_resource_bindings.h"
 
 #include <functional>
 
@@ -117,6 +118,63 @@ void GraphicsBackendBase::DeleteShader(GraphicsBackendShaderObject shader)
 void GraphicsBackendBase::DeleteProgram(GraphicsBackendProgram program)
 {
     m_DeletedPrograms.emplace_back(program, BaseBackendLocal::k_DeleteResourceDelay);
+}
+
+void GraphicsBackendBase::BindResources()
+{
+    for (const auto& pair: m_BoundTextures)
+        BindTexture_Internal(pair.second, pair.first);
+
+    for (const auto& pair: m_BoundSamplers)
+        BindSampler_Internal(pair.second, pair.first);
+
+    for (const auto& pair: m_BoundBuffers)
+    {
+        const BufferBindInfo& info = pair.second;
+        BindBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
+    }
+
+    for (const auto& pair: m_BoundStructuredBuffers)
+    {
+        const BufferBindInfo& info = pair.second;
+        BindStructuredBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size, info.ElementsCount);
+    }
+
+    for (const auto& pair: m_BoundConstantBuffers)
+    {
+        const BufferBindInfo& info = pair.second;
+        BindConstantBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
+    }
+}
+
+void GraphicsBackendBase::BindTexture(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendTexture& texture)
+{
+    uint32_t index = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
+    m_BoundTextures[index] = texture;
+}
+
+void GraphicsBackendBase::BindSampler(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendSampler& sampler)
+{
+    uint32_t index = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
+    m_BoundSamplers[index] = sampler;
+}
+
+void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int offset, int size)
+{
+    uint32_t index = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
+    m_BoundBuffers[index] = BufferBindInfo{buffer, offset, size};
+}
+
+void GraphicsBackendBase::BindStructuredBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int elementOffset, int elementSize, int elementCount)
+{
+    uint32_t index = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
+    m_BoundStructuredBuffers[index] = BufferBindInfo{buffer, elementOffset, elementSize, elementCount};
+}
+
+void GraphicsBackendBase::BindConstantBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int offset, int size)
+{
+    uint32_t index = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
+    m_BoundConstantBuffers[index] = BufferBindInfo{buffer, offset, size};
 }
 
 bool GraphicsBackendBase::IsTexture3D(TextureType type)

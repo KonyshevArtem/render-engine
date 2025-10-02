@@ -19,9 +19,6 @@ public:
     GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) override;
     GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name) override;
 
-    void BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture) override;
-    void BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler) override;
-
     void GenerateMipmaps(const GraphicsBackendTexture &texture) override;
     void UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData) override;
 
@@ -29,9 +26,6 @@ public:
     TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear) override;
 
     GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data = nullptr) override;
-    void BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
-    void BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount) override;
-    void BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size) override;
 
     void SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data) override;
     void CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size) override;
@@ -89,6 +83,12 @@ protected:
     void DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry) override;
     void DeleteShader_Internal(GraphicsBackendShaderObject shader) override;
     void DeleteProgram_Internal(GraphicsBackendProgram program) override;
+
+    void BindTexture_Internal(const GraphicsBackendTexture &texture, uint32_t index) override;
+    void BindSampler_Internal(const GraphicsBackendSampler &sampler, uint32_t index) override;
+    void BindBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) override;
+    void BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int elementOffset, int elementSize, int elementCount) override;
+    void BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) override;
 
 private:
     std::set<std::string> m_Extensions;

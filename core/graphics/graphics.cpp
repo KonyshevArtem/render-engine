@@ -62,8 +62,6 @@ namespace Graphics
     int s_ScreenHeight = 0;
     int s_DrawCallCount = 0;
 
-    std::unordered_map<std::string, std::shared_ptr<Texture>> s_GlobalTextures;
-
     void InitConstantBuffers()
     {
         s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), 32, "CameraData");
@@ -121,18 +119,18 @@ namespace Graphics
         s_SelectionOutlinePass = nullptr;
         s_ShadowMapDebugPass = nullptr;
 #endif
-
-        s_GlobalTextures.clear();
     }
 
     void SetLightingData(const std::vector<Light*>& lights, const std::shared_ptr<Texture>& skybox)
     {
+        const std::shared_ptr<Texture> reflectionCube = skybox ? skybox : Cubemap::White();
+
         LightingData lightingData{};
         lightingData.AmbientLight = GraphicsSettings::GetAmbientLightColor() * GraphicsSettings::GetAmbientLightIntensity();
         lightingData.PointLightsCount = 0;
         lightingData.SpotLightsCount = 0;
         lightingData.HasDirectionalLight = -1;
-        lightingData.ReflectionCubeMips = skybox ? skybox->GetMipLevels() : 1;
+        lightingData.ReflectionCubeMips = reflectionCube->GetMipLevels();
 
         for (Light* light : lights)
         {
@@ -164,9 +162,10 @@ namespace Graphics
             }
         }
 
-        SetGlobalTexture("_ReflectionCube", skybox ? skybox : Cubemap::White());
-        s_LightingDataBuffer->SetData(&lightingData, 0, sizeof(lightingData));
+        GraphicsBackend::Current()->BindTexture(reflectionCube->GetBackendTexture(), 3);
+        GraphicsBackend::Current()->BindSampler(reflectionCube->GetBackendSampler(), 3);
 
+        s_LightingDataBuffer->SetData(&lightingData, 0, sizeof(lightingData));
         GraphicsBackend::Current()->BindConstantBuffer(s_LightingDataBuffer->GetBackendBuffer(), 2, 0, sizeof(lightingData));
     }
 
@@ -278,34 +277,6 @@ namespace Graphics
         GraphicsBackend::Current()->BindStructuredBuffer(s_InstancingMatricesBuffer->GetBackendBuffer(), 0, s_InstancingMatricesBuffer->GetCurrentElementOffset(), matricesSize, count);
     }
 
-    void SetTextures(const std::unordered_map<std::string, std::shared_ptr<Texture>> &textures, const Shader& shader)
-    {
-        const auto &shaderTextures = shader.GetTextures();
-        const auto &shaderSamplers = shader.GetSamplers();
-
-        for (const auto &pair: textures)
-        {
-            const std::string &texName = pair.first;
-            const std::shared_ptr<Texture> &texture = pair.second;
-
-            if (!texture)
-                continue;
-
-            auto texInfoIt = shaderTextures.find(texName);
-            if (texInfoIt == shaderTextures.end())
-                continue;
-
-            const GraphicsBackendTextureInfo &textureInfo = texInfoIt->second;
-            const std::string samplerName = "sampler" + texName;
-
-            GraphicsBackend::Current()->BindTexture(textureInfo.TextureBindings, texture->GetBackendTexture());
-
-            auto samplerInfoIt = shaderSamplers.find(samplerName);
-            if (samplerInfoIt != shaderSamplers.end())
-                GraphicsBackend::Current()->BindSampler(samplerInfoIt->second.Bindings, texture->GetBackendSampler());
-        }
-    }
-
     void SetupShaderPass(const Material &material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
     {
         Shader& shaderPass = *material.GetShader();
@@ -314,8 +285,14 @@ namespace Graphics
         if (perMaterialDataBuffer)
             GraphicsBackend::Current()->BindConstantBuffer(perMaterialDataBuffer->GetBackendBuffer(), 4, 0, perMaterialDataBuffer->GetSize());
 
-        SetTextures(s_GlobalTextures, shaderPass);
-        SetTextures(material.GetTextures(), shaderPass);
+        for (const auto& pair: material.GetTextures())
+        {
+            uint32_t binding = pair.first;
+            const std::shared_ptr<Texture> &texture = pair.second;
+
+            GraphicsBackend::Current()->BindTexture(texture->GetBackendTexture(), binding);
+            GraphicsBackend::Current()->BindSampler(texture->GetBackendSampler(), binding);
+        }
 
         bool isLinear;
         TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
@@ -414,11 +391,6 @@ namespace Graphics
     {
         GraphicsBackend::Current()->SetViewport(viewport.x, viewport.y, viewport.z, viewport.w, 0, 1);
         GraphicsBackend::Current()->SetScissorRect(viewport.x, viewport.y, viewport.z, viewport.w);
-    }
-
-    void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture)
-    {
-        s_GlobalTextures[name] = texture;
     }
 
     void CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size)

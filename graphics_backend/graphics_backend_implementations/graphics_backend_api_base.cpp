@@ -166,15 +166,13 @@ void GraphicsBackendBase::BindResources()
     }
 }
 
-void GraphicsBackendBase::BindTexture(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendTexture& texture)
+void GraphicsBackendBase::BindTexture(const GraphicsBackendTexture& texture, uint32_t index)
 {
-    uint32_t index = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
     m_BoundTextures[index] = texture;
 }
 
-void GraphicsBackendBase::BindSampler(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendSampler& sampler)
+void GraphicsBackendBase::BindSampler(const GraphicsBackendSampler& sampler, uint32_t index)
 {
-    uint32_t index = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
     m_BoundSamplers[index] = sampler;
 }
 

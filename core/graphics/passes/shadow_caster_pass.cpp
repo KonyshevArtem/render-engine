@@ -33,10 +33,6 @@ ShadowCasterPass::ShadowCasterPass(int priority) :
     m_PointLightShadowMap(Texture2DArray::Create(k_PointLightShadowMapSize, k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, "PointLightShadowMap"))
     m_ShadowsConstantBuffer(std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData")),
 {
-    Graphics::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
-    Graphics::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
-    Graphics::SetGlobalTexture("_PointLightShadowMapArray", m_PointLightShadowMap);
-
     m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
     m_DirectionLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
     m_DirectionLightShadowMap->SetComparisonFunction(ComparisonFunction::LEQUAL);
@@ -220,6 +216,16 @@ void ShadowCasterPass::Execute(const Context& ctx)
         if (!m_DirectionalLightRenderQueues[i].IsEmpty())
             Render(m_DirectionalLightRenderQueues[i], m_DirectionLightShadowMap, i, m_DirectionLightCameraData[i], "Directional Light Shadow Pass " + std::to_string(i));
     }
+
+    auto BindShadowMap = [](const std::shared_ptr<Texture>& shadowMap, uint32_t index)
+    {
+        GraphicsBackend::Current()->BindTexture(shadowMap->GetBackendTexture(), index);
+        GraphicsBackend::Current()->BindSampler(shadowMap->GetBackendSampler(), index);
+    };
+
+    BindShadowMap(m_DirectionLightShadowMap, 0);
+    BindShadowMap(m_SpotLightShadowMapArray, 1);
+    BindShadowMap(m_PointLightShadowMap, 2);
 }
 
 void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData& cameraData, const std::string& passName)

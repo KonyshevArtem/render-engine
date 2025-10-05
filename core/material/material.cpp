@@ -24,13 +24,18 @@ std::shared_ptr<Material> Material::Copy()
     return material;
 }
 
-void Material::SetTexture(const std::string &name, std::shared_ptr<Texture> texture)
+void Material::SetTexture(const std::string& name, std::shared_ptr<Texture> texture)
 {
-    m_Textures[name] = texture;
-    if (texture == nullptr)
-    {
+    const std::unordered_map<std::string, GraphicsBackendTextureInfo>& shaderTextures = m_Shader->GetTextures();
+    auto it = shaderTextures.find(name);
+    if (it == shaderTextures.end())
         return;
-    }
+
+    const GraphicsBackendResourceBindings& bindings = it->second.TextureBindings;
+    uint32_t binding = bindings.FragmentIndex != -1 ? bindings.FragmentIndex : bindings.VertexIndex;
+    m_Textures[binding] = texture;
+    if (texture == nullptr)
+        return;
 
     SetVector(name + "_ST", {0, 0, 1, 1});
 

@@ -37,12 +37,12 @@ public:
     void SetMatrix(const std::string &_name, const Matrix4x4 &_value);
     void SetInt(const std::string &name, int value);
 
-    inline const std::shared_ptr<Shader> &GetShader() const
+    inline const std::shared_ptr<Shader>& GetShader() const
     {
         return m_Shader;
     }
 
-    inline const std::unordered_map<std::string, std::shared_ptr<Texture>> &GetTextures() const
+    inline const std::unordered_map<uint32_t, std::shared_ptr<Texture>>& GetTextures() const
     {
         return m_Textures;
     }
@@ -65,7 +65,7 @@ private:
 
     std::shared_ptr<GraphicsBufferWrapper> m_PerMaterialDataBufferWrapper;
     std::shared_ptr<Shader> m_Shader;
-    std::unordered_map<std::string, std::shared_ptr<Texture>> m_Textures;
+    std::unordered_map<uint32_t, std::shared_ptr<Texture>> m_Textures;
     std::string m_Name;
     int m_RenderQueue = 2000;
 };

@@ -63,8 +63,8 @@ public:
     void DeleteTexture(const GraphicsBackendTexture& texture);
     void DeleteSampler(const GraphicsBackendSampler& sampler);
 
-    void BindTexture(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendTexture& texture);
-    void BindSampler(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendSampler& sampler);
+    void BindTexture(const GraphicsBackendTexture& texture, uint32_t index);
+    void BindSampler(const GraphicsBackendSampler& sampler, uint32_t index);
 
     virtual void GenerateMipmaps(const GraphicsBackendTexture &texture) = 0;
     virtual void UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData) = 0;

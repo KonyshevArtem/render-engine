@@ -34,8 +34,6 @@ namespace Graphics
     void CopyTextureToTexture(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, GraphicsBackendRenderTargetDescriptor destinationDescriptor);
     Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix);
 
-    void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture);
-
     int GetDrawCallCount();
 }; // namespace Graphics
 

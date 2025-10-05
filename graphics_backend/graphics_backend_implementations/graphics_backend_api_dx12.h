@@ -85,7 +85,7 @@ protected:
     void BindTexture_Internal(const GraphicsBackendTexture &texture, uint32_t index) override;
     void BindSampler_Internal(const GraphicsBackendSampler &sampler, uint32_t index) override;
     void BindBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) override;
-    void BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int elementOffset, int elementSize, int elementCount) override;
+    void BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size, int count) override;
     void BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) override;
 };
 

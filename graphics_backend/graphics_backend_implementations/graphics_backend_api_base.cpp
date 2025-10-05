@@ -178,21 +178,18 @@ void GraphicsBackendBase::BindSampler(const GraphicsBackendResourceBindings& bin
     m_BoundSamplers[index] = sampler;
 }
 
-void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int offset, int size)
+void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
-    uint32_t index = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
     m_BoundBuffers[index] = BufferBindInfo{buffer, offset, size};
 }
 
-void GraphicsBackendBase::BindStructuredBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int elementOffset, int elementSize, int elementCount)
+void GraphicsBackendBase::BindStructuredBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count)
 {
-    uint32_t index = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
-    m_BoundStructuredBuffers[index] = BufferBindInfo{buffer, elementOffset, elementSize, elementCount};
+    m_BoundStructuredBuffers[index] = BufferBindInfo{buffer, offset, size, count};
 }
 
-void GraphicsBackendBase::BindConstantBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int offset, int size)
+void GraphicsBackendBase::BindConstantBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
-    uint32_t index = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
     m_BoundConstantBuffers[index] = BufferBindInfo{buffer, offset, size};
 }
 

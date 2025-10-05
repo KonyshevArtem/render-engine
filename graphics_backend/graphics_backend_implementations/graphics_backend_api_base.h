@@ -74,9 +74,9 @@ public:
 
     virtual GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data = nullptr) = 0;
     void DeleteBuffer(const GraphicsBackendBuffer& buffer);
-    void BindBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int offset, int size);
-    void BindStructuredBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int elementOffset, int elementSize, int elementCount);
-    void BindConstantBuffer(const GraphicsBackendBuffer& buffer, const GraphicsBackendResourceBindings& bindings, int offset, int size);
+    void BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size);
+    void BindStructuredBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count);
+    void BindConstantBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size);
 
     virtual void SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data) = 0;
     virtual void CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size) = 0;
@@ -151,7 +151,7 @@ protected:
     virtual void BindTexture_Internal(const GraphicsBackendTexture &texture, uint32_t index) = 0;
     virtual void BindSampler_Internal(const GraphicsBackendSampler &sampler, uint32_t index) = 0;
     virtual void BindBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) = 0;
-    virtual void BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int elementOffset, int elementSize, int elementCount) = 0;
+    virtual void BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size, int count) = 0;
     virtual void BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) = 0;
 
 private:

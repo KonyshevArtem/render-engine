@@ -32,7 +32,6 @@ void ShadowMapDebugPass::DrawCascades(const Context& ctx)
     static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowCascadeVisualize", {}, {true, BlendFactor::ONE, BlendFactor::ONE_MINUS_SRC_ALPHA}, {CullFace::NONE, CullFaceOrientation::CLOCKWISE}, {false, ComparisonFunction::ALWAYS});
     static std::shared_ptr<Material> material = std::make_shared<Material>(shader, "Shadow Cascade Visualize");
     static std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(DebugData), "ShadowCascadeVisualizeData");
-    static GraphicsBackendResourceBindings dataBindings = shader->GetBuffers().at("DebugData")->GetBinding();
     static GraphicsBackendResourceBindings depthBindings = shader->GetTextures().at("_Depth").TextureBindings;
 
     if (DrawShadowCascades)
@@ -42,7 +41,7 @@ void ShadowMapDebugPass::DrawCascades(const Context& ctx)
 
         GraphicsBackend::Current()->BeginRenderPass("Shadow Cascade Visualize Pass");
         buffer->SetData(&data, 0, sizeof(data));
-        GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), dataBindings, 0, sizeof(data));
+        GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 2, 0, sizeof(data));
         GraphicsBackend::Current()->BindTexture(depthBindings, m_DepthMap->GetBackendTexture());
         Graphics::Draw(*m_FullscreenMesh, *material, Matrix4x4::Identity());
         GraphicsBackend::Current()->EndRenderPass();
@@ -67,7 +66,6 @@ void ShadowMapDebugPass::DrawOverlay(const Context& ctx)
     static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowMapOverlay", {}, {}, {CullFace::NONE, CullFaceOrientation::CLOCKWISE}, {false, ComparisonFunction::ALWAYS});
     static std::shared_ptr<Material> material = std::make_shared<Material>(shader, "ShadowMap Overlay");
     static std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(DebugData), "ShadowMapOverlayData");
-    static GraphicsBackendResourceBindings debugDataBindings = shader->GetBuffers().at("DebugData")->GetBinding();
 
     static bool hasSampler = shader->GetSamplers().contains("_Sampler");
     static GraphicsBackendResourceBindings samplerBindings = hasSampler ? shader->GetSamplers().at("_Sampler").Bindings : GraphicsBackendResourceBindings{};
@@ -86,7 +84,7 @@ void ShadowMapDebugPass::DrawOverlay(const Context& ctx)
 
         GraphicsBackend::Current()->BeginRenderPass("ShadowMap Overlay Pass");
         buffer->SetData(&data, 0, sizeof(data));
-        GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), debugDataBindings, 0, sizeof(data));
+        GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 2, 0, sizeof(data));
         if (hasSampler)
             GraphicsBackend::Current()->BindSampler(samplerBindings, sampler);
         Graphics::Draw(*m_FullscreenMesh, *material, Matrix4x4::Identity());

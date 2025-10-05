@@ -580,9 +580,9 @@ void GraphicsBackendOpenGL::BindBuffer_Internal(const GraphicsBackendBuffer &buf
     OpenGLLocal::BindBuffer(GL_SHADER_STORAGE_BUFFER, buffer, index, offset, size);
 }
 
-void GraphicsBackendOpenGL::BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int elementOffset, int elementSize, int elementCount)
+void GraphicsBackendOpenGL::BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size, int count)
 {
-    OpenGLLocal::BindBuffer(GL_SHADER_STORAGE_BUFFER, buffer, index, elementOffset * elementSize, elementSize * elementCount);
+    OpenGLLocal::BindBuffer(GL_SHADER_STORAGE_BUFFER, buffer, index, offset, size);
 }
 
 void GraphicsBackendOpenGL::BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size)

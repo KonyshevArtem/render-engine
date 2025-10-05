@@ -397,9 +397,9 @@ void GraphicsBackendMetal::BindBuffer_Internal(const GraphicsBackendBuffer& buff
     m_RenderCommandEncoder->setFragmentBuffer(bufferData->Buffer, offset, index);
 }
 
-void GraphicsBackendMetal::BindStructuredBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int elementOffset, int elementSize, int elementCount)
+void GraphicsBackendMetal::BindStructuredBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count)
 {
-    BindBuffer_Internal(buffer, index, elementOffset * elementSize, elementCount * elementSize);
+    BindBuffer_Internal(buffer, index, offset, size);
 }
 
 void GraphicsBackendMetal::BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)

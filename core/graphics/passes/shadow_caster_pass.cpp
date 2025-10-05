@@ -26,12 +26,12 @@ constexpr int k_SpotLightShadowMapSize = 1024;
 constexpr int k_DirLightShadowMapSize = 2048;
 constexpr int k_PointLightShadowMapSize = 512;
 
-ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer, int priority) :
+ShadowCasterPass::ShadowCasterPass(int priority) :
     RenderPass(priority),
-    m_ShadowsConstantBuffer(std::move(shadowsConstantBuffer)),
     m_SpotLightShadowMapArray(Texture2DArray::Create(k_SpotLightShadowMapSize, k_SpotLightShadowMapSize, GlobalConstants::MaxSpotLightSources, TextureInternalFormat::DEPTH_32, true, "SpotLightShadowMap")),
     m_DirectionLightShadowMap(Texture2DArray::Create(k_DirLightShadowMapSize, k_DirLightShadowMapSize, GlobalConstants::ShadowCascadeCount, TextureInternalFormat::DEPTH_32, true, "DirectionalShadowMap")),
     m_PointLightShadowMap(Texture2DArray::Create(k_PointLightShadowMapSize, k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, "PointLightShadowMap"))
+    m_ShadowsConstantBuffer(std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData")),
 {
     Graphics::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
     Graphics::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
@@ -189,6 +189,8 @@ void ShadowCasterPass::Prepare(const Context& ctx)
     }
 
     m_ShadowsConstantBuffer->SetData(&m_ShadowsGPUData, 0, sizeof(ShadowsData));
+
+    GraphicsBackend::Current()->BindConstantBuffer(m_ShadowsConstantBuffer->GetBackendBuffer(), 1, 0, sizeof(ShadowsData));
 }
 
 void ShadowCasterPass::Execute(const Context& ctx)

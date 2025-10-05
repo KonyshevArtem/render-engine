@@ -97,7 +97,15 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
         spirv_cross::CompilerMSL::Options options;
         options.platform = spirv_cross::CompilerMSL::Options::macOS;
         options.msl_version = spirv_cross::CompilerMSL::Options::make_msl_version(3);
+        options.enable_decoration_binding = true;
         msl->set_msl_options(options);
+
+        spirv_cross::ShaderResources resource = msl->get_shader_resources();
+        for (const spirv_cross::Resource& buffer : resource.uniform_buffers)
+        {
+            uint32_t binding = msl->get_decoration(buffer.id, spv::DecorationBinding);
+            msl->set_decoration(buffer.id, spv::DecorationBinding, binding + k_MetalConstantBufferBindingOffset);
+        }
 
         return msl;
     }

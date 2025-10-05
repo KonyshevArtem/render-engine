@@ -13,6 +13,10 @@ enum GraphicsBackend : int
     GRAPHICS_BACKEND_MAX
 };
 
+// Used to offset binding index for constant buffers on Metal because they use the same index space as other buffers
+// Must match with value in GraphicsBackendMetal
+constexpr uint32_t k_MetalConstantBufferBindingOffset = 8;
+
 std::string GetBackendLiteral(GraphicsBackend backend)
 {
     switch (backend)

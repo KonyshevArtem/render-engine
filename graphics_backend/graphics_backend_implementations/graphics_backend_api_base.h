@@ -37,7 +37,6 @@ class GraphicsBackendShaderObject;
 class GraphicsBackendGeometry;
 struct GraphicsBackendTextureInfo;
 class GraphicsBackendBufferInfo;
-struct GraphicsBackendResourceBindings;
 struct GraphicsBackendRenderTargetDescriptor;
 struct GraphicsBackendColorAttachmentDescriptor;
 struct GraphicsBackendFence;

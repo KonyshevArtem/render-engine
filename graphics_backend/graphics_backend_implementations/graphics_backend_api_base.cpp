@@ -12,7 +12,6 @@
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_program.h"
 #include "arguments.h"
-#include "types/graphics_backend_resource_bindings.h"
 
 #include <functional>
 

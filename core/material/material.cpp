@@ -31,9 +31,7 @@ void Material::SetTexture(const std::string& name, std::shared_ptr<Texture> text
     if (it == shaderTextures.end())
         return;
 
-    const GraphicsBackendResourceBindings& bindings = it->second.TextureBindings;
-    uint32_t binding = bindings.FragmentIndex != -1 ? bindings.FragmentIndex : bindings.VertexIndex;
-    m_Textures[binding] = texture;
+    m_Textures[it->second.Binding] = texture;
     if (texture == nullptr)
         return;
 

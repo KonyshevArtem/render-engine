@@ -199,8 +199,8 @@ int main(int argc, char **argv)
         WriteShaderBinary(outputDirPath, vertexDXC, true);
         WriteShaderBinary(outputDirPath, fragmentDXC, false);
 
-        ExtractReflectionFromDXC(vertexDXC, pUtils, true, reflection);
-        ExtractReflectionFromDXC(fragmentDXC, pUtils, false, reflection);
+        ExtractReflectionFromDXC(vertexDXC, pUtils, reflection);
+        ExtractReflectionFromDXC(fragmentDXC, pUtils, reflection);
     }
     else
     {
@@ -210,8 +210,8 @@ int main(int argc, char **argv)
         WriteShaderSource(outputDirPath, vertexSPIRV, true);
         WriteShaderSource(outputDirPath, fragmentSPIRV, false);
 
-        ExtractReflectionFromSPIRV(vertexSPIRV, true, reflection, backend);
-        ExtractReflectionFromSPIRV(fragmentSPIRV, false, reflection, backend);
+        ExtractReflectionFromSPIRV(vertexSPIRV, reflection, backend);
+        ExtractReflectionFromSPIRV(fragmentSPIRV, reflection, backend);
     }
 
     WriteReflection(outputDirPath, reflection);

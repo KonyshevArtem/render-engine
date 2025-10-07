@@ -83,8 +83,10 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
         for (int i = 0; i < combinedImageSamplers.size(); i++)
         {
             const auto& sampler = combinedImageSamplers[i];
+            const uint32_t binding = glsl->get_decoration(sampler.image_id, spv::DecorationBinding);
             glsl->set_name(sampler.combined_id, glsl->get_name(sampler.image_id));
-            glsl->set_decoration(sampler.combined_id, spv::DecorationLocation, i);
+            glsl->set_decoration(sampler.combined_id, spv::DecorationBinding, binding);
+            glsl->set_decoration(sampler.combined_id, spv::DecorationLocation, binding);
         }
 
         return glsl;

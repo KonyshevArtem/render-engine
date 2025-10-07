@@ -777,9 +777,7 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     programData->DepthComparisonFunction = OpenGLHelpers::ToComparisonFunction(descriptor.DepthComparisonFunction);
     programData->DepthWrite = descriptor.DepthWrite ? GL_TRUE : GL_FALSE;
 
-    GraphicsBackendProgram program{};
-    program.Program = reinterpret_cast<uint64_t>(programData);
-    return program;
+    return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(programData), descriptor);
 }
 
 void GraphicsBackendOpenGL::DeleteShader_Internal(GraphicsBackendShaderObject shader)
@@ -799,7 +797,7 @@ bool GraphicsBackendOpenGL::RequireStrictPSODescriptor()
     return false;
 }
 
-void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
+void GraphicsBackendOpenGL::UseProgram(const GraphicsBackendProgram& program)
 {
     OpenGLLocal::ProgramData* programData = reinterpret_cast<OpenGLLocal::ProgramData*>(program.Program);
 
@@ -825,7 +823,7 @@ void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
     glDepthFunc(programData->DepthComparisonFunction);
     glDepthMask(programData->DepthWrite);
 
-    BindResources();
+    BindResources(program);
 }
 
 void GraphicsBackendOpenGL::SetClearColor(float r, float g, float b, float a)

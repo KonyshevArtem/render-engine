@@ -11,6 +11,7 @@
 #include "types/graphics_backend_geometry.h"
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_program.h"
+#include "types/graphics_backend_program_descriptor.h"
 #include "arguments.h"
 
 #include <functional>
@@ -138,30 +139,44 @@ void GraphicsBackendBase::DeleteProgram(GraphicsBackendProgram program)
     m_DeletedPrograms.emplace_back(program, BaseBackendLocal::k_DeleteResourceDelay);
 }
 
-void GraphicsBackendBase::BindResources()
+void GraphicsBackendBase::BindResources(const GraphicsBackendProgram& program)
 {
+    auto HasBinding = [](uint32_t bindingFlags, uint32_t binding)
+    {
+        return (bindingFlags & (1 << binding)) != 0;
+    };
+
     for (const auto& pair: m_BoundTextures)
-        BindTexture_Internal(pair.second, pair.first);
+    {
+        if (HasBinding(program.TextureBindings, pair.first))
+            BindTexture_Internal(pair.second, pair.first);
+    }
 
     for (const auto& pair: m_BoundSamplers)
-        BindSampler_Internal(pair.second, pair.first);
+    {
+        if (HasBinding(program.SamplerBindings, pair.first))
+            BindSampler_Internal(pair.second, pair.first);
+    }
 
     for (const auto& pair: m_BoundBuffers)
     {
         const BufferBindInfo& info = pair.second;
-        BindBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
+        if (HasBinding(program.BufferBindings, pair.first))
+            BindBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
     }
 
     for (const auto& pair: m_BoundStructuredBuffers)
     {
         const BufferBindInfo& info = pair.second;
-        BindStructuredBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size, info.ElementsCount);
+        if (HasBinding(program.BufferBindings, pair.first))
+            BindStructuredBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size, info.ElementsCount);
     }
 
     for (const auto& pair: m_BoundConstantBuffers)
     {
         const BufferBindInfo& info = pair.second;
-        BindConstantBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
+        if (HasBinding(program.ConstantBufferBindings, pair.first))
+            BindConstantBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
     }
 }
 
@@ -188,6 +203,31 @@ void GraphicsBackendBase::BindStructuredBuffer(const GraphicsBackendBuffer& buff
 void GraphicsBackendBase::BindConstantBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
     m_BoundConstantBuffers[index] = BufferBindInfo{buffer, offset, size};
+}
+
+GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor)
+{
+    GraphicsBackendProgram program{};
+    program.Program = programPtr;
+    program.BufferBindings = 0;
+    program.TextureBindings = 0;
+    program.SamplerBindings = 0;
+
+    for (const auto& pair : *descriptor.Buffers)
+    {
+        if (pair.second->GetBufferType() == BufferType::CONSTANT_BUFFER)
+            program.ConstantBufferBindings |= 1 << pair.second->GetBinding();
+        else
+            program.BufferBindings |= 1 << pair.second->GetBinding();
+    }
+
+    for (const auto& pair : *descriptor.Textures)
+        program.TextureBindings |= 1 << pair.second.Binding;
+
+    for (const auto& pair : *descriptor.Samplers)
+        program.SamplerBindings |= 1 << pair.second.Binding;
+
+    return program;
 }
 
 bool GraphicsBackendBase::IsTexture3D(TextureType type)

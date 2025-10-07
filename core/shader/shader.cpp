@@ -103,6 +103,9 @@ const GraphicsBackendProgram& Shader::CreatePSO(std::vector<GraphicsBackendShade
     GraphicsBackendProgramDescriptor programDescriptor{};
     programDescriptor.Shaders = &shaders;
     programDescriptor.VertexAttributes = &vertexAttributes;
+    programDescriptor.Textures = &m_Textures;
+    programDescriptor.Samplers = &m_Samplers;
+    programDescriptor.Buffers = &m_Buffers;
     programDescriptor.Name = &name;
     programDescriptor.ColorAttachmentDescriptor = colorAttachmentDescriptor;
     programDescriptor.DepthFormat = depthFormat;

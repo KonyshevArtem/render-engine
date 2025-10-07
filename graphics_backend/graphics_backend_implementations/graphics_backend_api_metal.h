@@ -56,7 +56,7 @@ public:
     GraphicsBackendShaderObject CompileShader(ShaderType shaderType, const std::string &source, const std::string& name) override;
     GraphicsBackendShaderObject CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name) override;
     GraphicsBackendProgram CreateProgram(const GraphicsBackendProgramDescriptor& descriptor) override;
-    void UseProgram(GraphicsBackendProgram program) override;
+    void UseProgram(const GraphicsBackendProgram& program) override;
     bool RequireStrictPSODescriptor() override;
 
     void SetClearColor(float r, float g, float b, float a) override;

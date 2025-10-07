@@ -93,7 +93,7 @@ public:
     virtual GraphicsBackendProgram CreateProgram(const GraphicsBackendProgramDescriptor& descriptor) = 0;
     void DeleteShader(GraphicsBackendShaderObject shader);
     void DeleteProgram(GraphicsBackendProgram program);
-    virtual void UseProgram(GraphicsBackendProgram program) = 0;
+    virtual void UseProgram(const GraphicsBackendProgram& program) = 0;
     virtual bool RequireStrictPSODescriptor() = 0;
 
     virtual void SetClearColor(float r, float g, float b, float a) = 0;
@@ -146,12 +146,14 @@ protected:
     virtual void DeleteShader_Internal(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram_Internal(GraphicsBackendProgram program) = 0;
 
-    void BindResources();
+    void BindResources(const GraphicsBackendProgram& program);
     virtual void BindTexture_Internal(const GraphicsBackendTexture &texture, uint32_t index) = 0;
     virtual void BindSampler_Internal(const GraphicsBackendSampler &sampler, uint32_t index) = 0;
     virtual void BindBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) = 0;
     virtual void BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size, int count) = 0;
     virtual void BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) = 0;
+
+    GraphicsBackendProgram CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor);
 
 private:
     struct BufferBindInfo

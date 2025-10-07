@@ -573,9 +573,7 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
     psoData->CullFace = MetalHelpers::ToCullFace(descriptor.CullFace);
     psoData->CullFaceOrientation = MetalHelpers::ToCullFaceOrientation(descriptor.CullFaceOrientation);
 
-    GraphicsBackendProgram program{};
-    program.Program = reinterpret_cast<uint64_t>(psoData);
-    return program;
+    return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(psoData), descriptor);
 }
 
 void GraphicsBackendMetal::DeleteShader_Internal(GraphicsBackendShaderObject shader)
@@ -596,7 +594,7 @@ bool GraphicsBackendMetal::RequireStrictPSODescriptor()
     return true;
 }
 
-void GraphicsBackendMetal::UseProgram(GraphicsBackendProgram program)
+void GraphicsBackendMetal::UseProgram(const GraphicsBackendProgram& program)
 {
     assert(m_RenderCommandEncoder != nullptr);
 
@@ -606,7 +604,7 @@ void GraphicsBackendMetal::UseProgram(GraphicsBackendProgram program)
     m_RenderCommandEncoder->setCullMode(psoData->CullFace);
     m_RenderCommandEncoder->setFrontFacingWinding(psoData->CullFaceOrientation);
 
-    BindResources();
+    BindResources(program);
 }
 
 void GraphicsBackendMetal::SetClearColor(float r, float g, float b, float a)

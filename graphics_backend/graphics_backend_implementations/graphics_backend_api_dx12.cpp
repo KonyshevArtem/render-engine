@@ -1506,9 +1506,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     if (descriptor.Name && !descriptor.Name->empty())
         DX12Local::SetObjectName(pso, (*descriptor.Name) + "_PSO");
 
-    GraphicsBackendProgram program{};
-    program.Program = reinterpret_cast<uint64_t>(pso);
-    return program;
+    return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(pso), descriptor);
 }
 
 void GraphicsBackendDX12::DeleteShader_Internal(GraphicsBackendShaderObject shader)
@@ -1528,7 +1526,7 @@ bool GraphicsBackendDX12::RequireStrictPSODescriptor()
     return true;
 }
 
-void GraphicsBackendDX12::UseProgram(GraphicsBackendProgram program)
+void GraphicsBackendDX12::UseProgram(const GraphicsBackendProgram& program)
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
@@ -1536,7 +1534,7 @@ void GraphicsBackendDX12::UseProgram(GraphicsBackendProgram program)
     frameData.RenderCommandList->List->SetGraphicsRootSignature(DX12Local::s_RootSignature);
     frameData.RenderCommandList->List->SetPipelineState(pso);
 
-    BindResources();
+    BindResources(program);
 }
 
 void GraphicsBackendDX12::SetClearColor(float r, float g, float b, float a)

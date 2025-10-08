@@ -162,8 +162,7 @@ namespace Graphics
             }
         }
 
-        GraphicsBackend::Current()->BindTexture(reflectionCube->GetBackendTexture(), 3);
-        GraphicsBackend::Current()->BindSampler(reflectionCube->GetBackendSampler(), 3);
+        GraphicsBackend::Current()->BindTextureSampler(reflectionCube->GetBackendTexture(), reflectionCube->GetBackendSampler(), 3);
 
         s_LightingDataBuffer->SetData(&lightingData, 0, sizeof(lightingData));
         GraphicsBackend::Current()->BindConstantBuffer(s_LightingDataBuffer->GetBackendBuffer(), 2, 0, sizeof(lightingData));
@@ -219,7 +218,7 @@ namespace Graphics
 
 #if RENDER_ENGINE_EDITOR
             const bool executeGizmosPass = s_GizmosPass->Prepare(ctx.Renderers, s_CopyDepthPass->GetEndFence());
-            const bool executeSelectionPass = s_SelectionOutlinePass->Prepare();
+            const bool executeSelectionPass = s_SelectionOutlinePass->Prepare(ctx);
 
             if (executeGizmosPass)
             {
@@ -290,14 +289,10 @@ namespace Graphics
             uint32_t binding = pair.first;
             const std::shared_ptr<Texture> &texture = pair.second;
 
-            GraphicsBackend::Current()->BindTexture(texture->GetBackendTexture(), binding);
-            GraphicsBackend::Current()->BindSampler(texture->GetBackendSampler(), binding);
+            GraphicsBackend::Current()->BindTextureSampler(texture->GetBackendTexture(), texture->GetBackendSampler(), binding);
         }
 
-        bool isLinear;
-        TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
-        TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
-        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, isLinear, depthTargetFormat, primitiveType));
+        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, primitiveType));
     }
 
     void DrawRenderQueue(const RenderQueue& renderQueue)
@@ -377,56 +372,10 @@ namespace Graphics
         GraphicsBackend::Current()->BindConstantBuffer(s_CameraDataBuffer->GetBackendBuffer(), 3, s_CameraDataBuffer->GetCurrentElementOffset(), s_CameraDataBuffer->GetElementSize());
     }
 
-    void SetRenderTarget(GraphicsBackendRenderTargetDescriptor descriptor, const std::shared_ptr<Texture> &target)
-    {
-        if (target)
-        {
-            descriptor.Texture = target->GetBackendTexture();
-        }
-
-        GraphicsBackend::Current()->AttachRenderTarget(descriptor);
-    }
-
     void SetViewport(const Vector4 &viewport)
     {
         GraphicsBackend::Current()->SetViewport(viewport.x, viewport.y, viewport.z, viewport.w, 0, 1);
         GraphicsBackend::Current()->SetScissorRect(viewport.x, viewport.y, viewport.z, viewport.w);
-    }
-
-    void CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size)
-    {
-        if (source && destination)
-        {
-            GraphicsBackend::Current()->CopyBufferSubData(source->GetBackendBuffer(), destination->GetBackendBuffer(), sourceOffset, destinationOffset, size);
-        }
-    }
-
-    void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material, const std::string& name)
-    {
-        static const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
-        static const GraphicsBackendRenderTargetDescriptor depthDescriptor{FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT};
-
-        material.SetTexture("_BlitTexture", source);
-
-        SetRenderTarget(destinationDescriptor, destination);
-        SetRenderTarget(depthDescriptor, nullptr);
-
-        GraphicsBackend::Current()->BeginRenderPass(name);
-        Draw(*fullscreenMesh, material, Matrix4x4::Identity());
-        GraphicsBackend::Current()->EndRenderPass();
-    }
-
-    void CopyTextureToTexture(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, GraphicsBackendRenderTargetDescriptor destinationDescriptor)
-    {
-        if (!source)
-            return;
-
-        if (destination)
-        {
-            destinationDescriptor.Texture = destination->GetBackendTexture();
-        }
-
-        GraphicsBackend::Current()->CopyTextureToTexture(source->GetBackendTexture(), destinationDescriptor, 0, 0, 0, 0, source->GetWidth(), source->GetHeight());
     }
 
     Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix)

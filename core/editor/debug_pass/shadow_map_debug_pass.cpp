@@ -8,6 +8,7 @@
 #include "types/graphics_backend_buffer_info.h"
 #include "graphics/context.h"
 #include "types/graphics_backend_sampler_info.h"
+#include "enums/indices_data_type.h"
 
 bool ShadowMapDebugPass::DrawShadowMapOverlay = false;
 bool ShadowMapDebugPass::DrawShadowCascades = false;
@@ -30,7 +31,6 @@ void ShadowMapDebugPass::DrawCascades(const Context& ctx)
     };
 
     static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowCascadeVisualize", {}, {true, BlendFactor::ONE, BlendFactor::ONE_MINUS_SRC_ALPHA}, {CullFace::NONE, CullFaceOrientation::CLOCKWISE}, {false, ComparisonFunction::ALWAYS});
-    static std::shared_ptr<Material> material = std::make_shared<Material>(shader, "Shadow Cascade Visualize");
     static std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(DebugData), "ShadowCascadeVisualizeData");
 
     if (DrawShadowCascades)
@@ -41,9 +41,9 @@ void ShadowMapDebugPass::DrawCascades(const Context& ctx)
         GraphicsBackend::Current()->BeginRenderPass("Shadow Cascade Visualize Pass");
         buffer->SetData(&data, 0, sizeof(data));
         GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 2, 0, sizeof(data));
-        GraphicsBackend::Current()->BindTexture(m_DepthMap->GetBackendTexture(), 0);
-        GraphicsBackend::Current()->BindSampler(m_DepthMap->GetBackendSampler(), 0);
-        Graphics::Draw(*m_FullscreenMesh, *material, Matrix4x4::Identity());
+        GraphicsBackend::Current()->BindTextureSampler(m_DepthMap->GetBackendTexture(), m_DepthMap->GetBackendSampler(), 0);
+        GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_FullscreenMesh->GetVertexAttributes(), m_FullscreenMesh->GetPrimitiveType()));
+        GraphicsBackend::Current()->DrawElements(m_FullscreenMesh->GetGraphicsBackendGeometry(), m_FullscreenMesh->GetPrimitiveType(), m_FullscreenMesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
         GraphicsBackend::Current()->EndRenderPass();
     }
 }
@@ -64,7 +64,6 @@ void ShadowMapDebugPass::DrawOverlay(const Context& ctx)
     };
 
     static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowMapOverlay", {}, {}, {CullFace::NONE, CullFaceOrientation::CLOCKWISE}, {false, ComparisonFunction::ALWAYS});
-    static std::shared_ptr<Material> material = std::make_shared<Material>(shader, "ShadowMap Overlay");
     static std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(DebugData), "ShadowMapOverlayData");
     static GraphicsBackendSampler sampler = GraphicsBackend::Current()->CreateSampler(TextureWrapMode::CLAMP_TO_EDGE, TextureFilteringMode::NEAREST, nullptr, 0, ComparisonFunction::NONE, "ShadowMap Overlay Sampler");
 
@@ -83,7 +82,8 @@ void ShadowMapDebugPass::DrawOverlay(const Context& ctx)
         buffer->SetData(&data, 0, sizeof(data));
         GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 2, 0, sizeof(data));
         GraphicsBackend::Current()->BindSampler(sampler, 3);
-        Graphics::Draw(*m_FullscreenMesh, *material, Matrix4x4::Identity());
+        GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_FullscreenMesh->GetVertexAttributes(), m_FullscreenMesh->GetPrimitiveType()));
+        GraphicsBackend::Current()->DrawElements(m_FullscreenMesh->GetGraphicsBackendGeometry(), m_FullscreenMesh->GetPrimitiveType(), m_FullscreenMesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
         GraphicsBackend::Current()->EndRenderPass();
     }
 }

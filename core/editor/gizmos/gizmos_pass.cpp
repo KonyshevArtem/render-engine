@@ -56,8 +56,8 @@ void GizmosPass::Execute(const Context& ctx)
 
     GraphicsBackend::Current()->WaitForFence(m_Fence);
 
-    Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
-    Graphics::SetRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
+    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
+    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
 
     GraphicsBackend::Current()->BeginRenderPass("Gizmos pass");
     const std::unordered_map<Gizmos::GizmoType, std::vector<Matrix4x4>>& gizmos = Gizmos::GetGizmosToDraw();

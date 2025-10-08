@@ -27,11 +27,7 @@ namespace Graphics
     void SetCameraData(const Matrix4x4& viewMatrix, const Matrix4x4& projectionMatrix, float nearPlane, float farPlane);
     int  GetScreenWidth();
     int  GetScreenHeight();
-    void SetRenderTarget(GraphicsBackendRenderTargetDescriptor descriptor, const std::shared_ptr<Texture> &target = nullptr);
     void SetViewport(const Vector4& viewport);
-    void CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size);
-    void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material, const std::string &name);
-    void CopyTextureToTexture(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, GraphicsBackendRenderTargetDescriptor destinationDescriptor);
     Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix);
 
     int GetDrawCallCount();

@@ -217,15 +217,9 @@ void ShadowCasterPass::Execute(const Context& ctx)
             Render(m_DirectionalLightRenderQueues[i], m_DirectionLightShadowMap, i, m_DirectionLightCameraData[i], "Directional Light Shadow Pass " + std::to_string(i));
     }
 
-    auto BindShadowMap = [](const std::shared_ptr<Texture>& shadowMap, uint32_t index)
-    {
-        GraphicsBackend::Current()->BindTexture(shadowMap->GetBackendTexture(), index);
-        GraphicsBackend::Current()->BindSampler(shadowMap->GetBackendSampler(), index);
-    };
-
-    BindShadowMap(m_DirectionLightShadowMap, 0);
-    BindShadowMap(m_SpotLightShadowMapArray, 1);
-    BindShadowMap(m_PointLightShadowMap, 2);
+    GraphicsBackend::Current()->BindTextureSampler(m_DirectionLightShadowMap->GetBackendTexture(), m_DirectionLightShadowMap->GetBackendSampler(), 0);
+    GraphicsBackend::Current()->BindTextureSampler(m_SpotLightShadowMapArray->GetBackendTexture(), m_SpotLightShadowMapArray->GetBackendSampler(), 1);
+    GraphicsBackend::Current()->BindTextureSampler(m_PointLightShadowMap->GetBackendTexture(), m_PointLightShadowMap->GetBackendSampler(), 2);
 }
 
 void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData& cameraData, const std::string& passName)
@@ -236,10 +230,11 @@ void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_
     Profiler::GPUMarker gpuMarker("ShadowCasterPass::Render");
 
     const Vector4& viewport{0, 0, static_cast<float>(target->GetWidth()), static_cast<float>(target->GetHeight())};
-    const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR, .Layer = targetLayer };
+    const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .Texture = target->GetBackendTexture(), .LoadAction = LoadAction::CLEAR, .Layer = targetLayer };
 
-    Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
-    Graphics::SetRenderTarget(depthTargetDescriptor, target);
+    GraphicsBackend::Current()->AttachRenderTarget(colorTargetDescriptor);
+    GraphicsBackend::Current()->AttachRenderTarget(depthTargetDescriptor);
+
     Graphics::SetCameraData(cameraData.ViewMatrix, cameraData.ProjectionMatrix, 0.01, cameraData.FarPlane);
 
     GraphicsBackend::Current()->BeginRenderPass(passName);

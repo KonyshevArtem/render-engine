@@ -6,6 +6,7 @@
 #include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_program_descriptor.h"
+#include "enums/framebuffer_attachment.h"
 #include "hash.h"
 #include "editor/profiler/profiler.h"
 
@@ -72,12 +73,16 @@ Shader::~Shader()
     }
 }
 
-const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat, PrimitiveType primitiveType)
+const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
 {
     if (!GraphicsBackend::Current()->RequireStrictPSODescriptor() && !m_Programs.empty())
     {
         return m_Programs.begin()->second;
     }
+
+    bool isLinear;
+    const TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
+    const TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
 
     auto hash = ShaderLocal::GetPSOHash(vertexAttributes.GetHash(), colorTargetFormat, isLinear, depthTargetFormat, primitiveType);
 

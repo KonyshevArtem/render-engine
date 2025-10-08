@@ -190,6 +190,12 @@ void GraphicsBackendBase::BindSampler(const GraphicsBackendSampler& sampler, uin
     m_BoundSamplers[index] = sampler;
 }
 
+void GraphicsBackendBase::BindTextureSampler(const GraphicsBackendTexture& texture, const GraphicsBackendSampler& sampler, uint32_t index)
+{
+    BindTexture(texture, index);
+    BindSampler(sampler, index);
+}
+
 void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
     m_BoundBuffers[index] = BufferBindInfo{buffer, offset, size};

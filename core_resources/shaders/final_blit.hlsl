@@ -21,11 +21,12 @@ struct Varyings
     float2 uv : TEXCOORD0;
 };
 
-cbuffer PerMaterialData : register(b4)
+cbuffer BlitData : register(b4)
 {
     float _OneOverGamma;
     float _Exposure;
     uint _TonemappingMode;
+    float Padding0;
 };
 
 Texture2D _BlitTexture : register(t4);

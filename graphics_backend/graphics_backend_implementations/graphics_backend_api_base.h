@@ -64,6 +64,7 @@ public:
 
     void BindTexture(const GraphicsBackendTexture& texture, uint32_t index);
     void BindSampler(const GraphicsBackendSampler& sampler, uint32_t index);
+    void BindTextureSampler(const GraphicsBackendTexture& texture, const GraphicsBackendSampler& sampler, uint32_t index);
 
     virtual void GenerateMipmaps(const GraphicsBackendTexture &texture) = 0;
     virtual void UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData) = 0;

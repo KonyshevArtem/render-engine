@@ -31,7 +31,7 @@ void CopyDepthPass::Execute(const Context& ctx)
     GraphicsBackend::Current()->WaitForFence(m_StartFence);
 
     GraphicsBackend::Current()->BeginCopyPass("Copy Depth To Backbuffer");
-    Graphics::CopyTextureToTexture(m_SourceDepth, nullptr, GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
+    GraphicsBackend::Current()->CopyTextureToTexture(m_SourceDepth->GetBackendTexture(), GraphicsBackendRenderTargetDescriptor::DepthBackbuffer(), 0, 0, 0, 0, m_SourceDepth->GetWidth(), m_SourceDepth->GetHeight());
     GraphicsBackend::Current()->EndCopyPass();
 
     GraphicsBackend::Current()->SignalFence(m_EndFence);

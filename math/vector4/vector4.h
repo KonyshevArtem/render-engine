@@ -19,6 +19,8 @@ public:
 
     static const Vector4 &Zero();
 
+    Vector4 operator /(float a);
+
     void operator /=(float a);
 };
 

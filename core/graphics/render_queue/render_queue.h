@@ -13,10 +13,19 @@ struct RenderSettings;
 class RenderQueue
 {
 public:
+    struct Item
+    {
+        std::shared_ptr<DrawableGeometry> Geometry;
+        std::shared_ptr<Material> Material;
+        Matrix4x4 Matrix;
+        Bounds AABB;
+    };
+
     RenderQueue() = default;
     ~RenderQueue() = default;
 
     void Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& renderSettings);
+    void Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<Item>& items, const RenderSettings& renderSettings);
     void Clear();
 
     bool IsEmpty() const;

@@ -217,7 +217,7 @@ namespace Graphics
             renderPasses.push_back(s_FinalBlitPass);
 
 #if RENDER_ENGINE_EDITOR
-            const bool executeGizmosPass = s_GizmosPass->Prepare(ctx.Renderers, s_CopyDepthPass->GetEndFence());
+            const bool executeGizmosPass = s_GizmosPass->Prepare(ctx, s_CopyDepthPass->GetEndFence());
             const bool executeSelectionPass = s_SelectionOutlinePass->Prepare(ctx);
 
             if (executeGizmosPass)

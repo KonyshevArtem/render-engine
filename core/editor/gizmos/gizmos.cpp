@@ -1,32 +1,14 @@
 #if RENDER_ENGINE_EDITOR
 
 #include "gizmos.h"
-#include "vector3/vector3.h"
-#include "matrix4x4/matrix4x4.h"
 #include "lines/lines.h"
+#include "shader/shader.h"
+#include "material/material.h"
 
-bool m_IsEnabled;
-std::shared_ptr<Lines> m_WireCubePrimitive;
-std::unordered_map<Gizmos::GizmoType, std::vector<Matrix4x4>> m_GizmosToDraw;
-
-void Gizmos::DrawWireCube(const Matrix4x4& matrix)
+namespace GizmosLocal
 {
-    if (m_IsEnabled)
-        m_GizmosToDraw[GizmoType::WIRE_CUBE].push_back(matrix);
-}
-
-void Gizmos::DrawFrustum(const Matrix4x4& matrix)
-{
-    if (m_IsEnabled)
-        m_GizmosToDraw[GizmoType::FRUSTUM].push_back(matrix);
-}
-
-void Gizmos::Init()
-{
-    // wire cube
+    std::vector<Vector3> s_CubeCorners
     {
-        std::vector<Vector3> wireCubePoints
-        {
             { -1, -1, -1 },
             { -1, -1, 1 },
             { -1, 1, -1 },
@@ -35,47 +17,111 @@ void Gizmos::Init()
             { 1, -1, 1 },
             { 1, 1, -1 },
             { 1, 1, 1 }
-        };
+    };
+
+    bool s_IsEnabled;
+    std::shared_ptr<Lines> s_WireCubePrimitive;
+    std::vector<RenderQueue::Item> s_GizmosToDraw;
+
+    std::shared_ptr<DrawableGeometry> GetGizmosGeometry(Gizmos::GizmoType gizmoType)
+    {
+        switch (gizmoType)
+        {
+            case Gizmos::GizmoType::WIRE_CUBE:
+            case Gizmos::GizmoType::FRUSTUM:
+                return s_WireCubePrimitive;
+        }
+
+        return nullptr;
+    }
+
+    std::shared_ptr<Material> GetGizmosMaterial(Gizmos::GizmoType gizmoType)
+    {
+        static std::shared_ptr<Material> wireCubeMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {}), "Wire Cube Gizmo");
+        static std::shared_ptr<Material> frustumMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING", "_FRUSTUM_GIZMO"}, {}, {}, {}), "Frustum Gizmo");
+
+        switch (gizmoType)
+        {
+            case Gizmos::GizmoType::WIRE_CUBE:
+                return wireCubeMaterial;
+            case Gizmos::GizmoType::FRUSTUM:
+                return frustumMaterial;
+        }
+
+        return nullptr;
+    }
+}
+
+void Gizmos::DrawWireCube(const Matrix4x4& matrix)
+{
+    if (!GizmosLocal::s_IsEnabled)
+        return;
+
+    Vector3 points[8];
+    for (int i = 0; i < 8; ++i)
+        points[i] = matrix * GizmosLocal::s_CubeCorners[i].ToVector4(1);
+
+    RenderQueue::Item item;
+    item.Geometry = GizmosLocal::GetGizmosGeometry(GizmoType::WIRE_CUBE);
+    item.Material = GizmosLocal::GetGizmosMaterial(GizmoType::WIRE_CUBE);
+    item.Matrix = matrix;
+    item.AABB = Bounds::FromPoints(std::span<Vector3>(&points[0], 8));
+
+    GizmosLocal::s_GizmosToDraw.push_back(item);
+}
+
+void Gizmos::DrawFrustum(const Matrix4x4& matrix)
+{
+    if (!GizmosLocal::s_IsEnabled)
+        return;
+
+    Vector3 points[8];
+    for (int i = 0; i < 8; ++i)
+    {
+        Vector4 point = matrix * GizmosLocal::s_CubeCorners[i].ToVector4(1);
+        points[i] = point / point.w;
+    }
+
+    RenderQueue::Item item;
+    item.Geometry = GizmosLocal::GetGizmosGeometry(GizmoType::FRUSTUM);
+    item.Material = GizmosLocal::GetGizmosMaterial(GizmoType::FRUSTUM);
+    item.Matrix = matrix;
+    item.AABB = Bounds::FromPoints(std::span<Vector3>(&points[0], 8));
+
+    GizmosLocal::s_GizmosToDraw.push_back(item);
+}
+
+void Gizmos::Init()
+{
+    // wire cube
+    {
         std::vector<int> wireCubeIndices
         {
             0, 1, 0, 2, 1, 3, 2, 3, 4, 5, 4, 6, 5, 7, 6, 7, 0, 4, 1, 5, 2, 6, 3, 7
         };
 
-        m_WireCubePrimitive = std::make_shared<Lines>(wireCubePoints, wireCubeIndices, "WireCube");
-        m_GizmosToDraw[GizmoType::WIRE_CUBE] = {};
-        m_GizmosToDraw[GizmoType::FRUSTUM] = {};
+        GizmosLocal::s_WireCubePrimitive = std::make_shared<Lines>(GizmosLocal::s_CubeCorners, wireCubeIndices, "WireCube");
     }
 }
 
-const std::unordered_map<Gizmos::GizmoType, std::vector<Matrix4x4>>& Gizmos::GetGizmosToDraw()
+const std::vector<RenderQueue::Item>& Gizmos::GetGizmosToDraw()
 {
-    return m_GizmosToDraw;
-}
-
-std::shared_ptr<DrawableGeometry> Gizmos::GetGizmosGeometry(Gizmos::GizmoType gizmoType)
-{
-    switch (gizmoType)
-    {
-        case GizmoType::WIRE_CUBE:
-        case GizmoType::FRUSTUM:
-            return m_WireCubePrimitive;
-    }
+    return GizmosLocal::s_GizmosToDraw;
 }
 
 void Gizmos::ClearGizmos()
 {
-    for (auto& pair: m_GizmosToDraw)
-        pair.second.clear();
+    GizmosLocal::s_GizmosToDraw.clear();
 }
 
 bool Gizmos::IsEnabled()
 {
-    return m_IsEnabled;
+    return GizmosLocal::s_IsEnabled;
 }
 
 void Gizmos::SetEnabled(bool enabled)
 {
-    m_IsEnabled = enabled;
+    GizmosLocal::s_IsEnabled = enabled;
 }
 
 #endif

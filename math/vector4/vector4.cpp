@@ -40,6 +40,11 @@ Vector4 Vector4::Normalize() const
     };
 }
 
+Vector4 Vector4::operator /(float a)
+{
+    return Vector4(x / a, y / a, z / a, w / a);
+}
+
 void Vector4::operator/=(float a)
 {
     x /= a;

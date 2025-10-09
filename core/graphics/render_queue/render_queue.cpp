@@ -18,6 +18,27 @@ namespace RenderQueueLocal
         return Hash::Combine(materialHash, geometryHash);
     }
 
+    void SetupDrawCall(const std::shared_ptr<DrawableGeometry>& geometry, const std::shared_ptr<Material>& material, const Matrix4x4& matrix, const Bounds& aabb, bool castShadows, const RenderSettings& settings, const Frustum& frustum, std::vector<DrawCallInfo>& outDrawCalls)
+    {
+        const Material* mat = settings.OverrideMaterial ? settings.OverrideMaterial.get() : material.get();
+
+        if (!geometry || !mat)
+            return;
+
+        if (RenderQueue::EnableFrustumCulling && !frustum.IsVisible(aabb, settings.FrustumCullingPlanesBits))
+            return;
+
+        DrawCallInfo info{
+                geometry.get(),
+                mat,
+                {matrix},
+                aabb,
+                castShadows,
+                false
+        };
+        outDrawCalls.push_back(info);
+    }
+
     void SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& settings, const Frustum& frustum, std::vector<DrawCallInfo>& outDrawCalls)
     {
         outDrawCalls.reserve(renderers.size());
@@ -25,28 +46,16 @@ namespace RenderQueueLocal
         for (const std::shared_ptr<Renderer>& renderer : renderers)
         {
             if (renderer)
-            {
-                const DrawableGeometry* geometry = renderer->GetGeometry().get();
-                const Material* material = settings.OverrideMaterial ? settings.OverrideMaterial.get() : renderer->GetMaterial().get();
-
-                if (geometry && material)
-                {
-                    const Bounds aabb = renderer->GetAABB();
-                    if (RenderQueue::EnableFrustumCulling && !frustum.IsVisible(aabb, settings.FrustumCullingPlanesBits))
-                        continue;
-
-                    DrawCallInfo info{
-                        geometry,
-                        material,
-                        {renderer->GetModelMatrix()},
-                        aabb,
-                        renderer->CastShadows,
-                        false
-                    };
-                    outDrawCalls.push_back(info);
-                }
-            }
+                SetupDrawCall(renderer->GetGeometry(), renderer->GetMaterial(), renderer->GetModelMatrix(), renderer->GetAABB(), renderer->CastShadows, settings, frustum, outDrawCalls);
         }
+    }
+
+    void SetupDrawCalls(const std::vector<RenderQueue::Item>& items, const RenderSettings& settings, const Frustum& frustum, std::vector<DrawCallInfo>& outDrawCalls)
+    {
+        outDrawCalls.reserve(items.size());
+
+        for (const RenderQueue::Item& item : items)
+            SetupDrawCall(item.Geometry, item.Material, item.Matrix, item.AABB, false, settings, frustum, outDrawCalls);
     }
 
     void FilterDrawCalls(const DrawCallFilter& filter, std::vector<DrawCallInfo>& outDrawCalls)
@@ -116,6 +125,19 @@ void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vect
         m_Frustum = Frustum(viewProjectionMatrix);
 
     RenderQueueLocal::SetupDrawCalls(renderers, renderSettings, m_Frustum, m_DrawCalls);
+    RenderQueueLocal::FilterDrawCalls(renderSettings.Filter, m_DrawCalls);
+    RenderQueueLocal::BatchDrawCalls(m_DrawCalls);
+    RenderQueueLocal::SortDrawCalls(renderSettings.Sorting, viewProjectionMatrix, m_DrawCalls);
+}
+
+void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<Item>& items, const RenderSettings& renderSettings)
+{
+    m_DrawCalls.clear();
+
+    if (!FreezeFrustumCulling)
+        m_Frustum = Frustum(viewProjectionMatrix);
+
+    RenderQueueLocal::SetupDrawCalls(items, renderSettings, m_Frustum, m_DrawCalls);
     RenderQueueLocal::FilterDrawCalls(renderSettings.Filter, m_DrawCalls);
     RenderQueueLocal::BatchDrawCalls(m_DrawCalls);
     RenderQueueLocal::SortDrawCalls(renderSettings.Sorting, viewProjectionMatrix, m_DrawCalls);

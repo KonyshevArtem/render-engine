@@ -18,8 +18,6 @@ namespace Graphics
     int  GetScreenHeight();
     void SetViewport(const Vector4& viewport);
     Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix);
-
-    int GetDrawCallCount();
 }; // namespace Graphics
 
 #endif //RENDER_ENGINE_GRAPHICS_H

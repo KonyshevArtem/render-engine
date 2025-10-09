@@ -50,7 +50,6 @@ namespace Graphics
 
     int s_ScreenWidth  = 0;
     int s_ScreenHeight = 0;
-    int s_DrawCallCount = 0;
 
     void InitConstantBuffers()
     {
@@ -161,7 +160,6 @@ namespace Graphics
 
         s_ScreenWidth  = width;
         s_ScreenHeight = height;
-        s_DrawCallCount = 0;
 
         const Context ctx;
         std::vector<std::shared_ptr<RenderPass>> renderPasses;
@@ -270,10 +268,5 @@ namespace Graphics
         }
 
         return gpuProjectionMatrix;
-    }
-
-    int GetDrawCallCount()
-    {
-        return s_DrawCallCount;
     }
 } // namespace Graphics

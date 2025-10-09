@@ -137,6 +137,11 @@ public:
     bool IsDepthFormat(TextureInternalFormat format);
     bool IsDepthAttachment(FramebufferAttachment attachment);
 
+    uint32_t GetDrawCallCount()
+    {
+        return m_DrawCallCount;
+    }
+
 protected:
     bool IsMainThread();
 
@@ -155,6 +160,8 @@ protected:
     virtual void BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) = 0;
 
     GraphicsBackendProgram CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor);
+
+    uint32_t m_DrawCallCount = 0;
 
 private:
     struct BufferBindInfo

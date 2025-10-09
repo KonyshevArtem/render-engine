@@ -1557,6 +1557,8 @@ void GraphicsBackendDX12::DrawArrays(const GraphicsBackendGeometry& geometry, Pr
 
 void GraphicsBackendDX12::DrawArraysInstanced(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
+    ++m_DrawCallCount;
+
     DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.Geometry);
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
@@ -1582,6 +1584,8 @@ void GraphicsBackendDX12::DrawElements(const GraphicsBackendGeometry& geometry, 
 
 void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
+    ++m_DrawCallCount;
+
     DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.Geometry);
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();

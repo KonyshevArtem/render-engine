@@ -150,8 +150,6 @@ namespace Graphics
         if (width == 0 || height == 0)
             return;
 
-        s_CameraDataBuffer->CheckResize();
-
         static std::shared_ptr<Texture2D> cameraColorTarget;
         static std::shared_ptr<Texture2D> cameraDepthTarget;
 

@@ -22,7 +22,6 @@ public:
     }
 
     void SetData(const void *data, uint64_t offset, uint64_t size);
-    void CheckResize();
 
     inline uint64_t GetCurrentElementOffset() const
     {
@@ -42,14 +41,14 @@ public:
 
 private:
     std::shared_ptr<GraphicsBuffer> m_Buffer;
-    std::shared_ptr<GraphicsBuffer> m_OldBuffer;
     std::string m_Name;
 
     uint64_t m_ElementSize;
     int m_Capacity;
-    int      m_ElementsInUse;
+    int m_ElementsInUse;
 
-    int m_CurrentOffset = -1;
+    int m_CurrentOffset;
+    uint64_t m_LastCheckFrame;
 };
 
 

@@ -1,7 +1,6 @@
 #include "graphics.h"
 #include "camera/camera.h"
 #include "context.h"
-#include "debug.h"
 #include "draw_call_info.h"
 #include "editor/gizmos/gizmos.h"
 #include "editor/gizmos/gizmos_pass.h"
@@ -10,22 +9,16 @@
 #include "passes/shadow_caster_pass.h"
 #include "renderer/renderer.h"
 #include "texture/texture.h"
-#include "graphics_buffer/graphics_buffer.h"
-#include "graphics_backend_api.h"
-#include "graphics_backend_debug_group.h"
 #include "enums/indices_data_type.h"
 #include "shader/shader.h"
 #include "data_structs/camera_data.h"
 #include "data_structs/lighting_data.h"
-#include "data_structs/per_draw_data.h"
 #include "types/graphics_backend_buffer_info.h"
-#include "render_settings/draw_call_filter.h"
 #include "texture_2d/texture_2d.h"
 #include "mesh/mesh.h"
 #include "passes/final_blit_pass.h"
 #include "editor/selection_outline/selection_outline_pass.h"
 #include "graphics_settings.h"
-#include "graphics_buffer/ring_buffer.h"
 #include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "material/material.h"
@@ -41,10 +34,7 @@
 
 namespace Graphics
 {
-    std::shared_ptr<RingBuffer> s_InstancingMatricesBuffer;
     std::shared_ptr<GraphicsBuffer> s_LightingDataBuffer;
-
-    std::shared_ptr<RingBuffer> s_PerDrawDataBuffer;
     std::shared_ptr<RingBuffer> s_CameraDataBuffer;
 
     std::shared_ptr<ForwardRenderPass> s_ForwardRenderPass;
@@ -66,7 +56,6 @@ namespace Graphics
     {
         s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), 32, "CameraData");
         s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), "LightingData");
-        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(sizeof(PerDrawData), 1024, "PerDrawData");
     }
 
     void InitPasses()
@@ -83,13 +72,6 @@ namespace Graphics
 #endif
     }
 
-    void InitInstancing()
-    {
-        auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
-
-        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, 64, "PerInstanceMatrices");
-    }
-
     void Init()
     {
 #if RENDER_ENGINE_EDITOR
@@ -98,15 +80,11 @@ namespace Graphics
 
         InitConstantBuffers();
         InitPasses();
-        InitInstancing();
     }
 
     void Shutdown()
     {
-        s_InstancingMatricesBuffer = nullptr;
         s_LightingDataBuffer = nullptr;
-
-        s_PerDrawDataBuffer = nullptr;
         s_CameraDataBuffer = nullptr;
 
         s_ForwardRenderPass = nullptr;
@@ -173,8 +151,6 @@ namespace Graphics
         if (width == 0 || height == 0)
             return;
 
-        s_InstancingMatricesBuffer->CheckResize();
-        s_PerDrawDataBuffer->CheckResize();
         s_CameraDataBuffer->CheckResize();
 
         static std::shared_ptr<Texture2D> cameraColorTarget;
@@ -244,104 +220,6 @@ namespace Graphics
             {
                 pass->Execute(ctx);
             }
-        }
-    }
-
-    void SetupMatrices(const Matrix4x4 &modelMatrix)
-    {
-        PerDrawData perDrawData{};
-        perDrawData.ModelMatrix = modelMatrix;
-        perDrawData.ModelNormalMatrix = modelMatrix.Invert().Transpose();
-        s_PerDrawDataBuffer->SetData(&perDrawData, 0, sizeof(perDrawData));
-
-        GraphicsBackend::Current()->BindConstantBuffer(s_PerDrawDataBuffer->GetBackendBuffer(), 0, s_PerDrawDataBuffer->GetCurrentElementOffset(), sizeof(perDrawData));
-    }
-
-    void SetupMatrices(const std::vector<Matrix4x4> &matrices)
-    {
-        static std::vector<Matrix4x4> matricesBuffer;
-
-        auto count = matrices.size();
-
-        matricesBuffer.resize(count * 2);
-        for (int i = 0; i < count; ++i)
-        {
-            matricesBuffer[i * 2 + 0] = matrices[i];
-            matricesBuffer[i * 2 + 1] = matrices[i].Invert().Transpose();
-        }
-
-        auto matricesSize = sizeof(Matrix4x4) * matricesBuffer.size();
-        s_InstancingMatricesBuffer->SetData(matricesBuffer.data(), 0, matricesSize);
-
-        GraphicsBackend::Current()->BindStructuredBuffer(s_InstancingMatricesBuffer->GetBackendBuffer(), 0, s_InstancingMatricesBuffer->GetCurrentElementOffset(), matricesSize, count);
-    }
-
-    void SetupShaderPass(const Material &material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
-    {
-        Shader& shaderPass = *material.GetShader();
-
-        const auto &perMaterialDataBuffer = material.GetPerMaterialDataBuffer();
-        if (perMaterialDataBuffer)
-            GraphicsBackend::Current()->BindConstantBuffer(perMaterialDataBuffer->GetBackendBuffer(), 4, 0, perMaterialDataBuffer->GetSize());
-
-        for (const auto& pair: material.GetTextures())
-        {
-            uint32_t binding = pair.first;
-            const std::shared_ptr<Texture> &texture = pair.second;
-
-            GraphicsBackend::Current()->BindTextureSampler(texture->GetBackendTexture(), texture->GetBackendSampler(), binding);
-        }
-
-        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, primitiveType));
-    }
-
-    void DrawRenderQueue(const RenderQueue& renderQueue)
-    {
-        for (const DrawCallInfo& drawCall : renderQueue.GetDrawCalls())
-        {
-            if (drawCall.Instanced)
-                DrawInstanced(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrices);
-            else
-                Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrices[0]);
-        }
-    }
-
-    void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix)
-    {
-        auto primitiveType = geometry.GetPrimitiveType();
-        auto elementsCount = geometry.GetElementsCount();
-
-        SetupMatrices(modelMatrix);
-        SetupShaderPass(material, geometry.GetVertexAttributes(), geometry.GetPrimitiveType());
-
-        if (geometry.HasIndexes())
-        {
-            GraphicsBackend::Current()->DrawElements(geometry.GetGraphicsBackendGeometry(), primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT);
-        }
-        else
-        {
-            GraphicsBackend::Current()->DrawArrays(geometry.GetGraphicsBackendGeometry(), primitiveType, 0, elementsCount);
-        }
-
-        ++s_DrawCallCount;
-    }
-
-    void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices)
-    {
-        auto primitiveType = geometry.GetPrimitiveType();
-        auto elementsCount = geometry.GetElementsCount();
-        auto instanceCount = modelMatrices.size();
-
-        SetupMatrices(modelMatrices);
-        SetupShaderPass(material, geometry.GetVertexAttributes(), geometry.GetPrimitiveType());
-
-        if (geometry.HasIndexes())
-        {
-            GraphicsBackend::Current()->DrawElementsInstanced(geometry.GetGraphicsBackendGeometry(), primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, instanceCount);
-        }
-        else
-        {
-            GraphicsBackend::Current()->DrawArraysInstanced(geometry.GetGraphicsBackendGeometry(), primitiveType, 0, elementsCount, instanceCount);
         }
     }
 

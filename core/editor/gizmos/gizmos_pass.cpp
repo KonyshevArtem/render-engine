@@ -58,7 +58,7 @@ void GizmosPass::Execute(const Context& ctx)
     GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
 
     GraphicsBackend::Current()->BeginRenderPass("Gizmos pass");
-    Graphics::DrawRenderQueue(m_GizmosQueue);
+    m_GizmosQueue.Draw();
     GraphicsBackend::Current()->EndRenderPass();
 }
 

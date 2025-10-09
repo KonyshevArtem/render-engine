@@ -71,7 +71,6 @@ add_library(
 	graphics/data_structs/shadows_data.h
 	graphics/data_structs/lighting_data.h
 	graphics/data_structs/camera_data.h
-	graphics/data_structs/per_draw_data.h
 	graphics_buffer/graphics_buffer_wrapper.h
 	graphics_buffer/graphics_buffer_wrapper.cpp
 	graphics/render_settings/draw_call_comparer.h

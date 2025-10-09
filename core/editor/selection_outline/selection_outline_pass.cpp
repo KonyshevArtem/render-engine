@@ -83,7 +83,7 @@ void SelectionOutlinePass::Execute(const Context& ctx)
         GraphicsBackend::Current()->AttachRenderTarget(colorTarget);
 
         GraphicsBackend::Current()->BeginRenderPass("Selection Outline Pass");
-        Graphics::DrawRenderQueue(m_SelectedObjectsQueue);
+        m_SelectedObjectsQueue.Draw();
         GraphicsBackend::Current()->EndRenderPass();
     }
 

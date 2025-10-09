@@ -7,23 +7,12 @@
 
 struct Vector4;
 struct Matrix4x4;
-struct RenderSettings;
-class Renderer;
-class Texture;
-class GraphicsBuffer;
-class DrawableGeometry;
-class Material;
-class RenderQueue;
-struct GraphicsBackendRenderTargetDescriptor;
 
 namespace Graphics
 {
     void Init();
     void Shutdown();
     void Render(int width, int height);
-    void DrawRenderQueue(const RenderQueue& renderQueue);
-    void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix);
-    void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices);
     void SetCameraData(const Matrix4x4& viewMatrix, const Matrix4x4& projectionMatrix, float nearPlane, float farPlane);
     int  GetScreenWidth();
     int  GetScreenHeight();

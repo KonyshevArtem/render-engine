@@ -239,6 +239,6 @@ void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_
 
     GraphicsBackend::Current()->BeginRenderPass(passName);
     Graphics::SetViewport(viewport);
-    Graphics::DrawRenderQueue(renderQueue);
+    renderQueue.Draw();
     GraphicsBackend::Current()->EndRenderPass();
 }

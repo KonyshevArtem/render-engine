@@ -41,8 +41,9 @@ private:
     std::vector<DrawCallInfo> m_DrawCalls;
     Frustum m_Frustum;
 
-    static std::shared_ptr<RingBuffer> s_InstancingMatricesBuffer;
-    static std::shared_ptr<RingBuffer> s_PerDrawDataBuffer;
+    static std::shared_ptr<RingBuffer> s_MatricesBuffer;
+
+    static void SetupMatrices(const std::vector<Matrix4x4>& matrices);
 };
 
 #endif //RENDER_QUEUE_H

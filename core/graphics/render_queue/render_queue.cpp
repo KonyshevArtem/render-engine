@@ -13,6 +13,8 @@
 bool RenderQueue::EnableFrustumCulling = true;
 bool RenderQueue::FreezeFrustumCulling = false;
 
+std::shared_ptr<RingBuffer> RenderQueue::s_MatricesBuffer;
+
 namespace RenderQueueLocal
 {
     uint32_t k_MaxInstancingCount = 256;
@@ -122,35 +124,6 @@ namespace RenderQueueLocal
             std::sort(outDrawCalls.begin(), outDrawCalls.end(), DrawCallComparer {sortMode, cameraDirection});
     }
 
-    void SetupMatrices(const Matrix4x4 &modelMatrix, std::shared_ptr<RingBuffer> buffer)
-    {
-        Matrix4x4 matrices[2];
-        matrices[0] = modelMatrix;
-        matrices[1] = modelMatrix.Invert().Transpose();
-        buffer->SetData(&matrices[0], 0, sizeof(matrices));
-
-        GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, buffer->GetCurrentElementOffset(), sizeof(matrices));
-    }
-
-    void SetupMatrices(const std::vector<Matrix4x4> &matrices, std::shared_ptr<RingBuffer> buffer)
-    {
-        static std::vector<Matrix4x4> matricesBuffer;
-
-        int count = matrices.size();
-
-        matricesBuffer.resize(count * 2);
-        for (int i = 0; i < count; ++i)
-        {
-            matricesBuffer[i * 2 + 0] = matrices[i];
-            matricesBuffer[i * 2 + 1] = matrices[i].Invert().Transpose();
-        }
-
-        int matricesSize = sizeof(Matrix4x4) * matricesBuffer.size();
-        buffer->SetData(matricesBuffer.data(), 0, matricesSize);
-
-        GraphicsBackend::Current()->BindStructuredBuffer(buffer->GetBackendBuffer(), 0, buffer->GetCurrentElementOffset(), matricesSize, count);
-    }
-
     void SetupShaderPass(const Material* material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
     {
         const std::shared_ptr<GraphicsBuffer>& perMaterialDataBuffer = material->GetPerMaterialDataBuffer();
@@ -169,19 +142,10 @@ namespace RenderQueueLocal
     }
 }
 
-std::shared_ptr<RingBuffer> RenderQueue::s_InstancingMatricesBuffer;
-std::shared_ptr<RingBuffer> RenderQueue::s_PerDrawDataBuffer;
-
 RenderQueue::RenderQueue()
 {
-    if (!s_InstancingMatricesBuffer)
-    {
-        int matricesBufferSize = sizeof(Matrix4x4) * RenderQueueLocal::k_MaxInstancingCount * 2;
-        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, 64, "PerInstanceMatrices");
-    }
-
-    if (!s_PerDrawDataBuffer)
-        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(sizeof(Matrix4x4) * 2, 1024, "PerDrawData");
+    if (!s_MatricesBuffer)
+        s_MatricesBuffer = std::make_shared<RingBuffer>(sizeof(Matrix4x4) * 4096, "Render Queue Matrices Buffer");
 }
 
 void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& renderSettings)
@@ -234,11 +198,7 @@ void RenderQueue::Draw() const
         const int elementsCount = drawCall.Geometry->GetElementsCount();
         const bool hasIndices = drawCall.Geometry->HasIndexes();
 
-        if (drawCall.Instanced)
-            RenderQueueLocal::SetupMatrices(drawCall.ModelMatrices, s_InstancingMatricesBuffer);
-        else
-            RenderQueueLocal::SetupMatrices(drawCall.ModelMatrices[0], s_PerDrawDataBuffer);
-
+        SetupMatrices(drawCall.ModelMatrices);
         RenderQueueLocal::SetupShaderPass(drawCall.Material, drawCall.Geometry->GetVertexAttributes(), primitiveType);
 
         if (drawCall.Instanced)
@@ -257,4 +217,26 @@ void RenderQueue::Draw() const
                 GraphicsBackend::Current()->DrawArrays(geom, primitiveType, 0, elementsCount);
         }
     }
+}
+
+void RenderQueue::SetupMatrices(const std::vector<Matrix4x4>& matrices)
+{
+    static std::vector<Matrix4x4> matricesBuffer;
+
+    const int count = matrices.size();
+
+    matricesBuffer.resize(count * 2);
+    for (int i = 0; i < count; ++i)
+    {
+        matricesBuffer[i * 2 + 0] = matrices[i];
+        matricesBuffer[i * 2 + 1] = matrices[i].Invert().Transpose();
+    }
+
+    const uint64_t size = sizeof(Matrix4x4) * matricesBuffer.size();
+    uint64_t offset = s_MatricesBuffer->SetData(matricesBuffer.data(), 0, size);
+
+    if (matrices.size() > 1)
+        GraphicsBackend::Current()->BindStructuredBuffer(s_MatricesBuffer->GetBackendBuffer(), 0, offset, size, count);
+    else
+        GraphicsBackend::Current()->BindConstantBuffer(s_MatricesBuffer->GetBackendBuffer(), 0, offset, size);
 }

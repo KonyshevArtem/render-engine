@@ -13,7 +13,7 @@ class GraphicsBackendBuffer;
 class RingBuffer
 {
 public:
-    RingBuffer(uint64_t elementSize, uint64_t elementsCount, const std::string& name);
+    RingBuffer(uint64_t size, const std::string& name);
     ~RingBuffer() = default;
 
     const GraphicsBackendBuffer& GetBackendBuffer() const
@@ -21,33 +21,19 @@ public:
         return m_Buffer->GetBackendBuffer();
     }
 
-    void SetData(const void *data, uint64_t offset, uint64_t size);
-
-    inline uint64_t GetCurrentElementOffset() const
-    {
-        return m_ElementSize * m_CurrentOffset;
-    }
-
-    inline uint64_t GetElementSize() const
-    {
-        return m_ElementSize;
-    }
+    uint64_t SetData(const void *data, uint64_t offset, uint64_t size);
 
     RingBuffer(const RingBuffer &) = delete;
-    RingBuffer(RingBuffer &&)      = delete;
+    RingBuffer(RingBuffer &&) = delete;
 
     RingBuffer &operator()(const RingBuffer &) = delete;
-    RingBuffer &operator()(RingBuffer &&)      = delete;
+    RingBuffer &operator()(RingBuffer &&) = delete;
 
 private:
     std::shared_ptr<GraphicsBuffer> m_Buffer;
     std::string m_Name;
 
-    uint64_t m_ElementSize;
-    int m_Capacity;
-    int m_ElementsInUse;
-
-    int m_CurrentOffset;
+    uint64_t m_CurrentOffset[GraphicsBackend::GetMaxFramesInFlight()];
     uint64_t m_LastCheckFrame;
 };
 

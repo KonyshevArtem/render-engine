@@ -53,7 +53,7 @@ namespace Graphics
 
     void InitConstantBuffers()
     {
-        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), 32, "CameraData");
+        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData) * 32, "CameraData");
         s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), "LightingData");
     }
 
@@ -241,9 +241,8 @@ namespace Graphics
         cameraData.ViewProjectionMatrix = gpuProjectionMatrix * viewMatrix;
         cameraData.CameraDirection = invViewMatrix * Vector4{0, 0, 1, 0};
 
-        s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
-
-        GraphicsBackend::Current()->BindConstantBuffer(s_CameraDataBuffer->GetBackendBuffer(), 3, s_CameraDataBuffer->GetCurrentElementOffset(), s_CameraDataBuffer->GetElementSize());
+        uint64_t offset = s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
+        GraphicsBackend::Current()->BindConstantBuffer(s_CameraDataBuffer->GetBackendBuffer(), 3, offset, sizeof(cameraData));
     }
 
     void SetViewport(const Vector4 &viewport)

@@ -48,7 +48,9 @@ void ForwardRenderPass::Execute(const Context& ctx)
     Graphics::SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix, ctx.NearPlane, ctx.FarPlane);
 
     GraphicsBackend::Current()->BeginRenderPass("Forward Render Pass");
-    Graphics::SetViewport({0, 0, static_cast<float>(Graphics::GetScreenWidth()), static_cast<float>(Graphics::GetScreenHeight())});
+
+    GraphicsBackend::Current()->SetViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), 0, 1);
+    GraphicsBackend::Current()->SetScissorRect(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 
     m_OpaquePass->Execute(ctx);
     m_SkyboxPass->Execute(ctx);

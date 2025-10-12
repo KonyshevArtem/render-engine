@@ -245,12 +245,6 @@ namespace Graphics
         GraphicsBackend::Current()->BindConstantBuffer(s_CameraDataBuffer->GetBackendBuffer(), 3, offset, sizeof(cameraData));
     }
 
-    void SetViewport(const Vector4 &viewport)
-    {
-        GraphicsBackend::Current()->SetViewport(viewport.x, viewport.y, viewport.z, viewport.w, 0, 1);
-        GraphicsBackend::Current()->SetScissorRect(viewport.x, viewport.y, viewport.z, viewport.w);
-    }
-
     Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix)
     {
         Matrix4x4 gpuProjectionMatrix = projectionMatrix;

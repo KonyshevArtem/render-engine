@@ -238,7 +238,10 @@ void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_
     Graphics::SetCameraData(cameraData.ViewMatrix, cameraData.ProjectionMatrix, 0.01, cameraData.FarPlane);
 
     GraphicsBackend::Current()->BeginRenderPass(passName);
-    Graphics::SetViewport(viewport);
+
+    GraphicsBackend::Current()->SetViewport(0, 0, target->GetWidth(), target->GetHeight(), 0, 1);
+    GraphicsBackend::Current()->SetScissorRect(0, 0, target->GetWidth(), target->GetHeight());
+
     renderQueue.Draw();
     GraphicsBackend::Current()->EndRenderPass();
 }

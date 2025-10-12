@@ -14,9 +14,8 @@ namespace Graphics
     void Shutdown();
     void Render(int width, int height);
     void SetCameraData(const Matrix4x4& viewMatrix, const Matrix4x4& projectionMatrix, float nearPlane, float farPlane);
-    int  GetScreenWidth();
-    int  GetScreenHeight();
-    void SetViewport(const Vector4& viewport);
+    int GetScreenWidth();
+    int GetScreenHeight();
     Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix);
 }; // namespace Graphics
 

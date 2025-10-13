@@ -36,7 +36,7 @@ public:
     Shader &operator=(const Shader &) = delete;
     Shader &operator=(Shader &&) = delete;
 
-    const GraphicsBackendProgram &GetProgram(const VertexAttributes &vertexAttributes, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat, PrimitiveType primitiveType);
+    const GraphicsBackendProgram &GetProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType);
 
     inline const std::unordered_map<std::string, GraphicsBackendTextureInfo> &GetTextures() const
     {

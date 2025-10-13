@@ -21,6 +21,9 @@ struct GraphicsBackendProgramDescriptor
 {
     const std::vector<GraphicsBackendShaderObject>* Shaders;
     const std::vector<GraphicsBackendVertexAttributeDescriptor>* VertexAttributes;
+    const std::unordered_map<std::string, GraphicsBackendTextureInfo>* Textures;
+    const std::unordered_map<std::string, GraphicsBackendSamplerInfo>* Samplers;
+    const std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* Buffers;
     const std::string* Name;
 
     GraphicsBackendColorAttachmentDescriptor ColorAttachmentDescriptor;

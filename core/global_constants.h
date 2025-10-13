@@ -4,14 +4,7 @@
 // Keep in-sync with shaders/common/global_defines.h
 namespace GlobalConstants
 {
-    constexpr const char *ShadowsBufferName = "Shadows";
-    constexpr const char *LightingBufferName = "Lighting";
-    constexpr const char *CameraDataBufferName = "CameraData";
-    constexpr const char *PerDrawDataBufferName = "PerDrawData";
     constexpr const char *PerMaterialDataBufferName = "PerMaterialData";
-    constexpr const char *InstanceMatricesBufferName = "InstanceMatricesBuffer";
-
-    constexpr int MaxInstancingCount = 256;
 
     constexpr int ShadowCascadeCount = 4;
     constexpr int MaxSpotLightSources = 3;

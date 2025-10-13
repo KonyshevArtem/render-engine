@@ -33,7 +33,6 @@ add_library(GraphicsBackend
         graphics_backend_implementations/graphics_backend_api_dx12.cpp
         graphics_backend_implementations/graphics_backend_api_dx12.h
         types/graphics_backend_vertex_attribute_descriptor.h
-        types/graphics_backend_resource_bindings.h
         helpers/opengl_helpers.h
         helpers/opengl_helpers.cpp
         helpers/metal_helpers.h

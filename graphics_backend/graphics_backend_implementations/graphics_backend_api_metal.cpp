@@ -30,6 +30,7 @@ namespace MetalLocal
 {
     constexpr int k_MaxBuffers = 31;
     constexpr int k_MaxTimestampSamples = 100;
+    constexpr uint32_t k_ConstantBufferIndexOffset = 8;
 
     MTL::ResourceOptions s_DefaultBufferStorageMode;
 
@@ -241,36 +242,22 @@ void GraphicsBackendMetal::DeleteSampler_Internal(const GraphicsBackendSampler &
     metalSampler->release();
 }
 
-void GraphicsBackendMetal::BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture)
+void GraphicsBackendMetal::BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
 {
     assert(m_RenderCommandEncoder != nullptr);
 
     auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
-
-    if (bindings.VertexIndex >= 0)
-    {
-        m_RenderCommandEncoder->setVertexTexture(metalTexture, bindings.VertexIndex);
-    }
-    if (bindings.FragmentIndex >= 0)
-    {
-        m_RenderCommandEncoder->setFragmentTexture(metalTexture, bindings.FragmentIndex);
-    }
+    m_RenderCommandEncoder->setVertexTexture(metalTexture, index);
+    m_RenderCommandEncoder->setFragmentTexture(metalTexture, index);
 }
 
-void GraphicsBackendMetal::BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler)
+void GraphicsBackendMetal::BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index)
 {
     assert(m_RenderCommandEncoder != nullptr);
 
     auto metalSampler = reinterpret_cast<MTL::SamplerState *>(sampler.Sampler);
-
-    if (bindings.VertexIndex >= 0)
-    {
-        m_RenderCommandEncoder->setVertexSamplerState(metalSampler, bindings.VertexIndex);
-    }
-    if (bindings.FragmentIndex >= 0)
-    {
-        m_RenderCommandEncoder->setFragmentSamplerState(metalSampler, bindings.FragmentIndex);
-    }
+    m_RenderCommandEncoder->setVertexSamplerState(metalSampler, index);
+    m_RenderCommandEncoder->setFragmentSamplerState(metalSampler, index);
 }
 
 void GraphicsBackendMetal::GenerateMipmaps(const GraphicsBackendTexture &texture)
@@ -401,29 +388,23 @@ void GraphicsBackendMetal::DeleteBuffer_Internal(const GraphicsBackendBuffer &bu
     delete bufferData;
 }
 
-void GraphicsBackendMetal::BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
+void GraphicsBackendMetal::BindBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
     assert(m_RenderCommandEncoder != nullptr);
 
     const MetalLocal::BufferData* bufferData = reinterpret_cast<MetalLocal::BufferData*>(buffer.Buffer);
-    if (bindings.VertexIndex >= 0)
-    {
-        m_RenderCommandEncoder->setVertexBuffer(bufferData->Buffer, offset, bindings.VertexIndex);
-    }
-    if (bindings.FragmentIndex >= 0)
-    {
-        m_RenderCommandEncoder->setFragmentBuffer(bufferData->Buffer, offset, bindings.FragmentIndex);
-    }
+    m_RenderCommandEncoder->setVertexBuffer(bufferData->Buffer, offset, index);
+    m_RenderCommandEncoder->setFragmentBuffer(bufferData->Buffer, offset, index);
 }
 
-void GraphicsBackendMetal::BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount)
+void GraphicsBackendMetal::BindStructuredBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count)
 {
-    BindBuffer(buffer, bindings, elementOffset * elementSize, elementCount * elementSize);
+    BindBuffer_Internal(buffer, index, offset, size);
 }
 
-void GraphicsBackendMetal::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
+void GraphicsBackendMetal::BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
-    BindBuffer(buffer, bindings, offset, size);
+    BindBuffer_Internal(buffer, index + MetalLocal::k_ConstantBufferIndexOffset, offset, size);
 }
 
 void GraphicsBackendMetal::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data)
@@ -592,9 +573,7 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
     psoData->CullFace = MetalHelpers::ToCullFace(descriptor.CullFace);
     psoData->CullFaceOrientation = MetalHelpers::ToCullFaceOrientation(descriptor.CullFaceOrientation);
 
-    GraphicsBackendProgram program{};
-    program.Program = reinterpret_cast<uint64_t>(psoData);
-    return program;
+    return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(psoData), descriptor);
 }
 
 void GraphicsBackendMetal::DeleteShader_Internal(GraphicsBackendShaderObject shader)
@@ -615,7 +594,7 @@ bool GraphicsBackendMetal::RequireStrictPSODescriptor()
     return true;
 }
 
-void GraphicsBackendMetal::UseProgram(GraphicsBackendProgram program)
+void GraphicsBackendMetal::UseProgram(const GraphicsBackendProgram& program)
 {
     assert(m_RenderCommandEncoder != nullptr);
 
@@ -624,6 +603,8 @@ void GraphicsBackendMetal::UseProgram(GraphicsBackendProgram program)
     m_RenderCommandEncoder->setDepthStencilState(psoData->DepthStencilState);
     m_RenderCommandEncoder->setCullMode(psoData->CullFace);
     m_RenderCommandEncoder->setFrontFacingWinding(psoData->CullFaceOrientation);
+
+    BindResources(program);
 }
 
 void GraphicsBackendMetal::SetClearColor(float r, float g, float b, float a)
@@ -642,6 +623,8 @@ void GraphicsBackendMetal::DrawArrays(const GraphicsBackendGeometry &geometry, P
 {
     assert(m_RenderCommandEncoder != nullptr);
 
+    ++m_DrawCallCount;
+
     const MetalLocal::BufferData* vertexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.VertexBuffer.Buffer);
     m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, MetalLocal::k_MaxBuffers - 1);
     m_RenderCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
@@ -650,6 +633,8 @@ void GraphicsBackendMetal::DrawArrays(const GraphicsBackendGeometry &geometry, P
 void GraphicsBackendMetal::DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
     assert(m_RenderCommandEncoder != nullptr);
+
+    ++m_DrawCallCount;
 
     const MetalLocal::BufferData* vertexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.VertexBuffer.Buffer);
     m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, MetalLocal::k_MaxBuffers - 1);
@@ -660,6 +645,8 @@ void GraphicsBackendMetal::DrawElements(const GraphicsBackendGeometry &geometry,
 {
     assert(m_RenderCommandEncoder != nullptr);
 
+    ++m_DrawCallCount;
+
     const MetalLocal::BufferData* vertexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.VertexBuffer.Buffer);
     const MetalLocal::BufferData* indexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.IndexBuffer.Buffer);
     m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, MetalLocal::k_MaxBuffers - 1);
@@ -669,6 +656,8 @@ void GraphicsBackendMetal::DrawElements(const GraphicsBackendGeometry &geometry,
 void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
     assert(m_RenderCommandEncoder != nullptr);
+
+    ++m_DrawCallCount;
 
     const MetalLocal::BufferData* vertexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.VertexBuffer.Buffer);
     const MetalLocal::BufferData* indexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.IndexBuffer.Buffer);

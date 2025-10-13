@@ -26,17 +26,13 @@ constexpr int k_SpotLightShadowMapSize = 1024;
 constexpr int k_DirLightShadowMapSize = 2048;
 constexpr int k_PointLightShadowMapSize = 512;
 
-ShadowCasterPass::ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer, int priority) :
+ShadowCasterPass::ShadowCasterPass(int priority) :
     RenderPass(priority),
-    m_ShadowsConstantBuffer(std::move(shadowsConstantBuffer)),
     m_SpotLightShadowMapArray(Texture2DArray::Create(k_SpotLightShadowMapSize, k_SpotLightShadowMapSize, GlobalConstants::MaxSpotLightSources, TextureInternalFormat::DEPTH_32, true, "SpotLightShadowMap")),
     m_DirectionLightShadowMap(Texture2DArray::Create(k_DirLightShadowMapSize, k_DirLightShadowMapSize, GlobalConstants::ShadowCascadeCount, TextureInternalFormat::DEPTH_32, true, "DirectionalShadowMap")),
-    m_PointLightShadowMap(Texture2DArray::Create(k_PointLightShadowMapSize, k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, "PointLightShadowMap"))
+    m_PointLightShadowMap(Texture2DArray::Create(k_PointLightShadowMapSize, k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, "PointLightShadowMap")),
+    m_ShadowsConstantBuffer(std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData"))
 {
-    Graphics::SetGlobalTexture("_DirLightShadowMap", m_DirectionLightShadowMap);
-    Graphics::SetGlobalTexture("_SpotLightShadowMapArray", m_SpotLightShadowMapArray);
-    Graphics::SetGlobalTexture("_PointLightShadowMapArray", m_PointLightShadowMap);
-
     m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
     m_DirectionLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
     m_DirectionLightShadowMap->SetComparisonFunction(ComparisonFunction::LEQUAL);
@@ -189,6 +185,8 @@ void ShadowCasterPass::Prepare(const Context& ctx)
     }
 
     m_ShadowsConstantBuffer->SetData(&m_ShadowsGPUData, 0, sizeof(ShadowsData));
+
+    GraphicsBackend::Current()->BindConstantBuffer(m_ShadowsConstantBuffer->GetBackendBuffer(), 1, 0, sizeof(ShadowsData));
 }
 
 void ShadowCasterPass::Execute(const Context& ctx)
@@ -218,6 +216,10 @@ void ShadowCasterPass::Execute(const Context& ctx)
         if (!m_DirectionalLightRenderQueues[i].IsEmpty())
             Render(m_DirectionalLightRenderQueues[i], m_DirectionLightShadowMap, i, m_DirectionLightCameraData[i], "Directional Light Shadow Pass " + std::to_string(i));
     }
+
+    GraphicsBackend::Current()->BindTextureSampler(m_DirectionLightShadowMap->GetBackendTexture(), m_DirectionLightShadowMap->GetBackendSampler(), 0);
+    GraphicsBackend::Current()->BindTextureSampler(m_SpotLightShadowMapArray->GetBackendTexture(), m_SpotLightShadowMapArray->GetBackendSampler(), 1);
+    GraphicsBackend::Current()->BindTextureSampler(m_PointLightShadowMap->GetBackendTexture(), m_PointLightShadowMap->GetBackendSampler(), 2);
 }
 
 void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData& cameraData, const std::string& passName)
@@ -228,14 +230,18 @@ void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_
     Profiler::GPUMarker gpuMarker("ShadowCasterPass::Render");
 
     const Vector4& viewport{0, 0, static_cast<float>(target->GetWidth()), static_cast<float>(target->GetHeight())};
-    const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .LoadAction = LoadAction::CLEAR, .Layer = targetLayer };
+    const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .Texture = target->GetBackendTexture(), .LoadAction = LoadAction::CLEAR, .Layer = targetLayer };
 
-    Graphics::SetRenderTarget(colorTargetDescriptor, nullptr);
-    Graphics::SetRenderTarget(depthTargetDescriptor, target);
+    GraphicsBackend::Current()->AttachRenderTarget(colorTargetDescriptor);
+    GraphicsBackend::Current()->AttachRenderTarget(depthTargetDescriptor);
+
     Graphics::SetCameraData(cameraData.ViewMatrix, cameraData.ProjectionMatrix, 0.01, cameraData.FarPlane);
 
     GraphicsBackend::Current()->BeginRenderPass(passName);
-    Graphics::SetViewport(viewport);
-    Graphics::DrawRenderQueue(renderQueue);
+
+    GraphicsBackend::Current()->SetViewport(0, 0, target->GetWidth(), target->GetHeight(), 0, 1);
+    GraphicsBackend::Current()->SetScissorRect(0, 0, target->GetWidth(), target->GetHeight());
+
+    renderQueue.Draw();
     GraphicsBackend::Current()->EndRenderPass();
 }

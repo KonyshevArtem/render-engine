@@ -25,6 +25,11 @@ struct GraphicsBackendRenderTargetDescriptor
     {
         return { .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .LoadAction = loadAction, .StoreAction = storeAction, .IsBackbuffer = true };
     }
+
+    static inline GraphicsBackendRenderTargetDescriptor EmptyDepth()
+    {
+        return { .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT };
+    }
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_RENDER_TARGET_DESCRIPTOR_H

@@ -1,9 +1,11 @@
 #include "common/global_defines.h"
 
-cbuffer PerMaterialData
+cbuffer OutlineData : register(b0)
 {
     float4 _Color;
-    float4 _BlitTexture_TexelSize;
+
+    float2 _InvTextureSize;
+    float2 Padding0;
 };
 
 struct Attributes
@@ -18,8 +20,8 @@ struct Varyings
     float2 Uv             : TEXCOORD0;
 };
 
-Texture2D _BlitTexture : register(t4);
-SamplerState sampler_BlitTexture : register(s4);
+Texture2D _BlitTexture : register(t0);
+SamplerState sampler_BlitTexture : register(s0);
 
 Varyings vertexMain(Attributes attributes)
 {
@@ -34,10 +36,10 @@ Varyings vertexMain(Attributes attributes)
 
 half4 fragmentMain(Varyings vars) : SV_Target
 {
-    half a0 = _BlitTexture.Sample(sampler_BlitTexture, vars.Uv + _BlitTexture_TexelSize.zw * float2(2, 0)).r;
-    half a1 = _BlitTexture.Sample(sampler_BlitTexture, vars.Uv + _BlitTexture_TexelSize.zw * float2(-2, 0)).r;
-    half a2 = _BlitTexture.Sample(sampler_BlitTexture, vars.Uv + _BlitTexture_TexelSize.zw * float2(0, 2)).r;
-    half a3 = _BlitTexture.Sample(sampler_BlitTexture, vars.Uv + _BlitTexture_TexelSize.zw * float2(0, -2)).r;
+    half a0 = _BlitTexture.Sample(sampler_BlitTexture, vars.Uv + _InvTextureSize * float2(2, 0)).r;
+    half a1 = _BlitTexture.Sample(sampler_BlitTexture, vars.Uv + _InvTextureSize * float2(-2, 0)).r;
+    half a2 = _BlitTexture.Sample(sampler_BlitTexture, vars.Uv + _InvTextureSize * float2(0, 2)).r;
+    half a3 = _BlitTexture.Sample(sampler_BlitTexture, vars.Uv + _InvTextureSize * float2(0, -2)).r;
     half maxAlpha = max(a0, max(a1, max(a2, a3)));
     maxAlpha = maxAlpha > half(0.01) ? 1 : 0;
 

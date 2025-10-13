@@ -190,6 +190,14 @@ namespace OpenGLLocal
             state.Layer = 0;
         }
     }
+
+    void BindBuffer(GLenum bindTarget, const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
+    {
+        const OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
+
+        glBindBuffer(bindTarget, bufferData->GLBuffer);
+        glBindBufferRange(bindTarget, index, bufferData->GLBuffer, offset, size);
+    }
 }
 
 void GraphicsBackendOpenGL::Init(void* data)
@@ -397,19 +405,17 @@ void GraphicsBackendOpenGL::DeleteSampler_Internal(const GraphicsBackendSampler 
     glDeleteSamplers(1, reinterpret_cast<const GLuint *>(&sampler.Sampler));
 }
 
-void GraphicsBackendOpenGL::BindTexture(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendTexture &texture)
+void GraphicsBackendOpenGL::BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
 {
-    auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
-    glActiveTexture(OpenGLHelpers::ToTextureUnit(binding));
+    glActiveTexture(OpenGLHelpers::ToTextureUnit(index));
     glBindTexture(OpenGLHelpers::ToTextureType(texture.Type), texture.Texture);
-    glUniform1i(binding, binding);
+    glUniform1i(index, index);
 }
 
-void GraphicsBackendOpenGL::BindSampler(const GraphicsBackendResourceBindings &bindings, const GraphicsBackendSampler &sampler)
+void GraphicsBackendOpenGL::BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index)
 {
-    auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
-    glActiveTexture(OpenGLHelpers::ToTextureUnit(binding));
-    glBindSampler(binding, sampler.Sampler);
+    glActiveTexture(OpenGLHelpers::ToTextureUnit(index));
+    glBindSampler(index, sampler.Sampler);
 }
 
 void GraphicsBackendOpenGL::GenerateMipmaps(const GraphicsBackendTexture &texture)
@@ -569,28 +575,19 @@ void GraphicsBackendOpenGL::DeleteBuffer_Internal(const GraphicsBackendBuffer &b
     delete bufferData;
 }
 
-void BindBuffer_Internal(GLenum bindTarget, const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
+void GraphicsBackendOpenGL::BindBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size)
 {
-    const OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
-
-    auto binding = bindings.VertexIndex >= 0 ? bindings.VertexIndex : bindings.FragmentIndex;
-    glBindBuffer(bindTarget, bufferData->GLBuffer);
-    glBindBufferRange(bindTarget, binding, bufferData->GLBuffer, offset, size);
+    OpenGLLocal::BindBuffer(GL_SHADER_STORAGE_BUFFER, buffer, index, offset, size);
 }
 
-void GraphicsBackendOpenGL::BindBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
+void GraphicsBackendOpenGL::BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size, int count)
 {
-    BindBuffer_Internal(GL_SHADER_STORAGE_BUFFER, buffer, bindings, offset, size);
+    OpenGLLocal::BindBuffer(GL_SHADER_STORAGE_BUFFER, buffer, index, offset, size);
 }
 
-void GraphicsBackendOpenGL::BindStructuredBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount)
+void GraphicsBackendOpenGL::BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size)
 {
-    BindBuffer_Internal(GL_SHADER_STORAGE_BUFFER, buffer, bindings, elementOffset * elementSize, elementSize * elementCount);
-}
-
-void GraphicsBackendOpenGL::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
-{
-    BindBuffer_Internal(GL_UNIFORM_BUFFER, buffer, bindings, offset, size);
+    OpenGLLocal::BindBuffer(GL_UNIFORM_BUFFER, buffer, index, offset, size);
 }
 
 void GraphicsBackendOpenGL::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data)
@@ -780,9 +777,7 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     programData->DepthComparisonFunction = OpenGLHelpers::ToComparisonFunction(descriptor.DepthComparisonFunction);
     programData->DepthWrite = descriptor.DepthWrite ? GL_TRUE : GL_FALSE;
 
-    GraphicsBackendProgram program{};
-    program.Program = reinterpret_cast<uint64_t>(programData);
-    return program;
+    return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(programData), descriptor);
 }
 
 void GraphicsBackendOpenGL::DeleteShader_Internal(GraphicsBackendShaderObject shader)
@@ -802,7 +797,7 @@ bool GraphicsBackendOpenGL::RequireStrictPSODescriptor()
     return false;
 }
 
-void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
+void GraphicsBackendOpenGL::UseProgram(const GraphicsBackendProgram& program)
 {
     OpenGLLocal::ProgramData* programData = reinterpret_cast<OpenGLLocal::ProgramData*>(program.Program);
 
@@ -827,6 +822,8 @@ void GraphicsBackendOpenGL::UseProgram(GraphicsBackendProgram program)
     glFrontFace(programData->CullFaceOrientation);
     glDepthFunc(programData->DepthComparisonFunction);
     glDepthMask(programData->DepthWrite);
+
+    BindResources(program);
 }
 
 void GraphicsBackendOpenGL::SetClearColor(float r, float g, float b, float a)
@@ -841,24 +838,32 @@ void GraphicsBackendOpenGL::SetClearDepth(double depth)
 
 void GraphicsBackendOpenGL::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
 {
+    ++m_DrawCallCount;
+
     BindGeometry(geometry);
     glDrawArrays(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
 }
 
 void GraphicsBackendOpenGL::DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
+    ++m_DrawCallCount;
+
     BindGeometry(geometry);
     glDrawArraysInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, instanceCount);
 }
 
 void GraphicsBackendOpenGL::DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType)
 {
+    ++m_DrawCallCount;
+
     BindGeometry(geometry);
     glDrawElements(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr);
 }
 
 void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
+    ++m_DrawCallCount;
+
     BindGeometry(geometry);
     glDrawElementsInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr, instanceCount);
 }

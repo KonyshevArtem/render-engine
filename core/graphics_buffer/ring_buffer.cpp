@@ -3,33 +3,40 @@
 #include "graphics/graphics.h"
 #include "math_utils.h"
 
-RingBuffer::RingBuffer(uint64_t elementSize, uint64_t elementsCount, const std::string& name) :
+RingBuffer::RingBuffer(uint64_t size, const std::string& name) :
     m_Name(name),
-    m_ElementSize(Math::Align(elementSize, GraphicsBackend::Current()->GetConstantBufferOffsetAlignment())),
-    m_Capacity(elementsCount),
-    m_ElementsInUse(0)
+    m_LastCheckFrame(0)
 {
-    m_Buffer = std::make_shared<GraphicsBuffer>(m_ElementSize * m_Capacity, m_Name);
+    for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
+        m_CurrentOffset[i] = 0;
+
+    m_Buffer = std::make_shared<GraphicsBuffer>(size, m_Name);
 }
 
-void RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
+uint64_t RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
 {
-    m_CurrentOffset = (m_CurrentOffset + 1) % m_Capacity;
-    m_Buffer->SetData(data, m_ElementSize * m_CurrentOffset + offset, size);
-    ++m_ElementsInUse;
-}
+    const int frameIndex = GraphicsBackend::GetInFlightFrameIndex();
+    const uint64_t currentFrame = GraphicsBackend::Current()->GetFrameNumber();
 
-void RingBuffer::CheckResize()
-{
-    if (m_OldBuffer)
-        m_OldBuffer = nullptr;
-
-    if (m_ElementsInUse > m_Capacity)
+    if (m_LastCheckFrame != currentFrame)
     {
-        m_OldBuffer = m_Buffer;
-        m_Capacity = m_ElementsInUse * 2;
-        m_Buffer = std::make_shared<GraphicsBuffer>(m_ElementSize * m_Capacity, m_Name);
+        m_CurrentOffset[frameIndex] = 0;
+        m_LastCheckFrame = currentFrame;
     }
 
-    m_ElementsInUse = 0;
+    offset = Math::Align(offset, GraphicsBackend::Current()->GetConstantBufferOffsetAlignment());
+    size = Math::Align(size, GraphicsBackend::Current()->GetConstantBufferOffsetAlignment());
+
+    const uint64_t bufferSize = m_Buffer->GetSize();
+    const uint64_t currentOffset = m_CurrentOffset[frameIndex];
+    const uint64_t requiredSize = currentOffset + offset + size;
+    if (m_Buffer->GetSize() < requiredSize)
+    {
+        m_Buffer = std::make_shared<GraphicsBuffer>(std::max(bufferSize * 2, requiredSize), m_Name);
+        m_CurrentOffset[frameIndex] = 0;
+    }
+
+    m_Buffer->SetData(data, currentOffset + offset, size);
+    m_CurrentOffset[frameIndex] += offset + size;
+    return currentOffset;
 }

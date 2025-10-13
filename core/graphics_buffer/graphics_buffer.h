@@ -3,7 +3,6 @@
 
 #include "graphics_backend_api.h"
 #include "types/graphics_backend_buffer.h"
-#include "types/graphics_backend_resource_bindings.h"
 
 #include <string>
 

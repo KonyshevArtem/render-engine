@@ -11,6 +11,7 @@
 #include "types/graphics_backend_geometry.h"
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_program.h"
+#include "types/graphics_backend_program_descriptor.h"
 #include "arguments.h"
 
 #include <functional>
@@ -71,6 +72,8 @@ void GraphicsBackendBase::Init(void* data)
 
 void GraphicsBackendBase::InitNewFrame()
 {
+    m_DrawCallCount = 0;
+
     BaseBackendLocal::DeleteResources<GraphicsBackendTexture>(m_DeletedTextures, [this](GraphicsBackendTexture& texture){ DeleteTexture_Internal(texture); });
     BaseBackendLocal::DeleteResources<GraphicsBackendSampler>(m_DeletedSamplers, [this](GraphicsBackendSampler& sampler){ DeleteSampler_Internal(sampler); });
     BaseBackendLocal::DeleteResources<GraphicsBackendBuffer>(m_DeletedBuffers, [this](GraphicsBackendBuffer& buffer){ DeleteBuffer_Internal(buffer); });
@@ -92,16 +95,35 @@ uint64_t GraphicsBackendBase::GetFrameNumber() const
 void GraphicsBackendBase::DeleteTexture(const GraphicsBackendTexture& texture)
 {
     m_DeletedTextures.emplace_back(texture, BaseBackendLocal::k_DeleteResourceDelay);
+
+    std::erase_if(m_BoundTextures, [&texture](const auto& pair)
+    {
+        return pair.second.Texture == texture.Texture;
+    });
 }
 
 void GraphicsBackendBase::DeleteSampler(const GraphicsBackendSampler& sampler)
 {
     m_DeletedSamplers.emplace_back(sampler, BaseBackendLocal::k_DeleteResourceDelay);
+
+    std::erase_if(m_BoundSamplers, [&sampler](const auto& pair)
+    {
+        return pair.second.Sampler == sampler.Sampler;
+    });
 }
 
 void GraphicsBackendBase::DeleteBuffer(const GraphicsBackendBuffer& buffer)
 {
     m_DeletedBuffers.emplace_back(buffer, BaseBackendLocal::k_DeleteResourceDelay);
+
+    auto Predicate = [&buffer](const std::pair<uint32_t, BufferBindInfo>& pair)
+    {
+        return pair.second.Buffer.Buffer == buffer.Buffer;
+    };
+
+    std::erase_if(m_BoundBuffers, Predicate);
+    std::erase_if(m_BoundStructuredBuffers, Predicate);
+    std::erase_if(m_BoundConstantBuffers, Predicate);
 }
 
 void GraphicsBackendBase::DeleteGeometry(const GraphicsBackendGeometry &geometry)
@@ -117,6 +139,103 @@ void GraphicsBackendBase::DeleteShader(GraphicsBackendShaderObject shader)
 void GraphicsBackendBase::DeleteProgram(GraphicsBackendProgram program)
 {
     m_DeletedPrograms.emplace_back(program, BaseBackendLocal::k_DeleteResourceDelay);
+}
+
+void GraphicsBackendBase::BindResources(const GraphicsBackendProgram& program)
+{
+    auto HasBinding = [](uint32_t bindingFlags, uint32_t binding)
+    {
+        return (bindingFlags & (1 << binding)) != 0;
+    };
+
+    for (const auto& pair: m_BoundTextures)
+    {
+        if (HasBinding(program.TextureBindings, pair.first))
+            BindTexture_Internal(pair.second, pair.first);
+    }
+
+    for (const auto& pair: m_BoundSamplers)
+    {
+        if (HasBinding(program.SamplerBindings, pair.first))
+            BindSampler_Internal(pair.second, pair.first);
+    }
+
+    for (const auto& pair: m_BoundBuffers)
+    {
+        const BufferBindInfo& info = pair.second;
+        if (HasBinding(program.BufferBindings, pair.first))
+            BindBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
+    }
+
+    for (const auto& pair: m_BoundStructuredBuffers)
+    {
+        const BufferBindInfo& info = pair.second;
+        if (HasBinding(program.BufferBindings, pair.first))
+            BindStructuredBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size, info.ElementsCount);
+    }
+
+    for (const auto& pair: m_BoundConstantBuffers)
+    {
+        const BufferBindInfo& info = pair.second;
+        if (HasBinding(program.ConstantBufferBindings, pair.first))
+            BindConstantBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
+    }
+}
+
+void GraphicsBackendBase::BindTexture(const GraphicsBackendTexture& texture, uint32_t index)
+{
+    m_BoundTextures[index] = texture;
+}
+
+void GraphicsBackendBase::BindSampler(const GraphicsBackendSampler& sampler, uint32_t index)
+{
+    m_BoundSamplers[index] = sampler;
+}
+
+void GraphicsBackendBase::BindTextureSampler(const GraphicsBackendTexture& texture, const GraphicsBackendSampler& sampler, uint32_t index)
+{
+    BindTexture(texture, index);
+    BindSampler(sampler, index);
+}
+
+void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
+{
+    m_BoundBuffers[index] = BufferBindInfo{buffer, offset, size};
+}
+
+void GraphicsBackendBase::BindStructuredBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count)
+{
+    m_BoundStructuredBuffers[index] = BufferBindInfo{buffer, offset, size, count};
+}
+
+void GraphicsBackendBase::BindConstantBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
+{
+    m_BoundConstantBuffers[index] = BufferBindInfo{buffer, offset, size};
+}
+
+GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor)
+{
+    GraphicsBackendProgram program{};
+    program.Program = programPtr;
+    program.BufferBindings = 0;
+    program.TextureBindings = 0;
+    program.SamplerBindings = 0;
+
+    for (const auto& pair : *descriptor.Buffers)
+    {
+        if (pair.second->GetBufferType() == BufferType::CONSTANT_BUFFER)
+            program.ConstantBufferBindings |= 1 << pair.second->GetBinding();
+        else
+            program.BufferBindings |= 1 << pair.second->GetBinding();
+    }
+
+    for (const auto& pair : *descriptor.Textures)
+        program.TextureBindings |= 1 << pair.second.Binding;
+
+    for (const auto& pair : *descriptor.Samplers)
+        program.SamplerBindings |= 1 << pair.second.Binding;
+
+    return program;
 }
 
 bool GraphicsBackendBase::IsTexture3D(TextureType type)

@@ -1,7 +1,6 @@
 #ifndef RENDER_ENGINE_BUFFER_INFO_H
 #define RENDER_ENGINE_BUFFER_INFO_H
 
-#include "types/graphics_backend_resource_bindings.h"
 #include "enums/buffer_type.h"
 
 #include <unordered_map>
@@ -10,21 +9,20 @@
 class GraphicsBackendBufferInfo
 {
 public:
-    GraphicsBackendBufferInfo(int size, BufferType bufferType, std::unordered_map<std::string, int> variables) :
-        m_Size(size), m_BufferType(bufferType), m_Variables(std::move(variables)) {}
+    GraphicsBackendBufferInfo(uint32_t binding, uint32_t size, BufferType bufferType, std::unordered_map<std::string, int> variables) :
+        m_Binding(binding),
+        m_Size(size),
+        m_BufferType(bufferType),
+        m_Variables(std::move(variables)) {}
+
     ~GraphicsBackendBufferInfo() = default;
 
-    inline GraphicsBackendResourceBindings GetBinding() const
+    inline uint32_t GetBinding() const
     {
         return m_Binding;
     }
 
-    inline void SetBindings(GraphicsBackendResourceBindings bindings)
-    {
-        m_Binding = bindings;
-    }
-
-    inline int GetSize() const
+    inline uint32_t GetSize() const
     {
         return m_Size;
     }
@@ -34,7 +32,7 @@ public:
         return m_BufferType;
     }
 
-    inline const std::unordered_map<std::string, int> &GetVariables() const
+    inline const std::unordered_map<std::string, int>& GetVariables() const
     {
         return m_Variables;
     }
@@ -46,8 +44,8 @@ public:
     GraphicsBackendBufferInfo &operator()(GraphicsBackendBufferInfo &&) = delete;
 
 private:
-    GraphicsBackendResourceBindings m_Binding;
-    int m_Size;
+    uint32_t m_Binding;
+    uint32_t m_Size;
     BufferType m_BufferType;
 
     std::unordered_map<std::string, int> m_Variables;

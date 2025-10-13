@@ -7,21 +7,12 @@
 
 #include <filesystem>
 
-void to_json(nlohmann::json& json, const Bindings& bindings)
-{
-    json = nlohmann::json{
-            {"Vertex",   bindings.Vertex},
-            {"Fragment", bindings.Fragment},
-            {"Space",    bindings.Space}
-    };
-}
-
 void to_json(nlohmann::json& json, const BufferDesc& bufferDesc)
 {
     json = nlohmann::json{
             {"Size",      bufferDesc.Size},
             {"BufferType", bufferDesc.BufferType},
-            {"Bindings",  nlohmann::json(bufferDesc.Bindings)},
+            {"Binding",  nlohmann::json(bufferDesc.Binding)},
             {"Variables", nlohmann::json(bufferDesc.Variables)},
     };
 }
@@ -29,7 +20,7 @@ void to_json(nlohmann::json& json, const BufferDesc& bufferDesc)
 void to_json(nlohmann::json& json, const GenericDesc& desc)
 {
     json = nlohmann::json{
-            {"Bindings",  nlohmann::json(desc.Bindings)},
+            {"Binding",  nlohmann::json(desc.Binding)},
     };
 }
 

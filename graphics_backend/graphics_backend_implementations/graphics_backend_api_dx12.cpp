@@ -464,32 +464,6 @@ namespace DX12Local
         return s_DepthBackbuffers[s_SwapChain->GetCurrentBackBufferIndex()];
     }
 
-    uint32_t GetShaderRegister(const GraphicsBackendResourceBindings& bindings)
-    {
-        return bindings.VertexIndex != -1 ? bindings.VertexIndex : bindings.FragmentIndex;
-    }
-
-    D3D12_SHADER_VISIBILITY GetShaderVisibility(const GraphicsBackendResourceBindings& bindings)
-    {
-        const bool isVertex = bindings.VertexIndex != -1;
-        const bool isFragment = bindings.FragmentIndex != -1;
-
-        if (isVertex && isFragment)
-            return D3D12_SHADER_VISIBILITY_ALL;
-        return isVertex ? D3D12_SHADER_VISIBILITY_VERTEX : D3D12_SHADER_VISIBILITY_PIXEL;
-    }
-
-    size_t GetResourceBindingHash(D3D12_ROOT_PARAMETER_TYPE parameterType, D3D12_DESCRIPTOR_RANGE_TYPE rangeType, const GraphicsBackendResourceBindings& bindings)
-    {
-        size_t hash = 0;
-        hash = Hash::Combine(hash, std::hash<D3D12_ROOT_PARAMETER_TYPE>{}(parameterType));
-        hash = Hash::Combine(hash, std::hash<D3D12_DESCRIPTOR_RANGE_TYPE>{}(rangeType));
-        hash = Hash::Combine(hash, std::hash<D3D12_SHADER_VISIBILITY>{}(GetShaderVisibility(bindings)));
-        hash = Hash::Combine(hash, std::hash<uint32_t>{}(GetShaderRegister(bindings)));
-        hash = Hash::Combine(hash, std::hash<int32_t>{}(bindings.Space));
-        return hash;
-    }
-
     void GetWindowSize(HWND window, int& outWidth, int& outHeight)
     {
         RECT rect;
@@ -1056,37 +1030,27 @@ void GraphicsBackendDX12::DeleteSampler_Internal(const GraphicsBackendSampler& s
     delete samplerData;
 }
 
-void GraphicsBackendDX12::BindTexture(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendTexture& texture)
+void GraphicsBackendDX12::BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
 {
-    assert(bindings.VertexIndex < DX12Local::k_MaxResourcesPerDraw && bindings.FragmentIndex < DX12Local::k_MaxResourcesPerDraw);
+    assert(index < DX12Local::k_MaxResourcesPerDraw);
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
+    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, frameData.RenderCommandList->List);
 
-    D3D12_RESOURCE_STATES state;
-    D3D12_SHADER_VISIBILITY visibility = DX12Local::GetShaderVisibility(bindings);
-    if (visibility == D3D12_SHADER_VISIBILITY_ALL)
-        state = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
-    else if (visibility == D3D12_SHADER_VISIBILITY_PIXEL)
-        state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-    else
-        state = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-
-    DX12Local::TransitionResource(resourceData, state, frameData.RenderCommandList->List);
-
-    D3D12_CPU_DESCRIPTOR_HANDLE destHandle = frameData.BoundResourceDescriptorHeap.GetCPUHandle(DX12Local::GetShaderRegister(bindings));
+    D3D12_CPU_DESCRIPTOR_HANDLE destHandle = frameData.BoundResourceDescriptorHeap.GetCPUHandle(index);
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void GraphicsBackendDX12::BindSampler(const GraphicsBackendResourceBindings& bindings, const GraphicsBackendSampler& sampler)
+void GraphicsBackendDX12::BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index)
 {
-    assert(bindings.VertexIndex < DX12Local::k_MaxResourcesPerDraw && bindings.FragmentIndex < DX12Local::k_MaxResourcesPerDraw);
+    assert(index < DX12Local::k_MaxResourcesPerDraw);
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
     DX12Local::SamplerData* samplerData = reinterpret_cast<DX12Local::SamplerData*>(sampler.Sampler);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE destHandle = frameData.BoundSamplerDescriptorHeap.GetCPUHandle(DX12Local::GetShaderRegister(bindings));
+    D3D12_CPU_DESCRIPTOR_HANDLE destHandle = frameData.BoundSamplerDescriptorHeap.GetCPUHandle(index);
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, samplerData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 }
 
@@ -1309,9 +1273,9 @@ void GraphicsBackendDX12::DeleteBuffer_Internal(const GraphicsBackendBuffer& buf
     delete resourceData;
 }
 
-void GraphicsBackendDX12::BindBuffer(const GraphicsBackendBuffer& buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
+void GraphicsBackendDX12::BindBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
-    assert(bindings.VertexIndex < DX12Local::k_MaxResourcesPerDraw && bindings.FragmentIndex < DX12Local::k_MaxResourcesPerDraw);
+    assert(index < DX12Local::k_MaxResourcesPerDraw);
 
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
 
@@ -1323,30 +1287,33 @@ void GraphicsBackendDX12::BindBuffer(const GraphicsBackendBuffer& buffer, Graphi
     srvDesc.Buffer.NumElements = size;
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(DX12Local::GetShaderRegister(bindings) + DX12Local::k_BuffersDescriptorsOffset));
+    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_BuffersDescriptorsOffset));
 }
 
-void GraphicsBackendDX12::BindStructuredBuffer(const GraphicsBackendBuffer& buffer, GraphicsBackendResourceBindings bindings, int elementOffset, int elementSize, int elementCount)
+void GraphicsBackendDX12::BindStructuredBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count)
 {
-    assert(bindings.VertexIndex < DX12Local::k_MaxResourcesPerDraw && bindings.FragmentIndex < DX12Local::k_MaxResourcesPerDraw);
+    assert(index < DX12Local::k_MaxResourcesPerDraw);
 
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+
+    const int elementSize = size / count;
+    const int elementOffset = offset / elementSize;
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
     srvDesc.Format = DXGI_FORMAT_UNKNOWN;
     srvDesc.Buffer.FirstElement = elementOffset;
-    srvDesc.Buffer.NumElements = elementCount;
+    srvDesc.Buffer.NumElements = count;
     srvDesc.Buffer.StructureByteStride = elementSize;
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(DX12Local::GetShaderRegister(bindings) + DX12Local::k_BuffersDescriptorsOffset));
+    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_BuffersDescriptorsOffset));
 }
 
-void GraphicsBackendDX12::BindConstantBuffer(const GraphicsBackendBuffer &buffer, GraphicsBackendResourceBindings bindings, int offset, int size)
+void GraphicsBackendDX12::BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size)
 {
-    assert(bindings.VertexIndex < DX12Local::k_MaxResourcesPerDraw && bindings.FragmentIndex < DX12Local::k_MaxResourcesPerDraw);
+    assert(index < DX12Local::k_MaxResourcesPerDraw);
 
     size = Math::Align(size, GetConstantBufferOffsetAlignment());
 
@@ -1357,7 +1324,7 @@ void GraphicsBackendDX12::BindConstantBuffer(const GraphicsBackendBuffer &buffer
     cbvDesc.SizeInBytes = size;
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    DX12Local::s_Device->CreateConstantBufferView(&cbvDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(DX12Local::GetShaderRegister(bindings) + DX12Local::k_ConstantBuffersDescriptorsOffset));
+    DX12Local::s_Device->CreateConstantBufferView(&cbvDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_ConstantBuffersDescriptorsOffset));
 }
 
 void GraphicsBackendDX12::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void* data)
@@ -1539,9 +1506,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     if (descriptor.Name && !descriptor.Name->empty())
         DX12Local::SetObjectName(pso, (*descriptor.Name) + "_PSO");
 
-    GraphicsBackendProgram program{};
-    program.Program = reinterpret_cast<uint64_t>(pso);
-    return program;
+    return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(pso), descriptor);
 }
 
 void GraphicsBackendDX12::DeleteShader_Internal(GraphicsBackendShaderObject shader)
@@ -1561,13 +1526,15 @@ bool GraphicsBackendDX12::RequireStrictPSODescriptor()
     return true;
 }
 
-void GraphicsBackendDX12::UseProgram(GraphicsBackendProgram program)
+void GraphicsBackendDX12::UseProgram(const GraphicsBackendProgram& program)
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
     ID3D12PipelineState* pso = reinterpret_cast<ID3D12PipelineState*>(program.Program);
     frameData.RenderCommandList->List->SetGraphicsRootSignature(DX12Local::s_RootSignature);
     frameData.RenderCommandList->List->SetPipelineState(pso);
+
+    BindResources(program);
 }
 
 void GraphicsBackendDX12::SetClearColor(float r, float g, float b, float a)
@@ -1590,6 +1557,8 @@ void GraphicsBackendDX12::DrawArrays(const GraphicsBackendGeometry& geometry, Pr
 
 void GraphicsBackendDX12::DrawArraysInstanced(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
+    ++m_DrawCallCount;
+
     DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.Geometry);
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
@@ -1615,6 +1584,8 @@ void GraphicsBackendDX12::DrawElements(const GraphicsBackendGeometry& geometry, 
 
 void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount)
 {
+    ++m_DrawCallCount;
+
     DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.Geometry);
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();

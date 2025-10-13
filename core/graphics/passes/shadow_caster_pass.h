@@ -21,7 +21,7 @@ class Light;
 class ShadowCasterPass : public RenderPass
 {
 public:
-    ShadowCasterPass(std::shared_ptr<GraphicsBuffer> shadowsConstantBuffer, int priority);
+    explicit ShadowCasterPass(int priority);
     ~ShadowCasterPass() override = default;
 
     void Prepare(const Context& ctx);

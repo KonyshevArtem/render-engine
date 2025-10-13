@@ -1,21 +1,14 @@
 #include "shader_parser.h"
 #include "nlohmann/json.hpp"
 
-void from_json(const nlohmann::json& json, GraphicsBackendResourceBindings& bindings)
-{
-    json.at("Vertex").get_to(bindings.VertexIndex);
-    json.at("Fragment").get_to(bindings.FragmentIndex);
-    json.at("Space").get_to(bindings.Space);
-}
-
 void from_json(const nlohmann::json& json, GraphicsBackendTextureInfo& info)
 {
-    json.at("Bindings").get_to(info.TextureBindings);
+    json.at("Binding").get_to(info.Binding);
 }
 
 void from_json(const nlohmann::json& json, GraphicsBackendSamplerInfo& info)
 {
-    json.at("Bindings").get_to(info.Bindings);
+    json.at("Binding").get_to(info.Binding);
 }
 
 template <>
@@ -23,18 +16,17 @@ struct nlohmann::adl_serializer<std::shared_ptr<GraphicsBackendBufferInfo>>
 {
     static std::shared_ptr<GraphicsBackendBufferInfo> from_json(const nlohmann::json& json)
     {
-        int size;
+        uint32_t binding;
+        uint32_t size;
         BufferType bufferType;
-        GraphicsBackendResourceBindings bindings;
         std::unordered_map<std::string, int> variables;
 
-        json.at("Bindings").get_to(bindings);
+        json.at("Binding").get_to(binding);
         json.at("Size").get_to(size);
         json.at("BufferType").get_to(bufferType);
         json.at("Variables").get_to(variables);
 
-        auto info = std::make_shared<GraphicsBackendBufferInfo>(size, bufferType, variables);
-        info->SetBindings(bindings);
+        auto info = std::make_shared<GraphicsBackendBufferInfo>(binding, size, bufferType, variables);
         return info;
     }
 };

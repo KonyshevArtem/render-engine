@@ -83,8 +83,10 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
         for (int i = 0; i < combinedImageSamplers.size(); i++)
         {
             const auto& sampler = combinedImageSamplers[i];
+            const uint32_t binding = glsl->get_decoration(sampler.image_id, spv::DecorationBinding);
             glsl->set_name(sampler.combined_id, glsl->get_name(sampler.image_id));
-            glsl->set_decoration(sampler.combined_id, spv::DecorationLocation, i);
+            glsl->set_decoration(sampler.combined_id, spv::DecorationBinding, binding);
+            glsl->set_decoration(sampler.combined_id, spv::DecorationLocation, binding);
         }
 
         return glsl;
@@ -97,7 +99,15 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
         spirv_cross::CompilerMSL::Options options;
         options.platform = spirv_cross::CompilerMSL::Options::macOS;
         options.msl_version = spirv_cross::CompilerMSL::Options::make_msl_version(3);
+        options.enable_decoration_binding = true;
         msl->set_msl_options(options);
+
+        spirv_cross::ShaderResources resource = msl->get_shader_resources();
+        for (const spirv_cross::Resource& buffer : resource.uniform_buffers)
+        {
+            uint32_t binding = msl->get_decoration(buffer.id, spv::DecorationBinding);
+            msl->set_decoration(buffer.id, spv::DecorationBinding, binding + k_MetalConstantBufferBindingOffset);
+        }
 
         return msl;
     }
@@ -191,8 +201,8 @@ int main(int argc, char **argv)
         WriteShaderBinary(outputDirPath, vertexDXC, true);
         WriteShaderBinary(outputDirPath, fragmentDXC, false);
 
-        ExtractReflectionFromDXC(vertexDXC, pUtils, true, reflection);
-        ExtractReflectionFromDXC(fragmentDXC, pUtils, false, reflection);
+        ExtractReflectionFromDXC(vertexDXC, pUtils, reflection);
+        ExtractReflectionFromDXC(fragmentDXC, pUtils, reflection);
     }
     else
     {
@@ -202,8 +212,8 @@ int main(int argc, char **argv)
         WriteShaderSource(outputDirPath, vertexSPIRV, true);
         WriteShaderSource(outputDirPath, fragmentSPIRV, false);
 
-        ExtractReflectionFromSPIRV(vertexSPIRV, true, reflection, backend);
-        ExtractReflectionFromSPIRV(fragmentSPIRV, false, reflection, backend);
+        ExtractReflectionFromSPIRV(vertexSPIRV, reflection, backend);
+        ExtractReflectionFromSPIRV(fragmentSPIRV, reflection, backend);
     }
 
     WriteReflection(outputDirPath, reflection);

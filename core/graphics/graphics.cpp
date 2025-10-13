@@ -1,7 +1,6 @@
 #include "graphics.h"
 #include "camera/camera.h"
 #include "context.h"
-#include "debug.h"
 #include "draw_call_info.h"
 #include "editor/gizmos/gizmos.h"
 #include "editor/gizmos/gizmos_pass.h"
@@ -10,22 +9,16 @@
 #include "passes/shadow_caster_pass.h"
 #include "renderer/renderer.h"
 #include "texture/texture.h"
-#include "graphics_buffer/graphics_buffer.h"
-#include "graphics_backend_api.h"
-#include "graphics_backend_debug_group.h"
 #include "enums/indices_data_type.h"
 #include "shader/shader.h"
 #include "data_structs/camera_data.h"
 #include "data_structs/lighting_data.h"
-#include "data_structs/per_draw_data.h"
 #include "types/graphics_backend_buffer_info.h"
-#include "render_settings/draw_call_filter.h"
 #include "texture_2d/texture_2d.h"
 #include "mesh/mesh.h"
 #include "passes/final_blit_pass.h"
 #include "editor/selection_outline/selection_outline_pass.h"
 #include "graphics_settings.h"
-#include "graphics_buffer/ring_buffer.h"
 #include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "material/material.h"
@@ -36,16 +29,14 @@
 #include "editor/debug_pass/shadow_map_debug_pass.h"
 #include "cubemap/cubemap.h"
 #include "gameObject/gameObject.h"
+#include "graphics_buffer/graphics_buffer.h"
+#include "graphics_buffer/ring_buffer.h"
 
 #include <cassert>
 
 namespace Graphics
 {
-    std::shared_ptr<RingBuffer> s_InstancingMatricesBuffer;
     std::shared_ptr<GraphicsBuffer> s_LightingDataBuffer;
-    std::shared_ptr<GraphicsBuffer> s_ShadowsDataBuffer;
-
-    std::shared_ptr<RingBuffer> s_PerDrawDataBuffer;
     std::shared_ptr<RingBuffer> s_CameraDataBuffer;
 
     std::shared_ptr<ForwardRenderPass> s_ForwardRenderPass;
@@ -61,21 +52,16 @@ namespace Graphics
 
     int s_ScreenWidth  = 0;
     int s_ScreenHeight = 0;
-    int s_DrawCallCount = 0;
-
-    std::unordered_map<std::string, std::shared_ptr<Texture>> s_GlobalTextures;
 
     void InitConstantBuffers()
     {
-        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData), 32, "CameraData");
+        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData) * 32, "CameraData");
         s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), "LightingData");
-        s_ShadowsDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData");
-        s_PerDrawDataBuffer = std::make_shared<RingBuffer>(sizeof(PerDrawData), 1024, "PerDrawData");
     }
 
     void InitPasses()
     {
-        s_ShadowCasterPass = std::make_shared<ShadowCasterPass>(s_ShadowsDataBuffer, 0);
+        s_ShadowCasterPass = std::make_shared<ShadowCasterPass>(0);
         s_ForwardRenderPass = std::make_shared<ForwardRenderPass>(1);
         s_FinalBlitPass = std::make_shared<FinalBlitPass>(3);
 
@@ -87,13 +73,6 @@ namespace Graphics
 #endif
     }
 
-    void InitInstancing()
-    {
-        auto matricesBufferSize = sizeof(Matrix4x4) * GlobalConstants::MaxInstancingCount * 2;
-
-        s_InstancingMatricesBuffer = std::make_shared<RingBuffer>(matricesBufferSize, 64, "PerInstanceMatrices");
-    }
-
     void Init()
     {
 #if RENDER_ENGINE_EDITOR
@@ -102,16 +81,11 @@ namespace Graphics
 
         InitConstantBuffers();
         InitPasses();
-        InitInstancing();
     }
 
     void Shutdown()
     {
-        s_InstancingMatricesBuffer = nullptr;
         s_LightingDataBuffer = nullptr;
-        s_ShadowsDataBuffer = nullptr;
-
-        s_PerDrawDataBuffer = nullptr;
         s_CameraDataBuffer = nullptr;
 
         s_ForwardRenderPass = nullptr;
@@ -124,18 +98,18 @@ namespace Graphics
         s_SelectionOutlinePass = nullptr;
         s_ShadowMapDebugPass = nullptr;
 #endif
-
-        s_GlobalTextures.clear();
     }
 
     void SetLightingData(const std::vector<Light*>& lights, const std::shared_ptr<Texture>& skybox)
     {
+        const std::shared_ptr<Texture> reflectionCube = skybox ? skybox : Cubemap::White();
+
         LightingData lightingData{};
         lightingData.AmbientLight = GraphicsSettings::GetAmbientLightColor() * GraphicsSettings::GetAmbientLightIntensity();
         lightingData.PointLightsCount = 0;
         lightingData.SpotLightsCount = 0;
         lightingData.HasDirectionalLight = -1;
-        lightingData.ReflectionCubeMips = skybox ? skybox->GetMipLevels() : 1;
+        lightingData.ReflectionCubeMips = reflectionCube->GetMipLevels();
 
         for (Light* light : lights)
         {
@@ -167,18 +141,16 @@ namespace Graphics
             }
         }
 
-        SetGlobalTexture("_ReflectionCube", skybox ? skybox : Cubemap::White());
+        GraphicsBackend::Current()->BindTextureSampler(reflectionCube->GetBackendTexture(), reflectionCube->GetBackendSampler(), 3);
+
         s_LightingDataBuffer->SetData(&lightingData, 0, sizeof(lightingData));
+        GraphicsBackend::Current()->BindConstantBuffer(s_LightingDataBuffer->GetBackendBuffer(), 2, 0, sizeof(lightingData));
     }
 
     void Render(int width, int height)
     {
         if (width == 0 || height == 0)
             return;
-
-        s_InstancingMatricesBuffer->CheckResize();
-        s_PerDrawDataBuffer->CheckResize();
-        s_CameraDataBuffer->CheckResize();
 
         static std::shared_ptr<Texture2D> cameraColorTarget;
         static std::shared_ptr<Texture2D> cameraDepthTarget;
@@ -188,7 +160,6 @@ namespace Graphics
 
         s_ScreenWidth  = width;
         s_ScreenHeight = height;
-        s_DrawCallCount = 0;
 
         const Context ctx;
         std::vector<std::shared_ptr<RenderPass>> renderPasses;
@@ -220,8 +191,8 @@ namespace Graphics
             renderPasses.push_back(s_FinalBlitPass);
 
 #if RENDER_ENGINE_EDITOR
-            const bool executeGizmosPass = s_GizmosPass->Prepare(ctx.Renderers, s_CopyDepthPass->GetEndFence());
-            const bool executeSelectionPass = s_SelectionOutlinePass->Prepare();
+            const bool executeGizmosPass = s_GizmosPass->Prepare(ctx, s_CopyDepthPass->GetEndFence());
+            const bool executeSelectionPass = s_SelectionOutlinePass->Prepare(ctx);
 
             if (executeGizmosPass)
             {
@@ -250,170 +221,6 @@ namespace Graphics
         }
     }
 
-    void SetupMatrices(const Matrix4x4 &modelMatrix)
-    {
-        PerDrawData perDrawData{};
-        perDrawData.ModelMatrix = modelMatrix;
-        perDrawData.ModelNormalMatrix = modelMatrix.Invert().Transpose();
-        s_PerDrawDataBuffer->SetData(&perDrawData, 0, sizeof(perDrawData));
-    }
-
-    void SetupMatrices(const std::vector<Matrix4x4> &matrices)
-    {
-        static std::vector<Matrix4x4> matricesBuffer;
-
-        auto count = matrices.size();
-
-        matricesBuffer.resize(count * 2);
-        for (int i = 0; i < count; ++i)
-        {
-            matricesBuffer[i * 2 + 0] = matrices[i];
-            matricesBuffer[i * 2 + 1] = matrices[i].Invert().Transpose();
-        }
-
-        auto matricesSize = sizeof(Matrix4x4) * matricesBuffer.size();
-        s_InstancingMatricesBuffer->SetData(matricesBuffer.data(), 0, matricesSize);
-    }
-
-    void SetTextures(const std::unordered_map<std::string, std::shared_ptr<Texture>> &textures, const Shader& shader)
-    {
-        const auto &shaderTextures = shader.GetTextures();
-        const auto &shaderSamplers = shader.GetSamplers();
-
-        for (const auto &pair: textures)
-        {
-            const std::string &texName = pair.first;
-            const std::shared_ptr<Texture> &texture = pair.second;
-
-            if (!texture)
-                continue;
-
-            auto texInfoIt = shaderTextures.find(texName);
-            if (texInfoIt == shaderTextures.end())
-                continue;
-
-            const GraphicsBackendTextureInfo &textureInfo = texInfoIt->second;
-            const std::string samplerName = "sampler" + texName;
-
-            GraphicsBackend::Current()->BindTexture(textureInfo.TextureBindings, texture->GetBackendTexture());
-
-            auto samplerInfoIt = shaderSamplers.find(samplerName);
-            if (samplerInfoIt != shaderSamplers.end())
-                GraphicsBackend::Current()->BindSampler(samplerInfoIt->second.Bindings, texture->GetBackendSampler());
-        }
-    }
-
-    bool TryFindBufferInfo(const std::string &name, const Shader& shader, GraphicsBackendBufferInfo*& outInfo)
-    {
-        const auto &buffers = shader.GetBuffers();
-
-        auto it = buffers.find(name);
-        bool found = it != buffers.end();
-        if (found)
-            outInfo = it->second.get();
-        return found;
-    }
-
-    void BindBuffer(const std::string& name, const GraphicsBackendBuffer& buffer, const Shader& shader, int offset, int size)
-    {
-        GraphicsBackendBufferInfo* info;
-        if (TryFindBufferInfo(name, shader, info))
-        {
-            switch (info->GetBufferType())
-            {
-                case BufferType::RAW_BYTE_BUFFER:
-                    GraphicsBackend::Current()->BindBuffer(buffer, info->GetBinding(), offset, size);
-                case BufferType::STRUCTURED_BUFFER:
-                    GraphicsBackend::Current()->BindStructuredBuffer(buffer, info->GetBinding(), offset / info->GetSize(), info->GetSize(), size / info->GetSize());
-                case BufferType::CONSTANT_BUFFER:
-                    GraphicsBackend::Current()->BindConstantBuffer(buffer, info->GetBinding(), offset, size);
-            }
-        }
-    }
-
-    void BindBuffer(const std::string &name, const std::shared_ptr<GraphicsBuffer> &buffer, const Shader& shader, int offset = 0)
-    {
-        if (buffer)
-            BindBuffer(name, buffer->GetBackendBuffer(), shader, offset, buffer->GetSize());
-    }
-
-    void BindBuffer(const std::string &name, const std::shared_ptr<RingBuffer>& buffer, const Shader& shader, int offset = 0)
-    {
-        if (buffer)
-            BindBuffer(name, buffer->GetBackendBuffer(), shader, buffer->GetCurrentElementOffset() + offset, buffer->GetElementSize());
-    }
-
-    void SetupShaderPass(const Material &material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
-    {
-        Shader& shaderPass = *material.GetShader();
-        const auto &perMaterialDataBuffer = material.GetPerMaterialDataBuffer();
-
-        bool isLinear;
-        TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
-        TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
-        GraphicsBackend::Current()->UseProgram(shaderPass.GetProgram(vertexAttributes, colorTargetFormat, isLinear, depthTargetFormat, primitiveType));
-
-        BindBuffer(GlobalConstants::LightingBufferName, s_LightingDataBuffer, shaderPass);
-        BindBuffer(GlobalConstants::CameraDataBufferName, s_CameraDataBuffer, shaderPass);
-        BindBuffer(GlobalConstants::ShadowsBufferName, s_ShadowsDataBuffer, shaderPass);
-        BindBuffer(GlobalConstants::PerDrawDataBufferName, s_PerDrawDataBuffer, shaderPass);
-        BindBuffer(GlobalConstants::PerMaterialDataBufferName, perMaterialDataBuffer, shaderPass);
-        BindBuffer(GlobalConstants::InstanceMatricesBufferName, s_InstancingMatricesBuffer, shaderPass);
-
-        SetTextures(s_GlobalTextures, shaderPass);
-        SetTextures(material.GetTextures(), shaderPass);
-    }
-
-    void DrawRenderQueue(const RenderQueue& renderQueue)
-    {
-        for (const DrawCallInfo& drawCall : renderQueue.GetDrawCalls())
-        {
-            if (drawCall.Instanced)
-                DrawInstanced(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrices);
-            else
-                Draw(*drawCall.Geometry, *drawCall.Material, drawCall.ModelMatrices[0]);
-        }
-    }
-
-    void Draw(const DrawableGeometry &geometry, const Material &material, const Matrix4x4 &modelMatrix)
-    {
-        auto primitiveType = geometry.GetPrimitiveType();
-        auto elementsCount = geometry.GetElementsCount();
-
-        SetupMatrices(modelMatrix);
-        SetupShaderPass(material, geometry.GetVertexAttributes(), geometry.GetPrimitiveType());
-
-        if (geometry.HasIndexes())
-        {
-            GraphicsBackend::Current()->DrawElements(geometry.GetGraphicsBackendGeometry(), primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT);
-        }
-        else
-        {
-            GraphicsBackend::Current()->DrawArrays(geometry.GetGraphicsBackendGeometry(), primitiveType, 0, elementsCount);
-        }
-
-        ++s_DrawCallCount;
-    }
-
-    void DrawInstanced(const DrawableGeometry &geometry, const Material &material, const std::vector<Matrix4x4> &modelMatrices)
-    {
-        auto primitiveType = geometry.GetPrimitiveType();
-        auto elementsCount = geometry.GetElementsCount();
-        auto instanceCount = modelMatrices.size();
-
-        SetupMatrices(modelMatrices);
-        SetupShaderPass(material, geometry.GetVertexAttributes(), geometry.GetPrimitiveType());
-
-        if (geometry.HasIndexes())
-        {
-            GraphicsBackend::Current()->DrawElementsInstanced(geometry.GetGraphicsBackendGeometry(), primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, instanceCount);
-        }
-        else
-        {
-            GraphicsBackend::Current()->DrawArraysInstanced(geometry.GetGraphicsBackendGeometry(), primitiveType, 0, elementsCount, instanceCount);
-        }
-    }
-
     int GetScreenWidth()
     {
         return s_ScreenWidth;
@@ -436,64 +243,8 @@ namespace Graphics
         cameraData.ViewProjectionMatrix = gpuProjectionMatrix * viewMatrix;
         cameraData.CameraDirection = invViewMatrix * Vector4{0, 0, 1, 0};
 
-        s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
-    }
-
-    void SetRenderTarget(GraphicsBackendRenderTargetDescriptor descriptor, const std::shared_ptr<Texture> &target)
-    {
-        if (target)
-        {
-            descriptor.Texture = target->GetBackendTexture();
-        }
-
-        GraphicsBackend::Current()->AttachRenderTarget(descriptor);
-    }
-
-    void SetViewport(const Vector4 &viewport)
-    {
-        GraphicsBackend::Current()->SetViewport(viewport.x, viewport.y, viewport.z, viewport.w, 0, 1);
-        GraphicsBackend::Current()->SetScissorRect(viewport.x, viewport.y, viewport.z, viewport.w);
-    }
-
-    void SetGlobalTexture(const std::string &name, const std::shared_ptr<Texture> &texture)
-    {
-        s_GlobalTextures[name] = texture;
-    }
-
-    void CopyBufferData(const std::shared_ptr<GraphicsBuffer> &source, const std::shared_ptr<GraphicsBuffer> &destination, int sourceOffset, int destinationOffset, int size)
-    {
-        if (source && destination)
-        {
-            GraphicsBackend::Current()->CopyBufferSubData(source->GetBackendBuffer(), destination->GetBackendBuffer(), sourceOffset, destinationOffset, size);
-        }
-    }
-
-    void Blit(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, Material &material, const std::string& name)
-    {
-        static const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
-        static const GraphicsBackendRenderTargetDescriptor depthDescriptor{FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT};
-
-        material.SetTexture("_BlitTexture", source);
-
-        SetRenderTarget(destinationDescriptor, destination);
-        SetRenderTarget(depthDescriptor, nullptr);
-
-        GraphicsBackend::Current()->BeginRenderPass(name);
-        Draw(*fullscreenMesh, material, Matrix4x4::Identity());
-        GraphicsBackend::Current()->EndRenderPass();
-    }
-
-    void CopyTextureToTexture(const std::shared_ptr<Texture> &source, const std::shared_ptr<Texture> &destination, GraphicsBackendRenderTargetDescriptor destinationDescriptor)
-    {
-        if (!source)
-            return;
-
-        if (destination)
-        {
-            destinationDescriptor.Texture = destination->GetBackendTexture();
-        }
-
-        GraphicsBackend::Current()->CopyTextureToTexture(source->GetBackendTexture(), destinationDescriptor, 0, 0, 0, 0, source->GetWidth(), source->GetHeight());
+        uint64_t offset = s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
+        GraphicsBackend::Current()->BindConstantBuffer(s_CameraDataBuffer->GetBackendBuffer(), 3, offset, sizeof(cameraData));
     }
 
     Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix)
@@ -510,10 +261,5 @@ namespace Graphics
         }
 
         return gpuProjectionMatrix;
-    }
-
-    int GetDrawCallCount()
-    {
-        return s_DrawCallCount;
     }
 } // namespace Graphics

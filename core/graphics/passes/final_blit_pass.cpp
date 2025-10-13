@@ -6,6 +6,9 @@
 #include "graphics/graphics.h"
 #include "graphics/graphics_settings.h"
 #include "types/graphics_backend_render_target_descriptor.h"
+#include "graphics_buffer/graphics_buffer.h"
+#include "mesh/mesh.h"
+#include "enums/indices_data_type.h"
 
 FinalBlitPass::FinalBlitPass(int priority) :
     RenderPass(priority),
@@ -20,16 +23,35 @@ void FinalBlitPass::Prepare(const std::shared_ptr<Texture2D>& source)
 
 void FinalBlitPass::Execute(const Context& ctx)
 {
+    struct BlitData
+    {
+        float OneOverGamma;
+        float Exposure;
+        uint32_t TonemappingMode;
+        float Padding0;
+    };
+
     static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/final_blit", {}, {}, {}, {false, ComparisonFunction::ALWAYS});
-    static const std::shared_ptr<Material> material = std::make_shared<Material>(shader, "FinalBlit");
+    static const std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(BlitData), "Final Blit Data");
 
     Profiler::Marker marker("FinalBlitPass::Execute");
     Profiler::GPUMarker gpuMarker("FinalBlitPass::Execute");
 
-    const GraphicsSettings::TonemappingMode tonemappingMode = GraphicsSettings::GetTonemappingMode();
+    BlitData data{};
+    data.OneOverGamma = 1 / GraphicsSettings::GetGamma();
+    data.Exposure = GraphicsSettings::GetExposure();
+    data.TonemappingMode = static_cast<uint32_t>(GraphicsSettings::GetTonemappingMode());
 
-    material->SetFloat("_OneOverGamma", 1 / GraphicsSettings::GetGamma());
-    material->SetFloat("_Exposure", GraphicsSettings::GetExposure());
-    material->SetInt("_TonemappingMode", static_cast<int>(tonemappingMode));
-    Graphics::Blit(m_Source, nullptr, GraphicsBackendRenderTargetDescriptor::ColorBackbuffer(), *material, "Final Blit Pass");
+    const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
+
+    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
+    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
+
+    GraphicsBackend::Current()->BeginRenderPass("Final Blit Pass");
+    buffer->SetData(&data, 0, sizeof(data));
+    GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 4, 0, sizeof(data));
+    GraphicsBackend::Current()->BindTextureSampler(m_Source->GetBackendTexture(), m_Source->GetBackendSampler(), 4);
+    GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh->GetVertexAttributes(), fullscreenMesh->GetPrimitiveType()));
+    GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
+    GraphicsBackend::Current()->EndRenderPass();
 }

@@ -1,7 +1,9 @@
-#ifndef CAMERA_DATA
-#define CAMERA_DATA
+#ifndef CAMERA_DATA_H
+#define CAMERA_DATA_H
 
-cbuffer CameraData : register(b3)
+#include "global_defines.h"
+
+cbuffer CameraData : register(CAMERA_DATA)
 {
     float4x4   _VPMatrix;
     float3     _CameraPosWS;
@@ -10,4 +12,4 @@ cbuffer CameraData : register(b3)
     float      _FarClipPlane;
 };
 
-#endif//CAMERA_DATA
+#endif// CAMERA_DATA_H

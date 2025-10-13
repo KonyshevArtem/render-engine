@@ -186,7 +186,7 @@ void ShadowCasterPass::Prepare(const Context& ctx)
 
     m_ShadowsConstantBuffer->SetData(&m_ShadowsGPUData, 0, sizeof(ShadowsData));
 
-    GraphicsBackend::Current()->BindConstantBuffer(m_ShadowsConstantBuffer->GetBackendBuffer(), 1, 0, sizeof(ShadowsData));
+    GraphicsBackend::Current()->BindConstantBuffer(m_ShadowsConstantBuffer->GetBackendBuffer(), GlobalConstants::ShadowDataIndex, 0, sizeof(ShadowsData));
 }
 
 void ShadowCasterPass::Execute(const Context& ctx)
@@ -217,9 +217,9 @@ void ShadowCasterPass::Execute(const Context& ctx)
             Render(m_DirectionalLightRenderQueues[i], m_DirectionLightShadowMap, i, m_DirectionLightCameraData[i], "Directional Light Shadow Pass " + std::to_string(i));
     }
 
-    GraphicsBackend::Current()->BindTextureSampler(m_DirectionLightShadowMap->GetBackendTexture(), m_DirectionLightShadowMap->GetBackendSampler(), 0);
-    GraphicsBackend::Current()->BindTextureSampler(m_SpotLightShadowMapArray->GetBackendTexture(), m_SpotLightShadowMapArray->GetBackendSampler(), 1);
-    GraphicsBackend::Current()->BindTextureSampler(m_PointLightShadowMap->GetBackendTexture(), m_PointLightShadowMap->GetBackendSampler(), 2);
+    GraphicsBackend::Current()->BindTextureSampler(m_DirectionLightShadowMap->GetBackendTexture(), m_DirectionLightShadowMap->GetBackendSampler(), GlobalConstants::DirectionalShadowMapIndex);
+    GraphicsBackend::Current()->BindTextureSampler(m_SpotLightShadowMapArray->GetBackendTexture(), m_SpotLightShadowMapArray->GetBackendSampler(), GlobalConstants::SpotLightShadowMapIndex);
+    GraphicsBackend::Current()->BindTextureSampler(m_PointLightShadowMap->GetBackendTexture(), m_PointLightShadowMap->GetBackendSampler(), GlobalConstants::PointLightShadowMapIndex);
 }
 
 void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData& cameraData, const std::string& passName)
@@ -229,7 +229,6 @@ void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_
     Profiler::Marker marker("ShadowCasterPass::Render");
     Profiler::GPUMarker gpuMarker("ShadowCasterPass::Render");
 
-    const Vector4& viewport{0, 0, static_cast<float>(target->GetWidth()), static_cast<float>(target->GetHeight())};
     const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .Texture = target->GetBackendTexture(), .LoadAction = LoadAction::CLEAR, .Layer = targetLayer };
 
     GraphicsBackend::Current()->AttachRenderTarget(colorTargetDescriptor);

@@ -1,5 +1,7 @@
-#ifndef RENDER_ENGINE_PER_DRAW_DATA
-#define RENDER_ENGINE_PER_DRAW_DATA
+#ifndef RENDER_ENGINE_PER_DRAW_DATA_H
+#define RENDER_ENGINE_PER_DRAW_DATA_H
+
+#include "global_defines.h"
 
 struct PerDrawDataStruct
 {
@@ -11,7 +13,7 @@ struct PerDrawDataStruct
 
     static uint _InstanceID;
 
-    StructuredBuffer<PerDrawDataStruct> InstanceMatricesBuffer : register(t0, space1);
+    StructuredBuffer<PerDrawDataStruct> InstanceMatricesBuffer : register(INSTANCING_MATRICES_DATA);
 
     #define _ModelMatrix            InstanceMatricesBuffer[_InstanceID]._ModelMatrix
     #define _ModelNormalMatrix      InstanceMatricesBuffer[_InstanceID]._ModelNormalMatrix
@@ -24,7 +26,7 @@ struct PerDrawDataStruct
 
 #else
 
-    ConstantBuffer<PerDrawDataStruct> PerDrawData : register(b0);
+    ConstantBuffer<PerDrawDataStruct> PerDrawData : register(MATRICES_DATA);
 
     #define _ModelMatrix            PerDrawData._ModelMatrix
     #define _ModelNormalMatrix      PerDrawData._ModelNormalMatrix
@@ -37,4 +39,4 @@ struct PerDrawDataStruct
 
 #endif
 
-#endif
+#endif // RENDER_ENGINE_PER_DRAW_DATA_H

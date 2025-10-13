@@ -1,5 +1,5 @@
-#ifndef SHADOWS
-#define SHADOWS
+#ifndef SHADOWS_H
+#define SHADOWS_H
 
 #include "global_defines.h"
 
@@ -14,21 +14,21 @@ struct PointLightShadowData
     float4 LightPosWS;
 };
 
-cbuffer Shadows : register(b1)
+cbuffer Shadows : register(SHADOW_DATA)
 {
     ShadowData _DirLightShadow[SHADOW_CASCADE_COUNT];
     ShadowData _SpotLightShadows[MAX_SPOT_LIGHT_SOURCES];
     PointLightShadowData _PointLightShadows[MAX_POINT_LIGHT_SOURCES];
 };
 
-Texture2DArray<float> _DirLightShadowMap : register(t0);
-SamplerComparisonState sampler_DirLightShadowMap : register(s0);
+Texture2DArray<float> _DirLightShadowMap : register(DIRECTIONAL_SHADOW_MAP);
+SamplerComparisonState sampler_DirLightShadowMap : register(DIRECTIONAL_SHADOW_MAP_SAMPLER);
 
-Texture2DArray<float> _SpotLightShadowMapArray : register(t1);
-SamplerComparisonState sampler_SpotLightShadowMapArray : register(s1);
+Texture2DArray<float> _SpotLightShadowMapArray : register(SPOTLIGHT_SHADOW_MAP);
+SamplerComparisonState sampler_SpotLightShadowMapArray : register(SPOTLIGHT_SHADOW_MAP_SAMPLER);
 
-Texture2DArray<float> _PointLightShadowMapArray : register(t2);
-SamplerComparisonState sampler_PointLightShadowMapArray : register(s2);
+Texture2DArray<float> _PointLightShadowMapArray : register(POINTLIGHT_SHADOW_MAP);
+SamplerComparisonState sampler_PointLightShadowMapArray : register(POINTLIGHT_SHADOW_MAP_SAMPLER);
 
 bool isFragVisibleZ(float fragZ)
 {
@@ -147,4 +147,4 @@ float getPointLightShadowTerm(int index, float3 posWS, float lightAngleCos)
     #endif
 }
 
-#endif
+#endif // SHADOWS_H

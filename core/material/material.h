@@ -29,7 +29,7 @@ public:
     Material &operator=(Material &&) = delete;
 
     std::shared_ptr<Material> Copy();
-    std::shared_ptr<GraphicsBuffer> GetPerMaterialDataBuffer() const;
+    std::shared_ptr<GraphicsBuffer> GetPerMaterialDataBuffer(uint32_t& bindingIndex) const;
 
     void SetTexture(const std::string &name, std::shared_ptr<Texture> texture);
     void SetVector(const std::string &_name, const Vector4 &_value);
@@ -46,7 +46,6 @@ public:
     {
         return m_Textures;
     }
-
 
     inline int GetRenderQueue() const
     {

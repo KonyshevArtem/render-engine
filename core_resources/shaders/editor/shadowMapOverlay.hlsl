@@ -13,7 +13,7 @@ struct Varyings
     float2 UV               : TEXCOORD2;
 };
 
-cbuffer DebugData : register(b2)
+cbuffer DebugData : register(b0)
 {
     uint _LightType;
     uint _LightIndex;
@@ -26,7 +26,7 @@ cbuffer DebugData : register(b2)
     float Padding0;
 }
 
-SamplerState _Sampler : register(s3);
+SamplerState _Sampler : register(s0);
 
 Varyings vertexMain(Attributes attributes)
 {

@@ -19,10 +19,7 @@ public:
 
     void TrySetVariable(const std::string &variableName, const void *data, uint64_t size);
 
-    inline const std::shared_ptr<GraphicsBuffer>& GetBuffer() const
-    {
-        return m_Buffer;
-    }
+    const std::shared_ptr<GraphicsBuffer>& GetBuffer(uint32_t& bindingIndex) const;
 
     GraphicsBufferWrapper(const GraphicsBufferWrapper &) = delete;
     GraphicsBufferWrapper(GraphicsBufferWrapper &&) = delete;

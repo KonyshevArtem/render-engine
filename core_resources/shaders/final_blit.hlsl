@@ -21,7 +21,7 @@ struct Varyings
     float2 uv : TEXCOORD0;
 };
 
-cbuffer BlitData : register(b4)
+cbuffer BlitData : register(b0)
 {
     float _OneOverGamma;
     float _Exposure;
@@ -29,8 +29,8 @@ cbuffer BlitData : register(b4)
     float Padding0;
 };
 
-Texture2D _BlitTexture : register(t4);
-SamplerState sampler_BlitTexture : register(t4);
+Texture2D _BlitTexture : register(t0);
+SamplerState sampler_BlitTexture : register(t0);
 
 half3 GammaCorrection(half3 color, float oneOverGamma)
 {

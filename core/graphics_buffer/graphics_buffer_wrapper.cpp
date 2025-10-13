@@ -60,3 +60,10 @@ void GraphicsBufferWrapper::TrySetVariable(const std::string &variableName, cons
         }
     }
 }
+
+const std::shared_ptr<GraphicsBuffer>& GraphicsBufferWrapper::GetBuffer(uint32_t& bindingIndex) const
+{
+    if (m_BufferInfo)
+        bindingIndex = m_BufferInfo->GetBinding();
+    return m_Buffer;
+}

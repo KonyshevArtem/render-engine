@@ -9,6 +9,7 @@
 #include "texture/texture.h"
 #include "drawable_geometry/drawable_geometry.h"
 #include "enums/indices_data_type.h"
+#include "global_constants.h"
 
 bool RenderQueue::EnableFrustumCulling = true;
 bool RenderQueue::FreezeFrustumCulling = false;
@@ -126,9 +127,10 @@ namespace RenderQueueLocal
 
     void SetupShaderPass(const Material* material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
     {
-        const std::shared_ptr<GraphicsBuffer>& perMaterialDataBuffer = material->GetPerMaterialDataBuffer();
+        uint32_t perMaterialDataBinding = 0;
+        const std::shared_ptr<GraphicsBuffer>& perMaterialDataBuffer = material->GetPerMaterialDataBuffer(perMaterialDataBinding);
         if (perMaterialDataBuffer)
-            GraphicsBackend::Current()->BindConstantBuffer(perMaterialDataBuffer->GetBackendBuffer(), 4, 0, perMaterialDataBuffer->GetSize());
+            GraphicsBackend::Current()->BindConstantBuffer(perMaterialDataBuffer->GetBackendBuffer(), perMaterialDataBinding, 0, perMaterialDataBuffer->GetSize());
 
         for (const auto& pair: material->GetTextures())
         {
@@ -236,7 +238,7 @@ void RenderQueue::SetupMatrices(const std::vector<Matrix4x4>& matrices)
     uint64_t offset = s_MatricesBuffer->SetData(matricesBuffer.data(), 0, size);
 
     if (matrices.size() > 1)
-        GraphicsBackend::Current()->BindStructuredBuffer(s_MatricesBuffer->GetBackendBuffer(), 0, offset, size, count);
+        GraphicsBackend::Current()->BindStructuredBuffer(s_MatricesBuffer->GetBackendBuffer(), GlobalConstants::InstancingMatricesData, offset, size, count);
     else
-        GraphicsBackend::Current()->BindConstantBuffer(s_MatricesBuffer->GetBackendBuffer(), 0, offset, size);
+        GraphicsBackend::Current()->BindConstantBuffer(s_MatricesBuffer->GetBackendBuffer(), GlobalConstants::MatricesData, offset, size);
 }

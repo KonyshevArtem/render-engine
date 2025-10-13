@@ -16,7 +16,7 @@ struct Varyings
 Texture2D<float> _Depth : register(t0);
 SamplerState sampler_Depth : register(s0);
 
-cbuffer DebugData : register(b2)
+cbuffer DebugData : register(b0)
 {
     float4x4 _InvCameraVP;
 }

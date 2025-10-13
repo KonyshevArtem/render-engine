@@ -1,5 +1,5 @@
-#ifndef LIGHTING
-#define LIGHTING
+#ifndef LIGHTING_H
+#define LIGHTING_H
 
 #include "global_defines.h"
 #include "shadows.h"
@@ -25,7 +25,7 @@ struct SpotLight
     float CutOffCos;
 };
 
-cbuffer Lighting : register(b2)
+cbuffer Lighting : register(LIGHTING_DATA)
 {
     float3 _AmbientLight;
     int _PointLightsCount;
@@ -43,8 +43,8 @@ cbuffer Lighting : register(b2)
     float _ReflectionCubeMips;
 };
 
-TextureCube _ReflectionCube : register(t3);
-SamplerState sampler_ReflectionCube : register(s3);
+TextureCube _ReflectionCube : register(REFLECTION_CUBE);
+SamplerState sampler_ReflectionCube : register(REFLECTION_CUBE_SAMPLER);
 
 float lightAttenuation(float distance, float range)
 {
@@ -213,4 +213,4 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
     return albedo.rgb * indirectLighting + directLighting;
 }
 
-#endif //LIGHTING
+#endif // LIGHTING_H

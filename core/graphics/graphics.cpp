@@ -31,6 +31,7 @@
 #include "gameObject/gameObject.h"
 #include "graphics_buffer/graphics_buffer.h"
 #include "graphics_buffer/ring_buffer.h"
+#include "global_constants.h"
 
 #include <cassert>
 
@@ -141,10 +142,10 @@ namespace Graphics
             }
         }
 
-        GraphicsBackend::Current()->BindTextureSampler(reflectionCube->GetBackendTexture(), reflectionCube->GetBackendSampler(), 3);
+        GraphicsBackend::Current()->BindTextureSampler(reflectionCube->GetBackendTexture(), reflectionCube->GetBackendSampler(), GlobalConstants::ReflectionCubeIndex);
 
         s_LightingDataBuffer->SetData(&lightingData, 0, sizeof(lightingData));
-        GraphicsBackend::Current()->BindConstantBuffer(s_LightingDataBuffer->GetBackendBuffer(), 2, 0, sizeof(lightingData));
+        GraphicsBackend::Current()->BindConstantBuffer(s_LightingDataBuffer->GetBackendBuffer(), GlobalConstants::LightingDataIndex, 0, sizeof(lightingData));
     }
 
     void Render(int width, int height)
@@ -244,7 +245,7 @@ namespace Graphics
         cameraData.CameraDirection = invViewMatrix * Vector4{0, 0, 1, 0};
 
         uint64_t offset = s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
-        GraphicsBackend::Current()->BindConstantBuffer(s_CameraDataBuffer->GetBackendBuffer(), 3, offset, sizeof(cameraData));
+        GraphicsBackend::Current()->BindConstantBuffer(s_CameraDataBuffer->GetBackendBuffer(), GlobalConstants::CameraDataIndex, offset, sizeof(cameraData));
     }
 
     Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix)

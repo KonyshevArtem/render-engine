@@ -40,7 +40,7 @@ void ShadowMapDebugPass::DrawCascades(const Context& ctx)
 
         GraphicsBackend::Current()->BeginRenderPass("Shadow Cascade Visualize Pass");
         buffer->SetData(&data, 0, sizeof(data));
-        GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 2, 0, sizeof(data));
+        GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
         GraphicsBackend::Current()->BindTextureSampler(m_DepthMap->GetBackendTexture(), m_DepthMap->GetBackendSampler(), 0);
         GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_FullscreenMesh->GetVertexAttributes(), m_FullscreenMesh->GetPrimitiveType()));
         GraphicsBackend::Current()->DrawElements(m_FullscreenMesh->GetGraphicsBackendGeometry(), m_FullscreenMesh->GetPrimitiveType(), m_FullscreenMesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
@@ -80,8 +80,8 @@ void ShadowMapDebugPass::DrawOverlay(const Context& ctx)
 
         GraphicsBackend::Current()->BeginRenderPass("ShadowMap Overlay Pass");
         buffer->SetData(&data, 0, sizeof(data));
-        GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 2, 0, sizeof(data));
-        GraphicsBackend::Current()->BindSampler(sampler, 3);
+        GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
+        GraphicsBackend::Current()->BindSampler(sampler, 0);
         GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_FullscreenMesh->GetVertexAttributes(), m_FullscreenMesh->GetPrimitiveType()));
         GraphicsBackend::Current()->DrawElements(m_FullscreenMesh->GetGraphicsBackendGeometry(), m_FullscreenMesh->GetPrimitiveType(), m_FullscreenMesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
         GraphicsBackend::Current()->EndRenderPass();

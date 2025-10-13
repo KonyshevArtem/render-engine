@@ -67,7 +67,7 @@ void Material::SetDataToConstantBuffer(const std::string &name, const void *data
     m_PerMaterialDataBufferWrapper->TrySetVariable(name, data, size);
 }
 
-std::shared_ptr<GraphicsBuffer> Material::GetPerMaterialDataBuffer() const
+std::shared_ptr<GraphicsBuffer> Material::GetPerMaterialDataBuffer(uint32_t& bindingIndex) const
 {
-    return m_PerMaterialDataBufferWrapper->GetBuffer();
+    return m_PerMaterialDataBufferWrapper->GetBuffer(bindingIndex);
 }

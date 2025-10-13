@@ -49,8 +49,8 @@ void FinalBlitPass::Execute(const Context& ctx)
 
     GraphicsBackend::Current()->BeginRenderPass("Final Blit Pass");
     buffer->SetData(&data, 0, sizeof(data));
-    GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 4, 0, sizeof(data));
-    GraphicsBackend::Current()->BindTextureSampler(m_Source->GetBackendTexture(), m_Source->GetBackendSampler(), 4);
+    GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
+    GraphicsBackend::Current()->BindTextureSampler(m_Source->GetBackendTexture(), m_Source->GetBackendSampler(), 0);
     GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh->GetVertexAttributes(), fullscreenMesh->GetPrimitiveType()));
     GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
     GraphicsBackend::Current()->EndRenderPass();

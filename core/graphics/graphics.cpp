@@ -29,6 +29,8 @@
 #include "editor/debug_pass/shadow_map_debug_pass.h"
 #include "cubemap/cubemap.h"
 #include "gameObject/gameObject.h"
+#include "graphics_buffer/graphics_buffer.h"
+#include "graphics_buffer/ring_buffer.h"
 
 #include <cassert>
 

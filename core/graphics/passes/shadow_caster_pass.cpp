@@ -30,8 +30,8 @@ ShadowCasterPass::ShadowCasterPass(int priority) :
     RenderPass(priority),
     m_SpotLightShadowMapArray(Texture2DArray::Create(k_SpotLightShadowMapSize, k_SpotLightShadowMapSize, GlobalConstants::MaxSpotLightSources, TextureInternalFormat::DEPTH_32, true, "SpotLightShadowMap")),
     m_DirectionLightShadowMap(Texture2DArray::Create(k_DirLightShadowMapSize, k_DirLightShadowMapSize, GlobalConstants::ShadowCascadeCount, TextureInternalFormat::DEPTH_32, true, "DirectionalShadowMap")),
-    m_PointLightShadowMap(Texture2DArray::Create(k_PointLightShadowMapSize, k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, "PointLightShadowMap"))
-    m_ShadowsConstantBuffer(std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData")),
+    m_PointLightShadowMap(Texture2DArray::Create(k_PointLightShadowMapSize, k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, "PointLightShadowMap")),
+    m_ShadowsConstantBuffer(std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData"))
 {
     m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
     m_DirectionLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);

@@ -22,15 +22,26 @@
 
 #include <cfloat>
 
-constexpr int k_SpotLightShadowMapSize = 1024;
-constexpr int k_DirLightShadowMapSize = 2048;
-constexpr int k_PointLightShadowMapSize = 512;
+namespace ShadowCasterPassLocal
+{
+    constexpr int k_SpotLightShadowMapSize = 1024;
+    constexpr int k_DirLightShadowMapSize = 2048;
+    constexpr int k_PointLightShadowMapSize = 512;
+
+    struct ShadowCasterPassData
+    {
+        Vector4 LightPosWS;
+
+        Vector3 Padding0;
+        float ShadowDepthBias;
+    };
+}
 
 ShadowCasterPass::ShadowCasterPass(int priority) :
     RenderPass(priority),
-    m_SpotLightShadowMapArray(Texture2DArray::Create(k_SpotLightShadowMapSize, k_SpotLightShadowMapSize, GlobalConstants::MaxSpotLightSources, TextureInternalFormat::DEPTH_32, true, "SpotLightShadowMap")),
-    m_DirectionLightShadowMap(Texture2DArray::Create(k_DirLightShadowMapSize, k_DirLightShadowMapSize, GlobalConstants::ShadowCascadeCount, TextureInternalFormat::DEPTH_32, true, "DirectionalShadowMap")),
-    m_PointLightShadowMap(Texture2DArray::Create(k_PointLightShadowMapSize, k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, "PointLightShadowMap")),
+    m_SpotLightShadowMapArray(Texture2DArray::Create(ShadowCasterPassLocal::k_SpotLightShadowMapSize, ShadowCasterPassLocal::k_SpotLightShadowMapSize, GlobalConstants::MaxSpotLightSources, TextureInternalFormat::DEPTH_32, true, "SpotLightShadowMap")),
+    m_DirectionLightShadowMap(Texture2DArray::Create(ShadowCasterPassLocal::k_DirLightShadowMapSize, ShadowCasterPassLocal::k_DirLightShadowMapSize, GlobalConstants::ShadowCascadeCount, TextureInternalFormat::DEPTH_32, true, "DirectionalShadowMap")),
+    m_PointLightShadowMap(Texture2DArray::Create(ShadowCasterPassLocal::k_PointLightShadowMapSize, ShadowCasterPassLocal::k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, "PointLightShadowMap")),
     m_ShadowsConstantBuffer(std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData"))
 {
     m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
@@ -45,6 +56,8 @@ ShadowCasterPass::ShadowCasterPass(int priority) :
     m_PointLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
     m_PointLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
     m_PointLightShadowMap->SetComparisonFunction(ComparisonFunction::LEQUAL);
+
+    m_ShadowCasterPassBuffer = std::make_shared<RingBuffer>(sizeof(ShadowCasterPassLocal::ShadowCasterPassData) * 128, "ShadowCasterPassBuffer");
 }
 
 void ShadowCasterPass::Prepare(const Context& ctx)
@@ -93,7 +106,7 @@ void ShadowCasterPass::Prepare(const Context& ctx)
             const Matrix4x4 proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, farPlane);
             const Matrix4x4 viewProj = proj * view;
 
-            m_SpotLightCameraData[spotLightIndex] = {view, proj, farPlane};
+            m_SpotLightCameraData[spotLightIndex] = {view, proj, lightGo->GetPosition().ToVector4(1), farPlane};
             m_SpotLightRenderQueues[spotLightIndex].Prepare(viewProj, ctx.Renderers, renderSettings);
             m_ShadowsGPUData.SpotLightsViewProjMatrices[spotLightIndex] = biasMatrix * viewProj;
 
@@ -110,7 +123,7 @@ void ShadowCasterPass::Prepare(const Context& ctx)
                 const Matrix4x4 view = pointLightViewMatrices[i] * Matrix4x4::Translation(-lightGo->GetPosition());
                 const Matrix4x4 viewProj = proj * view;
 
-                m_PointLightCameraData[pointLightsIndex * 6 + i] = {view, proj, farPlane};
+                m_PointLightCameraData[pointLightsIndex * 6 + i] = {view, proj, lightGo->GetPosition().ToVector4(1), farPlane};
                 m_PointLightsRenderQueues[pointLightsIndex * 6 + i].Prepare(viewProj, ctx.Renderers, renderSettings);
                 m_ShadowsGPUData.PointLightShadows[pointLightsIndex].ViewProjMatrices[i] = biasMatrix * viewProj;
             }
@@ -178,7 +191,8 @@ void ShadowCasterPass::Prepare(const Context& ctx)
                 const Matrix4x4 renderViewMatrix = Matrix4x4::Translation({-viewOffset.x, -viewOffset.y, -viewMin.z}) * rotationViewMatrix;
                 const Matrix4x4 renderProjMatrix = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0.01, renderFarPlane);
 
-                m_DirectionLightCameraData[i] = {renderViewMatrix, renderProjMatrix, renderFarPlane};
+                const Vector3 lightDirection = lightGo->GetRotation() * Vector3(0, 0, 1);
+                m_DirectionLightCameraData[i] = {renderViewMatrix, renderProjMatrix, lightDirection.ToVector4(0), renderFarPlane};
                 m_ShadowsGPUData.DirectionalLightViewProjMatrix[i] = biasMatrix * renderProjMatrix * renderViewMatrix;
             }
         }
@@ -234,9 +248,15 @@ void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_
     GraphicsBackend::Current()->AttachRenderTarget(colorTargetDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(depthTargetDescriptor);
 
+    ShadowCasterPassLocal::ShadowCasterPassData data;
+    data.LightPosWS = cameraData.LightPosOrDir;
+    data.ShadowDepthBias = GraphicsSettings::GetShadowDepthBias();
+    uint64_t offset = m_ShadowCasterPassBuffer->SetData(&data, 0, sizeof(data));
+
     Graphics::SetCameraData(cameraData.ViewMatrix, cameraData.ProjectionMatrix, 0.01, cameraData.FarPlane);
 
     GraphicsBackend::Current()->BeginRenderPass(passName);
+    GraphicsBackend::Current()->BindConstantBuffer(m_ShadowCasterPassBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
 
     GraphicsBackend::Current()->SetViewport(0, 0, target->GetWidth(), target->GetHeight(), 0, 1);
     GraphicsBackend::Current()->SetScissorRect(0, 0, target->GetWidth(), target->GetHeight());

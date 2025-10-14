@@ -40,35 +40,7 @@ bool isFragVisibleXY(float2 fragXY)
     return all(fragXY >= 0) && all(fragXY <= 1);
 }
 
-float applyDepthBias(float fragZ, float lightAngleCos, bool isLinearDepth)
-{
-    const float depthBias = 0.005;
-    const float slopeDepthBias = 0.05;
-
-    float bias = lerp(slopeDepthBias, depthBias, saturate(abs(lightAngleCos)));
-    if (!isLinearDepth)
-        bias *= 1 - fragZ;
-
-    return fragZ - bias;
-}
-
-float getShadowTerm(float fragZ, float shadowMapDepth, float lightAngleCos, bool isLinearDepth)
-{
-    const float depthBias = 0.005;
-    const float slopeDepthBias = 0.05;
-
-    float bias = lerp(slopeDepthBias, depthBias, saturate(abs(lightAngleCos)));
-
-    float biasedFragZ;
-    if (isLinearDepth)
-        biasedFragZ = fragZ - bias;
-    else
-        biasedFragZ = fragZ - (1 - fragZ) * bias;
-
-    return shadowMapDepth > biasedFragZ ? 1 : 0;
-}
-
-float getDirLightShadowTerm(float3 posWS, float lightAngleCos, float fragDistance)
+float getDirLightShadowTerm(float3 posWS)
 {
     #ifdef _RECEIVE_SHADOWS
     float3 shadowCoord;
@@ -89,14 +61,13 @@ float getDirLightShadowTerm(float3 posWS, float lightAngleCos, float fragDistanc
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
 
-    shadowCoord.z = applyDepthBias(saturate(shadowCoord.z), lightAngleCos, true);
-    return _DirLightShadowMap.SampleCmpLevelZero(sampler_DirLightShadowMap, float3(shadowCoord.xy, cascadeIndex), shadowCoord.z).x;
+    return _DirLightShadowMap.SampleCmpLevelZero(sampler_DirLightShadowMap, float3(shadowCoord.xy, cascadeIndex), saturate(shadowCoord.z)).x;
     #else
     return 1;
     #endif
 }
 
-float getSpotLightShadowTerm(int index, float3 posWS, float lightAngleCos)
+float getSpotLightShadowTerm(int index, float3 posWS)
 {
     #ifdef _RECEIVE_SHADOWS
     float4 shadowCoord = mul(_SpotLightShadows[index].LightViewProjMatrix, float4(posWS, 1));
@@ -105,8 +76,7 @@ float getSpotLightShadowTerm(int index, float3 posWS, float lightAngleCos)
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
 
-    shadowCoord.z = applyDepthBias(saturate(shadowCoord.z), lightAngleCos, false);
-    return _SpotLightShadowMapArray.SampleCmpLevelZero(sampler_SpotLightShadowMapArray, float3(shadowCoord.xy, index), shadowCoord.z).x;
+    return _SpotLightShadowMapArray.SampleCmpLevelZero(sampler_SpotLightShadowMapArray, float3(shadowCoord.xy, index), saturate(shadowCoord.z)).x;
     #else
     return 1;
     #endif
@@ -127,7 +97,7 @@ int getPointLightShadowMapSlice(float3 lightToFrag)
     return lightToFrag.z > 0 ? 4 : 5;
 }
 
-float getPointLightShadowTerm(int index, float3 posWS, float lightAngleCos)
+float getPointLightShadowTerm(int index, float3 posWS)
 {
     #ifdef _RECEIVE_SHADOWS
     float3 lightToFrag = posWS - _PointLightShadows[index].LightPosWS.xyz;
@@ -140,8 +110,7 @@ float getPointLightShadowTerm(int index, float3 posWS, float lightAngleCos)
     #endif
 
     index = index * 6 + slice; // keep this on a separate line, otherwise SPIRV-Cross does not declare _PointLightShadowMapArray as sampler2DArrayShadow
-    shadowCoord.z = applyDepthBias(saturate(shadowCoord.z), lightAngleCos, false);
-    return _PointLightShadowMapArray.SampleCmpLevelZero(sampler_PointLightShadowMapArray, float3(shadowCoord.xy, index), shadowCoord.z).x;
+    return _PointLightShadowMapArray.SampleCmpLevelZero(sampler_PointLightShadowMapArray, float3(shadowCoord.xy, index), saturate(shadowCoord.z)).x;
     #else
     return 1;
     #endif

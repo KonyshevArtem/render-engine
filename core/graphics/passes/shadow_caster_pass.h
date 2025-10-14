@@ -5,6 +5,8 @@
 #include "graphics/data_structs/shadows_data.h"
 #include "graphics/render_queue/render_queue.h"
 #include "global_constants.h"
+#include "light/light.h"
+#include "graphics_buffer/ring_buffer.h"
 
 #include <memory>
 #include <vector>
@@ -38,6 +40,7 @@ private:
     {
         Matrix4x4 ViewMatrix;
         Matrix4x4 ProjectionMatrix;
+        Vector4 LightPosOrDir;
         float FarPlane;
     };
 
@@ -55,7 +58,9 @@ private:
     ShadowsCameraData m_SpotLightCameraData[GlobalConstants::MaxSpotLightSources];
     ShadowsCameraData m_PointLightCameraData[GlobalConstants::MaxPointLightSources * 6];
 
-    static void Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData &cameraData, const std::string& passName);
+    std::shared_ptr<RingBuffer> m_ShadowCasterPassBuffer;
+
+    void Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData &cameraData, const std::string& passName);
 };
 
 #endif //RENDER_ENGINE_SHADOW_CASTER_PASS_H

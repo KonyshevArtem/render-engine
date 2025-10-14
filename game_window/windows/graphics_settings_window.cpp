@@ -89,6 +89,7 @@ void DrawShadowsSettings()
 
     DrawFloatSetting("Shadow Distance", GraphicsSettings::GetShadowDistance, GraphicsSettings::SetShadowDistance, 0.1f);
     DrawShadowCascadeBoundsSettings();
+    DrawFloatSetting("Shadow Depth Bias", GraphicsSettings::GetShadowDepthBias, GraphicsSettings::SetShadowDepthBias, 0.01f);
 }
 
 void GraphicsSettingsWindow::DrawInternal()

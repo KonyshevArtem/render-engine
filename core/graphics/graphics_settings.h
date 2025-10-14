@@ -36,6 +36,7 @@ namespace GraphicsSettings
 
     DECLARE_GRAPHICS_SETTING(float, ShadowDistance)
     DECLARE_GRAPHICS_SETTING_ARRAY(float, ShadowCascadeBounds)
+    DECLARE_GRAPHICS_SETTING(float, ShadowDepthBias)
 }
 
 #endif //RENDER_ENGINE_GRAPHICS_SETTINGS_H

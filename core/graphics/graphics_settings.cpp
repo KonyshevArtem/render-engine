@@ -25,4 +25,5 @@ namespace GraphicsSettings
 
     DEFINE_GRAPHICS_SETTING(float, ShadowDistance, 50)
     DEFINE_GRAPHICS_SETTING_ARRAY(float, GlobalConstants::ShadowCascadeCount, ShadowCascadeBounds, 0.05f, 0.2f, 0.5f, 1.0f)
+    DEFINE_GRAPHICS_SETTING(float, ShadowDepthBias, 0.1f)
 }

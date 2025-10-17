@@ -129,7 +129,15 @@ add_library(
 	worker/worker.h
 	worker/worker.cpp
 	culling/frustum.h
-	culling/frustum.cpp)
+	culling/frustum.cpp
+	ui/ui_manager.cpp
+	ui/ui_manager.h
+	ui/ui_image.cpp
+	ui/ui_image.h
+	ui/ui_element.cpp
+	ui/ui_element.h
+	ui/ui_render_pass.cpp
+	ui/ui_render_pass.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)

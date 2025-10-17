@@ -7,6 +7,8 @@
 #include "math_utils.h"
 #include "renderer/mesh_renderer.h"
 #include "resources/resources.h"
+#include "ui/ui_manager.h"
+#include "ui/ui_image.h"
 
 std::shared_ptr<TestSceneUpdater> TestSceneUpdater::Create(const nlohmann::json& componentData)
 {
@@ -68,6 +70,13 @@ void TestSceneUpdater::Update()
             instancedCube->SetLocalPosition({-40.0f + 80.0f * x / gridSize, -15.0f - 2.5f * y, -40.0f + 80.0f * z / gridSize});
             instancedCube->GetRenderer()->CastShadows = false;
         }
+
+        const std::shared_ptr<Texture2D> uiTestTexture = Resources::Load<Texture2D>("core_resources/textures/ui/ui_test");
+        std::shared_ptr<UIImage> image1 = UIManager::CreateImage({10, 20}, {100, 100}, uiTestTexture);
+        std::shared_ptr<UIImage> image2 = UIManager::CreateImage({10, 100}, {100, 100}, uiTestTexture);
+
+        image1->Color = Vector4(1, 0.5, 0.5, 0.5);
+        image2->Color = Vector4(0.5, 1, 0.5, 0.5);
 
         m_Initialized = true;
     }

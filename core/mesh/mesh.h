@@ -31,7 +31,8 @@ public:
         return m_Bounds;
     }
 
-    static const std::shared_ptr<Mesh> &GetFullscreenMesh();
+    static const std::shared_ptr<Mesh>& GetFullscreenMesh();
+    static const std::shared_ptr<Mesh>& GetQuadMesh();
 
     Mesh(const Mesh &) = delete;
     Mesh(Mesh &&)      = delete;

@@ -103,7 +103,7 @@ Mesh::Mesh(const std::vector<Vector3>& vertices,
     m_GraphicsBackendGeometry = MeshLocal::CreateGeometry(m_VertexAttributes, vertexData.data(), vertexData.size(), indexes.data(), indexes.size(), name);
 }
 
-const std::shared_ptr<Mesh> &Mesh::GetFullscreenMesh()
+const std::shared_ptr<Mesh>& Mesh::GetFullscreenMesh()
 {
     static std::shared_ptr<Mesh> fullscreenMesh = nullptr;
     if (!fullscreenMesh)
@@ -116,6 +116,21 @@ const std::shared_ptr<Mesh> &Mesh::GetFullscreenMesh()
         fullscreenMesh = std::make_shared<Mesh>(vertices, normals, indexes, uvs, tangents, "FullscreenMesh");
     }
 
-
     return fullscreenMesh;
+}
+
+const std::shared_ptr<Mesh>& Mesh::GetQuadMesh()
+{
+    static std::shared_ptr<Mesh> quadMesh = nullptr;
+    if (!quadMesh)
+    {
+        auto vertices  = std::vector<Vector3> {{0, 0, 0.5f}, {1, 0, 0.5f}, {1, 1, 0.5f}, {0, 1, 0.5f}};
+        auto normals   = std::vector<Vector3> {};
+        auto indexes   = std::vector<int> {0, 2, 1, 0, 3, 2};
+        auto uvs       = std::vector<Vector2> {{0, 1}, {1, 1}, {1, 0}, {0, 0}};
+        auto tangents  = std::vector<Vector3> {};
+        quadMesh       = std::make_shared<Mesh>(vertices, normals, indexes, uvs, tangents, "QuadMesh");
+    }
+
+    return quadMesh;
 }

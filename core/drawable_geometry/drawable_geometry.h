@@ -2,6 +2,7 @@
 #define RENDER_ENGINE_DRAWABLE_GEOMETRY
 
 #include "enums/primitive_type.h"
+#include "enums/indices_data_type.h"
 #include "types/graphics_backend_geometry.h"
 #include "types/graphics_backend_buffer.h"
 #include "drawable_geometry/vertex_attributes/vertex_attributes.h"
@@ -14,6 +15,11 @@ public:
     inline PrimitiveType GetPrimitiveType() const
     {
         return m_PrimitiveType;
+    }
+
+    inline IndicesDataType GetIndicesDataType() const
+    {
+        return m_IndicesDataType;
     }
 
     inline bool HasIndexes() const
@@ -44,6 +50,7 @@ protected:
 
 private:
     PrimitiveType m_PrimitiveType;
+    IndicesDataType m_IndicesDataType;
     int m_ElementsCount;
     bool m_HasIndices;
 };

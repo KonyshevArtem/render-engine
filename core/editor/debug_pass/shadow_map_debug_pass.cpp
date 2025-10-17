@@ -8,7 +8,6 @@
 #include "types/graphics_backend_buffer_info.h"
 #include "graphics/context.h"
 #include "types/graphics_backend_sampler_info.h"
-#include "enums/indices_data_type.h"
 
 bool ShadowMapDebugPass::DrawShadowMapOverlay = false;
 bool ShadowMapDebugPass::DrawShadowCascades = false;
@@ -42,8 +41,8 @@ void ShadowMapDebugPass::DrawCascades(const Context& ctx)
         buffer->SetData(&data, 0, sizeof(data));
         GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
         GraphicsBackend::Current()->BindTextureSampler(m_DepthMap->GetBackendTexture(), m_DepthMap->GetBackendSampler(), 0);
-        GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_FullscreenMesh->GetVertexAttributes(), m_FullscreenMesh->GetPrimitiveType()));
-        GraphicsBackend::Current()->DrawElements(m_FullscreenMesh->GetGraphicsBackendGeometry(), m_FullscreenMesh->GetPrimitiveType(), m_FullscreenMesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
+        GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_FullscreenMesh));
+        GraphicsBackend::Current()->DrawElements(m_FullscreenMesh->GetGraphicsBackendGeometry(), m_FullscreenMesh->GetPrimitiveType(), m_FullscreenMesh->GetElementsCount(), m_FullscreenMesh->GetIndicesDataType());
         GraphicsBackend::Current()->EndRenderPass();
     }
 }
@@ -82,8 +81,8 @@ void ShadowMapDebugPass::DrawOverlay(const Context& ctx)
         buffer->SetData(&data, 0, sizeof(data));
         GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
         GraphicsBackend::Current()->BindSampler(sampler, 0);
-        GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_FullscreenMesh->GetVertexAttributes(), m_FullscreenMesh->GetPrimitiveType()));
-        GraphicsBackend::Current()->DrawElements(m_FullscreenMesh->GetGraphicsBackendGeometry(), m_FullscreenMesh->GetPrimitiveType(), m_FullscreenMesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
+        GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_FullscreenMesh));
+        GraphicsBackend::Current()->DrawElements(m_FullscreenMesh->GetGraphicsBackendGeometry(), m_FullscreenMesh->GetPrimitiveType(), m_FullscreenMesh->GetElementsCount(), m_FullscreenMesh->GetIndicesDataType());
         GraphicsBackend::Current()->EndRenderPass();
     }
 }

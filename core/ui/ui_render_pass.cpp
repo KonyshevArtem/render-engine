@@ -7,7 +7,6 @@
 #include "graphics/graphics.h"
 #include "graphics_backend_api.h"
 #include "texture_2d/texture_2d.h"
-#include "enums/indices_data_type.h"
 #include "mesh/mesh.h"
 
 UIRenderPass::UIRenderPass(int priority) :
@@ -44,8 +43,8 @@ void UIRenderPass::Execute(const Context& ctx)
             GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
             GraphicsBackend::Current()->BindTextureSampler(image->Image->GetBackendTexture(), image->Image->GetBackendSampler(), 0);
 
-            GraphicsBackend::Current()->UseProgram(m_UIShader->GetProgram(mesh->GetVertexAttributes(), mesh->GetPrimitiveType()));
-            GraphicsBackend::Current()->DrawElements(mesh->GetGraphicsBackendGeometry(), mesh->GetPrimitiveType(), mesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
+            GraphicsBackend::Current()->UseProgram(m_UIShader->GetProgram(mesh));
+            GraphicsBackend::Current()->DrawElements(mesh->GetGraphicsBackendGeometry(), mesh->GetPrimitiveType(), mesh->GetElementsCount(), mesh->GetIndicesDataType());
         }
     }
 

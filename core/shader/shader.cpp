@@ -9,6 +9,7 @@
 #include "enums/framebuffer_attachment.h"
 #include "hash.h"
 #include "editor/profiler/profiler.h"
+#include "drawable_geometry/drawable_geometry.h"
 
 #include <vector>
 
@@ -71,6 +72,11 @@ Shader::~Shader()
     {
         GraphicsBackend::Current()->DeleteShader(shader);
     }
+}
+
+const GraphicsBackendProgram& Shader::GetProgram(const std::shared_ptr<DrawableGeometry>& geometry)
+{
+    return GetProgram(geometry->GetVertexAttributes(), geometry->GetPrimitiveType());
 }
 
 const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)

@@ -8,7 +8,6 @@
 #include "graphics_buffer/ring_buffer.h"
 #include "texture/texture.h"
 #include "drawable_geometry/drawable_geometry.h"
-#include "enums/indices_data_type.h"
 #include "global_constants.h"
 
 bool RenderQueue::EnableFrustumCulling = true;
@@ -197,6 +196,7 @@ void RenderQueue::Draw() const
     {
         const GraphicsBackendGeometry& geom = drawCall.Geometry->GetGraphicsBackendGeometry();
         const PrimitiveType primitiveType = drawCall.Geometry->GetPrimitiveType();
+        const IndicesDataType indicesDataType = drawCall.Geometry->GetIndicesDataType();
         const int elementsCount = drawCall.Geometry->GetElementsCount();
         const bool hasIndices = drawCall.Geometry->HasIndexes();
 
@@ -207,14 +207,14 @@ void RenderQueue::Draw() const
         {
             const int instanceCount = drawCall.ModelMatrices.size();
             if (hasIndices)
-                GraphicsBackend::Current()->DrawElementsInstanced(geom, primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT, instanceCount);
+                GraphicsBackend::Current()->DrawElementsInstanced(geom, primitiveType, elementsCount, indicesDataType, instanceCount);
             else
                 GraphicsBackend::Current()->DrawArraysInstanced(geom, primitiveType, 0, elementsCount, instanceCount);
         }
         else
         {
             if (hasIndices)
-                GraphicsBackend::Current()->DrawElements(geom, primitiveType, elementsCount, IndicesDataType::UNSIGNED_INT);
+                GraphicsBackend::Current()->DrawElements(geom, primitiveType, elementsCount, indicesDataType);
             else
                 GraphicsBackend::Current()->DrawArrays(geom, primitiveType, 0, elementsCount);
         }

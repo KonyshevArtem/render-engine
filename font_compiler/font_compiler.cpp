@@ -2,6 +2,7 @@
 
 #include "../core/texture/texture_header.h"
 #include "cuttlefish/Image.h"
+#include "debug.h"
 
 #include <iostream>
 #include <fstream>
@@ -91,7 +92,6 @@ void ReadPagesBlock(const uint8_t* data, uint16_t pageCount, std::vector<const c
         pageNames.push_back(pageName);
 
         offset += strlen(pageName);
-        std::cout << pageName << std::endl;
     }
 }
 
@@ -127,7 +127,7 @@ void CompileFont(const std::filesystem::path& path, const std::filesystem::path&
     std::ifstream file(path, std::ios::binary);
     if (!file)
     {
-        std::cout << "No input file: " << path << std::endl;
+        Debug::LogErrorFormat("No input file: {}", path.string());
         return;
     }
 
@@ -136,7 +136,7 @@ void CompileFont(const std::filesystem::path& path, const std::filesystem::path&
     const uint32_t version = static_cast<uint32_t>(buffer[3]);
     if (buffer[0] != 'B' || buffer[1] != 'M' || buffer[2] != 'F' || version != 3)
     {
-        std::cout << "Incorrect BMFont file identifier or version: " << path << std::endl;
+        Debug::LogErrorFormat("Incorrect BMFont file identifier or version: {}", path.string());
         return;
     }
 
@@ -183,7 +183,7 @@ void CompileFont(const std::filesystem::path& path, const std::filesystem::path&
         std::string pagePath = (path.parent_path() / pageNames[i]).string();
         if (!pageImages[i]->load(pagePath.c_str(), cuttlefish::ColorSpace::sRGB))
         {
-            std::cout << "Cannot load page image: " << pagePath << std::endl;
+            Debug::LogErrorFormat("Cannot load page image: {}", pagePath);
             return;
         }
     }
@@ -219,6 +219,8 @@ void CompileFont(const std::filesystem::path& path, const std::filesystem::path&
     }
 
     fout.close();
+
+    Debug::LogInfoFormat("Font compiled: {}", path.string());
 }
 
 int main(int argc, char** argv)
@@ -226,9 +228,9 @@ int main(int argc, char** argv)
     Arguments::Init(argv, argc);
 
     if (!Arguments::Contains("-input"))
-        std::cout << "No -input argument" << std::endl;
+        Debug::LogError("No -input argument");
     if (!Arguments::Contains("-output"))
-        std::cout << "No -output argument" << std::endl;
+        Debug::LogError("No -output argument");
 
     std::filesystem::path inputPath = Arguments::Get("-input");
     std::filesystem::path outputPath = Arguments::Get("-output");

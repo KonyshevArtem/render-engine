@@ -1,5 +1,6 @@
 #include "resources.h"
 #include "texture_2d/texture_2d.h"
+#include "texture_2d_array/texture_2d_array.h"
 #include "cubemap/cubemap.h"
 #include "editor/profiler/profiler.h"
 #include "texture/texture_binary_reader.h"
@@ -7,6 +8,8 @@
 #include "material/material_parser.h"
 #include "mesh/mesh.h"
 #include "mesh/mesh_binary_reader.h"
+#include "font/font.h"
+#include "font/font_binary_reader.h"
 #include "file_system/file_system.h"
 #include "resource.h"
 #include "debug.h"
@@ -109,6 +112,29 @@ std::shared_ptr<Mesh> Resources::Load(const std::filesystem::path& path, bool as
     return mesh;
 }
 
+template<>
+std::shared_ptr<Font> Resources::Load(const std::filesystem::path &path, bool asyncSubresourceLoads)
+{
+    Profiler::Marker _("Resources::Load<Font>", path.string());
+
+    std::shared_ptr<Font> font;
+    if (TryGetFromCache(path, font))
+        return font;
+
+    FontBinaryReader reader;
+    if (!reader.ReadFont(path))
+        return nullptr;
+
+    const TextureHeader& header = reader.PagesHeader;
+    std::shared_ptr<Texture2DArray> pagesTexture = Texture2DArray::Create(header.Width, header.Height, header.Depth, header.TextureFormat, header.IsLinear, path.string());
+    UploadPixels(*pagesTexture, reader);
+
+    font = std::make_shared<Font>(reader.Common, reader.Chars, reader.KerningPairs, pagesTexture);
+    AddToCache(path, font);
+
+    return font;
+}
+
 void Resources::UploadPixels(Texture& texture, int facesCount, int mipCount, TextureBinaryReader& reader)
 {
     for (int face = 0; face < facesCount; ++face)
@@ -119,6 +145,12 @@ void Resources::UploadPixels(Texture& texture, int facesCount, int mipCount, Tex
             texture.UploadPixels(pixels.data(), pixels.size(), 0, mip, static_cast<CubemapFace>(face));
         }
     }
+}
+
+void Resources::UploadPixels(Texture& texture, FontBinaryReader& reader)
+{
+    for (int i = 0; i < reader.Common.Pages; ++i)
+        texture.UploadPixels(reader.PageBytes[i].data(), reader.PageBytes[i].size_bytes(), i, 0);
 }
 
 void Resources::AddToCache(const std::filesystem::path& path, std::shared_ptr<Resource> resource)

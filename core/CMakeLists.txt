@@ -137,7 +137,12 @@ add_library(
 	ui/ui_element.cpp
 	ui/ui_element.h
 	ui/ui_render_pass.cpp
-	ui/ui_render_pass.h)
+	ui/ui_render_pass.h
+	font/font.cpp
+	font/font.h
+	font/font_data.h
+	font/font_binary_reader.cpp
+	font/font_binary_reader.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)

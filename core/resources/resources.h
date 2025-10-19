@@ -14,6 +14,7 @@
 class Resource;
 class Texture;
 class TextureBinaryReader;
+class FontBinaryReader;
 
 class Resources
 {
@@ -77,6 +78,7 @@ private:
     };
 
     static void UploadPixels(Texture& texture, int facesCount, int mipCount, TextureBinaryReader& reader);
+    static void UploadPixels(Texture& texture, FontBinaryReader& reader);
 
     static std::unordered_map<std::filesystem::path, std::shared_ptr<Resource>> s_LoadedResources;
     static std::unordered_map<std::filesystem::path, AsyncLoadRequest> s_AsyncLoadRequests;

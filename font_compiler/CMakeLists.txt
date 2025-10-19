@@ -8,6 +8,7 @@ if (${RENDER_ENGINE_BUILD_TOOLS})
     add_executable(
         FontCompiler
         font_compiler.cpp
+        ../core/font/font_data.h
         ../core/texture/texture_header.h
     )
     target_link_libraries(FontCompiler GraphicsBackend Arguments Cuttlefish::lib)

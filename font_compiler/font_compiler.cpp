@@ -1,13 +1,13 @@
 #include "arguments.h"
 
 #include "../core/texture/texture_header.h"
+#include "../core/font/font_data.h"
 #include "cuttlefish/Image.h"
+#include "cuttlefish/Texture.h"
 #include "debug.h"
 
-#include <iostream>
 #include <fstream>
 #include <filesystem>
-#include <cstdint>
 
 enum BlockType : uint8_t
 {
@@ -16,43 +16,6 @@ enum BlockType : uint8_t
     PAGES,
     CHARS,
     KERNING_PAIRS
-};
-
-struct CommonBlock
-{
-    uint16_t LineHeight;
-    uint16_t Base;
-    uint16_t ScaleW;
-    uint16_t ScaleH;
-    uint16_t Pages;
-    uint8_t BitField;
-    uint8_t AlphaChannel;
-    uint8_t RedChannel;
-    uint8_t GreenChannel;
-    uint8_t BlueChannel;
-    uint16_t CharsCount;
-    uint16_t KerningPairsCount;
-};
-
-struct Char
-{
-    uint32_t Id;
-    uint16_t X;
-    uint16_t Y;
-    uint16_t Width;
-    uint16_t Height;
-    int16_t XOffset;
-    int16_t YOffset;
-    int16_t XAdvance;
-    uint8_t Page;
-    uint8_t Channel;
-};
-
-struct KerningPair
-{
-    uint32_t First;
-    uint32_t Second;
-    int16_t Amount;
 };
 
 template<typename T>
@@ -122,6 +85,32 @@ void ReadKerningBlock(const uint8_t* data, uint32_t blockSize, std::vector<Kerni
     }
 }
 
+TextureInternalFormat GetRenderEngineFormat(cuttlefish::Image::Format format)
+{
+    switch (format)
+    {
+        case cuttlefish::Image::Format::Gray8:
+            return TextureInternalFormat::R8;
+        case cuttlefish::Image::Format::RGBA8:
+            return TextureInternalFormat::RGBA8;
+        default:
+            return TextureInternalFormat::INVALID;
+    }
+}
+
+cuttlefish::Texture::Format GetCuttlefishTextureFormat(cuttlefish::Image::Format format)
+{
+    switch (format)
+    {
+        case cuttlefish::Image::Format::Gray8:
+            return cuttlefish::Texture::Format::R8;
+        case cuttlefish::Image::Format::RGBA8:
+            return cuttlefish::Texture::Format::R8G8B8A8;
+        default:
+            return cuttlefish::Texture::Format::Unknown;
+    }
+}
+
 void CompileFont(const std::filesystem::path& path, const std::filesystem::path& outputPath)
 {
     std::ifstream file(path, std::ios::binary);
@@ -181,11 +170,25 @@ void CompileFont(const std::filesystem::path& path, const std::filesystem::path&
         pageImages[i] = new cuttlefish::Image();
 
         std::string pagePath = (path.parent_path() / pageNames[i]).string();
-        if (!pageImages[i]->load(pagePath.c_str(), cuttlefish::ColorSpace::sRGB))
+        if (!pageImages[i]->load(pagePath.c_str(), cuttlefish::ColorSpace::Linear))
         {
             Debug::LogErrorFormat("Cannot load page image: {}", pagePath);
             return;
         }
+    }
+
+    TextureHeader header{};
+    header.Depth = commonBlock.Pages;
+    header.Width = commonBlock.ScaleW;
+    header.Height = commonBlock.ScaleH;
+    header.MipCount = 1;
+    header.TextureFormat = GetRenderEngineFormat(pageImages[0]->format());
+    header.IsLinear = true;
+
+    if (header.TextureFormat == TextureInternalFormat::INVALID)
+    {
+        Debug::LogError("Invalid image format");
+        return;
     }
 
     std::filesystem::create_directories(outputPath.parent_path());
@@ -196,26 +199,23 @@ void CompileFont(const std::filesystem::path& path, const std::filesystem::path&
     fout.write(reinterpret_cast<char*>(&chars[0]), chars.size() * sizeof(Char));
     if (!kerningPairs.empty())
         fout.write(reinterpret_cast<char*>(&kerningPairs[0]), kerningPairs.size() * sizeof(KerningPair));
+    fout.write(reinterpret_cast<char*>(&header), sizeof(TextureHeader));
 
     for (int i = 0; i < pageNames.size(); ++i)
     {
         cuttlefish::Image* image = pageImages[i];
+        cuttlefish::Texture* texture = new cuttlefish::Texture(cuttlefish::Texture::Dimension::Dim2D, header.Width, header.Height, 0, 1, image->colorSpace());
+        texture->setImage(*image);
 
-        std::vector<uint8_t> imageData;
-        image->save(imageData, "tga");
+        if (!texture->convert(GetCuttlefishTextureFormat(image->format()), cuttlefish::Texture::Type::UNorm))
+        {
+            Debug::LogError("Cannot load page image");
+            return;
+        }
 
-        TextureHeader header{};
-        header.Depth = 1;
-        header.Width = image->width();
-        header.Height = image->height();
-        header.MipCount = 1;
-        header.TextureFormat = TextureInternalFormat::RGBA8;
-        header.IsLinear = true;
-
-        uint32_t imageSize = imageData.size();
-        fout.write(reinterpret_cast<char*>(&header), sizeof(TextureHeader));
+        uint32_t imageSize = texture->dataSize();
         fout.write(reinterpret_cast<char*>(&imageSize), sizeof(uint32_t));
-        fout.write(reinterpret_cast<char*>(&imageData[0]), imageSize);
+        fout.write(reinterpret_cast<const char*>(texture->data()), imageSize);
     }
 
     fout.close();

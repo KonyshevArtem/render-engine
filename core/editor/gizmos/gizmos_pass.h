@@ -30,7 +30,13 @@ public:
 
 private:
     GraphicsBackendFence m_Fence;
-    RenderQueue m_GizmosQueue;
+    RenderQueue m_3DGizmosQueue;
+    RenderQueue m_2DGizmosQueue;
+    Matrix4x4 m_3DViewMatrix;
+    Matrix4x4 m_3DProjectionMatrix;
+    Matrix4x4 m_2DProjectionMatrix;
+    float m_3DNearPlane;
+    float m_3DFarPlane;
 };
 
 #endif

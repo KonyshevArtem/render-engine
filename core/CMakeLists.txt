@@ -134,6 +134,8 @@ add_library(
 	ui/ui_manager.h
 	ui/ui_image.cpp
 	ui/ui_image.h
+	ui/ui_text.cpp
+	ui/ui_text.h
 	ui/ui_element.cpp
 	ui/ui_element.h
 	ui/ui_render_pass.cpp

@@ -126,7 +126,7 @@ std::shared_ptr<Font> Resources::Load(const std::filesystem::path &path, bool as
         return nullptr;
 
     const TextureHeader& header = reader.PagesHeader;
-    std::shared_ptr<Texture2DArray> pagesTexture = Texture2DArray::Create(header.Width, header.Height, header.Depth, header.TextureFormat, header.IsLinear, path.string());
+    std::shared_ptr<Texture2DArray> pagesTexture = Texture2DArray::Create(header.Width, header.Height, header.Depth, header.TextureFormat, header.IsLinear, false, path.string());
     UploadPixels(*pagesTexture, reader);
 
     font = std::make_shared<Font>(reader.Common, reader.Chars, reader.KerningPairs, pagesTexture);

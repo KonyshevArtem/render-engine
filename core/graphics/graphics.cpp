@@ -190,6 +190,7 @@ namespace Graphics
             s_ShadowCasterPass->Prepare(ctx);
             s_ForwardRenderPass->Prepare(ctx, colorTargetDescriptor, depthTargetDescriptor);
             s_FinalBlitPass->Prepare(cameraColorTarget);
+            s_UIRenderPass->Prepare(ctx);
 
             renderPasses.push_back(s_ShadowCasterPass);
             renderPasses.push_back(s_ForwardRenderPass);

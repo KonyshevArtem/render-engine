@@ -12,10 +12,12 @@ public:
     explicit UIRenderPass(int priority);
     ~UIRenderPass() override = default;
 
+    void Prepare(const Context& ctx);
     void Execute(const Context& ctx) override;
 
 private:
-    std::shared_ptr<Shader> m_UIShader;
+    std::shared_ptr<Shader> m_ImageShader;
+    std::shared_ptr<Shader> m_TextShader;
     std::shared_ptr<RingBuffer> m_UIDataBuffer;
 };
 

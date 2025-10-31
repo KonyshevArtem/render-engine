@@ -39,9 +39,9 @@ namespace ShadowCasterPassLocal
 
 ShadowCasterPass::ShadowCasterPass(int priority) :
     RenderPass(priority),
-    m_SpotLightShadowMapArray(Texture2DArray::Create(ShadowCasterPassLocal::k_SpotLightShadowMapSize, ShadowCasterPassLocal::k_SpotLightShadowMapSize, GlobalConstants::MaxSpotLightSources, TextureInternalFormat::DEPTH_32, true, "SpotLightShadowMap")),
-    m_DirectionLightShadowMap(Texture2DArray::Create(ShadowCasterPassLocal::k_DirLightShadowMapSize, ShadowCasterPassLocal::k_DirLightShadowMapSize, GlobalConstants::ShadowCascadeCount, TextureInternalFormat::DEPTH_32, true, "DirectionalShadowMap")),
-    m_PointLightShadowMap(Texture2DArray::Create(ShadowCasterPassLocal::k_PointLightShadowMapSize, ShadowCasterPassLocal::k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, "PointLightShadowMap")),
+    m_SpotLightShadowMapArray(Texture2DArray::Create(ShadowCasterPassLocal::k_SpotLightShadowMapSize, ShadowCasterPassLocal::k_SpotLightShadowMapSize, GlobalConstants::MaxSpotLightSources, TextureInternalFormat::DEPTH_32, true, true, "SpotLightShadowMap")),
+    m_DirectionLightShadowMap(Texture2DArray::Create(ShadowCasterPassLocal::k_DirLightShadowMapSize, ShadowCasterPassLocal::k_DirLightShadowMapSize, GlobalConstants::ShadowCascadeCount, TextureInternalFormat::DEPTH_32, true, true, "DirectionalShadowMap")),
+    m_PointLightShadowMap(Texture2DArray::Create(ShadowCasterPassLocal::k_PointLightShadowMapSize, ShadowCasterPassLocal::k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, true, "PointLightShadowMap")),
     m_ShadowsConstantBuffer(std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData"))
 {
     m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);

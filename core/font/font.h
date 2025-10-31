@@ -8,23 +8,32 @@
 #include <memory>
 #include <span>
 
-class Texture2DArray;
+class Texture;
 
 class Font : public Resource
 {
 public:
-    Font(const CommonBlock& commonBlock, const std::span<Char>& chars, const std::span<KerningPair>& kerningPairs, const std::shared_ptr<Texture2DArray>& atlas);
+    Font(const CommonBlock& commonBlock, const std::span<Char>& chars, const std::span<KerningPair>& kerningPairs, const std::shared_ptr<Texture>& atlas);
     ~Font() = default;
 
-    inline std::shared_ptr<Texture2DArray> GetAtlas() const
+    inline const CommonBlock& GetCommonBlock() const
+    {
+        return m_Common;
+    }
+
+    inline std::shared_ptr<Texture> GetAtlas() const
     {
         return m_Atlas;
     }
 
+    const Char& GetChar(uint32_t ch) const;
+    int16_t GetKerning(uint32_t firstChar, uint32_t secondChar) const;
+
 private:
+    CommonBlock m_Common;
     std::unordered_map<uint32_t, Char> m_Chars;
     std::unordered_map<uint64_t, int16_t> m_KerningPairs;
-    std::shared_ptr<Texture2DArray> m_Atlas;
+    std::shared_ptr<Texture> m_Atlas;
 };
 
 #endif //RENDER_ENGINE_FONT_H

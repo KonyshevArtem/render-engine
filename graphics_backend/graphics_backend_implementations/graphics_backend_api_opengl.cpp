@@ -452,7 +452,7 @@ void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &text
         const GLenum dataType = OpenGLHelpers::ToTextureDataType(texture.Format);
         if (isTexture3D)
         {
-            glTexSubImage3D(target, level, 0, 0, 0, width, height, depth, pixelFormat, dataType, pixelsData);
+            glTexSubImage3D(target, level, 0, 0, 0, width, height, depth + 1, pixelFormat, dataType, pixelsData);
         }
         else
         {

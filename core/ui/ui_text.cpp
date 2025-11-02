@@ -36,10 +36,18 @@ void UIText::PrepareText()
     const CommonBlock& common = m_Font->GetCommonBlock();
 
     uint32_t xPosition = 0;
+    int32_t yPosition = Size.y;
     for (int i = 0; i < m_Text.size(); ++i)
     {
         char c = m_Text[i];
         const Char& ch = m_Font->GetChar(c);
+
+        if (c == '\n' || c == '\r')
+        {
+            xPosition = 0;
+            yPosition -= common.LineHeight;
+            continue;
+        }
 
         if (!isspace(c))
         {
@@ -49,7 +57,7 @@ void UIText::PrepareText()
             Vector2 minUv = Vector2(static_cast<float>(ch.X) / common.ScaleW, static_cast<float>(ch.Y) / common.ScaleH);
             Vector2 maxUv = Vector2(minUv.x + charWidth, minUv.y + charHeight);
 
-            Vector3 minPos = Vector3(xPosition, (Size.y - ch.Height - ch.YOffset), 0.5f);
+            Vector3 minPos = Vector3(xPosition, (yPosition - ch.Height - ch.YOffset), 0.5f);
             Vector3 maxPos = Vector3(minPos.x + ch.Width, minPos.y + ch.Height, 0.5f);
 
             const int32_t baseVertexIndex = positions.size();

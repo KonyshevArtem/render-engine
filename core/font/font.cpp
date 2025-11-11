@@ -29,7 +29,6 @@ std::vector<Char> Font::ShapeText(const std::span<const char> text)
     for (const Trex::ShapedGlyph& glyph : glyphs)
     {
         Char ch{};
-        ch.Id = glyph.info.codepoint;
         ch.XOffset = glyph.xOffset + glyph.info.bearingX;
         ch.YOffset = glyph.yOffset - glyph.info.bearingY + m_TrexAtlas->GetFont()->GetMetrics().ascender;
         ch.XAdvance = glyph.xAdvance;

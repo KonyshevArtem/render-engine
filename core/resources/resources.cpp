@@ -9,7 +9,6 @@
 #include "mesh/mesh.h"
 #include "mesh/mesh_binary_reader.h"
 #include "font/font.h"
-#include "font/font_binary_reader.h"
 #include "file_system/file_system.h"
 #include "resource.h"
 #include "debug.h"
@@ -140,12 +139,6 @@ void Resources::UploadPixels(Texture& texture, int facesCount, int mipCount, Tex
             texture.UploadPixels(pixels.data(), pixels.size(), 0, mip, static_cast<CubemapFace>(face));
         }
     }
-}
-
-void Resources::UploadPixels(Texture& texture, FontBinaryReader& reader)
-{
-    for (int i = 0; i < reader.Common.Pages; ++i)
-        texture.UploadPixels(reader.PageBytes[i].data(), reader.PageBytes[i].size_bytes(), i, 0);
 }
 
 void Resources::AddToCache(const std::filesystem::path& path, std::shared_ptr<Resource> resource)

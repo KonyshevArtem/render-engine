@@ -122,6 +122,7 @@ Compile editor/shadowMapOverlay
 Compile editor/shadowCascadeVisualize
 
 Compile ui/image
+Compile ui/text
 
 echo "Finished compiling shaders for ${PLATFORM} ${BACKENDS}";
 if [ -z "$1" ]; then

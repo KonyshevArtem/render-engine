@@ -19,3 +19,5 @@ add_subdirectory(Cuttlefish)
 
 set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
 add_subdirectory(json)
+
+add_subdirectory(trex)

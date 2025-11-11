@@ -14,3 +14,6 @@
 [submodule "external/DirectX-Headers"]
 	path = external/DirectX-Headers
 	url = https://github.com/microsoft/DirectX-Headers
+[submodule "external/trex"]
+	path = external/trex
+	url = https://github.com/KyrietS/trex

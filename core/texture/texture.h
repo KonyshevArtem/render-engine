@@ -60,7 +60,7 @@ public:
 protected:
     Texture(TextureType textureType, TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, bool isLinear, bool isRenderTarget, const std::string& name);
 
-    void UploadPixels(void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace = CubemapFace::POSITIVE_X) const;
+    void UploadPixels(const void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace = CubemapFace::POSITIVE_X) const;
 
 private:
     void RecreateSampler(bool deleteOld);
@@ -82,6 +82,7 @@ private:
     bool m_DoubleBuffered;
 
     friend class Resources;
+    friend class Font;
 };
 
 #endif //RENDER_ENGINE_TEXTURE_H

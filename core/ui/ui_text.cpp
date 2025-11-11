@@ -37,50 +37,55 @@ void UIText::PrepareText()
 
     uint32_t xPosition = 0;
     int32_t yPosition = Size.y;
-    for (int i = 0; i < m_Text.size(); ++i)
+
+    for (uint32_t i = 0, begin = 0, length = 0; i < m_Text.size(); ++i)
     {
         char c = m_Text[i];
-        const Char& ch = m_Font->GetChar(c);
 
-        if (c == '\n' || c == '\r')
+        if (c == '\n' || c == '\r' || i == m_Text.size() - 1)
         {
+            std::vector<Char> chars = m_Font->ShapeText(std::span<const char>(&m_Text[begin], length));
+
+            for (const Char& ch : chars)
+            {
+                float charWidth  = static_cast<float>(ch.Width) / common.ScaleW;
+                float charHeight = static_cast<float>(ch.Height) / common.ScaleH;
+
+                Vector2 minUv = Vector2(static_cast<float>(ch.X) / common.ScaleW, static_cast<float>(ch.Y) / common.ScaleH);
+                Vector2 maxUv = Vector2(minUv.x + charWidth, minUv.y + charHeight);
+
+                Vector3 minPos = Vector3(xPosition + ch.XOffset, (yPosition - ch.Height - ch.YOffset), 0.5f);
+                Vector3 maxPos = Vector3(minPos.x + ch.Width, minPos.y + ch.Height, 0.5f);
+
+                const int32_t baseVertexIndex = positions.size();
+                positions.push_back(minPos);
+                positions.push_back({maxPos.x, minPos.y, 0.5f});
+                positions.push_back(maxPos);
+                positions.push_back({minPos.x, maxPos.y, 0.5f});
+
+                indices.push_back(0 + baseVertexIndex);
+                indices.push_back(2 + baseVertexIndex);
+                indices.push_back(1 + baseVertexIndex);
+                indices.push_back(0 + baseVertexIndex);
+                indices.push_back(3 + baseVertexIndex);
+                indices.push_back(2 + baseVertexIndex);
+
+                uvs.push_back({minUv.x, maxUv.y});
+                uvs.push_back(maxUv);
+                uvs.push_back({maxUv.x, minUv.y});
+                uvs.push_back(minUv);
+
+                xPosition += ch.XAdvance;
+            }
+
             xPosition = 0;
             yPosition -= common.LineHeight;
+            begin = i + 1;
+            length = 0;
             continue;
         }
 
-        if (!isspace(c))
-        {
-            float charWidth  = static_cast<float>(ch.Width) / common.ScaleW;
-            float charHeight = static_cast<float>(ch.Height) / common.ScaleH;
-
-            Vector2 minUv = Vector2(static_cast<float>(ch.X) / common.ScaleW, static_cast<float>(ch.Y) / common.ScaleH);
-            Vector2 maxUv = Vector2(minUv.x + charWidth, minUv.y + charHeight);
-
-            Vector3 minPos = Vector3(xPosition, (yPosition - ch.Height - ch.YOffset), 0.5f);
-            Vector3 maxPos = Vector3(minPos.x + ch.Width, minPos.y + ch.Height, 0.5f);
-
-            const int32_t baseVertexIndex = positions.size();
-            positions.push_back(minPos);
-            positions.push_back({maxPos.x, minPos.y, 0.5f});
-            positions.push_back(maxPos);
-            positions.push_back({minPos.x, maxPos.y, 0.5f});
-
-            indices.push_back(0 + baseVertexIndex);
-            indices.push_back(2 + baseVertexIndex);
-            indices.push_back(1 + baseVertexIndex);
-            indices.push_back(0 + baseVertexIndex);
-            indices.push_back(3 + baseVertexIndex);
-            indices.push_back(2 + baseVertexIndex);
-
-            uvs.push_back({minUv.x, maxUv.y});
-            uvs.push_back(maxUv);
-            uvs.push_back({maxUv.x, minUv.y});
-            uvs.push_back(minUv);
-        }
-
-        const int16_t kerning = i < m_Text.size() - 1 ? m_Font->GetKerning(c, m_Text[i + 1]) : 0;
-        xPosition += ch.XAdvance + kerning;
+        ++length;
     }
 
     m_Mesh = std::make_shared<Mesh>(positions, std::vector<Vector3>(), indices, uvs, std::vector<Vector3>(), "TextMesh");

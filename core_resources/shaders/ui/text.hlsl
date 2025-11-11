@@ -4,8 +4,7 @@ cbuffer UIData : register(b0)
     float4 _Color;
 }
 
-Texture2DArray _FontAtlas : register(t0);
-// Texture2D _FontAtlas : register(t0);
+Texture2D _FontAtlas : register(t0);
 SamplerState sampler_Image : register(s0);
 
 struct Attributes
@@ -31,7 +30,6 @@ Varyings vertexMain(Attributes attributes)
 float4 fragmentMain(Varyings vars) : SV_Target
 {
     float4 color = _Color;
-    color.a *= _FontAtlas.Sample(sampler_Image, float3(vars.UV, 0)).r;
-//     color.a *= _FontAtlas.Sample(sampler_Image, vars.UV).r;
+    color.a *= 1 - _FontAtlas.Sample(sampler_Image, vars.UV).r;
     return color;
 }

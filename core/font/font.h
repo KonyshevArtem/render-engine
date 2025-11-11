@@ -7,13 +7,19 @@
 #include <unordered_map>
 #include <memory>
 #include <span>
+#include <string>
 
 class Texture;
+
+namespace Trex
+{
+    class Atlas;
+}
 
 class Font : public Resource
 {
 public:
-    Font(const CommonBlock& commonBlock, const std::span<Char>& chars, const std::span<KerningPair>& kerningPairs, const std::shared_ptr<Texture>& atlas);
+    Font(std::vector<uint8_t>& bytes, const std::string& fontName);
     ~Font() = default;
 
     inline const CommonBlock& GetCommonBlock() const
@@ -26,14 +32,14 @@ public:
         return m_Atlas;
     }
 
-    const Char& GetChar(uint32_t ch) const;
-    int16_t GetKerning(uint32_t firstChar, uint32_t secondChar) const;
+    std::vector<Char> ShapeText(const std::span<const char> text);
 
 private:
     CommonBlock m_Common;
-    std::unordered_map<uint32_t, Char> m_Chars;
-    std::unordered_map<uint64_t, int16_t> m_KerningPairs;
+    std::vector<uint8_t> m_FontBytes;
     std::shared_ptr<Texture> m_Atlas;
+    std::shared_ptr<Trex::Atlas> m_TrexAtlas;
+    std::string m_FontName;
 };
 
 #endif //RENDER_ENGINE_FONT_H

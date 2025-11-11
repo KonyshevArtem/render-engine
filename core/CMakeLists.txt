@@ -147,4 +147,4 @@ add_library(
 	font/font_binary_reader.h)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)
+target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex)

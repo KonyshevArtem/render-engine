@@ -17,7 +17,10 @@ public:
     UIText(const Vector2& position, const Vector2& size, const std::string& text, const std::shared_ptr<Font>& font);
 
     void SetText(const std::string& text);
-    void PrepareText();
+    void SetFontSize(uint16_t fontSize);
+
+    void PrepareFont();
+    void PrepareMesh();
 
     const std::shared_ptr<Mesh> GetMesh() const;
     const std::shared_ptr<Texture> GetFontAtlas() const;
@@ -25,6 +28,8 @@ public:
 private:
     bool m_Dirty;
     Vector2 m_PrevSize;
+    uint16_t m_FontSize;
+    uint16_t m_PrevFontSize;
     std::string m_Text;
     std::shared_ptr<Font> m_Font;
     std::shared_ptr<Mesh> m_Mesh;

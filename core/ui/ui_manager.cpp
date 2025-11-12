@@ -14,12 +14,13 @@ std::shared_ptr<UIImage> UIManager::CreateImage(const Vector2& position, const V
     return uiImage;
 }
 
-std::shared_ptr<UIText> UIManager::CreateText(const Vector2& position, const Vector2& size, const std::string& text)
+std::shared_ptr<UIText> UIManager::CreateText(const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize)
 {
     if (!s_Font)
         s_Font = Resources::Load<Font>("core_resources/fonts/Inter.ttf");
 
-    std::shared_ptr<UIText> uiImage = std::make_shared<UIText>(position, size, text, s_Font);
-    Elements.push_back(uiImage);
-    return uiImage;
+    std::shared_ptr<UIText> uiText = std::make_shared<UIText>(position, size, text, s_Font);
+    uiText->SetFontSize(fontSize);
+    Elements.push_back(uiText);
+    return uiText;
 }

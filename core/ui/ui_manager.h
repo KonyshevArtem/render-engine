@@ -17,7 +17,7 @@ class UIManager
 {
 public:
     static std::shared_ptr<UIImage> CreateImage(const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image);
-    static std::shared_ptr<UIText> CreateText(const Vector2& position, const Vector2& size, const std::string& text);
+    static std::shared_ptr<UIText> CreateText(const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize);
 
     static std::vector<std::shared_ptr<UIElement>> Elements;
 

@@ -74,7 +74,8 @@ void TestSceneUpdater::Update()
         const std::shared_ptr<Texture2D> uiTestTexture = Resources::Load<Texture2D>("core_resources/textures/ui/ui_test");
         std::shared_ptr<UIImage> image1 = UIManager::CreateImage({10, 20}, {100, 100}, uiTestTexture);
         std::shared_ptr<UIImage> image2 = UIManager::CreateImage({10, 100}, {100, 100}, uiTestTexture);
-        std::shared_ptr<UIText> text = UIManager::CreateText({10, 250}, {150, 32}, "Hello, Text!\nMultiline?");
+        std::shared_ptr<UIText> text1 = UIManager::CreateText({10, 250}, {150, 32}, "Hello, Text!\nMultiline?", 32);
+        std::shared_ptr<UIText> text2 = UIManager::CreateText({10, 275}, {150, 32}, "Smaller Text :)", 12);
 
         image1->Color = Vector4(1, 0.5, 0.5, 0.5);
         image2->Color = Vector4(0.5, 1, 0.5, 0.5);

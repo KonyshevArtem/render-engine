@@ -18,12 +18,26 @@ void UIText::SetText(const std::string& text)
     m_Text = text;
 }
 
-void UIText::PrepareText()
+void UIText::SetFontSize(uint16_t fontSize)
+{
+    m_FontSize = fontSize;
+}
+
+void UIText::PrepareFont()
+{
+    if (m_FontSize == m_PrevFontSize)
+        return;
+
+    m_Font->Prepare(m_FontSize);
+    m_PrevFontSize = m_FontSize;
+}
+
+void UIText::PrepareMesh()
 {
     if (!m_Dirty && m_PrevSize == Size)
         return;
 
-    Profiler::Marker _("UIText::PrepareText");
+    Profiler::Marker _("UIText::PrepareMesh");
 
     std::vector<int> indices;
     std::vector<Vector3> positions;
@@ -33,7 +47,7 @@ void UIText::PrepareText()
     positions.reserve(m_Text.size() * 4);
     uvs.reserve(m_Text.size() * 4);
 
-    const CommonBlock& common = m_Font->GetCommonBlock();
+    const CommonBlock& common = m_Font->GetCommonBlock(m_FontSize);
 
     uint32_t xPosition = 0;
     int32_t yPosition = Size.y;
@@ -44,7 +58,7 @@ void UIText::PrepareText()
 
         if (c == '\n' || c == '\r' || i == m_Text.size() - 1)
         {
-            std::vector<Char> chars = m_Font->ShapeText(std::span<const char>(&m_Text[begin], length));
+            std::vector<Char> chars = m_Font->ShapeText(std::span<const char>(&m_Text[begin], length), m_FontSize);
 
             for (const Char& ch : chars)
             {
@@ -101,5 +115,5 @@ const std::shared_ptr<Mesh> UIText::GetMesh() const
 
 const std::shared_ptr<Texture> UIText::GetFontAtlas() const
 {
-    return m_Font->GetAtlas();
+    return m_Font->GetAtlas(m_FontSize);
 }

@@ -22,23 +22,19 @@ public:
     Font(std::vector<uint8_t>& bytes, const std::string& fontName);
     ~Font() = default;
 
-    inline const CommonBlock& GetCommonBlock() const
-    {
-        return m_Common;
-    }
+    void Prepare(uint16_t fontSize);
 
-    inline std::shared_ptr<Texture> GetAtlas() const
-    {
-        return m_Atlas;
-    }
+    const CommonBlock& GetCommonBlock(uint16_t fontSize) const;
+    const std::shared_ptr<Texture> GetAtlas(uint16_t fontSize) const;
 
-    std::vector<Char> ShapeText(const std::span<const char> text);
+    std::vector<Char> ShapeText(const std::span<const char> text, uint16_t fontSize);
 
 private:
-    CommonBlock m_Common;
+    std::unordered_map<uint16_t, CommonBlock> m_Common;
+    std::unordered_map<uint16_t, std::shared_ptr<Texture>> m_Atlas;
+    std::unordered_map<uint16_t, std::shared_ptr<Trex::Atlas>> m_TrexAtlas;
+
     std::vector<uint8_t> m_FontBytes;
-    std::shared_ptr<Texture> m_Atlas;
-    std::shared_ptr<Trex::Atlas> m_TrexAtlas;
     std::string m_FontName;
 };
 

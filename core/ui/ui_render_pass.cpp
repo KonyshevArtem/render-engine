@@ -36,7 +36,13 @@ void UIRenderPass::Prepare(const Context& ctx)
     for (const std::shared_ptr<UIElement>& element : UIManager::Elements)
     {
         if (std::shared_ptr<UIText> text = std::dynamic_pointer_cast<UIText>(element))
-            text->PrepareText();
+            text->PrepareFont();
+    }
+
+    for (const std::shared_ptr<UIElement>& element : UIManager::Elements)
+    {
+        if (std::shared_ptr<UIText> text = std::dynamic_pointer_cast<UIText>(element))
+            text->PrepareMesh();
 
         Gizmos::DrawRect(element->Position, element->Position + element->Size);
     }

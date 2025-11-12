@@ -7,20 +7,51 @@ Font::Font(std::vector<uint8_t>& bytes, const std::string& fontName) :
     m_FontBytes(std::move(bytes)),
     m_FontName(fontName)
 {
-    m_TrexAtlas = std::make_shared<Trex::Atlas>(m_FontBytes, 32, Trex::Charset::Ascii());
-
-    const Trex::Atlas::Bitmap& bitmap = m_TrexAtlas->GetBitmap();
-    m_Atlas = Texture2D::Create(bitmap.Width(), bitmap.Height(), TextureInternalFormat::R8, true, false, m_FontName + "_Atlas");
-    m_Atlas->UploadPixels(reinterpret_cast<const void*>(bitmap.Data().data()), bitmap.Data().size(), 0, 0);
-
-    m_Common.LineHeight = m_TrexAtlas->GetFont()->GetMetrics().height;
-    m_Common.ScaleW = bitmap.Width();
-    m_Common.ScaleH = bitmap.Height();
 }
 
-std::vector<Char> Font::ShapeText(const std::span<const char> text)
+void Font::Prepare(uint16_t fontSize)
 {
-    Trex::TextShaper shaper(*m_TrexAtlas);
+    if (m_Atlas.contains(fontSize))
+        return;
+
+    std::shared_ptr<Trex::Atlas> trexAtlas = std::make_shared<Trex::Atlas>(m_FontBytes, fontSize, Trex::Charset::Ascii());
+    m_TrexAtlas[fontSize] = trexAtlas;
+
+    const Trex::Atlas::Bitmap& bitmap = trexAtlas->GetBitmap();
+    std::shared_ptr<Texture> atlas = Texture2D::Create(bitmap.Width(), bitmap.Height(), TextureInternalFormat::R8, true, false, m_FontName + "_Atlas_" + std::to_string(fontSize));
+    atlas->UploadPixels(reinterpret_cast<const void*>(bitmap.Data().data()), bitmap.Data().size(), 0, 0);
+    m_Atlas[fontSize] = atlas;
+
+    CommonBlock commonBlock;
+    commonBlock.LineHeight = trexAtlas->GetFont()->GetMetrics().height;
+    commonBlock.ScaleW = bitmap.Width();
+    commonBlock.ScaleH = bitmap.Height();
+    m_Common[fontSize] = commonBlock;
+}
+
+const CommonBlock& Font::GetCommonBlock(uint16_t fontSize) const
+{
+    static CommonBlock empty{};
+
+    auto it = m_Common.find(fontSize);
+    return it != m_Common.end() ? it->second : empty;
+}
+
+const std::shared_ptr<Texture> Font::GetAtlas(uint16_t fontSize) const
+{
+    auto it = m_Atlas.find(fontSize);
+    return it != m_Atlas.end() ? it->second : nullptr;
+}
+
+std::vector<Char> Font::ShapeText(const std::span<const char> text, uint16_t fontSize)
+{
+    auto it = m_TrexAtlas.find(fontSize);
+    if (it == m_TrexAtlas.end())
+        return std::vector<Char>();
+
+    std::shared_ptr<Trex::Atlas> trexAtlas = it->second;
+
+    Trex::TextShaper shaper(*trexAtlas);
     Trex::ShapedGlyphs glyphs = shaper.ShapeUtf8(text);
 
     std::vector<Char> chars;
@@ -30,7 +61,7 @@ std::vector<Char> Font::ShapeText(const std::span<const char> text)
     {
         Char ch{};
         ch.XOffset = glyph.xOffset + glyph.info.bearingX;
-        ch.YOffset = glyph.yOffset - glyph.info.bearingY + m_TrexAtlas->GetFont()->GetMetrics().ascender;
+        ch.YOffset = glyph.yOffset - glyph.info.bearingY + trexAtlas->GetFont()->GetMetrics().ascender;
         ch.XAdvance = glyph.xAdvance;
         ch.Width = glyph.info.width;
         ch.Height = glyph.info.height;

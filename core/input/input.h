@@ -41,11 +41,16 @@ namespace Input
     bool GetKeyDown(unsigned char key);
     bool GetKeyUp(unsigned char key);
     bool GetKey(unsigned char key);
+
     bool GetTouch(uint64_t touchId, Touch& outTouch);
+    const std::vector<Touch>& GetTouches();
+
     bool GetMouseButton(MouseButton mouseButton);
+    bool GetMouseButtonDown(MouseButton mouseButton);
+    bool GetMouseButtonUp(MouseButton mouseButton);
+
     const Vector2& GetMousePosition();
     const Vector2& GetMouseDelta();
-    const std::vector<Touch>& GetTouches();
 }; // namespace Input
 
 #endif //RENDER_ENGINE_INPUT_H

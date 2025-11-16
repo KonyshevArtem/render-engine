@@ -12,6 +12,8 @@ namespace Input
     Vector2 s_MousePosition = Vector2();
     Vector2 s_MouseDelta = Vector2();
     uint8_t s_MouseButtonBits;
+    uint8_t s_MouseButtonDownBits;
+    uint8_t s_MouseButtonUpBits;
 
     void ProcessPendingTouches()
     {
@@ -67,6 +69,9 @@ namespace Input
         s_InputsUp.clear();
         s_InputsDown.clear();
 
+        s_MouseButtonDownBits = 0;
+        s_MouseButtonUpBits = 0;
+
         for (int i = 0; i < s_Touches.size(); ++i)
         {
             if (s_Touches[i].State == TouchState::UP)
@@ -104,10 +109,12 @@ namespace Input
         if (isPressed)
         {
             s_MouseButtonBits |= mouseButtonBit;
+            s_MouseButtonDownBits |= mouseButtonBit;
         }
         else
         {
             s_MouseButtonBits &= ~mouseButtonBit;
+            s_MouseButtonUpBits |= mouseButtonBit;
         }
     }
 
@@ -153,6 +160,18 @@ namespace Input
     {
         uint8_t mouseButtonBit = 1U << static_cast<int>(mouseButton);
         return (s_MouseButtonBits & mouseButtonBit) != 0;
+    }
+
+    bool GetMouseButtonDown(MouseButton mouseButton)
+    {
+        uint8_t mouseButtonBit = 1U << static_cast<int>(mouseButton);
+        return (s_MouseButtonDownBits & mouseButtonBit) != 0;
+    }
+
+    bool GetMouseButtonUp(MouseButton mouseButton)
+    {
+        uint8_t mouseButtonBit = 1U << static_cast<int>(mouseButton);
+        return (s_MouseButtonUpBits & mouseButtonBit) != 0;
     }
 
     const Vector2 &GetMousePosition()

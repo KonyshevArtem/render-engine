@@ -15,9 +15,10 @@
 
 namespace UIRenderPass_Local
 {
-    Vector4 GetOffsetScale(Vector2 position, Vector2 size, float width, float height)
+    Vector4 GetOffsetScale(Vector2 position, Vector2 size)
     {
-        return Vector4(position.x / width, position.y / height, size.x / width, size.y / height);
+        const Vector2& referenceSize = UIManager::GetReferenceSize();
+        return Vector4(position.x / referenceSize.x, position.y / referenceSize.y, size.x / referenceSize.x, size.y / referenceSize.y);
     }
 }
 
@@ -59,8 +60,6 @@ void UIRenderPass::Execute(const Context& ctx)
         Vector4 Color;
     };
 
-    const int width = Graphics::GetScreenWidth();
-    const int height = Graphics::GetScreenHeight();
     const std::shared_ptr<Mesh> quadMesh = Mesh::GetQuadMesh();
 
     GraphicsBackend::Current()->BeginRenderPass("UI Pass");
@@ -70,7 +69,7 @@ void UIRenderPass::Execute(const Context& ctx)
         if (std::shared_ptr<UIImage> image = std::dynamic_pointer_cast<UIImage>(element))
         {
             UIData data;
-            data.OffsetScale = UIRenderPass_Local::GetOffsetScale(image->Position, image->Size, width, height);
+            data.OffsetScale = UIRenderPass_Local::GetOffsetScale(image->Position, image->Size);
             data.Color = image->Color;
             uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
 
@@ -84,7 +83,7 @@ void UIRenderPass::Execute(const Context& ctx)
         if (std::shared_ptr<UIText> text = std::dynamic_pointer_cast<UIText>(element))
         {
             UIData data;
-            data.OffsetScale = UIRenderPass_Local::GetOffsetScale(text->Position, Vector2(1, 1), width, height);
+            data.OffsetScale = UIRenderPass_Local::GetOffsetScale(text->Position, Vector2(1, 1));
             data.Color = Vector4(1, 1, 1, 1);
             uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
 

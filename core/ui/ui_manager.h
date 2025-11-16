@@ -16,6 +16,14 @@ class Font;
 class UIManager
 {
 public:
+    static void Initialize(const Vector2& referenceSize);
+    static void Update();
+
+    static inline const Vector2& GetReferenceSize()
+    {
+        return s_ReferenceSize;
+    }
+
     static std::shared_ptr<UIImage> CreateImage(const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image);
     static std::shared_ptr<UIText> CreateText(const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize);
 
@@ -23,6 +31,9 @@ public:
 
 private:
     static std::shared_ptr<Font> s_Font;
+    static std::shared_ptr<UIElement> s_Root;
+
+    static Vector2 s_ReferenceSize;
 };
 
 #endif //RENDER_ENGINE_UI_MANAGER_H

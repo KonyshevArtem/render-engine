@@ -13,6 +13,7 @@
 #include "core_components_register.h"
 #include "resources/resources.h"
 #include "worker/worker.h"
+#include "ui/ui_manager.h"
 
 GameWindow* window = nullptr;
 
@@ -22,6 +23,7 @@ void display(int width, int height)
 
     Time::Update();
     Input::Update();
+    UIManager::Update();
     Scene::Update();
 
     Graphics::Render(width, height);
@@ -45,6 +47,7 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
 
     Graphics::Init();
     Time::Init();
+    UIManager::Initialize(Vector2(1920, 1080));
 
     std::string scenePath = "core_resources/scenes/test_scene.scene";
     if (Arguments::Contains("-scene"))

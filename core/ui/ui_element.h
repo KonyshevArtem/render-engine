@@ -6,6 +6,8 @@
 #include <vector>
 #include <memory>
 
+struct UIEventInfo;
+
 class UIElement : public std::enable_shared_from_this<UIElement>
 {
 public:
@@ -23,7 +25,7 @@ public:
     }
 
 protected:
-    virtual void Stub(){};
+    virtual void HandleEvent(UIEventInfo& eventInfo){};
 
 private:
     std::vector<std::shared_ptr<UIElement>> m_Children;

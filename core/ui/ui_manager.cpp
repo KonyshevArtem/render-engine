@@ -2,23 +2,49 @@
 #include "ui_image.h"
 #include "ui_text.h"
 #include "ui_button.h"
+#include "ui_event_info.h"
 #include "font/font.h"
 #include "resources/resources.h"
 #include "graphics/graphics.h"
+#include "input/input.h"
+#include "editor/profiler/profiler.h"
 
 std::shared_ptr<Font> UIManager::s_Font;
 std::shared_ptr<UIElement> UIManager::s_Root;
+std::vector<UIElement*> UIManager::s_Elements;
 
 Vector2 UIManager::s_ReferenceSize(0, 0);
 
 void UIManager::Initialize(const Vector2& referenceSize)
 {
     s_ReferenceSize = referenceSize;
-    s_Root = std::make_shared<UIElement>(Vector2(0, 0), Vector2(0, 0));
+    s_Root = std::make_shared<UIElement>(Vector2(0, 0), s_ReferenceSize);
 }
 
 void UIManager::Update()
 {
+    Profiler::Marker _("UIManager::Update");
+
+    {
+        Profiler::Marker collectMarker("Collect Elements");
+
+        s_Elements.clear();
+        CollectElements(*s_Root);
+    }
+
+    {
+        Profiler::Marker inputMarker("Handle Input");
+
+        if (Input::GetMouseButtonDown(Input::MouseButton::LEFT))
+        {
+            Vector2 mousePos = Input::GetMousePosition();
+            mousePos.x = mousePos.x / Graphics::GetScreenWidth() * s_ReferenceSize.x;
+            mousePos.y = (1 - mousePos.y / Graphics::GetScreenHeight()) * s_ReferenceSize.y;
+
+            UIEventInfo eventInfo {mousePos, false};
+            HandleEvent(eventInfo, s_Root.get());
+        }
+    }
 }
 
 std::shared_ptr<UIImage> UIManager::CreateImage(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image)
@@ -53,20 +79,36 @@ std::shared_ptr<UIButton> UIManager::CreateButton(std::shared_ptr<UIElement> par
      return uiButton;
 }
 
-void UIManager::CollectElements(std::vector<UIElement*>& outElements)
+void UIManager::CollectElements(UIElement& element)
 {
-    CollectElements(*s_Root, outElements);
-}
-
-void UIManager::CollectElements(UIElement& element, std::vector<UIElement *>& outElements)
-{
-    outElements.push_back(&element);
+    s_Elements.push_back(&element);
     for (std::shared_ptr<UIElement>& child : element.m_Children)
     {
         if (child)
         {
             child->m_GlobalPosition = element.m_GlobalPosition + child->Position;
-            CollectElements(*child, outElements);
+            CollectElements(*child);
         }
+    }
+}
+
+void UIManager::HandleEvent(UIEventInfo& eventInfo, UIElement* element)
+{
+    if (eventInfo.Position.x < element->m_GlobalPosition.x ||
+        eventInfo.Position.y < element->m_GlobalPosition.y ||
+        eventInfo.Position.x > element->m_GlobalPosition.x + element->Size.x ||
+        eventInfo.Position.y > element->m_GlobalPosition.y + element->Size.y)
+        return;
+
+    element->HandleEvent(eventInfo);
+    if (eventInfo.Consumed)
+        return;
+
+    for (std::shared_ptr<UIElement>& child : element->m_Children)
+    {
+        if (eventInfo.Consumed)
+            return;
+
+        HandleEvent(eventInfo, child.get());
     }
 }

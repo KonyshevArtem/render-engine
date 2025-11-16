@@ -34,10 +34,7 @@ void UIRenderPass::Prepare(const Context& ctx)
 {
     Profiler::Marker _("UIRenderPass::Prepare");
 
-    m_Elements.clear();
-    UIManager::CollectElements(m_Elements);
-
-    for (UIElement* element : m_Elements)
+    for (UIElement* element : UIManager::GetElements())
     {
         if (UIText* text = dynamic_cast<UIText*>(element))
             text->PrepareFont();
@@ -45,7 +42,7 @@ void UIRenderPass::Prepare(const Context& ctx)
 
     const int width = Graphics::GetScreenWidth();
     const int height = Graphics::GetScreenHeight();
-    for (UIElement* element : m_Elements)
+    for (UIElement* element : UIManager::GetElements())
     {
         if (UIText* text = dynamic_cast<UIText*>(element))
             text->PrepareMesh();
@@ -72,7 +69,7 @@ void UIRenderPass::Execute(const Context& ctx)
 
     GraphicsBackend::Current()->BeginRenderPass("UI Pass");
 
-    for (UIElement* element : m_Elements)
+    for (UIElement* element : UIManager::GetElements())
     {
         if (UIImage* image = dynamic_cast<UIImage*>(element))
         {

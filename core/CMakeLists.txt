@@ -144,7 +144,8 @@ add_library(
 	font/font.h
 	font/font_data.h
 	ui/ui_button.cpp
-	ui/ui_button.h)
+	ui/ui_button.h
+	ui/ui_event_info.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex)

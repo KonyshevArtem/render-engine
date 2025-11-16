@@ -21,7 +21,6 @@ private:
     std::shared_ptr<Shader> m_ImageShader;
     std::shared_ptr<Shader> m_TextShader;
     std::shared_ptr<RingBuffer> m_UIDataBuffer;
-    std::vector<UIElement*> m_Elements;
 };
 
 #endif //RENDER_ENGINE_UI_RENDER_PASS_H

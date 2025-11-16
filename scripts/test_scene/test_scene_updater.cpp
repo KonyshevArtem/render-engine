@@ -77,7 +77,10 @@ void TestSceneUpdater::Update()
         UIManager::CreateImage(nullptr, {10, 20}, {100, 100}, uiTestTexture)->Color = Vector4(1, 0.5f, 0.5f, 0.5f);
         UIManager::CreateImage(nullptr, {10, 100}, {100, 100}, uiTestTexture)->Color = Vector4(0.5f, 1, 0.5f, 0.5f);
         UIManager::CreateText(nullptr, {10, 250}, {150, 32}, "Hello, Text!\nMultiline?", 32);
-        UIManager::CreateButton(nullptr, {10, 290}, {100, 50}, "Reload\nscene", 20, Texture2D::White())->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
+
+        std::shared_ptr<UIButton> button = UIManager::CreateButton(nullptr, {10, 290}, {100, 50}, "Reload\nscene", 20, Texture2D::White());
+        button->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
+        button->OnClick = [](){ Scene::Load("core_resources/scenes/test_scene.scene"); };
 
         m_Initialized = true;
     }
@@ -111,9 +114,4 @@ void TestSceneUpdater::Update()
 
     if (!m_RotatingCylinder2.expired())
         m_RotatingCylinder2.lock()->SetLocalRotation(TestSceneUpdaterLocal::CalcRotation(phase, 1));
-
-    if (Input::GetKeyDown('G'))
-    {
-        Scene::Load("core_resources/scenes/test_scene.scene");
-    }
 }

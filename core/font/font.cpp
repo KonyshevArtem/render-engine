@@ -2,6 +2,7 @@
 #include "Trex/Atlas.hpp"
 #include "Trex/TextShaper.hpp"
 #include "texture_2d/texture_2d.h"
+#include "editor/profiler/profiler.h"
 
 Font::Font(std::vector<uint8_t>& bytes, const std::string& fontName) :
     m_FontBytes(std::move(bytes)),
@@ -13,6 +14,8 @@ void Font::Prepare(uint16_t fontSize)
 {
     if (m_Atlas.contains(fontSize))
         return;
+
+    Profiler::Marker _("Font::Prepare");
 
     std::shared_ptr<Trex::Atlas> trexAtlas = std::make_shared<Trex::Atlas>(m_FontBytes, fontSize, Trex::Charset::Ascii());
     m_TrexAtlas[fontSize] = trexAtlas;
@@ -45,6 +48,8 @@ const std::shared_ptr<Texture> Font::GetAtlas(uint16_t fontSize) const
 
 std::vector<Char> Font::ShapeText(const std::span<const char> text, uint16_t fontSize)
 {
+    Profiler::Marker _("Font::ShapeText");
+
     auto it = m_TrexAtlas.find(fontSize);
     if (it == m_TrexAtlas.end())
         return std::vector<Char>();

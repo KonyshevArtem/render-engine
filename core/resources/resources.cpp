@@ -121,7 +121,7 @@ std::shared_ptr<Font> Resources::Load(const std::filesystem::path &path, bool as
         return font;
 
     std::vector<uint8_t> bytes;
-    FileSystem::ReadFileBytes(path, bytes);
+    FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / path, bytes);
 
     font = std::make_shared<Font>(bytes, path.string());
     AddToCache(path, font);

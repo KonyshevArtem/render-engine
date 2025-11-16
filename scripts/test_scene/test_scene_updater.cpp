@@ -9,6 +9,8 @@
 #include "resources/resources.h"
 #include "ui/ui_manager.h"
 #include "ui/ui_image.h"
+#include "ui/ui_button.h"
+#include "texture_2d/texture_2d.h"
 
 std::shared_ptr<TestSceneUpdater> TestSceneUpdater::Create(const nlohmann::json& componentData)
 {
@@ -72,13 +74,10 @@ void TestSceneUpdater::Update()
         }
 
         const std::shared_ptr<Texture2D> uiTestTexture = Resources::Load<Texture2D>("core_resources/textures/ui/ui_test");
-        std::shared_ptr<UIImage> image1 = UIManager::CreateImage({10, 20}, {100, 100}, uiTestTexture);
-        std::shared_ptr<UIImage> image2 = UIManager::CreateImage({10, 100}, {100, 100}, uiTestTexture);
-        std::shared_ptr<UIText> text1 = UIManager::CreateText({10, 250}, {150, 32}, "Hello, Text!\nMultiline?", 32);
-        std::shared_ptr<UIText> text2 = UIManager::CreateText({10, 275}, {150, 32}, "Smaller Text :)", 12);
-
-        image1->Color = Vector4(1, 0.5, 0.5, 0.5);
-        image2->Color = Vector4(0.5, 1, 0.5, 0.5);
+        UIManager::CreateImage(nullptr, {10, 20}, {100, 100}, uiTestTexture)->Color = Vector4(1, 0.5f, 0.5f, 0.5f);
+        UIManager::CreateImage(nullptr, {10, 100}, {100, 100}, uiTestTexture)->Color = Vector4(0.5f, 1, 0.5f, 0.5f);
+        UIManager::CreateText(nullptr, {10, 250}, {150, 32}, "Hello, Text!\nMultiline?", 32);
+        UIManager::CreateButton(nullptr, {10, 290}, {100, 50}, "Reload\nscene", 20, Texture2D::White())->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
 
         m_Initialized = true;
     }

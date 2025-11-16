@@ -142,7 +142,9 @@ add_library(
 	ui/ui_render_pass.h
 	font/font.cpp
 	font/font.h
-	font/font_data.h)
+	font/font_data.h
+	ui/ui_button.cpp
+	ui/ui_button.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex)

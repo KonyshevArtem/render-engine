@@ -1,6 +1,7 @@
 #include "ui_manager.h"
 #include "ui_image.h"
 #include "ui_text.h"
+#include "ui_button.h"
 #include "font/font.h"
 #include "resources/resources.h"
 #include "graphics/graphics.h"
@@ -36,6 +37,20 @@ std::shared_ptr<UIText> UIManager::CreateText(std::shared_ptr<UIElement> parent,
     uiText->SetParent(parent != nullptr ? parent : s_Root);
     uiText->SetFontSize(fontSize);
     return uiText;
+}
+
+std::shared_ptr<UIButton> UIManager::CreateButton(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize, const std::shared_ptr<Texture2D> image)
+{
+     std::shared_ptr<UIButton> uiButton = std::make_shared<UIButton>(position, size);
+     uiButton->SetParent(parent != nullptr ? parent : s_Root);
+
+     std::shared_ptr<UIImage> uiImage = UIManager::CreateImage(uiButton, Vector2(0, 0), size, image);
+     std::shared_ptr<UIText> uiText = UIManager::CreateText(uiButton, Vector2(0, 0), size, text, fontSize);
+
+     uiButton->m_Image = uiImage;
+     uiButton->m_Text = uiText;
+
+     return uiButton;
 }
 
 void UIManager::CollectElements(std::vector<UIElement*>& outElements)

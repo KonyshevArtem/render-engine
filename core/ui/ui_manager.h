@@ -10,6 +10,7 @@
 class UIElement;
 class UIImage;
 class UIText;
+class UIButton;
 class Texture2D;
 class Font;
 
@@ -26,6 +27,7 @@ public:
 
     static std::shared_ptr<UIImage> CreateImage(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image);
     static std::shared_ptr<UIText> CreateText(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize);
+    static std::shared_ptr<UIButton> CreateButton(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize, const std::shared_ptr<Texture2D> image);
 
     static void CollectElements(std::vector<UIElement*>& outElements);
 

@@ -34,15 +34,18 @@ void UIRenderPass::Prepare(const Context& ctx)
 {
     Profiler::Marker _("UIRenderPass::Prepare");
 
-    for (const std::shared_ptr<UIElement>& element : UIManager::Elements)
+    m_Elements.clear();
+    UIManager::CollectElements(m_Elements);
+
+    for (UIElement* element : m_Elements)
     {
-        if (std::shared_ptr<UIText> text = std::dynamic_pointer_cast<UIText>(element))
+        if (UIText* text = dynamic_cast<UIText*>(element))
             text->PrepareFont();
     }
 
-    for (const std::shared_ptr<UIElement>& element : UIManager::Elements)
+    for (UIElement* element : m_Elements)
     {
-        if (std::shared_ptr<UIText> text = std::dynamic_pointer_cast<UIText>(element))
+        if (UIText* text = dynamic_cast<UIText*>(element))
             text->PrepareMesh();
 
         Gizmos::DrawRect(element->Position, element->Position + element->Size);
@@ -64,9 +67,9 @@ void UIRenderPass::Execute(const Context& ctx)
 
     GraphicsBackend::Current()->BeginRenderPass("UI Pass");
 
-    for (const std::shared_ptr<UIElement>& element : UIManager::Elements)
+    for (UIElement* element : m_Elements)
     {
-        if (std::shared_ptr<UIImage> image = std::dynamic_pointer_cast<UIImage>(element))
+        if (UIImage* image = dynamic_cast<UIImage*>(element))
         {
             UIData data;
             data.OffsetScale = UIRenderPass_Local::GetOffsetScale(image->Position, image->Size);
@@ -80,7 +83,7 @@ void UIRenderPass::Execute(const Context& ctx)
             GraphicsBackend::Current()->DrawElements(quadMesh->GetGraphicsBackendGeometry(), quadMesh->GetPrimitiveType(), quadMesh->GetElementsCount(), quadMesh->GetIndicesDataType());
         }
 
-        if (std::shared_ptr<UIText> text = std::dynamic_pointer_cast<UIText>(element))
+        if (UIText* text = dynamic_cast<UIText*>(element))
         {
             UIData data;
             data.OffsetScale = UIRenderPass_Local::GetOffsetScale(text->Position, Vector2(1, 1));

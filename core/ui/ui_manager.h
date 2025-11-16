@@ -24,16 +24,18 @@ public:
         return s_ReferenceSize;
     }
 
-    static std::shared_ptr<UIImage> CreateImage(const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image);
-    static std::shared_ptr<UIText> CreateText(const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize);
+    static std::shared_ptr<UIImage> CreateImage(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image);
+    static std::shared_ptr<UIText> CreateText(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize);
 
-    static std::vector<std::shared_ptr<UIElement>> Elements;
+    static void CollectElements(std::vector<UIElement*>& outElements);
 
 private:
     static std::shared_ptr<Font> s_Font;
     static std::shared_ptr<UIElement> s_Root;
 
     static Vector2 s_ReferenceSize;
+
+    static void CollectElements(UIElement& element, std::vector<UIElement*>& outElements);
 };
 
 #endif //RENDER_ENGINE_UI_MANAGER_H

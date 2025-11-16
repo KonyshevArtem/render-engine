@@ -17,12 +17,18 @@ public:
     void SetParent(const std::shared_ptr<UIElement>& parent);
     void RemoveChild(const std::shared_ptr<UIElement>& child);
 
+    inline Vector2 GetGlobalPosition() const
+    {
+        return m_GlobalPosition;
+    }
+
 protected:
     virtual void Stub(){};
 
 private:
     std::vector<std::shared_ptr<UIElement>> m_Children;
     std::weak_ptr<UIElement> m_Parent;
+    Vector2 m_GlobalPosition;
 
     friend class UIManager;
 };

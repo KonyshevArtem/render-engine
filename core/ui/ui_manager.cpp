@@ -50,6 +50,9 @@ void UIManager::CollectElements(UIElement& element, std::vector<UIElement *>& ou
     for (std::shared_ptr<UIElement>& child : element.m_Children)
     {
         if (child)
+        {
+            child->m_GlobalPosition = element.m_GlobalPosition + child->Position;
             CollectElements(*child, outElements);
+        }
     }
 }

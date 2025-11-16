@@ -72,7 +72,7 @@ void UIRenderPass::Execute(const Context& ctx)
         if (UIImage* image = dynamic_cast<UIImage*>(element))
         {
             UIData data;
-            data.OffsetScale = UIRenderPass_Local::GetOffsetScale(image->Position, image->Size);
+            data.OffsetScale = UIRenderPass_Local::GetOffsetScale(image->GetGlobalPosition(), image->Size);
             data.Color = image->Color;
             uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
 
@@ -86,7 +86,7 @@ void UIRenderPass::Execute(const Context& ctx)
         if (UIText* text = dynamic_cast<UIText*>(element))
         {
             UIData data;
-            data.OffsetScale = UIRenderPass_Local::GetOffsetScale(text->Position, Vector2(1, 1));
+            data.OffsetScale = UIRenderPass_Local::GetOffsetScale(text->GetGlobalPosition(), Vector2(1, 1));
             data.Color = Vector4(1, 1, 1, 1);
             uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
 

@@ -56,8 +56,14 @@ void UIText::PrepareMesh()
     {
         char c = m_Text[i];
 
-        if (c == '\n' || c == '\r' || i == m_Text.size() - 1)
+        bool isLastChar = i == m_Text.size() - 1;
+        bool isLineBreak = c == '\n' || c == '\r';
+
+        if (isLineBreak || isLastChar)
         {
+            if (isLastChar && !isLineBreak)
+                ++length;
+
             std::vector<Char> chars = m_Font->ShapeText(std::span<const char>(&m_Text[begin], length), m_FontSize);
 
             for (const Char& ch : chars)

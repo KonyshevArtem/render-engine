@@ -18,7 +18,6 @@ void UIManager::Initialize(const Vector2& referenceSize)
 
 void UIManager::Update()
 {
-    s_Root->Size = Vector2(Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 }
 
 std::shared_ptr<UIImage> UIManager::CreateImage(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image)

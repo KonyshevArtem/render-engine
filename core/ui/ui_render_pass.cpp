@@ -43,12 +43,17 @@ void UIRenderPass::Prepare(const Context& ctx)
             text->PrepareFont();
     }
 
+    const int width = Graphics::GetScreenWidth();
+    const int height = Graphics::GetScreenHeight();
     for (UIElement* element : m_Elements)
     {
         if (UIText* text = dynamic_cast<UIText*>(element))
             text->PrepareMesh();
 
-        Gizmos::DrawRect(element->Position, element->Position + element->Size);
+        Vector4 offsetScale = UIRenderPass_Local::GetOffsetScale(element->GetGlobalPosition(), element->Size);
+        Vector2 position = Vector2(offsetScale.x * width, offsetScale.y * height);
+        Vector2 size = Vector2(offsetScale.z * width, offsetScale.w * height);
+        Gizmos::DrawRect(position, position + size);
     }
 }
 

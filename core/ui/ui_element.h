@@ -18,6 +18,7 @@ public:
 
     void SetParent(const std::shared_ptr<UIElement>& parent);
     void RemoveChild(const std::shared_ptr<UIElement>& child);
+    void Destroy();
 
     inline Vector2 GetGlobalPosition() const
     {

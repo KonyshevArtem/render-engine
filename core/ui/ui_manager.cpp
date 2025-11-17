@@ -47,6 +47,18 @@ void UIManager::Update()
     }
 }
 
+void UIManager::DestroyUI()
+{
+    s_FocusedElement = nullptr;
+    s_Elements.clear();
+
+    std::vector<std::shared_ptr<UIElement>> children = std::move(s_Root->m_Children);
+    s_Root->m_Children.clear();
+
+    for (std::shared_ptr<UIElement>& child : children)
+        child->Destroy();
+}
+
 std::shared_ptr<UIImage> UIManager::CreateImage(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image)
 {
     std::shared_ptr<UIImage> uiImage = std::make_shared<UIImage>(position, size, image);
@@ -104,11 +116,11 @@ void UIManager::HandleEvent(UIEventInfo& eventInfo, UIElement* element)
     if (eventInfo.Consumed)
         return;
 
-    for (std::shared_ptr<UIElement>& child : element->m_Children)
+    for (int i = element->m_Children.size() - 1; i >= 0; --i)
     {
         if (eventInfo.Consumed)
             return;
 
-        HandleEvent(eventInfo, child.get());
+        HandleEvent(eventInfo, element->m_Children[i].get());
     }
 }

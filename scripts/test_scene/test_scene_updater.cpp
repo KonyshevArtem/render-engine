@@ -10,6 +10,7 @@
 #include "ui/ui_manager.h"
 #include "ui/ui_image.h"
 #include "ui/ui_button.h"
+#include "ui/ui_text.h"
 #include "texture_2d/texture_2d.h"
 
 std::shared_ptr<TestSceneUpdater> TestSceneUpdater::Create(const nlohmann::json& componentData)
@@ -76,11 +77,15 @@ void TestSceneUpdater::Update()
         const std::shared_ptr<Texture2D> uiTestTexture = Resources::Load<Texture2D>("core_resources/textures/ui/ui_test");
         UIManager::CreateImage(nullptr, {10, 20}, {100, 100}, uiTestTexture)->Color = Vector4(1, 0.5f, 0.5f, 0.5f);
         UIManager::CreateImage(nullptr, {10, 100}, {100, 100}, uiTestTexture)->Color = Vector4(0.5f, 1, 0.5f, 0.5f);
-        UIManager::CreateText(nullptr, {10, 250}, {150, 32}, "Hello, Text!\nMultiline?", 32);
+        std::shared_ptr<UIText> text = UIManager::CreateText(nullptr, {10, 250}, {150, 32}, "Hello, Text!\nMultiline?", 32);
 
-        std::shared_ptr<UIButton> button = UIManager::CreateButton(nullptr, {10, 290}, {100, 50}, "Reload\nscene", 20, Texture2D::White());
-        button->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
-        button->OnClick = [](){ Scene::Load("core_resources/scenes/test_scene.scene"); };
+        std::shared_ptr<UIButton> reloadButton = UIManager::CreateButton(nullptr, {10, 290}, {100, 50}, "Reload\nscene", 20, Texture2D::White());
+        reloadButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
+        reloadButton->OnClick = [](){ Scene::Load("core_resources/scenes/test_scene.scene"); };
+
+        std::shared_ptr<UIButton> deleteButton = UIManager::CreateButton(nullptr, {10, 350}, {100, 50}, "Delete\ntext", 20, Texture2D::White());
+        deleteButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
+        deleteButton->OnClick = [text](){ text->Destroy(); };
 
         m_Initialized = true;
     }

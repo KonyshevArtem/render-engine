@@ -19,7 +19,13 @@ void UIElement::SetParent(const std::shared_ptr<UIElement>& parent)
         parent->m_Children.push_back(thisPtr);
 }
 
-void UIElement::RemoveChild(const std::shared_ptr<UIElement> &child)
+void UIElement::RemoveChild(const std::shared_ptr<UIElement>& child)
 {
     m_Children.erase(std::remove_if(m_Children.begin(), m_Children.end(), [child](std::shared_ptr<UIElement>& ch){return child == ch;}), m_Children.end());
+}
+
+void UIElement::Destroy()
+{
+    if (!m_Parent.expired())
+        m_Parent.lock()->RemoveChild(shared_from_this());
 }

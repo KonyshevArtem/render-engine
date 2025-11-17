@@ -20,6 +20,7 @@ class UIManager
 public:
     static void Initialize(const Vector2& referenceSize);
     static void Update();
+    static void DestroyUI();
 
     static inline const Vector2& GetReferenceSize()
     {

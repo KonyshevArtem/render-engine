@@ -46,7 +46,7 @@ const std::shared_ptr<Texture> Font::GetAtlas(uint16_t fontSize) const
     return it != m_Atlas.end() ? it->second : nullptr;
 }
 
-std::vector<Char> Font::ShapeText(const std::span<const char> text, uint16_t fontSize)
+std::vector<Char> Font::ShapeText(const std::span<const char> text, uint16_t fontSize, float& outTextWidth)
 {
     Profiler::Marker _("Font::ShapeText");
 
@@ -74,6 +74,9 @@ std::vector<Char> Font::ShapeText(const std::span<const char> text, uint16_t fon
         ch.Y = glyph.info.y;
         chars.push_back(ch);
     }
+
+    Trex::TextMeasurement measurement = shaper.Measure(glyphs);
+    outTextWidth = measurement.width;
 
     return chars;
 }

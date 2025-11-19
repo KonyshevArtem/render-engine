@@ -23,6 +23,12 @@ void UIText::SetFontSize(uint16_t fontSize)
     m_FontSize = fontSize;
 }
 
+void UIText::SetHorizontalAlignment(UIText::HorizontalAlignment alignment)
+{
+    m_Dirty |= m_HorizontalAlignment != alignment;
+    m_HorizontalAlignment = alignment;
+}
+
 void UIText::PrepareFont()
 {
     if (m_FontSize == m_PrevFontSize)
@@ -49,7 +55,6 @@ void UIText::PrepareMesh()
 
     const CommonBlock& common = m_Font->GetCommonBlock(m_FontSize);
 
-    uint32_t xPosition = 0;
     int32_t yPosition = Size.y;
 
     for (uint32_t i = 0, begin = 0, length = 0; i < m_Text.size(); ++i)
@@ -64,7 +69,14 @@ void UIText::PrepareMesh()
             if (isLastChar && !isLineBreak)
                 ++length;
 
-            std::vector<Char> chars = m_Font->ShapeText(std::span<const char>(&m_Text[begin], length), m_FontSize);
+            float textWidth;
+            std::vector<Char> chars = m_Font->ShapeText(std::span<const char>(&m_Text[begin], length), m_FontSize, textWidth);
+
+            int32_t xPosition = 0;
+            if (m_HorizontalAlignment == MIDDLE)
+                xPosition = (Size.x - textWidth) * 0.5f;
+            if (m_HorizontalAlignment == RIGHT)
+                xPosition = Size.x - textWidth;
 
             for (const Char& ch : chars)
             {
@@ -98,7 +110,6 @@ void UIText::PrepareMesh()
                 xPosition += ch.XAdvance;
             }
 
-            xPosition = 0;
             yPosition -= common.LineHeight;
             begin = i + 1;
             length = 0;

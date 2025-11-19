@@ -27,7 +27,7 @@ public:
     const CommonBlock& GetCommonBlock(uint16_t fontSize) const;
     const std::shared_ptr<Texture> GetAtlas(uint16_t fontSize) const;
 
-    std::vector<Char> ShapeText(const std::span<const char> text, uint16_t fontSize);
+    std::vector<Char> ShapeText(const std::span<const char> text, uint16_t fontSize, float& outTextWidth);
 
 private:
     std::unordered_map<uint16_t, CommonBlock> m_Common;

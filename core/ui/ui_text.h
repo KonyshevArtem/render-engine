@@ -14,10 +14,18 @@ class Texture;
 class UIText : public UIElement
 {
 public:
+    enum HorizontalAlignment
+    {
+        LEFT,
+        MIDDLE,
+        RIGHT
+    };
+
     UIText(const Vector2& position, const Vector2& size, const std::string& text, const std::shared_ptr<Font>& font);
 
     void SetText(const std::string& text);
     void SetFontSize(uint16_t fontSize);
+    void SetHorizontalAlignment(HorizontalAlignment alignment);
 
     void PrepareFont();
     void PrepareMesh();
@@ -33,6 +41,7 @@ private:
     std::string m_Text;
     std::shared_ptr<Font> m_Font;
     std::shared_ptr<Mesh> m_Mesh;
+    HorizontalAlignment m_HorizontalAlignment;
 };
 
 #endif //RENDER_ENGINE_UI_TEXT_H

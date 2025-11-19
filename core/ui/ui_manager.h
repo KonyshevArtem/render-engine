@@ -40,11 +40,13 @@ private:
     static std::shared_ptr<Font> s_Font;
     static std::shared_ptr<UIElement> s_Root;
     static std::vector<UIElement*> s_Elements;
+    static std::shared_ptr<UIElement> s_FocusedElement;
+    static std::shared_ptr<UIElement> s_HoveredElement;
 
     static Vector2 s_ReferenceSize;
 
     static void CollectElements(UIElement& element);
-    static void HandleEvent(UIEventInfo& eventInfo, UIElement* element);
+    static std::shared_ptr<UIElement> HandleEvent(UIEventInfo& eventInfo, std::shared_ptr<UIElement>& element);
 };
 
 #endif //RENDER_ENGINE_UI_MANAGER_H

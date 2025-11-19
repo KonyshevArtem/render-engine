@@ -12,6 +12,8 @@
 std::shared_ptr<Font> UIManager::s_Font;
 std::shared_ptr<UIElement> UIManager::s_Root;
 std::vector<UIElement*> UIManager::s_Elements;
+std::shared_ptr<UIElement> UIManager::s_FocusedElement;
+std::shared_ptr<UIElement> UIManager::s_HoveredElement;
 
 Vector2 UIManager::s_ReferenceSize(0, 0);
 
@@ -35,14 +37,42 @@ void UIManager::Update()
     {
         Profiler::Marker inputMarker("Handle Input");
 
-        if (Input::GetMouseButtonDown(Input::MouseButton::LEFT))
-        {
-            Vector2 mousePos = Input::GetMousePosition();
-            mousePos.x = mousePos.x / Graphics::GetScreenWidth() * s_ReferenceSize.x;
-            mousePos.y = (1 - mousePos.y / Graphics::GetScreenHeight()) * s_ReferenceSize.y;
+        Vector2 mousePos = Input::GetMousePosition();
+        mousePos.x = mousePos.x / Graphics::GetScreenWidth() * s_ReferenceSize.x;
+        mousePos.y = (1 - mousePos.y / Graphics::GetScreenHeight()) * s_ReferenceSize.y;
 
-            UIEventInfo eventInfo {mousePos, false};
-            HandleEvent(eventInfo, s_Root.get());
+        auto HandlePointerEvent = [mousePos](UIEventType eventType)
+        {
+            UIEventInfo eventInfo{};
+            eventInfo.Position = mousePos;
+            eventInfo.Type = eventType;
+
+            std::shared_ptr<UIElement> element = HandleEvent(eventInfo, s_Root);
+            if (element != s_FocusedElement)
+            {
+                if (s_FocusedElement)
+                    s_FocusedElement->LoseFocus();
+                s_FocusedElement = element;
+            }
+        };
+
+        if (Input::GetMouseButtonDown(Input::MouseButton::LEFT))
+            HandlePointerEvent(UIEventType::POINTER_DOWN);
+        else if (Input::GetMouseButtonUp(Input::MouseButton::LEFT))
+            HandlePointerEvent(UIEventType::POINTER_UP);
+
+        {
+            UIEventInfo eventInfo{};
+            eventInfo.Position = mousePos;
+            eventInfo.Type = UIEventType::HOVER;
+
+            std::shared_ptr<UIElement> element = HandleEvent(eventInfo, s_Root);
+            if (element != s_HoveredElement)
+            {
+                if (s_HoveredElement)
+                    s_HoveredElement->LoseHover();
+                s_HoveredElement = element;
+            }
         }
     }
 }
@@ -104,23 +134,24 @@ void UIManager::CollectElements(UIElement& element)
     }
 }
 
-void UIManager::HandleEvent(UIEventInfo& eventInfo, UIElement* element)
+std::shared_ptr<UIElement> UIManager::HandleEvent(UIEventInfo& eventInfo, std::shared_ptr<UIElement>& element)
 {
     if (eventInfo.Position.x < element->m_GlobalPosition.x ||
         eventInfo.Position.y < element->m_GlobalPosition.y ||
         eventInfo.Position.x > element->m_GlobalPosition.x + element->Size.x ||
         eventInfo.Position.y > element->m_GlobalPosition.y + element->Size.y)
-        return;
+        return nullptr;
 
     element->HandleEvent(eventInfo);
     if (eventInfo.Consumed)
-        return;
+        return element;
 
     for (int i = element->m_Children.size() - 1; i >= 0; --i)
     {
-        if (eventInfo.Consumed)
-            return;
-
-        HandleEvent(eventInfo, element->m_Children[i].get());
+        std::shared_ptr<UIElement> consumer = HandleEvent(eventInfo, element->m_Children[i]);
+        if (consumer)
+            return consumer;
     }
+
+    return nullptr;
 }

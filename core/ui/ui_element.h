@@ -27,6 +27,8 @@ public:
 
 protected:
     virtual void HandleEvent(UIEventInfo& eventInfo){};
+    virtual void LoseFocus(){};
+    virtual void LoseHover(){};
 
 private:
     std::vector<std::shared_ptr<UIElement>> m_Children;

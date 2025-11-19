@@ -16,14 +16,21 @@ public:
 
     void SetImageColor(const Vector4& color);
 
-    std::function<void()> OnClick;
+    std::function<void()> OnPress;
 
 protected:
     void HandleEvent(UIEventInfo& eventInfo) override;
+    void LoseFocus() override;
+    void LoseHover() override;
 
 private:
     std::weak_ptr<UIText> m_Text;
     std::weak_ptr<UIImage> m_Image;
+    Vector4 m_ImageColor;
+    bool m_IsHovered;
+    bool m_IsPressed;
+
+    void SetImageColor_Internal(const Vector4& color, float colorMultiplier);
 
     friend class UIManager;
 };

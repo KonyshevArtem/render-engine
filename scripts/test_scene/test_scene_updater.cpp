@@ -81,11 +81,11 @@ void TestSceneUpdater::Update()
 
         std::shared_ptr<UIButton> reloadButton = UIManager::CreateButton(nullptr, {10, 290}, {100, 50}, "Reload\nscene", 20, Texture2D::White());
         reloadButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
-        reloadButton->OnClick = [](){ Scene::Load("core_resources/scenes/test_scene.scene"); };
+        reloadButton->OnPress = [](){ Scene::Load("core_resources/scenes/test_scene.scene"); };
 
         std::shared_ptr<UIButton> deleteButton = UIManager::CreateButton(nullptr, {10, 350}, {100, 50}, "Delete\ntext", 20, Texture2D::White());
         deleteButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
-        deleteButton->OnClick = [text](){ text->Destroy(); };
+        deleteButton->OnPress = [text](){ text->Destroy(); };
 
         m_Initialized = true;
     }

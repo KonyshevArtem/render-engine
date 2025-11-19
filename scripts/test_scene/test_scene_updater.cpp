@@ -79,11 +79,11 @@ void TestSceneUpdater::Update()
         UIManager::CreateImage(nullptr, {10, 100}, {100, 100}, uiTestTexture)->Color = Vector4(0.5f, 1, 0.5f, 0.5f);
         std::shared_ptr<UIText> text = UIManager::CreateText(nullptr, {10, 250}, {150, 32}, "Hello, Text!\nMultiline?", 32);
 
-        std::shared_ptr<UIButton> reloadButton = UIManager::CreateButton(nullptr, {10, 290}, {100, 50}, "Reload\nscene", 20, Texture2D::White());
+        std::shared_ptr<UIButton> reloadButton = UIManager::CreateButton(nullptr, {10, 290}, {100, 50}, "Reload\nscene", 15, Texture2D::White());
         reloadButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
         reloadButton->OnPress = [](){ Scene::Load("core_resources/scenes/test_scene.scene"); };
 
-        std::shared_ptr<UIButton> deleteButton = UIManager::CreateButton(nullptr, {10, 350}, {100, 50}, "Delete\ntext", 20, Texture2D::White());
+        std::shared_ptr<UIButton> deleteButton = UIManager::CreateButton(nullptr, {10, 350}, {100, 50}, "Delete\ntext", 15, Texture2D::White());
         deleteButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
         deleteButton->OnPress = [text](){ text->Destroy(); };
 

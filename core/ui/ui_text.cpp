@@ -29,6 +29,12 @@ void UIText::SetHorizontalAlignment(UIText::HorizontalAlignment alignment)
     m_HorizontalAlignment = alignment;
 }
 
+void UIText::SetVerticalAlignment(UIText::VerticalAlignment alignment)
+{
+    m_Dirty |= m_VerticalAlignment != alignment;
+    m_VerticalAlignment = alignment;
+}
+
 void UIText::PrepareFont()
 {
     if (m_FontSize == m_PrevFontSize)
@@ -55,14 +61,27 @@ void UIText::PrepareMesh()
 
     const CommonBlock& common = m_Font->GetCommonBlock(m_FontSize);
 
+    auto IsLineBreak = [](char c) { return c == '\n' || c == '\r'; };
+
+    float textHeight = common.LineHeight;
+    for (uint32_t i = 0; m_VerticalAlignment != VerticalAlignment::TOP && i < m_Text.size(); ++i)
+    {
+        if (IsLineBreak(m_Text[i]))
+            textHeight += common.LineHeight;
+    }
+
     int32_t yPosition = Size.y;
+    if (m_VerticalAlignment == VerticalAlignment::MIDDLE)
+        yPosition = textHeight + (Size.y - textHeight) * 0.5f;
+    else if (m_VerticalAlignment == VerticalAlignment::BOTTOM)
+        yPosition = textHeight;
 
     for (uint32_t i = 0, begin = 0, length = 0; i < m_Text.size(); ++i)
     {
         char c = m_Text[i];
 
         bool isLastChar = i == m_Text.size() - 1;
-        bool isLineBreak = c == '\n' || c == '\r';
+        bool isLineBreak = IsLineBreak(c);
 
         if (isLineBreak || isLastChar)
         {
@@ -73,9 +92,9 @@ void UIText::PrepareMesh()
             std::vector<Char> chars = m_Font->ShapeText(std::span<const char>(&m_Text[begin], length), m_FontSize, textWidth);
 
             int32_t xPosition = 0;
-            if (m_HorizontalAlignment == MIDDLE)
+            if (m_HorizontalAlignment == HorizontalAlignment::MIDDLE)
                 xPosition = (Size.x - textWidth) * 0.5f;
-            if (m_HorizontalAlignment == RIGHT)
+            else if (m_HorizontalAlignment == HorizontalAlignment::RIGHT)
                 xPosition = Size.x - textWidth;
 
             for (const Char& ch : chars)

@@ -115,6 +115,7 @@ std::shared_ptr<UIButton> UIManager::CreateButton(std::shared_ptr<UIElement> par
      std::shared_ptr<UIImage> uiImage = UIManager::CreateImage(uiButton, Vector2(0, 0), size, image);
      std::shared_ptr<UIText> uiText = UIManager::CreateText(uiButton, Vector2(0, 0), size, text, fontSize);
      uiText->SetHorizontalAlignment(UIText::HorizontalAlignment::MIDDLE);
+     uiText->SetVerticalAlignment(UIText::VerticalAlignment::MIDDLE);
 
      uiButton->m_Image = uiImage;
      uiButton->m_Text = uiText;

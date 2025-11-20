@@ -49,6 +49,12 @@ void UIText::PrepareMesh()
     if (!m_Dirty && m_PrevSize == Size)
         return;
 
+    if (m_Text.empty())
+    {
+        m_Mesh = nullptr;
+        return;
+    }
+
     Profiler::Marker _("UIText::PrepareMesh");
 
     std::vector<int> indices;

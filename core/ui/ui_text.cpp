@@ -6,6 +6,7 @@
 
 UIText::UIText(const Vector2 &position, const Vector2& size, const std::string& text, const std::shared_ptr<Font>& font) :
     UIElement(position, size),
+    Color(1, 1, 1, 1),
     m_Dirty(true),
     m_Text(text),
     m_Font(font)

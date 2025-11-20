@@ -93,7 +93,7 @@ void UIRenderPass::Execute(const Context& ctx)
 
             UIData data;
             data.OffsetScale = UIRenderPass_Local::GetOffsetScale(text->GetGlobalPosition(), Vector2(1, 1));
-            data.Color = Vector4(1, 1, 1, 1);
+            data.Color = text->Color;
             uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
 
             GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));

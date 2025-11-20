@@ -41,6 +41,8 @@ public:
     const std::shared_ptr<Mesh> GetMesh() const;
     const std::shared_ptr<Texture> GetFontAtlas() const;
 
+    Vector4 Color;
+
 private:
     bool m_Dirty;
     Vector2 m_PrevSize;

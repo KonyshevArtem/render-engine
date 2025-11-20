@@ -117,25 +117,25 @@ void EngineFramework::Shutdown()
 void EngineFramework::ProcessMouseClick(int mouseButton, bool pressed)
 {
     if (!window || !window->CaptureMouse())
-    {
         Input::HandleMouseClick(static_cast<Input::MouseButton>(mouseButton), pressed);
-    }
 }
 
 void EngineFramework::ProcessMouseMove(float x, float y)
 {
     if (!window || !window->CaptureMouse())
-    {
         Input::HandleMouseMove(x, y);
-    }
 }
 
 void EngineFramework::ProcessKeyPress(char key, bool pressed)
 {
     if (!window || !window->CaptureKeyboard())
-    {
         Input::HandleKeyboardInput(key, pressed);
-    }
+}
+
+void EngineFramework::ProcessCharInput(unsigned char ch)
+{
+    if (!window || !window->CaptureKeyboard())
+        Input::HandleCharInput(ch);
 }
 
 void EngineFramework::ProcessTouchDown(unsigned long touchId, float x, float y)

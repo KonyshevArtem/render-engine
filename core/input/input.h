@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <unordered_set>
 
 #include "vector2/vector2.h"
 
@@ -34,10 +35,12 @@ namespace Input
     void CleanUp();
 
     void HandleKeyboardInput(unsigned char key, bool isPressed);
+    void HandleCharInput(unsigned char ch);
     void HandleMouseClick(MouseButton mouseButton, bool isPressed);
     void HandleMouseMove(double x, double y);
     void HandleTouch(TouchState state, uint64_t touchId, float x, float y);
 
+    const std::unordered_set<unsigned char>& GetCharInputs();
     bool GetKeyDown(unsigned char key);
     bool GetKeyUp(unsigned char key);
     bool GetKey(unsigned char key);

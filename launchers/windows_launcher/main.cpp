@@ -50,6 +50,9 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         case WM_KEYUP:
             EngineFramework::ProcessKeyPress(static_cast<char>(wParam), message == WM_KEYDOWN);
             return 0;
+        case WM_CHAR:
+            EngineFramework::ProcessCharInput(static_cast<char>(wParam));
+            return 0;
         case WM_MOUSEMOVE:
         {
             int x = GET_X_LPARAM(lParam);

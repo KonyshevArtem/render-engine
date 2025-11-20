@@ -8,6 +8,7 @@ namespace Input
     std::unordered_set<unsigned char> s_Inputs;
     std::unordered_set<unsigned char> s_InputsDown;
     std::unordered_set<unsigned char> s_InputsUp;
+    std::unordered_set<unsigned char> s_CharInputs;
     Vector2 s_OldMousePosition = Vector2();
     Vector2 s_MousePosition = Vector2();
     Vector2 s_MouseDelta = Vector2();
@@ -68,6 +69,7 @@ namespace Input
     {
         s_InputsUp.clear();
         s_InputsDown.clear();
+        s_CharInputs.clear();
 
         s_MouseButtonDownBits = 0;
         s_MouseButtonUpBits = 0;
@@ -103,6 +105,12 @@ namespace Input
         }
     }
 
+    void HandleCharInput(unsigned char ch)
+    {
+        if (!s_CharInputs.contains(ch))
+            s_CharInputs.insert(ch);
+    }
+
     void HandleMouseClick(MouseButton mouseButton, bool isPressed)
     {
         uint8_t mouseButtonBit = 1U << static_cast<int>(mouseButton);
@@ -126,6 +134,11 @@ namespace Input
     void HandleTouch(TouchState state, uint64_t touchId, float x, float y)
     {
         s_PendingTouches.push_back(Touch{touchId, state, {x, y}, {0, 0}});
+    }
+
+    const std::unordered_set<unsigned char>& GetCharInputs()
+    {
+        return s_CharInputs;
     }
 
     bool GetKeyDown(unsigned char key)

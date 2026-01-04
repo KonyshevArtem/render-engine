@@ -62,6 +62,7 @@ std::vector<Char> Font::ShapeText(const std::span<const char> text, uint16_t fon
     std::vector<Char> chars;
     chars.reserve(glyphs.size());
 
+    outTextWidth = 0;
     for (const Trex::ShapedGlyph& glyph : glyphs)
     {
         Char ch{};
@@ -73,10 +74,9 @@ std::vector<Char> Font::ShapeText(const std::span<const char> text, uint16_t fon
         ch.X = glyph.info.x;
         ch.Y = glyph.info.y;
         chars.push_back(ch);
-    }
 
-    Trex::TextMeasurement measurement = shaper.Measure(glyphs);
-    outTextWidth = measurement.width;
+        outTextWidth += ch.XAdvance;
+    }
 
     return chars;
 }

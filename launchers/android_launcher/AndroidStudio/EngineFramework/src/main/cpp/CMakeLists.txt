@@ -15,6 +15,9 @@ set(
         RenderEngineLauncher
         Arguments
         Hash
+        freetype
+        harfbuzz
+        trex
 )
 
 foreach (LIB ${DEPENDENCIES})
@@ -30,6 +33,7 @@ target_link_libraries(
         ${CMAKE_PROJECT_NAME}
         android
         log
+        z
         ${DEPENDENCIES}
         GLESv2
         GLESv3

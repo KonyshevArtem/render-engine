@@ -160,3 +160,13 @@ const std::shared_ptr<Texture> UIText::GetFontAtlas() const
 {
     return m_Font->GetAtlas(m_FontSize);
 }
+
+const std::shared_ptr<Font> UIText::GetFont() const
+{
+    return m_Font;
+}
+
+uint16_t UIText::GetFontSize() const
+{
+    return m_FontSize;
+}

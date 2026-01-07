@@ -11,7 +11,9 @@
 #include "ui/ui_image.h"
 #include "ui/ui_button.h"
 #include "ui/ui_text.h"
+#include "ui/ui_text_field.h"
 #include "texture_2d/texture_2d.h"
+#include "debug.h"
 
 std::shared_ptr<TestSceneUpdater> TestSceneUpdater::Create(const nlohmann::json& componentData)
 {
@@ -86,6 +88,9 @@ void TestSceneUpdater::Update()
         std::shared_ptr<UIButton> deleteButton = UIManager::CreateButton(nullptr, {10, 350}, {100, 50}, "Delete\ntext", 15, Texture2D::White());
         deleteButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
         deleteButton->OnPress = [text](){ text->Destroy(); };
+
+        std::shared_ptr<UITextField> inputField = UIManager::CreateTextField(nullptr, {10, 410}, {150, 30}, 24, Texture2D::White());
+        inputField->OnFinish = [](const std::string& text){ Debug::LogInfo(text); };
 
         m_Initialized = true;
     }

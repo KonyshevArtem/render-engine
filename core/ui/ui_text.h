@@ -35,11 +35,18 @@ public:
     void SetHorizontalAlignment(HorizontalAlignment alignment);
     void SetVerticalAlignment(VerticalAlignment alignment);
 
+    inline const std::string& GetText() const
+    {
+        return m_Text;
+    }
+
     void PrepareFont();
     void PrepareMesh();
 
     const std::shared_ptr<Mesh> GetMesh() const;
     const std::shared_ptr<Texture> GetFontAtlas() const;
+    const std::shared_ptr<Font> GetFont() const;
+    uint16_t GetFontSize() const;
 
     Vector4 Color;
 

@@ -3,6 +3,7 @@
 UIElement::UIElement(const Vector2& position, const Vector2& size) :
     Position(position),
     Size(size),
+    Active(true),
     m_GlobalPosition(Vector2(0, 0))
 {
 }

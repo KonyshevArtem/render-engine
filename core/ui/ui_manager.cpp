@@ -125,6 +125,9 @@ std::shared_ptr<UIButton> UIManager::CreateButton(std::shared_ptr<UIElement> par
 
 void UIManager::CollectElements(UIElement& element)
 {
+    if (!element.Active)
+        return;
+
     s_Elements.push_back(&element);
     for (std::shared_ptr<UIElement>& child : element.m_Children)
     {

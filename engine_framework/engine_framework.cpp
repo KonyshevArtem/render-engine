@@ -138,6 +138,12 @@ void EngineFramework::ProcessCharInput(unsigned char ch)
         Input::HandleCharInput(ch);
 }
 
+void EngineFramework::ProcessSpecialKey(int keyId, bool pressed)
+{
+    if (!window || !window->CaptureKeyboard())
+        Input::HandleSpecialKeyInput(keyId, pressed);
+}
+
 void EngineFramework::ProcessTouchDown(unsigned long touchId, float x, float y)
 {
     Input::HandleTouch(Input::TouchState::DOWN, touchId, x, y);

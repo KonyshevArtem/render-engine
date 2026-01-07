@@ -19,15 +19,19 @@ std::shared_ptr<UIElement> UIManager::s_HoveredElement;
 
 Vector2 UIManager::s_ReferenceSize(0, 0);
 
-void UIManager::Initialize(const Vector2& referenceSize)
+void UIManager::Initialize(float referenceHeight)
 {
-    s_ReferenceSize = referenceSize;
+    s_ReferenceSize = Vector2(0, referenceHeight);
     s_Root = std::make_shared<UIElement>(Vector2(0, 0), s_ReferenceSize);
 }
 
 void UIManager::Update()
 {
     Profiler::Marker _("UIManager::Update");
+
+    float aspect = static_cast<float>(Graphics::GetScreenWidth()) / static_cast<float>(Graphics::GetScreenHeight());
+    s_ReferenceSize.x = aspect * s_ReferenceSize.y;
+    s_Root->Size = s_ReferenceSize;
 
     {
         Profiler::Marker collectMarker("Collect Elements");

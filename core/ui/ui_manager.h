@@ -19,7 +19,7 @@ struct UIEventInfo;
 class UIManager
 {
 public:
-    static void Initialize(const Vector2& referenceSize);
+    static void Initialize(float referenceHeight);
     static void Update();
     static void DestroyUI();
 

@@ -47,7 +47,13 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
 
     Graphics::Init();
     Time::Init();
-    UIManager::Initialize(Vector2(1920, 1080));
+
+#if RENDER_ENGINE_WINDOWS
+    float uiHeight = 1080;
+#else
+    float uiHeight = 720;
+#endif
+    UIManager::Initialize(uiHeight);
 
     std::string scenePath = "core_resources/scenes/test_scene.scene";
     if (Arguments::Contains("-scene"))

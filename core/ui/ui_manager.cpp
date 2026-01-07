@@ -39,28 +39,28 @@ void UIManager::Update()
     {
         Profiler::Marker inputMarker("Handle Input");
 
-        Vector2 mousePos = Input::GetMousePosition();
-        mousePos.x = mousePos.x / Graphics::GetScreenWidth() * s_ReferenceSize.x;
-        mousePos.y = (1 - mousePos.y / Graphics::GetScreenHeight()) * s_ReferenceSize.y;
+        auto ToUIPosition = [](const Vector2& inputPosition)
+        {
+            Vector2 uiPosition = inputPosition;
+            uiPosition.x = uiPosition.x / Graphics::GetScreenWidth() * s_ReferenceSize.x;
+            uiPosition.y = (1 - uiPosition.y / Graphics::GetScreenHeight()) * s_ReferenceSize.y;
+            return uiPosition;
+        };
 
-        auto HandlePointerEvent = [mousePos](UIEventType eventType)
+        auto HandlePointerEvent = [](const Vector2& position, UIEventType eventType)
         {
             UIEventInfo eventInfo{};
-            eventInfo.Position = mousePos;
+            eventInfo.Position = position;
             eventInfo.Type = eventType;
 
             std::shared_ptr<UIElement> element = HandleEvent(eventInfo, s_Root);
             ChangeFocus(element);
         };
 
-        if (Input::GetMouseButtonDown(Input::MouseButton::LEFT))
-            HandlePointerEvent(UIEventType::POINTER_DOWN);
-        else if (Input::GetMouseButtonUp(Input::MouseButton::LEFT))
-            HandlePointerEvent(UIEventType::POINTER_UP);
-
+        auto HandleHoverEvent = [](const Vector2& position)
         {
             UIEventInfo eventInfo{};
-            eventInfo.Position = mousePos;
+            eventInfo.Position = position;
             eventInfo.Type = UIEventType::HOVER;
 
             std::shared_ptr<UIElement> element = HandleEvent(eventInfo, s_Root);
@@ -70,6 +70,25 @@ void UIManager::Update()
                     s_HoveredElement->LoseHover();
                 s_HoveredElement = element;
             }
+        };
+
+        const Vector2 mousePos = ToUIPosition(Input::GetMousePosition());
+        if (Input::GetMouseButtonDown(Input::MouseButton::LEFT))
+            HandlePointerEvent(mousePos, UIEventType::POINTER_DOWN);
+        else if (Input::GetMouseButtonUp(Input::MouseButton::LEFT))
+            HandlePointerEvent(mousePos, UIEventType::POINTER_UP);
+        HandleHoverEvent(mousePos);
+
+        const std::vector<Input::Touch>& touches = Input::GetTouches();
+        for (const Input::Touch& touch : touches)
+        {
+            const Vector2 touchPos = ToUIPosition(touch.Position);
+            if (touch.State == Input::TouchState::DOWN)
+                HandlePointerEvent(touchPos, UIEventType::POINTER_DOWN);
+            else if (touch.State == Input::TouchState::UP)
+                HandlePointerEvent(touchPos, UIEventType::POINTER_UP);
+            else
+                HandleHoverEvent(touchPos);
         }
 
         if (s_FocusedElement)

@@ -48,12 +48,7 @@ void UIManager::Update()
             eventInfo.Type = eventType;
 
             std::shared_ptr<UIElement> element = HandleEvent(eventInfo, s_Root);
-            if (element != s_FocusedElement)
-            {
-                if (s_FocusedElement)
-                    s_FocusedElement->LoseFocus();
-                s_FocusedElement = element;
-            }
+            ChangeFocus(element);
         };
 
         if (Input::GetMouseButtonDown(Input::MouseButton::LEFT))
@@ -72,6 +67,35 @@ void UIManager::Update()
                 if (s_HoveredElement)
                     s_HoveredElement->LoseHover();
                 s_HoveredElement = element;
+            }
+        }
+
+        if (s_FocusedElement)
+        {
+            const std::unordered_map<Input::SpecialKey, Input::KeyboardKeyState> specialKeys = Input::GetSpecialKeys();
+            for (const auto& pair : specialKeys)
+            {
+                const Input::KeyboardKeyState& keyState = pair.second;
+                if (keyState.State == 0)
+                    continue;
+
+                UIEventInfo eventInfo;
+                eventInfo.KeyState = keyState;
+                eventInfo.Type = UIEventType::SPECIAL_KEY;
+                HandleEvent(eventInfo, s_FocusedElement);
+                if (eventInfo.LoseFocus)
+                    ChangeFocus(nullptr);
+            }
+
+            std::unordered_set<unsigned char> charInputs = Input::GetCharInputs();
+            for (unsigned char ch : charInputs)
+            {
+                UIEventInfo eventInfo;
+                eventInfo.KeyState.Char = ch;
+                eventInfo.Type = UIEventType::CHAR_INPUT;
+                HandleEvent(eventInfo, s_FocusedElement);
+                if (eventInfo.LoseFocus)
+                    ChangeFocus(nullptr);
             }
         }
     }
@@ -141,10 +165,13 @@ void UIManager::CollectElements(UIElement& element)
 
 std::shared_ptr<UIElement> UIManager::HandleEvent(UIEventInfo& eventInfo, std::shared_ptr<UIElement>& element)
 {
-    if (eventInfo.Position.x < element->m_GlobalPosition.x ||
+    if ((eventInfo.Type == UIEventType::POINTER_DOWN ||
+         eventInfo.Type == UIEventType::POINTER_UP ||
+         eventInfo.Type == UIEventType::HOVER) &&
+        (eventInfo.Position.x < element->m_GlobalPosition.x ||
         eventInfo.Position.y < element->m_GlobalPosition.y ||
         eventInfo.Position.x > element->m_GlobalPosition.x + element->Size.x ||
-        eventInfo.Position.y > element->m_GlobalPosition.y + element->Size.y)
+        eventInfo.Position.y > element->m_GlobalPosition.y + element->Size.y))
         return nullptr;
 
     element->HandleEvent(eventInfo);
@@ -159,4 +186,14 @@ std::shared_ptr<UIElement> UIManager::HandleEvent(UIEventInfo& eventInfo, std::s
     }
 
     return nullptr;
+}
+
+void UIManager::ChangeFocus(const std::shared_ptr<UIElement>& newFocusedElement)
+{
+    if (newFocusedElement == s_FocusedElement)
+        return;
+
+    if (s_FocusedElement)
+        s_FocusedElement->LoseFocus();
+    s_FocusedElement = newFocusedElement;
 }

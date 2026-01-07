@@ -47,6 +47,8 @@ private:
 
     static void CollectElements(UIElement& element);
     static std::shared_ptr<UIElement> HandleEvent(UIEventInfo& eventInfo, std::shared_ptr<UIElement>& element);
+
+    static void ChangeFocus(const std::shared_ptr<UIElement>& newFocusedElement);
 };
 
 #endif //RENDER_ENGINE_UI_MANAGER_H

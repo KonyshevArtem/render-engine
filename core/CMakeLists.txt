@@ -147,7 +147,11 @@ add_library(
 	ui/ui_button.h
 	ui/ui_event_info.h
 	ui/ui_text_field.cpp
-	ui/ui_text_field.h)
+	ui/ui_text_field.h
+	ui/ui_native_keyboard.cpp
+	ui/ui_native_keyboard.h
+	native_bridge/native_bridge_android.cpp
+	native_bridge/native_bridge_android.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex)

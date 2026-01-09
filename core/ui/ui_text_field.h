@@ -14,6 +14,11 @@ class UITextField : public UIElement
 public:
     UITextField(const Vector2& position, const Vector2& size);
 
+    const std::string& GetText() const;
+    void SetText(const std::string& text);
+
+    void Done();
+
     std::function<void(const std::string&)> OnFinish;
 
 protected:

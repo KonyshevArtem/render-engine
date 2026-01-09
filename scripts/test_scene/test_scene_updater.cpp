@@ -90,7 +90,9 @@ void TestSceneUpdater::Update()
         deleteButton->OnPress = [text](){ text->Destroy(); };
 
         std::shared_ptr<UITextField> inputField = UIManager::CreateTextField(nullptr, {10, 410}, {150, 30}, 24, Texture2D::White());
-        inputField->OnFinish = [](const std::string& text){ Debug::LogInfo(text); };
+        inputField->OnFinish = [text](const std::string& inputText){ text->SetText(inputText); };
+
+        UIManager::CreateTextField(nullptr, {10, 460}, {150, 30}, 24, Texture2D::White());
 
         m_Initialized = true;
     }

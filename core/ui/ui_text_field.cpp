@@ -2,6 +2,7 @@
 #include "ui_event_info.h"
 #include "ui_text.h"
 #include "ui_image.h"
+#include "ui_native_keyboard.h"
 #include "font/font.h"
 
 #include <algorithm>
@@ -13,10 +14,27 @@ UITextField::UITextField(const Vector2& position, const Vector2& size) :
 {
 }
 
+const std::string& UITextField::GetText() const
+{
+    return m_Text->GetText();
+}
+
+void UITextField::SetText(const std::string& text)
+{
+    m_Text->SetText(text);
+}
+
+void UITextField::Done()
+{
+    if (OnFinish)
+        OnFinish(m_Text->GetText());
+}
+
 void UITextField::HandleEvent(UIEventInfo& eventInfo)
 {
     if (eventInfo.Type == UIEventType::POINTER_DOWN || eventInfo.Type == UIEventType::POINTER_UP)
     {
+        UINativeKeyboard::ShowKeyboard(std::static_pointer_cast<UITextField>(shared_from_this()));
         SetCursorActive(true);
         eventInfo.Consumed = true;
     }
@@ -66,8 +84,7 @@ void UITextField::HandleEvent(UIEventInfo& eventInfo)
         }
         else if (eventInfo.KeyState.Char == '\r')
         {
-            if (OnFinish)
-                OnFinish(m_Text->GetText());
+            Done();
 
             eventInfo.Consumed = true;
             eventInfo.LoseFocus = true;

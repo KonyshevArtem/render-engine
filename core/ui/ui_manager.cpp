@@ -138,6 +138,11 @@ void UIManager::DestroyUI()
         child->Destroy();
 }
 
+void UIManager::ResetFocus()
+{
+    ChangeFocus(nullptr);
+}
+
 std::shared_ptr<UIImage> UIManager::CreateImage(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image)
 {
     std::shared_ptr<UIImage> uiImage = std::make_shared<UIImage>(position, size, image);

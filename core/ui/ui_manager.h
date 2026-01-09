@@ -22,6 +22,7 @@ public:
     static void Initialize(float referenceHeight);
     static void Update();
     static void DestroyUI();
+    static void ResetFocus();
 
     static inline const Vector2& GetReferenceSize()
     {

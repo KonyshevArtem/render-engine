@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 rootProject.name = "RenderEngine"
 include(":app")
 include(":EngineFramework")
+include(":NativeBridge")

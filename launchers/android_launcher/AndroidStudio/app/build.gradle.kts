@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(project(":EngineFramework"))
+    implementation(project(":NativeBridge"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

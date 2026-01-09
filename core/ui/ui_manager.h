@@ -8,12 +8,9 @@
 #include <vector>
 
 class UIElement;
-class UIImage;
-class UIText;
 class UIButton;
 class UITextField;
 class Texture2D;
-class Font;
 struct UIEventInfo;
 
 class UIManager
@@ -29,18 +26,14 @@ public:
         return s_ReferenceSize;
     }
 
-    static std::shared_ptr<UIImage> CreateImage(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image);
-    static std::shared_ptr<UIText> CreateText(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize);
-    static std::shared_ptr<UIButton> CreateButton(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize, const std::shared_ptr<Texture2D> image);
-    static std::shared_ptr<UITextField> CreateTextField(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, uint16_t fontSize, const std::shared_ptr<Texture2D> image);
-
     static inline const std::vector<UIElement*> GetElements()
     {
         return s_Elements;
     }
 
+    static std::shared_ptr<UIElement> GetRoot();
+
 private:
-    static std::shared_ptr<Font> s_Font;
     static std::shared_ptr<UIElement> s_Root;
     static std::vector<UIElement*> s_Elements;
     static std::shared_ptr<UIElement> s_FocusedElement;

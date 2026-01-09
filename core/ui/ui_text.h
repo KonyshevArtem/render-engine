@@ -28,7 +28,7 @@ public:
         BOTTOM
     };
 
-    UIText(const Vector2& position, const Vector2& size, const std::string& text, const std::shared_ptr<Font>& font);
+    static std::shared_ptr<UIText> Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize);
 
     void SetText(const std::string& text);
     void SetFontSize(uint16_t fontSize);
@@ -51,6 +51,10 @@ public:
     Vector4 Color;
 
 private:
+    UIText(const Vector2& position, const Vector2& size, const std::string& text, const std::shared_ptr<Font>& font);
+
+    static std::shared_ptr<Font> s_Font;
+
     bool m_Dirty;
     Vector2 m_PrevSize;
     uint16_t m_FontSize;

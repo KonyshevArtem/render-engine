@@ -5,14 +5,16 @@
 #include "vector4/vector4.h"
 
 #include <functional>
+#include <string>
 
 class UIText;
 class UIImage;
+class Texture2D;
 
 class UIButton : public UIElement
 {
 public:
-    UIButton(const Vector2& position, const Vector2& size);
+    static std::shared_ptr<UIButton> Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize, const std::shared_ptr<Texture2D> image);
 
     void SetImageColor(const Vector4& color);
 
@@ -24,6 +26,8 @@ protected:
     void LoseHover() override;
 
 private:
+    UIButton(const Vector2& position, const Vector2& size);
+
     std::weak_ptr<UIText> m_Text;
     std::weak_ptr<UIImage> m_Image;
     Vector4 m_ImageColor;

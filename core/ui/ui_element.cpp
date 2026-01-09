@@ -1,4 +1,5 @@
 #include "ui_element.h"
+#include "ui_manager.h"
 
 UIElement::UIElement(const Vector2& position, const Vector2& size) :
     Position(position),
@@ -15,9 +16,11 @@ void UIElement::SetParent(const std::shared_ptr<UIElement>& parent)
     if (!m_Parent.expired())
         m_Parent.lock()->RemoveChild(thisPtr);
 
-    m_Parent = parent;
-    if (parent)
-        parent->m_Children.push_back(thisPtr);
+    std::shared_ptr<UIElement> p = parent ? parent : UIManager::GetRoot();
+
+    m_Parent = p;
+    if (p)
+        p->m_Children.push_back(thisPtr);
 }
 
 void UIElement::RemoveChild(const std::shared_ptr<UIElement>& child)

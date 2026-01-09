@@ -4,8 +4,30 @@
 #include "ui_image.h"
 #include "ui_native_keyboard.h"
 #include "font/font.h"
+#include "texture_2d/texture_2d.h"
 
 #include <algorithm>
+
+std::shared_ptr<UITextField> UITextField::Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, uint16_t fontSize, const std::shared_ptr<Texture2D> image)
+{
+    std::shared_ptr<UITextField> uiTextField = std::shared_ptr<UITextField>(new UITextField(position, size));
+    uiTextField->SetParent(parent);
+
+    std::shared_ptr<UIImage> backgroundImage = UIImage::Create(uiTextField, Vector2(0, 0), size, image);
+    std::shared_ptr<UIText> uiText = UIText::Create(uiTextField, Vector2(0, 0), size, "", fontSize);
+    std::shared_ptr<UIImage> cursorImage = UIImage::Create(uiTextField, Vector2(0, 0), Vector2(1, size.y), Texture2D::White());
+
+    const Vector4 defaultColor = Vector4(0.2f, 0.2f, 0.2f, 1);
+    uiText->Color = defaultColor;
+    cursorImage->Color = defaultColor;
+    cursorImage->Active = false;
+
+    uiTextField->m_BackgroundImage = backgroundImage;
+    uiTextField->m_CursorImage = cursorImage;
+    uiTextField->m_Text = uiText;
+
+    return uiTextField;
+}
 
 UITextField::UITextField(const Vector2& position, const Vector2& size) :
     UIElement(position, size),

@@ -1,17 +1,12 @@
 #include "ui_manager.h"
 #include "ui_image.h"
-#include "ui_text.h"
-#include "ui_button.h"
 #include "ui_text_field.h"
 #include "ui_event_info.h"
-#include "font/font.h"
 #include "resources/resources.h"
 #include "graphics/graphics.h"
 #include "input/input.h"
 #include "editor/profiler/profiler.h"
-#include "texture_2d/texture_2d.h"
 
-std::shared_ptr<Font> UIManager::s_Font;
 std::shared_ptr<UIElement> UIManager::s_Root;
 std::vector<UIElement*> UIManager::s_Elements;
 std::shared_ptr<UIElement> UIManager::s_FocusedElement;
@@ -143,59 +138,9 @@ void UIManager::ResetFocus()
     ChangeFocus(nullptr);
 }
 
-std::shared_ptr<UIImage> UIManager::CreateImage(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image)
+std::shared_ptr<UIElement> UIManager::GetRoot()
 {
-    std::shared_ptr<UIImage> uiImage = std::make_shared<UIImage>(position, size, image);
-    uiImage->SetParent(parent != nullptr ? parent : s_Root);
-    return uiImage;
-}
-
-std::shared_ptr<UIText> UIManager::CreateText(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize)
-{
-    if (!s_Font)
-        s_Font = Resources::Load<Font>("core_resources/fonts/Inter.ttf");
-
-    std::shared_ptr<UIText> uiText = std::make_shared<UIText>(position, size, text, s_Font);
-    uiText->SetParent(parent != nullptr ? parent : s_Root);
-    uiText->SetFontSize(fontSize);
-    return uiText;
-}
-
-std::shared_ptr<UIButton> UIManager::CreateButton(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize, const std::shared_ptr<Texture2D> image)
-{
-     std::shared_ptr<UIButton> uiButton = std::make_shared<UIButton>(position, size);
-     uiButton->SetParent(parent != nullptr ? parent : s_Root);
-
-     std::shared_ptr<UIImage> uiImage = UIManager::CreateImage(uiButton, Vector2(0, 0), size, image);
-     std::shared_ptr<UIText> uiText = UIManager::CreateText(uiButton, Vector2(0, 0), size, text, fontSize);
-     uiText->SetHorizontalAlignment(UIText::HorizontalAlignment::MIDDLE);
-     uiText->SetVerticalAlignment(UIText::VerticalAlignment::MIDDLE);
-
-     uiButton->m_Image = uiImage;
-     uiButton->m_Text = uiText;
-
-     return uiButton;
-}
-
-std::shared_ptr<UITextField> UIManager::CreateTextField(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, uint16_t fontSize, const std::shared_ptr<Texture2D> image)
-{
-    std::shared_ptr<UITextField> uiTextField = std::make_shared<UITextField>(position, size);
-    uiTextField->SetParent(parent != nullptr ? parent : s_Root);
-
-    std::shared_ptr<UIImage> backgroundImage = UIManager::CreateImage(uiTextField, Vector2(0, 0), size, image);
-    std::shared_ptr<UIText> uiText = UIManager::CreateText(uiTextField, Vector2(0, 0), size, "", fontSize);
-    std::shared_ptr<UIImage> cursorImage = UIManager::CreateImage(uiTextField, Vector2(0, 0), Vector2(1, size.y), Texture2D::White());
-
-    const Vector4 defaultColor = Vector4(0.2f, 0.2f, 0.2f, 1);
-    uiText->Color = defaultColor;
-    cursorImage->Color = defaultColor;
-    cursorImage->Active = false;
-
-    uiTextField->m_BackgroundImage = backgroundImage;
-    uiTextField->m_CursorImage = cursorImage;
-    uiTextField->m_Text = uiText;
-
-    return uiTextField;
+    return s_Root;
 }
 
 void UIManager::CollectElements(UIElement& element)

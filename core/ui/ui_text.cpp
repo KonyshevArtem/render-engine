@@ -3,13 +3,29 @@
 #include "mesh/mesh.h"
 #include "texture_2d_array/texture_2d_array.h"
 #include "editor/profiler/profiler.h"
+#include "resources/resources.h"
+
+std::shared_ptr<Font> UIText::s_Font;
+
+std::shared_ptr<UIText> UIText::Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize)
+{
+    if (!s_Font)
+        s_Font = Resources::Load<Font>("core_resources/fonts/Inter.ttf");
+
+    std::shared_ptr<UIText> uiText = std::shared_ptr<UIText>(new UIText(position, size, text, s_Font));
+    uiText->SetParent(parent);
+    uiText->SetFontSize(fontSize);
+    return uiText;
+}
 
 UIText::UIText(const Vector2 &position, const Vector2& size, const std::string& text, const std::shared_ptr<Font>& font) :
     UIElement(position, size),
     Color(1, 1, 1, 1),
     m_Dirty(true),
     m_Text(text),
-    m_Font(font)
+    m_Font(font),
+    m_HorizontalAlignment(HorizontalAlignment::LEFT),
+    m_VerticalAlignment(VerticalAlignment::TOP)
 {
 }
 

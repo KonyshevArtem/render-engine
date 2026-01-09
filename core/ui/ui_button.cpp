@@ -4,6 +4,22 @@
 #include "ui_manager.h"
 #include "ui_event_info.h"
 
+std::shared_ptr<UIButton> UIButton::Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize, const std::shared_ptr<Texture2D> image)
+{
+    std::shared_ptr<UIButton> uiButton = std::shared_ptr<UIButton>(new UIButton(position, size));
+    uiButton->SetParent(parent);
+
+    std::shared_ptr<UIImage> uiImage = UIImage::Create(uiButton, Vector2(0, 0), size, image);
+    std::shared_ptr<UIText> uiText = UIText::Create(uiButton, Vector2(0, 0), size, text, fontSize);
+    uiText->SetHorizontalAlignment(UIText::HorizontalAlignment::MIDDLE);
+    uiText->SetVerticalAlignment(UIText::VerticalAlignment::MIDDLE);
+
+    uiButton->m_Image = uiImage;
+    uiButton->m_Text = uiText;
+
+    return uiButton;
+}
+
 UIButton::UIButton(const Vector2& position, const Vector2& size) :
     UIElement(position, size),
     m_ImageColor(Vector4(1, 1, 1, 1)),

@@ -76,7 +76,7 @@ const int k_MouseButtonRight = 1;
 
 - (void) mouseUp:(NSEvent *)event
 {
-    [EngineFrameworkWrapper ProcessMouseClick:k_MouseButtonRight pressed:false];
+    [EngineFrameworkWrapper ProcessMouseClick:k_MouseButtonLeft pressed:false];
 }
 
 - (void) mouseDragged:(NSEvent *)event

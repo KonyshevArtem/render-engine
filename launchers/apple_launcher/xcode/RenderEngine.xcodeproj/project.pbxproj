@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 55;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -17,6 +17,7 @@
 		3ABD52F62283BDB70050D28E /* AAPLMetalRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A40C5A82277F0F500DBB29F /* AAPLMetalRenderer.m */; };
 		3ABD52FB2283BE4B0050D28E /* AAPLMetalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52E82283BB9B0050D28E /* AAPLMetalViewController.m */; };
 		3ABD53092283C4FE0050D28E /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
+		461F181E2F12729F00F75837 /* libbz2.1.0.8.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 461F181D2F12729700F75837 /* libbz2.1.0.8.tbd */; platformFilters = (ios, maccatalyst, macos, tvos, watchos, xros, ); };
 		464255592CD802BF009D7BB1 /* EngineFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1E2D2BAE3C5600362748 /* EngineFramework.h */; };
 		4642555A2CD802CC009D7BB1 /* RenderEngineViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */; };
 		4642555C2CD80300009D7BB1 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4642555B2CD80300009D7BB1 /* GameController.framework */; };
@@ -55,6 +56,7 @@
 		3ABD52E92283BB9B0050D28E /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		3ABD52F12283BC300050D28E /* AAPLAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAPLAppDelegate.h; sourceTree = "<group>"; };
 		3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAPLAppDelegate.m; sourceTree = "<group>"; };
+		461F181D2F12729700F75837 /* libbz2.1.0.8.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.1.0.8.tbd; path = usr/lib/libbz2.1.0.8.tbd; sourceTree = SDKROOT; };
 		4642555B2CD80300009D7BB1 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/System/Library/Frameworks/GameController.framework; sourceTree = DEVELOPER_DIR; };
 		4642558C2CD810CA009D7BB1 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		464255912CD81E56009D7BB1 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
@@ -280,6 +282,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				461F181E2F12729F00F75837 /* libbz2.1.0.8.tbd in Frameworks */,
 				93A9F05B2BB0658E0023B4D5 /* GameController.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -961,6 +964,7 @@
 		935D1D652BA79E7500362748 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				461F181D2F12729700F75837 /* libbz2.1.0.8.tbd */,
 				464255912CD81E56009D7BB1 /* libc++.tbd */,
 				4642558C2CD810CA009D7BB1 /* UIKit.framework */,
 				935D1E222BAA41CE00362748 /* GameController.framework */,
@@ -1323,6 +1327,10 @@
 					"-lRenderEngineLauncher",
 					"-lHash",
 					"-lArguments",
+					"-lz",
+					"-lfreetype",
+					"-lharfbuzz",
+					"-ltrex",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -1370,6 +1378,10 @@
 					"-lRenderEngineLauncher",
 					"-lHash",
 					"-lArguments",
+					"-lz",
+					"-lfreetype",
+					"-lharfbuzz",
+					"-ltrex",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";

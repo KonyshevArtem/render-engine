@@ -12,6 +12,7 @@
 #include "mesh/mesh.h"
 #include "editor/gizmos/gizmos.h"
 #include "editor/profiler/profiler.h"
+#include "types/graphics_backend_render_target_descriptor.h"
 
 namespace UIRenderPass_Local
 {
@@ -66,6 +67,9 @@ void UIRenderPass::Execute(const Context& ctx)
     };
 
     const std::shared_ptr<Mesh> quadMesh = Mesh::GetQuadMesh();
+
+    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
+    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
 
     GraphicsBackend::Current()->BeginRenderPass("UI Pass");
 

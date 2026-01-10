@@ -96,7 +96,7 @@ void UITextField::HandleEvent(UIEventInfo& eventInfo)
 
     if (eventInfo.Type == UIEventType::CHAR_INPUT)
     {
-        if (eventInfo.KeyState.Char == '\b')
+        if (eventInfo.KeyState.Char == '\b' || eventInfo.KeyState.Char == 127)
         {
             if (!m_Text->GetText().empty() && m_CursorPosition != 0)
             {

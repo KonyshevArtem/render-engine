@@ -7,6 +7,21 @@
 const int k_MouseButtonLeft = 0;
 const int k_MouseButtonRight = 1;
 
+NSDictionary *m_SpecialKeys = NULL;
+
++ (void) initialize
+{
+    m_SpecialKeys = @{
+        @(NSDeleteFunctionKey): @6,
+        @(NSHomeFunctionKey): @7,
+        @(NSEndFunctionKey): @8,
+        @(NSLeftArrowFunctionKey): @9,
+        @(NSRightArrowFunctionKey): @10,
+        @(NSUpArrowFunctionKey): @11,
+        @(NSDownArrowFunctionKey): @12
+    };
+}
+
 - (CGFloat) getScreenScale
 {
 #if defined(TARGET_IOS) || defined(TARGET_TVOS)
@@ -125,14 +140,36 @@ const int k_MouseButtonRight = 1;
     [EngineFrameworkWrapper ProcessKeyPress:[[event.characters uppercaseString] characterAtIndex:0] pressed:pressed];
 }
 
+- (void) specialKeyPress:(int)keyCode pressed:(bool)pressed
+{
+    [EngineFrameworkWrapper ProcessSpecialKey:keyCode pressed:pressed];
+}
+
+- (void) charPress:(NSEvent *)event
+{
+    const char* str = [event.characters cStringUsingEncoding:NSUnicodeStringEncoding];
+    [EngineFrameworkWrapper ProcessCharInput:str[0]];
+}
+
 - (void) keyDown:(NSEvent *)event
 {
-    [self keyPress:event pressed:true];
+    NSNumber* specialKeyCodePtr = [m_SpecialKeys objectForKey:@([event.characters characterAtIndex:0])];
+    if (specialKeyCodePtr != NULL)
+        [self specialKeyPress:[specialKeyCodePtr intValue] pressed:true];
+    else
+    {
+        [self keyPress:event pressed:true];
+        [self charPress:event];
+    }
 }
 
 - (void) keyUp:(NSEvent *)event
 {
-    [self keyPress:event pressed:false];
+    NSNumber* specialKeyCodePtr = [m_SpecialKeys objectForKey:@([event.characters characterAtIndex:0])];
+    if (specialKeyCodePtr != NULL)
+        [self specialKeyPress:[specialKeyCodePtr intValue] pressed:false];
+    else
+        [self keyPress:event pressed:false];
 }
 
 #endif

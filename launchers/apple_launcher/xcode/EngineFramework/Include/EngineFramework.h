@@ -12,7 +12,9 @@ public:
     static void ProcessMouseClick(int mouseButton, bool pressed);
     static void ProcessMouseMove(float x, float y);
     static void ProcessKeyPress(char key, bool pressed);
-    
+    static void ProcessCharInput(unsigned char ch);
+    static void ProcessSpecialKey(int keyId, bool pressed);
+
     static void ProcessTouchDown(unsigned long touchId, float x, float y);
     static void ProcessTouchMove(unsigned long touchId, float x, float y);
     static void ProcessTouchUp(unsigned long touchId);

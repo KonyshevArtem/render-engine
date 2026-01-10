@@ -1328,7 +1328,7 @@
 					"-lHash",
 					"-lArguments",
 					"-lz",
-					"-lfreetype",
+					"-lfreetyped",
 					"-lharfbuzz",
 					"-ltrex",
 				);

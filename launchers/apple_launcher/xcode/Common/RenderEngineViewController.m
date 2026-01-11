@@ -11,6 +11,7 @@ NSDictionary *m_SpecialKeys = NULL;
 
 + (void) initialize
 {
+#if !defined(TARGET_IOS) && !defined(TARGET_TVOS)
     m_SpecialKeys = @{
         @(NSDeleteFunctionKey): @6,
         @(NSHomeFunctionKey): @7,
@@ -20,6 +21,7 @@ NSDictionary *m_SpecialKeys = NULL;
         @(NSUpArrowFunctionKey): @11,
         @(NSDownArrowFunctionKey): @12
     };
+#endif
 }
 
 - (CGFloat) getScreenScale

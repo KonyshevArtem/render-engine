@@ -70,6 +70,7 @@ namespace Input
     struct Touch
     {
         uint64_t Id{};
+        uint64_t StartFrame;
         TouchState State = TouchState::DOWN;
         Vector2 Position{};
         Vector2 Delta{};

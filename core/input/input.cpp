@@ -1,4 +1,5 @@
 #include "input.h"
+#include "graphics_backend_api.h"
 
 namespace Input
 {
@@ -35,7 +36,7 @@ namespace Input
         {
             if (pendingTouch.State == TouchState::DOWN)
             {
-                const Touch touch{pendingTouch.Id, TouchState::DOWN, {pendingTouch.Position.x, pendingTouch.Position.y}, {0, 0}};
+                const Touch touch{pendingTouch.Id, pendingTouch.StartFrame, TouchState::DOWN, {pendingTouch.Position.x, pendingTouch.Position.y}, {0, 0}};
                 s_Touches.push_back(touch);
             }
 
@@ -43,7 +44,7 @@ namespace Input
             {
                 for (Touch& touch: s_Touches)
                 {
-                    if (touch.Id == pendingTouch.Id)
+                    if (touch.Id == pendingTouch.Id && pendingTouch.StartFrame > touch.StartFrame)
                     {
                         Vector2 pos = {pendingTouch.Position.x, pendingTouch.Position.y};
                         touch.Delta = pos - touch.Position;
@@ -59,10 +60,7 @@ namespace Input
                 for (Touch& touch: s_Touches)
                 {
                     if (touch.Id == pendingTouch.Id)
-                    {
                         touch.State = TouchState::UP;
-                        break;
-                    }
                 }
             }
         }
@@ -153,7 +151,7 @@ namespace Input
 
     void HandleTouch(TouchState state, uint64_t touchId, float x, float y)
     {
-        s_PendingTouches.push_back(Touch{touchId, state, {x, y}, {0, 0}});
+        s_PendingTouches.push_back(Touch{touchId, GraphicsBackend::Current()->GetFrameNumber(), state, {x, y}, {0, 0}});
     }
 
     const std::unordered_set<unsigned char>& GetCharInputs()

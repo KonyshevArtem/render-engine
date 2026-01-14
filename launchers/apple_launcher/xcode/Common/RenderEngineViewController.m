@@ -1,5 +1,6 @@
 #import "RenderEngineViewController.h"
 #import "EngineFrameworkWrapper.h"
+#import "NativeKeyboard.h"
 #import <Foundation/Foundation.h>
 
 @implementation RenderEngineViewController
@@ -21,6 +22,13 @@ NSDictionary *m_SpecialKeys = NULL;
         @(NSUpArrowFunctionKey): @11,
         @(NSDownArrowFunctionKey): @12
     };
+#endif
+}
+
+- (void) viewDidLoad
+{
+#if defined(TARGET_IOS)
+    [NativeKeyboard Initialize:self.view];
 #endif
 }
 

@@ -151,7 +151,9 @@ add_library(
 	ui/ui_native_keyboard.cpp
 	ui/ui_native_keyboard.h
 	native_bridge/native_bridge_android.cpp
-	native_bridge/native_bridge_android.h)
+	native_bridge/native_bridge_android.h
+	native_bridge/native_bridge_apple.cpp
+	native_bridge/native_bridge_apple.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex)

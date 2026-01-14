@@ -2,22 +2,23 @@
 #include "ui_text_field.h"
 #include "ui_manager.h"
 #include "native_bridge/native_bridge_android.h"
+#include "native_bridge/native_bridge_apple.h"
 
 namespace UINativeKeyboard_Local
 {
-    void OnNativeKeyboardTextChanged(void* textFieldPtr, const char* text)
+    std::shared_ptr<UITextField> s_CurrentTextField;
+
+    void OnNativeKeyboardTextChanged(const char* text)
     {
-        UITextField* textField = static_cast<UITextField*>(textFieldPtr);
-        textField->SetText(text);
+        if (s_CurrentTextField)
+            s_CurrentTextField->SetText(text);
     }
 
-    void OnFinishEdit(void* textFieldPtr, bool done)
+    void OnFinishEdit(bool done)
     {
-        if (done)
-        {
-            UITextField* textField = static_cast<UITextField*>(textFieldPtr);
-            textField->Done();
-        }
+        if (done && s_CurrentTextField)
+            s_CurrentTextField->Done();
+        s_CurrentTextField = nullptr;
 
         UIManager::ResetFocus();
     }
@@ -25,6 +26,8 @@ namespace UINativeKeyboard_Local
 
 void UINativeKeyboard::ShowKeyboard(std::shared_ptr<UITextField> textField)
 {
+    UINativeKeyboard_Local::s_CurrentTextField = textField;
+
 #if RENDER_ENGINE_ANDROID
     NativeBridgeAndroid::ShowNativeKeyboard(
             textField->GetText().c_str(),
@@ -32,5 +35,11 @@ void UINativeKeyboard::ShowKeyboard(std::shared_ptr<UITextField> textField)
             reinterpret_cast<void*>(&UINativeKeyboard_Local::OnNativeKeyboardTextChanged),
             reinterpret_cast<void*>(&UINativeKeyboard_Local::OnFinishEdit)
         );
+#elif RENDER_ENGINE_APPLE
+    NativeBridgeApple::ShowNativeKeyboard(
+            textField->GetText().c_str(),
+            UINativeKeyboard_Local::OnNativeKeyboardTextChanged,
+            UINativeKeyboard_Local::OnFinishEdit
+    );
 #endif
 }

@@ -14,7 +14,12 @@
 
 @property (strong, nonatomic) PlatformWindow *window;
 
+#if defined(TARGET_IOS) || defined(TARGET_TVOS)
 - (BOOL) application:(PlatformApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions;
+#else
+- (void) applicationDidFinishLaunching:(NSNotification *)notification;
+#endif
+
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed:(PlatformApplication *)sender;
 
 @end

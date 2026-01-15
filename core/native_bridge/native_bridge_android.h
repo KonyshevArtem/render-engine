@@ -3,10 +3,15 @@
 
 #ifdef RENDER_ENGINE_ANDROID
 
+#include "native_bridge_common.h"
+
 class NativeBridgeAndroid
 {
 public:
-    static void ShowNativeKeyboard(const char* text, void* textFieldPtr, void* textChangedCallback, void* finishEditCallback);
+    static void ShowNativeKeyboard(const char* text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback);
+
+    static void NativeKeyboardTextChanged(const char *text);
+    static void NativeKeyboardFinishEdit(bool done);
 };
 
 #endif

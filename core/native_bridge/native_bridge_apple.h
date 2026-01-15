@@ -3,6 +3,8 @@
 
 #ifdef RENDER_ENGINE_APPLE
 
+#include "native_bridge_common.h"
+
 typedef void (*ShowNativeKeyboardCallback)(const char* text);
 
 void SetShowNativeKeyboardCallback(ShowNativeKeyboardCallback fn);
@@ -12,9 +14,6 @@ void NativeKeyboardFinishEdit(bool done);
 class NativeBridgeApple
 {
 public:
-    typedef void (*TextChangedCallback)(const char* text);
-    typedef void (*FinishEditCallback)(bool done);
-
     static void ShowNativeKeyboard(const char* text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback);
 };
 

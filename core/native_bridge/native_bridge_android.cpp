@@ -6,6 +6,9 @@
 
 namespace NativeBridgeAndroid_Local
 {
+    TextChangedCallback s_TextChangedCallback;
+    FinishEditCallback s_FinishEditCallback;
+
     JavaVM* s_JavaVM = nullptr;
     JNIEnv* s_Env = nullptr;
 
@@ -19,8 +22,11 @@ namespace NativeBridgeAndroid_Local
 
         s_JavaVM->AttachCurrentThread(&s_Env, nullptr);
 
-        s_NativeBridgeClass = s_Env->FindClass("com/artemkonyshev/renderengine/NativeKeyboardView");
-        s_ShowKeyboardMethodID = s_Env->GetStaticMethodID(s_NativeBridgeClass, "ShowKeyboard", "(Ljava/lang/String;JJJ)V");
+        jclass localRef = s_Env->FindClass("com/artemkonyshev/renderengine/NativeKeyboardView");
+        s_NativeBridgeClass = reinterpret_cast<jclass>(s_Env->NewGlobalRef(localRef));
+        s_Env->DeleteLocalRef(localRef);
+
+        s_ShowKeyboardMethodID = s_Env->GetStaticMethodID(s_NativeBridgeClass, "ShowKeyboard", "(Ljava/lang/String;)V");
     }
 }
 
@@ -30,17 +36,29 @@ jint JNI_OnLoad(JavaVM* javaVM, void* reserved)
     return JNI_VERSION_1_6;
 }
 
-void NativeBridgeAndroid::ShowNativeKeyboard(const char* text, void* textFieldPtr, void* textChangedCallback, void* finishEditCallback)
+void NativeBridgeAndroid::NativeKeyboardTextChanged(const char *text)
+{
+    if (NativeBridgeAndroid_Local::s_TextChangedCallback)
+        NativeBridgeAndroid_Local::s_TextChangedCallback(text);
+}
+
+void NativeBridgeAndroid::NativeKeyboardFinishEdit(bool done)
+{
+    if (NativeBridgeAndroid_Local::s_FinishEditCallback)
+        NativeBridgeAndroid_Local::s_FinishEditCallback(done);
+}
+
+void NativeBridgeAndroid::ShowNativeKeyboard(const char* text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback)
 {
     NativeBridgeAndroid_Local::InitBridge();
+
+    NativeBridgeAndroid_Local::s_TextChangedCallback = textChangedCallback;
+    NativeBridgeAndroid_Local::s_FinishEditCallback = finishEditCallback;
 
     NativeBridgeAndroid_Local::s_Env->CallStaticVoidMethod(
         NativeBridgeAndroid_Local::s_NativeBridgeClass,
         NativeBridgeAndroid_Local::s_ShowKeyboardMethodID,
-        NativeBridgeAndroid_Local::s_Env->NewStringUTF(text),
-        textFieldPtr,
-        textChangedCallback,
-        finishEditCallback);
+        NativeBridgeAndroid_Local::s_Env->NewStringUTF(text));
 }
 
 #endif

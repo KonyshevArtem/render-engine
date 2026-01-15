@@ -11,7 +11,6 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/EngineFramework" />
-            <option value="$PROJECT_DIR$/NativeBridge" />
             <option value="$PROJECT_DIR$/app" />
           </set>
         </option>

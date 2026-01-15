@@ -6,8 +6,8 @@ namespace NativeBridgeApple_Local
 {
     ShowNativeKeyboardCallback s_ShowNativeKeyboardCallback;
 
-    NativeBridgeApple::TextChangedCallback s_TextChangedCallback;
-    NativeBridgeApple::FinishEditCallback s_FinishEditCallback;
+    TextChangedCallback s_TextChangedCallback;
+    FinishEditCallback s_FinishEditCallback;
 }
 
 void SetShowNativeKeyboardCallback(ShowNativeKeyboardCallback callback)

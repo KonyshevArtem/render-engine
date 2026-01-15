@@ -10,24 +10,19 @@ import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatEditText;
 
-import com.artemkonyshev.renderengine.nativebridge.NativeBridge;
+import com.artemkonyshev.engineframework.NativeBridge;
 
 public class NativeKeyboardView extends AppCompatEditText
 {
     private static NativeKeyboardView s_Instance;
 
     private InputMethodManager m_InputMethodManager;
-    private long m_TextFieldPtr;
-    private long m_TextChangedCallbackPtr;
-    private long m_FinishEditCallbackPtr;
 
     public NativeKeyboardView(Context context, InputMethodManager inputMethodManager)
     {
         super(context);
 
         m_InputMethodManager = inputMethodManager;
-        m_TextFieldPtr = 0;
-        m_TextChangedCallbackPtr = 0;
 
         setOnEditorActionListener(this::HandleEditorAction);
         setOnFocusChangeListener(this::HandleFocusChange);
@@ -44,9 +39,9 @@ public class NativeKeyboardView extends AppCompatEditText
         s_Instance = this;
     }
 
-    public static void ShowKeyboard(String text, long textFieldPtr, long textChangedCallbackPtr, long finishEditCallbackPtr)
+    public static void ShowKeyboard(String text)
     {
-        MainActivity.getInstance().runOnUiThread(() -> s_Instance.ShowKeyboard_Internal(text, textFieldPtr, textChangedCallbackPtr, finishEditCallbackPtr));
+        MainActivity.getInstance().runOnUiThread(() -> s_Instance.ShowKeyboard_Internal(text));
     }
 
     public static void HideKeyboard(boolean done)
@@ -54,12 +49,8 @@ public class NativeKeyboardView extends AppCompatEditText
         MainActivity.getInstance().runOnUiThread(() -> s_Instance.HideKeyboard_Internal(done));
     }
 
-    private void ShowKeyboard_Internal(String text, long textFieldPtr, long textChangedCallbackPtr, long finishEditCallbackPtr)
+    private void ShowKeyboard_Internal(String text)
     {
-        m_TextFieldPtr = textFieldPtr;
-        m_TextChangedCallbackPtr = textChangedCallbackPtr;
-        m_FinishEditCallbackPtr = finishEditCallbackPtr;
-
         setText(text);
 
         setEnabled(true);
@@ -70,11 +61,7 @@ public class NativeKeyboardView extends AppCompatEditText
 
     private void HideKeyboard_Internal(boolean done)
     {
-        NativeBridge.InvokeFinishEdit(done, m_TextFieldPtr, m_FinishEditCallbackPtr);
-
-        m_TextFieldPtr = 0;
-        m_TextChangedCallbackPtr = 0;
-        m_FinishEditCallbackPtr = 0;
+        NativeBridge.NativeKeyboardFinishEdit(done);
 
         clearFocus();
     }
@@ -84,8 +71,7 @@ public class NativeKeyboardView extends AppCompatEditText
     {
         super.onTextChanged(text, start, lengthBefore, lengthAfter);
 
-        if (m_TextFieldPtr != 0 && m_TextChangedCallbackPtr != 0)
-            NativeBridge.InvokeNativeKeyboardTextChanged(text.toString(), m_TextFieldPtr, m_TextChangedCallbackPtr);
+        NativeBridge.NativeKeyboardTextChanged(text.toString());
     }
 
     private boolean HandleEditorAction(TextView view, int actionId, KeyEvent event)

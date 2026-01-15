@@ -31,9 +31,8 @@ void UINativeKeyboard::ShowKeyboard(std::shared_ptr<UITextField> textField)
 #if RENDER_ENGINE_ANDROID
     NativeBridgeAndroid::ShowNativeKeyboard(
             textField->GetText().c_str(),
-            textField.get(),
-            reinterpret_cast<void*>(&UINativeKeyboard_Local::OnNativeKeyboardTextChanged),
-            reinterpret_cast<void*>(&UINativeKeyboard_Local::OnFinishEdit)
+            &UINativeKeyboard_Local::OnNativeKeyboardTextChanged,
+            &UINativeKeyboard_Local::OnFinishEdit
         );
 #elif RENDER_ENGINE_APPLE
     NativeBridgeApple::ShowNativeKeyboard(

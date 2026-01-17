@@ -14,7 +14,7 @@ std::shared_ptr<UITextField> UITextField::Create(std::shared_ptr<UIElement> pare
     uiTextField->SetParent(parent);
 
     std::shared_ptr<UIImage> backgroundImage = UIImage::Create(uiTextField, Vector2(0, 0), size, image);
-    std::shared_ptr<UIText> uiText = UIText::Create(uiTextField, Vector2(0, 0), size, "", fontSize);
+    std::shared_ptr<UIText> uiText = UIText::Create(uiTextField, Vector2(0, 0), size, L"", fontSize);
     std::shared_ptr<UIImage> cursorImage = UIImage::Create(uiTextField, Vector2(0, 0), Vector2(1, size.y), Texture2D::White());
 
     const Vector4 defaultColor = Vector4(0.2f, 0.2f, 0.2f, 1);
@@ -36,12 +36,12 @@ UITextField::UITextField(const Vector2& position, const Vector2& size) :
 {
 }
 
-const std::string& UITextField::GetText() const
+const std::wstring& UITextField::GetText() const
 {
     return m_Text->GetText();
 }
 
-void UITextField::SetText(const std::string& text)
+void UITextField::SetText(const std::wstring& text)
 {
     m_Text->SetText(text);
 }
@@ -85,7 +85,7 @@ void UITextField::HandleEvent(UIEventInfo& eventInfo)
             case Input::SpecialKey::DELETE:
                 if (keyState.IsDown() && !m_Text->GetText().empty() && m_CursorPosition != m_Text->GetText().size())
                 {
-                    UpdateText([&](std::string& text){ text.erase(text.begin() + m_CursorPosition); }, 0);
+                    UpdateText([&](std::wstring& text){ text.erase(text.begin() + m_CursorPosition); }, 0);
                     eventInfo.Consumed = true;
                 }
                 break;
@@ -100,7 +100,7 @@ void UITextField::HandleEvent(UIEventInfo& eventInfo)
         {
             if (!m_Text->GetText().empty() && m_CursorPosition != 0)
             {
-                UpdateText([&](std::string& text){ text.erase(text.begin() + m_CursorPosition - 1); }, -1);
+                UpdateText([&](std::wstring& text){ text.erase(text.begin() + m_CursorPosition - 1); }, -1);
                 eventInfo.Consumed = true;
             }
         }
@@ -113,7 +113,7 @@ void UITextField::HandleEvent(UIEventInfo& eventInfo)
         }
         else
         {
-            UpdateText([&](std::string& text){ text.insert(text.begin() + m_CursorPosition, eventInfo.KeyState.Char); }, 1);
+            UpdateText([&](std::wstring& text){ text.insert(text.begin() + m_CursorPosition, eventInfo.KeyState.Char); }, 1);
             eventInfo.Consumed = true;
         }
     }
@@ -138,14 +138,14 @@ void UITextField::MoveCursor(int offset)
     m_CursorPosition = std::clamp(m_CursorPosition + offset, 0, static_cast<int>(m_Text->GetText().size()));
 
     float textWidth;
-    const std::string& text = m_Text->GetText();
-    std::vector<Char> chars = m_Text->GetFont()->ShapeText(std::span<const char>(&text[0], m_CursorPosition), m_Text->GetFontSize(), textWidth);
+    const std::wstring& text = m_Text->GetText();
+    std::vector<Char> chars = m_Text->GetFont()->ShapeText(std::span<const wchar_t>(text.c_str(), m_CursorPosition), m_Text->GetFontSize(), textWidth);
     m_CursorImage->Position = Vector2(textWidth, 0);
 }
 
-void UITextField::UpdateText(const std::function<void(std::string &)>& updateFunc, int cursorOffset)
+void UITextField::UpdateText(const std::function<void(std::wstring &)>& updateFunc, int cursorOffset)
 {
-    std::string text = m_Text->GetText();
+    std::wstring text = m_Text->GetText();
     updateFunc(text);
     m_Text->SetText(text);
 

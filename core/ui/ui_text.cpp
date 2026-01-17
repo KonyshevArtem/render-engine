@@ -7,7 +7,7 @@
 
 std::shared_ptr<Font> UIText::s_Font;
 
-std::shared_ptr<UIText> UIText::Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize)
+std::shared_ptr<UIText> UIText::Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::wstring& text, uint16_t fontSize)
 {
     if (!s_Font)
         s_Font = Resources::Load<Font>("core_resources/fonts/Inter.ttf");
@@ -18,7 +18,7 @@ std::shared_ptr<UIText> UIText::Create(std::shared_ptr<UIElement> parent, const 
     return uiText;
 }
 
-UIText::UIText(const Vector2 &position, const Vector2& size, const std::string& text, const std::shared_ptr<Font>& font) :
+UIText::UIText(const Vector2 &position, const Vector2& size, const std::wstring& text, const std::shared_ptr<Font>& font) :
     UIElement(position, size),
     Color(1, 1, 1, 1),
     m_Dirty(true),
@@ -29,7 +29,7 @@ UIText::UIText(const Vector2 &position, const Vector2& size, const std::string& 
 {
 }
 
-void UIText::SetText(const std::string& text)
+void UIText::SetText(const std::wstring& text)
 {
     m_Dirty = true;
     m_Text = text;
@@ -84,7 +84,7 @@ void UIText::PrepareMesh()
 
     const CommonBlock& common = m_Font->GetCommonBlock(m_FontSize);
 
-    auto IsLineBreak = [](char c) { return c == '\n' || c == '\r'; };
+    auto IsLineBreak = [](wchar_t c) { return c == '\n' || c == '\r'; };
 
     float textHeight = common.LineHeight;
     for (uint32_t i = 0; m_VerticalAlignment != VerticalAlignment::TOP && i < m_Text.size(); ++i)
@@ -101,7 +101,7 @@ void UIText::PrepareMesh()
 
     for (uint32_t i = 0, begin = 0, length = 0; i < m_Text.size(); ++i)
     {
-        char c = m_Text[i];
+        wchar_t c = m_Text[i];
 
         bool isLastChar = i == m_Text.size() - 1;
         bool isLineBreak = IsLineBreak(c);
@@ -112,7 +112,7 @@ void UIText::PrepareMesh()
                 ++length;
 
             float textWidth;
-            std::vector<Char> chars = m_Font->ShapeText(std::span<const char>(&m_Text[begin], length), m_FontSize, textWidth);
+            std::vector<Char> chars = m_Font->ShapeText(std::span<wchar_t>(&m_Text[begin], length), m_FontSize, textWidth);
 
             int32_t xPosition = 0;
             if (m_HorizontalAlignment == HorizontalAlignment::MIDDLE)

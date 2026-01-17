@@ -15,12 +15,12 @@ class UITextField : public UIElement
 public:
     static std::shared_ptr<UITextField> Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, uint16_t fontSize, const std::shared_ptr<Texture2D> image);
 
-    const std::string& GetText() const;
-    void SetText(const std::string& text);
+    const std::wstring& GetText() const;
+    void SetText(const std::wstring& text);
 
     void Done();
 
-    std::function<void(const std::string&)> OnFinish;
+    std::function<void(const std::wstring&)> OnFinish;
 
 protected:
     void HandleEvent(UIEventInfo& eventInfo) override;
@@ -38,7 +38,7 @@ private:
 
     void SetCursorActive(bool isActive);
     void MoveCursor(int offset);
-    void UpdateText(const std::function<void(std::string&)>& updateFunc, int cursorOffset);
+    void UpdateText(const std::function<void(std::wstring&)>& updateFunc, int cursorOffset);
 
     friend class UIManager;
 };

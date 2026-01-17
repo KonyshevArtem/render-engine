@@ -78,18 +78,18 @@ void TestSceneUpdater::Update()
         const std::shared_ptr<Texture2D> uiTestTexture = Resources::Load<Texture2D>("core_resources/textures/ui/ui_test");
         UIImage::Create(nullptr, {10, 20}, {100, 100}, uiTestTexture)->Color = Vector4(1, 0.5f, 0.5f, 0.5f);
         UIImage::Create(nullptr, {10, 100}, {100, 100}, uiTestTexture)->Color = Vector4(0.5f, 1, 0.5f, 0.5f);
-        std::shared_ptr<UIText> text = UIText::Create(nullptr, {10, 250}, {150, 32}, "Hello, Text!\nMultiline?", 32);
+        std::shared_ptr<UIText> text = UIText::Create(nullptr, {10, 250}, {150, 32}, L"Hello, Text!\nMultiline?", 32);
 
-        std::shared_ptr<UIButton> reloadButton = UIButton::Create(nullptr, {10, 290}, {100, 50}, "Reload\nscene", 15, Texture2D::White());
+        std::shared_ptr<UIButton> reloadButton = UIButton::Create(nullptr, {10, 290}, {100, 50}, L"Reload\nscene", 15, Texture2D::White());
         reloadButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
         reloadButton->OnPress = [](){ Scene::Load("core_resources/scenes/test_scene.scene"); };
 
-        std::shared_ptr<UIButton> deleteButton = UIButton::Create(nullptr, {10, 350}, {100, 50}, "Delete\ntext", 15, Texture2D::White());
+        std::shared_ptr<UIButton> deleteButton = UIButton::Create(nullptr, {10, 350}, {100, 50}, L"Delete\ntext", 15, Texture2D::White());
         deleteButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
         deleteButton->OnPress = [text](){ text->Destroy(); };
 
         std::shared_ptr<UITextField> inputField = UITextField::Create(nullptr, {10, 410}, {150, 30}, 24, Texture2D::White());
-        inputField->OnFinish = [text](const std::string& inputText){ text->SetText(inputText); };
+        inputField->OnFinish = [text](const std::wstring& inputText){ text->SetText(inputText); };
 
         UITextField::Create(nullptr, {10, 460}, {150, 30}, 24, Texture2D::White());
 

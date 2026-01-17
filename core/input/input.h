@@ -57,7 +57,7 @@ namespace Input
     {
         union
         {
-            unsigned char Char;
+            wchar_t Char;
             SpecialKey SpecialKey;
         };
         uint16_t State;
@@ -80,13 +80,13 @@ namespace Input
     void CleanUp();
 
     void HandleKeyboardInput(unsigned char key, bool isPressed);
-    void HandleCharInput(unsigned char ch);
+    void HandleCharInput(wchar_t ch);
     void HandleSpecialKeyInput(int keyId, bool isPressed);
     void HandleMouseClick(MouseButton mouseButton, bool isPressed);
     void HandleMouseMove(double x, double y);
     void HandleTouch(TouchState state, uint64_t touchId, float x, float y);
 
-    const std::unordered_set<unsigned char>& GetCharInputs();
+    const std::unordered_set<wchar_t>& GetCharInputs();
     const std::unordered_map<SpecialKey, KeyboardKeyState>& GetSpecialKeys();
     bool GetKeyDown(unsigned char key);
     bool GetKeyUp(unsigned char key);

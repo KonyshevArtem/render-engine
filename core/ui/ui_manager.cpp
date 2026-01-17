@@ -107,8 +107,8 @@ void UIManager::Update()
                     ChangeFocus(nullptr);
             }
 
-            std::unordered_set<unsigned char> charInputs = Input::GetCharInputs();
-            for (unsigned char ch : charInputs)
+            std::unordered_set<wchar_t> charInputs = Input::GetCharInputs();
+            for (wchar_t ch : charInputs)
             {
                 UIEventInfo eventInfo;
                 eventInfo.KeyState.Char = ch;

@@ -7,7 +7,7 @@ namespace Input
     std::vector<Touch> s_PendingTouches;
     std::unordered_map<unsigned char, KeyboardKeyState> s_KeyboardKeys;
     std::unordered_map<SpecialKey, KeyboardKeyState> s_SpecialKeys;
-    std::unordered_set<unsigned char> s_CharInputs;
+    std::unordered_set<wchar_t> s_CharInputs;
     Vector2 s_OldMousePosition = Vector2();
     Vector2 s_MousePosition = Vector2();
     Vector2 s_MouseDelta = Vector2();
@@ -115,7 +115,7 @@ namespace Input
         s_KeyboardKeys[key] = keyState;
     }
 
-    void HandleCharInput(unsigned char ch)
+    void HandleCharInput(wchar_t ch)
     {
         if (!s_CharInputs.contains(ch))
             s_CharInputs.insert(ch);
@@ -154,7 +154,7 @@ namespace Input
         s_PendingTouches.push_back(Touch{touchId, GraphicsBackend::Current()->GetFrameNumber(), state, {x, y}, {0, 0}});
     }
 
-    const std::unordered_set<unsigned char>& GetCharInputs()
+    const std::unordered_set<wchar_t>& GetCharInputs()
     {
         return s_CharInputs;
     }

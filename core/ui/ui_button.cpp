@@ -4,7 +4,7 @@
 #include "ui_manager.h"
 #include "ui_event_info.h"
 
-std::shared_ptr<UIButton> UIButton::Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize, const std::shared_ptr<Texture2D> image)
+std::shared_ptr<UIButton> UIButton::Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::wstring& text, uint16_t fontSize, const std::shared_ptr<Texture2D> image)
 {
     std::shared_ptr<UIButton> uiButton = std::shared_ptr<UIButton>(new UIButton(position, size));
     uiButton->SetParent(parent);

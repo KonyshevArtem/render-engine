@@ -8,7 +8,7 @@ namespace UINativeKeyboard_Local
 {
     std::shared_ptr<UITextField> s_CurrentTextField;
 
-    void OnNativeKeyboardTextChanged(const char* text)
+    void OnNativeKeyboardTextChanged(const wchar_t* text)
     {
         if (s_CurrentTextField)
             s_CurrentTextField->SetText(text);

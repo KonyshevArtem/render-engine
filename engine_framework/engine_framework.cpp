@@ -138,7 +138,7 @@ void EngineFramework::ProcessKeyPress(char key, bool pressed)
         Input::HandleKeyboardInput(key, pressed);
 }
 
-void EngineFramework::ProcessCharInput(unsigned char ch)
+void EngineFramework::ProcessCharInput(wchar_t ch)
 {
     if (!window || !window->CaptureKeyboard())
         Input::HandleCharInput(ch);

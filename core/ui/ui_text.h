@@ -28,14 +28,14 @@ public:
         BOTTOM
     };
 
-    static std::shared_ptr<UIText> Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::string& text, uint16_t fontSize);
+    static std::shared_ptr<UIText> Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::wstring& text, uint16_t fontSize);
 
-    void SetText(const std::string& text);
+    void SetText(const std::wstring& text);
     void SetFontSize(uint16_t fontSize);
     void SetHorizontalAlignment(HorizontalAlignment alignment);
     void SetVerticalAlignment(VerticalAlignment alignment);
 
-    inline const std::string& GetText() const
+    inline const std::wstring& GetText() const
     {
         return m_Text;
     }
@@ -51,7 +51,7 @@ public:
     Vector4 Color;
 
 private:
-    UIText(const Vector2& position, const Vector2& size, const std::string& text, const std::shared_ptr<Font>& font);
+    UIText(const Vector2& position, const Vector2& size, const std::wstring& text, const std::shared_ptr<Font>& font);
 
     static std::shared_ptr<Font> s_Font;
 
@@ -59,7 +59,7 @@ private:
     Vector2 m_PrevSize;
     uint16_t m_FontSize;
     uint16_t m_PrevFontSize;
-    std::string m_Text;
+    std::wstring m_Text;
     std::shared_ptr<Font> m_Font;
     std::shared_ptr<Mesh> m_Mesh;
     HorizontalAlignment m_HorizontalAlignment;

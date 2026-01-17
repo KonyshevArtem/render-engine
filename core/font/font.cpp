@@ -4,6 +4,37 @@
 #include "texture_2d/texture_2d.h"
 #include "editor/profiler/profiler.h"
 
+namespace Font_Local
+{
+    std::u32string Utf16ToUtf32(const std::span<const wchar_t>& utf16Text)
+    {
+        std::u32string out;
+        out.reserve(utf16Text.size());
+
+        for (size_t i = 0; i < utf16Text.size(); ++i)
+        {
+            wchar_t wc = utf16Text[i];
+
+            if (wc >= 0xD800 && wc <= 0xDBFF)
+            {
+                wchar_t high = wc;
+                wchar_t low  = utf16Text[++i];
+
+                uint32_t cp =
+                        0x10000 +
+                        ((high - 0xD800) << 10) +
+                        (low  - 0xDC00);
+
+                out.push_back(cp);
+            }
+            else
+                out.push_back(static_cast<char32_t>(wc));
+        }
+
+        return out;
+    }
+}
+
 Font::Font(std::vector<uint8_t>& bytes, const std::string& fontName) :
     m_FontBytes(std::move(bytes)),
     m_FontName(fontName)
@@ -46,7 +77,7 @@ const std::shared_ptr<Texture> Font::GetAtlas(uint16_t fontSize) const
     return it != m_Atlas.end() ? it->second : nullptr;
 }
 
-std::vector<Char> Font::ShapeText(const std::span<const char> text, uint16_t fontSize, float& outTextWidth)
+std::vector<Char> Font::ShapeText(const std::span<const wchar_t> text, uint16_t fontSize, float& outTextWidth)
 {
     Profiler::Marker _("Font::ShapeText");
 
@@ -57,7 +88,14 @@ std::vector<Char> Font::ShapeText(const std::span<const char> text, uint16_t fon
     std::shared_ptr<Trex::Atlas> trexAtlas = it->second;
 
     Trex::TextShaper shaper(*trexAtlas);
-    Trex::ShapedGlyphs glyphs = shaper.ShapeUtf8(text);
+    Trex::ShapedGlyphs glyphs;
+    if (sizeof(wchar_t) == 4)
+        glyphs = shaper.ShapeUtf32(std::span<const char32_t>(reinterpret_cast<const char32_t *>(text.data()), text.size()));
+    else
+    {
+        std::u32string utf32String = Font_Local::Utf16ToUtf32(text);
+        glyphs = shaper.ShapeUtf32(std::span<const char32_t>(utf32String.data(), utf32String.size()));
+    }
 
     std::vector<Char> chars;
     chars.reserve(glyphs.size());

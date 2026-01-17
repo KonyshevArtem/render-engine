@@ -1201,7 +1201,7 @@ void GraphicsBackendOpenGL::LogContextError(const std::string& tag)
             nullptr);
 
     if (success)
-        Debug::LogErrorFormat("[{}] {}", tag, static_cast<LPCTSTR>(lpMsgBuf));
+        Debug::LogErrorFormat("[{}] {}", tag, static_cast<const char*>(lpMsgBuf));
 #elif RENDER_ENGINE_ANDROID
     auto GetErrorString = [](EGLint error)
     {

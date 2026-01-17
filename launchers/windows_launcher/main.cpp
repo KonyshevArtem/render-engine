@@ -78,7 +78,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
             return 0;
         }
         case WM_CHAR:
-            EngineFramework::ProcessCharInput(static_cast<char>(wParam));
+            EngineFramework::ProcessCharInput(static_cast<wchar_t>(wParam));
             return 0;
         case WM_MOUSEMOVE:
         {
@@ -98,13 +98,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     windowClass.style = CS_OWNDC;
     windowClass.lpfnWndProc = WindowProc;
     windowClass.hInstance = hInstance;
-    windowClass.lpszClassName = "RenderEngine Window Class";
+    windowClass.lpszClassName = L"RenderEngine Window Class";
     RegisterClass(&windowClass);
 
     HWND window = CreateWindowEx(
             0,
             windowClass.lpszClassName,
-            "Render Engine",
+            L"Render Engine",
             WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, CW_USEDEFAULT, 1920, 1080,
             nullptr,

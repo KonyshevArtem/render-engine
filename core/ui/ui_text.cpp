@@ -27,12 +27,16 @@ UIText::UIText(const Vector2 &position, const Vector2& size, const std::wstring&
     m_HorizontalAlignment(HorizontalAlignment::LEFT),
     m_VerticalAlignment(VerticalAlignment::TOP)
 {
+    m_Font->UpdateCharset(m_Text);
 }
 
 void UIText::SetText(const std::wstring& text)
 {
+    std::unique_lock lock(m_TextMutex);
+
     m_Dirty = true;
     m_Text = text;
+    m_Font->UpdateCharset(m_Text);
 }
 
 void UIText::SetFontSize(uint16_t fontSize)
@@ -54,8 +58,7 @@ void UIText::SetVerticalAlignment(UIText::VerticalAlignment alignment)
 
 void UIText::PrepareFont()
 {
-    if (m_FontSize == m_PrevFontSize)
-        return;
+    std::shared_lock lock(m_TextMutex);
 
     m_Font->Prepare(m_FontSize);
     m_PrevFontSize = m_FontSize;
@@ -63,6 +66,8 @@ void UIText::PrepareFont()
 
 void UIText::PrepareMesh()
 {
+    std::shared_lock lock(m_TextMutex);
+
     if (!m_Dirty && m_PrevSize == Size)
         return;
 
@@ -161,7 +166,8 @@ void UIText::PrepareMesh()
         ++length;
     }
 
-    m_Mesh = std::make_shared<Mesh>(positions, std::vector<Vector3>(), indices, uvs, std::vector<Vector3>(), "TextMesh");
+    if (!positions.empty())
+        m_Mesh = std::make_shared<Mesh>(positions, std::vector<Vector3>(), indices, uvs, std::vector<Vector3>(), "TextMesh");
 
     m_Dirty = false;
     m_PrevSize = Size;

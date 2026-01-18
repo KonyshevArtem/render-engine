@@ -37,7 +37,8 @@ namespace Font_Local
 
 Font::Font(std::vector<uint8_t>& bytes, const std::string& fontName) :
     m_FontBytes(std::move(bytes)),
-    m_FontName(fontName)
+    m_FontName(fontName),
+    m_Charset(new Trex::Charset(0, 127))
 {
 }
 
@@ -48,7 +49,7 @@ void Font::Prepare(uint16_t fontSize)
 
     Profiler::Marker _("Font::Prepare");
 
-    std::shared_ptr<Trex::Atlas> trexAtlas = std::make_shared<Trex::Atlas>(m_FontBytes, fontSize, Trex::Charset::Ascii());
+    std::shared_ptr<Trex::Atlas> trexAtlas = std::make_shared<Trex::Atlas>(m_FontBytes, fontSize, *m_Charset);
     m_TrexAtlas[fontSize] = trexAtlas;
 
     const Trex::Atlas::Bitmap& bitmap = trexAtlas->GetBitmap();
@@ -61,6 +62,22 @@ void Font::Prepare(uint16_t fontSize)
     commonBlock.ScaleW = bitmap.Width();
     commonBlock.ScaleH = bitmap.Height();
     m_Common[fontSize] = commonBlock;
+}
+
+void Font::UpdateCharset(const std::wstring& text)
+{
+    Profiler::Marker _("Font::UpdateCharset");
+
+    for (wchar_t c : text)
+    {
+        const uint32_t codepoint = static_cast<uint32_t>(c);
+        if (std::find(m_Charset->begin(), m_Charset->end(), codepoint) == m_Charset->end())
+        {
+            m_Charset->AddCodepoint(codepoint);
+            m_TrexAtlas.clear();
+            m_Atlas.clear();
+        }
+    }
 }
 
 const CommonBlock& Font::GetCommonBlock(uint16_t fontSize) const

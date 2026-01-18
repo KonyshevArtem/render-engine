@@ -14,6 +14,7 @@ class Texture;
 namespace Trex
 {
     class Atlas;
+    class Charset;
 }
 
 class Font : public Resource
@@ -23,6 +24,7 @@ public:
     ~Font() = default;
 
     void Prepare(uint16_t fontSize);
+    void UpdateCharset(const std::wstring& text);
 
     const CommonBlock& GetCommonBlock(uint16_t fontSize) const;
     const std::shared_ptr<Texture> GetAtlas(uint16_t fontSize) const;
@@ -34,6 +36,7 @@ private:
     std::unordered_map<uint16_t, std::shared_ptr<Texture>> m_Atlas;
     std::unordered_map<uint16_t, std::shared_ptr<Trex::Atlas>> m_TrexAtlas;
 
+    std::shared_ptr<Trex::Charset> m_Charset;
     std::vector<uint8_t> m_FontBytes;
     std::string m_FontName;
 };

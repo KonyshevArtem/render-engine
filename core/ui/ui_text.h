@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <shared_mutex>
 
 class Font;
 class Mesh;
@@ -64,6 +65,7 @@ private:
     std::shared_ptr<Mesh> m_Mesh;
     HorizontalAlignment m_HorizontalAlignment;
     VerticalAlignment m_VerticalAlignment;
+    std::shared_mutex m_TextMutex;
 };
 
 #endif //RENDER_ENGINE_UI_TEXT_H

@@ -92,7 +92,8 @@ void UIRenderPass::Execute(const Context& ctx)
         if (UIText* text = dynamic_cast<UIText*>(element))
         {
             const std::shared_ptr<Mesh> textMesh = text->GetMesh();
-            if (!textMesh)
+            const std::shared_ptr<Texture> fontAtlas = text->GetFontAtlas();
+            if (!textMesh || !fontAtlas)
                 continue;
 
             UIData data;
@@ -101,7 +102,7 @@ void UIRenderPass::Execute(const Context& ctx)
             uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
 
             GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
-            GraphicsBackend::Current()->BindTextureSampler(text->GetFontAtlas()->GetBackendTexture(), text->GetFontAtlas()->GetBackendSampler(), 0);
+            GraphicsBackend::Current()->BindTextureSampler(fontAtlas->GetBackendTexture(), fontAtlas->GetBackendSampler(), 0);
 
             GraphicsBackend::Current()->UseProgram(m_TextShader->GetProgram(textMesh));
             GraphicsBackend::Current()->DrawElements(textMesh->GetGraphicsBackendGeometry(), textMesh->GetPrimitiveType(), textMesh->GetElementsCount(), textMesh->GetIndicesDataType());

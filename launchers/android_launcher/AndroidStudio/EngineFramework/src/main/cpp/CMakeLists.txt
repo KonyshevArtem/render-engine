@@ -24,6 +24,7 @@ set(
         ${FREETYPE_LIB}
         harfbuzz
         trex
+        StringEncodingUtil
 )
 
 foreach (LIB ${DEPENDENCIES})

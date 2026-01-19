@@ -1,16 +1,17 @@
 #ifndef RENDER_ENGINE_NATIVE_BRIDGE_ANDROID_H
 #define RENDER_ENGINE_NATIVE_BRIDGE_ANDROID_H
 
-#ifdef RENDER_ENGINE_ANDROID
+#if RENDER_ENGINE_ANDROID
 
 #include "native_bridge_common.h"
+#include <cstdio>
 
 class NativeBridgeAndroid
 {
 public:
-    static void ShowNativeKeyboard(const char* text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback);
+    static void ShowNativeKeyboard(const wchar_t* text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback);
 
-    static void NativeKeyboardTextChanged(const char *text);
+    static void NativeKeyboardTextChanged(const char16_t* text, size_t length);
     static void NativeKeyboardFinishEdit(bool done);
 };
 

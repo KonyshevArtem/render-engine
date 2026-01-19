@@ -1,6 +1,7 @@
 #if RENDER_ENGINE_ANDROID
 
 #include "native_bridge_android.h"
+#include "string_encoding_util.h"
 
 #include <jni.h>
 
@@ -36,10 +37,11 @@ jint JNI_OnLoad(JavaVM* javaVM, void* reserved)
     return JNI_VERSION_1_6;
 }
 
-void NativeBridgeAndroid::NativeKeyboardTextChanged(const char *text)
+void NativeBridgeAndroid::NativeKeyboardTextChanged(const char16_t* text, size_t length)
 {
+    std::u32string utf32Text = StringEncodingUtil::Utf16ToUtf32(text, length);
     if (NativeBridgeAndroid_Local::s_TextChangedCallback)
-        NativeBridgeAndroid_Local::s_TextChangedCallback(text);
+        NativeBridgeAndroid_Local::s_TextChangedCallback(reinterpret_cast<const wchar_t*>(utf32Text.c_str()));
 }
 
 void NativeBridgeAndroid::NativeKeyboardFinishEdit(bool done)
@@ -48,17 +50,22 @@ void NativeBridgeAndroid::NativeKeyboardFinishEdit(bool done)
         NativeBridgeAndroid_Local::s_FinishEditCallback(done);
 }
 
-void NativeBridgeAndroid::ShowNativeKeyboard(const char* text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback)
+void NativeBridgeAndroid::ShowNativeKeyboard(const wchar_t* text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback)
 {
     NativeBridgeAndroid_Local::InitBridge();
 
     NativeBridgeAndroid_Local::s_TextChangedCallback = textChangedCallback;
     NativeBridgeAndroid_Local::s_FinishEditCallback = finishEditCallback;
 
+    std::u16string utf16Text = StringEncodingUtil::Utf32ToUtf16(reinterpret_cast<const char32_t*>(text), wcslen(text));
+    jstring javaText = NativeBridgeAndroid_Local::s_Env->NewString(reinterpret_cast<const jchar*>(utf16Text.c_str()), utf16Text.length());
+
     NativeBridgeAndroid_Local::s_Env->CallStaticVoidMethod(
         NativeBridgeAndroid_Local::s_NativeBridgeClass,
         NativeBridgeAndroid_Local::s_ShowKeyboardMethodID,
-        NativeBridgeAndroid_Local::s_Env->NewStringUTF(text));
+        javaText);
+
+    NativeBridgeAndroid_Local::s_Env->DeleteLocalRef(javaText);
 }
 
 #endif

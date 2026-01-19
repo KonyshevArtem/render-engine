@@ -6,7 +6,12 @@ JNIEXPORT void JNICALL
 Java_com_artemkonyshev_engineframework_NativeBridge_NativeKeyboardTextChanged(JNIEnv *env,
                                                                               jclass clazz,
                                                                               jstring text) {
-    NativeBridgeAndroid::NativeKeyboardTextChanged(env->GetStringUTFChars(text, nullptr));
+    const jchar* textPtr = env->GetStringChars(text, nullptr);
+    NativeBridgeAndroid::NativeKeyboardTextChanged(
+            reinterpret_cast<const char16_t*>(textPtr),
+            env->GetStringLength(text));
+
+    env->ReleaseStringChars(text, textPtr);
 }
 extern "C"
 JNIEXPORT void JNICALL

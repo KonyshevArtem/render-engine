@@ -1,4 +1,4 @@
-#ifdef RENDER_ENGINE_APPLE
+#if RENDER_ENGINE_APPLE
 
 #include "native_bridge_apple.h"
 

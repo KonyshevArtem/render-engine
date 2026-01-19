@@ -157,4 +157,4 @@ add_library(
 	native_bridge/native_bridge_common.h)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex)
+target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil)

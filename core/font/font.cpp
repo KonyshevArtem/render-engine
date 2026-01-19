@@ -3,37 +3,8 @@
 #include "Trex/TextShaper.hpp"
 #include "texture_2d/texture_2d.h"
 #include "editor/profiler/profiler.h"
+#include "string_encoding_util.h"
 
-namespace Font_Local
-{
-    std::u32string Utf16ToUtf32(const std::span<const wchar_t>& utf16Text)
-    {
-        std::u32string out;
-        out.reserve(utf16Text.size());
-
-        for (size_t i = 0; i < utf16Text.size(); ++i)
-        {
-            wchar_t wc = utf16Text[i];
-
-            if (wc >= 0xD800 && wc <= 0xDBFF)
-            {
-                wchar_t high = wc;
-                wchar_t low  = utf16Text[++i];
-
-                uint32_t cp =
-                        0x10000 +
-                        ((high - 0xD800) << 10) +
-                        (low  - 0xDC00);
-
-                out.push_back(cp);
-            }
-            else
-                out.push_back(static_cast<char32_t>(wc));
-        }
-
-        return out;
-    }
-}
 
 Font::Font(std::vector<uint8_t>& bytes, const std::string& fontName) :
     m_FontBytes(std::move(bytes)),
@@ -110,7 +81,7 @@ std::vector<Char> Font::ShapeText(const std::span<const wchar_t> text, uint16_t 
         glyphs = shaper.ShapeUtf32(std::span<const char32_t>(reinterpret_cast<const char32_t *>(text.data()), text.size()));
     else
     {
-        std::u32string utf32String = Font_Local::Utf16ToUtf32(text);
+        std::u32string utf32String = StringEncodingUtil::Utf16ToUtf32(reinterpret_cast<const char16_t*>(text.data()), text.size());
         glyphs = shaper.ShapeUtf32(std::span<const char32_t>(utf32String.data(), utf32String.size()));
     }
 

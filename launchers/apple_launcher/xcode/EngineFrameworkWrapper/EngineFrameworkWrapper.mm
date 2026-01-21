@@ -39,7 +39,7 @@
     EngineFramework::ProcessKeyPress(key, pressed);
 }
 
-+ (void) ProcessCharInput:(unsigned char) ch;
++ (void) ProcessCharInput:(wchar_t) ch;
 {
     EngineFramework::ProcessCharInput(ch);
 }

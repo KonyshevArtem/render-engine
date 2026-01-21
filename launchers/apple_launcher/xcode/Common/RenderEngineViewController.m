@@ -157,7 +157,7 @@ NSDictionary *m_SpecialKeys = NULL;
 
 - (void) charPress:(NSEvent *)event
 {
-    const char* str = [event.characters cStringUsingEncoding:NSUnicodeStringEncoding];
+    const wchar_t* str = (const wchar_t*)[event.characters cStringUsingEncoding:NSUTF32StringEncoding];
     [EngineFrameworkWrapper ProcessCharInput:str[0]];
 }
 

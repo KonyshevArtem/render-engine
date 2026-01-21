@@ -60,6 +60,7 @@ private:
     Vector2 m_PrevSize;
     uint16_t m_FontSize;
     uint16_t m_PrevFontSize;
+    uint32_t m_PrevFontRevision;
     std::wstring m_Text;
     std::shared_ptr<Font> m_Font;
     std::shared_ptr<Mesh> m_Mesh;

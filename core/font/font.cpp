@@ -33,6 +33,9 @@ void Font::Prepare(uint16_t fontSize)
     commonBlock.ScaleW = bitmap.Width();
     commonBlock.ScaleH = bitmap.Height();
     m_Common[fontSize] = commonBlock;
+
+    uint32_t revision = GetAtlasRevision(fontSize);
+    m_AtlasRevision[fontSize] = ++revision;
 }
 
 void Font::UpdateCharset(const std::wstring& text)
@@ -63,6 +66,12 @@ const std::shared_ptr<Texture> Font::GetAtlas(uint16_t fontSize) const
 {
     auto it = m_Atlas.find(fontSize);
     return it != m_Atlas.end() ? it->second : nullptr;
+}
+
+uint32_t Font::GetAtlasRevision(uint16_t fontSize) const
+{
+    auto it = m_AtlasRevision.find(fontSize);
+    return it != m_AtlasRevision.end() ? it->second : 0;
 }
 
 std::vector<Char> Font::ShapeText(const std::span<const wchar_t> text, uint16_t fontSize, float& outTextWidth)

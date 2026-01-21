@@ -68,7 +68,8 @@ void UIText::PrepareMesh()
 {
     std::shared_lock lock(m_TextMutex);
 
-    if (!m_Dirty && m_PrevSize == Size)
+    uint32_t fontRevision = m_Font->GetAtlasRevision(m_FontSize);
+    if (!m_Dirty && m_PrevSize == Size && m_PrevFontRevision == m_Font->GetAtlasRevision(m_FontSize))
         return;
 
     if (m_Text.empty())
@@ -171,6 +172,7 @@ void UIText::PrepareMesh()
 
     m_Dirty = false;
     m_PrevSize = Size;
+    m_PrevFontRevision = fontRevision;
 }
 
 const std::shared_ptr<Mesh> UIText::GetMesh() const

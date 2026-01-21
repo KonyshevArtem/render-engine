@@ -1,0 +1,29 @@
+{
+  "Shader": {
+    "Path": "core_resources/shaders/standard",
+    "Keywords": [],
+    "BlendInfo": {
+      "Enabled": true,
+      "SourceFactor": "SRC_ALPHA",
+      "DestinationFactor": "ONE_MINUS_SRC_ALPHA"
+    }
+  },
+  "Textures": [
+    {
+      "Name": "_Albedo",
+      "Type": "2D",
+      "Path": "White"
+    }
+  ],
+  "Floats": [
+    {
+      "Name": "_Roughness",
+      "Value": 0.8
+    },
+    {
+      "Name": "_Metallness",
+      "Value": 0
+    }
+  ],
+  "RenderQueue": 3001
+}

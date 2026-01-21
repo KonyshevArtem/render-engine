@@ -29,6 +29,7 @@
 #include "editor/debug_pass/shadow_map_debug_pass.h"
 #include "cubemap/cubemap.h"
 #include "gameObject/gameObject.h"
+#include "ui/ui_render_pass.h"
 #include "graphics_buffer/graphics_buffer.h"
 #include "graphics_buffer/ring_buffer.h"
 #include "global_constants.h"
@@ -43,6 +44,7 @@ namespace Graphics
     std::shared_ptr<ForwardRenderPass> s_ForwardRenderPass;
     std::shared_ptr<ShadowCasterPass> s_ShadowCasterPass;
     std::shared_ptr<FinalBlitPass> s_FinalBlitPass;
+    std::shared_ptr<UIRenderPass> s_UIRenderPass;
 
 #if RENDER_ENGINE_EDITOR
     std::shared_ptr<CopyDepthPass> s_CopyDepthPass;
@@ -65,12 +67,13 @@ namespace Graphics
         s_ShadowCasterPass = std::make_shared<ShadowCasterPass>(0);
         s_ForwardRenderPass = std::make_shared<ForwardRenderPass>(1);
         s_FinalBlitPass = std::make_shared<FinalBlitPass>(3);
+        s_UIRenderPass = std::make_shared<UIRenderPass>(4);
 
 #if RENDER_ENGINE_EDITOR
         s_CopyDepthPass = std::make_shared<CopyDepthPass>(2);
-        s_GizmosPass = std::make_shared<GizmosPass>(5);
-        s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>(4);
-        s_ShadowMapDebugPass = std::make_shared<ShadowMapDebugPass>(6);
+        s_GizmosPass = std::make_shared<GizmosPass>(6);
+        s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>(5);
+        s_ShadowMapDebugPass = std::make_shared<ShadowMapDebugPass>(7);
 #endif
     }
 
@@ -92,6 +95,7 @@ namespace Graphics
         s_ForwardRenderPass = nullptr;
         s_ShadowCasterPass = nullptr;
         s_FinalBlitPass = nullptr;
+        s_UIRenderPass = nullptr;
 
 #if RENDER_ENGINE_EDITOR
         s_CopyDepthPass = nullptr;
@@ -186,10 +190,12 @@ namespace Graphics
             s_ShadowCasterPass->Prepare(ctx);
             s_ForwardRenderPass->Prepare(ctx, colorTargetDescriptor, depthTargetDescriptor);
             s_FinalBlitPass->Prepare(cameraColorTarget);
+            s_UIRenderPass->Prepare(ctx);
 
             renderPasses.push_back(s_ShadowCasterPass);
             renderPasses.push_back(s_ForwardRenderPass);
             renderPasses.push_back(s_FinalBlitPass);
+            renderPasses.push_back(s_UIRenderPass);
 
 #if RENDER_ENGINE_EDITOR
             const bool executeGizmosPass = s_GizmosPass->Prepare(ctx, s_CopyDepthPass->GetEndFence());

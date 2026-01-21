@@ -39,6 +39,16 @@
     EngineFramework::ProcessKeyPress(key, pressed);
 }
 
++ (void) ProcessCharInput:(wchar_t) ch;
+{
+    EngineFramework::ProcessCharInput(ch);
+}
+
++ (void) ProcessSpecialKey:(int)keyId  pressed:(bool)pressed
+{
+    EngineFramework::ProcessSpecialKey(keyId, pressed);
+}
+
 + (void) ProcessTouchDown:(unsigned long)touchId x:(float)x y:(float)y
 {
     EngineFramework::ProcessTouchDown(touchId, x, y);

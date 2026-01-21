@@ -13,6 +13,7 @@
 #include "core_components_register.h"
 #include "resources/resources.h"
 #include "worker/worker.h"
+#include "ui/ui_manager.h"
 
 GameWindow* window = nullptr;
 
@@ -22,6 +23,7 @@ void display(int width, int height)
 
     Time::Update();
     Input::Update();
+    UIManager::Update();
     Scene::Update();
 
     Graphics::Render(width, height);
@@ -45,6 +47,13 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
 
     Graphics::Init();
     Time::Init();
+
+#if RENDER_ENGINE_WINDOWS
+    float uiHeight = 1080;
+#else
+    float uiHeight = 720;
+#endif
+    UIManager::Initialize(uiHeight);
 
     std::string scenePath = "core_resources/scenes/test_scene.scene";
     if (Arguments::Contains("-scene"))
@@ -114,25 +123,31 @@ void EngineFramework::Shutdown()
 void EngineFramework::ProcessMouseClick(int mouseButton, bool pressed)
 {
     if (!window || !window->CaptureMouse())
-    {
         Input::HandleMouseClick(static_cast<Input::MouseButton>(mouseButton), pressed);
-    }
 }
 
 void EngineFramework::ProcessMouseMove(float x, float y)
 {
     if (!window || !window->CaptureMouse())
-    {
         Input::HandleMouseMove(x, y);
-    }
 }
 
 void EngineFramework::ProcessKeyPress(char key, bool pressed)
 {
     if (!window || !window->CaptureKeyboard())
-    {
         Input::HandleKeyboardInput(key, pressed);
-    }
+}
+
+void EngineFramework::ProcessCharInput(wchar_t ch)
+{
+    if (!window || !window->CaptureKeyboard())
+        Input::HandleCharInput(ch);
+}
+
+void EngineFramework::ProcessSpecialKey(int keyId, bool pressed)
+{
+    if (!window || !window->CaptureKeyboard())
+        Input::HandleSpecialKeyInput(keyId, pressed);
 }
 
 void EngineFramework::ProcessTouchDown(unsigned long touchId, float x, float y)

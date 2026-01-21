@@ -452,7 +452,7 @@ void GraphicsBackendOpenGL::UploadImagePixels(const GraphicsBackendTexture &text
         const GLenum dataType = OpenGLHelpers::ToTextureDataType(texture.Format);
         if (isTexture3D)
         {
-            glTexSubImage3D(target, level, 0, 0, 0, width, height, depth, pixelFormat, dataType, pixelsData);
+            glTexSubImage3D(target, level, 0, 0, 0, width, height, depth + 1, pixelFormat, dataType, pixelsData);
         }
         else
         {
@@ -1201,7 +1201,7 @@ void GraphicsBackendOpenGL::LogContextError(const std::string& tag)
             nullptr);
 
     if (success)
-        Debug::LogErrorFormat("[{}] {}", tag, static_cast<LPCTSTR>(lpMsgBuf));
+        Debug::LogErrorFormat("[{}] {}", tag, static_cast<const char*>(lpMsgBuf));
 #elif RENDER_ENGINE_ANDROID
     auto GetErrorString = [](EGLint error)
     {

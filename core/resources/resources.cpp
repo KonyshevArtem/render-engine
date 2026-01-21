@@ -1,5 +1,6 @@
 #include "resources.h"
 #include "texture_2d/texture_2d.h"
+#include "texture_2d_array/texture_2d_array.h"
 #include "cubemap/cubemap.h"
 #include "editor/profiler/profiler.h"
 #include "texture/texture_binary_reader.h"
@@ -7,6 +8,7 @@
 #include "material/material_parser.h"
 #include "mesh/mesh.h"
 #include "mesh/mesh_binary_reader.h"
+#include "font/font.h"
 #include "file_system/file_system.h"
 #include "resource.h"
 #include "debug.h"
@@ -107,6 +109,24 @@ std::shared_ptr<Mesh> Resources::Load(const std::filesystem::path& path, bool as
     AddToCache(path, mesh);
 
     return mesh;
+}
+
+template<>
+std::shared_ptr<Font> Resources::Load(const std::filesystem::path &path, bool asyncSubresourceLoads)
+{
+    Profiler::Marker _("Resources::Load<Font>", path.string());
+
+    std::shared_ptr<Font> font;
+    if (TryGetFromCache(path, font))
+        return font;
+
+    std::vector<uint8_t> bytes;
+    FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / path, bytes);
+
+    font = std::make_shared<Font>(bytes, path.string());
+    AddToCache(path, font);
+
+    return font;
 }
 
 void Resources::UploadPixels(Texture& texture, int facesCount, int mipCount, TextureBinaryReader& reader)

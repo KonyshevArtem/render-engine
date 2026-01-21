@@ -22,7 +22,14 @@ add_library(
         string_split.cpp
 )
 
+add_library(
+        StringEncodingUtil
+        string_encoding_util.h
+        string_encoding_util.cpp
+)
+
 target_include_directories(DebugUtil PUBLIC .)
 target_include_directories(Hash PUBLIC .)
 target_include_directories(Arguments PUBLIC .)
 target_include_directories(StringSplit PUBLIC .)
+target_include_directories(StringEncodingUtil PUBLIC .)

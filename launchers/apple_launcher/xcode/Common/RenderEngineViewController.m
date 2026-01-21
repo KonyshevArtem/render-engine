@@ -1,11 +1,36 @@
 #import "RenderEngineViewController.h"
 #import "EngineFrameworkWrapper.h"
+#import "NativeKeyboard.h"
 #import <Foundation/Foundation.h>
 
 @implementation RenderEngineViewController
 
 const int k_MouseButtonLeft = 0;
 const int k_MouseButtonRight = 1;
+
+NSDictionary *m_SpecialKeys = NULL;
+
++ (void) initialize
+{
+#if !defined(TARGET_IOS) && !defined(TARGET_TVOS)
+    m_SpecialKeys = @{
+        @(NSDeleteFunctionKey): @6,
+        @(NSHomeFunctionKey): @7,
+        @(NSEndFunctionKey): @8,
+        @(NSLeftArrowFunctionKey): @9,
+        @(NSRightArrowFunctionKey): @10,
+        @(NSUpArrowFunctionKey): @11,
+        @(NSDownArrowFunctionKey): @12
+    };
+#endif
+}
+
+- (void) viewDidLoad
+{
+#if defined(TARGET_IOS)
+    [NativeKeyboard Initialize:self.view];
+#endif
+}
 
 - (CGFloat) getScreenScale
 {
@@ -76,7 +101,7 @@ const int k_MouseButtonRight = 1;
 
 - (void) mouseUp:(NSEvent *)event
 {
-    [EngineFrameworkWrapper ProcessMouseClick:k_MouseButtonRight pressed:false];
+    [EngineFrameworkWrapper ProcessMouseClick:k_MouseButtonLeft pressed:false];
 }
 
 - (void) mouseDragged:(NSEvent *)event
@@ -125,14 +150,36 @@ const int k_MouseButtonRight = 1;
     [EngineFrameworkWrapper ProcessKeyPress:[[event.characters uppercaseString] characterAtIndex:0] pressed:pressed];
 }
 
+- (void) specialKeyPress:(int)keyCode pressed:(bool)pressed
+{
+    [EngineFrameworkWrapper ProcessSpecialKey:keyCode pressed:pressed];
+}
+
+- (void) charPress:(NSEvent *)event
+{
+    const wchar_t* str = (const wchar_t*)[event.characters cStringUsingEncoding:NSUTF32StringEncoding];
+    [EngineFrameworkWrapper ProcessCharInput:str[0]];
+}
+
 - (void) keyDown:(NSEvent *)event
 {
-    [self keyPress:event pressed:true];
+    NSNumber* specialKeyCodePtr = [m_SpecialKeys objectForKey:@([event.characters characterAtIndex:0])];
+    if (specialKeyCodePtr != NULL)
+        [self specialKeyPress:[specialKeyCodePtr intValue] pressed:true];
+    else
+    {
+        [self keyPress:event pressed:true];
+        [self charPress:event];
+    }
 }
 
 - (void) keyUp:(NSEvent *)event
 {
-    [self keyPress:event pressed:false];
+    NSNumber* specialKeyCodePtr = [m_SpecialKeys objectForKey:@([event.characters characterAtIndex:0])];
+    if (specialKeyCodePtr != NULL)
+        [self specialKeyPress:[specialKeyCodePtr intValue] pressed:false];
+    else
+        [self keyPress:event pressed:false];
 }
 
 #endif

@@ -16,6 +16,7 @@
 struct GraphicsBackendTextureInfo;
 struct GraphicsBackendSamplerInfo;
 class GraphicsBackendBufferInfo;
+class DrawableGeometry;
 
 class Shader
 {
@@ -36,7 +37,8 @@ public:
     Shader &operator=(const Shader &) = delete;
     Shader &operator=(Shader &&) = delete;
 
-    const GraphicsBackendProgram &GetProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType);
+    const GraphicsBackendProgram& GetProgram(const std::shared_ptr<DrawableGeometry>& geometry);
+    const GraphicsBackendProgram& GetProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType);
 
     inline const std::unordered_map<std::string, GraphicsBackendTextureInfo> &GetTextures() const
     {

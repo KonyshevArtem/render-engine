@@ -4,6 +4,7 @@
 #include "component/component.h"
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
+#include "ui/ui_manager.h"
 
 namespace SceneLocal
 {
@@ -69,6 +70,7 @@ void Scene::Load(const std::string& scenePath)
 void Scene::Unload()
 {
     Current = nullptr;
+    UIManager::DestroyUI();
 }
 
 void Scene::SetSkybox(const std::shared_ptr<Cubemap>& skybox)
@@ -109,6 +111,7 @@ void Scene::LoadInternal()
 {
     Profiler::Marker _("Scene::LoadInternal");
 
+    Unload();
     Current = SceneParser::Parse(s_PendingScenePath);
     s_PendingScenePath = "";
 }

@@ -1,17 +1,34 @@
 #include "input.h"
-#include <unordered_set>
+#include "graphics_backend_api.h"
 
 namespace Input
 {
     std::vector<Touch> s_Touches;
     std::vector<Touch> s_PendingTouches;
-    std::unordered_set<unsigned char> s_Inputs;
-    std::unordered_set<unsigned char> s_InputsDown;
-    std::unordered_set<unsigned char> s_InputsUp;
+    std::unordered_map<unsigned char, KeyboardKeyState> s_KeyboardKeys;
+    std::unordered_map<SpecialKey, KeyboardKeyState> s_SpecialKeys;
+    std::unordered_set<wchar_t> s_CharInputs;
     Vector2 s_OldMousePosition = Vector2();
     Vector2 s_MousePosition = Vector2();
     Vector2 s_MouseDelta = Vector2();
     uint8_t s_MouseButtonBits;
+    uint8_t s_MouseButtonDownBits;
+    uint8_t s_MouseButtonUpBits;
+
+    bool KeyboardKeyState::IsDown() const
+    {
+        return (State & KeyState::DOWN) != 0;
+    }
+
+    bool KeyboardKeyState::IsPressed() const
+    {
+        return (State & KeyState::PRESSED) != 0;
+    }
+
+    bool KeyboardKeyState::IsUp() const
+    {
+        return (State & KeyState::UP) != 0;
+    }
 
     void ProcessPendingTouches()
     {
@@ -19,7 +36,7 @@ namespace Input
         {
             if (pendingTouch.State == TouchState::DOWN)
             {
-                const Touch touch{pendingTouch.Id, TouchState::DOWN, {pendingTouch.Position.x, pendingTouch.Position.y}, {0, 0}};
+                const Touch touch{pendingTouch.Id, pendingTouch.StartFrame, TouchState::DOWN, {pendingTouch.Position.x, pendingTouch.Position.y}, {0, 0}};
                 s_Touches.push_back(touch);
             }
 
@@ -27,7 +44,7 @@ namespace Input
             {
                 for (Touch& touch: s_Touches)
                 {
-                    if (touch.Id == pendingTouch.Id)
+                    if (touch.Id == pendingTouch.Id && pendingTouch.StartFrame > touch.StartFrame)
                     {
                         Vector2 pos = {pendingTouch.Position.x, pendingTouch.Position.y};
                         touch.Delta = pos - touch.Position;
@@ -43,10 +60,7 @@ namespace Input
                 for (Touch& touch: s_Touches)
                 {
                     if (touch.Id == pendingTouch.Id)
-                    {
                         touch.State = TouchState::UP;
-                        break;
-                    }
                 }
             }
         }
@@ -64,8 +78,23 @@ namespace Input
 
     void CleanUp()
     {
-        s_InputsUp.clear();
-        s_InputsDown.clear();
+        auto UpdateKeyState = [](KeyboardKeyState& keyState)
+        {
+            if (keyState.IsUp())
+                keyState.State = 0;
+            keyState.State &= ~KeyState::DOWN;
+        };
+
+        for (auto& pair : s_KeyboardKeys)
+            UpdateKeyState(pair.second);
+
+        for (auto& pair : s_SpecialKeys)
+            UpdateKeyState(pair.second);
+
+        s_CharInputs.clear();
+
+        s_MouseButtonDownBits = 0;
+        s_MouseButtonUpBits = 0;
 
         for (int i = 0; i < s_Touches.size(); ++i)
         {
@@ -80,22 +109,24 @@ namespace Input
 
     void HandleKeyboardInput(unsigned char key, bool isPressed)
     {
-        if (isPressed)
-        {
-            if (!s_Inputs.contains(key))
-            {
-                s_Inputs.insert(key);
-                s_InputsDown.insert(key);
-            }
-        }
-        else
-        {
-            if (s_Inputs.contains(key))
-            {
-                s_Inputs.erase(key);
-                s_InputsUp.insert(key);
-            }
-        }
+        KeyboardKeyState keyState{};
+        keyState.Char = key;
+        keyState.State = KeyState::PRESSED | (isPressed ? KeyState::DOWN : KeyState::UP);
+        s_KeyboardKeys[key] = keyState;
+    }
+
+    void HandleCharInput(wchar_t ch)
+    {
+        if (!s_CharInputs.contains(ch))
+            s_CharInputs.insert(ch);
+    }
+
+    void HandleSpecialKeyInput(int keyId, bool isPressed)
+    {
+        KeyboardKeyState keyState{};
+        keyState.SpecialKey = static_cast<SpecialKey>(keyId);
+        keyState.State = KeyState::PRESSED | (isPressed ? KeyState::DOWN : KeyState::UP);
+        s_SpecialKeys[keyState.SpecialKey] = keyState;
     }
 
     void HandleMouseClick(MouseButton mouseButton, bool isPressed)
@@ -104,10 +135,12 @@ namespace Input
         if (isPressed)
         {
             s_MouseButtonBits |= mouseButtonBit;
+            s_MouseButtonDownBits |= mouseButtonBit;
         }
         else
         {
             s_MouseButtonBits &= ~mouseButtonBit;
+            s_MouseButtonUpBits |= mouseButtonBit;
         }
     }
 
@@ -118,21 +151,40 @@ namespace Input
 
     void HandleTouch(TouchState state, uint64_t touchId, float x, float y)
     {
-        s_PendingTouches.push_back(Touch{touchId, state, {x, y}, {0, 0}});
+        s_PendingTouches.push_back(Touch{touchId, GraphicsBackend::Current()->GetFrameNumber(), state, {x, y}, {0, 0}});
+    }
+
+    const std::unordered_set<wchar_t>& GetCharInputs()
+    {
+        return s_CharInputs;
+    }
+
+    const std::unordered_map<SpecialKey, KeyboardKeyState>& GetSpecialKeys()
+    {
+        return s_SpecialKeys;
+    }
+
+    bool CheckKeyState(unsigned char key, KeyState state)
+    {
+        const auto& it = s_KeyboardKeys.find(key);
+        if (it != s_KeyboardKeys.end())
+            return (it->second.State & state) != 0;
+        return false;
     }
 
     bool GetKeyDown(unsigned char key)
     {
-        return s_InputsDown.contains(key);
+        return CheckKeyState(key, KeyState::DOWN);
     }
+
     bool GetKeyUp(unsigned char key)
     {
-        return s_InputsUp.contains(key);
+        return CheckKeyState(key, KeyState::UP);
     }
 
     bool GetKey(unsigned char key)
     {
-        return s_Inputs.contains(key);
+        return CheckKeyState(key, KeyState::PRESSED);
     }
 
     bool GetTouch(uint64_t touchId, Touch& outTouch)
@@ -153,6 +205,18 @@ namespace Input
     {
         uint8_t mouseButtonBit = 1U << static_cast<int>(mouseButton);
         return (s_MouseButtonBits & mouseButtonBit) != 0;
+    }
+
+    bool GetMouseButtonDown(MouseButton mouseButton)
+    {
+        uint8_t mouseButtonBit = 1U << static_cast<int>(mouseButton);
+        return (s_MouseButtonDownBits & mouseButtonBit) != 0;
+    }
+
+    bool GetMouseButtonUp(MouseButton mouseButton)
+    {
+        uint8_t mouseButtonBit = 1U << static_cast<int>(mouseButton);
+        return (s_MouseButtonUpBits & mouseButtonBit) != 0;
     }
 
     const Vector2 &GetMousePosition()

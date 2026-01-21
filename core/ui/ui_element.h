@@ -1,0 +1,42 @@
+#ifndef RENDER_ENGINE_UI_ELEMENT_H
+#define RENDER_ENGINE_UI_ELEMENT_H
+
+#include "vector2/vector2.h"
+
+#include <vector>
+#include <memory>
+
+struct UIEventInfo;
+
+class UIElement : public std::enable_shared_from_this<UIElement>
+{
+public:
+    UIElement(const Vector2& position, const Vector2& size);
+
+    Vector2 Position;
+    Vector2 Size;
+    bool Active;
+
+    void SetParent(const std::shared_ptr<UIElement>& parent);
+    void RemoveChild(const std::shared_ptr<UIElement>& child);
+    void Destroy();
+
+    inline Vector2 GetGlobalPosition() const
+    {
+        return m_GlobalPosition;
+    }
+
+protected:
+    virtual void HandleEvent(UIEventInfo& eventInfo){};
+    virtual void LoseFocus(){};
+    virtual void LoseHover(){};
+
+private:
+    std::vector<std::shared_ptr<UIElement>> m_Children;
+    std::weak_ptr<UIElement> m_Parent;
+    Vector2 m_GlobalPosition;
+
+    friend class UIManager;
+};
+
+#endif //RENDER_ENGINE_UI_ELEMENT_H

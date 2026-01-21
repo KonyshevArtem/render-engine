@@ -22,8 +22,6 @@ public:
 private:
     Texture2D(TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, bool isLinear, bool isRenderTarget, const std::string& name);
 
-    static std::shared_ptr<Texture2D> Create_Internal(uint8_t *pixels, uint8_t size, uint32_t width, uint32_t height, TextureInternalFormat textureFormat, bool isLinear, bool isRenderTarget, const std::string& name);
-
     friend class Resources;
 };
 

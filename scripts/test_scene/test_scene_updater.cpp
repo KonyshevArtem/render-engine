@@ -7,6 +7,12 @@
 #include "math_utils.h"
 #include "renderer/mesh_renderer.h"
 #include "resources/resources.h"
+#include "ui/ui_image.h"
+#include "ui/ui_button.h"
+#include "ui/ui_text.h"
+#include "ui/ui_text_field.h"
+#include "texture_2d/texture_2d.h"
+#include "debug.h"
 
 std::shared_ptr<TestSceneUpdater> TestSceneUpdater::Create(const nlohmann::json& componentData)
 {
@@ -69,6 +75,24 @@ void TestSceneUpdater::Update()
             instancedCube->GetRenderer()->CastShadows = false;
         }
 
+        const std::shared_ptr<Texture2D> uiTestTexture = Resources::Load<Texture2D>("core_resources/textures/ui/ui_test");
+        UIImage::Create(nullptr, {10, 20}, {100, 100}, uiTestTexture)->Color = Vector4(1, 0.5f, 0.5f, 0.5f);
+        UIImage::Create(nullptr, {10, 100}, {100, 100}, uiTestTexture)->Color = Vector4(0.5f, 1, 0.5f, 0.5f);
+        std::shared_ptr<UIText> text = UIText::Create(nullptr, {10, 250}, {150, 32}, L"Hello, Text!\nMultiline?", 32);
+
+        std::shared_ptr<UIButton> reloadButton = UIButton::Create(nullptr, {10, 290}, {100, 50}, L"Reload\nscene", 15, Texture2D::White());
+        reloadButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
+        reloadButton->OnPress = [](){ Scene::Load("core_resources/scenes/test_scene.scene"); };
+
+        std::shared_ptr<UIButton> deleteButton = UIButton::Create(nullptr, {10, 350}, {100, 50}, L"Delete\ntext", 15, Texture2D::White());
+        deleteButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
+        deleteButton->OnPress = [text](){ text->Destroy(); };
+
+        std::shared_ptr<UITextField> inputField = UITextField::Create(nullptr, {10, 410}, {150, 30}, 24, Texture2D::White());
+        inputField->OnFinish = [text](const std::wstring& inputText){ text->SetText(inputText); };
+
+        UITextField::Create(nullptr, {10, 460}, {150, 30}, 24, Texture2D::White());
+
         m_Initialized = true;
     }
 
@@ -101,9 +125,4 @@ void TestSceneUpdater::Update()
 
     if (!m_RotatingCylinder2.expired())
         m_RotatingCylinder2.lock()->SetLocalRotation(TestSceneUpdaterLocal::CalcRotation(phase, 1));
-
-    if (Input::GetKeyDown('G'))
-    {
-        Scene::Load("core_resources/scenes/test_scene.scene");
-    }
 }

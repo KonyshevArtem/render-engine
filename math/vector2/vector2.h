@@ -27,6 +27,10 @@ public:
 
     Vector2 operator/(float value) const;
 
+    bool operator==(const Vector2& vector) const;
+
+    bool operator!=(const Vector2& vector) const;
+
     float Length() const;
 };
 

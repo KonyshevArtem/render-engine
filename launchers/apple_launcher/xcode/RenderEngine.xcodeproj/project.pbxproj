@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 55;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -17,6 +17,8 @@
 		3ABD52F62283BDB70050D28E /* AAPLMetalRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A40C5A82277F0F500DBB29F /* AAPLMetalRenderer.m */; };
 		3ABD52FB2283BE4B0050D28E /* AAPLMetalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52E82283BB9B0050D28E /* AAPLMetalViewController.m */; };
 		3ABD53092283C4FE0050D28E /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
+		461F181E2F12729F00F75837 /* libbz2.1.0.8.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 461F181D2F12729700F75837 /* libbz2.1.0.8.tbd */; platformFilters = (ios, maccatalyst, macos, tvos, watchos, xros, ); };
+		461F18232F13115A00F75837 /* libbz2.1.0.8.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 461F181F2F12E9B500F75837 /* libbz2.1.0.8.tbd */; };
 		464255592CD802BF009D7BB1 /* EngineFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 935D1E2D2BAE3C5600362748 /* EngineFramework.h */; };
 		4642555A2CD802CC009D7BB1 /* RenderEngineViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */; };
 		4642555C2CD80300009D7BB1 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4642555B2CD80300009D7BB1 /* GameController.framework */; };
@@ -32,6 +34,14 @@
 		464258582CE29EEB009D7BB1 /* TrackingAreaProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 464258562CE29EEB009D7BB1 /* TrackingAreaProvider.h */; };
 		46D157772D39BF3B009BDACA /* core_resources in Resources */ = {isa = PBXBuildFile; fileRef = 46D157762D39BF3B009BDACA /* core_resources */; };
 		46D157792D39BF5D009BDACA /* core_resources in Resources */ = {isa = PBXBuildFile; fileRef = 46D157782D39BF5D009BDACA /* core_resources */; };
+		46FE0FBD2F144FAB00C306C1 /* NativeBridge.h in Headers */ = {isa = PBXBuildFile; fileRef = 46FE0FBA2F144FAB00C306C1 /* NativeBridge.h */; };
+		46FE0FBE2F144FAB00C306C1 /* NativeBridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = 46FE0FBB2F144FAB00C306C1 /* NativeBridge.mm */; };
+		46FE0FC02F14557400C306C1 /* NativeKeyboard.h in Headers */ = {isa = PBXBuildFile; fileRef = 46FE0FBF2F14556E00C306C1 /* NativeKeyboard.h */; };
+		46FE0FC12F14557400C306C1 /* NativeKeyboard.h in Headers */ = {isa = PBXBuildFile; fileRef = 46FE0FBF2F14556E00C306C1 /* NativeKeyboard.h */; };
+		46FE0FC32F14557E00C306C1 /* NativeKeyboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 46FE0FC22F14557B00C306C1 /* NativeKeyboard.m */; };
+		46FE0FC42F14557E00C306C1 /* NativeKeyboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 46FE0FC22F14557B00C306C1 /* NativeKeyboard.m */; };
+		46FE0FC52F18114500C306C1 /* NativeBridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = 46FE0FBB2F144FAB00C306C1 /* NativeBridge.mm */; };
+		46FE0FC62F18115500C306C1 /* NativeBridge.h in Headers */ = {isa = PBXBuildFile; fileRef = 46FE0FBA2F144FAB00C306C1 /* NativeBridge.h */; };
 		932D9AA72BB99B2300A4C3AB /* RenderEngineViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */; };
 		932D9AAA2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
 		932D9AAB2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */; };
@@ -55,6 +65,9 @@
 		3ABD52E92283BB9B0050D28E /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		3ABD52F12283BC300050D28E /* AAPLAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAPLAppDelegate.h; sourceTree = "<group>"; };
 		3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAPLAppDelegate.m; sourceTree = "<group>"; };
+		461F181D2F12729700F75837 /* libbz2.1.0.8.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.1.0.8.tbd; path = usr/lib/libbz2.1.0.8.tbd; sourceTree = SDKROOT; };
+		461F181F2F12E9B500F75837 /* libbz2.1.0.8.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.1.0.8.tbd; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/usr/lib/libbz2.1.0.8.tbd; sourceTree = DEVELOPER_DIR; };
+		461F18202F12E9CA00F75837 /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/usr/lib/libbz2.tbd; sourceTree = DEVELOPER_DIR; };
 		4642555B2CD80300009D7BB1 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/System/Library/Frameworks/GameController.framework; sourceTree = DEVELOPER_DIR; };
 		4642558C2CD810CA009D7BB1 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		464255912CD81E56009D7BB1 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS17.5.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
@@ -265,6 +278,10 @@
 		46AEF8002E1B1F9A0083DD55 /* graphics_backend_debug_group.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = graphics_backend_debug_group.cpp; sourceTree = "<group>"; };
 		46D157762D39BF3B009BDACA /* core_resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = core_resources; path = ../../../build_resources/mac/core_resources; sourceTree = "<group>"; };
 		46D157782D39BF5D009BDACA /* core_resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = core_resources; path = ../../../build_resources/ios/core_resources; sourceTree = "<group>"; };
+		46FE0FBA2F144FAB00C306C1 /* NativeBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NativeBridge.h; sourceTree = "<group>"; };
+		46FE0FBB2F144FAB00C306C1 /* NativeBridge.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = NativeBridge.mm; sourceTree = "<group>"; };
+		46FE0FBF2F14556E00C306C1 /* NativeKeyboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NativeKeyboard.h; sourceTree = "<group>"; };
+		46FE0FC22F14557B00C306C1 /* NativeKeyboard.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NativeKeyboard.m; sourceTree = "<group>"; };
 		78FA0B4078F9C9B000000001 /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		932D9AA62BB99B2300A4C3AB /* RenderEngineViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RenderEngineViewController.h; sourceTree = "<group>"; };
 		932D9AA92BB99C1800A4C3AB /* RenderEngineViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RenderEngineViewController.m; sourceTree = "<group>"; };
@@ -280,6 +297,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				461F181E2F12729F00F75837 /* libbz2.1.0.8.tbd in Frameworks */,
 				93A9F05B2BB0658E0023B4D5 /* GameController.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -288,6 +306,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				461F18232F13115A00F75837 /* libbz2.1.0.8.tbd in Frameworks */,
 				464255922CD81E56009D7BB1 /* libc++.tbd in Frameworks */,
 				4642558D2CD810CA009D7BB1 /* UIKit.framework in Frameworks */,
 				4642555C2CD80300009D7BB1 /* GameController.framework in Frameworks */,
@@ -300,6 +319,7 @@
 		3A40C59F2277F0F500DBB29F = {
 			isa = PBXGroup;
 			children = (
+				46FE0FBC2F144FAB00C306C1 /* NativeBridge */,
 				46AEF7AA2E1B1F9A0083DD55 /* core */,
 				46AEF7AD2E1B1F9A0083DD55 /* engine_framework */,
 				46AEF7C22E1B1F9A0083DD55 /* game_window */,
@@ -348,6 +368,8 @@
 		3ABD53012283C3710050D28E /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				46FE0FC22F14557B00C306C1 /* NativeKeyboard.m */,
+				46FE0FBF2F14556E00C306C1 /* NativeKeyboard.h */,
 				3ABD52E92283BB9B0050D28E /* main.m */,
 				3ABD52F12283BC300050D28E /* AAPLAppDelegate.h */,
 				3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */,
@@ -950,6 +972,15 @@
 			path = "/Users/artemkonyshev/Workspace/render-engine/graphics_backend";
 			sourceTree = "<absolute>";
 		};
+		46FE0FBC2F144FAB00C306C1 /* NativeBridge */ = {
+			isa = PBXGroup;
+			children = (
+				46FE0FBA2F144FAB00C306C1 /* NativeBridge.h */,
+				46FE0FBB2F144FAB00C306C1 /* NativeBridge.mm */,
+			);
+			path = NativeBridge;
+			sourceTree = "<group>";
+		};
 		78F9C07078F9C6B000000001 /* LICENSE */ = {
 			isa = PBXGroup;
 			children = (
@@ -961,6 +992,9 @@
 		935D1D652BA79E7500362748 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				461F18202F12E9CA00F75837 /* libbz2.tbd */,
+				461F181D2F12729700F75837 /* libbz2.1.0.8.tbd */,
+				461F181F2F12E9B500F75837 /* libbz2.1.0.8.tbd */,
 				464255912CD81E56009D7BB1 /* libc++.tbd */,
 				4642558C2CD810CA009D7BB1 /* UIKit.framework */,
 				935D1E222BAA41CE00362748 /* GameController.framework */,
@@ -1004,8 +1038,10 @@
 			files = (
 				4642584F2CDE9BAC009D7BB1 /* EngineFrameworkWrapper.h in Headers */,
 				464255592CD802BF009D7BB1 /* EngineFramework.h in Headers */,
+				46FE0FC12F14557400C306C1 /* NativeKeyboard.h in Headers */,
 				4642555A2CD802CC009D7BB1 /* RenderEngineViewController.h in Headers */,
 				464258582CE29EEB009D7BB1 /* TrackingAreaProvider.h in Headers */,
+				46FE0FBD2F144FAB00C306C1 /* NativeBridge.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1013,8 +1049,10 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				46FE0FC62F18115500C306C1 /* NativeBridge.h in Headers */,
 				93A9F0462BB03BDE0023B4D5 /* EngineFrameworkWrapper.h in Headers */,
 				932D9AA72BB99B2300A4C3AB /* RenderEngineViewController.h in Headers */,
+				46FE0FC02F14557400C306C1 /* NativeKeyboard.h in Headers */,
 				464258572CE29EEB009D7BB1 /* TrackingAreaProvider.h in Headers */,
 				4642583D2CDE97D4009D7BB1 /* EngineFramework.h in Headers */,
 			);
@@ -1123,9 +1161,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				46FE0FC52F18114500C306C1 /* NativeBridge.mm in Sources */,
 				464258542CE29ED0009D7BB1 /* TrackingAreaProvider.m in Sources */,
 				3A40C5C12277F0F500DBB29F /* AAPLMetalRenderer.m in Sources */,
 				3ABD52EC2283BB9B0050D28E /* AAPLMetalViewController.m in Sources */,
+				46FE0FC42F14557E00C306C1 /* NativeKeyboard.m in Sources */,
 				932D9AAA2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */,
 				3ABD52ED2283BB9B0050D28E /* main.m in Sources */,
 				93A9F0472BB0452E0023B4D5 /* AAPLAppDelegate.m in Sources */,
@@ -1140,8 +1180,10 @@
 				464258552CE29ED0009D7BB1 /* TrackingAreaProvider.m in Sources */,
 				3ABD52FB2283BE4B0050D28E /* AAPLMetalViewController.m in Sources */,
 				3ABD52F62283BDB70050D28E /* AAPLMetalRenderer.m in Sources */,
+				46FE0FBE2F144FAB00C306C1 /* NativeBridge.mm in Sources */,
 				932D9AAB2BB99C1800A4C3AB /* RenderEngineViewController.m in Sources */,
 				3ABD53092283C4FE0050D28E /* AAPLAppDelegate.m in Sources */,
+				46FE0FC32F14557E00C306C1 /* NativeKeyboard.m in Sources */,
 				3ABD52F02283BC260050D28E /* main.m in Sources */,
 				464258522CDE9BE7009D7BB1 /* EngineFrameworkWrapper.mm in Sources */,
 			);
@@ -1323,6 +1365,11 @@
 					"-lRenderEngineLauncher",
 					"-lHash",
 					"-lArguments",
+					"-lz",
+					"-lfreetyped",
+					"-lharfbuzz",
+					"-ltrex",
+					"-lStringEncodingUtil",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -1370,6 +1417,11 @@
 					"-lRenderEngineLauncher",
 					"-lHash",
 					"-lArguments",
+					"-lz",
+					"-lfreetype",
+					"-lharfbuzz",
+					"-ltrex",
+					"-lStringEncodingUtil",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -1412,6 +1464,11 @@
 					"-lImGuiWrapper",
 					"-lHash",
 					"-lArguments",
+					"-lz",
+					"-lfreetyped",
+					"-lharfbuzz",
+					"-ltrex",
+					"-lStringEncodingUtil",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -1453,6 +1510,11 @@
 					"-lImGuiWrapper",
 					"-lHash",
 					"-lArguments",
+					"-lz",
+					"-lfreetype",
+					"-lharfbuzz",
+					"-ltrex",
+					"-lStringEncodingUtil",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";

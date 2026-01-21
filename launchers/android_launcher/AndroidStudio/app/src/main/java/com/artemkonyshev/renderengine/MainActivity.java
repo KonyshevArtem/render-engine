@@ -1,9 +1,12 @@
 package com.artemkonyshev.renderengine;
 
 import android.app.Activity;
+import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.MotionEvent;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.FrameLayout;
 
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -13,8 +16,14 @@ import com.artemkonyshev.engineframework.EngineFramework;
 
 public class MainActivity extends Activity
 {
+    private static MainActivity s_Instance;
+
     private EngineFramework m_EngineFramework;
-    private GLSurfaceView m_GlSurfaceView;
+
+    public static MainActivity getInstance()
+    {
+        return s_Instance;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -26,8 +35,15 @@ public class MainActivity extends Activity
         insetsController.hide(WindowInsetsCompat.Type.systemBars());
 
         m_EngineFramework = new EngineFramework();
-        m_GlSurfaceView = new RenderEngineGLSurfaceView(this, m_EngineFramework);
-        setContentView(m_GlSurfaceView);
+        GLSurfaceView glSurfaceView = new RenderEngineGLSurfaceView(this, m_EngineFramework);
+        NativeKeyboardView keyboardView = new NativeKeyboardView(this, (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE));
+
+        FrameLayout layout = new FrameLayout(this);
+        layout.addView(glSurfaceView);
+        layout.addView(keyboardView);
+        setContentView(layout);
+
+        s_Instance = this;
     }
 
     @Override

@@ -129,7 +129,32 @@ add_library(
 	worker/worker.h
 	worker/worker.cpp
 	culling/frustum.h
-	culling/frustum.cpp)
+	culling/frustum.cpp
+	ui/ui_manager.cpp
+	ui/ui_manager.h
+	ui/ui_image.cpp
+	ui/ui_image.h
+	ui/ui_text.cpp
+	ui/ui_text.h
+	ui/ui_element.cpp
+	ui/ui_element.h
+	ui/ui_render_pass.cpp
+	ui/ui_render_pass.h
+	font/font.cpp
+	font/font.h
+	font/font_data.h
+	ui/ui_button.cpp
+	ui/ui_button.h
+	ui/ui_event_info.h
+	ui/ui_text_field.cpp
+	ui/ui_text_field.h
+	ui/ui_native_keyboard.cpp
+	ui/ui_native_keyboard.h
+	native_bridge/native_bridge_android.cpp
+	native_bridge/native_bridge_android.h
+	native_bridge/native_bridge_apple.cpp
+	native_bridge/native_bridge_apple.h
+	native_bridge/native_bridge_common.h)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json)
+target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil)

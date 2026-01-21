@@ -1,8 +1,29 @@
 #include "engine_framework.h"
 #include "imgui_wrapper.h"
 
+#include <unordered_map>
 #include <windows.h>
 #include <windowsx.h>
+
+namespace WinMain_Local
+{
+    std::unordered_map<int, int> s_SpecialKeysMap
+    {
+        {VK_LSHIFT, 0},
+        {VK_RSHIFT, 1},
+        {VK_LCONTROL, 2},
+        {VK_RCONTROL, 3},
+        {VK_RETURN, 4},
+        {VK_BACK, 5},
+        {VK_DELETE, 6},
+        {VK_HOME, 7},
+        {VK_END, 8},
+        {VK_LEFT, 9},
+        {VK_RIGHT, 10},
+        {VK_UP, 11},
+        {VK_DOWN, 12}
+    };
+}
 
 LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -48,7 +69,16 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
             return 0;
         case WM_KEYDOWN:
         case WM_KEYUP:
-            EngineFramework::ProcessKeyPress(static_cast<char>(wParam), message == WM_KEYDOWN);
+        {
+            const bool isPressed = message == WM_KEYDOWN;
+            if (WinMain_Local::s_SpecialKeysMap.contains(wParam))
+                EngineFramework::ProcessSpecialKey(WinMain_Local::s_SpecialKeysMap[wParam], isPressed);
+            else
+                EngineFramework::ProcessKeyPress(static_cast<char>(wParam), isPressed);
+            return 0;
+        }
+        case WM_CHAR:
+            EngineFramework::ProcessCharInput(static_cast<wchar_t>(wParam));
             return 0;
         case WM_MOUSEMOVE:
         {
@@ -68,13 +98,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     windowClass.style = CS_OWNDC;
     windowClass.lpfnWndProc = WindowProc;
     windowClass.hInstance = hInstance;
-    windowClass.lpszClassName = "RenderEngine Window Class";
+    windowClass.lpszClassName = L"RenderEngine Window Class";
     RegisterClass(&windowClass);
 
     HWND window = CreateWindowEx(
             0,
             windowClass.lpszClassName,
-            "Render Engine",
+            L"Render Engine",
             WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, CW_USEDEFAULT, 1920, 1080,
             nullptr,

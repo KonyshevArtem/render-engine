@@ -39,8 +39,14 @@ bool GizmosPass::Prepare(const Context& ctx, const GraphicsBackendFence& waitFor
         }
     }
 
-    const Matrix4x4 vpMatrix = ctx.ProjectionMatrix * ctx.ViewMatrix;
-    m_GizmosQueue.Prepare(vpMatrix, Gizmos::GetGizmosToDraw(), RenderSettings{});
+    m_3DViewMatrix = ctx.ViewMatrix;
+    m_3DProjectionMatrix = ctx.ProjectionMatrix;
+    m_3DNearPlane = ctx.NearPlane;
+    m_3DFarPlane = ctx.FarPlane;
+    m_3DGizmosQueue.Prepare(m_3DProjectionMatrix * m_3DViewMatrix, Gizmos::Get3DGizmosToDraw(), RenderSettings{});
+
+    m_2DProjectionMatrix = Matrix4x4::Orthographic(0, Graphics::GetScreenWidth(), 0, Graphics::GetScreenHeight(), 0.01f, 1);
+    m_2DGizmosQueue.Prepare(m_2DProjectionMatrix, Gizmos::Get2DGizmosToDraw(), RenderSettings{.FrustumCullingPlanesBits = 0});
 
     Gizmos::ClearGizmos();
 
@@ -58,7 +64,13 @@ void GizmosPass::Execute(const Context& ctx)
     GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
 
     GraphicsBackend::Current()->BeginRenderPass("Gizmos pass");
-    m_GizmosQueue.Draw();
+
+    Graphics::SetCameraData(m_3DViewMatrix, m_3DProjectionMatrix, m_3DNearPlane, m_3DFarPlane);
+    m_3DGizmosQueue.Draw();
+
+    Graphics::SetCameraData(Matrix4x4::Identity(), m_2DProjectionMatrix, 0.01f, 1.0f);
+    m_2DGizmosQueue.Draw();
+
     GraphicsBackend::Current()->EndRenderPass();
 }
 

@@ -66,7 +66,7 @@ void Texture::SetComparisonFunction(ComparisonFunction function)
     RecreateSampler(true);
 }
 
-void Texture::UploadPixels(void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace) const
+void Texture::UploadPixels(const void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace) const
 {
     Profiler::Marker _("Texture::UploadPixels");
 

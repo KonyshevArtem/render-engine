@@ -7,7 +7,7 @@
 class Texture2DArray: public Texture
 {
 public:
-    static std::shared_ptr<Texture2DArray> Create(uint32_t width, uint32_t height, uint32_t slices, TextureInternalFormat format, bool isLinear, const std::string& name);
+    static std::shared_ptr<Texture2DArray> Create(uint32_t width, uint32_t height, uint32_t slices, TextureInternalFormat format, bool isLinear, bool isRenderTarget, const std::string& name);
 
     ~Texture2DArray() override = default;
 
@@ -18,7 +18,7 @@ public:
     Texture2DArray &operator=(Texture2DArray &&)      = delete;
 
 private:
-    Texture2DArray(TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, bool isLinear, const std::string& name);
+    Texture2DArray(TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, bool isLinear, bool isRenderTarget, const std::string& name);
 };
 
 #endif //RENDER_ENGINE_TEXTURE_2D_ARRAY_H

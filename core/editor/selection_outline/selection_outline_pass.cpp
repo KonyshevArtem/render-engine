@@ -17,7 +17,6 @@
 #include "vector2/vector2.h"
 #include "graphics_buffer/graphics_buffer.h"
 #include "mesh/mesh.h"
-#include "enums/indices_data_type.h"
 #include "graphics/context.h"
 #include "graphics/render_settings/render_settings.h"
 
@@ -114,8 +113,8 @@ void SelectionOutlinePass::Execute(const Context& ctx)
         blitDataBuffer->SetData(&data, 0, sizeof(data));
         GraphicsBackend::Current()->BindConstantBuffer(blitDataBuffer->GetBackendBuffer(), 0, 0, sizeof(data));
         GraphicsBackend::Current()->BindTextureSampler(silhouetteRenderTarget->GetBackendTexture(), silhouetteRenderTarget->GetBackendSampler(), 0);
-        GraphicsBackend::Current()->UseProgram(blitShader->GetProgram(fullscreenMesh->GetVertexAttributes(), fullscreenMesh->GetPrimitiveType()));
-        GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
+        GraphicsBackend::Current()->UseProgram(blitShader->GetProgram(fullscreenMesh));
+        GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
         GraphicsBackend::Current()->EndRenderPass();
     }
 }

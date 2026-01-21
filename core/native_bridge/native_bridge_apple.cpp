@@ -1,0 +1,36 @@
+#if RENDER_ENGINE_APPLE
+
+#include "native_bridge_apple.h"
+
+namespace NativeBridgeApple_Local
+{
+    ShowNativeKeyboardCallback s_ShowNativeKeyboardCallback;
+
+    TextChangedCallback s_TextChangedCallback;
+    FinishEditCallback s_FinishEditCallback;
+}
+
+void SetShowNativeKeyboardCallback(ShowNativeKeyboardCallback callback)
+{
+    NativeBridgeApple_Local::s_ShowNativeKeyboardCallback = callback;
+}
+
+void NativeKeyboardTextChanged(const wchar_t* text)
+{
+    NativeBridgeApple_Local::s_TextChangedCallback(text);
+}
+
+void NativeKeyboardFinishEdit(bool done)
+{
+    NativeBridgeApple_Local::s_FinishEditCallback(done);
+}
+
+void NativeBridgeApple::ShowNativeKeyboard(const wchar_t* text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback)
+{
+    NativeBridgeApple_Local::s_TextChangedCallback = textChangedCallback;
+    NativeBridgeApple_Local::s_FinishEditCallback = finishEditCallback;
+
+    NativeBridgeApple_Local::s_ShowNativeKeyboardCallback(text);
+}
+
+#endif

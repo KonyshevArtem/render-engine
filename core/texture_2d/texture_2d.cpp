@@ -5,9 +5,9 @@ Texture2D::Texture2D(TextureInternalFormat format, uint32_t width, uint32_t heig
 {
 }
 
-std::shared_ptr<Texture2D> Texture2D::Create(uint32_t _width, uint32_t _height, TextureInternalFormat textureFormat, bool isLinear, bool isRenderTarget, const std::string& name)
+std::shared_ptr<Texture2D> Texture2D::Create(uint32_t width, uint32_t height, TextureInternalFormat textureFormat, bool isLinear, bool isRenderTarget, const std::string& name)
 {
-    return Create_Internal(nullptr, 0, _width, _height, textureFormat, isLinear, isRenderTarget, name);
+    return std::shared_ptr<Texture2D>(new Texture2D(textureFormat, width, height, 1, isLinear, isRenderTarget, name));
 }
 
 const std::shared_ptr<Texture2D> &Texture2D::White()
@@ -17,7 +17,8 @@ const std::shared_ptr<Texture2D> &Texture2D::White()
     if (white == nullptr)
     {
         uint8_t pixels[4] {255, 255, 255, 255};
-        white = Create_Internal(&pixels[0], 4, 1, 1, TextureInternalFormat::RGBA8, false, false, "White");
+        white = std::shared_ptr<Texture2D>(new Texture2D(TextureInternalFormat::RGBA8, 1, 1, 1, false, false, "White"));
+        white->UploadPixels(pixels, 4, 0, 0);
     }
 
     return white;
@@ -30,7 +31,8 @@ const std::shared_ptr<Texture2D> &Texture2D::Normal()
     if (normal == nullptr)
     {
         uint8_t pixels[4] {125, 125, 255, 255};
-        normal = Create_Internal(&pixels[0], 4, 1, 1, TextureInternalFormat::RGBA8, true, false, "DefaultNormal");
+        normal = std::shared_ptr<Texture2D>(new Texture2D(TextureInternalFormat::RGBA8, 1, 1, 1, true, false, "DefaultNormal"));
+        normal->UploadPixels(pixels, 4, 0, 0);
     }
 
     return normal;
@@ -40,14 +42,4 @@ const std::shared_ptr<Texture2D> &Texture2D::Null()
 {
     static std::shared_ptr<Texture2D> null;
     return null;
-}
-
-std::shared_ptr<Texture2D> Texture2D::Create_Internal(uint8_t *pixels, uint8_t size, uint32_t width, uint32_t height, TextureInternalFormat textureFormat, bool isLinear, bool isRenderTarget, const std::string& name)
-{
-    auto texture = std::shared_ptr<Texture2D>(new Texture2D(textureFormat, width, height, 1, isLinear, isRenderTarget, name));
-    if (!isRenderTarget)
-    {
-        texture->UploadPixels(pixels, size, 0, 0);
-    }
-    return texture;
 }

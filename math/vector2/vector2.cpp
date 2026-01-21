@@ -52,6 +52,16 @@ Vector2 Vector2::operator/(float value) const
     return {x / value, y / value};
 }
 
+bool Vector2::operator==(const Vector2& vector) const
+{
+    return x == vector.x && y == vector.y;
+}
+
+bool Vector2::operator!=(const Vector2& vector) const
+{
+    return !(*this == vector);
+}
+
 float Vector2::Length() const
 {
     return sqrtf(x * x + y * y);

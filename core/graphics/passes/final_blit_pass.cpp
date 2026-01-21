@@ -8,7 +8,6 @@
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "graphics_buffer/graphics_buffer.h"
 #include "mesh/mesh.h"
-#include "enums/indices_data_type.h"
 
 FinalBlitPass::FinalBlitPass(int priority) :
     RenderPass(priority),
@@ -51,7 +50,7 @@ void FinalBlitPass::Execute(const Context& ctx)
     buffer->SetData(&data, 0, sizeof(data));
     GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
     GraphicsBackend::Current()->BindTextureSampler(m_Source->GetBackendTexture(), m_Source->GetBackendSampler(), 0);
-    GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh->GetVertexAttributes(), fullscreenMesh->GetPrimitiveType()));
-    GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
+    GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh));
+    GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
     GraphicsBackend::Current()->EndRenderPass();
 }

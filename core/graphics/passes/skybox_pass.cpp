@@ -6,7 +6,6 @@
 #include "graphics_buffer/graphics_buffer.h"
 #include "shader/shader.h"
 #include "resources/resources.h"
-#include "enums/indices_data_type.h"
 
 std::shared_ptr<Mesh> SkyboxPass::m_Mesh = nullptr;
 
@@ -47,6 +46,6 @@ void SkyboxPass::Execute(const Context& ctx)
 
     GraphicsBackend::Current()->BindTextureSampler(ctx.Skybox->GetBackendTexture(), ctx.Skybox->GetBackendSampler(), 0);
 
-    GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_Mesh->GetVertexAttributes(), m_Mesh->GetPrimitiveType()));
-    GraphicsBackend::Current()->DrawElements(m_Mesh->GetGraphicsBackendGeometry(), m_Mesh->GetPrimitiveType(), m_Mesh->GetElementsCount(), IndicesDataType::UNSIGNED_INT);
+    GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_Mesh));
+    GraphicsBackend::Current()->DrawElements(m_Mesh->GetGraphicsBackendGeometry(), m_Mesh->GetPrimitiveType(), m_Mesh->GetElementsCount(), m_Mesh->GetIndicesDataType());
 }

@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 
+struct Vector2;
 struct Matrix4x4;
 class DrawableGeometry;
 
@@ -16,14 +17,17 @@ namespace Gizmos
     enum class GizmoType
     {
         WIRE_CUBE,
-        FRUSTUM
+        FRUSTUM,
+        RECT,
     };
 
     void DrawWireCube(const Matrix4x4& matrix);
     void DrawFrustum(const Matrix4x4& matrix);
+    void DrawRect(const Vector2& min, const Vector2& max);
 
     void Init();
-    const std::vector<RenderQueue::Item>& GetGizmosToDraw();
+    const std::vector<RenderQueue::Item>& Get3DGizmosToDraw();
+    const std::vector<RenderQueue::Item>& Get2DGizmosToDraw();
     void ClearGizmos();
 
     bool IsEnabled();

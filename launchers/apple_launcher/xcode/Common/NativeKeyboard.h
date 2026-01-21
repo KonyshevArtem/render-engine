@@ -6,7 +6,7 @@
 @interface NativeKeyboard : NSObject
 
 + (void) Initialize:(UIView*)view;
-+ (void) Show:(const char*)text;
++ (void) Show:(const wchar_t*)text;
 
 @end
 

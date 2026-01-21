@@ -5,6 +5,7 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <wchar.h>
 
 @interface KeyboardTextFieldDelegate : NSObject<UITextFieldDelegate>
 @end
@@ -55,10 +56,12 @@ KeyboardTextFieldDelegate* s_TextFieldDelegate;
     ]];
 }
 
-+ (void) Show:(const char *)text
++ (void) Show:(const wchar_t*)text
 {
+    NSString* textStr = [[NSString alloc] initWithBytes:text length:wcslen(text)*sizeof(*text) encoding:NSUTF32LittleEndianStringEncoding];
+    
     [s_TextField setHidden:FALSE];
-    [s_TextField setText:[NSString stringWithCString:text encoding:NSUTF8StringEncoding]];
+    [s_TextField setText:textStr];
     [s_TextField becomeFirstResponder];
 }
 

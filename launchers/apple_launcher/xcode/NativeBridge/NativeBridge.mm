@@ -2,7 +2,7 @@
 #import "NativeBridge.h"
 #import "NativeKeyboard.h"
 
-void ShowNativeKeyboard(const char* text)
+void ShowNativeKeyboard(const wchar_t* text)
 {
 #if defined(TARGET_IOS)
     [NativeKeyboard Show:text];
@@ -18,7 +18,8 @@ void ShowNativeKeyboard(const char* text)
 
 + (void) NativeKeyboardTextChanged:(NSString *)text
 {
-    NativeKeyboardTextChanged([text cStringUsingEncoding:NSUTF8StringEncoding]);
+    const wchar_t* textPtr = reinterpret_cast<const wchar_t*>([text cStringUsingEncoding:NSUTF32StringEncoding]);
+    NativeKeyboardTextChanged(textPtr);
 }
 
 + (void) NativeKeyboardFinishEdit:(bool)done

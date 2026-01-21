@@ -15,7 +15,7 @@ void SetShowNativeKeyboardCallback(ShowNativeKeyboardCallback callback)
     NativeBridgeApple_Local::s_ShowNativeKeyboardCallback = callback;
 }
 
-void NativeKeyboardTextChanged(const char* text)
+void NativeKeyboardTextChanged(const wchar_t* text)
 {
     NativeBridgeApple_Local::s_TextChangedCallback(text);
 }
@@ -25,7 +25,7 @@ void NativeKeyboardFinishEdit(bool done)
     NativeBridgeApple_Local::s_FinishEditCallback(done);
 }
 
-void NativeBridgeApple::ShowNativeKeyboard(const char *text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback)
+void NativeBridgeApple::ShowNativeKeyboard(const wchar_t* text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback)
 {
     NativeBridgeApple_Local::s_TextChangedCallback = textChangedCallback;
     NativeBridgeApple_Local::s_FinishEditCallback = finishEditCallback;

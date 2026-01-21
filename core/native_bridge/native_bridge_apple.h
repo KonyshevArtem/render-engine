@@ -5,16 +5,16 @@
 
 #include "native_bridge_common.h"
 
-typedef void (*ShowNativeKeyboardCallback)(const char* text);
+typedef void (*ShowNativeKeyboardCallback)(const wchar_t* text);
 
 void SetShowNativeKeyboardCallback(ShowNativeKeyboardCallback fn);
-void NativeKeyboardTextChanged(const char *text);
+void NativeKeyboardTextChanged(const wchar_t* text);
 void NativeKeyboardFinishEdit(bool done);
 
 class NativeBridgeApple
 {
 public:
-    static void ShowNativeKeyboard(const char* text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback);
+    static void ShowNativeKeyboard(const wchar_t* text, TextChangedCallback textChangedCallback, FinishEditCallback finishEditCallback);
 };
 
 #endif

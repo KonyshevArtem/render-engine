@@ -26,7 +26,7 @@ namespace RenderQueueLocal
         return Hash::Combine(materialHash, geometryHash);
     }
 
-    void SetupDrawCall(const std::shared_ptr<DrawableGeometry>& geometry, const std::shared_ptr<Material>& material, const Matrix4x4& matrix, const Bounds& aabb, bool castShadows, const RenderSettings& settings, const Frustum& frustum, std::vector<DrawCallInfo>& outDrawCalls)
+    void SetupDrawCall(const std::shared_ptr<DrawableGeometry>& geometry, const std::shared_ptr<Material>& material, const Matrix4x4& matrix, const Bounds& aabb, bool castShadows, uint8_t stencilValue, const RenderSettings& settings, const Frustum& frustum, std::vector<DrawCallInfo>& outDrawCalls)
     {
         const Material* mat = settings.OverrideMaterial ? settings.OverrideMaterial.get() : material.get();
 
@@ -42,7 +42,8 @@ namespace RenderQueueLocal
                 {matrix},
                 aabb,
                 castShadows,
-                false
+                false,
+                stencilValue
         };
         outDrawCalls.push_back(info);
     }
@@ -54,7 +55,7 @@ namespace RenderQueueLocal
         for (const std::shared_ptr<Renderer>& renderer : renderers)
         {
             if (renderer)
-                SetupDrawCall(renderer->GetGeometry(), renderer->GetMaterial(), renderer->GetModelMatrix(), renderer->GetAABB(), renderer->CastShadows, settings, frustum, outDrawCalls);
+                SetupDrawCall(renderer->GetGeometry(), renderer->GetMaterial(), renderer->GetModelMatrix(), renderer->GetAABB(), renderer->CastShadows, renderer->StencilValue, settings, frustum, outDrawCalls);
         }
     }
 
@@ -63,7 +64,7 @@ namespace RenderQueueLocal
         outDrawCalls.reserve(items.size());
 
         for (const RenderQueue::Item& item : items)
-            SetupDrawCall(item.Geometry, item.Material, item.Matrix, item.AABB, false, settings, frustum, outDrawCalls);
+            SetupDrawCall(item.Geometry, item.Material, item.Matrix, item.AABB, false, 0, settings, frustum, outDrawCalls);
     }
 
     void FilterDrawCalls(const DrawCallFilter& filter, std::vector<DrawCallInfo>& outDrawCalls)
@@ -124,7 +125,7 @@ namespace RenderQueueLocal
             std::sort(outDrawCalls.begin(), outDrawCalls.end(), DrawCallComparer {sortMode, cameraDirection});
     }
 
-    void SetupShaderPass(const Material* material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
+    void SetupShaderPass(const Material* material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType, uint8_t stencilValue)
     {
         uint32_t perMaterialDataBinding = 0;
         const std::shared_ptr<GraphicsBuffer>& perMaterialDataBuffer = material->GetPerMaterialDataBuffer(perMaterialDataBinding);
@@ -139,7 +140,11 @@ namespace RenderQueueLocal
             GraphicsBackend::Current()->BindTextureSampler(texture->GetBackendTexture(), texture->GetBackendSampler(), binding);
         }
 
-        GraphicsBackend::Current()->UseProgram(material->GetShader()->GetProgram(vertexAttributes, primitiveType));
+        std::shared_ptr<Shader> shader = material->GetShader();
+        if (shader->UsesStencil())
+            GraphicsBackend::Current()->SetStencilValue(stencilValue);
+
+        GraphicsBackend::Current()->UseProgram(shader->GetProgram(vertexAttributes, primitiveType));
     }
 }
 
@@ -201,7 +206,7 @@ void RenderQueue::Draw() const
         const bool hasIndices = drawCall.Geometry->HasIndexes();
 
         SetupMatrices(drawCall.ModelMatrices);
-        RenderQueueLocal::SetupShaderPass(drawCall.Material, drawCall.Geometry->GetVertexAttributes(), primitiveType);
+        RenderQueueLocal::SetupShaderPass(drawCall.Material, drawCall.Geometry->GetVertexAttributes(), primitiveType, drawCall.StencilValue);
 
         if (drawCall.Instanced)
         {

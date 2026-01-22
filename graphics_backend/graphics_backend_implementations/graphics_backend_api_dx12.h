@@ -43,6 +43,7 @@ public:
 
     void SetClearColor(float r, float g, float b, float a) override;
     void SetClearDepth(double depth) override;
+    void SetStencilValue(uint8_t value) override;
 
     void DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount) override;
     void DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount) override;

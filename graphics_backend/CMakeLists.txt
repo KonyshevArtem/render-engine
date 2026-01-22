@@ -53,7 +53,10 @@ add_library(GraphicsBackend
         helpers/dx12_helpers.h
         types/graphics_backend_program_descriptor.h
         enums/resource_state.h
-        enums/buffer_type.h)
+        enums/buffer_type.h
+        types/graphics_backend_stencil_operation_descriptor.h
+        enums/stencil_operation.h
+        types/graphics_backend_stencil_descriptor.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

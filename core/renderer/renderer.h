@@ -30,6 +30,7 @@ public:
     void SetMaterial(std::shared_ptr<Material> material);
 
     bool CastShadows = true;
+    uint8_t StencilValue = 0;
 
 protected:
     Renderer() = default;

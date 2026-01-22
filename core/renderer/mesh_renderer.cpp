@@ -19,6 +19,9 @@ std::shared_ptr<MeshRenderer> MeshRenderer::Create(const nlohmann::json& compone
     if (componentData.contains("CastShadows"))
         componentData.at("CastShadows").get_to(renderer->CastShadows);
 
+    if (componentData.contains("StencilValue"))
+        componentData.at("StencilValue").get_to(renderer->StencilValue);
+
     return renderer;
 }
 
@@ -43,6 +46,9 @@ std::shared_ptr<Worker::Task> MeshRenderer::CreateAsync(const nlohmann::json& co
 
     if (componentData.contains("CastShadows"))
         componentData.at("CastShadows").get_to(renderer->CastShadows);
+
+    if (componentData.contains("StencilValue"))
+        componentData.at("StencilValue").get_to(renderer->StencilValue);
 
     return task;
 }

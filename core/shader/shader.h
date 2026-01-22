@@ -8,6 +8,7 @@
 
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
+#include "types/graphics_backend_stencil_descriptor.h"
 #include "enums/texture_internal_format.h"
 #include "enums/primitive_type.h"
 #include "shader/shader_structs.h"
@@ -22,9 +23,10 @@ class Shader
 {
 public:
     static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords,
-        BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo);
+        BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, GraphicsBackendStencilDescriptor stencilDescriptor = {});
 
     Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
+           GraphicsBackendStencilDescriptor stencilDescriptor,
            std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
            std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
            std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
@@ -60,6 +62,11 @@ public:
         return m_SupportInstancing;
     }
 
+    inline bool UsesStencil() const
+    {
+        return m_StencilDescriptor.Enabled;
+    }
+
 private:
     std::vector<GraphicsBackendShaderObject> m_Shaders;
     std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
@@ -67,6 +74,7 @@ private:
     CullInfo m_CullInfo;
     BlendInfo m_BlendInfo;
     DepthInfo m_DepthInfo;
+    GraphicsBackendStencilDescriptor m_StencilDescriptor;
     std::string m_Name;
     bool m_SupportInstancing;
 

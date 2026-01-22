@@ -9,6 +9,14 @@
     },
     "DepthInfo": {
       "WriteDepth": false
+    },
+    "Stencil":
+    {
+      "Enabled": true,
+      "FrontFace":
+      {
+        "Pass": "REPLACE"
+      }
     }
   },
   "Textures": [

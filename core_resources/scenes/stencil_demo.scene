@@ -37,7 +37,7 @@
     {
       "Name": "Wall1",
       "Position": {
-        "x": -10,
+        "x": -3.5,
         "y": 0,
         "z": 0
       },
@@ -48,8 +48,8 @@
         "w": 1
       },
       "Scale": {
-        "x": 8,
-        "y": 5,
+        "x": 3,
+        "y": 3,
         "z": 1
       },
       "Components": [
@@ -57,7 +57,8 @@
           "Name": "MeshRenderer",
           "Data": {
             "Mesh": "core_resources/models/Cube",
-            "Material": "core_resources/materials/stencil_demo/stencil_demo_wall_1.material"
+            "Material": "core_resources/materials/stencil_demo/stencil_demo_wall_1.material",
+            "StencilValue": 1
           }
         }
       ]
@@ -65,7 +66,7 @@
     {
       "Name": "Wall2",
       "Position": {
-        "x": 10,
+        "x": 3.5,
         "y": 0,
         "z": 0
       },
@@ -76,8 +77,8 @@
         "w": 1
       },
       "Scale": {
-        "x": 8,
-        "y": 5,
+        "x": 3,
+        "y": 3,
         "z": 1
       },
       "Components": [
@@ -85,7 +86,8 @@
           "Name": "MeshRenderer",
           "Data": {
             "Mesh": "core_resources/models/Cube",
-            "Material": "core_resources/materials/stencil_demo/stencil_demo_wall_2.material"
+            "Material": "core_resources/materials/stencil_demo/stencil_demo_wall_2.material",
+            "StencilValue": 2
           }
         }
       ]
@@ -104,16 +106,17 @@
         "w": 1
       },
       "Scale": {
-        "x": 1,
-        "y": 1,
-        "z": 1
+        "x": 3,
+        "y": 3,
+        "z": 3
       },
       "Components": [
         {
           "Name": "MeshRenderer",
           "Data": {
             "Mesh": "core_resources/models/Sphere",
-            "Material": "core_resources/materials/stencil_demo/stencil_demo_sphere_1.material"
+            "Material": "core_resources/materials/stencil_demo/stencil_demo_sphere_1.material",
+            "StencilValue": 1
           }
         }
       ]
@@ -132,16 +135,17 @@
         "w": 1
       },
       "Scale": {
-        "x": 1,
-        "y": 1,
-        "z": 1
+        "x": 3,
+        "y": 3,
+        "z": 3
       },
       "Components": [
         {
           "Name": "MeshRenderer",
           "Data": {
             "Mesh": "core_resources/models/Sphere",
-            "Material": "core_resources/materials/stencil_demo/stencil_demo_sphere_2.material"
+            "Material": "core_resources/materials/stencil_demo/stencil_demo_sphere_2.material",
+            "StencilValue": 2
           }
         }
       ]

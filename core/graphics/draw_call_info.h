@@ -18,6 +18,7 @@ struct DrawCallInfo
     Bounds AABB{};
     bool CastShadows = false;
     bool Instanced = false;
+    uint8_t StencilValue = 0;
 };
 
 #endif

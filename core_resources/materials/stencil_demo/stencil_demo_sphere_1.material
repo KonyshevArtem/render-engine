@@ -6,6 +6,14 @@
       "Enabled": true,
       "SourceFactor": "SRC_ALPHA",
       "DestinationFactor": "ONE_MINUS_SRC_ALPHA"
+    },
+    "Stencil":
+    {
+      "Enabled": true,
+      "FrontFace":
+      {
+        "Comparison": "EQUAL"
+      }
     }
   },
   "Textures": [

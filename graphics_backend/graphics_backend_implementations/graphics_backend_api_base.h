@@ -99,6 +99,7 @@ public:
 
     virtual void SetClearColor(float r, float g, float b, float a) = 0;
     virtual void SetClearDepth(double depth) = 0;
+    virtual void SetStencilValue(uint8_t value) = 0;
 
     virtual void DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount) = 0;
     virtual void DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount) = 0;

@@ -836,6 +836,10 @@ void GraphicsBackendOpenGL::SetClearDepth(double depth)
     glClearDepthf(depth);
 }
 
+void GraphicsBackendOpenGL::SetStencilValue(uint8_t value)
+{
+}
+
 void GraphicsBackendOpenGL::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
 {
     ++m_DrawCallCount;

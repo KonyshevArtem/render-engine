@@ -7,6 +7,7 @@
 #include "types/graphics_backend_texture_info.h"
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_sampler_info.h"
+#include "types/graphics_backend_stencil_descriptor.h"
 #include "enums/texture_internal_format.h"
 #include "enums/cull_face.h"
 #include "enums/cull_face_orientation.h"
@@ -34,6 +35,8 @@ struct GraphicsBackendProgramDescriptor
 
     bool DepthWrite;
     ComparisonFunction DepthComparisonFunction;
+
+    GraphicsBackendStencilDescriptor StencilDescriptor;
 
     PrimitiveType PrimitiveType;
 };

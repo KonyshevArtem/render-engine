@@ -23,6 +23,7 @@
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 #include "arguments.h"
+#include "string_encoding_util.h"
 
 #include <stdexcept>
 #include <cassert>
@@ -1195,7 +1196,7 @@ void GraphicsBackendOpenGL::LogContextError(const std::string& tag)
     LPVOID lpMsgBuf;
     DWORD dw = GetLastError();
 
-    bool success = FormatMessage(
+    DWORD length = FormatMessage(
             FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
             nullptr,
             dw,
@@ -1204,8 +1205,11 @@ void GraphicsBackendOpenGL::LogContextError(const std::string& tag)
             0,
             nullptr);
 
-    if (success)
-        Debug::LogErrorFormat("[{}] {}", tag, static_cast<const char*>(lpMsgBuf));
+    if (length > 0)
+    {
+        std::string text = StringEncodingUtil::Utf16ToUtf8(reinterpret_cast<const char16_t*>(lpMsgBuf), length);
+        Debug::LogErrorFormat("[{}] {}", tag, text);
+    }
 #elif RENDER_ENGINE_ANDROID
     auto GetErrorString = [](EGLint error)
     {

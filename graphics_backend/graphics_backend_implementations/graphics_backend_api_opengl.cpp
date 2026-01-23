@@ -65,6 +65,7 @@ namespace OpenGLLocal
         GLenum CullFaceOrientation;
         GLenum DepthComparisonFunction;
         GLboolean DepthWrite;
+        GraphicsBackendStencilDescriptor StencilDescriptor;
     };
 
     struct DebugMessageType
@@ -108,6 +109,12 @@ namespace OpenGLLocal
     uint64_t s_DebugGroupId = 0;
     uint64_t s_TimestampDifference = 0;
     GLsync s_FrameFinishFence[GraphicsBackend::GetMaxFramesInFlight()];
+
+    bool s_StencilEnabled = false;
+    GLenum s_StencilFrontFunc = GL_ALWAYS;
+    GLenum s_StencilBackFunc = GL_ALWAYS;
+    uint8_t s_StencilReadMask = 255;
+    uint8_t s_StencilValue = 0;
 
     std::array s_DebugMessageTypes =
     {
@@ -198,6 +205,15 @@ namespace OpenGLLocal
 
         glBindBuffer(bindTarget, bufferData->GLBuffer);
         glBindBufferRange(bindTarget, index, bufferData->GLBuffer, offset, size);
+    }
+
+    void UpdateStencil()
+    {
+        if (s_StencilEnabled)
+        {
+            glStencilFuncSeparate(GL_FRONT, s_StencilFrontFunc, s_StencilValue, s_StencilReadMask);
+            glStencilFuncSeparate(GL_BACK, s_StencilBackFunc, s_StencilValue, s_StencilReadMask);
+        }
     }
 }
 
@@ -777,6 +793,7 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     programData->CullFaceOrientation = OpenGLHelpers::ToCullFaceOrientation(descriptor.CullFaceOrientation);
     programData->DepthComparisonFunction = OpenGLHelpers::ToComparisonFunction(descriptor.DepthComparisonFunction);
     programData->DepthWrite = descriptor.DepthWrite ? GL_TRUE : GL_FALSE;
+    programData->StencilDescriptor = descriptor.StencilDescriptor;
 
     return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(programData), descriptor);
 }
@@ -820,6 +837,35 @@ void GraphicsBackendOpenGL::UseProgram(const GraphicsBackendProgram& program)
     else
         glDisable(GL_CULL_FACE);
 
+    OpenGLLocal::s_StencilEnabled = programData->StencilDescriptor.Enabled;
+    if (programData->StencilDescriptor.Enabled)
+    {
+        GraphicsBackendStencilDescriptor stencilDesc = programData->StencilDescriptor;
+
+        glEnable(GL_STENCIL_TEST);
+        glStencilOpSeparate(
+                GL_FRONT,
+                OpenGLHelpers::ToStencilOp(stencilDesc.FrontFaceOpDescriptor.FailOp),
+                OpenGLHelpers::ToStencilOp(stencilDesc.FrontFaceOpDescriptor.DepthFailOp),
+                OpenGLHelpers::ToStencilOp(stencilDesc.FrontFaceOpDescriptor.PassOp)
+            );
+        glStencilOpSeparate(
+                GL_BACK,
+                OpenGLHelpers::ToStencilOp(stencilDesc.BackFaceOpDescriptor.FailOp),
+                OpenGLHelpers::ToStencilOp(stencilDesc.BackFaceOpDescriptor.DepthFailOp),
+                OpenGLHelpers::ToStencilOp(stencilDesc.BackFaceOpDescriptor.PassOp)
+        );
+        glStencilMask(stencilDesc.WriteMask);
+
+        ComparisonFunction frontFunc = stencilDesc.FrontFaceOpDescriptor.ComparisonFunction;
+        ComparisonFunction backFunc = stencilDesc.BackFaceOpDescriptor.ComparisonFunction;
+        OpenGLLocal::s_StencilFrontFunc = frontFunc != ComparisonFunction::NONE ? OpenGLHelpers::ToComparisonFunction(frontFunc) : GL_ALWAYS;
+        OpenGLLocal::s_StencilBackFunc = backFunc != ComparisonFunction::NONE ? OpenGLHelpers::ToComparisonFunction(backFunc) : GL_ALWAYS;
+        OpenGLLocal::s_StencilReadMask = stencilDesc.ReadMask;
+    }
+    else
+        glDisable(GL_STENCIL_TEST);
+
     glFrontFace(programData->CullFaceOrientation);
     glDepthFunc(programData->DepthComparisonFunction);
     glDepthMask(programData->DepthWrite);
@@ -839,12 +885,14 @@ void GraphicsBackendOpenGL::SetClearDepth(double depth)
 
 void GraphicsBackendOpenGL::SetStencilValue(uint8_t value)
 {
+    OpenGLLocal::s_StencilValue = value;
 }
 
 void GraphicsBackendOpenGL::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)
 {
     ++m_DrawCallCount;
 
+    OpenGLLocal::UpdateStencil();
     BindGeometry(geometry);
     glDrawArrays(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
 }
@@ -853,6 +901,7 @@ void GraphicsBackendOpenGL::DrawArraysInstanced(const GraphicsBackendGeometry &g
 {
     ++m_DrawCallCount;
 
+    OpenGLLocal::UpdateStencil();
     BindGeometry(geometry);
     glDrawArraysInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, instanceCount);
 }
@@ -861,6 +910,7 @@ void GraphicsBackendOpenGL::DrawElements(const GraphicsBackendGeometry &geometry
 {
     ++m_DrawCallCount;
 
+    OpenGLLocal::UpdateStencil();
     BindGeometry(geometry);
     glDrawElements(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr);
 }
@@ -869,6 +919,7 @@ void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry 
 {
     ++m_DrawCallCount;
 
+    OpenGLLocal::UpdateStencil();
     BindGeometry(geometry);
     glDrawElementsInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr, instanceCount);
 }

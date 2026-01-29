@@ -5,6 +5,7 @@
 #include "texture_2d/texture_2d.h"
 #include "cubemap/cubemap.h"
 #include "resources/resources.h"
+#include "types/graphics_backend_stencil_descriptor.h"
 
 NLOHMANN_JSON_SERIALIZE_ENUM(BlendFactor, {
     {BlendFactor::ZERO, "ZERO"},
@@ -45,6 +46,17 @@ NLOHMANN_JSON_SERIALIZE_ENUM(ComparisonFunction, {
     {ComparisonFunction::ALWAYS, "ALWAYS"}
 })
 
+NLOHMANN_JSON_SERIALIZE_ENUM(StencilOperation, {
+    {StencilOperation::KEEP, "KEEP"},
+    {StencilOperation::ZERO, "ZERO"},
+    {StencilOperation::REPLACE, "REPLACE"},
+    {StencilOperation::INCREMENT_SATURATE, "INCREMENT_SATURATE"},
+    {StencilOperation::DECREMENT_SATURATE, "DECREMENT_SATURATE"},
+    {StencilOperation::INVERT, "INVERT"},
+    {StencilOperation::INCREMENT, "INCREMENT"},
+    {StencilOperation::DECREMENT, "DECREMENT"}
+})
+
 void from_json(const nlohmann::json& json, BlendInfo& info)
 {
     json.at("Enabled").get_to(info.Enabled);
@@ -64,6 +76,31 @@ void from_json(const nlohmann::json& json, DepthInfo& info)
         json.at("DepthFunction").get_to(info.DepthFunction);
 }
 
+void from_json(const nlohmann::json& json, GraphicsBackendStencilOperationDescriptor& stencilOperationDescriptor)
+{
+    if (json.contains("Fail"))
+        json.at("Fail").get_to(stencilOperationDescriptor.FailOp);
+    if (json.contains("DepthFail"))
+        json.at("DepthFail").get_to(stencilOperationDescriptor.DepthFailOp);
+    if (json.contains("Pass"))
+        json.at("Pass").get_to(stencilOperationDescriptor.PassOp);
+    if (json.contains("Comparison"))
+        json.at("Comparison").get_to(stencilOperationDescriptor.ComparisonFunction);
+}
+
+void from_json(const nlohmann::json& json, GraphicsBackendStencilDescriptor& stencilDescriptor)
+{
+    json.at("Enabled").get_to(stencilDescriptor.Enabled);
+    if (json.contains("ReadMask"))
+        json.at("ReadMask").get_to(stencilDescriptor.ReadMask);
+    if (json.contains("WriteMask"))
+        json.at("WriteMask").get_to(stencilDescriptor.ReadMask);
+    if (json.contains("FrontFace"))
+        json.at("FrontFace").get_to(stencilDescriptor.FrontFaceOpDescriptor);
+    if (json.contains("BackFace"))
+        json.at("BackFace").get_to(stencilDescriptor.BackFaceOpDescriptor);
+}
+
 namespace MaterialParser
 {
     struct ShaderInfo
@@ -73,6 +110,7 @@ namespace MaterialParser
         BlendInfo BlendInfo;
         CullInfo CullInfo;
         DepthInfo DepthInfo;
+        GraphicsBackendStencilDescriptor StencilDescriptor;
     };
 
     struct TextureInfo
@@ -107,6 +145,8 @@ namespace MaterialParser
             json.at("CullInfo").get_to(info.CullInfo);
         if (json.contains("DepthInfo"))
             json.at("DepthInfo").get_to(info.DepthInfo);
+        if (json.contains("Stencil"))
+            json.at("Stencil").get_to(info.StencilDescriptor);
     }
 
     void from_json(const nlohmann::json& json, TextureInfo& info)
@@ -156,7 +196,8 @@ namespace MaterialParser
         MaterialInfo materialInfo;
         materialJson.get_to(materialInfo);
 
-        std::shared_ptr<Shader> shader = Shader::Load(materialInfo.Shader.Path, materialInfo.Shader.Keywords, materialInfo.Shader.BlendInfo, materialInfo.Shader.CullInfo, materialInfo.Shader.DepthInfo);
+        std::shared_ptr<Shader> shader = Shader::Load(materialInfo.Shader.Path, materialInfo.Shader.Keywords, materialInfo.Shader.BlendInfo,
+                                                          materialInfo.Shader.CullInfo, materialInfo.Shader.DepthInfo, materialInfo.Shader.StencilDescriptor);
         std::shared_ptr<Material> material = std::make_shared<Material>(shader, path.string());
 
         for (const TextureInfo& textureInfo: materialInfo.Textures)

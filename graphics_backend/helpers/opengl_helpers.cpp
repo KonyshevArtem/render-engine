@@ -1068,4 +1068,27 @@ TextureDataType OpenGLHelpers::FromTextureDataType(GLenum textureDataType)
     }
 }
 
+GLenum OpenGLHelpers::ToStencilOp(StencilOperation op)
+{
+    switch (op)
+    {
+        case StencilOperation::KEEP:
+            return GL_KEEP;
+        case StencilOperation::ZERO:
+            return GL_ZERO;
+        case StencilOperation::REPLACE:
+            return GL_REPLACE;
+        case StencilOperation::INCREMENT_SATURATE:
+            return GL_INCR;
+        case StencilOperation::DECREMENT_SATURATE:
+            return GL_DECR;
+        case StencilOperation::INVERT:
+            return GL_INVERT;
+        case StencilOperation::INCREMENT:
+            return GL_INCR_WRAP;
+        case StencilOperation::DECREMENT:
+            return GL_DECR_WRAP;
+    }
+}
+
 #endif //RENDER_BACKEND_OPENGL

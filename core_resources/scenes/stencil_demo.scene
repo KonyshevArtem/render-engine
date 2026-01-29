@@ -1,0 +1,186 @@
+{
+  "GameObjects": [
+    {
+      "Name": "Camera",
+      "Position": {
+        "x": 0,
+        "y": 0,
+        "z": -15
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "Camera",
+          "Data": {
+            "Fov": 60,
+            "NearClip": 0.5,
+            "FarClip": 100,
+            "ShadowsDistance": 100
+          }
+        },
+        {
+          "Name": "CameraFlyController",
+          "Data": {}
+        }
+      ]
+    },
+    {
+      "Name": "Wall1",
+      "Position": {
+        "x": -3.5,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 3,
+        "y": 3,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "Mesh": "core_resources/models/Cube",
+            "Material": "core_resources/materials/stencil_demo/stencil_demo_wall_1.material",
+            "StencilValue": 1
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Wall2",
+      "Position": {
+        "x": 3.5,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 3,
+        "y": 3,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "Mesh": "core_resources/models/Cube",
+            "Material": "core_resources/materials/stencil_demo/stencil_demo_wall_2.material",
+            "StencilValue": 2
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Sphere1",
+      "Position": {
+        "x": -5,
+        "y": 0,
+        "z": 5
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 3,
+        "y": 3,
+        "z": 3
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "Mesh": "core_resources/models/Sphere",
+            "Material": "core_resources/materials/stencil_demo/stencil_demo_sphere_1.material",
+            "StencilValue": 1
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Sphere2",
+      "Position": {
+        "x": 5,
+        "y": 0,
+        "z": 5
+      },
+      "Rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "Scale": {
+        "x": 3,
+        "y": 3,
+        "z": 3
+      },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "Mesh": "core_resources/models/Sphere",
+            "Material": "core_resources/materials/stencil_demo/stencil_demo_sphere_2.material",
+            "StencilValue": 2
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Directional Light",
+      "Position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "Rotation": {
+        "x": 0.067,
+        "y": -0.933,
+        "z": 0.25,
+        "w": 0.25
+      },
+      "Scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "Components": [
+        {
+          "Name": "Light",
+          "Data": {
+            "Type": "DIRECTIONAL",
+            "Intensity": {
+              "x": 1,
+              "y": 1,
+              "z": 1
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

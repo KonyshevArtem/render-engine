@@ -18,6 +18,7 @@
 #include "enums/blend_factor.h"
 #include "enums/texture_data_type.h"
 #include "enums/cubemap_face.h"
+#include "enums/stencil_operation.h"
 
 #include <string>
 
@@ -83,6 +84,7 @@ namespace OpenGLHelpers
     GLenum ToBlendFactor(BlendFactor factor);
     bool IsTexture(GLenum uniformType);
     TextureDataType FromTextureDataType(GLenum textureDataType);
+    GLenum ToStencilOp(StencilOperation op);
 }
 
 #endif //RENDER_BACKEND_OPENGL

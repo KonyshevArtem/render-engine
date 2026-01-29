@@ -558,6 +558,29 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
     depthStencilDescriptor->setDepthWriteEnabled(descriptor.DepthWrite);
     depthStencilDescriptor->setDepthCompareFunction(MetalHelpers::ToComparisonFunction(descriptor.DepthComparisonFunction));
 
+    const GraphicsBackendStencilDescriptor& stencilDesc = descriptor.StencilDescriptor;
+    if (stencilDesc.Enabled)
+    {
+        auto GetMetalStencilDesc = [&stencilDesc](bool isFront) -> MTL::StencilDescriptor*
+        {
+            MTL::StencilDescriptor* metalStencilDesc = MTL::StencilDescriptor::alloc()->init();
+            metalStencilDesc->setReadMask(stencilDesc.ReadMask);
+            metalStencilDesc->setWriteMask(stencilDesc.WriteMask);
+
+            const GraphicsBackendStencilOperationDescriptor& stencilOpDesc = isFront ? stencilDesc.FrontFaceOpDescriptor : stencilDesc.BackFaceOpDescriptor;
+            metalStencilDesc->setDepthFailureOperation(MetalHelpers::ToStencilOperation(stencilOpDesc.DepthFailOp));
+            metalStencilDesc->setStencilFailureOperation(MetalHelpers::ToStencilOperation(stencilOpDesc.FailOp));
+            metalStencilDesc->setDepthStencilPassOperation(MetalHelpers::ToStencilOperation(stencilOpDesc.PassOp));
+            metalStencilDesc->setStencilCompareFunction(stencilOpDesc.ComparisonFunction != ComparisonFunction::NONE
+                                                        ? MetalHelpers::ToComparisonFunction(stencilOpDesc.ComparisonFunction)
+                                                        : MTL::CompareFunction::CompareFunctionNever);
+            return metalStencilDesc;
+        };
+
+        depthStencilDescriptor->setFrontFaceStencil(GetMetalStencilDesc(true));
+        depthStencilDescriptor->setBackFaceStencil(GetMetalStencilDesc(false));
+    }
+
     if (descriptor.Name && !descriptor.Name->empty())
     {
         std::string depthStencilStateName = *descriptor.Name + "_DepthStencil";
@@ -617,6 +640,13 @@ void GraphicsBackendMetal::SetClearDepth(double depth)
 {
     auto desc = m_RenderPassDescriptor->depthAttachment();
     desc->setClearDepth(depth);
+}
+
+void GraphicsBackendMetal::SetStencilValue(uint8_t value)
+{
+    assert(m_RenderCommandEncoder != nullptr);
+
+    m_RenderCommandEncoder->setStencilReferenceValue(value);
 }
 
 void GraphicsBackendMetal::DrawArrays(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int count)

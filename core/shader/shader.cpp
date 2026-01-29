@@ -25,15 +25,15 @@ namespace ShaderLocal
 }
 
 std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &path, const std::vector<std::string> &keywords,
-    BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo)
+    BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, GraphicsBackendStencilDescriptor stencilDescriptor)
 {
     Profiler::Marker _("Shader::Load", path.string());
 
-    auto shader = ShaderLoader::Load(path, keywords, blendInfo, cullInfo, depthInfo);
+    auto shader = ShaderLoader::Load(path, keywords, blendInfo, cullInfo, depthInfo, stencilDescriptor);
 
     if (!shader)
     {
-        static std::shared_ptr<Shader> fallback = ShaderLoader::Load("core_resources/shaders/fallback", {}, {}, {}, {});
+        static std::shared_ptr<Shader> fallback = ShaderLoader::Load("core_resources/shaders/fallback", {}, {}, {}, {}, {});
 
         if (!fallback)
             exit(1);
@@ -45,6 +45,7 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &path, const st
 }
 
 Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
+               GraphicsBackendStencilDescriptor stencilDescriptor,
                std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
                std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
                std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
@@ -53,6 +54,7 @@ Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blen
     m_CullInfo(cullInfo),
     m_BlendInfo(blendInfo),
     m_DepthInfo(depthInfo),
+    m_StencilDescriptor(stencilDescriptor),
     m_Textures(std::move(textures)),
     m_Buffers(std::move(buffers)),
     m_Samplers(std::move(samplers)),
@@ -124,6 +126,7 @@ const GraphicsBackendProgram& Shader::CreatePSO(std::vector<GraphicsBackendShade
     programDescriptor.CullFaceOrientation = m_CullInfo.Orientation;
     programDescriptor.DepthWrite = m_DepthInfo.WriteDepth;
     programDescriptor.DepthComparisonFunction = m_DepthInfo.DepthFunction;
+    programDescriptor.StencilDescriptor = m_StencilDescriptor;
     programDescriptor.PrimitiveType = primitiveType;
 
     auto program = GraphicsBackend::Current()->CreateProgram(programDescriptor);

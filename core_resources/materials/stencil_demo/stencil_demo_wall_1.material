@@ -1,0 +1,40 @@
+{
+  "Shader": {
+    "Path": "core_resources/shaders/standard",
+    "Keywords": [],
+    "BlendInfo": {
+      "Enabled": true,
+      "SourceFactor": "SRC_ALPHA",
+      "DestinationFactor": "ONE_MINUS_SRC_ALPHA"
+    },
+    "DepthInfo": {
+      "WriteDepth": false
+    },
+    "Stencil":
+    {
+      "Enabled": true,
+      "FrontFace":
+      {
+        "Pass": "REPLACE"
+      }
+    }
+  },
+  "Textures": [
+    {
+      "Name": "_Albedo",
+      "Type": "2D",
+      "Path": "core_resources/textures/window_cube"
+    }
+  ],
+  "Floats": [
+    {
+      "Name": "_Roughness",
+      "Value": 0.8
+    },
+    {
+      "Name": "_Metallness",
+      "Value": 0
+    }
+  ],
+  "RenderQueue": 3000
+}

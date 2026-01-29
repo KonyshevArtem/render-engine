@@ -17,6 +17,7 @@
 #include "enums/cull_face.h"
 #include "enums/blend_factor.h"
 #include "enums/texture_data_type.h"
+#include "enums/stencil_operation.h"
 
 #include <cstdint>
 
@@ -37,6 +38,7 @@ namespace MTL
     enum CullMode : std::uintptr_t;
     enum BlendFactor : std::uintptr_t;
     enum DataType : std::uintptr_t;
+    enum StencilOperation : std::uintptr_t;
 }
 
 namespace MetalHelpers
@@ -56,6 +58,7 @@ namespace MetalHelpers
     MTL::Winding ToCullFaceOrientation(CullFaceOrientation orientation);
     MTL::CullMode ToCullFace(CullFace face);
     MTL::BlendFactor ToBlendFactor(BlendFactor factor);
+    MTL::StencilOperation ToStencilOperation(StencilOperation operation);
     TextureDataType FromTextureDataType(MTL::DataType dataType, MTL::TextureType textureType);
 }
 

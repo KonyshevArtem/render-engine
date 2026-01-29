@@ -641,6 +641,29 @@ MTL::BlendFactor MetalHelpers::ToBlendFactor(BlendFactor factor)
     }
 }
 
+MTL::StencilOperation MetalHelpers::ToStencilOperation(StencilOperation operation)
+{
+    switch (operation)
+    {
+        case StencilOperation::KEEP:
+            return MTL::StencilOperation::StencilOperationKeep;
+        case StencilOperation::ZERO:
+            return MTL::StencilOperation::StencilOperationZero;
+        case StencilOperation::REPLACE:
+            return MTL::StencilOperation::StencilOperationReplace;
+        case StencilOperation::INCREMENT_SATURATE:
+            return MTL::StencilOperation::StencilOperationIncrementClamp;
+        case StencilOperation::DECREMENT_SATURATE:
+            return MTL::StencilOperation::StencilOperationDecrementClamp;
+        case StencilOperation::INVERT:
+            return MTL::StencilOperation::StencilOperationInvert;
+        case StencilOperation::INCREMENT:
+            return MTL::StencilOperation::StencilOperationIncrementWrap;
+        case StencilOperation::DECREMENT:
+            return MTL::StencilOperation::StencilOperationDecrementWrap;
+    }
+}
+
 TextureDataType MetalHelpers::FromTextureDataType(MTL::DataType dataType, MTL::TextureType textureType)
 {
     switch (textureType)

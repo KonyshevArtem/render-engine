@@ -42,3 +42,75 @@ std::u16string StringEncodingUtil::Utf32ToUtf16(const char32_t* u32, size_t leng
 
     return out;
 }
+
+std::string StringEncodingUtil::Utf32ToUtf8(const char32_t* text, size_t length)
+{
+    std::string out;
+
+    for (size_t i = 0; i < length; ++i)
+    {
+        char32_t cp = text[i];
+        if (cp <= 0x7F)
+            out.push_back(static_cast<char>(cp));
+        else if (cp <= 0x7FF)
+        {
+            out.push_back(static_cast<char>(0xC0 | (cp >> 6)));
+            out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+        }
+        else if (cp <= 0xFFFF)
+        {
+            out.push_back(static_cast<char>(0xE0 | (cp >> 12)));
+            out.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
+            out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+        }
+        else
+        {
+            out.push_back(static_cast<char>(0xF0 | (cp >> 18)));
+            out.push_back(static_cast<char>(0x80 | ((cp >> 12) & 0x3F)));
+            out.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
+            out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+        }
+    }
+
+    return out;
+}
+
+std::string StringEncodingUtil::Utf16ToUtf8(const char16_t* text, size_t length)
+{
+    std::string out;
+
+    for (size_t i = 0; i < length; ++i)
+    {
+        uint32_t cp = text[i];
+
+        if (cp >= 0xD800 && cp <= 0xDBFF)
+        {
+            uint32_t high = cp - 0xD800;
+            uint32_t low  = text[++i] - 0xDC00;
+            cp = 0x10000 + ((high << 10) | low);
+        }
+
+        if (cp <= 0x7F)
+            out.push_back(cp);
+        else if (cp <= 0x7FF)
+        {
+            out.push_back(0xC0 | (cp >> 6));
+            out.push_back(0x80 | (cp & 0x3F));
+        }
+        else if (cp <= 0xFFFF)
+        {
+            out.push_back(0xE0 | (cp >> 12));
+            out.push_back(0x80 | ((cp >> 6) & 0x3F));
+            out.push_back(0x80 | (cp & 0x3F));
+        }
+        else
+        {
+            out.push_back(0xF0 | (cp >> 18));
+            out.push_back(0x80 | ((cp >> 12) & 0x3F));
+            out.push_back(0x80 | ((cp >> 6) & 0x3F));
+            out.push_back(0x80 | (cp & 0x3F));
+        }
+    }
+
+    return out;
+}

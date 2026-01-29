@@ -555,4 +555,27 @@ D3D12_RESOURCE_STATES DX12Helpers::ToResourceState(ResourceState state)
     }
 }
 
+D3D12_STENCIL_OP DX12Helpers::ToStencilOp(StencilOperation op)
+{
+    switch (op)
+    {
+        case StencilOperation::KEEP:
+            return D3D12_STENCIL_OP_KEEP;
+        case StencilOperation::ZERO:
+            return D3D12_STENCIL_OP_ZERO;
+        case StencilOperation::REPLACE:
+            return D3D12_STENCIL_OP_REPLACE;
+        case StencilOperation::INCREMENT_SATURATE:
+            return D3D12_STENCIL_OP_INCR_SAT;
+        case StencilOperation::DECREMENT_SATURATE:
+            return D3D12_STENCIL_OP_DECR_SAT;
+        case StencilOperation::INVERT:
+            return D3D12_STENCIL_OP_INVERT;
+        case StencilOperation::INCREMENT:
+            return D3D12_STENCIL_OP_INCR;
+        case StencilOperation::DECREMENT:
+            return D3D12_STENCIL_OP_DECR;
+    }
+}
+
 #endif

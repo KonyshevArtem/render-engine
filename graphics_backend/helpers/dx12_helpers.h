@@ -14,6 +14,7 @@
 #include "enums/cull_face.h"
 #include "enums/comparison_function.h"
 #include "enums/resource_state.h"
+#include "enums/stencil_operation.h"
 
 #include "directx/d3d12.h"
 #include "directx/d3dx12.h"
@@ -37,6 +38,7 @@ namespace DX12Helpers
     D3D12_CULL_MODE ToCullFace(CullFace face);
     D3D12_COMPARISON_FUNC ToComparisonFunction(ComparisonFunction function);
     D3D12_RESOURCE_STATES ToResourceState(ResourceState state);
+    D3D12_STENCIL_OP ToStencilOp(StencilOperation op);
 }
 
 #endif

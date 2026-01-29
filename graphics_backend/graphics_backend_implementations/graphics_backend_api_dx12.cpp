@@ -1477,10 +1477,28 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     rasterizerDesc.CullMode = DX12Helpers::ToCullFace(descriptor.CullFace);
     rasterizerDesc.FrontCounterClockwise = descriptor.CullFaceOrientation == CullFaceOrientation::COUNTER_CLOCKWISE;
 
+    auto GetStencilOpDesc = [](GraphicsBackendStencilOperationDescriptor stencilOpDesc)
+    {
+        D3D12_DEPTH_STENCILOP_DESC opDesc;
+        opDesc.StencilFailOp = DX12Helpers::ToStencilOp(stencilOpDesc.FailOp);
+        opDesc.StencilDepthFailOp = DX12Helpers::ToStencilOp(stencilOpDesc.DepthFailOp);
+        opDesc.StencilPassOp = DX12Helpers::ToStencilOp(stencilOpDesc.PassOp);
+        opDesc.StencilFunc = stencilOpDesc.ComparisonFunction != ComparisonFunction::NONE
+                                            ? DX12Helpers::ToComparisonFunction(stencilOpDesc.ComparisonFunction)
+                                            : D3D12_COMPARISON_FUNC_NEVER;
+        return opDesc;
+    };
+
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     depthStencilDesc.DepthEnable = true;
     depthStencilDesc.DepthWriteMask = descriptor.DepthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
     depthStencilDesc.DepthFunc = DX12Helpers::ToComparisonFunction(descriptor.DepthComparisonFunction);
+    depthStencilDesc.StencilEnable = descriptor.StencilDescriptor.Enabled;
+    depthStencilDesc.StencilReadMask = descriptor.StencilDescriptor.ReadMask;
+    depthStencilDesc.StencilWriteMask = descriptor.StencilDescriptor.WriteMask;
+    depthStencilDesc.StencilWriteMask = descriptor.StencilDescriptor.WriteMask;
+    depthStencilDesc.FrontFace = GetStencilOpDesc(descriptor.StencilDescriptor.FrontFaceOpDescriptor);
+    depthStencilDesc.BackFace = GetStencilOpDesc(descriptor.StencilDescriptor.BackFaceOpDescriptor);
 
     DXGI_FORMAT colorTargetFormat = DX12Helpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);
     bool hasColorTarget = colorTargetFormat != DXGI_FORMAT_UNKNOWN;
@@ -1548,6 +1566,12 @@ void GraphicsBackendDX12::SetClearColor(float r, float g, float b, float a)
 void GraphicsBackendDX12::SetClearDepth(double depth)
 {
     DX12Local::s_ClearDepth = depth;
+}
+
+void GraphicsBackendDX12::SetStencilValue(uint8_t value)
+{
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    frameData.RenderCommandList->List->OMSetStencilRef(value);
 }
 
 void GraphicsBackendDX12::DrawArrays(const GraphicsBackendGeometry& geometry, PrimitiveType primitiveType, int firstIndex, int count)

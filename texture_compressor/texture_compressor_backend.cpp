@@ -305,7 +305,7 @@ namespace TextureCompressorBackend
         for (const std::filesystem::directory_entry& entry: std::filesystem::recursive_directory_iterator(inputPath))
         {
             if (entry.is_regular_file() && entry.path().extension() == ".texture")
-                textureFilePaths.push_back(entry.path());
+                textureFilePaths.push_back(std::filesystem::absolute(entry.path()));
         }
 
 #if RENDER_ENGINE_APPLE

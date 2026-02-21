@@ -16,6 +16,7 @@ set(CUTTLEFISH_BUILD_TOOL OFF CACHE BOOL "" FORCE)
 set(CUTTLEFISH_BUILD_PVRTC OFF CACHE BOOL "" FORCE)
 set(CUTTLEFISH_INSTALL OFF CACHE BOOL "" FORCE)
 add_subdirectory(Cuttlefish)
+target_compile_options(cuttlefish_lib PRIVATE -UUNICODE -U_UNICODE)
 
 set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
 add_subdirectory(json)

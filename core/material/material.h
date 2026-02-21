@@ -4,6 +4,7 @@
 #include "matrix4x4/matrix4x4.h"
 #include "vector4/vector4.h"
 #include "types/graphics_backend_texture_info.h"
+#include "types/graphics_backend_stencil_descriptor.h"
 #include "resources/resource.h"
 
 #include <vector>
@@ -56,6 +57,8 @@ public:
     {
         m_RenderQueue = _renderQueue;
     }
+
+    GraphicsBackendStencilDescriptor StencilDescriptor{};
 
 private:
     Material() = default;

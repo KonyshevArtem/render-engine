@@ -140,11 +140,11 @@ namespace RenderQueueLocal
             GraphicsBackend::Current()->BindTextureSampler(texture->GetBackendTexture(), texture->GetBackendSampler(), binding);
         }
 
-        std::shared_ptr<Shader> shader = material->GetShader();
-        if (shader->UsesStencil())
+        GraphicsBackend::Current()->SetStencilState(material->StencilDescriptor);
+        if (material->StencilDescriptor.Enabled)
             GraphicsBackend::Current()->SetStencilValue(stencilValue);
 
-        GraphicsBackend::Current()->UseProgram(shader->GetProgram(vertexAttributes, primitiveType));
+        GraphicsBackend::Current()->UseProgram(material->GetShader()->GetProgram(vertexAttributes, primitiveType));
     }
 }
 

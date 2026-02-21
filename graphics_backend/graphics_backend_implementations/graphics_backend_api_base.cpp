@@ -238,6 +238,16 @@ GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, c
     return program;
 }
 
+void GraphicsBackendBase::SetStencilState(const GraphicsBackendStencilDescriptor& stencilDescriptor)
+{
+    m_StencilDescriptor = stencilDescriptor;
+}
+
+const GraphicsBackendStencilDescriptor& GraphicsBackendBase::GetStencilDescriptor() const
+{
+    return m_StencilDescriptor;
+}
+
 bool GraphicsBackendBase::IsTexture3D(TextureType type)
 {
     return type == TextureType::TEXTURE_2D_ARRAY || type == TextureType::TEXTURE_3D || type == TextureType::TEXTURE_CUBEMAP_ARRAY;

@@ -198,8 +198,10 @@ namespace MaterialParser
         materialJson.get_to(materialInfo);
 
         std::shared_ptr<Shader> shader = Shader::Load(materialInfo.Shader.Path, materialInfo.Shader.Keywords, materialInfo.Shader.BlendInfo,
-                                                          materialInfo.Shader.CullInfo, materialInfo.Shader.DepthDescriptor, materialInfo.Shader.StencilDescriptor);
+                                                          materialInfo.Shader.CullInfo, materialInfo.Shader.DepthDescriptor);
         std::shared_ptr<Material> material = std::make_shared<Material>(shader, path.string());
+
+        material->StencilDescriptor = materialInfo.Shader.StencilDescriptor;
 
         for (const TextureInfo& textureInfo: materialInfo.Textures)
         {

@@ -791,8 +791,8 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     programData->BlendState = blendState;
     programData->CullFace = OpenGLHelpers::ToCullFace(descriptor.CullFace);
     programData->CullFaceOrientation = OpenGLHelpers::ToCullFaceOrientation(descriptor.CullFaceOrientation);
-    programData->DepthComparisonFunction = OpenGLHelpers::ToComparisonFunction(descriptor.DepthComparisonFunction);
-    programData->DepthWrite = descriptor.DepthWrite ? GL_TRUE : GL_FALSE;
+    programData->DepthComparisonFunction = OpenGLHelpers::ToComparisonFunction(descriptor.DepthDescriptor.DepthFunction);
+    programData->DepthWrite = descriptor.DepthDescriptor.WriteDepth ? GL_TRUE : GL_FALSE;
     programData->StencilDescriptor = descriptor.StencilDescriptor;
 
     return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(programData), descriptor);

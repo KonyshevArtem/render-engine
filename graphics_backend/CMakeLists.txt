@@ -56,7 +56,8 @@ add_library(GraphicsBackend
         enums/buffer_type.h
         types/graphics_backend_stencil_operation_descriptor.h
         enums/stencil_operation.h
-        types/graphics_backend_stencil_descriptor.h)
+        types/graphics_backend_stencil_descriptor.h
+        types/graphics_backend_depth_descriptor.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

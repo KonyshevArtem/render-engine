@@ -6,6 +6,7 @@
 #include "cubemap/cubemap.h"
 #include "resources/resources.h"
 #include "types/graphics_backend_stencil_descriptor.h"
+#include "types/graphics_backend_depth_descriptor.h"
 
 NLOHMANN_JSON_SERIALIZE_ENUM(BlendFactor, {
     {BlendFactor::ZERO, "ZERO"},
@@ -69,11 +70,11 @@ void from_json(const nlohmann::json& json, CullInfo& info)
     json.at("Face").get_to(info.Face);
 }
 
-void from_json(const nlohmann::json& json, DepthInfo& info)
+void from_json(const nlohmann::json& json, GraphicsBackendDepthDescriptor& depthDescriptor)
 {
-    json.at("WriteDepth").get_to(info.WriteDepth);
+    json.at("WriteDepth").get_to(depthDescriptor.WriteDepth);
     if (json.contains("DepthFunction"))
-        json.at("DepthFunction").get_to(info.DepthFunction);
+        json.at("DepthFunction").get_to(depthDescriptor.DepthFunction);
 }
 
 void from_json(const nlohmann::json& json, GraphicsBackendStencilOperationDescriptor& stencilOperationDescriptor)
@@ -109,7 +110,7 @@ namespace MaterialParser
         std::vector<std::string> Keywords;
         BlendInfo BlendInfo;
         CullInfo CullInfo;
-        DepthInfo DepthInfo;
+        GraphicsBackendDepthDescriptor DepthDescriptor;
         GraphicsBackendStencilDescriptor StencilDescriptor;
     };
 
@@ -144,7 +145,7 @@ namespace MaterialParser
         if (json.contains("CullInfo"))
             json.at("CullInfo").get_to(info.CullInfo);
         if (json.contains("DepthInfo"))
-            json.at("DepthInfo").get_to(info.DepthInfo);
+            json.at("DepthInfo").get_to(info.DepthDescriptor);
         if (json.contains("Stencil"))
             json.at("Stencil").get_to(info.StencilDescriptor);
     }
@@ -197,7 +198,7 @@ namespace MaterialParser
         materialJson.get_to(materialInfo);
 
         std::shared_ptr<Shader> shader = Shader::Load(materialInfo.Shader.Path, materialInfo.Shader.Keywords, materialInfo.Shader.BlendInfo,
-                                                          materialInfo.Shader.CullInfo, materialInfo.Shader.DepthInfo, materialInfo.Shader.StencilDescriptor);
+                                                          materialInfo.Shader.CullInfo, materialInfo.Shader.DepthDescriptor, materialInfo.Shader.StencilDescriptor);
         std::shared_ptr<Material> material = std::make_shared<Material>(shader, path.string());
 
         for (const TextureInfo& textureInfo: materialInfo.Textures)

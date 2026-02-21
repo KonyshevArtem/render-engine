@@ -1491,8 +1491,8 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
 
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     depthStencilDesc.DepthEnable = true;
-    depthStencilDesc.DepthWriteMask = descriptor.DepthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
-    depthStencilDesc.DepthFunc = DX12Helpers::ToComparisonFunction(descriptor.DepthComparisonFunction);
+    depthStencilDesc.DepthWriteMask = descriptor.DepthDescriptor.WriteDepth ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+    depthStencilDesc.DepthFunc = DX12Helpers::ToComparisonFunction(descriptor.DepthDescriptor.DepthFunction);
     depthStencilDesc.StencilEnable = descriptor.StencilDescriptor.Enabled;
     depthStencilDesc.StencilReadMask = descriptor.StencilDescriptor.ReadMask;
     depthStencilDesc.StencilWriteMask = descriptor.StencilDescriptor.WriteMask;

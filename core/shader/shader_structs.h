@@ -1,7 +1,6 @@
 #ifndef RENDER_ENGINE_SHADER_STRUCTS_H
 #define RENDER_ENGINE_SHADER_STRUCTS_H
 
-#include "enums/comparison_function.h"
 #include "enums/blend_factor.h"
 #include "enums/cull_face.h"
 #include "enums/cull_face_orientation.h"
@@ -17,12 +16,6 @@ struct CullInfo
 {
     CullFace Face = CullFace::BACK;
     CullFaceOrientation Orientation = CullFaceOrientation::CLOCKWISE;
-};
-
-struct DepthInfo
-{
-    bool WriteDepth = true;
-    ComparisonFunction DepthFunction = ComparisonFunction::LEQUAL;
 };
 
 #endif //RENDER_ENGINE_SHADER_STRUCTS_H

@@ -25,11 +25,11 @@ namespace ShaderLocal
 }
 
 std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &path, const std::vector<std::string> &keywords,
-    BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, GraphicsBackendStencilDescriptor stencilDescriptor)
+    BlendInfo blendInfo, CullInfo cullInfo, GraphicsBackendDepthDescriptor depthDescriptor, GraphicsBackendStencilDescriptor stencilDescriptor)
 {
     Profiler::Marker _("Shader::Load", path.string());
 
-    auto shader = ShaderLoader::Load(path, keywords, blendInfo, cullInfo, depthInfo, stencilDescriptor);
+    auto shader = ShaderLoader::Load(path, keywords, blendInfo, cullInfo, depthDescriptor, stencilDescriptor);
 
     if (!shader)
     {
@@ -44,7 +44,7 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &path, const st
     return shader;
 }
 
-Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
+Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, GraphicsBackendDepthDescriptor depthDescriptor,
                GraphicsBackendStencilDescriptor stencilDescriptor,
                std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
                std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
@@ -53,7 +53,7 @@ Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blen
     m_Shaders(std::move(shaders)),
     m_CullInfo(cullInfo),
     m_BlendInfo(blendInfo),
-    m_DepthInfo(depthInfo),
+    m_DepthDescriptor(depthDescriptor),
     m_StencilDescriptor(stencilDescriptor),
     m_Textures(std::move(textures)),
     m_Buffers(std::move(buffers)),
@@ -124,8 +124,7 @@ const GraphicsBackendProgram& Shader::CreatePSO(std::vector<GraphicsBackendShade
     programDescriptor.DepthFormat = depthFormat;
     programDescriptor.CullFace = m_CullInfo.Face;
     programDescriptor.CullFaceOrientation = m_CullInfo.Orientation;
-    programDescriptor.DepthWrite = m_DepthInfo.WriteDepth;
-    programDescriptor.DepthComparisonFunction = m_DepthInfo.DepthFunction;
+    programDescriptor.DepthDescriptor = m_DepthDescriptor;
     programDescriptor.StencilDescriptor = m_StencilDescriptor;
     programDescriptor.PrimitiveType = primitiveType;
 

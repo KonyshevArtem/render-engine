@@ -24,9 +24,9 @@ class Shader
 {
 public:
     static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords,
-        BlendInfo blendInfo, CullInfo cullInfo, GraphicsBackendDepthDescriptor depthDescriptor);
+        BlendInfo blendInfo, CullInfo cullInfo);
 
-    Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, GraphicsBackendDepthDescriptor depthDescriptor,
+    Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo,
            std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
            std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
            std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
@@ -68,7 +68,6 @@ private:
 
     CullInfo m_CullInfo;
     BlendInfo m_BlendInfo;
-    GraphicsBackendDepthDescriptor m_DepthDescriptor;
     std::string m_Name;
     bool m_SupportInstancing;
 
@@ -79,6 +78,7 @@ private:
 	const GraphicsBackendProgram& CreatePSO(std::vector<GraphicsBackendShaderObject>& shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat, bool isLinear,
 		TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, PrimitiveType primitiveType,
 		const GraphicsBackendStencilDescriptor& stencilDescriptor,
+        const GraphicsBackendDepthDescriptor& depthDescriptor,
 		const std::string& name);
 };
 

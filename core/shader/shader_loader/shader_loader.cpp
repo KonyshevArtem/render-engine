@@ -61,7 +61,7 @@ namespace ShaderLoader
     }
 
     std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords,
-        BlendInfo blendInfo, CullInfo cullInfo, GraphicsBackendDepthDescriptor depthDescriptor)
+        BlendInfo blendInfo, CullInfo cullInfo)
     {
         bool supportInstancing = false;
         std::string keywordHash = GetKeywordsHash(_keywords, supportInstancing);
@@ -108,7 +108,7 @@ namespace ShaderLoader
                 shaders.push_back(shader);
             }
 
-            return std::make_shared<Shader>(shaders, blendInfo, cullInfo, depthDescriptor, textures, buffers, samplers, shaderDebugName, supportInstancing);
+            return std::make_shared<Shader>(shaders, blendInfo, cullInfo, textures, buffers, samplers, shaderDebugName, supportInstancing);
         }
         catch (const std::exception &_exception)
         {

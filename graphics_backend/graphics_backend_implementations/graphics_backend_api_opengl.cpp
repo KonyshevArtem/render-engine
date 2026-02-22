@@ -1081,6 +1081,8 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
 
 void GraphicsBackendOpenGL::EndRenderPass()
 {
+    GraphicsBackendBase::EndRenderPass();
+
     OpenGLLocal::ResetRenderTargetStates();
     PopDebugGroup(GPUQueue::RENDER);
 }

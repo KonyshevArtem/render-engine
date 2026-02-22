@@ -5,6 +5,7 @@
 #include "vector4/vector4.h"
 #include "types/graphics_backend_texture_info.h"
 #include "types/graphics_backend_stencil_descriptor.h"
+#include "types/graphics_backend_depth_descriptor.h"
 #include "resources/resource.h"
 
 #include <vector>
@@ -38,6 +39,11 @@ public:
     void SetMatrix(const std::string &_name, const Matrix4x4 &_value);
     void SetInt(const std::string &name, int value);
 
+    const std::string& GetName() const
+    {
+        return m_Name;
+    }
+
     inline const std::shared_ptr<Shader>& GetShader() const
     {
         return m_Shader;
@@ -59,6 +65,7 @@ public:
     }
 
     GraphicsBackendStencilDescriptor StencilDescriptor{};
+    GraphicsBackendDepthDescriptor DepthDescriptor{};
 
 private:
     Material() = default;

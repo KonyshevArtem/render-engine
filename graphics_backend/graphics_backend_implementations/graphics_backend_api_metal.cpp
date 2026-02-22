@@ -856,6 +856,8 @@ void GraphicsBackendMetal::BeginRenderPass(const std::string& name)
 
 void GraphicsBackendMetal::EndRenderPass()
 {
+    GraphicsBackendBase::EndRenderPass();
+
     assert(m_RenderCommandEncoder != nullptr);
 
     m_RenderCommandEncoder->endEncoding();

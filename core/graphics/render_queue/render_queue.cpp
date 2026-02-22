@@ -147,6 +147,7 @@ namespace RenderQueueLocal
             GraphicsBackend::Current()->BindTextureSampler(texture->GetBackendTexture(), texture->GetBackendSampler(), binding);
         }
 
+        GraphicsBackend::Current()->SetDepthState(material->DepthDescriptor);
         GraphicsBackend::Current()->SetStencilState(material->StencilDescriptor);
         if (material->StencilDescriptor.Enabled)
             GraphicsBackend::Current()->SetStencilValue(stencilValue);

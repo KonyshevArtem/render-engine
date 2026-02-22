@@ -238,6 +238,12 @@ GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, c
     return program;
 }
 
+void GraphicsBackendBase::EndRenderPass()
+{
+    m_StencilDescriptor = {};
+    m_DepthDescriptor = {};
+}
+
 void GraphicsBackendBase::SetStencilState(const GraphicsBackendStencilDescriptor& stencilDescriptor)
 {
     m_StencilDescriptor = stencilDescriptor;
@@ -246,6 +252,16 @@ void GraphicsBackendBase::SetStencilState(const GraphicsBackendStencilDescriptor
 const GraphicsBackendStencilDescriptor& GraphicsBackendBase::GetStencilDescriptor() const
 {
     return m_StencilDescriptor;
+}
+
+void GraphicsBackendBase::SetDepthState(const GraphicsBackendDepthDescriptor& depthDescriptor)
+{
+    m_DepthDescriptor = depthDescriptor;
+}
+
+const GraphicsBackendDepthDescriptor& GraphicsBackendBase::GetDepthState() const
+{
+    return m_DepthDescriptor;
 }
 
 bool GraphicsBackendBase::IsTexture3D(TextureType type)

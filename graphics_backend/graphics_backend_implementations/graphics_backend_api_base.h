@@ -6,6 +6,7 @@
 #include "types/graphics_backend_profiler_marker.h"
 #include "types/graphics_backend_buffer.h"
 #include "types/graphics_backend_stencil_descriptor.h"
+#include "types/graphics_backend_depth_descriptor.h"
 
 #include <string>
 #include <vector>
@@ -118,7 +119,7 @@ public:
     virtual bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults) = 0;
 
     virtual void BeginRenderPass(const std::string& name) = 0;
-    virtual void EndRenderPass() = 0;
+    virtual void EndRenderPass();
     virtual void BeginCopyPass(const std::string& name) = 0;
     virtual void EndCopyPass() = 0;
 
@@ -136,6 +137,9 @@ public:
 
     void SetStencilState(const GraphicsBackendStencilDescriptor& stencilDescriptor);
     const GraphicsBackendStencilDescriptor& GetStencilDescriptor() const;
+
+    void SetDepthState(const GraphicsBackendDepthDescriptor& depthDescriptor);
+    const GraphicsBackendDepthDescriptor& GetDepthState() const;
 
     bool IsTexture3D(TextureType type);
     bool IsCompressedTextureFormat(TextureInternalFormat format);
@@ -196,6 +200,7 @@ private:
     std::unordered_map<uint32_t, BufferBindInfo> m_BoundStructuredBuffers;
 
     GraphicsBackendStencilDescriptor m_StencilDescriptor;
+    GraphicsBackendDepthDescriptor m_DepthDescriptor;
 };
 
 

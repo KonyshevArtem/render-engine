@@ -1817,6 +1817,8 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 
 void GraphicsBackendDX12::EndRenderPass()
 {
+    GraphicsBackendBase::EndRenderPass();
+
     DX12Local::ResetRenderTargetStates();
     PopDebugGroup(GPUQueue::RENDER);
 }

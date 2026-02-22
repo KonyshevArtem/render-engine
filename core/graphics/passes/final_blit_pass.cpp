@@ -30,7 +30,7 @@ void FinalBlitPass::Execute(const Context& ctx)
         float Padding0;
     };
 
-    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/final_blit", {}, {}, {}, {false, ComparisonFunction::ALWAYS});
+    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/final_blit", {}, {}, {});
     static const std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(BlitData), "Final Blit Data");
 
     Profiler::Marker marker("FinalBlitPass::Execute");
@@ -50,6 +50,7 @@ void FinalBlitPass::Execute(const Context& ctx)
     buffer->SetData(&data, 0, sizeof(data));
     GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
     GraphicsBackend::Current()->BindTextureSampler(m_Source->GetBackendTexture(), m_Source->GetBackendSampler(), 0);
+    GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
     GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh));
     GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
     GraphicsBackend::Current()->EndRenderPass();

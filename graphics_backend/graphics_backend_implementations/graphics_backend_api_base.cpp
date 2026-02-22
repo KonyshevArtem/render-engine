@@ -243,6 +243,7 @@ void GraphicsBackendBase::EndRenderPass()
     m_StencilDescriptor = {};
     m_DepthDescriptor = {};
     m_RasterizerDescriptor = {};
+    m_BlendDescriptor = {};
 }
 
 void GraphicsBackendBase::SetStencilState(const GraphicsBackendStencilDescriptor& stencilDescriptor)
@@ -273,6 +274,16 @@ void GraphicsBackendBase::SetRasterizerState(const GraphicsBackendRasterizerDesc
 const GraphicsBackendRasterizerDescriptor& GraphicsBackendBase::GetRasterizerState() const
 {
     return m_RasterizerDescriptor;
+}
+
+void GraphicsBackendBase::SetBlendState(const GraphicsBackendBlendDescriptor& blendDescriptor)
+{
+    m_BlendDescriptor = blendDescriptor;
+}
+
+const GraphicsBackendBlendDescriptor& GraphicsBackendBase::GetBlendState() const
+{
+    return m_BlendDescriptor;
 }
 
 bool GraphicsBackendBase::IsTexture3D(TextureType type)

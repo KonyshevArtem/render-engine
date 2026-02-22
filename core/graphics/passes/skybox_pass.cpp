@@ -27,7 +27,7 @@ void SkyboxPass::Execute(const Context& ctx)
         Matrix4x4 MVPMatrix;
     };
 
-    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/skybox", {}, {});
+    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/skybox", {});
     static const std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(SkyboxData), "Skybox Data");
 
     if (m_Mesh == nullptr || ctx.Skybox == nullptr)

@@ -34,7 +34,7 @@ void CheckTexture(std::shared_ptr<Texture2D> &_texture)
 SelectionOutlinePass::SelectionOutlinePass(int priority) :
     RenderPass(priority)
 {
-    m_SilhouetteMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/silhouette", {}, {}), "Silhouette");
+    m_SilhouetteMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/silhouette", {}), "Silhouette");
     m_SilhouetteMaterial->DepthDescriptor = GraphicsBackendDepthDescriptor::AlwaysPassNoWrite();
 }
 
@@ -97,7 +97,7 @@ void SelectionOutlinePass::Execute(const Context& ctx)
             Vector2 Padding0;
         };
 
-        static std::shared_ptr<Shader> blitShader = Shader::Load("core_resources/shaders/outlineBlit", {}, {});
+        static std::shared_ptr<Shader> blitShader = Shader::Load("core_resources/shaders/outlineBlit", {});
         static std::shared_ptr<GraphicsBuffer> blitDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(OutlineData), "Selection Outline Data");
 
         Profiler::GPUMarker gpuMarker("Selection Blit Pass");

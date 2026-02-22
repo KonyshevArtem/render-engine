@@ -26,8 +26,8 @@ namespace UIRenderPass_Local
 UIRenderPass::UIRenderPass(int priority) :
     RenderPass(priority)
 {
-    m_ImageShader = Shader::Load("core_resources/shaders/ui/image", {}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA});
-    m_TextShader = Shader::Load("core_resources/shaders/ui/text", {}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA});
+    m_ImageShader = Shader::Load("core_resources/shaders/ui/image", {});
+    m_TextShader = Shader::Load("core_resources/shaders/ui/text", {});
     m_UIDataBuffer = std::make_shared<RingBuffer>(1024, "UI Data");
 }
 
@@ -85,6 +85,7 @@ void UIRenderPass::Execute(const Context& ctx)
             GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
             GraphicsBackend::Current()->BindTextureSampler(image->Image->GetBackendTexture(), image->Image->GetBackendSampler(), 0);
 
+            GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::AlphaBlending());
             GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
             GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
             GraphicsBackend::Current()->UseProgram(m_ImageShader->GetProgram(quadMesh));
@@ -106,6 +107,7 @@ void UIRenderPass::Execute(const Context& ctx)
             GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
             GraphicsBackend::Current()->BindTextureSampler(fontAtlas->GetBackendTexture(), fontAtlas->GetBackendSampler(), 0);
 
+            GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::AlphaBlending());
             GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
             GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
             GraphicsBackend::Current()->UseProgram(m_TextShader->GetProgram(textMesh));

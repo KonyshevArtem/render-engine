@@ -505,9 +505,9 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
 
     auto attachmentDesc = desc->colorAttachments()->object(0);
     attachmentDesc->setPixelFormat(metalColorFormat);
-    attachmentDesc->setBlendingEnabled(descriptor.ColorAttachmentDescriptor.BlendingEnabled);
-    attachmentDesc->setSourceRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.SourceFactor));
-    attachmentDesc->setDestinationRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.DestinationFactor));
+    attachmentDesc->setBlendingEnabled(descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled);
+    attachmentDesc->setSourceRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor));
+    attachmentDesc->setDestinationRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor));
 
     desc->setDepthAttachmentPixelFormat(metalDepthFormat);
 

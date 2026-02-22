@@ -15,6 +15,8 @@
 #include <unordered_map>
 #include <thread>
 
+#include "types/graphics_backend_blend_descriptor.h"
+
 enum class TextureType;
 enum class TextureInternalFormat : uint16_t;
 enum class FramebufferAttachment;
@@ -145,6 +147,9 @@ public:
     void SetRasterizerState(const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor);
     const GraphicsBackendRasterizerDescriptor& GetRasterizerState() const;
 
+    void SetBlendState(const GraphicsBackendBlendDescriptor& blendDescriptor);
+    const GraphicsBackendBlendDescriptor& GetBlendState() const;
+
     bool IsTexture3D(TextureType type);
     bool IsCompressedTextureFormat(TextureInternalFormat format);
     int GetBlockSize(TextureInternalFormat format);
@@ -206,6 +211,7 @@ private:
     GraphicsBackendStencilDescriptor m_StencilDescriptor;
     GraphicsBackendDepthDescriptor m_DepthDescriptor;
     GraphicsBackendRasterizerDescriptor m_RasterizerDescriptor;
+    GraphicsBackendBlendDescriptor m_BlendDescriptor;
 };
 
 

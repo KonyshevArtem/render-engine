@@ -29,7 +29,7 @@ void ShadowMapDebugPass::DrawCascades(const Context& ctx)
         Matrix4x4 InvCameraVP;
     };
 
-    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowCascadeVisualize", {}, {true, BlendFactor::ONE, BlendFactor::ONE_MINUS_SRC_ALPHA});
+    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowCascadeVisualize", {});
     static std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(DebugData), "ShadowCascadeVisualizeData");
 
     if (DrawShadowCascades)
@@ -41,6 +41,7 @@ void ShadowMapDebugPass::DrawCascades(const Context& ctx)
         buffer->SetData(&data, 0, sizeof(data));
         GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
         GraphicsBackend::Current()->BindTextureSampler(m_DepthMap->GetBackendTexture(), m_DepthMap->GetBackendSampler(), 0);
+        GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::PremultipliedAlphaBlending());
         GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
         GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
         GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_FullscreenMesh));
@@ -64,7 +65,7 @@ void ShadowMapDebugPass::DrawOverlay(const Context& ctx)
         float Padding0;
     };
 
-    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowMapOverlay", {}, {});
+    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowMapOverlay", {});
     static std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(DebugData), "ShadowMapOverlayData");
     static GraphicsBackendSampler sampler = GraphicsBackend::Current()->CreateSampler(TextureWrapMode::CLAMP_TO_EDGE, TextureFilteringMode::NEAREST, nullptr, 0, ComparisonFunction::NONE, "ShadowMap Overlay Sampler");
 

@@ -68,16 +68,15 @@ namespace ShaderLocal
     }
 }
 
-std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &path, const std::vector<std::string> &keywords,
-    BlendInfo blendInfo)
+std::shared_ptr<Shader> Shader::Load(const std::filesystem::path& path, const std::vector<std::string>& keywords)
 {
     Profiler::Marker _("Shader::Load", path.string());
 
-    auto shader = ShaderLoader::Load(path, keywords, blendInfo);
+    auto shader = ShaderLoader::Load(path, keywords);
 
     if (!shader)
     {
-        static std::shared_ptr<Shader> fallback = ShaderLoader::Load("core_resources/shaders/fallback", {}, {});
+        static std::shared_ptr<Shader> fallback = ShaderLoader::Load("core_resources/shaders/fallback", {});
 
         if (!fallback)
             exit(1);
@@ -88,13 +87,12 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path &path, const st
     return shader;
 }
 
-Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo,
+Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders,
                std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
                std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
                std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
                std::string name, bool supportInstancing) :
     m_Shaders(std::move(shaders)),
-    m_BlendInfo(blendInfo),
     m_Name(std::move(name)),
     m_SupportInstancing(supportInstancing),
     m_Textures(std::move(textures)),
@@ -135,6 +133,7 @@ const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexA
     const GraphicsBackendStencilDescriptor& stencilDescriptor = GraphicsBackend::Current()->GetStencilDescriptor();
     const GraphicsBackendDepthDescriptor& depthDescriptor = GraphicsBackend::Current()->GetDepthState();
     const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor = GraphicsBackend::Current()->GetRasterizerState();
+    const GraphicsBackendBlendDescriptor& blendDescriptor = GraphicsBackend::Current()->GetBlendState();
 
     const size_t hash = ShaderLocal::GetPSOHash(vertexAttributes.GetHash(), colorTargetFormat, isLinear, depthTargetFormat, primitiveType, stencilDescriptor, depthDescriptor, rasterizerDescriptor);
 
@@ -144,21 +143,20 @@ const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexA
         return it->second;
     }
 
-    return CreatePSO(m_Shaders, m_BlendInfo, colorTargetFormat, isLinear, depthTargetFormat, vertexAttributes.GetAttributes(), primitiveType, stencilDescriptor, depthDescriptor, rasterizerDescriptor, m_Name);
+    return CreatePSO(m_Shaders, colorTargetFormat, isLinear, depthTargetFormat, vertexAttributes.GetAttributes(), primitiveType, stencilDescriptor, depthDescriptor, rasterizerDescriptor, blendDescriptor, m_Name);
 }
 
-const GraphicsBackendProgram& Shader::CreatePSO(std::vector<GraphicsBackendShaderObject>& shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat, bool isLinear,
+const GraphicsBackendProgram& Shader::CreatePSO(std::vector<GraphicsBackendShaderObject>& shaders, TextureInternalFormat colorFormat, bool isLinear,
 	TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, PrimitiveType primitiveType,
 	const GraphicsBackendStencilDescriptor& stencilDescriptor,
     const GraphicsBackendDepthDescriptor& depthDescriptor,
     const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor,
+    const GraphicsBackendBlendDescriptor& blendDescriptor,
 	const std::string& name)
 {
     GraphicsBackendColorAttachmentDescriptor colorAttachmentDescriptor{};
     colorAttachmentDescriptor.Format = colorFormat;
-    colorAttachmentDescriptor.SourceFactor = blendInfo.SourceFactor;
-    colorAttachmentDescriptor.DestinationFactor = blendInfo.DestinationFactor;
-    colorAttachmentDescriptor.BlendingEnabled = blendInfo.Enabled;
+    colorAttachmentDescriptor.BlendDescriptor = blendDescriptor;
     colorAttachmentDescriptor.IsLinear = isLinear;
 
     GraphicsBackendProgramDescriptor programDescriptor{};

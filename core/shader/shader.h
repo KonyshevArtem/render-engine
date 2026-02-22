@@ -11,9 +11,9 @@
 #include "types/graphics_backend_stencil_descriptor.h"
 #include "types/graphics_backend_depth_descriptor.h"
 #include "types/graphics_backend_rasterizer_descriptor.h"
+#include "types/graphics_backend_blend_descriptor.h"
 #include "enums/texture_internal_format.h"
 #include "enums/primitive_type.h"
-#include "shader/shader_structs.h"
 #include "drawable_geometry/vertex_attributes/vertex_attributes.h"
 
 struct GraphicsBackendTextureInfo;
@@ -24,10 +24,9 @@ class DrawableGeometry;
 class Shader
 {
 public:
-    static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords,
-        BlendInfo blendInfo);
+    static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords);
 
-    Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo,
+    Shader(std::vector<GraphicsBackendShaderObject> &shaders,
            std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
            std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
            std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
@@ -67,7 +66,6 @@ private:
     std::vector<GraphicsBackendShaderObject> m_Shaders;
     std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
 
-    BlendInfo m_BlendInfo;
     std::string m_Name;
     bool m_SupportInstancing;
 
@@ -75,11 +73,12 @@ private:
     std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
 
-	const GraphicsBackendProgram& CreatePSO(std::vector<GraphicsBackendShaderObject>& shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat, bool isLinear,
+	const GraphicsBackendProgram& CreatePSO(std::vector<GraphicsBackendShaderObject>& shaders, TextureInternalFormat colorFormat, bool isLinear,
 		TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, PrimitiveType primitiveType,
 		const GraphicsBackendStencilDescriptor& stencilDescriptor,
         const GraphicsBackendDepthDescriptor& depthDescriptor,
         const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor,
+        const GraphicsBackendBlendDescriptor& blendDescriptor,
 		const std::string& name);
 };
 

@@ -782,9 +782,9 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     }
 
     OpenGLLocal::BlendState blendState{};
-    blendState.SourceFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.SourceFactor);
-    blendState.DestinationFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.DestinationFactor);
-    blendState.Enabled = descriptor.ColorAttachmentDescriptor.BlendingEnabled;
+    blendState.SourceFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor);
+    blendState.DestinationFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor);
+    blendState.Enabled = descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled;
 
     OpenGLLocal::ProgramData* programData = new OpenGLLocal::ProgramData();
     programData->Program = glProgram;

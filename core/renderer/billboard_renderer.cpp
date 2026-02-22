@@ -41,7 +41,7 @@ std::shared_ptr<Mesh> s_BillboardMesh = nullptr;
 BillboardRenderer::BillboardRenderer(const std::shared_ptr<Texture2D>& texture, float size, const std::string& name) :
     Renderer(nullptr)
 {
-    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/billboard", {}, {});
+    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/billboard", {});
     static std::vector<Vector3> points(4);
     static std::vector<int> indices{0, 1, 2, 1, 2, 3};
 

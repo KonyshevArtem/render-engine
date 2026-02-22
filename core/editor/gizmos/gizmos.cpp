@@ -42,9 +42,11 @@ namespace GizmosLocal
 
     std::shared_ptr<Material> GetGizmosMaterial(Gizmos::GizmoType gizmoType)
     {
-        static std::shared_ptr<Material> wireCubeMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {}), "Wire Cube Gizmo");
-        static std::shared_ptr<Material> frustumMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING", "_FRUSTUM_GIZMO"}, {}, {}, {}), "Frustum Gizmo");
-        static std::shared_ptr<Material> wireRectMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}, {}, {}, {.DepthFunction = ComparisonFunction::ALWAYS}), "Wire Rect Gizmo");
+        static std::shared_ptr<Material> wireCubeMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}), "Wire Cube Gizmo");
+        static std::shared_ptr<Material> frustumMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING", "_FRUSTUM_GIZMO"}), "Frustum Gizmo");
+        static std::shared_ptr<Material> wireRectMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/gizmos", {"_INSTANCING"}), "Wire Rect Gizmo");
+
+        wireRectMaterial->DepthDescriptor = GraphicsBackendDepthDescriptor::AlwaysPass();
 
         switch (gizmoType)
         {

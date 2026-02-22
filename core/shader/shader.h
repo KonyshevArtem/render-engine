@@ -9,9 +9,11 @@
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_stencil_descriptor.h"
+#include "types/graphics_backend_depth_descriptor.h"
+#include "types/graphics_backend_rasterizer_descriptor.h"
+#include "types/graphics_backend_blend_descriptor.h"
 #include "enums/texture_internal_format.h"
 #include "enums/primitive_type.h"
-#include "shader/shader_structs.h"
 #include "drawable_geometry/vertex_attributes/vertex_attributes.h"
 
 struct GraphicsBackendTextureInfo;
@@ -22,11 +24,9 @@ class DrawableGeometry;
 class Shader
 {
 public:
-    static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords,
-        BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, GraphicsBackendStencilDescriptor stencilDescriptor = {});
+    static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords);
 
-    Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo,
-           GraphicsBackendStencilDescriptor stencilDescriptor,
+    Shader(std::vector<GraphicsBackendShaderObject> &shaders,
            std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
            std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
            std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
@@ -62,19 +62,10 @@ public:
         return m_SupportInstancing;
     }
 
-    inline bool UsesStencil() const
-    {
-        return m_StencilDescriptor.Enabled;
-    }
-
 private:
     std::vector<GraphicsBackendShaderObject> m_Shaders;
     std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
 
-    CullInfo m_CullInfo;
-    BlendInfo m_BlendInfo;
-    DepthInfo m_DepthInfo;
-    GraphicsBackendStencilDescriptor m_StencilDescriptor;
     std::string m_Name;
     bool m_SupportInstancing;
 
@@ -82,8 +73,13 @@ private:
     std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
 
-    const GraphicsBackendProgram &CreatePSO(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, TextureInternalFormat colorFormat, bool isLinear,
-                                            TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, PrimitiveType primitiveType, const std::string& name);
+	const GraphicsBackendProgram& CreatePSO(std::vector<GraphicsBackendShaderObject>& shaders, TextureInternalFormat colorFormat, bool isLinear,
+		TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, PrimitiveType primitiveType,
+		const GraphicsBackendStencilDescriptor& stencilDescriptor,
+        const GraphicsBackendDepthDescriptor& depthDescriptor,
+        const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor,
+        const GraphicsBackendBlendDescriptor& blendDescriptor,
+		const std::string& name);
 };
 
 #endif //RENDER_ENGINE_SHADER_H

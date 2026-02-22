@@ -8,9 +8,9 @@
 #include "types/graphics_backend_buffer_info.h"
 #include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_stencil_descriptor.h"
+#include "types/graphics_backend_depth_descriptor.h"
+#include "types/graphics_backend_rasterizer_descriptor.h"
 #include "enums/texture_internal_format.h"
-#include "enums/cull_face.h"
-#include "enums/cull_face_orientation.h"
 #include "enums/primitive_type.h"
 
 #include <vector>
@@ -30,12 +30,8 @@ struct GraphicsBackendProgramDescriptor
     GraphicsBackendColorAttachmentDescriptor ColorAttachmentDescriptor;
     TextureInternalFormat DepthFormat;
 
-    CullFace CullFace;
-    CullFaceOrientation CullFaceOrientation;
-
-    bool DepthWrite;
-    ComparisonFunction DepthComparisonFunction;
-
+    GraphicsBackendRasterizerDescriptor RasterizerDescriptor;
+    GraphicsBackendDepthDescriptor DepthDescriptor;
     GraphicsBackendStencilDescriptor StencilDescriptor;
 
     PrimitiveType PrimitiveType;

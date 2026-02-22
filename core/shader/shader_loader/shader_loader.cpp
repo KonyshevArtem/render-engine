@@ -60,16 +60,15 @@ namespace ShaderLoader
         return std::to_string(Hash::FNV1a(keywordsDirectives));
     }
 
-    std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords,
-        BlendInfo blendInfo, CullInfo cullInfo, DepthInfo depthInfo, GraphicsBackendStencilDescriptor stencilDescriptor)
+	std::shared_ptr<Shader> Load(const std::filesystem::path& path, const std::vector<std::string>& keywords)
     {
         bool supportInstancing = false;
-        std::string keywordHash = GetKeywordsHash(_keywords, supportInstancing);
+        std::string keywordHash = GetKeywordsHash(keywords, supportInstancing);
 
         try
         {
             std::string backendLiteral = GetBackendLiteral(GraphicsBackend::Current()->GetName());
-            std::filesystem::path backendPath = FileSystem::GetResourcesPath() / _path / backendLiteral / keywordHash;
+            std::filesystem::path backendPath = FileSystem::GetResourcesPath() / path / backendLiteral / keywordHash;
 
             auto reflectionJson = FileSystem::ReadFile(backendPath / "reflection.json");
             std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;
@@ -78,7 +77,7 @@ namespace ShaderLoader
             ShaderParser::ParseReflection(reflectionJson, textures, buffers, samplers);
 
             std::string shaderDebugName;
-            shaderDebugName.append(_path.string());
+            shaderDebugName.append(path.string());
             shaderDebugName.append("_");
             shaderDebugName.append(keywordHash);
 
@@ -108,11 +107,11 @@ namespace ShaderLoader
                 shaders.push_back(shader);
             }
 
-            return std::make_shared<Shader>(shaders, blendInfo, cullInfo, depthInfo, stencilDescriptor, textures, buffers, samplers, shaderDebugName, supportInstancing);
+            return std::make_shared<Shader>(shaders, textures, buffers, samplers, shaderDebugName, supportInstancing);
         }
         catch (const std::exception &_exception)
         {
-            Debug::LogErrorFormat("[ShaderLoader] Can't load shader {}\n{}", _path.string(), _exception.what());
+            Debug::LogErrorFormat("[ShaderLoader] Can't load shader {}\n{}", path.string(), _exception.what());
             return nullptr;
         }
     }

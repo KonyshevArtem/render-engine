@@ -238,6 +238,54 @@ GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, c
     return program;
 }
 
+void GraphicsBackendBase::EndRenderPass()
+{
+    m_StencilDescriptor = {};
+    m_DepthDescriptor = {};
+    m_RasterizerDescriptor = {};
+    m_BlendDescriptor = {};
+}
+
+void GraphicsBackendBase::SetStencilState(const GraphicsBackendStencilDescriptor& stencilDescriptor)
+{
+    m_StencilDescriptor = stencilDescriptor;
+}
+
+const GraphicsBackendStencilDescriptor& GraphicsBackendBase::GetStencilDescriptor() const
+{
+    return m_StencilDescriptor;
+}
+
+void GraphicsBackendBase::SetDepthState(const GraphicsBackendDepthDescriptor& depthDescriptor)
+{
+    m_DepthDescriptor = depthDescriptor;
+}
+
+const GraphicsBackendDepthDescriptor& GraphicsBackendBase::GetDepthState() const
+{
+    return m_DepthDescriptor;
+}
+
+void GraphicsBackendBase::SetRasterizerState(const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor)
+{
+    m_RasterizerDescriptor = rasterizerDescriptor;
+}
+
+const GraphicsBackendRasterizerDescriptor& GraphicsBackendBase::GetRasterizerState() const
+{
+    return m_RasterizerDescriptor;
+}
+
+void GraphicsBackendBase::SetBlendState(const GraphicsBackendBlendDescriptor& blendDescriptor)
+{
+    m_BlendDescriptor = blendDescriptor;
+}
+
+const GraphicsBackendBlendDescriptor& GraphicsBackendBase::GetBlendState() const
+{
+    return m_BlendDescriptor;
+}
+
 bool GraphicsBackendBase::IsTexture3D(TextureType type)
 {
     return type == TextureType::TEXTURE_2D_ARRAY || type == TextureType::TEXTURE_3D || type == TextureType::TEXTURE_CUBEMAP_ARRAY;

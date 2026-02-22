@@ -782,17 +782,17 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     }
 
     OpenGLLocal::BlendState blendState{};
-    blendState.SourceFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.SourceFactor);
-    blendState.DestinationFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.DestinationFactor);
-    blendState.Enabled = descriptor.ColorAttachmentDescriptor.BlendingEnabled;
+    blendState.SourceFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor);
+    blendState.DestinationFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor);
+    blendState.Enabled = descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled;
 
     OpenGLLocal::ProgramData* programData = new OpenGLLocal::ProgramData();
     programData->Program = glProgram;
     programData->BlendState = blendState;
-    programData->CullFace = OpenGLHelpers::ToCullFace(descriptor.CullFace);
-    programData->CullFaceOrientation = OpenGLHelpers::ToCullFaceOrientation(descriptor.CullFaceOrientation);
-    programData->DepthComparisonFunction = OpenGLHelpers::ToComparisonFunction(descriptor.DepthComparisonFunction);
-    programData->DepthWrite = descriptor.DepthWrite ? GL_TRUE : GL_FALSE;
+    programData->CullFace = OpenGLHelpers::ToCullFace(descriptor.RasterizerDescriptor.Face);
+    programData->CullFaceOrientation = OpenGLHelpers::ToCullFaceOrientation(descriptor.RasterizerDescriptor.Orientation);
+    programData->DepthComparisonFunction = OpenGLHelpers::ToComparisonFunction(descriptor.DepthDescriptor.DepthFunction);
+    programData->DepthWrite = descriptor.DepthDescriptor.WriteDepth ? GL_TRUE : GL_FALSE;
     programData->StencilDescriptor = descriptor.StencilDescriptor;
 
     return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(programData), descriptor);
@@ -1081,6 +1081,8 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
 
 void GraphicsBackendOpenGL::EndRenderPass()
 {
+    GraphicsBackendBase::EndRenderPass();
+
     OpenGLLocal::ResetRenderTargetStates();
     PopDebugGroup(GPUQueue::RENDER);
 }

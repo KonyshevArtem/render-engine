@@ -7,8 +7,8 @@ size_t GetHash_Internal(const GraphicsBackendVertexAttributeDescriptor &attribut
     hash = Hash::Combine(hash, std::hash<uint8_t>{}(attribute.Dimensions));
     hash = Hash::Combine(hash, std::hash<VertexAttributeDataType>{}(attribute.DataType));
     hash = Hash::Combine(hash, std::hash<uint8_t>{}(attribute.IsNormalized));
-    hash = Hash::Combine(hash, std::hash<uint8_t>{}(attribute.Stride));
-    hash = Hash::Combine(hash, std::hash<uint8_t>{}(attribute.Offset));
+    hash = Hash::Combine(hash, std::hash<uint64_t>{}(attribute.Stride));
+    hash = Hash::Combine(hash, std::hash<uint64_t>{}(attribute.Offset));
     return hash;
 }
 

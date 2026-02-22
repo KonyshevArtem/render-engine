@@ -30,7 +30,10 @@ std::shared_ptr<Texture2D> Resources::Load(const std::filesystem::path& path, bo
 
     TextureBinaryReader reader;
     if (!reader.ReadTexture(path))
+    {
+        Debug::LogErrorFormat("[Resources] Cannot load texture: {}", path.string());
         return nullptr;
+    }
 
     const TextureHeader& header = reader.GetHeader();
 
@@ -52,14 +55,17 @@ std::shared_ptr<Cubemap> Resources::Load(const std::filesystem::path& path, bool
 
     TextureBinaryReader reader;
     if (!reader.ReadTexture(path))
+    {
+        Debug::LogErrorFormat("[Resources] Cannot load cubemap: {}", path.string());
         return nullptr;
+    }
 
     const TextureHeader& header = reader.GetHeader();
 
     constexpr int facesCount = static_cast<int>(CubemapFace::MAX);
     if (header.Depth != facesCount)
     {
-        Debug::LogErrorFormat("Number of slices in texture file is {}, expected {}", std::to_string(header.Depth), std::to_string(facesCount));
+        Debug::LogErrorFormat("[Resources] Number of slices in texture file is {}, expected {}", std::to_string(header.Depth), std::to_string(facesCount));
         return nullptr;
     }
 
@@ -100,7 +106,10 @@ std::shared_ptr<Mesh> Resources::Load(const std::filesystem::path& path, bool as
 
     MeshBinaryReader reader;
     if (!reader.ReadMesh(path))
+    {
+        Debug::LogErrorFormat("[Resources] Cannot load mesh: {}", path.string());
         return nullptr;
+    }
 
     const MeshHeader& header = reader.GetHeader();
     mesh = std::make_shared<Mesh>(reader.GetVertexData(), reader.GetIndices(), header.HasUV, header.HasNormals, header.HasTangents,
@@ -121,7 +130,11 @@ std::shared_ptr<Font> Resources::Load(const std::filesystem::path &path, bool as
         return font;
 
     std::vector<uint8_t> bytes;
-    FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / path, bytes);
+    if (!FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / path, bytes))
+    {
+        Debug::LogErrorFormat("[Resources] Cannot load font: {}", path.string());
+        return nullptr;
+    }
 
     font = std::make_shared<Font>(bytes, path.string());
     AddToCache(path, font);

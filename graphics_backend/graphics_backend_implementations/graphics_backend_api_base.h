@@ -5,12 +5,17 @@
 #include "types/graphics_backend_vertex_attribute_descriptor.h"
 #include "types/graphics_backend_profiler_marker.h"
 #include "types/graphics_backend_buffer.h"
+#include "types/graphics_backend_stencil_descriptor.h"
+#include "types/graphics_backend_depth_descriptor.h"
+#include "types/graphics_backend_rasterizer_descriptor.h"
 
 #include <string>
 #include <vector>
 #include <memory>
 #include <unordered_map>
 #include <thread>
+
+#include "types/graphics_backend_blend_descriptor.h"
 
 enum class TextureType;
 enum class TextureInternalFormat : uint16_t;
@@ -46,7 +51,9 @@ struct GraphicsBackendProgramDescriptor;
 class GraphicsBackendBase
 {
 public:
-    static GraphicsBackendBase *Create();
+	virtual ~GraphicsBackendBase() = default;
+
+	static GraphicsBackendBase *Create();
 
     virtual void Init(void *data);
     virtual GraphicsBackendName GetName() = 0;
@@ -115,7 +122,7 @@ public:
     virtual bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults) = 0;
 
     virtual void BeginRenderPass(const std::string& name) = 0;
-    virtual void EndRenderPass() = 0;
+    virtual void EndRenderPass();
     virtual void BeginCopyPass(const std::string& name) = 0;
     virtual void EndCopyPass() = 0;
 
@@ -130,6 +137,18 @@ public:
     virtual void TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor& descriptor, ResourceState state, GPUQueue queue) = 0;
     virtual void TransitionTexture(const GraphicsBackendTexture& texture, ResourceState state, GPUQueue queue) = 0;
     virtual void TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue) = 0;
+
+    void SetStencilState(const GraphicsBackendStencilDescriptor& stencilDescriptor);
+    const GraphicsBackendStencilDescriptor& GetStencilDescriptor() const;
+
+    void SetDepthState(const GraphicsBackendDepthDescriptor& depthDescriptor);
+    const GraphicsBackendDepthDescriptor& GetDepthState() const;
+
+    void SetRasterizerState(const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor);
+    const GraphicsBackendRasterizerDescriptor& GetRasterizerState() const;
+
+    void SetBlendState(const GraphicsBackendBlendDescriptor& blendDescriptor);
+    const GraphicsBackendBlendDescriptor& GetBlendState() const;
 
     bool IsTexture3D(TextureType type);
     bool IsCompressedTextureFormat(TextureInternalFormat format);
@@ -173,7 +192,7 @@ private:
         int ElementsCount;
     };
 
-    uint64_t m_FrameCount;
+    uint64_t m_FrameCount = 0;
     std::thread::id m_MainThreadId;
 
     std::vector<std::pair<GraphicsBackendTexture, int>> m_DeletedTextures;
@@ -188,6 +207,11 @@ private:
     std::unordered_map<uint32_t, BufferBindInfo> m_BoundBuffers;
     std::unordered_map<uint32_t, BufferBindInfo> m_BoundConstantBuffers;
     std::unordered_map<uint32_t, BufferBindInfo> m_BoundStructuredBuffers;
+
+    GraphicsBackendStencilDescriptor m_StencilDescriptor;
+    GraphicsBackendDepthDescriptor m_DepthDescriptor;
+    GraphicsBackendRasterizerDescriptor m_RasterizerDescriptor;
+    GraphicsBackendBlendDescriptor m_BlendDescriptor;
 };
 
 

@@ -505,9 +505,9 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
 
     auto attachmentDesc = desc->colorAttachments()->object(0);
     attachmentDesc->setPixelFormat(metalColorFormat);
-    attachmentDesc->setBlendingEnabled(descriptor.ColorAttachmentDescriptor.BlendingEnabled);
-    attachmentDesc->setSourceRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.SourceFactor));
-    attachmentDesc->setDestinationRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.DestinationFactor));
+    attachmentDesc->setBlendingEnabled(descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled);
+    attachmentDesc->setSourceRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor));
+    attachmentDesc->setDestinationRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor));
 
     desc->setDepthAttachmentPixelFormat(metalDepthFormat);
 
@@ -555,8 +555,8 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
     }
 
     auto depthStencilDescriptor = MTL::DepthStencilDescriptor::alloc()->init();
-    depthStencilDescriptor->setDepthWriteEnabled(descriptor.DepthWrite);
-    depthStencilDescriptor->setDepthCompareFunction(MetalHelpers::ToComparisonFunction(descriptor.DepthComparisonFunction));
+    depthStencilDescriptor->setDepthWriteEnabled(descriptor.DepthDescriptor.WriteDepth);
+    depthStencilDescriptor->setDepthCompareFunction(MetalHelpers::ToComparisonFunction(descriptor.DepthDescriptor.DepthFunction));
 
     const GraphicsBackendStencilDescriptor& stencilDesc = descriptor.StencilDescriptor;
     if (stencilDesc.Enabled)
@@ -593,8 +593,8 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
     MetalLocal::PSOData* psoData = new MetalLocal::PSOData();
     psoData->PSO = pso;
     psoData->DepthStencilState = depthStencilState;
-    psoData->CullFace = MetalHelpers::ToCullFace(descriptor.CullFace);
-    psoData->CullFaceOrientation = MetalHelpers::ToCullFaceOrientation(descriptor.CullFaceOrientation);
+    psoData->CullFace = MetalHelpers::ToCullFace(descriptor.RasterizerDescriptor.Face);
+    psoData->CullFaceOrientation = MetalHelpers::ToCullFaceOrientation(descriptor.RasterizerDescriptor.Orientation);
 
     return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(psoData), descriptor);
 }
@@ -856,6 +856,8 @@ void GraphicsBackendMetal::BeginRenderPass(const std::string& name)
 
 void GraphicsBackendMetal::EndRenderPass()
 {
+    GraphicsBackendBase::EndRenderPass();
+
     assert(m_RenderCommandEncoder != nullptr);
 
     m_RenderCommandEncoder->endEncoding();

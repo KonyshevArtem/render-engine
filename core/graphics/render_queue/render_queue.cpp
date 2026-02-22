@@ -9,6 +9,7 @@
 #include "texture/texture.h"
 #include "drawable_geometry/drawable_geometry.h"
 #include "global_constants.h"
+#include "debug.h"
 
 bool RenderQueue::EnableFrustumCulling = true;
 bool RenderQueue::FreezeFrustumCulling = false;
@@ -135,16 +136,25 @@ namespace RenderQueueLocal
         for (const auto& pair: material->GetTextures())
         {
             uint32_t binding = pair.first;
-            const std::shared_ptr<Texture> &texture = pair.second;
+            const std::shared_ptr<Texture>& texture = pair.second;
+
+            if (!texture)
+            {
+                Debug::LogErrorFormat("[RenderQueue] Texture for binding {} is missing on material: {}", std::to_string(binding), material->GetName());
+                continue;
+            }
 
             GraphicsBackend::Current()->BindTextureSampler(texture->GetBackendTexture(), texture->GetBackendSampler(), binding);
         }
 
-        std::shared_ptr<Shader> shader = material->GetShader();
-        if (shader->UsesStencil())
+        GraphicsBackend::Current()->SetDepthState(material->DepthDescriptor);
+        GraphicsBackend::Current()->SetRasterizerState(material->RasterizerDescriptor);
+        GraphicsBackend::Current()->SetBlendState(material->BlendDescriptor);
+        GraphicsBackend::Current()->SetStencilState(material->StencilDescriptor);
+        if (material->StencilDescriptor.Enabled)
             GraphicsBackend::Current()->SetStencilValue(stencilValue);
 
-        GraphicsBackend::Current()->UseProgram(shader->GetProgram(vertexAttributes, primitiveType));
+        GraphicsBackend::Current()->UseProgram(material->GetShader()->GetProgram(vertexAttributes, primitiveType));
     }
 }
 

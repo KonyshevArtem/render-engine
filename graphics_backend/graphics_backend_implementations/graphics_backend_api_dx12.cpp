@@ -1469,13 +1469,13 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     ID3DBlob* fragmentBlob = reinterpret_cast<ID3DBlob*>(shaders[1].ShaderObject);
 
     D3D12_BLEND_DESC blendDescriptor = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    blendDescriptor.RenderTarget[0].BlendEnable = descriptor.ColorAttachmentDescriptor.BlendingEnabled;
-    blendDescriptor.RenderTarget[0].SrcBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.SourceFactor);
-    blendDescriptor.RenderTarget[0].DestBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.DestinationFactor);
+    blendDescriptor.RenderTarget[0].BlendEnable = descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled;
+    blendDescriptor.RenderTarget[0].SrcBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor);
+    blendDescriptor.RenderTarget[0].DestBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor);
 
     D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    rasterizerDesc.CullMode = DX12Helpers::ToCullFace(descriptor.CullFace);
-    rasterizerDesc.FrontCounterClockwise = descriptor.CullFaceOrientation == CullFaceOrientation::COUNTER_CLOCKWISE;
+    rasterizerDesc.CullMode = DX12Helpers::ToCullFace(descriptor.RasterizerDescriptor.Face);
+    rasterizerDesc.FrontCounterClockwise = descriptor.RasterizerDescriptor.Orientation == CullFaceOrientation::COUNTER_CLOCKWISE;
 
     auto GetStencilOpDesc = [](GraphicsBackendStencilOperationDescriptor stencilOpDesc)
     {
@@ -1491,8 +1491,8 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
 
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     depthStencilDesc.DepthEnable = true;
-    depthStencilDesc.DepthWriteMask = descriptor.DepthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
-    depthStencilDesc.DepthFunc = DX12Helpers::ToComparisonFunction(descriptor.DepthComparisonFunction);
+    depthStencilDesc.DepthWriteMask = descriptor.DepthDescriptor.WriteDepth ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+    depthStencilDesc.DepthFunc = DX12Helpers::ToComparisonFunction(descriptor.DepthDescriptor.DepthFunction);
     depthStencilDesc.StencilEnable = descriptor.StencilDescriptor.Enabled;
     depthStencilDesc.StencilReadMask = descriptor.StencilDescriptor.ReadMask;
     depthStencilDesc.StencilWriteMask = descriptor.StencilDescriptor.WriteMask;
@@ -1817,6 +1817,8 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
 
 void GraphicsBackendDX12::EndRenderPass()
 {
+    GraphicsBackendBase::EndRenderPass();
+
     DX12Local::ResetRenderTargetStates();
     PopDebugGroup(GPUQueue::RENDER);
 }

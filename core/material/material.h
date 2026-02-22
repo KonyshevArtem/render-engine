@@ -6,6 +6,7 @@
 #include "types/graphics_backend_texture_info.h"
 #include "types/graphics_backend_stencil_descriptor.h"
 #include "types/graphics_backend_depth_descriptor.h"
+#include "types/graphics_backend_rasterizer_descriptor.h"
 #include "resources/resource.h"
 
 #include <vector>
@@ -66,6 +67,7 @@ public:
 
     GraphicsBackendStencilDescriptor StencilDescriptor{};
     GraphicsBackendDepthDescriptor DepthDescriptor{};
+    GraphicsBackendRasterizerDescriptor RasterizerDescriptor{};
 
 private:
     Material() = default;

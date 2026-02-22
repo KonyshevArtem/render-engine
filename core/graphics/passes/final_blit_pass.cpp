@@ -30,7 +30,7 @@ void FinalBlitPass::Execute(const Context& ctx)
         float Padding0;
     };
 
-    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/final_blit", {}, {}, {});
+    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/final_blit", {}, {});
     static const std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(BlitData), "Final Blit Data");
 
     Profiler::Marker marker("FinalBlitPass::Execute");

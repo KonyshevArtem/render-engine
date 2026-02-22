@@ -7,28 +7,29 @@
 #include "resources/resources.h"
 #include "types/graphics_backend_stencil_descriptor.h"
 #include "types/graphics_backend_depth_descriptor.h"
+#include "types/graphics_backend_rasterizer_descriptor.h"
 
 NLOHMANN_JSON_SERIALIZE_ENUM(BlendFactor, {
-    {BlendFactor::ZERO, "ZERO"},
-    {BlendFactor::ONE, "ONE"},
-    {BlendFactor::SRC_COLOR, "SRC_COLOR"},
-    {BlendFactor::ONE_MINUS_SRC_COLOR, "ONE_MINUS_SRC_COLOR"},
-    {BlendFactor::DST_COLOR, "DST_COLOR"},
-    {BlendFactor::ONE_MINUS_DST_COLOR, "ONE_MINUS_DST_COLOR"},
-    {BlendFactor::SRC_ALPHA, "SRC_ALPHA"},
-    {BlendFactor::ONE_MINUS_SRC_ALPHA, "ONE_MINUS_SRC_ALPHA"},
-    {BlendFactor::DST_ALPHA, "DST_ALPHA"},
-    {BlendFactor::ONE_MINUS_DST_ALPHA, "ONE_MINUS_DST_ALPHA"},
-    {BlendFactor::CONSTANT_COLOR, "CONSTANT_COLOR"},
-    {BlendFactor::ONE_MINUS_CONSTANT_COLOR, "ONE_MINUS_CONSTANT_COLOR"},
-    {BlendFactor::CONSTANT_ALPHA, "CONSTANT_ALPHA"},
-    {BlendFactor::ONE_MINUS_CONSTANT_ALPHA, "ONE_MINUS_CONSTANT_ALPHA"},
-    {BlendFactor::SRC_ALPHA_SATURATE, "SRC_ALPHA_SATURATE"},
-    {BlendFactor::SRC1_COLOR, "SRC1_COLOR"},
-    {BlendFactor::ONE_MINUS_SRC1_COLOR, "ONE_MINUS_SRC1_COLOR"},
-    {BlendFactor::SRC1_ALPHA, "SRC1_ALPHA"},
-    {BlendFactor::ONE_MINUS_SRC1_ALPHA, "ONE_MINUS_SRC1_ALPHA"},
-})
+                             {BlendFactor::ZERO, "ZERO"},
+                             {BlendFactor::ONE, "ONE"},
+                             {BlendFactor::SRC_COLOR, "SRC_COLOR"},
+                             {BlendFactor::ONE_MINUS_SRC_COLOR, "ONE_MINUS_SRC_COLOR"},
+                             {BlendFactor::DST_COLOR, "DST_COLOR"},
+                             {BlendFactor::ONE_MINUS_DST_COLOR, "ONE_MINUS_DST_COLOR"},
+                             {BlendFactor::SRC_ALPHA, "SRC_ALPHA"},
+                             {BlendFactor::ONE_MINUS_SRC_ALPHA, "ONE_MINUS_SRC_ALPHA"},
+                             {BlendFactor::DST_ALPHA, "DST_ALPHA"},
+                             {BlendFactor::ONE_MINUS_DST_ALPHA, "ONE_MINUS_DST_ALPHA"},
+                             {BlendFactor::CONSTANT_COLOR, "CONSTANT_COLOR"},
+                             {BlendFactor::ONE_MINUS_CONSTANT_COLOR, "ONE_MINUS_CONSTANT_COLOR"},
+                             {BlendFactor::CONSTANT_ALPHA, "CONSTANT_ALPHA"},
+                             {BlendFactor::ONE_MINUS_CONSTANT_ALPHA, "ONE_MINUS_CONSTANT_ALPHA"},
+                             {BlendFactor::SRC_ALPHA_SATURATE, "SRC_ALPHA_SATURATE"},
+                             {BlendFactor::SRC1_COLOR, "SRC1_COLOR"},
+                             {BlendFactor::ONE_MINUS_SRC1_COLOR, "ONE_MINUS_SRC1_COLOR"},
+                             {BlendFactor::SRC1_ALPHA, "SRC1_ALPHA"},
+                             {BlendFactor::ONE_MINUS_SRC1_ALPHA, "ONE_MINUS_SRC1_ALPHA"},
+                             })
 
 NLOHMANN_JSON_SERIALIZE_ENUM(CullFace, {
     {CullFace::NONE, "NONE"},
@@ -65,7 +66,7 @@ void from_json(const nlohmann::json& json, BlendInfo& info)
     json.at("DestinationFactor").get_to(info.DestinationFactor);
 }
 
-void from_json(const nlohmann::json& json, CullInfo& info)
+void from_json(const nlohmann::json& json, GraphicsBackendRasterizerDescriptor& info)
 {
     json.at("Face").get_to(info.Face);
 }
@@ -109,7 +110,7 @@ namespace MaterialParser
         std::string Path;
         std::vector<std::string> Keywords;
         BlendInfo BlendInfo;
-        CullInfo CullInfo;
+        GraphicsBackendRasterizerDescriptor RasterizerDescriptor;
         GraphicsBackendDepthDescriptor DepthDescriptor;
         GraphicsBackendStencilDescriptor StencilDescriptor;
     };
@@ -143,7 +144,7 @@ namespace MaterialParser
         if (json.contains("BlendInfo"))
             json.at("BlendInfo").get_to(info.BlendInfo);
         if (json.contains("CullInfo"))
-            json.at("CullInfo").get_to(info.CullInfo);
+            json.at("CullInfo").get_to(info.RasterizerDescriptor);
         if (json.contains("DepthInfo"))
             json.at("DepthInfo").get_to(info.DepthDescriptor);
         if (json.contains("Stencil"))
@@ -197,12 +198,12 @@ namespace MaterialParser
         MaterialInfo materialInfo;
         materialJson.get_to(materialInfo);
 
-        std::shared_ptr<Shader> shader = Shader::Load(materialInfo.Shader.Path, materialInfo.Shader.Keywords, materialInfo.Shader.BlendInfo,
-                                                          materialInfo.Shader.CullInfo);
+        std::shared_ptr<Shader> shader = Shader::Load(materialInfo.Shader.Path, materialInfo.Shader.Keywords, materialInfo.Shader.BlendInfo);
         std::shared_ptr<Material> material = std::make_shared<Material>(shader, path.string());
 
         material->StencilDescriptor = materialInfo.Shader.StencilDescriptor;
         material->DepthDescriptor = materialInfo.Shader.DepthDescriptor;
+        material->RasterizerDescriptor = materialInfo.Shader.RasterizerDescriptor;
 
         for (const TextureInfo& textureInfo: materialInfo.Textures)
         {

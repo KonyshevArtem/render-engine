@@ -593,8 +593,8 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
     MetalLocal::PSOData* psoData = new MetalLocal::PSOData();
     psoData->PSO = pso;
     psoData->DepthStencilState = depthStencilState;
-    psoData->CullFace = MetalHelpers::ToCullFace(descriptor.CullFace);
-    psoData->CullFaceOrientation = MetalHelpers::ToCullFaceOrientation(descriptor.CullFaceOrientation);
+    psoData->CullFace = MetalHelpers::ToCullFace(descriptor.RasterizerDescriptor.Face);
+    psoData->CullFaceOrientation = MetalHelpers::ToCullFaceOrientation(descriptor.RasterizerDescriptor.Orientation);
 
     return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(psoData), descriptor);
 }

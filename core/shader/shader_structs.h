@@ -12,10 +12,4 @@ struct BlendInfo
     BlendFactor DestinationFactor = BlendFactor::ONE;
 };
 
-struct CullInfo
-{
-    CullFace Face = CullFace::BACK;
-    CullFaceOrientation Orientation = CullFaceOrientation::CLOCKWISE;
-};
-
 #endif //RENDER_ENGINE_SHADER_STRUCTS_H

@@ -26,8 +26,8 @@ namespace UIRenderPass_Local
 UIRenderPass::UIRenderPass(int priority) :
     RenderPass(priority)
 {
-    m_ImageShader = Shader::Load("core_resources/shaders/ui/image", {}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA}, {CullFace::NONE}, {false, ComparisonFunction::ALWAYS});
-    m_TextShader = Shader::Load("core_resources/shaders/ui/text", {}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA}, {CullFace::NONE}, {false, ComparisonFunction::ALWAYS});
+    m_ImageShader = Shader::Load("core_resources/shaders/ui/image", {}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA});
+    m_TextShader = Shader::Load("core_resources/shaders/ui/text", {}, {true, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA});
     m_UIDataBuffer = std::make_shared<RingBuffer>(1024, "UI Data");
 }
 
@@ -75,21 +75,23 @@ void UIRenderPass::Execute(const Context& ctx)
 
     for (UIElement* element : UIManager::GetElements())
     {
-        if (UIImage* image = dynamic_cast<UIImage*>(element))
+        if (const UIImage* image = dynamic_cast<UIImage*>(element))
         {
             UIData data;
             data.OffsetScale = UIRenderPass_Local::GetOffsetScale(image->GetGlobalPosition(), image->Size);
             data.Color = image->Color;
-            uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
+            const uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
 
             GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
             GraphicsBackend::Current()->BindTextureSampler(image->Image->GetBackendTexture(), image->Image->GetBackendSampler(), 0);
 
+            GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
+            GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
             GraphicsBackend::Current()->UseProgram(m_ImageShader->GetProgram(quadMesh));
             GraphicsBackend::Current()->DrawElements(quadMesh->GetGraphicsBackendGeometry(), quadMesh->GetPrimitiveType(), quadMesh->GetElementsCount(), quadMesh->GetIndicesDataType());
         }
 
-        if (UIText* text = dynamic_cast<UIText*>(element))
+        if (const UIText* text = dynamic_cast<UIText*>(element))
         {
             const std::shared_ptr<Mesh> textMesh = text->GetMesh();
             const std::shared_ptr<Texture> fontAtlas = text->GetFontAtlas();
@@ -99,11 +101,13 @@ void UIRenderPass::Execute(const Context& ctx)
             UIData data;
             data.OffsetScale = UIRenderPass_Local::GetOffsetScale(text->GetGlobalPosition(), Vector2(1, 1));
             data.Color = text->Color;
-            uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
+            const uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
 
             GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
             GraphicsBackend::Current()->BindTextureSampler(fontAtlas->GetBackendTexture(), fontAtlas->GetBackendSampler(), 0);
 
+            GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
+            GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
             GraphicsBackend::Current()->UseProgram(m_TextShader->GetProgram(textMesh));
             GraphicsBackend::Current()->DrawElements(textMesh->GetGraphicsBackendGeometry(), textMesh->GetPrimitiveType(), textMesh->GetElementsCount(), textMesh->GetIndicesDataType());
         }

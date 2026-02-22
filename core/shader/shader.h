@@ -10,6 +10,7 @@
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_stencil_descriptor.h"
 #include "types/graphics_backend_depth_descriptor.h"
+#include "types/graphics_backend_rasterizer_descriptor.h"
 #include "enums/texture_internal_format.h"
 #include "enums/primitive_type.h"
 #include "shader/shader_structs.h"
@@ -24,9 +25,9 @@ class Shader
 {
 public:
     static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords,
-        BlendInfo blendInfo, CullInfo cullInfo);
+        BlendInfo blendInfo);
 
-    Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo, CullInfo cullInfo,
+    Shader(std::vector<GraphicsBackendShaderObject> &shaders, BlendInfo blendInfo,
            std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
            std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
            std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
@@ -66,7 +67,6 @@ private:
     std::vector<GraphicsBackendShaderObject> m_Shaders;
     std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
 
-    CullInfo m_CullInfo;
     BlendInfo m_BlendInfo;
     std::string m_Name;
     bool m_SupportInstancing;
@@ -79,6 +79,7 @@ private:
 		TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, PrimitiveType primitiveType,
 		const GraphicsBackendStencilDescriptor& stencilDescriptor,
         const GraphicsBackendDepthDescriptor& depthDescriptor,
+        const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor,
 		const std::string& name);
 };
 

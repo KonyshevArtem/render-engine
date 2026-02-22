@@ -7,6 +7,7 @@
 #include "types/graphics_backend_buffer.h"
 #include "types/graphics_backend_stencil_descriptor.h"
 #include "types/graphics_backend_depth_descriptor.h"
+#include "types/graphics_backend_rasterizer_descriptor.h"
 
 #include <string>
 #include <vector>
@@ -141,6 +142,9 @@ public:
     void SetDepthState(const GraphicsBackendDepthDescriptor& depthDescriptor);
     const GraphicsBackendDepthDescriptor& GetDepthState() const;
 
+    void SetRasterizerState(const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor);
+    const GraphicsBackendRasterizerDescriptor& GetRasterizerState() const;
+
     bool IsTexture3D(TextureType type);
     bool IsCompressedTextureFormat(TextureInternalFormat format);
     int GetBlockSize(TextureInternalFormat format);
@@ -201,6 +205,7 @@ private:
 
     GraphicsBackendStencilDescriptor m_StencilDescriptor;
     GraphicsBackendDepthDescriptor m_DepthDescriptor;
+    GraphicsBackendRasterizerDescriptor m_RasterizerDescriptor;
 };
 
 

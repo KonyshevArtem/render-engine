@@ -27,7 +27,7 @@ void SkyboxPass::Execute(const Context& ctx)
         Matrix4x4 MVPMatrix;
     };
 
-    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/skybox", {}, {}, {CullFace::FRONT});
+    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/skybox", {}, {});
     static const std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(SkyboxData), "Skybox Data");
 
     if (m_Mesh == nullptr || ctx.Skybox == nullptr)
@@ -46,6 +46,7 @@ void SkyboxPass::Execute(const Context& ctx)
 
     GraphicsBackend::Current()->BindTextureSampler(ctx.Skybox->GetBackendTexture(), ctx.Skybox->GetBackendSampler(), 0);
 
+    GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::CullFront());
     GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_Mesh));
     GraphicsBackend::Current()->DrawElements(m_Mesh->GetGraphicsBackendGeometry(), m_Mesh->GetPrimitiveType(), m_Mesh->GetElementsCount(), m_Mesh->GetIndicesDataType());
 }

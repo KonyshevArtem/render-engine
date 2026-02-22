@@ -148,6 +148,7 @@ namespace RenderQueueLocal
         }
 
         GraphicsBackend::Current()->SetDepthState(material->DepthDescriptor);
+        GraphicsBackend::Current()->SetRasterizerState(material->RasterizerDescriptor);
         GraphicsBackend::Current()->SetStencilState(material->StencilDescriptor);
         if (material->StencilDescriptor.Enabled)
             GraphicsBackend::Current()->SetStencilValue(stencilValue);

@@ -1474,8 +1474,8 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     blendDescriptor.RenderTarget[0].DestBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.DestinationFactor);
 
     D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    rasterizerDesc.CullMode = DX12Helpers::ToCullFace(descriptor.CullFace);
-    rasterizerDesc.FrontCounterClockwise = descriptor.CullFaceOrientation == CullFaceOrientation::COUNTER_CLOCKWISE;
+    rasterizerDesc.CullMode = DX12Helpers::ToCullFace(descriptor.RasterizerDescriptor.Face);
+    rasterizerDesc.FrontCounterClockwise = descriptor.RasterizerDescriptor.Orientation == CullFaceOrientation::COUNTER_CLOCKWISE;
 
     auto GetStencilOpDesc = [](GraphicsBackendStencilOperationDescriptor stencilOpDesc)
     {

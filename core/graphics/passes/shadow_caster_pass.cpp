@@ -63,7 +63,7 @@ ShadowCasterPass::ShadowCasterPass(int priority) :
 void ShadowCasterPass::Prepare(const Context& ctx)
 {
     static const Matrix4x4 biasMatrix = Matrix4x4::TRS(Vector3{0.5f, 0.5f, 0.5f}, Quaternion(), Vector3{0.5f, 0.5f, 0.5f});
-    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/shadowCaster", {}, {}, {});
+    static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/shadowCaster", {}, {});
     static const std::shared_ptr<Material> material = std::make_shared<Material>(shader, "ShadowCaster");
     static const RenderSettings dirLightShadowRenderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material, Frustum::SidePlanesBits};
     static const RenderSettings renderSettings {DrawCallSortMode::NO_SORTING, DrawCallFilter::ShadowCasters(), material};

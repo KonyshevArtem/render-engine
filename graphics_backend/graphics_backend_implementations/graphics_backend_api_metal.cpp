@@ -555,8 +555,8 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
     }
 
     auto depthStencilDescriptor = MTL::DepthStencilDescriptor::alloc()->init();
-    depthStencilDescriptor->setDepthWriteEnabled(descriptor.DepthDescriptor.WriteDepth);
-    depthStencilDescriptor->setDepthCompareFunction(MetalHelpers::ToComparisonFunction(descriptor.DepthDescriptor.DepthFunction));
+    depthStencilDescriptor->setDepthWriteEnabled(descriptor.DepthDescriptor.WriteDepth && descriptor.DepthDescriptor.Enabled);
+    depthStencilDescriptor->setDepthCompareFunction(MetalHelpers::ToComparisonFunction(descriptor.DepthDescriptor.Enabled ? descriptor.DepthDescriptor.DepthFunction : ComparisonFunction::ALWAYS));
 
     const GraphicsBackendStencilDescriptor& stencilDesc = descriptor.StencilDescriptor;
     if (stencilDesc.Enabled)

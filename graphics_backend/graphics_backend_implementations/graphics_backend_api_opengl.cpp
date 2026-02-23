@@ -65,6 +65,7 @@ namespace OpenGLLocal
         GLenum CullFaceOrientation;
         GLenum DepthComparisonFunction;
         GLboolean DepthWrite;
+        GLboolean EnableDepth;
         GraphicsBackendStencilDescriptor StencilDescriptor;
     };
 
@@ -793,6 +794,7 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
     programData->CullFaceOrientation = OpenGLHelpers::ToCullFaceOrientation(descriptor.RasterizerDescriptor.Orientation);
     programData->DepthComparisonFunction = OpenGLHelpers::ToComparisonFunction(descriptor.DepthDescriptor.DepthFunction);
     programData->DepthWrite = descriptor.DepthDescriptor.WriteDepth ? GL_TRUE : GL_FALSE;
+    programData->EnableDepth = descriptor.DepthDescriptor.Enabled;
     programData->StencilDescriptor = descriptor.StencilDescriptor;
 
     return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(programData), descriptor);
@@ -867,8 +869,15 @@ void GraphicsBackendOpenGL::UseProgram(const GraphicsBackendProgram& program)
         glDisable(GL_STENCIL_TEST);
 
     glFrontFace(programData->CullFaceOrientation);
-    glDepthFunc(programData->DepthComparisonFunction);
-    glDepthMask(programData->DepthWrite);
+
+    if (programData->EnableDepth)
+    {
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(programData->DepthComparisonFunction);
+        glDepthMask(programData->DepthWrite);
+    }
+    else
+        glDisable(GL_DEPTH_TEST);
 
     BindResources(program);
 }
@@ -1203,7 +1212,7 @@ void GraphicsBackendOpenGL::InitContext()
         return;
 
     {
-        std::shared_lock readLock(m_ThreadContextsMutex);
+        std::unique_lock lock(m_ThreadContextsMutex);
 
         GLContext context = OpenGLLocal::s_ThreadContexts[threadId];
 #if RENDER_ENGINE_WINDOWS

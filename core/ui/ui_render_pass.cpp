@@ -69,7 +69,7 @@ void UIRenderPass::Execute(const Context& ctx)
     const std::shared_ptr<Mesh> quadMesh = Mesh::GetQuadMesh();
 
     GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
-    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
+    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer(LoadAction::CLEAR));
 
     GraphicsBackend::Current()->BeginRenderPass("UI Pass");
 

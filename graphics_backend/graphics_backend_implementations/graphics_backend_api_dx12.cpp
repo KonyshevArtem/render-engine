@@ -468,8 +468,8 @@ namespace DX12Local
     {
         RECT rect;
         GetClientRect(window, &rect);
-        outWidth = rect.right - rect.left;
-        outHeight = rect.bottom - rect.top;
+        outWidth = std::max<int>(rect.right - rect.left, 1);
+        outHeight = std::max<int>(rect.bottom - rect.top, 1);
     }
 
     inline void ThrowIfFailed(HRESULT result)
@@ -627,7 +627,7 @@ namespace DX12Local
             commandList->InitNewFrame();
         }
 
-        DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_COPY_DEST, commandList->List);
+        DX12Local::TransitionResource(resourceData, isMainThread ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_COMMON, commandList->List);
         UpdateSubresources(commandList->List, resourceData->Resource, bufferUploadHeap, 0, firstSubresource, 1, &subresourceData);
         DX12Local::TransitionResource(resourceData, isMainThread ? D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_COMMON, commandList->List);
 
@@ -1233,7 +1233,7 @@ GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::str
 {
     ID3D12Resource* dxBuffer;
 
-    D3D12_RESOURCE_STATES state = allowCPUWrites ? D3D12_RESOURCE_STATE_GENERIC_READ : (data ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
     CD3DX12_HEAP_PROPERTIES heapProps(allowCPUWrites ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT);
 
     D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
@@ -1490,7 +1490,7 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
     };
 
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    depthStencilDesc.DepthEnable = true;
+    depthStencilDesc.DepthEnable = descriptor.DepthDescriptor.Enabled;
     depthStencilDesc.DepthWriteMask = descriptor.DepthDescriptor.WriteDepth ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
     depthStencilDesc.DepthFunc = DX12Helpers::ToComparisonFunction(descriptor.DepthDescriptor.DepthFunction);
     depthStencilDesc.StencilEnable = descriptor.StencilDescriptor.Enabled;

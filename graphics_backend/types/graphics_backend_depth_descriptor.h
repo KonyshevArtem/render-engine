@@ -5,17 +5,23 @@
 
 struct GraphicsBackendDepthDescriptor
 {
+    bool Enabled = true;
     bool WriteDepth = true;
     ComparisonFunction DepthFunction = ComparisonFunction::LEQUAL;
 
     static GraphicsBackendDepthDescriptor AlwaysPass()
     {
-        return { true, ComparisonFunction::ALWAYS };
+        return { true, true, ComparisonFunction::ALWAYS };
     }
 
     static GraphicsBackendDepthDescriptor AlwaysPassNoWrite()
     {
-        return { false, ComparisonFunction::ALWAYS };
+        return { true, false, ComparisonFunction::ALWAYS };
+    }
+
+    static GraphicsBackendDepthDescriptor Disabled()
+    {
+        return { false, false, ComparisonFunction::ALWAYS };
     }
 };
 

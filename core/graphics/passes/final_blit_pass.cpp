@@ -50,7 +50,7 @@ void FinalBlitPass::Execute(const Context& ctx)
     buffer->SetData(&data, 0, sizeof(data));
     GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
     GraphicsBackend::Current()->BindTextureSampler(m_Source->GetBackendTexture(), m_Source->GetBackendSampler(), 0);
-    GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
+    GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
     GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh));
     GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
     GraphicsBackend::Current()->EndRenderPass();

@@ -7,6 +7,7 @@
 #include "vector4/vector4.h"
 #include "graphics/graphics.h"
 #include "graphics_backend_api.h"
+#include "ui_mask_stencil.h"
 #include "texture_2d/texture_2d.h"
 #include "texture_2d_array/texture_2d_array.h"
 #include "mesh/mesh.h"
@@ -28,6 +29,7 @@ UIRenderPass::UIRenderPass(int priority) :
 {
     m_ImageShader = Shader::Load("core_resources/shaders/ui/image", {});
     m_TextShader = Shader::Load("core_resources/shaders/ui/text", {});
+    m_MaskStencilShader = Shader::Load("core_resources/shaders/ui/maskStencil", {});
     m_UIDataBuffer = std::make_shared<RingBuffer>(1024, "UI Data");
 }
 
@@ -73,6 +75,8 @@ void UIRenderPass::Execute(const Context& ctx)
 
     GraphicsBackend::Current()->BeginRenderPass("UI Pass");
 
+    uint8_t maskStencilDepth = 0;
+
     for (UIElement* element : UIManager::GetElements())
     {
         if (const UIImage* image = dynamic_cast<UIImage*>(element))
@@ -112,6 +116,53 @@ void UIRenderPass::Execute(const Context& ctx)
             GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
             GraphicsBackend::Current()->UseProgram(m_TextShader->GetProgram(textMesh));
             GraphicsBackend::Current()->DrawElements(textMesh->GetGraphicsBackendGeometry(), textMesh->GetPrimitiveType(), textMesh->GetElementsCount(), textMesh->GetIndicesDataType());
+        }
+
+        if (const UIMaskStencil* maskStencil = dynamic_cast<UIMaskStencil*>(element))
+        {
+            Vector2 position = maskStencil->GetGlobalPosition();
+            Vector2 size = maskStencil->Size;
+
+            if (!maskStencil->Open)
+            {
+                position.x += size.x;
+                size.x *= -1;
+            }
+
+            Vector4 offsetScale = UIRenderPass_Local::GetOffsetScale(position, size);
+            const uint64_t offset = m_UIDataBuffer->SetData(&offsetScale, 0, sizeof(offsetScale));
+
+            GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(offsetScale));
+
+            GraphicsBackendStencilDescriptor stencilDescriptor{};
+            stencilDescriptor.Enabled = true;
+            stencilDescriptor.FrontFaceOpDescriptor.ComparisonFunction = ComparisonFunction::ALWAYS;
+            stencilDescriptor.FrontFaceOpDescriptor.PassOp = StencilOperation::INCREMENT_SATURATE;
+            stencilDescriptor.BackFaceOpDescriptor.ComparisonFunction = ComparisonFunction::ALWAYS;
+            stencilDescriptor.BackFaceOpDescriptor.PassOp = StencilOperation::DECREMENT_SATURATE;
+
+            GraphicsBackend::Current()->SetStencilState(stencilDescriptor);
+
+            GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::NoColorWrite());
+            GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
+            GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
+            GraphicsBackend::Current()->UseProgram(m_MaskStencilShader->GetProgram(quadMesh));
+            GraphicsBackend::Current()->DrawElements(quadMesh->GetGraphicsBackendGeometry(), quadMesh->GetPrimitiveType(), quadMesh->GetElementsCount(), quadMesh->GetIndicesDataType());
+
+            if (maskStencil->Open)
+                ++maskStencilDepth;
+            else
+                --maskStencilDepth;
+
+            stencilDescriptor = {};
+            if (maskStencilDepth > 0)
+            {
+                stencilDescriptor.Enabled = true;
+                stencilDescriptor.FrontFaceOpDescriptor.ComparisonFunction = ComparisonFunction::EQUAL;
+                GraphicsBackend::Current()->SetStencilValue(maskStencilDepth);
+            }
+
+            GraphicsBackend::Current()->SetStencilState(stencilDescriptor);
         }
     }
 

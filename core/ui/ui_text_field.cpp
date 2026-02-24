@@ -3,6 +3,7 @@
 #include "ui_text.h"
 #include "ui_image.h"
 #include "ui_native_keyboard.h"
+#include "ui_mask.h"
 #include "font/font.h"
 #include "texture_2d/texture_2d.h"
 
@@ -13,9 +14,10 @@ std::shared_ptr<UITextField> UITextField::Create(std::shared_ptr<UIElement> pare
     std::shared_ptr<UITextField> uiTextField = std::shared_ptr<UITextField>(new UITextField(position, size));
     uiTextField->SetParent(parent);
 
-    std::shared_ptr<UIImage> backgroundImage = UIImage::Create(uiTextField, Vector2(0, 0), size, image);
-    std::shared_ptr<UIText> uiText = UIText::Create(uiTextField, Vector2(0, 0), size, L"", fontSize);
-    std::shared_ptr<UIImage> cursorImage = UIImage::Create(uiTextField, Vector2(0, 0), Vector2(1, size.y), Texture2D::White());
+    std::shared_ptr<UIMask> mask = UIMask::Create(uiTextField, Vector2(0, 0), size);
+    std::shared_ptr<UIImage> backgroundImage = UIImage::Create(mask, Vector2(0, 0), size, image);
+    std::shared_ptr<UIText> uiText = UIText::Create(mask, Vector2(0, 0), size, L"", fontSize);
+    std::shared_ptr<UIImage> cursorImage = UIImage::Create(mask, Vector2(0, 0), Vector2(1, size.y), Texture2D::White());
 
     const Vector4 defaultColor = Vector4(0.2f, 0.2f, 0.2f, 1);
     uiText->Color = defaultColor;

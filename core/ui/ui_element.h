@@ -18,7 +18,6 @@ public:
     bool Active;
 
     void SetParent(const std::shared_ptr<UIElement>& parent);
-    void RemoveChild(const std::shared_ptr<UIElement>& child);
     void Destroy();
 
     inline Vector2 GetGlobalPosition() const
@@ -27,14 +26,19 @@ public:
     }
 
 protected:
+    std::vector<std::shared_ptr<UIElement>> m_Children;
+
     virtual void HandleEvent(UIEventInfo& eventInfo){};
     virtual void LoseFocus(){};
     virtual void LoseHover(){};
 
+    virtual void AddChild(const std::shared_ptr<UIElement>& child);
+
 private:
-    std::vector<std::shared_ptr<UIElement>> m_Children;
     std::weak_ptr<UIElement> m_Parent;
     Vector2 m_GlobalPosition;
+
+    void RemoveChild(const std::shared_ptr<UIElement>& child);
 
     friend class UIManager;
 };

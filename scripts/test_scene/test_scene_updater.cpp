@@ -11,6 +11,7 @@
 #include "ui/ui_button.h"
 #include "ui/ui_text.h"
 #include "ui/ui_text_field.h"
+#include "ui/ui_mask.h"
 #include "texture_2d/texture_2d.h"
 #include "debug.h"
 
@@ -92,6 +93,12 @@ void TestSceneUpdater::Update()
         inputField->OnFinish = [text](const std::wstring& inputText){ text->SetText(inputText); };
 
         UITextField::Create(nullptr, {10, 460}, {150, 30}, 24, Texture2D::White());
+
+        std::shared_ptr<UIMask> outerMask = UIMask::Create(nullptr, { 10, 500 }, { 100, 100 });
+        UIImage::Create(outerMask, { 0, 0 }, { 140, 140 }, uiTestTexture)->Color = Vector4(1, 0.5f, 0.5f, 0.5f);
+
+        std::shared_ptr<UIMask> innerMask = UIMask::Create(outerMask, { 25, 25 }, { 50, 50 });
+        UIImage::Create(innerMask, { 0, 0 }, { 75, 75 }, uiTestTexture)->Color = Vector4(0.5f, 1, 0.5f, 0.5f);
 
         m_Initialized = true;
     }

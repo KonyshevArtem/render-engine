@@ -149,6 +149,10 @@ add_library(
 	ui/ui_text_field.h
 	ui/ui_native_keyboard.cpp
 	ui/ui_native_keyboard.h
+	ui/ui_mask.cpp
+	ui/ui_mask.h
+	ui/ui_mask_stencil.cpp
+	ui/ui_mask_stencil.h
 	native_bridge/native_bridge_android.cpp
 	native_bridge/native_bridge_android.h
 	native_bridge/native_bridge_apple.cpp

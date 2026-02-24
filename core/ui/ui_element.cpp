@@ -20,7 +20,12 @@ void UIElement::SetParent(const std::shared_ptr<UIElement>& parent)
 
     m_Parent = p;
     if (p)
-        p->m_Children.push_back(thisPtr);
+        p->AddChild(thisPtr);
+}
+
+void UIElement::AddChild(const std::shared_ptr<UIElement>& child)
+{
+    m_Children.push_back(child);
 }
 
 void UIElement::RemoveChild(const std::shared_ptr<UIElement>& child)

@@ -20,6 +20,7 @@ public:
 private:
     std::shared_ptr<Shader> m_ImageShader;
     std::shared_ptr<Shader> m_TextShader;
+    std::shared_ptr<Shader> m_MaskStencilShader;
     std::shared_ptr<RingBuffer> m_UIDataBuffer;
 };
 

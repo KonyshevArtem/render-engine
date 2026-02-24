@@ -504,6 +504,7 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
     MTL::PixelFormat metalDepthFormat = MetalHelpers::ToTextureInternalFormat(descriptor.DepthFormat, false);
 
     auto attachmentDesc = desc->colorAttachments()->object(0);
+    attachmentDesc->setWriteMask(static_cast<MTL::ColorWriteMask>(descriptor.ColorAttachmentDescriptor.BlendDescriptor.ColorWriteMask));
     attachmentDesc->setPixelFormat(metalColorFormat);
     attachmentDesc->setBlendingEnabled(descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled);
     attachmentDesc->setSourceRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor));

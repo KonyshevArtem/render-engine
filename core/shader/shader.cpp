@@ -18,6 +18,7 @@ namespace ShaderLocal
     size_t GetDepthDescriptorHash(const GraphicsBackendDepthDescriptor& depthDescriptor)
     {
         size_t hash = 0;
+        hash = Hash::Combine(hash, std::hash<bool>{}(depthDescriptor.Enabled));
         hash = Hash::Combine(hash, std::hash<bool>{}(depthDescriptor.WriteDepth));
         hash = Hash::Combine(hash, std::hash<ComparisonFunction>{}(depthDescriptor.DepthFunction));
         return hash;
@@ -52,10 +53,21 @@ namespace ShaderLocal
         return hash;
     }
 
+    size_t GetBlendDescriptorHash(const GraphicsBackendBlendDescriptor& blendDescriptor)
+    {
+        size_t hash = 0;
+        hash = Hash::Combine(hash, std::hash<bool>{}(blendDescriptor.Enabled));
+        hash = Hash::Combine(hash, std::hash<BlendFactor>{}(blendDescriptor.SourceFactor));
+        hash = Hash::Combine(hash, std::hash<BlendFactor>{}(blendDescriptor.DestinationFactor));
+        hash = Hash::Combine(hash, std::hash<ColorWriteMask>{}(blendDescriptor.ColorWriteMask));
+        return hash;
+    }
+
     size_t GetPSOHash(size_t vertexAttributesHash, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat, PrimitiveType primitiveType,
         const GraphicsBackendStencilDescriptor& stencilDescriptor,
         const GraphicsBackendDepthDescriptor& depthDescriptor,
-        const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor)
+        const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor,
+        const GraphicsBackendBlendDescriptor& blendDescriptor)
     {
         size_t hash = Hash::Combine(std::hash<TextureInternalFormat>{}(colorTargetFormat), std::hash<TextureInternalFormat>{}(depthTargetFormat));
         hash = Hash::Combine(hash, std::hash<bool>{}(isLinear));
@@ -63,6 +75,7 @@ namespace ShaderLocal
         hash = Hash::Combine(hash, GetStencilDescriptorHash(stencilDescriptor));
         hash = Hash::Combine(hash, GetDepthDescriptorHash(depthDescriptor));
         hash = Hash::Combine(hash, GetRasterizerDescriptorHash(rasterizerDescriptor));
+        hash = Hash::Combine(hash, GetBlendDescriptorHash(blendDescriptor));
         hash = Hash::Combine(hash, vertexAttributesHash);
         return hash;
     }
@@ -121,11 +134,6 @@ const GraphicsBackendProgram& Shader::GetProgram(const std::shared_ptr<DrawableG
 
 const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
 {
-    if (!GraphicsBackend::Current()->RequireStrictPSODescriptor() && !m_Programs.empty())
-    {
-        return m_Programs.begin()->second;
-    }
-
     bool isLinear;
     const TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
     const TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
@@ -135,7 +143,7 @@ const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexA
     const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor = GraphicsBackend::Current()->GetRasterizerState();
     const GraphicsBackendBlendDescriptor& blendDescriptor = GraphicsBackend::Current()->GetBlendState();
 
-    const size_t hash = ShaderLocal::GetPSOHash(vertexAttributes.GetHash(), colorTargetFormat, isLinear, depthTargetFormat, primitiveType, stencilDescriptor, depthDescriptor, rasterizerDescriptor);
+    const size_t hash = ShaderLocal::GetPSOHash(vertexAttributes.GetHash(), colorTargetFormat, isLinear, depthTargetFormat, primitiveType, stencilDescriptor, depthDescriptor, rasterizerDescriptor, blendDescriptor);
 
     const auto it = m_Programs.find(hash);
     if (it != m_Programs.end())
@@ -175,7 +183,7 @@ const GraphicsBackendProgram& Shader::CreatePSO(std::vector<GraphicsBackendShade
 
     const GraphicsBackendProgram program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
 
-    const size_t hash = ShaderLocal::GetPSOHash(VertexAttributes::GetHash(vertexAttributes), colorFormat, isLinear, depthFormat, primitiveType, stencilDescriptor, depthDescriptor, rasterizerDescriptor);
+    const size_t hash = ShaderLocal::GetPSOHash(VertexAttributes::GetHash(vertexAttributes), colorFormat, isLinear, depthFormat, primitiveType, stencilDescriptor, depthDescriptor, rasterizerDescriptor, blendDescriptor);
     m_Programs[hash] = program;
 
     return m_Programs[hash];

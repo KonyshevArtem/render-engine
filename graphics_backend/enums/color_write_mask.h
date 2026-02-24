@@ -1,0 +1,14 @@
+#ifndef RENDER_ENGINE_COLOR_WRITE_MASK_H
+#define RENDER_ENGINE_COLOR_WRITE_MASK_H
+
+enum class ColorWriteMask
+{
+	NONE = 0,
+	RED = 1 << 0,
+	GREEN = 1 << 1,
+	BLUE = 1 << 2,
+	ALPHA = 1 << 3,
+	ALL = RED | GREEN | BLUE | ALPHA
+};
+
+#endif // RENDER_ENGINE_COLOR_WRITE_MASK_H

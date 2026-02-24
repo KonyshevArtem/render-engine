@@ -50,22 +50,12 @@ typedef EGLContext GLContext;
 
 namespace OpenGLLocal
 {
-    struct BlendState
-    {
-        GLenum SourceFactor;
-        GLenum DestinationFactor;
-        bool Enabled;
-    };
-
     struct ProgramData
     {
         GLuint Program;
-        BlendState BlendState;
-        GLenum CullFace;
-        GLenum CullFaceOrientation;
-        GLenum DepthComparisonFunction;
-        GLboolean DepthWrite;
-        GLboolean EnableDepth;
+        GraphicsBackendBlendDescriptor BlendDescriptor;
+        GraphicsBackendRasterizerDescriptor RasterizerDescriptor;
+        GraphicsBackendDepthDescriptor DepthDescriptor;
         GraphicsBackendStencilDescriptor StencilDescriptor;
     };
 
@@ -234,6 +224,7 @@ void GraphicsBackendOpenGL::Init(void* data)
     pixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
     pixelFormatDescriptor.cColorBits = 32;
     pixelFormatDescriptor.cDepthBits = 24;
+    pixelFormatDescriptor.cStencilBits = 8;
     pixelFormatDescriptor.iLayerType = PFD_MAIN_PLANE;
     int pixelFormat = ChoosePixelFormat(OpenGLLocal::s_DeviceContext, &pixelFormatDescriptor);
     SetPixelFormat(OpenGLLocal::s_DeviceContext, pixelFormat, &pixelFormatDescriptor);
@@ -782,19 +773,11 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
         throw std::runtime_error("Link failed with error:\n" + logMsg);
     }
 
-    OpenGLLocal::BlendState blendState{};
-    blendState.SourceFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor);
-    blendState.DestinationFactor = OpenGLHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor);
-    blendState.Enabled = descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled;
-
     OpenGLLocal::ProgramData* programData = new OpenGLLocal::ProgramData();
     programData->Program = glProgram;
-    programData->BlendState = blendState;
-    programData->CullFace = OpenGLHelpers::ToCullFace(descriptor.RasterizerDescriptor.Face);
-    programData->CullFaceOrientation = OpenGLHelpers::ToCullFaceOrientation(descriptor.RasterizerDescriptor.Orientation);
-    programData->DepthComparisonFunction = OpenGLHelpers::ToComparisonFunction(descriptor.DepthDescriptor.DepthFunction);
-    programData->DepthWrite = descriptor.DepthDescriptor.WriteDepth ? GL_TRUE : GL_FALSE;
-    programData->EnableDepth = descriptor.DepthDescriptor.Enabled;
+    programData->BlendDescriptor = descriptor.ColorAttachmentDescriptor.BlendDescriptor;
+    programData->RasterizerDescriptor = descriptor.RasterizerDescriptor;
+    programData->DepthDescriptor = descriptor.DepthDescriptor;
     programData->StencilDescriptor = descriptor.StencilDescriptor;
 
     return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(programData), descriptor);
@@ -823,18 +806,26 @@ void GraphicsBackendOpenGL::UseProgram(const GraphicsBackendProgram& program)
 
     glUseProgram(programData->Program);
 
-    if (programData->BlendState.Enabled)
+    if (programData->BlendDescriptor.Enabled)
     {
         glEnable(GL_BLEND);
-        glBlendFunc(programData->BlendState.SourceFactor, programData->BlendState.DestinationFactor);
+        glBlendFunc(OpenGLHelpers::ToBlendFactor(programData->BlendDescriptor.SourceFactor), OpenGLHelpers::ToBlendFactor(programData->BlendDescriptor.DestinationFactor));
     }
     else
         glDisable(GL_BLEND);
 
-    if (programData->CullFace)
+    const uint8_t colorMask = static_cast<uint8_t>(programData->BlendDescriptor.ColorWriteMask);
+    glColorMask(
+        (colorMask & static_cast<uint8_t>(ColorWriteMask::RED)) != 0 ? GL_TRUE : GL_FALSE,
+        (colorMask & static_cast<uint8_t>(ColorWriteMask::GREEN)) != 0 ? GL_TRUE : GL_FALSE,
+        (colorMask & static_cast<uint8_t>(ColorWriteMask::BLUE)) != 0 ? GL_TRUE : GL_FALSE,
+        (colorMask & static_cast<uint8_t>(ColorWriteMask::ALPHA)) != 0 ? GL_TRUE : GL_FALSE
+    );
+
+    if (programData->RasterizerDescriptor.Face != CullFace::NONE)
     {
         glEnable(GL_CULL_FACE);
-        glCullFace(programData->CullFace);
+        glCullFace(OpenGLHelpers::ToCullFace(programData->RasterizerDescriptor.Face));
     }
     else
         glDisable(GL_CULL_FACE);
@@ -868,13 +859,13 @@ void GraphicsBackendOpenGL::UseProgram(const GraphicsBackendProgram& program)
     else
         glDisable(GL_STENCIL_TEST);
 
-    glFrontFace(programData->CullFaceOrientation);
+    glFrontFace(OpenGLHelpers::ToCullFaceOrientation(programData->RasterizerDescriptor.Orientation));
 
-    if (programData->EnableDepth)
+    if (programData->DepthDescriptor.Enabled)
     {
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(programData->DepthComparisonFunction);
-        glDepthMask(programData->DepthWrite);
+        glDepthFunc(OpenGLHelpers::ToComparisonFunction(programData->DepthDescriptor.DepthFunction));
+        glDepthMask(programData->DepthDescriptor.WriteDepth);
     }
     else
         glDisable(GL_DEPTH_TEST);

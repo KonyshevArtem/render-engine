@@ -142,7 +142,10 @@ void UITextField::MoveCursor(int offset)
     float textWidth;
     const std::wstring& text = m_Text->GetText();
     std::vector<Char> chars = m_Text->GetFont()->ShapeText(std::span<const wchar_t>(text.c_str(), m_CursorPosition), m_Text->GetFontSize(), textWidth);
-    m_CursorImage->Position = Vector2(textWidth, 0);
+    m_CursorImage->Position = Vector2(std::clamp(textWidth, 0.0f, Size.x - 1.0f), 0);
+
+    const float overflow = std::max<float>(textWidth - Size.x, 0.0f);
+    m_Text->Position = Vector2(-overflow, 0);
 }
 
 void UITextField::UpdateText(const std::function<void(std::wstring &)>& updateFunc, int cursorOffset)

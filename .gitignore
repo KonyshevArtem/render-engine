@@ -1,8 +1,6 @@
 .DS_Store
 build
 
-core_resources/**/bistro*
-
 **/shaders/**/output
 **/textures/**/output
 **/build_resources

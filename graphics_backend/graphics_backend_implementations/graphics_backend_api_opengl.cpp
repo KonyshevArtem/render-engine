@@ -1064,6 +1064,7 @@ void GraphicsBackendOpenGL::EndRenderPass()
     GraphicsBackendBase::EndRenderPass();
 
     OpenGLLocal::ResetRenderTargetStates();
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     PopDebugGroup(GPUQueue::RENDER);
 }
 

@@ -50,15 +50,6 @@ typedef EGLContext GLContext;
 
 namespace OpenGLLocal
 {
-    struct ProgramData
-    {
-        GLuint Program;
-        GraphicsBackendBlendDescriptor BlendDescriptor;
-        GraphicsBackendRasterizerDescriptor RasterizerDescriptor;
-        GraphicsBackendDepthDescriptor DepthDescriptor;
-        GraphicsBackendStencilDescriptor StencilDescriptor;
-    };
-
     struct DebugMessageType
     {
         GLenum Type;
@@ -734,7 +725,7 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
 {
     InitContext();
 
-    GLuint glProgram = glCreateProgram();
+    const GLuint glProgram = glCreateProgram();
 
     const std::vector<GraphicsBackendShaderObject>& shaders = *descriptor.Shaders;
 
@@ -773,14 +764,7 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
         throw std::runtime_error("Link failed with error:\n" + logMsg);
     }
 
-    OpenGLLocal::ProgramData* programData = new OpenGLLocal::ProgramData();
-    programData->Program = glProgram;
-    programData->BlendDescriptor = descriptor.ColorAttachmentDescriptor.BlendDescriptor;
-    programData->RasterizerDescriptor = descriptor.RasterizerDescriptor;
-    programData->DepthDescriptor = descriptor.DepthDescriptor;
-    programData->StencilDescriptor = descriptor.StencilDescriptor;
-
-    return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(programData), descriptor);
+    return GraphicsBackendBase::CreateProgram(glProgram, descriptor);
 }
 
 void GraphicsBackendOpenGL::DeleteShader_Internal(GraphicsBackendShaderObject shader)
@@ -790,31 +774,26 @@ void GraphicsBackendOpenGL::DeleteShader_Internal(GraphicsBackendShaderObject sh
 
 void GraphicsBackendOpenGL::DeleteProgram_Internal(GraphicsBackendProgram program)
 {
-    OpenGLLocal::ProgramData* programData = reinterpret_cast<OpenGLLocal::ProgramData*>(program.Program);
-    glDeleteProgram(programData->Program);
-    delete programData;
-}
-
-bool GraphicsBackendOpenGL::RequireStrictPSODescriptor()
-{
-    return false;
+    const GLuint glProgram = program.Program;
+    glDeleteProgram(glProgram);
 }
 
 void GraphicsBackendOpenGL::UseProgram(const GraphicsBackendProgram& program)
 {
-    OpenGLLocal::ProgramData* programData = reinterpret_cast<OpenGLLocal::ProgramData*>(program.Program);
+    const GLuint glProgram = program.Program;
 
-    glUseProgram(programData->Program);
+    glUseProgram(glProgram);
 
-    if (programData->BlendDescriptor.Enabled)
+    const GraphicsBackendBlendDescriptor& blendDescriptor = GetBlendState();
+    if (blendDescriptor.Enabled)
     {
         glEnable(GL_BLEND);
-        glBlendFunc(OpenGLHelpers::ToBlendFactor(programData->BlendDescriptor.SourceFactor), OpenGLHelpers::ToBlendFactor(programData->BlendDescriptor.DestinationFactor));
+        glBlendFunc(OpenGLHelpers::ToBlendFactor(blendDescriptor.SourceFactor), OpenGLHelpers::ToBlendFactor(blendDescriptor.DestinationFactor));
     }
     else
         glDisable(GL_BLEND);
 
-    const uint8_t colorMask = static_cast<uint8_t>(programData->BlendDescriptor.ColorWriteMask);
+    const uint8_t colorMask = static_cast<uint8_t>(blendDescriptor.ColorWriteMask);
     glColorMask(
         (colorMask & static_cast<uint8_t>(ColorWriteMask::RED)) != 0 ? GL_TRUE : GL_FALSE,
         (colorMask & static_cast<uint8_t>(ColorWriteMask::GREEN)) != 0 ? GL_TRUE : GL_FALSE,
@@ -822,50 +801,51 @@ void GraphicsBackendOpenGL::UseProgram(const GraphicsBackendProgram& program)
         (colorMask & static_cast<uint8_t>(ColorWriteMask::ALPHA)) != 0 ? GL_TRUE : GL_FALSE
     );
 
-    if (programData->RasterizerDescriptor.Face != CullFace::NONE)
+    const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor = GetRasterizerState();
+    if (rasterizerDescriptor.Face != CullFace::NONE)
     {
         glEnable(GL_CULL_FACE);
-        glCullFace(OpenGLHelpers::ToCullFace(programData->RasterizerDescriptor.Face));
+        glCullFace(OpenGLHelpers::ToCullFace(rasterizerDescriptor.Face));
     }
     else
         glDisable(GL_CULL_FACE);
 
-    OpenGLLocal::s_StencilEnabled = programData->StencilDescriptor.Enabled;
-    if (programData->StencilDescriptor.Enabled)
+    const GraphicsBackendStencilDescriptor& stencilDescriptor = GetStencilDescriptor();
+    OpenGLLocal::s_StencilEnabled = stencilDescriptor.Enabled;
+    if (stencilDescriptor.Enabled)
     {
-        GraphicsBackendStencilDescriptor stencilDesc = programData->StencilDescriptor;
-
         glEnable(GL_STENCIL_TEST);
         glStencilOpSeparate(
                 GL_FRONT,
-                OpenGLHelpers::ToStencilOp(stencilDesc.FrontFaceOpDescriptor.FailOp),
-                OpenGLHelpers::ToStencilOp(stencilDesc.FrontFaceOpDescriptor.DepthFailOp),
-                OpenGLHelpers::ToStencilOp(stencilDesc.FrontFaceOpDescriptor.PassOp)
+                OpenGLHelpers::ToStencilOp(stencilDescriptor.FrontFaceOpDescriptor.FailOp),
+                OpenGLHelpers::ToStencilOp(stencilDescriptor.FrontFaceOpDescriptor.DepthFailOp),
+                OpenGLHelpers::ToStencilOp(stencilDescriptor.FrontFaceOpDescriptor.PassOp)
             );
         glStencilOpSeparate(
                 GL_BACK,
-                OpenGLHelpers::ToStencilOp(stencilDesc.BackFaceOpDescriptor.FailOp),
-                OpenGLHelpers::ToStencilOp(stencilDesc.BackFaceOpDescriptor.DepthFailOp),
-                OpenGLHelpers::ToStencilOp(stencilDesc.BackFaceOpDescriptor.PassOp)
+                OpenGLHelpers::ToStencilOp(stencilDescriptor.BackFaceOpDescriptor.FailOp),
+                OpenGLHelpers::ToStencilOp(stencilDescriptor.BackFaceOpDescriptor.DepthFailOp),
+                OpenGLHelpers::ToStencilOp(stencilDescriptor.BackFaceOpDescriptor.PassOp)
         );
-        glStencilMask(stencilDesc.WriteMask);
+        glStencilMask(stencilDescriptor.WriteMask);
 
-        ComparisonFunction frontFunc = stencilDesc.FrontFaceOpDescriptor.ComparisonFunction;
-        ComparisonFunction backFunc = stencilDesc.BackFaceOpDescriptor.ComparisonFunction;
+        ComparisonFunction frontFunc = stencilDescriptor.FrontFaceOpDescriptor.ComparisonFunction;
+        ComparisonFunction backFunc = stencilDescriptor.BackFaceOpDescriptor.ComparisonFunction;
         OpenGLLocal::s_StencilFrontFunc = frontFunc != ComparisonFunction::NONE ? OpenGLHelpers::ToComparisonFunction(frontFunc) : GL_ALWAYS;
         OpenGLLocal::s_StencilBackFunc = backFunc != ComparisonFunction::NONE ? OpenGLHelpers::ToComparisonFunction(backFunc) : GL_ALWAYS;
-        OpenGLLocal::s_StencilReadMask = stencilDesc.ReadMask;
+        OpenGLLocal::s_StencilReadMask = stencilDescriptor.ReadMask;
     }
     else
         glDisable(GL_STENCIL_TEST);
 
-    glFrontFace(OpenGLHelpers::ToCullFaceOrientation(programData->RasterizerDescriptor.Orientation));
+    glFrontFace(OpenGLHelpers::ToCullFaceOrientation(rasterizerDescriptor.Orientation));
 
-    if (programData->DepthDescriptor.Enabled)
+    const GraphicsBackendDepthDescriptor& depthDescriptor = GetDepthState();
+    if (depthDescriptor.Enabled)
     {
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(OpenGLHelpers::ToComparisonFunction(programData->DepthDescriptor.DepthFunction));
-        glDepthMask(programData->DepthDescriptor.WriteDepth);
+        glDepthFunc(OpenGLHelpers::ToComparisonFunction(depthDescriptor.DepthFunction));
+        glDepthMask(depthDescriptor.WriteDepth);
     }
     else
         glDisable(GL_DEPTH_TEST);
@@ -1138,6 +1118,41 @@ void GraphicsBackendOpenGL::TransitionTexture(const GraphicsBackendTexture& text
 
 void GraphicsBackendOpenGL::TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue)
 {
+}
+
+bool GraphicsBackendOpenGL::RequireVertexAttributesForPSO() const
+{
+    return false;
+}
+
+bool GraphicsBackendOpenGL::RequirePrimitiveTypeForPSO() const
+{
+    return false;
+}
+
+bool GraphicsBackendOpenGL::RequireRTFormatsForPSO() const
+{
+    return false;
+}
+
+bool GraphicsBackendOpenGL::RequireStencilStateForPSO() const
+{
+    return false;
+}
+
+bool GraphicsBackendOpenGL::RequireDepthStateForPSO() const
+{
+    return false;
+}
+
+bool GraphicsBackendOpenGL::RequireRasterizerStateForPSO() const
+{
+    return false;
+}
+
+bool GraphicsBackendOpenGL::RequireBlendStateForPSO() const
+{
+    return false;
 }
 
 void GraphicsBackendOpenGL::CreateVAO(const GraphicsBackendGeometry& geometry, const GraphicsBackendVertexAttributeDescriptor* vertexAttributes, uint32_t vertexAttributesCount)

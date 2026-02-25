@@ -1540,11 +1540,6 @@ void GraphicsBackendDX12::DeleteProgram_Internal(GraphicsBackendProgram program)
     pso->Release();
 }
 
-bool GraphicsBackendDX12::RequireStrictPSODescriptor()
-{
-    return true;
-}
-
 void GraphicsBackendDX12::UseProgram(const GraphicsBackendProgram& program)
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
@@ -1942,6 +1937,41 @@ void GraphicsBackendDX12::TransitionBuffer(const GraphicsBackendBuffer& buffer, 
 {
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
     DX12Local::TransitionResource(resourceData, DX12Helpers::ToResourceState(state), DX12Local::GetCommandList(DX12Local::GetCurrentFrameData(), queue));
+}
+
+bool GraphicsBackendDX12::RequireVertexAttributesForPSO() const
+{
+    return true;
+}
+
+bool GraphicsBackendDX12::RequirePrimitiveTypeForPSO() const
+{
+    return true;
+}
+
+bool GraphicsBackendDX12::RequireRTFormatsForPSO() const
+{
+    return true;
+}
+
+bool GraphicsBackendDX12::RequireStencilStateForPSO() const
+{
+    return true;
+}
+
+bool GraphicsBackendDX12::RequireDepthStateForPSO() const
+{
+    return true;
+}
+
+bool GraphicsBackendDX12::RequireRasterizerStateForPSO() const
+{
+    return true;
+}
+
+bool GraphicsBackendDX12::RequireBlendStateForPSO() const
+{
+    return true;
 }
 
 #undef ThrowIfFailed

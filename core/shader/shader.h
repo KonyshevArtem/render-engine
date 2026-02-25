@@ -8,11 +8,6 @@
 
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
-#include "types/graphics_backend_stencil_descriptor.h"
-#include "types/graphics_backend_depth_descriptor.h"
-#include "types/graphics_backend_rasterizer_descriptor.h"
-#include "types/graphics_backend_blend_descriptor.h"
-#include "enums/texture_internal_format.h"
 #include "enums/primitive_type.h"
 #include "drawable_geometry/vertex_attributes/vertex_attributes.h"
 
@@ -72,14 +67,6 @@ private:
     std::unordered_map<std::string, GraphicsBackendTextureInfo> m_Textures;
     std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
-
-	const GraphicsBackendProgram& CreatePSO(std::vector<GraphicsBackendShaderObject>& shaders, TextureInternalFormat colorFormat, bool isLinear,
-		TextureInternalFormat depthFormat, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, PrimitiveType primitiveType,
-		const GraphicsBackendStencilDescriptor& stencilDescriptor,
-        const GraphicsBackendDepthDescriptor& depthDescriptor,
-        const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor,
-        const GraphicsBackendBlendDescriptor& blendDescriptor,
-		const std::string& name);
 };
 
 #endif //RENDER_ENGINE_SHADER_H

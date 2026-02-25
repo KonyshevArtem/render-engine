@@ -102,7 +102,6 @@ public:
     void DeleteShader(GraphicsBackendShaderObject shader);
     void DeleteProgram(GraphicsBackendProgram program);
     virtual void UseProgram(const GraphicsBackendProgram& program) = 0;
-    virtual bool RequireStrictPSODescriptor() = 0;
 
     virtual void SetClearColor(float r, float g, float b, float a) = 0;
     virtual void SetClearDepth(double depth) = 0;
@@ -149,6 +148,14 @@ public:
 
     void SetBlendState(const GraphicsBackendBlendDescriptor& blendDescriptor);
     const GraphicsBackendBlendDescriptor& GetBlendState() const;
+
+    virtual bool RequireVertexAttributesForPSO() const = 0;
+    virtual bool RequirePrimitiveTypeForPSO() const = 0;
+    virtual bool RequireRTFormatsForPSO() const = 0;
+    virtual bool RequireStencilStateForPSO() const = 0;
+    virtual bool RequireDepthStateForPSO() const = 0;
+    virtual bool RequireRasterizerStateForPSO() const = 0;
+    virtual bool RequireBlendStateForPSO() const = 0;
 
     bool IsTexture3D(TextureType type);
     bool IsCompressedTextureFormat(TextureInternalFormat format);

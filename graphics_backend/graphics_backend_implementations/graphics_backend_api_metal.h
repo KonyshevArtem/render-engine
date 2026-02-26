@@ -16,6 +16,7 @@ namespace MTL
     class BlitCommandEncoder;
     class Texture;
     class CommandQueue;
+    class DepthStencilState;
 }
 
 namespace MTK
@@ -57,7 +58,6 @@ public:
     GraphicsBackendShaderObject CompileShaderBinary(ShaderType shaderType, const std::vector<uint8_t>& shaderBinary, const std::string& name) override;
     GraphicsBackendProgram CreateProgram(const GraphicsBackendProgramDescriptor& descriptor) override;
     void UseProgram(const GraphicsBackendProgram& program) override;
-    bool RequireStrictPSODescriptor() override;
 
     void SetClearColor(float r, float g, float b, float a) override;
     void SetClearDepth(double depth) override;
@@ -92,6 +92,14 @@ public:
     void TransitionRenderTarget(const GraphicsBackendRenderTargetDescriptor& descriptor, ResourceState state, GPUQueue queue) override;
     void TransitionTexture(const GraphicsBackendTexture& texture, ResourceState state, GPUQueue queue) override;
     void TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue) override;
+
+    bool RequireVertexAttributesForPSO() const override;
+    bool RequirePrimitiveTypeForPSO() const override;
+    bool RequireRTFormatsForPSO() const override;
+    bool RequireStencilStateForPSO() const override;
+    bool RequireDepthStateForPSO() const override;
+    bool RequireRasterizerStateForPSO() const override;
+    bool RequireBlendStateForPSO() const override;
 
 protected:
     void DeleteTexture_Internal(const GraphicsBackendTexture &texture) override;
@@ -135,6 +143,10 @@ private:
 
     MTL::BlitCommandEncoder* GetBlitCommandEncoder();
     void SetBlitCommandEncoder(MTL::BlitCommandEncoder* encoder);
+
+    MTL::DepthStencilState* CreateDepthStencilState(
+        const GraphicsBackendDepthDescriptor& depthDescriptor,
+        const GraphicsBackendStencilDescriptor& stencilDescriptor) const;
 };
 
 

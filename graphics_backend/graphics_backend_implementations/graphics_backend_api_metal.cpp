@@ -19,12 +19,14 @@
 #include "types/graphics_backend_program_descriptor.h"
 #include "helpers/metal_helpers.h"
 #include "debug.h"
+#include "hash.h"
 
 #include "Metal/Metal.hpp"
 #include "Metal/MTLCounters.hpp"
 #include "MetalKit/MetalKit.hpp"
 
 #include <semaphore>
+#include <unordered_map>
 
 namespace MetalLocal
 {
@@ -42,18 +44,11 @@ namespace MetalLocal
     MTL::Timestamp s_GpuStartTimestamp;
 
     std::counting_semaphore s_FramesInFlightSemaphore{GraphicsBackend::GetMaxFramesInFlight()};
+    std::unordered_map<size_t, MTL::DepthStencilState*> s_DepthStencilStates;
 
     struct BufferData {
         MTL::Buffer *Buffer;
         MTL::ResourceOptions StorageMode;
-    };
-
-    struct PSOData
-    {
-        MTL::RenderPipelineState* PSO;
-        MTL::DepthStencilState* DepthStencilState;
-        MTL::CullMode CullFace;
-        MTL::Winding CullFaceOrientation;
     };
 
     void SetCounterSampleFinished(uint64_t sampleIndex, int queueIndex, bool finished)
@@ -555,49 +550,7 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
         throw std::runtime_error(error->localizedDescription()->utf8String());
     }
 
-    auto depthStencilDescriptor = MTL::DepthStencilDescriptor::alloc()->init();
-    depthStencilDescriptor->setDepthWriteEnabled(descriptor.DepthDescriptor.WriteDepth && descriptor.DepthDescriptor.Enabled);
-    depthStencilDescriptor->setDepthCompareFunction(MetalHelpers::ToComparisonFunction(descriptor.DepthDescriptor.Enabled ? descriptor.DepthDescriptor.DepthFunction : ComparisonFunction::ALWAYS));
-
-    const GraphicsBackendStencilDescriptor& stencilDesc = descriptor.StencilDescriptor;
-    if (stencilDesc.Enabled)
-    {
-        auto GetMetalStencilDesc = [&stencilDesc](bool isFront) -> MTL::StencilDescriptor*
-        {
-            MTL::StencilDescriptor* metalStencilDesc = MTL::StencilDescriptor::alloc()->init();
-            metalStencilDesc->setReadMask(stencilDesc.ReadMask);
-            metalStencilDesc->setWriteMask(stencilDesc.WriteMask);
-
-            const GraphicsBackendStencilOperationDescriptor& stencilOpDesc = isFront ? stencilDesc.FrontFaceOpDescriptor : stencilDesc.BackFaceOpDescriptor;
-            metalStencilDesc->setDepthFailureOperation(MetalHelpers::ToStencilOperation(stencilOpDesc.DepthFailOp));
-            metalStencilDesc->setStencilFailureOperation(MetalHelpers::ToStencilOperation(stencilOpDesc.FailOp));
-            metalStencilDesc->setDepthStencilPassOperation(MetalHelpers::ToStencilOperation(stencilOpDesc.PassOp));
-            metalStencilDesc->setStencilCompareFunction(stencilOpDesc.ComparisonFunction != ComparisonFunction::NONE
-                                                        ? MetalHelpers::ToComparisonFunction(stencilOpDesc.ComparisonFunction)
-                                                        : MTL::CompareFunction::CompareFunctionNever);
-            return metalStencilDesc;
-        };
-
-        depthStencilDescriptor->setFrontFaceStencil(GetMetalStencilDesc(true));
-        depthStencilDescriptor->setBackFaceStencil(GetMetalStencilDesc(false));
-    }
-
-    if (descriptor.Name && !descriptor.Name->empty())
-    {
-        std::string depthStencilStateName = *descriptor.Name + "_DepthStencil";
-        depthStencilDescriptor->setLabel(NS::String::string(depthStencilStateName.c_str(), NS::UTF8StringEncoding));
-    }
-
-    MTL::DepthStencilState* depthStencilState = m_Device->newDepthStencilState(depthStencilDescriptor);
-    depthStencilDescriptor->release();
-
-    MetalLocal::PSOData* psoData = new MetalLocal::PSOData();
-    psoData->PSO = pso;
-    psoData->DepthStencilState = depthStencilState;
-    psoData->CullFace = MetalHelpers::ToCullFace(descriptor.RasterizerDescriptor.Face);
-    psoData->CullFaceOrientation = MetalHelpers::ToCullFaceOrientation(descriptor.RasterizerDescriptor.Orientation);
-
-    return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(psoData), descriptor);
+    return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(pso), descriptor);
 }
 
 void GraphicsBackendMetal::DeleteShader_Internal(GraphicsBackendShaderObject shader)
@@ -607,26 +560,37 @@ void GraphicsBackendMetal::DeleteShader_Internal(GraphicsBackendShaderObject sha
 
 void GraphicsBackendMetal::DeleteProgram_Internal(GraphicsBackendProgram program)
 {
-    MetalLocal::PSOData* psoData = reinterpret_cast<MetalLocal::PSOData*>(program.Program);
-    psoData->PSO->release();
-    psoData->DepthStencilState->release();
-    delete psoData;
-}
-
-bool GraphicsBackendMetal::RequireStrictPSODescriptor()
-{
-    return true;
+    MTL::RenderPipelineState* pso = reinterpret_cast<MTL::RenderPipelineState*>(program.Program);
+    pso->release();
 }
 
 void GraphicsBackendMetal::UseProgram(const GraphicsBackendProgram& program)
 {
     assert(m_RenderCommandEncoder != nullptr);
 
-    MetalLocal::PSOData* psoData = reinterpret_cast<MetalLocal::PSOData*>(program.Program);
-    m_RenderCommandEncoder->setRenderPipelineState(psoData->PSO);
-    m_RenderCommandEncoder->setDepthStencilState(psoData->DepthStencilState);
-    m_RenderCommandEncoder->setCullMode(psoData->CullFace);
-    m_RenderCommandEncoder->setFrontFacingWinding(psoData->CullFaceOrientation);
+    MTL::RenderPipelineState* pso = reinterpret_cast<MTL::RenderPipelineState*>(program.Program);
+    m_RenderCommandEncoder->setRenderPipelineState(pso);
+
+    const GraphicsBackendDepthDescriptor& depthDescriptor = GetDepthState();
+    const GraphicsBackendStencilDescriptor& stencilDescriptor = GetStencilDescriptor();
+    size_t depthStencilStateHash = Hash::Combine(GetDepthDescriptorHash(depthDescriptor), GetStencilDescriptorHash(stencilDescriptor));
+
+    MTL::DepthStencilState* depthStencilState;
+
+    const auto& it = MetalLocal::s_DepthStencilStates.find(depthStencilStateHash);
+    if (it != MetalLocal::s_DepthStencilStates.end())
+        depthStencilState = it->second;
+    else
+    {
+        depthStencilState = CreateDepthStencilState(depthDescriptor, stencilDescriptor);
+        MetalLocal::s_DepthStencilStates[depthStencilStateHash] = depthStencilState;
+    }
+
+    m_RenderCommandEncoder->setDepthStencilState(depthStencilState);
+
+    const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor = GetRasterizerState();
+    m_RenderCommandEncoder->setCullMode(MetalHelpers::ToCullFace(rasterizerDescriptor.Face));
+    m_RenderCommandEncoder->setFrontFacingWinding(MetalHelpers::ToCullFaceOrientation(rasterizerDescriptor.Orientation));
 
     BindResources(program);
 }
@@ -1068,6 +1032,77 @@ void GraphicsBackendMetal::TransitionTexture(const GraphicsBackendTexture& textu
 
 void GraphicsBackendMetal::TransitionBuffer(const GraphicsBackendBuffer& buffer, ResourceState state, GPUQueue queue)
 {
+}
+
+bool GraphicsBackendMetal::RequireVertexAttributesForPSO() const
+{
+    return true;
+}
+
+bool GraphicsBackendMetal::RequirePrimitiveTypeForPSO() const
+{
+    return false;
+}
+
+bool GraphicsBackendMetal::RequireRTFormatsForPSO() const
+{
+    return true;
+}
+
+bool GraphicsBackendMetal::RequireStencilStateForPSO() const
+{
+    return false;
+}
+
+bool GraphicsBackendMetal::RequireDepthStateForPSO() const
+{
+    return false;
+}
+
+bool GraphicsBackendMetal::RequireRasterizerStateForPSO() const
+{
+    return false;
+}
+
+bool GraphicsBackendMetal::RequireBlendStateForPSO() const
+{
+    return true;
+}
+
+MTL::DepthStencilState* GraphicsBackendMetal::CreateDepthStencilState(
+        const GraphicsBackendDepthDescriptor& depthDescriptor,
+        const GraphicsBackendStencilDescriptor& stencilDescriptor) const
+{
+    MTL::DepthStencilDescriptor* depthStencilDescriptor = MTL::DepthStencilDescriptor::alloc()->init();
+    depthStencilDescriptor->setDepthWriteEnabled(depthDescriptor.WriteDepth && depthDescriptor.Enabled);
+    depthStencilDescriptor->setDepthCompareFunction(MetalHelpers::ToComparisonFunction(depthDescriptor.Enabled ? depthDescriptor.DepthFunction : ComparisonFunction::ALWAYS));
+
+    if (stencilDescriptor.Enabled)
+    {
+        auto GetMetalStencilDesc = [&stencilDescriptor](bool isFront) -> MTL::StencilDescriptor*
+        {
+            MTL::StencilDescriptor* metalStencilDesc = MTL::StencilDescriptor::alloc()->init();
+            metalStencilDesc->setReadMask(stencilDescriptor.ReadMask);
+            metalStencilDesc->setWriteMask(stencilDescriptor.WriteMask);
+
+            const GraphicsBackendStencilOperationDescriptor& stencilOpDesc = isFront ? stencilDescriptor.FrontFaceOpDescriptor : stencilDescriptor.BackFaceOpDescriptor;
+            metalStencilDesc->setDepthFailureOperation(MetalHelpers::ToStencilOperation(stencilOpDesc.DepthFailOp));
+            metalStencilDesc->setStencilFailureOperation(MetalHelpers::ToStencilOperation(stencilOpDesc.FailOp));
+            metalStencilDesc->setDepthStencilPassOperation(MetalHelpers::ToStencilOperation(stencilOpDesc.PassOp));
+            metalStencilDesc->setStencilCompareFunction(stencilOpDesc.ComparisonFunction != ComparisonFunction::NONE
+                                                        ? MetalHelpers::ToComparisonFunction(stencilOpDesc.ComparisonFunction)
+                                                        : MTL::CompareFunction::CompareFunctionNever);
+            return metalStencilDesc;
+        };
+
+        depthStencilDescriptor->setFrontFaceStencil(GetMetalStencilDesc(true));
+        depthStencilDescriptor->setBackFaceStencil(GetMetalStencilDesc(false));
+    }
+
+    MTL::DepthStencilState* depthStencilState = m_Device->newDepthStencilState(depthStencilDescriptor);
+    depthStencilDescriptor->release();
+
+    return depthStencilState;
 }
 
 #endif // RENDER_BACKEND_METAL

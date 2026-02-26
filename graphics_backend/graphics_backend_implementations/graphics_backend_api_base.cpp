@@ -13,6 +13,7 @@
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_program_descriptor.h"
 #include "arguments.h"
+#include "hash.h"
 
 #include <functional>
 
@@ -451,4 +452,52 @@ bool GraphicsBackendBase::IsDepthAttachment(FramebufferAttachment attachment)
 bool GraphicsBackendBase::IsMainThread()
 {
     return std::this_thread::get_id() == m_MainThreadId;
+}
+
+size_t GraphicsBackendBase::GetDepthDescriptorHash(const GraphicsBackendDepthDescriptor& depthDescriptor)
+{
+    size_t hash = 0;
+    hash = Hash::Combine(hash, std::hash<bool>{}(depthDescriptor.Enabled));
+    hash = Hash::Combine(hash, std::hash<bool>{}(depthDescriptor.WriteDepth));
+    hash = Hash::Combine(hash, std::hash<ComparisonFunction>{}(depthDescriptor.DepthFunction));
+    return hash;
+}
+
+size_t GraphicsBackendBase::GetStencilOperationDescriptorHash(const GraphicsBackendStencilOperationDescriptor& stencilOperationDescriptor)
+{
+    size_t hash = 0;
+    hash = Hash::Combine(hash, std::hash<StencilOperation>{}(stencilOperationDescriptor.FailOp));
+    hash = Hash::Combine(hash, std::hash<StencilOperation>{}(stencilOperationDescriptor.DepthFailOp));
+    hash = Hash::Combine(hash, std::hash<StencilOperation>{}(stencilOperationDescriptor.PassOp));
+    hash = Hash::Combine(hash, std::hash<ComparisonFunction>{}(stencilOperationDescriptor.ComparisonFunction));
+    return hash;
+}
+
+size_t GraphicsBackendBase::GetStencilDescriptorHash(const GraphicsBackendStencilDescriptor& stencilDescriptor)
+{
+    size_t hash = 0;
+    hash = Hash::Combine(hash, std::hash<bool>{}(stencilDescriptor.Enabled));
+    hash = Hash::Combine(hash, std::hash<uint8_t>{}(stencilDescriptor.ReadMask));
+    hash = Hash::Combine(hash, std::hash<uint8_t>{}(stencilDescriptor.WriteMask));
+    hash = Hash::Combine(hash, GetStencilOperationDescriptorHash(stencilDescriptor.FrontFaceOpDescriptor));
+    hash = Hash::Combine(hash, GetStencilOperationDescriptorHash(stencilDescriptor.BackFaceOpDescriptor));
+    return hash;
+}
+
+size_t GraphicsBackendBase::GetRasterizerDescriptorHash(const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor)
+{
+    size_t hash = 0;
+    hash = Hash::Combine(hash, std::hash<CullFace>{}(rasterizerDescriptor.Face));
+    hash = Hash::Combine(hash, std::hash<CullFaceOrientation>{}(rasterizerDescriptor.Orientation));
+    return hash;
+}
+
+size_t GraphicsBackendBase::GetBlendDescriptorHash(const GraphicsBackendBlendDescriptor& blendDescriptor)
+{
+    size_t hash = 0;
+    hash = Hash::Combine(hash, std::hash<bool>{}(blendDescriptor.Enabled));
+    hash = Hash::Combine(hash, std::hash<BlendFactor>{}(blendDescriptor.SourceFactor));
+    hash = Hash::Combine(hash, std::hash<BlendFactor>{}(blendDescriptor.DestinationFactor));
+    hash = Hash::Combine(hash, std::hash<ColorWriteMask>{}(blendDescriptor.ColorWriteMask));
+    return hash;
 }

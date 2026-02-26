@@ -169,6 +169,12 @@ public:
         return m_DrawCallCount;
     }
 
+    static size_t GetDepthDescriptorHash(const GraphicsBackendDepthDescriptor& depthDescriptor);
+    static size_t GetStencilOperationDescriptorHash(const GraphicsBackendStencilOperationDescriptor& stencilOperationDescriptor);
+    static size_t GetStencilDescriptorHash(const GraphicsBackendStencilDescriptor& stencilDescriptor);
+    static size_t GetRasterizerDescriptorHash(const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor);
+    static size_t GetBlendDescriptorHash(const GraphicsBackendBlendDescriptor& blendDescriptor);
+
 protected:
     bool IsMainThread();
 

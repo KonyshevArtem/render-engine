@@ -15,54 +15,6 @@
 
 namespace ShaderLocal
 {
-    size_t GetDepthDescriptorHash(const GraphicsBackendDepthDescriptor& depthDescriptor)
-    {
-        size_t hash = 0;
-        hash = Hash::Combine(hash, std::hash<bool>{}(depthDescriptor.Enabled));
-        hash = Hash::Combine(hash, std::hash<bool>{}(depthDescriptor.WriteDepth));
-        hash = Hash::Combine(hash, std::hash<ComparisonFunction>{}(depthDescriptor.DepthFunction));
-        return hash;
-    }
-
-    size_t GetStencilOperationDescriptorHash(const GraphicsBackendStencilOperationDescriptor& stencilOperationDescriptor)
-    {
-        size_t hash = 0;
-        hash = Hash::Combine(hash, std::hash<StencilOperation>{}(stencilOperationDescriptor.FailOp));
-        hash = Hash::Combine(hash, std::hash<StencilOperation>{}(stencilOperationDescriptor.DepthFailOp));
-        hash = Hash::Combine(hash, std::hash<StencilOperation>{}(stencilOperationDescriptor.PassOp));
-        hash = Hash::Combine(hash, std::hash<ComparisonFunction>{}(stencilOperationDescriptor.ComparisonFunction));
-        return hash;
-    }
-
-    size_t GetStencilDescriptorHash(const GraphicsBackendStencilDescriptor& stencilDescriptor)
-    {
-        size_t hash = 0;
-        hash = Hash::Combine(hash, std::hash<bool>{}(stencilDescriptor.Enabled));
-        hash = Hash::Combine(hash, std::hash<uint8_t>{}(stencilDescriptor.ReadMask));
-        hash = Hash::Combine(hash, std::hash<uint8_t>{}(stencilDescriptor.WriteMask));
-        hash = Hash::Combine(hash, GetStencilOperationDescriptorHash(stencilDescriptor.FrontFaceOpDescriptor));
-        hash = Hash::Combine(hash, GetStencilOperationDescriptorHash(stencilDescriptor.BackFaceOpDescriptor));
-        return hash;
-    }
-
-    size_t GetRasterizerDescriptorHash(const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor)
-    {
-        size_t hash = 0;
-        hash = Hash::Combine(hash, std::hash<CullFace>{}(rasterizerDescriptor.Face));
-        hash = Hash::Combine(hash, std::hash<CullFaceOrientation>{}(rasterizerDescriptor.Orientation));
-        return hash;
-    }
-
-    size_t GetBlendDescriptorHash(const GraphicsBackendBlendDescriptor& blendDescriptor)
-    {
-        size_t hash = 0;
-        hash = Hash::Combine(hash, std::hash<bool>{}(blendDescriptor.Enabled));
-        hash = Hash::Combine(hash, std::hash<BlendFactor>{}(blendDescriptor.SourceFactor));
-        hash = Hash::Combine(hash, std::hash<BlendFactor>{}(blendDescriptor.DestinationFactor));
-        hash = Hash::Combine(hash, std::hash<ColorWriteMask>{}(blendDescriptor.ColorWriteMask));
-        return hash;
-    }
-
     size_t GetPSOHash(size_t vertexAttributesHash, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat, PrimitiveType primitiveType,
         const GraphicsBackendStencilDescriptor& stencilDescriptor,
         const GraphicsBackendDepthDescriptor& depthDescriptor,
@@ -79,13 +31,13 @@ namespace ShaderLocal
         if (GraphicsBackend::Current()->RequirePrimitiveTypeForPSO())
 			hash = Hash::Combine(hash, std::hash<PrimitiveType>{}(primitiveType));
         if (GraphicsBackend::Current()->RequireStencilStateForPSO())
-			hash = Hash::Combine(hash, GetStencilDescriptorHash(stencilDescriptor));
+			hash = Hash::Combine(hash, GraphicsBackendBase::GetStencilDescriptorHash(stencilDescriptor));
         if (GraphicsBackend::Current()->RequireDepthStateForPSO())
-			hash = Hash::Combine(hash, GetDepthDescriptorHash(depthDescriptor));
+			hash = Hash::Combine(hash, GraphicsBackendBase::GetDepthDescriptorHash(depthDescriptor));
         if (GraphicsBackend::Current()->RequireRasterizerStateForPSO())
-			hash = Hash::Combine(hash, GetRasterizerDescriptorHash(rasterizerDescriptor));
+			hash = Hash::Combine(hash, GraphicsBackendBase::GetRasterizerDescriptorHash(rasterizerDescriptor));
         if (GraphicsBackend::Current()->RequireBlendStateForPSO())
-			hash = Hash::Combine(hash, GetBlendDescriptorHash(blendDescriptor));
+			hash = Hash::Combine(hash, GraphicsBackendBase::GetBlendDescriptorHash(blendDescriptor));
         if (GraphicsBackend::Current()->RequireVertexAttributesForPSO())
 			hash = Hash::Combine(hash, vertexAttributesHash);
         return hash;

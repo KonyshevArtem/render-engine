@@ -61,7 +61,7 @@ void DeveloperConsole::Update()
 
 void DeveloperConsole::CreateUI()
 {
-	m_Root = UIElement::Create(nullptr, Vector2(0, 0), Vector2(0, 0));
+	m_Root = UIElement::Create(UIManager::GetPersistentUIRoot(), Vector2(0, 0), Vector2(0, 0));
 	m_Background = UIImage::Create(m_Root, Vector2(0, 0), Vector2(0, 0), Texture2D::White());
 	m_TextField = UITextField::Create(m_Root, Vector2(0, 0), Vector2(0, 0), 20, Texture2D::White());
 	m_PromptText = UIText::Create(m_Root, Vector2(0, -20), Vector2(0, 0), L"", 15);

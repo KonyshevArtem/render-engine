@@ -76,7 +76,7 @@ void Scene::Load(const std::string& scenePath)
 void Scene::Unload()
 {
     Current = nullptr;
-    UIManager::DestroyUI();
+    UIManager::DestroySceneUI();
 }
 
 void Scene::SetSkybox(const std::shared_ptr<Cubemap>& skybox)

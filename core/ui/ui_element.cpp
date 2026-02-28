@@ -29,7 +29,7 @@ void UIElement::SetParent(const std::shared_ptr<UIElement>& parent)
     if (!m_Parent.expired())
         m_Parent.lock()->RemoveChild(thisPtr);
 
-    std::shared_ptr<UIElement> p = parent ? parent : UIManager::GetRoot();
+    std::shared_ptr<UIElement> p = parent ? parent : UIManager::GetSceneUIRoot();
 
     m_Parent = p;
     if (p)

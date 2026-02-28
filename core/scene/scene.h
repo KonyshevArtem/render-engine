@@ -18,6 +18,7 @@ class Scene
 public:
     inline static std::shared_ptr<Scene> Current = nullptr;
 
+    static void Init();
     static void Update();
     static void Load(const std::string& scenePath);
     static void Unload();

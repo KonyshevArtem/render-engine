@@ -62,6 +62,7 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
     std::string scenePath = "core_resources/scenes/test_scene.scene";
     if (Arguments::Contains("-scene"))
         scenePath = Arguments::Get("-scene");
+    Scene::Init();
     Scene::Load(scenePath);
 
     GraphicsBackend::Current()->Flush();

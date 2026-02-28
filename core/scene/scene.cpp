@@ -5,6 +5,7 @@
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
 #include "ui/ui_manager.h"
+#include "developer_console/developer_console.h"
 
 namespace SceneLocal
 {
@@ -49,6 +50,11 @@ namespace SceneLocal
 }
 
 std::filesystem::path Scene::s_PendingScenePath = "";
+
+void Scene::Init()
+{
+    DeveloperConsole::AddFunctionCommand(L"Scene.Load", [](const std::string& scene) { Load(scene); });
+}
 
 void Scene::Update()
 {

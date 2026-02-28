@@ -15,6 +15,7 @@
 
 std::shared_ptr<DeveloperConsole> DeveloperConsole::Instance = nullptr;
 std::unordered_map<std::wstring, bool*> DeveloperConsole::s_BoolCommands;
+std::unordered_map<std::wstring, std::function<void(const std::string&)>> DeveloperConsole::s_FunctionCommands;
 
 void DeveloperConsole::Init()
 {
@@ -24,6 +25,11 @@ void DeveloperConsole::Init()
 void DeveloperConsole::AddBoolCommand(const std::wstring& command, bool* outResult)
 {
 	s_BoolCommands[StringEncodingUtil::ToLower(command)] = outResult;
+}
+
+void DeveloperConsole::AddFunctionCommand(const std::wstring& command, std::function<void(const std::string&)> func)
+{
+	s_FunctionCommands[StringEncodingUtil::ToLower(command)] = func;
 }
 
 void DeveloperConsole::Update()
@@ -114,8 +120,7 @@ void DeveloperConsole::HandleCommand(const std::wstring& command)
 	const std::vector<std::wstring> split = StringSplit::Split(command, ' ');
 	const std::wstring cmd = StringEncodingUtil::ToLower(split[0]);
 
-	const auto& it = s_BoolCommands.find(cmd);
-	if (it != s_BoolCommands.end())
+	if (const auto& it = s_BoolCommands.find(cmd); it != s_BoolCommands.end())
 	{
 		if (split.size() > 1)
 		{
@@ -127,6 +132,13 @@ void DeveloperConsole::HandleCommand(const std::wstring& command)
 			const bool currentState = *it->second;
 			AddUITextHistory(split[0] + (currentState ? L" true" : L" false"));
 		}
+	}
+	else if (const auto& it = s_FunctionCommands.find(cmd); it != s_FunctionCommands.end())
+	{
+		if (split.size() > 1)
+			it->second(StringEncodingUtil::WStringToString(split[1]));
+
+		AddUITextHistory(command);
 	}
 	else
 		AddUITextHistory(L"Unknown command");
@@ -148,24 +160,27 @@ void DeveloperConsole::UpdatePrompt(const std::wstring& text)
 
 		const std::vector<std::wstring> split = StringSplit::Split(text, ' ');
 
+		auto CheckCommand = [&](const std::wstring& command)
+			{
+				bool matching = true;
+				for (const std::wstring& pattern : split)
+				{
+					if (command.find(pattern) == std::wstring::npos)
+					{
+						matching = false;
+						break;
+					}
+				}
+
+				if (matching)
+					m_Prompts.push_back(command);
+			};
+
 		m_Prompts.clear();
 		for (const auto& it : s_BoolCommands)
-		{
-			const std::wstring& command = it.first;
-
-			bool matching = true;
-			for (const std::wstring& pattern : split)
-			{
-				if (command.find(pattern) == std::wstring::npos)
-				{
-					matching = false;
-					break;
-				}
-			}
-
-			if (matching)
-				m_Prompts.push_back(command);
-		}
+			CheckCommand(it.first);
+		for (const auto& it : s_FunctionCommands)
+			CheckCommand(it.first);
 
 		std::ranges::sort(m_Prompts);
 	}

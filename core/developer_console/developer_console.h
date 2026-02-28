@@ -22,11 +22,13 @@ public:
 	~DeveloperConsole() = default;
 
 	static void AddBoolCommand(const std::wstring& command, bool* outResult);
+	static void AddFunctionCommand(const std::wstring& command, std::function<void(const std::string&)> func);
 
 	void Update();
 
 private:
 	static std::unordered_map<std::wstring, bool*> s_BoolCommands;
+	static std::unordered_map<std::wstring, std::function<void(const std::string&)>> s_FunctionCommands;
 
 	std::shared_ptr<UIElement> m_Root;
 	std::shared_ptr<UIImage> m_Background;

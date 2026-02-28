@@ -30,7 +30,7 @@ void GameWindow::TickMainLoop(int width, int height)
     }
 
 #ifdef ENABLE_IMGUI
-    TopMenuBar::Draw([this](){ m_CloseFlag = true; });
+    TopMenuBar::Draw();
     WindowManager::DrawAllWindows();
 
     const std::string stats = "Draw Calls: " + std::to_string(GraphicsBackend::Current()->GetDrawCallCount());

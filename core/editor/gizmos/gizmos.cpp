@@ -5,6 +5,7 @@
 #include "shader/shader.h"
 #include "material/material.h"
 #include "vector2/vector2.h"
+#include "developer_console/developer_console.h"
 
 namespace GizmosLocal
 {
@@ -149,6 +150,8 @@ void Gizmos::Init()
 
         GizmosLocal::s_WireRectPrimitive = std::make_shared<Lines>(wireRectCorners, wireRectIndices, "WireRect");
     }
+
+    DeveloperConsole::AddBoolCommand("Gizmos.Draw", &GizmosLocal::s_IsEnabled);
 }
 
 const std::vector<RenderQueue::Item>& Gizmos::Get3DGizmosToDraw()

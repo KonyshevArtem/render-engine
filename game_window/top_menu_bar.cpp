@@ -29,39 +29,6 @@ namespace TopMenuBarLocal
     }
 }
 
-void DrawEngineMenu(std::function<void()> &closeWindow)
-{
-    if (ImGui::BeginMenu("Engine"))
-    {
-        if (ImGui::MenuItem("Exit") && closeWindow)
-        {
-            closeWindow();
-        }
-
-        ImGui::EndMenu();
-    }
-}
-
-void DrawDebugMenu()
-{
-    if (ImGui::BeginMenu("Debug"))
-    {
-        bool gizmosEnabled = Gizmos::IsEnabled();
-        if (ImGui::MenuItem("Draw Gizmos", nullptr, gizmosEnabled))
-        {
-            Gizmos::SetEnabled(!gizmosEnabled);
-        }
-
-        ImGui::MenuItem("Enable Frustum Culling", nullptr, &RenderQueue::EnableFrustumCulling);
-        ImGui::MenuItem("Freeze Frustum Culling", nullptr, &RenderQueue::FreezeFrustumCulling);
-
-        ImGui::MenuItem("Shadow Map Overlay", nullptr, &ShadowMapDebugPass::DrawShadowMapOverlay);
-        ImGui::MenuItem("Shadow Cascades", nullptr, &ShadowMapDebugPass::DrawShadowCascades);
-
-        ImGui::EndMenu();
-    }
-}
-
 void DrawWindowsMenu()
 {
     if (ImGui::BeginMenu("Windows"))
@@ -90,7 +57,7 @@ void DrawWindowsMenu()
     }
 }
 
-void TopMenuBar::Draw(std::function<void()> closeWindow)
+void TopMenuBar::Draw()
 {
     Profiler::Marker _("TopMenuBar::Draw");
 
@@ -98,8 +65,6 @@ void TopMenuBar::Draw(std::function<void()> closeWindow)
     {
         const float menuWidth = ImGui::GetContentRegionAvail().x;
 
-        DrawEngineMenu(closeWindow);
-        DrawDebugMenu();
         DrawWindowsMenu();
 
         const std::string backendName = TopMenuBarLocal::GetBackendName(GraphicsBackend::Current()->GetName());

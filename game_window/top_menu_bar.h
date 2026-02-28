@@ -3,11 +3,9 @@
 
 #ifdef ENABLE_IMGUI
 
-#include <functional>
-
 namespace TopMenuBar
 {
-    void Draw(std::function<void()> closeWindow);
+    void Draw();
 }
 
 #endif

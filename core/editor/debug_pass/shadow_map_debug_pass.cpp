@@ -8,6 +8,7 @@
 #include "types/graphics_backend_buffer_info.h"
 #include "graphics/context.h"
 #include "types/graphics_backend_sampler_info.h"
+#include "developer_console/developer_console.h"
 
 bool ShadowMapDebugPass::DrawShadowMapOverlay = false;
 bool ShadowMapDebugPass::DrawShadowCascades = false;
@@ -15,6 +16,9 @@ bool ShadowMapDebugPass::DrawShadowCascades = false;
 ShadowMapDebugPass::ShadowMapDebugPass(int priority) : RenderPass(priority)
 {
     m_FullscreenMesh = Mesh::GetFullscreenMesh();
+
+    DeveloperConsole::AddBoolCommand("Shadows.DrawOverlay", &DrawShadowMapOverlay);
+    DeveloperConsole::AddBoolCommand("Shadows.DrawCascades", &DrawShadowCascades);
 }
 
 void ShadowMapDebugPass::Prepare(const std::shared_ptr<Texture2D>& depthMap)

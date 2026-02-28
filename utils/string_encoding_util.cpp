@@ -1,5 +1,7 @@
 #include "string_encoding_util.h"
 
+#include <cwctype>
+
 std::u32string StringEncodingUtil::Utf16ToUtf32(const char16_t* text, size_t length)
 {
     std::u32string out;
@@ -120,6 +122,16 @@ std::string StringEncodingUtil::WStringToString(const std::wstring& wString)
     if constexpr (sizeof(wchar_t) == 4)
         return Utf32ToUtf8(reinterpret_cast<const char32_t*>(wString.c_str()), wString.size());
     return Utf16ToUtf8(reinterpret_cast<const char16_t*>(wString.c_str()), wString.size());
+}
+
+std::wstring StringEncodingUtil::ToLower(const std::wstring& wString)
+{
+    std::wstring result(wString);
+
+    for (wchar_t& c : result)
+        c = std::towlower(c);
+
+    return result;
 }
 
 std::string StringEncodingUtil::ToLower(const std::string& string)

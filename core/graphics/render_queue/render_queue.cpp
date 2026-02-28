@@ -161,8 +161,8 @@ namespace RenderQueueLocal
 
 RenderQueue::RenderQueue()
 {
-    DeveloperConsole::AddBoolCommand("FrustumCulling.Enabled", &EnableFrustumCulling);
-    DeveloperConsole::AddBoolCommand("FrustumCulling.Freeze", &FreezeFrustumCulling);
+    DeveloperConsole::AddBoolCommand(L"FrustumCulling.Enabled", &EnableFrustumCulling);
+    DeveloperConsole::AddBoolCommand(L"FrustumCulling.Freeze", &FreezeFrustumCulling);
 
     if (!s_MatricesBuffer)
         s_MatricesBuffer = std::make_shared<RingBuffer>(sizeof(Matrix4x4) * 4096, "Render Queue Matrices Buffer");

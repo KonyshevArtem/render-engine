@@ -17,8 +17,8 @@ ShadowMapDebugPass::ShadowMapDebugPass(int priority) : RenderPass(priority)
 {
     m_FullscreenMesh = Mesh::GetFullscreenMesh();
 
-    DeveloperConsole::AddBoolCommand("Shadows.DrawOverlay", &DrawShadowMapOverlay);
-    DeveloperConsole::AddBoolCommand("Shadows.DrawCascades", &DrawShadowCascades);
+    DeveloperConsole::AddBoolCommand(L"Shadows.DrawOverlay", &DrawShadowMapOverlay);
+    DeveloperConsole::AddBoolCommand(L"Shadows.DrawCascades", &DrawShadowCascades);
 }
 
 void ShadowMapDebugPass::Prepare(const std::shared_ptr<Texture2D>& depthMap)

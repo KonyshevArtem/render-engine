@@ -14,14 +14,14 @@
 #include <algorithm>
 
 std::shared_ptr<DeveloperConsole> DeveloperConsole::Instance = nullptr;
-std::unordered_map<std::string, bool*> DeveloperConsole::s_BoolCommands;
+std::unordered_map<std::wstring, bool*> DeveloperConsole::s_BoolCommands;
 
 void DeveloperConsole::Init()
 {
 	Instance = std::make_shared<DeveloperConsole>();
 }
 
-void DeveloperConsole::AddBoolCommand(const std::string& command, bool* outResult)
+void DeveloperConsole::AddBoolCommand(const std::wstring& command, bool* outResult)
 {
 	s_BoolCommands[StringEncodingUtil::ToLower(command)] = outResult;
 }
@@ -48,9 +48,9 @@ void DeveloperConsole::Update()
 	if (Input::GetSpecialKeyDown(Input::SpecialKey::TILDE))
 		m_Enabled = !m_Enabled;
 	if (Input::GetSpecialKeyDown(Input::SpecialKey::UP))
-		RestoreFromHistory(true);
+		AutoFillCommand(true);
 	if (Input::GetSpecialKeyDown(Input::SpecialKey::DOWN))
-		RestoreFromHistory(false);
+		AutoFillCommand(false);
 }
 
 void DeveloperConsole::CreateUI()
@@ -58,6 +58,7 @@ void DeveloperConsole::CreateUI()
 	m_Root = UIElement::Create(nullptr, Vector2(0, 0), Vector2(0, 0));
 	m_Background = UIImage::Create(m_Root, Vector2(0, 0), Vector2(0, 0), Texture2D::White());
 	m_TextField = UITextField::Create(m_Root, Vector2(0, 0), Vector2(0, 0), 20, Texture2D::White());
+	m_PromptText = UIText::Create(m_Root, Vector2(0, -20), Vector2(0, 0), L"", 15);
 
 	const Vector4 backgroundColor = Vector4(0, 0, 0, 0.7f);
 	m_Background->Color = backgroundColor;
@@ -66,6 +67,7 @@ void DeveloperConsole::CreateUI()
 
 	m_TextField->KeepFocusOnDone = true;
 	m_TextField->OnFinish = [&](const std::wstring& command) { HandleCommand(command); };
+	m_TextField->OnTextChanged = [&](const std::wstring& text) { UpdatePrompt(text); };
 }
 
 void DeveloperConsole::UpdateUI()
@@ -78,8 +80,10 @@ void DeveloperConsole::UpdateUI()
 	m_Root->Size = Vector2(rootParent->Size.x, rootParent->Size.y * 0.5f);
 	m_Root->Position = Vector2(0, rootParent->Size.y - m_Root->Size.y);
 
-	m_Background->Size = m_Root->Size;
+	m_Background->Position = Vector2(0, -m_PromptText->GetTextSize().y);
+	m_Background->Size = Vector2(m_Root->Size.x, m_Root->Size.y + m_PromptText->GetTextSize().y);
 	m_TextField->Size = Vector2(m_Root->Size.x, 25);
+	m_PromptText->Size = Vector2(m_Root->Size.x, 20);
 
 	float historyTextPosY = 0;
 	for (const std::shared_ptr<UIText>& historyText : m_HistoryTexts)
@@ -108,7 +112,7 @@ void DeveloperConsole::UpdateUI()
 void DeveloperConsole::HandleCommand(const std::wstring& command)
 {
 	const std::vector<std::wstring> split = StringSplit::Split(command, ' ');
-	const std::string cmd = StringEncodingUtil::ToLower(StringEncodingUtil::WStringToString(split[0]));
+	const std::wstring cmd = StringEncodingUtil::ToLower(split[0]);
 
 	const auto& it = s_BoolCommands.find(cmd);
 	if (it != s_BoolCommands.end())
@@ -131,6 +135,55 @@ void DeveloperConsole::HandleCommand(const std::wstring& command)
 	m_TextField->SetText(L"");
 }
 
+void DeveloperConsole::UpdatePrompt(const std::wstring& text)
+{
+	if (!m_FreezePrompts)
+	{
+		if (text.empty())
+		{
+			m_Prompts.clear();
+			m_PromptText->SetText(L"");
+			return;
+		}
+
+		const std::vector<std::wstring> split = StringSplit::Split(text, ' ');
+
+		m_Prompts.clear();
+		for (const auto& it : s_BoolCommands)
+		{
+			const std::wstring& command = it.first;
+
+			bool matching = true;
+			for (const std::wstring& pattern : split)
+			{
+				if (command.find(pattern) == std::wstring::npos)
+				{
+					matching = false;
+					break;
+				}
+			}
+
+			if (matching)
+				m_Prompts.push_back(command);
+		}
+
+		std::ranges::sort(m_Prompts);
+	}
+
+	const int shownPromptsCount = std::min<int>(m_Prompts.size(), 10);
+	const int currentPromptIndex = std::max<int>(-m_CurrentAutoFillIndex - 1, 0);
+
+	std::wstring prompt;
+	for (int i = 0; i < shownPromptsCount; ++i)
+	{
+		prompt.append(m_Prompts[std::min<int>(currentPromptIndex + i, m_Prompts.size() - shownPromptsCount + i)]);
+		if (i < shownPromptsCount - 1)
+			prompt.append(L"\n");
+	}
+
+	m_PromptText->SetText(prompt);
+}
+
 void DeveloperConsole::AddUITextHistory(const std::wstring& text)
 {
 	const std::shared_ptr<UIText> historyText = UIText::Create(m_Root, Vector2(0, 0), Vector2(0, 20), text, 15);
@@ -140,23 +193,39 @@ void DeveloperConsole::AddUITextHistory(const std::wstring& text)
 void DeveloperConsole::AddCommandHistory(const std::wstring& text)
 {
 	m_CommandHistory.push_back(text);
-	m_CurrentCommandHistoryIndex = -1;
+	m_CurrentAutoFillIndex = 0;
+	m_FreezePrompts = false;
 }
 
-void DeveloperConsole::RestoreFromHistory(bool up)
+void DeveloperConsole::AutoFillCommand(bool up)
 {
-	if (m_CommandHistory.empty())
+	if (m_CommandHistory.empty() && m_Prompts.empty())
 		return;
 
-	m_CurrentCommandHistoryIndex += up ? 1 : -1;
-	m_CurrentCommandHistoryIndex = std::clamp(m_CurrentCommandHistoryIndex, -1, static_cast<int>(m_CommandHistory.size()) - 1);
+	int newAutoFillIndex = m_CurrentAutoFillIndex + (up ? 1 : -1);
+	newAutoFillIndex = std::clamp(newAutoFillIndex, -static_cast<int>(m_Prompts.size()), static_cast<int>(m_CommandHistory.size()));
 
-	if (m_CurrentCommandHistoryIndex >= 0)
+	if (m_CurrentAutoFillIndex != newAutoFillIndex)
 	{
-		const std::wstring& text = m_CommandHistory[m_CommandHistory.size() - m_CurrentCommandHistoryIndex - 1];
-		m_TextField->SetText(text);
-		m_TextField->SetCursorPosition(text.size());
+		m_CurrentAutoFillIndex = newAutoFillIndex;
+
+		if (newAutoFillIndex > 0)
+		{
+			const std::wstring& text = m_CommandHistory[m_CommandHistory.size() - newAutoFillIndex];
+			m_TextField->SetText(text);
+			m_TextField->SetCursorPosition(text.size());
+		}
+		else if (newAutoFillIndex < 0)
+		{
+			m_FreezePrompts = true;
+			const std::wstring& text = m_Prompts[-newAutoFillIndex - 1];
+			m_TextField->SetText(text);
+			m_TextField->SetCursorPosition(text.size());
+		}
+		else
+		{
+			m_FreezePrompts = false;
+			m_TextField->SetText(L"");
+		}
 	}
-	else
-		m_TextField->SetText(L"");
 }

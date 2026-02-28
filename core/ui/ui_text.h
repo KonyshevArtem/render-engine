@@ -48,6 +48,7 @@ public:
     const std::shared_ptr<Texture> GetFontAtlas() const;
     const std::shared_ptr<Font> GetFont() const;
     uint16_t GetFontSize() const;
+    Vector2 GetTextSize() const;
 
     Vector4 Color;
 
@@ -67,6 +68,7 @@ private:
     HorizontalAlignment m_HorizontalAlignment;
     VerticalAlignment m_VerticalAlignment;
     std::shared_mutex m_TextMutex;
+    Vector2 m_TextSize;
 };
 
 #endif //RENDER_ENGINE_UI_TEXT_H

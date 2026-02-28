@@ -28,6 +28,7 @@ public:
     void Done();
 
     std::function<void(const std::wstring&)> OnFinish;
+    std::function<void(const std::wstring&)> OnTextChanged;
 
     void Update() override;
 

@@ -184,4 +184,7 @@ void UITextField::UpdateText(const std::function<void(std::wstring &)>& updateFu
     m_Text->SetText(text);
 
     MoveCursor(cursorOffset);
+
+    if (OnTextChanged)
+        OnTextChanged(text);
 }

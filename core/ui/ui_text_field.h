@@ -2,6 +2,7 @@
 #define RENDER_ENGINE_UI_TEXT_FIELD_H
 
 #include "ui_element.h"
+#include "vector4/vector4.h"
 
 #include <functional>
 #include <string>
@@ -9,6 +10,7 @@
 class UIText;
 class UIImage;
 class Texture2D;
+class UIMask;
 
 class UITextField : public UIElement
 {
@@ -18,13 +20,21 @@ public:
     const std::wstring& GetText() const;
     void SetText(const std::wstring& text);
 
+    void SetTextColor(const Vector4& color);
+    void SetBackgroundColor(const Vector4& color);
+
     void Done();
 
     std::function<void(const std::wstring&)> OnFinish;
 
+    void Update() override;
+
+    bool KeepFocusOnDone;
+
 protected:
     void HandleEvent(UIEventInfo& eventInfo) override;
-    void LoseFocus() override;
+    void OnGainFocus() override;
+    void OnLoseFocus() override;
 
 private:
     UITextField(const Vector2& position, const Vector2& size);
@@ -32,6 +42,7 @@ private:
     std::shared_ptr<UIText> m_Text;
     std::shared_ptr<UIImage> m_BackgroundImage;
     std::shared_ptr<UIImage> m_CursorImage;
+    std::shared_ptr<UIMask> m_Mask;
 
     int m_CursorPosition;
     bool m_IsCursorActive;

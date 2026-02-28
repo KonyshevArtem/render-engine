@@ -14,6 +14,7 @@
 #include "resources/resources.h"
 #include "worker/worker.h"
 #include "ui/ui_manager.h"
+#include "developer_console/developer_console.h"
 
 GameWindow* window = nullptr;
 
@@ -23,6 +24,7 @@ void display(int width, int height)
 
     Time::Update();
     Input::Update();
+    DeveloperConsole::Instance->Update();
     UIManager::Update();
     Scene::Update();
 
@@ -54,6 +56,8 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
     float uiHeight = 720;
 #endif
     UIManager::Initialize(uiHeight);
+
+    DeveloperConsole::Init();
 
     std::string scenePath = "core_resources/scenes/test_scene.scene";
     if (Arguments::Contains("-scene"))

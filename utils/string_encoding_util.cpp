@@ -114,3 +114,20 @@ std::string StringEncodingUtil::Utf16ToUtf8(const char16_t* text, size_t length)
 
     return out;
 }
+
+std::string StringEncodingUtil::WStringToString(const std::wstring& wString)
+{
+    if constexpr (sizeof(wchar_t) == 4)
+        return Utf32ToUtf8(reinterpret_cast<const char32_t*>(wString.c_str()), wString.size());
+    return Utf16ToUtf8(reinterpret_cast<const char16_t*>(wString.c_str()), wString.size());
+}
+
+std::string StringEncodingUtil::ToLower(const std::string& string)
+{
+    std::string result(string);
+
+    for (char& c : result)
+        c = std::tolower(c);
+
+    return result;
+}

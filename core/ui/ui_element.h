@@ -11,12 +11,15 @@ struct UIEventInfo;
 class UIElement : public std::enable_shared_from_this<UIElement>
 {
 public:
+    static std::shared_ptr<UIElement> Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size);
+
     UIElement(const Vector2& position, const Vector2& size);
 
     Vector2 Position;
     Vector2 Size;
     bool Active;
 
+    std::shared_ptr<UIElement> GetParent() const;
     void SetParent(const std::shared_ptr<UIElement>& parent);
     void Destroy();
 
@@ -25,12 +28,15 @@ public:
         return m_GlobalPosition;
     }
 
+    virtual void Update() {}
+
 protected:
     std::vector<std::shared_ptr<UIElement>> m_Children;
 
-    virtual void HandleEvent(UIEventInfo& eventInfo){};
-    virtual void LoseFocus(){};
-    virtual void LoseHover(){};
+    virtual void HandleEvent(UIEventInfo& eventInfo){}
+    virtual void OnGainFocus(){}
+    virtual void OnLoseFocus(){}
+    virtual void OnLoseHover(){}
 
     virtual void AddChild(const std::shared_ptr<UIElement>& child);
 

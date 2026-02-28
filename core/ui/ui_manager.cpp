@@ -36,6 +36,13 @@ void UIManager::Update()
     }
 
     {
+        Profiler::Marker updateMarker("Update Elements");
+
+        for (UIElement* element : s_Elements)
+	        element->Update();
+    }
+
+    {
         Profiler::Marker inputMarker("Handle Input");
 
         auto ToUIPosition = [](const Vector2& inputPosition)
@@ -66,7 +73,7 @@ void UIManager::Update()
             if (element != s_HoveredElement)
             {
                 if (s_HoveredElement)
-                    s_HoveredElement->LoseHover();
+                    s_HoveredElement->OnLoseHover();
                 s_HoveredElement = element;
             }
         };
@@ -190,6 +197,8 @@ void UIManager::ChangeFocus(const std::shared_ptr<UIElement>& newFocusedElement)
         return;
 
     if (s_FocusedElement)
-        s_FocusedElement->LoseFocus();
+        s_FocusedElement->OnLoseFocus();
     s_FocusedElement = newFocusedElement;
+    if (s_FocusedElement)
+        s_FocusedElement->OnGainFocus();
 }

@@ -62,6 +62,11 @@ void UITextField::SetBackgroundColor(const Vector4& color)
     m_BackgroundImage->Color = color;
 }
 
+void UITextField::SetCursorPosition(int position)
+{
+    MoveCursor(position - m_CursorPosition);
+}
+
 void UITextField::Done()
 {
     if (OnFinish)

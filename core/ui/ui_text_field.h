@@ -23,6 +23,8 @@ public:
     void SetTextColor(const Vector4& color);
     void SetBackgroundColor(const Vector4& color);
 
+    void SetCursorPosition(int position);
+
     void Done();
 
     std::function<void(const std::wstring&)> OnFinish;

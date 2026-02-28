@@ -9,6 +9,7 @@
 class UIElement;
 class UIImage;
 class UITextField;
+class UIText;
 
 class DeveloperConsole
 {
@@ -31,13 +32,20 @@ private:
 	std::shared_ptr<UIImage> m_Background;
 	std::shared_ptr<UITextField> m_TextField;
 
+	std::vector<std::shared_ptr<UIText>> m_HistoryTexts;
+	std::vector<std::wstring> m_CommandHistory;
+	int m_CurrentCommandHistoryIndex = -1;
+
 	bool m_Enabled = false;
 	bool m_WasEnabledLastFrame = false;
 
 	void CreateUI();
-	void UpdateUI() const;
+	void UpdateUI();
 
 	void HandleCommand(const std::wstring& command);
+	void AddUITextHistory(const std::wstring& text);
+	void AddCommandHistory(const std::wstring& text);
+	void RestoreFromHistory(bool up);
 };
 
 #endif // RENDER_ENGINE_DEVELOPER_CONSOLE_H

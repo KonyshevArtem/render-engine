@@ -1370,6 +1370,7 @@
 					"-lharfbuzz",
 					"-ltrex",
 					"-lStringEncodingUtil",
+					"-lStringSplit",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -1422,6 +1423,7 @@
 					"-lharfbuzz",
 					"-ltrex",
 					"-lStringEncodingUtil",
+					"-lStringSplit",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -1469,6 +1471,7 @@
 					"-lharfbuzz",
 					"-ltrex",
 					"-lStringEncodingUtil",
+					"-lStringSplit",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";
@@ -1515,6 +1518,7 @@
 					"-lharfbuzz",
 					"-ltrex",
 					"-lStringEncodingUtil",
+					"-lStringSplit",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.artemkonyshev.renderengine;
 				PRODUCT_NAME = "Render Engine";

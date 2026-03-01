@@ -18,8 +18,9 @@ class UIManager
 public:
     static void Initialize(float referenceHeight);
     static void Update();
-    static void DestroyUI();
+    static void DestroySceneUI();
     static void ResetFocus();
+    static void ChangeFocus(const std::shared_ptr<UIElement>& newFocusedElement);
 
     static inline const Vector2& GetReferenceSize()
     {
@@ -31,10 +32,13 @@ public:
         return s_Elements;
     }
 
-    static std::shared_ptr<UIElement> GetRoot();
+    static std::shared_ptr<UIElement> GetSceneUIRoot();
+    static std::shared_ptr<UIElement> GetPersistentUIRoot();
 
 private:
     static std::shared_ptr<UIElement> s_Root;
+    static std::shared_ptr<UIElement> s_SceneRoot;
+    static std::shared_ptr<UIElement> s_PersistentRoot;
     static std::vector<UIElement*> s_Elements;
     static std::shared_ptr<UIElement> s_FocusedElement;
     static std::shared_ptr<UIElement> s_HoveredElement;
@@ -43,8 +47,6 @@ private:
 
     static void CollectElements(UIElement& element);
     static std::shared_ptr<UIElement> HandleEvent(UIEventInfo& eventInfo, std::shared_ptr<UIElement>& element);
-
-    static void ChangeFocus(const std::shared_ptr<UIElement>& newFocusedElement);
 };
 
 #endif //RENDER_ENGINE_UI_MANAGER_H

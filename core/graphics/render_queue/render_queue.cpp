@@ -9,6 +9,7 @@
 #include "texture/texture.h"
 #include "drawable_geometry/drawable_geometry.h"
 #include "global_constants.h"
+#include "developer_console/developer_console.h"
 #include "debug.h"
 
 bool RenderQueue::EnableFrustumCulling = true;
@@ -160,6 +161,9 @@ namespace RenderQueueLocal
 
 RenderQueue::RenderQueue()
 {
+    DeveloperConsole::AddBoolCommand(L"FrustumCulling.Enabled", &EnableFrustumCulling);
+    DeveloperConsole::AddBoolCommand(L"FrustumCulling.Freeze", &FreezeFrustumCulling);
+
     if (!s_MatricesBuffer)
         s_MatricesBuffer = std::make_shared<RingBuffer>(sizeof(Matrix4x4) * 4096, "Render Queue Matrices Buffer");
 }

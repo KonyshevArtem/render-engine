@@ -187,6 +187,12 @@ namespace Input
         return CheckKeyState(key, KeyState::PRESSED);
     }
 
+    bool GetSpecialKeyDown(SpecialKey specialKey)
+    {
+        const auto& it = s_SpecialKeys.find(specialKey);
+        return it != s_SpecialKeys.end() && it->second.IsDown();
+    }
+
     bool GetTouch(uint64_t touchId, Touch& outTouch)
     {
         for (const Touch& touch : s_Touches)

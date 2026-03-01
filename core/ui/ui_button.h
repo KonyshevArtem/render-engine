@@ -22,8 +22,8 @@ public:
 
 protected:
     void HandleEvent(UIEventInfo& eventInfo) override;
-    void LoseFocus() override;
-    void LoseHover() override;
+    void OnLoseFocus() override;
+    void OnLoseHover() override;
 
 private:
     UIButton(const Vector2& position, const Vector2& size);

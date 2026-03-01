@@ -20,7 +20,8 @@ NSDictionary *m_SpecialKeys = NULL;
         @(NSLeftArrowFunctionKey): @9,
         @(NSRightArrowFunctionKey): @10,
         @(NSUpArrowFunctionKey): @11,
-        @(NSDownArrowFunctionKey): @12
+        @(NSDownArrowFunctionKey): @12,
+        @('~'): @13 // tilde
     };
 #endif
 }

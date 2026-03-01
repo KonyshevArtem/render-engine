@@ -25,7 +25,8 @@ UIText::UIText(const Vector2 &position, const Vector2& size, const std::wstring&
     m_Text(text),
     m_Font(font),
     m_HorizontalAlignment(HorizontalAlignment::LEFT),
-    m_VerticalAlignment(VerticalAlignment::TOP)
+    m_VerticalAlignment(VerticalAlignment::TOP),
+	m_TextSize(Vector2(0, 0))
 {
     m_Font->UpdateCharset(m_Text);
 }
@@ -75,6 +76,7 @@ void UIText::PrepareMesh()
     if (m_Text.empty())
     {
         m_Mesh = nullptr;
+        m_TextSize = Vector2(0, 0);
         return;
     }
 
@@ -92,19 +94,20 @@ void UIText::PrepareMesh()
 
     auto IsLineBreak = [](wchar_t c) { return c == '\n' || c == '\r'; };
 
-    float textHeight = common.LineHeight;
-    for (uint32_t i = 0; m_VerticalAlignment != VerticalAlignment::TOP && i < m_Text.size(); ++i)
+    m_TextSize.y = common.LineHeight;
+    for (uint32_t i = 0; i < m_Text.size(); ++i)
     {
         if (IsLineBreak(m_Text[i]))
-            textHeight += common.LineHeight;
+            m_TextSize.y += common.LineHeight;
     }
 
     int32_t yPosition = Size.y;
     if (m_VerticalAlignment == VerticalAlignment::MIDDLE)
-        yPosition = textHeight + (Size.y - textHeight) * 0.5f;
+        yPosition = m_TextSize.y + (Size.y - m_TextSize.y) * 0.5f;
     else if (m_VerticalAlignment == VerticalAlignment::BOTTOM)
-        yPosition = textHeight;
+        yPosition = m_TextSize.y;
 
+    m_TextSize.x = 0;
     for (uint32_t i = 0, begin = 0, length = 0; i < m_Text.size(); ++i)
     {
         wchar_t c = m_Text[i];
@@ -119,6 +122,7 @@ void UIText::PrepareMesh()
 
             float textWidth;
             std::vector<Char> chars = m_Font->ShapeText(std::span<wchar_t>(&m_Text[begin], length), m_FontSize, textWidth);
+            m_TextSize.x = std::max<float>(m_TextSize.x, textWidth);
 
             int32_t xPosition = 0;
             if (m_HorizontalAlignment == HorizontalAlignment::MIDDLE)
@@ -193,4 +197,9 @@ const std::shared_ptr<Font> UIText::GetFont() const
 uint16_t UIText::GetFontSize() const
 {
     return m_FontSize;
+}
+
+Vector2 UIText::GetTextSize() const
+{
+    return m_TextSize;
 }

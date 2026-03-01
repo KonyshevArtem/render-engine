@@ -21,7 +21,8 @@ namespace WinMain_Local
         {VK_LEFT, 9},
         {VK_RIGHT, 10},
         {VK_UP, 11},
-        {VK_DOWN, 12}
+        {VK_DOWN, 12},
+        {VK_OEM_3, 13}
     };
 }
 

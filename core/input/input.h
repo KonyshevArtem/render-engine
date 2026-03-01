@@ -50,7 +50,9 @@ namespace Input
         LEFT,
         RIGHT,
         UP,
-        DOWN
+        DOWN,
+
+        TILDE
     };
 
     struct KeyboardKeyState
@@ -91,6 +93,8 @@ namespace Input
     bool GetKeyDown(unsigned char key);
     bool GetKeyUp(unsigned char key);
     bool GetKey(unsigned char key);
+
+    bool GetSpecialKeyDown(SpecialKey specialKey);
 
     bool GetTouch(uint64_t touchId, Touch& outTouch);
     const std::vector<Touch>& GetTouches();

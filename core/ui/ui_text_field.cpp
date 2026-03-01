@@ -27,12 +27,14 @@ std::shared_ptr<UITextField> UITextField::Create(std::shared_ptr<UIElement> pare
     uiTextField->m_BackgroundImage = backgroundImage;
     uiTextField->m_CursorImage = cursorImage;
     uiTextField->m_Text = uiText;
+    uiTextField->m_Mask = mask;
 
     return uiTextField;
 }
 
 UITextField::UITextField(const Vector2& position, const Vector2& size) :
     UIElement(position, size),
+	KeepFocusOnDone(false),
     m_CursorPosition(0),
     m_IsCursorActive(false)
 {
@@ -46,6 +48,23 @@ const std::wstring& UITextField::GetText() const
 void UITextField::SetText(const std::wstring& text)
 {
     m_Text->SetText(text);
+    UpdateText(nullptr, 0);
+}
+
+void UITextField::SetTextColor(const Vector4& color)
+{
+    m_Text->Color = color;
+    m_CursorImage->Color = color;
+}
+
+void UITextField::SetBackgroundColor(const Vector4& color)
+{
+    m_BackgroundImage->Color = color;
+}
+
+void UITextField::SetCursorPosition(int position)
+{
+    MoveCursor(position - m_CursorPosition);
 }
 
 void UITextField::Done()
@@ -54,14 +73,20 @@ void UITextField::Done()
         OnFinish(m_Text->GetText());
 }
 
+void UITextField::Update()
+{
+	UIElement::Update();
+
+    m_BackgroundImage->Size = Size;
+    m_Text->Size = Size;
+    m_CursorImage->Size = Vector2(1, Size.y);
+    m_Mask->Size = Size;
+}
+
 void UITextField::HandleEvent(UIEventInfo& eventInfo)
 {
     if (eventInfo.Type == UIEventType::POINTER_DOWN || eventInfo.Type == UIEventType::POINTER_UP)
-    {
-        UINativeKeyboard::ShowKeyboard(std::static_pointer_cast<UITextField>(shared_from_this()));
-        SetCursorActive(true);
-        eventInfo.Consumed = true;
-    }
+	    eventInfo.Consumed = true;
 
     if (eventInfo.Type == UIEventType::SPECIAL_KEY)
     {
@@ -111,7 +136,7 @@ void UITextField::HandleEvent(UIEventInfo& eventInfo)
             Done();
 
             eventInfo.Consumed = true;
-            eventInfo.LoseFocus = true;
+            eventInfo.LoseFocus = !KeepFocusOnDone;
         }
         else
         {
@@ -121,7 +146,13 @@ void UITextField::HandleEvent(UIEventInfo& eventInfo)
     }
 }
 
-void UITextField::LoseFocus()
+void UITextField::OnGainFocus()
+{
+    UINativeKeyboard::ShowKeyboard(std::static_pointer_cast<UITextField>(shared_from_this()));
+    SetCursorActive(true);
+}
+
+void UITextField::OnLoseFocus()
 {
     SetCursorActive(false);
 }
@@ -134,9 +165,6 @@ void UITextField::SetCursorActive(bool isActive)
 
 void UITextField::MoveCursor(int offset)
 {
-    if (offset == 0)
-        return;
-
     m_CursorPosition = std::clamp(m_CursorPosition + offset, 0, static_cast<int>(m_Text->GetText().size()));
 
     float textWidth;
@@ -151,8 +179,12 @@ void UITextField::MoveCursor(int offset)
 void UITextField::UpdateText(const std::function<void(std::wstring &)>& updateFunc, int cursorOffset)
 {
     std::wstring text = m_Text->GetText();
-    updateFunc(text);
+    if (updateFunc)
+		updateFunc(text);
     m_Text->SetText(text);
 
     MoveCursor(cursorOffset);
+
+    if (OnTextChanged)
+        OnTextChanged(text);
 }

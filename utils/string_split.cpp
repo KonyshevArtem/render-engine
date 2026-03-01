@@ -14,4 +14,16 @@ namespace StringSplit
 
         return result;
     }
+
+    std::vector<std::wstring> Split(const std::wstring& string, wchar_t delimiter)
+    {
+        std::vector<std::wstring> result;
+
+        std::wstring word;
+        std::wstringstream stream(string);
+        while (std::getline(stream, word, delimiter))
+            result.emplace_back(word);
+
+        return result;
+    }
 }

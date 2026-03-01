@@ -8,6 +8,9 @@
 #include "editor/profiler/profiler.h"
 
 std::shared_ptr<UIElement> UIManager::s_Root;
+std::shared_ptr<UIElement> UIManager::s_SceneRoot;
+std::shared_ptr<UIElement> UIManager::s_PersistentRoot;
+
 std::vector<UIElement*> UIManager::s_Elements;
 std::shared_ptr<UIElement> UIManager::s_FocusedElement;
 std::shared_ptr<UIElement> UIManager::s_HoveredElement;
@@ -18,6 +21,11 @@ void UIManager::Initialize(float referenceHeight)
 {
     s_ReferenceSize = Vector2(0, referenceHeight);
     s_Root = std::make_shared<UIElement>(Vector2(0, 0), s_ReferenceSize);
+    s_SceneRoot = std::make_shared<UIElement>(Vector2(0, 0), s_ReferenceSize);
+    s_PersistentRoot = std::make_shared<UIElement>(Vector2(0, 0), s_ReferenceSize);
+
+    s_SceneRoot->SetParent(s_Root);
+    s_PersistentRoot->SetParent(s_Root);
 }
 
 void UIManager::Update()
@@ -26,13 +34,23 @@ void UIManager::Update()
 
     float aspect = static_cast<float>(Graphics::GetScreenWidth()) / static_cast<float>(Graphics::GetScreenHeight());
     s_ReferenceSize.x = aspect * s_ReferenceSize.y;
+
     s_Root->Size = s_ReferenceSize;
+    s_SceneRoot->Size = s_ReferenceSize;
+    s_PersistentRoot->Size = s_ReferenceSize;
 
     {
         Profiler::Marker collectMarker("Collect Elements");
 
         s_Elements.clear();
         CollectElements(*s_Root);
+    }
+
+    {
+        Profiler::Marker updateMarker("Update Elements");
+
+        for (UIElement* element : s_Elements)
+	        element->Update();
     }
 
     {
@@ -66,7 +84,7 @@ void UIManager::Update()
             if (element != s_HoveredElement)
             {
                 if (s_HoveredElement)
-                    s_HoveredElement->LoseHover();
+                    s_HoveredElement->OnLoseHover();
                 s_HoveredElement = element;
             }
         };
@@ -121,16 +139,18 @@ void UIManager::Update()
     }
 }
 
-void UIManager::DestroyUI()
+void UIManager::DestroySceneUI()
 {
-    s_FocusedElement = nullptr;
     s_Elements.clear();
 
-    std::vector<std::shared_ptr<UIElement>> children = std::move(s_Root->m_Children);
-    s_Root->m_Children.clear();
+    const std::vector<std::shared_ptr<UIElement>> sceneUI = std::move(s_SceneRoot->m_Children);
+    s_SceneRoot->m_Children.clear();
 
-    for (std::shared_ptr<UIElement>& child : children)
-        child->Destroy();
+    if (std::ranges::find(sceneUI, s_FocusedElement) != sceneUI.end())
+        s_FocusedElement = nullptr;
+
+    for (const std::shared_ptr<UIElement>& element : sceneUI)
+        element->Destroy();
 }
 
 void UIManager::ResetFocus()
@@ -138,9 +158,14 @@ void UIManager::ResetFocus()
     ChangeFocus(nullptr);
 }
 
-std::shared_ptr<UIElement> UIManager::GetRoot()
+std::shared_ptr<UIElement> UIManager::GetSceneUIRoot()
 {
-    return s_Root;
+    return s_SceneRoot;
+}
+
+std::shared_ptr<UIElement> UIManager::GetPersistentUIRoot()
+{
+    return s_PersistentRoot;
 }
 
 void UIManager::CollectElements(UIElement& element)
@@ -190,6 +215,8 @@ void UIManager::ChangeFocus(const std::shared_ptr<UIElement>& newFocusedElement)
         return;
 
     if (s_FocusedElement)
-        s_FocusedElement->LoseFocus();
+        s_FocusedElement->OnLoseFocus();
     s_FocusedElement = newFocusedElement;
+    if (s_FocusedElement)
+        s_FocusedElement->OnGainFocus();
 }

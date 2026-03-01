@@ -9,7 +9,18 @@ std::shared_ptr<UIMask> UIMask::Create(std::shared_ptr<UIElement> parent, const 
     std::shared_ptr<UIMaskStencil> openStencil = UIMaskStencil::Create(uiMask, Vector2(0, 0), size, true);
     std::shared_ptr<UIMaskStencil> closeStencil = UIMaskStencil::Create(uiMask, Vector2(0, 0), size, false);
 
+    uiMask->m_MaskStencils[0] = openStencil;
+    uiMask->m_MaskStencils[1] = closeStencil;
+
     return uiMask;
+}
+
+void UIMask::Update()
+{
+	UIElement::Update();
+
+    for (const std::shared_ptr<UIMaskStencil>& maskStencil : m_MaskStencils)
+        maskStencil->Size = Size;
 }
 
 void UIMask::AddChild(const std::shared_ptr<UIElement>& child)

@@ -74,7 +74,7 @@ void UIButton::HandleEvent(UIEventInfo& eventInfo)
     }
 }
 
-void UIButton::LoseFocus()
+void UIButton::OnLoseFocus()
 {
     if (m_IsPressed)
     {
@@ -83,7 +83,7 @@ void UIButton::LoseFocus()
     }
 }
 
-void UIButton::LoseHover()
+void UIButton::OnLoseHover()
 {
     if (m_IsHovered)
     {

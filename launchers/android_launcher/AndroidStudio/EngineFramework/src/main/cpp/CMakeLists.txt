@@ -16,7 +16,6 @@ set(
         GraphicsBackend
         ImGuiWrapper
         Math
-        OpenFBX
         RenderEngine
         RenderEngineLauncher
         Arguments
@@ -25,6 +24,7 @@ set(
         harfbuzz
         trex
         StringEncodingUtil
+        StringSplit
 )
 
 foreach (LIB ${DEPENDENCIES})

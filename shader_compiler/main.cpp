@@ -1,15 +1,29 @@
-#include "reflection.h"
+#include "reflection_spirv.h"
+#include "reflection_dxc.h"
 #include "serialization.h"
 #include "graphics_backend.h"
 #include "defines.h"
 #include "arguments.h"
 
-CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CComPtr<IDxcUtils>& pUtils, const CComPtr<IDxcCompiler3>& pCompiler,
-                               const CComPtr<IDxcIncludeHandler>& pIncludeHandler, GraphicsBackend backend,
-                               const std::vector<std::wstring>& defines, bool isVertexShader)
+#include <fstream>
+
+std::string ReadFile(const std::filesystem::path& path)
 {
-    std::wstring pathWString = hlslPath.parent_path().wstring();
-    std::wstring backendDefine = GetBackendDefine(backend);
+    std::ifstream file(path, std::ios::binary);
+	return std::string(
+        std::istreambuf_iterator<char>(file), 
+        std::istreambuf_iterator<char>());
+}
+
+CComPtr<IDxcResult> CompileDXC(const std::filesystem::path& hlslPath, const CComPtr<IDxcUtils>& pUtils, const CComPtr<IDxcCompiler3>& pCompiler,
+                               const CComPtr<IDxcIncludeHandler>& pIncludeHandler, GraphicsBackend backend,
+                               const std::vector<std::wstring>& defines, ShaderType shaderType)
+{
+    const std::wstring parentPath = hlslPath.parent_path().wstring();
+    const std::wstring hlslPathString = hlslPath.wstring();
+    const std::wstring backendDefine = GetBackendDefine(backend);
+    const std::wstring entryPoint = GetShaderEntryPointWString(shaderType);
+    const std::wstring profile = GetShaderProfile(shaderType);
 
     std::vector<LPCWSTR> vszArgs;
     if (backend != GRAPHICS_BACKEND_DX12)
@@ -19,14 +33,15 @@ CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CCom
         vszArgs.push_back(L"-Zi");
         vszArgs.push_back(L"-Qembed_debug");
     }
+
     vszArgs.push_back(L"-E");
-    vszArgs.push_back(isVertexShader ? L"vertexMain" : L"fragmentMain");
+    vszArgs.push_back(entryPoint.c_str());
     vszArgs.push_back(L"-T");
-    vszArgs.push_back(isVertexShader ? L"vs_6_0" : L"ps_6_0");
+    vszArgs.push_back(profile.c_str());
     vszArgs.push_back(L"-D");
     vszArgs.push_back(backendDefine.c_str());
     vszArgs.push_back(L"-I");
-    vszArgs.push_back(pathWString.c_str());
+    vszArgs.push_back(parentPath.c_str());
 
     for (const auto& define : defines)
     {
@@ -35,19 +50,16 @@ CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CCom
     }
 
     CComPtr<IDxcBlobEncoding> pSource = nullptr;
-    std::wstring hlslPathString = hlslPath.wstring();
     pUtils->LoadFile(hlslPathString.c_str(), nullptr, &pSource);
-    DxcBuffer Source{pSource->GetBufferPointer(), pSource->GetBufferSize(), DXC_CP_ACP};
+    const DxcBuffer source{pSource->GetBufferPointer(), pSource->GetBufferSize(), DXC_CP_ACP};
 
     CComPtr<IDxcResult> pResults;
-    pCompiler->Compile(&Source, vszArgs.data(), vszArgs.size(), pIncludeHandler, IID_PPV_ARGS(&pResults));
+    pCompiler->Compile(&source, vszArgs.data(), vszArgs.size(), pIncludeHandler, IID_PPV_ARGS(&pResults));
 
     CComPtr<IDxcBlobUtf8> pErrors = nullptr;
     pResults->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&pErrors), nullptr);
     if (pErrors != nullptr && pErrors->GetStringLength() != 0)
-    {
-        std::cout << "Warnings and Errors:\n" << pErrors->GetStringPointer() << std::endl;
-    }
+	    std::cout << "Warnings and Errors:\n" << pErrors->GetStringPointer() << std::endl;
 
     HRESULT hrStatus;
     pResults->GetStatus(&hrStatus);
@@ -60,7 +72,7 @@ CComPtr<IDxcResult> CompileDXC(const std::filesystem::path &hlslPath, const CCom
     return pResults;
 }
 
-spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, GraphicsBackend backend, bool isVertexShader)
+spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, GraphicsBackend backend, ShaderType shaderType)
 {
     CComPtr<IDxcBlob> pShader = nullptr;
     dxcResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), nullptr);
@@ -72,7 +84,8 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
     if (backend == GRAPHICS_BACKEND_OPENGL || isGLES)
     {
         auto glsl = new spirv_cross::CompilerGLSL(sourceBuffer, sourceSize);
-        glsl->build_combined_image_samplers();
+        glsl->build_dummy_sampler_for_combined_images();
+		glsl->build_combined_image_samplers();
 
         spirv_cross::CompilerGLSL::Options options;
         options.version = isGLES ? 320 : 460;
@@ -115,13 +128,13 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
     return nullptr;
 }
 
-void WriteShaderBinary(const std::filesystem::path &outputDirPath, const CComPtr<IDxcResult>& results, bool isVertexShader)
+void WriteShaderBinary(const std::filesystem::path& outputDirPath, const CComPtr<IDxcResult>& results, ShaderType shaderType)
 {
     CComPtr<IDxcBlob> pShader = nullptr;
     results->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), nullptr);
     if (pShader != nullptr)
     {
-        std::filesystem::path outputPath = outputDirPath / (isVertexShader ? "vs" : "ps");
+        const std::filesystem::path outputPath = outputDirPath / GetShaderOutputFilename(shaderType);
         std::filesystem::create_directories(outputPath.parent_path());
 
         FILE *fp = fopen(outputPath.string().c_str(), "wb");
@@ -130,12 +143,12 @@ void WriteShaderBinary(const std::filesystem::path &outputDirPath, const CComPtr
     }
 }
 
-void WriteShaderSource(const std::filesystem::path& outputDirPath, spirv_cross::Compiler* compiler, bool isVertexShader)
+void WriteShaderSource(const std::filesystem::path& outputDirPath, spirv_cross::Compiler* compiler, ShaderType shaderType)
 {
     if (!compiler)
         return;
 
-    std::filesystem::path outputPath = outputDirPath / (isVertexShader ? "vs" : "ps");
+    const std::filesystem::path outputPath = outputDirPath / GetShaderOutputFilename(shaderType);
     std::filesystem::create_directories(outputPath.parent_path());
 
     std::string shaderSource;
@@ -190,30 +203,31 @@ int main(int argc, char **argv)
     CComPtr<IDxcIncludeHandler> pIncludeHandler;
     pUtils->CreateDefaultIncludeHandler(&pIncludeHandler);
 
-    CComPtr<IDxcResult> vertexDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, defines, true);
-    CComPtr<IDxcResult> fragmentDXC = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, defines, false);
-
     Reflection reflection;
     std::filesystem::path outputDirPath = std::filesystem::path(Arguments::Get("-output")) / GetBackendLiteral(backend) / definesHash;
 
-    if (backend == GRAPHICS_BACKEND_DX12)
+    const std::string hlslText = ReadFile(hlslPath);
+    for (int i = 0; i < ShaderType::COUNT; ++i)
     {
-        WriteShaderBinary(outputDirPath, vertexDXC, true);
-        WriteShaderBinary(outputDirPath, fragmentDXC, false);
+        const ShaderType shaderType = static_cast<ShaderType>(i);
+        const std::string entryPoint = GetShaderEntryPoint(shaderType);
+        if (hlslText.find(entryPoint) == std::string::npos)
+            continue;
 
-        ExtractReflectionFromDXC(vertexDXC, pUtils, reflection);
-        ExtractReflectionFromDXC(fragmentDXC, pUtils, reflection);
-    }
-    else
-    {
-        spirv_cross::Compiler *vertexSPIRV = CompileSPIRV(vertexDXC, backend, true);
-        spirv_cross::Compiler *fragmentSPIRV = CompileSPIRV(fragmentDXC, backend, false);
+        CComPtr<IDxcResult> dxc = CompileDXC(hlslPath, pUtils, pCompiler, pIncludeHandler, backend, defines, shaderType);
 
-        WriteShaderSource(outputDirPath, vertexSPIRV, true);
-        WriteShaderSource(outputDirPath, fragmentSPIRV, false);
+        if (backend == GRAPHICS_BACKEND_DX12)
+        {
+            WriteShaderBinary(outputDirPath, dxc, shaderType);
+            ExtractReflectionFromDXC(dxc, pUtils, reflection);
+        }
+        else
+        {
+            spirv_cross::Compiler* SPIRV = CompileSPIRV(dxc, backend, shaderType);
 
-        ExtractReflectionFromSPIRV(vertexSPIRV, reflection, backend);
-        ExtractReflectionFromSPIRV(fragmentSPIRV, reflection, backend);
+            WriteShaderSource(outputDirPath, SPIRV, shaderType);
+            ExtractReflectionFromSPIRV(SPIRV, reflection, backend);
+        }
     }
 
     WriteReflection(outputDirPath, reflection);

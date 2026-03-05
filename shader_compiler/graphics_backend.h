@@ -13,6 +13,15 @@ enum GraphicsBackend : int
     GRAPHICS_BACKEND_MAX
 };
 
+enum ShaderType
+{
+	VERTEX_SHADER,
+    FRAGMENT_SHADER,
+    COMPUTE_SHADER,
+
+    COUNT
+};
+
 // Used to offset binding index for constant buffers on Metal because they use the same index space as other buffers
 // Must match with value in GraphicsBackendMetal
 constexpr uint32_t k_MetalConstantBufferBindingOffset = 8;
@@ -64,6 +73,58 @@ bool TryGetBackend(const std::string& backendString, GraphicsBackend& outBackend
     }
 
     return false;
+}
+
+std::string GetShaderEntryPoint(ShaderType type)
+{
+	switch (type)
+	{
+	case VERTEX_SHADER:
+        return "vertexMain";
+	case FRAGMENT_SHADER:
+        return "fragmentMain";
+	case COMPUTE_SHADER:
+        return "computeMain";
+	}
+}
+
+std::wstring GetShaderEntryPointWString(ShaderType type)
+{
+    switch (type)
+    {
+    case VERTEX_SHADER:
+        return L"vertexMain";
+    case FRAGMENT_SHADER:
+        return L"fragmentMain";
+    case COMPUTE_SHADER:
+        return L"computeMain";
+    }
+}
+
+std::wstring GetShaderProfile(ShaderType type)
+{
+    switch (type)
+    {
+    case VERTEX_SHADER:
+        return L"vs_6_0";
+    case FRAGMENT_SHADER:
+        return L"ps_6_0";
+    case COMPUTE_SHADER:
+        return L"cs_6_0";
+    }
+}
+
+std::string GetShaderOutputFilename(ShaderType type)
+{
+    switch (type)
+    {
+    case VERTEX_SHADER:
+        return "vs";
+    case FRAGMENT_SHADER:
+        return "ps";
+    case COMPUTE_SHADER:
+        return "cs";
+    }
 }
 
 #endif //RENDER_ENGINE_SHADER_COMPILER_GRAPHICS_BACKEND_H

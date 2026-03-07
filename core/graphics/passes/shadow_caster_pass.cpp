@@ -39,11 +39,28 @@ namespace ShadowCasterPassLocal
 
 ShadowCasterPass::ShadowCasterPass(int priority) :
     RenderPass(priority),
-    m_SpotLightShadowMapArray(Texture2DArray::Create(ShadowCasterPassLocal::k_SpotLightShadowMapSize, ShadowCasterPassLocal::k_SpotLightShadowMapSize, GlobalConstants::MaxSpotLightSources, TextureInternalFormat::DEPTH_32, true, true, "SpotLightShadowMap")),
-    m_DirectionLightShadowMap(Texture2DArray::Create(ShadowCasterPassLocal::k_DirLightShadowMapSize, ShadowCasterPassLocal::k_DirLightShadowMapSize, GlobalConstants::ShadowCascadeCount, TextureInternalFormat::DEPTH_32, true, true, "DirectionalShadowMap")),
-    m_PointLightShadowMap(Texture2DArray::Create(ShadowCasterPassLocal::k_PointLightShadowMapSize, ShadowCasterPassLocal::k_PointLightShadowMapSize, GlobalConstants::MaxPointLightSources * 6, TextureInternalFormat::DEPTH_32, true, true, "PointLightShadowMap")),
     m_ShadowsConstantBuffer(std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData"))
 {
+    Texture::Descriptor descriptor;
+    descriptor.Format = TextureInternalFormat::DEPTH_32;
+    descriptor.Linear = true;
+    descriptor.RenderTarget = true;
+
+    descriptor.Width = ShadowCasterPassLocal::k_SpotLightShadowMapSize;
+    descriptor.Height = ShadowCasterPassLocal::k_SpotLightShadowMapSize;
+    descriptor.Depth = GlobalConstants::MaxSpotLightSources;
+    m_SpotLightShadowMapArray = Texture2DArray::Create(descriptor, "SpotLightShadowMap");
+
+    descriptor.Width = ShadowCasterPassLocal::k_DirLightShadowMapSize;
+    descriptor.Height = ShadowCasterPassLocal::k_DirLightShadowMapSize;
+    descriptor.Depth = GlobalConstants::ShadowCascadeCount;
+    m_DirectionLightShadowMap = Texture2DArray::Create(descriptor, "DirectionalShadowMap");
+
+    descriptor.Width = ShadowCasterPassLocal::k_PointLightShadowMapSize;
+    descriptor.Height = ShadowCasterPassLocal::k_PointLightShadowMapSize;
+    descriptor.Depth = GlobalConstants::MaxPointLightSources;
+    m_PointLightShadowMap = Texture2DArray::Create(descriptor, "PointLightShadowMap");
+
     m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
     m_DirectionLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
     m_DirectionLightShadowMap->SetComparisonFunction(ComparisonFunction::LEQUAL);

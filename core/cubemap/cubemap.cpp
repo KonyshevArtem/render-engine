@@ -1,7 +1,7 @@
 #include "cubemap.h"
 
-Cubemap::Cubemap(TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, bool isLinear, const std::string& name) :
-        Texture(TextureType::TEXTURE_CUBEMAP, format, width, height, 0, mipLevels, isLinear, false, name)
+Cubemap::Cubemap(const Descriptor& descriptor, const std::string& name) :
+        Texture(TextureType::TEXTURE_CUBEMAP, descriptor, name)
 {
 }
 
@@ -33,7 +33,13 @@ std::shared_ptr<Cubemap> &Cubemap::Black()
 
 std::shared_ptr<Cubemap> Cubemap::CreateDefaultCubemap(uint8_t* pixels, uint8_t size, const std::string& name)
 {
-    auto cubemap = std::shared_ptr<Cubemap>(new Cubemap(TextureInternalFormat::RGBA8, 1, 1, 1, false, name));
+    Descriptor descriptor{};
+    descriptor.Width = 1;
+    descriptor.Height = 1;
+    descriptor.MipLevels = 1;
+    descriptor.Linear = false;
+
+    auto cubemap = std::shared_ptr<Cubemap>(new Cubemap(descriptor, name));
     for (int face = 0; face < static_cast<int>(CubemapFace::MAX); ++face)
     {
         cubemap->UploadPixels(pixels, size, 0, 0, static_cast<CubemapFace>(face));

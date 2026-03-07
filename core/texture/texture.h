@@ -18,6 +18,18 @@
 class Texture : public Resource
 {
 public:
+    struct Descriptor
+    {
+        uint32_t Width = 1;
+        uint32_t Height = 1;
+        uint32_t Depth = 1;
+        uint32_t MipLevels = 1;
+        TextureInternalFormat Format = TextureInternalFormat::RGBA8;
+        bool Linear = false;
+        bool RenderTarget = false;
+        bool ReadWrite = false;
+    };
+
     virtual ~Texture();
 
     void SetMinMipLevel(int minMipLevel);
@@ -58,7 +70,7 @@ public:
     Texture &operator=(Texture &&) = delete;
 
 protected:
-    Texture(TextureType textureType, TextureInternalFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, bool isLinear, bool isRenderTarget, const std::string& name);
+    Texture(TextureType textureType, const Descriptor& descriptor, const std::string& name);
 
     void UploadPixels(const void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace = CubemapFace::POSITIVE_X) const;
 

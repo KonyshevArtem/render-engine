@@ -20,14 +20,20 @@
 #include "graphics/context.h"
 #include "graphics/render_settings/render_settings.h"
 
-void CheckTexture(std::shared_ptr<Texture2D> &_texture)
+void CheckTexture(std::shared_ptr<Texture2D>& texture)
 {
     const int width  = Graphics::GetScreenWidth();
     const int height = Graphics::GetScreenHeight();
-    if (!_texture || _texture->GetWidth() != width || _texture->GetHeight() != height)
+    if (!texture || texture->GetWidth() != width || texture->GetHeight() != height)
     {
-        _texture = Texture2D::Create(width, height, TextureInternalFormat::RGBA8, false, true, "SilhouetteRT");
-        _texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
+        Texture::Descriptor descriptor;
+        descriptor.Width = width;
+        descriptor.Height = height;
+        descriptor.RenderTarget = true;
+        descriptor.Format = TextureInternalFormat::RGBA8;
+
+        texture = Texture2D::Create(descriptor, "SilhouetteRT");
+        texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
     }
 }
 

@@ -37,7 +37,14 @@ std::shared_ptr<Texture2D> Resources::Load(const std::filesystem::path& path, bo
 
     const TextureHeader& header = reader.GetHeader();
 
-    texture = std::shared_ptr<Texture2D>(new Texture2D(header.TextureFormat, header.Width, header.Height, header.MipCount, header.IsLinear, false, path.string()));
+    Texture::Descriptor descriptor;
+    descriptor.Width = header.Width;
+    descriptor.Height = header.Height;
+    descriptor.MipLevels = header.MipCount;
+    descriptor.Linear = header.IsLinear;
+    descriptor.Format = header.TextureFormat;
+
+    texture = std::shared_ptr<Texture2D>(new Texture2D(descriptor, path.string()));
     UploadPixels(*texture, 1, header.MipCount, reader);
     AddToCache(path, texture);
 
@@ -69,7 +76,14 @@ std::shared_ptr<Cubemap> Resources::Load(const std::filesystem::path& path, bool
         return nullptr;
     }
 
-    cubemap = std::shared_ptr<Cubemap>(new Cubemap(header.TextureFormat, header.Width, header.Height, header.MipCount, header.IsLinear, path.string()));
+    Texture::Descriptor descriptor;
+    descriptor.Width = header.Width;
+    descriptor.Height = header.Height;
+    descriptor.MipLevels = header.MipCount;
+    descriptor.Linear = header.IsLinear;
+    descriptor.Format = header.TextureFormat;
+
+    cubemap = std::shared_ptr<Cubemap>(new Cubemap(descriptor, path.string()));
     UploadPixels(*cubemap, facesCount, header.MipCount, reader);
     AddToCache(path, cubemap);
 

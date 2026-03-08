@@ -45,31 +45,6 @@ namespace SPIRVReflection_Local
 
         buffers[bufferName] = std::move(bufferDesc);
     }
-
-    //void HandleStructuredBufferReflection(const spirv_cross::Compiler* compiler, const spirv_cross::Resource& resource, std::unordered_map<std::string, BufferDescriptor>& buffers)
-    //{
-    //    const uint32_t bindPoint = GetSPIRVBindPoint(compiler, resource.id);
-    //    const std::string& bufferName = GetSPIRVResourceName(compiler, resource.id);
-    //
-    //    if (buffers.contains(bufferName))
-    //        return;
-    //
-    //    const spirv_cross::SPIRType &bufferType = compiler->get_type(resource.base_type_id);
-    //    const spirv_cross::SPIRType &structType = compiler->get_type(bufferType.member_types[0]);
-    //    uint32_t size = structType.basetype == spirv_cross::SPIRType::Struct ? static_cast<uint32_t>(compiler->get_declared_struct_size(structType)) : 0;
-    //
-    //    BufferDescriptor bufferDesc{bindPoint, size, BufferType::STRUCTURED_BUFFER};
-    //
-    //    for (uint32_t i = 0; i < structType.member_types.size(); ++i)
-    //    {
-    //        const std::string& varName = compiler->get_member_name(structType.self, i);
-    //        uint32_t varOffset = compiler->type_struct_member_offset(structType, i);
-    //
-    //        bufferDesc.Variables[varName] = varOffset;
-    //    }
-    //
-    //    buffers[bufferName] = std::move(bufferDesc);
-    //}
 }
 
 inline void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, Reflection& reflection, GraphicsBackend backend)
@@ -112,7 +87,7 @@ inline void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, Reflecti
         if (type.image.dim == spv::DimBuffer)
 	        WriteBufferDescriptor(compiler->get_name(image.id), SPIRVReflection_Local::GetSPIRVBindPoint(compiler, image.id), 0, BufferType::TYPED_BUFFER, true, reflection.Buffers);
         else
-            WriteTextureDescriptor(compiler->get_name(image.id), SPIRVReflection_Local::GetSPIRVBindPoint(compiler, image.id), false, reflection.Textures);
+            WriteTextureDescriptor(compiler->get_name(image.id), SPIRVReflection_Local::GetSPIRVBindPoint(compiler, image.id), true, reflection.Textures);
     }
 }
 

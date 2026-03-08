@@ -6,7 +6,7 @@
 class Texture2D: public Texture
 {
 public:
-	static std::shared_ptr<Texture2D> Create(const Descriptor& descriptor, const std::string& name);
+	static std::shared_ptr<Texture2D> Create(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name);
 	static const std::shared_ptr<Texture2D>& White();
 	static const std::shared_ptr<Texture2D>& Normal();
 	static const std::shared_ptr<Texture2D>& Null();
@@ -20,7 +20,7 @@ public:
     Texture2D &operator=(Texture2D &&) = delete;
 
 private:
-    Texture2D(const Descriptor& descriptor, const std::string& name);
+    Texture2D(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name);
 
     friend class Resources;
 };

@@ -20,6 +20,8 @@
 #include "types/graphics_backend_profiler_marker.h"
 #include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_program_descriptor.h"
+#include "types/graphics_backend_sampler_descriptor.h"
+#include "types/graphics_backend_texture_descriptor.h"
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 #include "arguments.h"
@@ -328,7 +330,7 @@ void GraphicsBackendOpenGL::FillImGuiFrameData(void *data)
 {
 }
 
-GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
+GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name)
 {
     InitContext();
 
@@ -338,53 +340,47 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(int width, int heigh
     const GLenum textureType = OpenGLHelpers::ToTextureType(type);
     glBindTexture(textureType, texture.Texture);
     glTexParameteri(textureType, GL_TEXTURE_BASE_LEVEL, 0);
-    glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, mipLevels - 1);
+    glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, descriptor.MipLevels - 1);
     if (!name.empty())
-    {
         glObjectLabel(GL_TEXTURE, texture.Texture, name.length(), name.c_str());
-    }
 
-    const GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(format, isLinear);
+    const GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(descriptor.Format, descriptor.Linear);
     if (IsTexture3D(type))
-    {
-        glTexStorage3D(textureType, mipLevels, internalFormat, width, height, depth);
-    }
+	    glTexStorage3D(textureType, descriptor.MipLevels, internalFormat, descriptor.Width, descriptor.Height, descriptor.Depth);
     else
-    {
-        glTexStorage2D(textureType, mipLevels, internalFormat, width, height);
-    }
+	    glTexStorage2D(textureType, descriptor.MipLevels, internalFormat, descriptor.Width, descriptor.Height);
 
     texture.Type = type;
-    texture.Format = format;
-    texture.IsLinear = isLinear;
+    texture.Format = descriptor.Format;
+    texture.IsLinear = descriptor.Linear;
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name)
+GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name)
 {
     InitContext();
 
     GraphicsBackendSampler sampler{};
     glGenSamplers(1, reinterpret_cast<GLuint *>(&sampler.Sampler));
 
-    GLint wrap = OpenGLHelpers::ToTextureWrapMode(wrapMode);
+    const GLint wrap = OpenGLHelpers::ToTextureWrapMode(descriptor.WrapMode);
     glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_S, wrap);
     glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_T, wrap);
     glSamplerParameteri(sampler.Sampler, GL_TEXTURE_WRAP_R, wrap);
 
     GLint minFilter, magFilter;
-    OpenGLHelpers::ToTextureFilteringMode(filteringMode, minFilter, magFilter);
+    OpenGLHelpers::ToTextureFilteringMode(descriptor.FilteringMode, minFilter, magFilter);
     glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_FILTER, minFilter);
     glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MAG_FILTER, magFilter);
 
-    if (borderColor != nullptr)
-        glSamplerParameterfv(sampler.Sampler, GL_TEXTURE_BORDER_COLOR, borderColor);
+    if (descriptor.HasBorderColor)
+        glSamplerParameterfv(sampler.Sampler, GL_TEXTURE_BORDER_COLOR, &descriptor.BorderColor[0]);
 
-    glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_LOD, minLod);
+    glSamplerParameteri(sampler.Sampler, GL_TEXTURE_MIN_LOD, descriptor.MinLod);
 
-    if (comparisonFunction != ComparisonFunction::NONE)
+    if (descriptor.ComparisonFunction != ComparisonFunction::NONE)
     {
-        const GLenum function = OpenGLHelpers::ToComparisonFunction(comparisonFunction);
+        const GLenum function = OpenGLHelpers::ToComparisonFunction(descriptor.ComparisonFunction);
         glSamplerParameteri(sampler.Sampler, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
         glSamplerParameteri(sampler.Sampler, GL_TEXTURE_COMPARE_FUNC, function);
     }

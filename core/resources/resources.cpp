@@ -37,7 +37,7 @@ std::shared_ptr<Texture2D> Resources::Load(const std::filesystem::path& path, bo
 
     const TextureHeader& header = reader.GetHeader();
 
-    Texture::Descriptor descriptor;
+    GraphicsBackendTextureDescriptor descriptor;
     descriptor.Width = header.Width;
     descriptor.Height = header.Height;
     descriptor.MipLevels = header.MipCount;
@@ -76,7 +76,7 @@ std::shared_ptr<Cubemap> Resources::Load(const std::filesystem::path& path, bool
         return nullptr;
     }
 
-    Texture::Descriptor descriptor;
+    GraphicsBackendTextureDescriptor descriptor;
     descriptor.Width = header.Width;
     descriptor.Height = header.Height;
     descriptor.MipLevels = header.MipCount;

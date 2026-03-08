@@ -1,6 +1,6 @@
 #include "cubemap.h"
 
-Cubemap::Cubemap(const Descriptor& descriptor, const std::string& name) :
+Cubemap::Cubemap(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name) :
         Texture(TextureType::TEXTURE_CUBEMAP, descriptor, name)
 {
 }
@@ -33,7 +33,7 @@ std::shared_ptr<Cubemap> &Cubemap::Black()
 
 std::shared_ptr<Cubemap> Cubemap::CreateDefaultCubemap(uint8_t* pixels, uint8_t size, const std::string& name)
 {
-    Descriptor descriptor{};
+    GraphicsBackendTextureDescriptor descriptor{};
     descriptor.Width = 1;
     descriptor.Height = 1;
     descriptor.MipLevels = 1;

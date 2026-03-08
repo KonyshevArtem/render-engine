@@ -7,7 +7,7 @@
 class Texture2DArray: public Texture
 {
 public:
-    static std::shared_ptr<Texture2DArray> Create(const Descriptor& descriptor, const std::string& name);
+    static std::shared_ptr<Texture2DArray> Create(const GraphicsBackendTextureDescriptor & descriptor, const std::string& name);
 
     ~Texture2DArray() override = default;
 
@@ -18,7 +18,7 @@ public:
     Texture2DArray &operator=(Texture2DArray &&)      = delete;
 
 private:
-    Texture2DArray(const Descriptor& descriptor, const std::string& name);
+    Texture2DArray(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name);
 };
 
 #endif //RENDER_ENGINE_TEXTURE_2D_ARRAY_H

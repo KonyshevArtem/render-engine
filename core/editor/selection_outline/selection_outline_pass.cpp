@@ -26,7 +26,7 @@ void CheckTexture(std::shared_ptr<Texture2D>& texture)
     const int height = Graphics::GetScreenHeight();
     if (!texture || texture->GetWidth() != width || texture->GetHeight() != height)
     {
-        Texture::Descriptor descriptor;
+        GraphicsBackendTextureDescriptor descriptor;
         descriptor.Width = width;
         descriptor.Height = height;
         descriptor.RenderTarget = true;

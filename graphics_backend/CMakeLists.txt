@@ -60,7 +60,9 @@ add_library(GraphicsBackend
         types/graphics_backend_depth_descriptor.h
         types/graphics_backend_rasterizer_descriptor.h
         types/graphics_backend_blend_descriptor.h
-        enums/color_write_mask.h)
+        enums/color_write_mask.h
+        types/graphics_backend_texture_descriptor.h
+        types/graphics_backend_sampler_descriptor.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

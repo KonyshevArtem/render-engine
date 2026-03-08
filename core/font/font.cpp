@@ -25,7 +25,7 @@ void Font::Prepare(uint16_t fontSize)
 
     const Trex::Atlas::Bitmap& bitmap = trexAtlas->GetBitmap();
 
-    Texture::Descriptor descriptor;
+    GraphicsBackendTextureDescriptor descriptor;
     descriptor.Width = bitmap.Width();
     descriptor.Height = bitmap.Height();
     descriptor.Linear = true;

@@ -175,7 +175,7 @@ namespace Graphics
             {
                 const TextureInternalFormat depthFormat = GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL ? TextureInternalFormat::DEPTH_32_STENCIL_8 : TextureInternalFormat::DEPTH_24_STENCIL_8;
 
-                Texture::Descriptor descriptor;
+                GraphicsBackendTextureDescriptor descriptor;
                 descriptor.Width = width;
                 descriptor.Height = height;
                 descriptor.Linear = true;

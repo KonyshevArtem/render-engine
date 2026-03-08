@@ -1,11 +1,11 @@
 #include "texture_2d.h"
 
-Texture2D::Texture2D(const Descriptor& descriptor, const std::string& name) :
+Texture2D::Texture2D(const GraphicsBackendTextureDescriptor & descriptor, const std::string& name) :
         Texture(TextureType::TEXTURE_2D, descriptor, name)
 {
 }
 
-std::shared_ptr<Texture2D> Texture2D::Create(const Descriptor& descriptor, const std::string& name)
+std::shared_ptr<Texture2D> Texture2D::Create(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name)
 {
     return std::shared_ptr<Texture2D>(new Texture2D(descriptor, name));
 }
@@ -16,7 +16,7 @@ const std::shared_ptr<Texture2D> &Texture2D::White()
 
     if (white == nullptr)
     {
-        Descriptor descriptor;
+        GraphicsBackendTextureDescriptor descriptor;
         descriptor.Width = 1;
         descriptor.Height = 1;
         descriptor.MipLevels = 1;
@@ -38,7 +38,7 @@ const std::shared_ptr<Texture2D> &Texture2D::Normal()
 
     if (normal == nullptr)
     {
-        Descriptor descriptor;
+        GraphicsBackendTextureDescriptor descriptor;
         descriptor.Width = 1;
         descriptor.Height = 1;
         descriptor.MipLevels = 1;

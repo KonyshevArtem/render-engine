@@ -69,9 +69,12 @@ void ShadowMapDebugPass::DrawOverlay(const Context& ctx)
         float Padding0;
     };
 
+    GraphicsBackendSamplerDescriptor samplerDescriptor{};
+    samplerDescriptor.FilteringMode = TextureFilteringMode::NEAREST;
+
     static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowMapOverlay", {});
     static std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(DebugData), "ShadowMapOverlayData");
-    static GraphicsBackendSampler sampler = GraphicsBackend::Current()->CreateSampler(TextureWrapMode::CLAMP_TO_EDGE, TextureFilteringMode::NEAREST, nullptr, 0, ComparisonFunction::NONE, "ShadowMap Overlay Sampler");
+    static GraphicsBackendSampler sampler = GraphicsBackend::Current()->CreateSampler(samplerDescriptor, "ShadowMap Overlay Sampler");
 
     if (DrawShadowMapOverlay)
     {

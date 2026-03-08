@@ -18,7 +18,7 @@ public:
     Cubemap &operator=(Cubemap &&) = delete;
 
 private:
-    Cubemap(const Descriptor& descriptor, const std::string& name);
+    Cubemap(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name);
 
     static std::shared_ptr<Cubemap> CreateDefaultCubemap(uint8_t* pixels, uint8_t size, const std::string& name);
 

@@ -10,6 +10,8 @@
 #include "enums/comparison_function.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
+#include "types/graphics_backend_texture_descriptor.h"
+#include "types/graphics_backend_sampler_descriptor.h"
 #include "vector4/vector4.h"
 #include "resources/resource.h"
 
@@ -18,18 +20,6 @@
 class Texture : public Resource
 {
 public:
-    struct Descriptor
-    {
-        uint32_t Width = 1;
-        uint32_t Height = 1;
-        uint32_t Depth = 1;
-        uint32_t MipLevels = 1;
-        TextureInternalFormat Format = TextureInternalFormat::RGBA8;
-        bool Linear = false;
-        bool RenderTarget = false;
-        bool ReadWrite = false;
-    };
-
     virtual ~Texture();
 
     void SetMinMipLevel(int minMipLevel);
@@ -43,24 +33,21 @@ public:
         return m_Texture[m_DoubleBuffered ? GraphicsBackend::GetInFlightFrameIndex() : 0];
     }
 
-    inline const GraphicsBackendSampler& GetBackendSampler() const
-    {
-        return m_Sampler;
-    }
+    const GraphicsBackendSampler& GetBackendSampler();
 
     inline uint32_t GetWidth() const
     {
-        return m_Width;
+        return m_TextureDescriptor.Width;
     }
 
     inline uint32_t GetHeight() const
     {
-        return m_Height;
+        return m_TextureDescriptor.Height;
     }
 
     inline uint32_t GetMipLevels() const
     {
-        return m_MipLevels;
+        return m_TextureDescriptor.MipLevels;
     }
 
     Texture(const Texture &) = delete;
@@ -70,28 +57,23 @@ public:
     Texture &operator=(Texture &&) = delete;
 
 protected:
-    Texture(TextureType textureType, const Descriptor& descriptor, const std::string& name);
+    Texture(TextureType textureType, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name);
 
     void UploadPixels(const void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace = CubemapFace::POSITIVE_X) const;
 
 private:
-    void RecreateSampler(bool deleteOld);
+    void RecreateSampler();
 
-    uint32_t m_Width = 0;
-    uint32_t m_Height = 0;
-    uint32_t m_Depth = 0;
+    GraphicsBackendTextureDescriptor m_TextureDescriptor;
     GraphicsBackendTexture m_Texture[GraphicsBackend::GetMaxFramesInFlight()];
     GraphicsBackendSampler m_Sampler{};
     TextureType m_TextureType = TextureType::TEXTURE_2D;
-    uint32_t m_MipLevels = 0;
     std::string m_SamplerName;
 
-    TextureWrapMode m_WrapMode;
-    TextureFilteringMode m_FilteringMode;
-    ComparisonFunction m_ComparisonFunction;
-    Vector4 m_BorderColor;
-    int m_MinLod;
+    GraphicsBackendSamplerDescriptor m_SamplerDescriptor;
     bool m_DoubleBuffered;
+    bool m_SamplerDirty;
+    bool m_HasSampler;
 
     friend class Resources;
     friend class Font;

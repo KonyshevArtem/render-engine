@@ -20,6 +20,8 @@
 #include "types/graphics_backend_profiler_marker.h"
 #include "types/graphics_backend_sampler_info.h"
 #include "types/graphics_backend_program_descriptor.h"
+#include "types/graphics_backend_sampler_descriptor.h"
+#include "types/graphics_backend_texture_descriptor.h"
 #include "helpers/dx12_helpers.h"
 #include "math_utils.h"
 #include "debug.h"
@@ -856,17 +858,17 @@ void GraphicsBackendDX12::FillImGuiFrameData(void *data)
     imguiData->CommandList = frameData.RenderCommandList->List;
 }
 
-GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
+GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name)
 {
-    DXGI_FORMAT dxResourceFormat = DX12Helpers::ToTextureInternalFormat(format, isLinear);
+    DXGI_FORMAT dxResourceFormat = DX12Helpers::ToTextureInternalFormat(descriptor.Format, descriptor.Linear);
     DXGI_FORMAT dxViewFormat = dxResourceFormat;
 
     D3D12_CLEAR_VALUE clearValue;
     D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
     D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
-    if (isRenderTarget)
+    if (descriptor.RenderTarget)
     {
-        if (IsDepthFormat(format))
+        if (IsDepthFormat(descriptor.Format))
         {
             flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
             state = D3D12_RESOURCE_STATE_DEPTH_WRITE;
@@ -900,26 +902,26 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(int width, int height,
             break;
     }
 
-    depth = max(depth, 1);
+    uint32_t depth = max(descriptor.Depth, 1);
     D3D12_RESOURCE_DESC desc;
     switch (type)
     {
         case TextureType::TEXTURE_1D:
         case TextureType::TEXTURE_1D_ARRAY:
-            desc = CD3DX12_RESOURCE_DESC::Tex1D(dxResourceFormat, width, depth, mipLevels, flags);
+            desc = CD3DX12_RESOURCE_DESC::Tex1D(dxResourceFormat, descriptor.Width, depth, descriptor.MipLevels, flags);
             break;
         case TextureType::TEXTURE_2D:
         case TextureType::TEXTURE_2D_MULTISAMPLE:
         case TextureType::TEXTURE_2D_ARRAY:
         case TextureType::TEXTURE_2D_MULTISAMPLE_ARRAY:
-            desc = CD3DX12_RESOURCE_DESC::Tex2D(dxResourceFormat, width, height, depth, mipLevels, 1, 0, flags);
+            desc = CD3DX12_RESOURCE_DESC::Tex2D(dxResourceFormat, descriptor.Width, descriptor.Height, depth, descriptor.MipLevels, 1, 0, flags);
             break;
         case TextureType::TEXTURE_CUBEMAP:
         case TextureType::TEXTURE_CUBEMAP_ARRAY:
-            desc = CD3DX12_RESOURCE_DESC::Tex2D(dxResourceFormat, width, height, 6 * depth, mipLevels, 1, 0, flags);
+            desc = CD3DX12_RESOURCE_DESC::Tex2D(dxResourceFormat, descriptor.Width, descriptor.Height, 6 * depth, descriptor.MipLevels, 1, 0, flags);
             break;
         case TextureType::TEXTURE_3D:
-            desc = CD3DX12_RESOURCE_DESC::Tex3D(dxResourceFormat, width, height, depth, mipLevels, flags);
+            desc = CD3DX12_RESOURCE_DESC::Tex3D(dxResourceFormat, descriptor.Width, descriptor.Height, depth, descriptor.MipLevels, flags);
             break;
         case TextureType::TEXTURE_RECTANGLE:
         case TextureType::TEXTURE_BUFFER:
@@ -929,7 +931,7 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(int width, int height,
     D3D12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
     ID3D12Resource* dxTexture;
-    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, state, isRenderTarget ? &clearValue : nullptr, IID_PPV_ARGS(&dxTexture)));
+    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, state, descriptor.RenderTarget ? &clearValue : nullptr, IID_PPV_ARGS(&dxTexture)));
 
     DX12Local::SetObjectName(dxTexture, name);
 
@@ -978,32 +980,27 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(int width, int height,
 
     GraphicsBackendTexture texture;
     texture.Texture = reinterpret_cast<uint64_t>(resourceData);
-    texture.Format = format;
+    texture.Format = descriptor.Format;
     texture.Type = type;
-    texture.IsLinear = isLinear;
+    texture.IsLinear = descriptor.Linear;
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name)
+GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name)
 {
-    D3D12_TEXTURE_ADDRESS_MODE dxWrapMode = DX12Helpers::ToTextureWrapMode(wrapMode);
+    const D3D12_TEXTURE_ADDRESS_MODE dxWrapMode = DX12Helpers::ToTextureWrapMode(descriptor.WrapMode);
 
     D3D12_SAMPLER_DESC samplerDesc{};
-    samplerDesc.Filter = DX12Helpers::ToTextureFilterMode(filteringMode, comparisonFunction);
+    samplerDesc.Filter = DX12Helpers::ToTextureFilterMode(descriptor.FilteringMode, descriptor.ComparisonFunction);
     samplerDesc.AddressU = dxWrapMode;
     samplerDesc.AddressV = dxWrapMode;
     samplerDesc.AddressW = dxWrapMode;
     samplerDesc.MipLODBias = 0;
     samplerDesc.MaxAnisotropy = 1;
-    samplerDesc.ComparisonFunc = DX12Helpers::ToComparisonFunction(comparisonFunction);
-    if (borderColor)
-    {
-        samplerDesc.BorderColor[0] = borderColor[0];
-        samplerDesc.BorderColor[1] = borderColor[1];
-        samplerDesc.BorderColor[2] = borderColor[2];
-        samplerDesc.BorderColor[3] = borderColor[3];
-    }
-    samplerDesc.MinLOD = minLod;
+    samplerDesc.ComparisonFunc = DX12Helpers::ToComparisonFunction(descriptor.ComparisonFunction);
+    if (descriptor.HasBorderColor)
+	    memcpy(&samplerDesc.BorderColor[0], &descriptor.BorderColor[0], 4 * sizeof(float));
+    samplerDesc.MinLOD = descriptor.MinLod;
     samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
 
     DX12Local::SamplerData* samplerData = new DX12Local::SamplerData();

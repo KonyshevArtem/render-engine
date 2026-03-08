@@ -41,7 +41,7 @@ ShadowCasterPass::ShadowCasterPass(int priority) :
     RenderPass(priority),
     m_ShadowsConstantBuffer(std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData"))
 {
-    Texture::Descriptor descriptor;
+    GraphicsBackendTextureDescriptor descriptor;
     descriptor.Format = TextureInternalFormat::DEPTH_32;
     descriptor.Linear = true;
     descriptor.RenderTarget = true;

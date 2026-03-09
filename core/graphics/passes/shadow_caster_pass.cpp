@@ -58,7 +58,7 @@ ShadowCasterPass::ShadowCasterPass(int priority) :
 
     descriptor.Width = ShadowCasterPassLocal::k_PointLightShadowMapSize;
     descriptor.Height = ShadowCasterPassLocal::k_PointLightShadowMapSize;
-    descriptor.Depth = GlobalConstants::MaxPointLightSources;
+    descriptor.Depth = GlobalConstants::MaxPointLightSources * 6;
     m_PointLightShadowMap = Texture2DArray::Create(descriptor, "PointLightShadowMap");
 
     m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);

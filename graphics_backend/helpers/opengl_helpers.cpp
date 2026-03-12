@@ -78,35 +78,16 @@ void OpenGLHelpers::InitBindings()
 #endif
 }
 
-std::string OpenGLHelpers::GetShaderTypeName(ShaderType shaderType)
-{
-    switch (shaderType)
-    {
-        case ShaderType::VERTEX_SHADER:
-            return "Vertex";
-        case ShaderType::FRAGMENT_SHADER:
-            return "Fragment";
-        case ShaderType::GEOMETRY_SHADER:
-            return "Geometry";
-        default:
-            return "Unknown";
-    }
-}
-
 GLuint OpenGLHelpers::ToShaderType(ShaderType shaderType)
 {
     switch (shaderType)
     {
         case ShaderType::VERTEX_SHADER:
             return GL_VERTEX_SHADER;
-        case ShaderType::TESS_CONTROL_SHADER:
-            return GL_TESS_CONTROL_SHADER;
-        case ShaderType::TESS_EVALUATION_SHADER:
-            return GL_TESS_EVALUATION_SHADER;
-        case ShaderType::GEOMETRY_SHADER:
-            return GL_GEOMETRY_SHADER;
         case ShaderType::FRAGMENT_SHADER:
             return GL_FRAGMENT_SHADER;
+	    case ShaderType::COMPUTE_SHADER:
+	        return GL_COMPUTE_SHADER;
     }
 }
 

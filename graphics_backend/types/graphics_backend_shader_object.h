@@ -6,6 +6,9 @@
 
 class GraphicsBackendShaderObject
 {
+public:
+    ShaderType Type;
+
 private:
     uint64_t ShaderObject;
 

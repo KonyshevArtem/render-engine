@@ -1427,6 +1427,7 @@ GraphicsBackendShaderObject GraphicsBackendDX12::CompileShader(ShaderType shader
 
     GraphicsBackendShaderObject shader{};
     shader.ShaderObject = reinterpret_cast<uint64_t>(blob);
+    shader.Type = shaderType;
     return shader;
 }
 
@@ -1439,6 +1440,7 @@ GraphicsBackendShaderObject GraphicsBackendDX12::CompileShaderBinary(ShaderType 
 
     GraphicsBackendShaderObject shader{};
     shader.ShaderObject = reinterpret_cast<uint64_t>(blob);
+    shader.Type = shaderType;
     return shader;
 }
 
@@ -1621,6 +1623,10 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
 
     frameData.BoundResourceDescriptorHeap.AdvanceIndex(DX12Local::k_ResourceDescriptorHeapAdvance);
     frameData.BoundSamplerDescriptorHeap.AdvanceIndex(DX12Local::k_SamplerDescriptorHeapAdvance);
+}
+
+void GraphicsBackendDX12::Dispatch(uint32_t x, uint32_t y, uint32_t z)
+{
 }
 
 void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& source, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)

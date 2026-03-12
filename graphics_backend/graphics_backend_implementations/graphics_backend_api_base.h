@@ -114,6 +114,8 @@ public:
     virtual void DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType) = 0;
     virtual void DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount) = 0;
 
+    virtual void Dispatch(uint32_t x, uint32_t y, uint32_t z) = 0;
+
     virtual void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) = 0;
 
     virtual void PushDebugGroup(const std::string& name, GPUQueue queue) = 0;
@@ -176,6 +178,8 @@ public:
     static size_t GetStencilDescriptorHash(const GraphicsBackendStencilDescriptor& stencilDescriptor);
     static size_t GetRasterizerDescriptorHash(const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor);
     static size_t GetBlendDescriptorHash(const GraphicsBackendBlendDescriptor& blendDescriptor);
+
+    static std::string GetShaderTypeName(ShaderType shaderType);
 
 protected:
     bool IsMainThread();

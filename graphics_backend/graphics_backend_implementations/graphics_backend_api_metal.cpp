@@ -482,6 +482,7 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
 
     GraphicsBackendShaderObject shaderObject{};
     shaderObject.ShaderObject = reinterpret_cast<uint64_t>(library);
+    shaderObject.Type = shaderType;
     return shaderObject;
 }
 

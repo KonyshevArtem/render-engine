@@ -75,27 +75,38 @@ Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders,
     m_Samplers(std::move(samplers)),
     m_Buffers(std::move(buffers))
 {
+    m_IsComputeShader = m_Shaders.size() == 1 && m_Shaders[0].Type == ShaderType::COMPUTE_SHADER;
 }
 
 Shader::~Shader()
 {
-    for (auto &pair : m_Programs)
-    {
-        GraphicsBackend::Current()->DeleteProgram(pair.second);
-    }
+    for (const auto& pair : m_Programs)
+	    GraphicsBackend::Current()->DeleteProgram(pair.second);
 
-    for (auto &shader : m_Shaders)
-    {
-        GraphicsBackend::Current()->DeleteShader(shader);
-    }
+    for (const auto& shader : m_Shaders)
+	    GraphicsBackend::Current()->DeleteShader(shader);
+}
+
+const GraphicsBackendProgram& Shader::GetProgram()
+{
+    return GetOrCreateComputeProgram();
 }
 
 const GraphicsBackendProgram& Shader::GetProgram(const std::shared_ptr<DrawableGeometry>& geometry)
 {
+    if (m_IsComputeShader)
+        return GetOrCreateComputeProgram();
     return GetProgram(geometry->GetVertexAttributes(), geometry->GetPrimitiveType());
 }
 
-const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
+const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType)
+{
+    if (m_IsComputeShader)
+        return GetOrCreateComputeProgram();
+    return GetOrCreateRenderProgram(vertexAttributes, primitiveType);
+}
+
+const GraphicsBackendProgram& Shader::GetOrCreateRenderProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType)
 {
     bool isLinear;
     const TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
@@ -110,7 +121,7 @@ const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexA
 
     const auto it = m_Programs.find(hash);
     if (it != m_Programs.end())
-	    return it->second;
+        return it->second;
 
     GraphicsBackendColorAttachmentDescriptor colorAttachmentDescriptor{};
     colorAttachmentDescriptor.Format = colorTargetFormat;
@@ -134,4 +145,21 @@ const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexA
     const GraphicsBackendProgram program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
     m_Programs[hash] = program;
     return m_Programs[hash];
+}
+
+const GraphicsBackendProgram& Shader::GetOrCreateComputeProgram()
+{
+    if (!m_Programs.empty())
+        return m_Programs.begin()->second;
+
+    GraphicsBackendProgramDescriptor programDescriptor{};
+    programDescriptor.Shaders = &m_Shaders;
+    programDescriptor.Textures = &m_Textures;
+    programDescriptor.Samplers = &m_Samplers;
+    programDescriptor.Buffers = &m_Buffers;
+    programDescriptor.Name = &m_Name;
+
+    const GraphicsBackendProgram program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
+    m_Programs[0] = program;
+    return m_Programs[0];
 }

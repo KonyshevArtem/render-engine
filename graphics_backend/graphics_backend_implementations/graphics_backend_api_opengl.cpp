@@ -688,6 +688,7 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
 
     GraphicsBackendShaderObject shaderObject{};
     shaderObject.ShaderObject = glCreateShader(OpenGLHelpers::ToShaderType(shaderType));
+    shaderObject.Type = shaderType;
 
     auto *sourceChar = source.c_str();
     glShaderSource(shaderObject.ShaderObject, 1, &sourceChar, nullptr);
@@ -708,7 +709,7 @@ GraphicsBackendShaderObject GraphicsBackendOpenGL::CompileShader(ShaderType shad
         std::string logMsg(infoLogLength + 1, ' ');
         glGetShaderInfoLog(shaderObject.ShaderObject, infoLogLength, nullptr, &logMsg[0]);
 
-        throw std::runtime_error(OpenGLHelpers::GetShaderTypeName(shaderType) + " shader compilation failed with errors:\n" + logMsg);
+        throw std::runtime_error(GetShaderTypeName(shaderType) + " shader compilation failed with errors:\n" + logMsg);
     }
 
     return shaderObject;
@@ -727,9 +728,9 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
 
     const std::vector<GraphicsBackendShaderObject>& shaders = *descriptor.Shaders;
 
-    for (auto &shader : shaders)
+    for (const GraphicsBackendShaderObject& shader : shaders)
     {
-        bool isShader = glIsShader(shader.ShaderObject);
+        const bool isShader = glIsShader(shader.ShaderObject);
         if (isShader)
             glAttachShader(glProgram, shader.ShaderObject);
 
@@ -737,9 +738,9 @@ GraphicsBackendProgram GraphicsBackendOpenGL::CreateProgram(const GraphicsBacken
 
     glLinkProgram(glProgram);
 
-    for (auto &shader : shaders)
+    for (const GraphicsBackendShaderObject& shader : shaders)
     {
-        bool isShader = glIsShader(shader.ShaderObject);
+        const bool isShader = glIsShader(shader.ShaderObject);
         if (isShader)
             glDetachShader(glProgram, shader.ShaderObject);
 
@@ -900,6 +901,11 @@ void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry 
     OpenGLLocal::UpdateStencil();
     BindGeometry(geometry);
     glDrawElementsInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr, instanceCount);
+}
+
+void GraphicsBackendOpenGL::Dispatch(uint32_t x, uint32_t y, uint32_t z)
+{
+    glDispatchCompute(x, y, z);
 }
 
 void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)

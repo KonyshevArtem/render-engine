@@ -501,3 +501,18 @@ size_t GraphicsBackendBase::GetBlendDescriptorHash(const GraphicsBackendBlendDes
     hash = Hash::Combine(hash, std::hash<ColorWriteMask>{}(blendDescriptor.ColorWriteMask));
     return hash;
 }
+
+std::string GraphicsBackendBase::GetShaderTypeName(ShaderType shaderType)
+{
+    switch (shaderType)
+    {
+    case ShaderType::VERTEX_SHADER:
+        return "vs";
+    case ShaderType::FRAGMENT_SHADER:
+        return "ps";
+    case ShaderType::COMPUTE_SHADER:
+        return "cs";
+    default:
+        return "Unknown";
+    }
+}

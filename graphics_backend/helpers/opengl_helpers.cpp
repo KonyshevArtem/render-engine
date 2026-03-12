@@ -674,12 +674,73 @@ GLenum OpenGLHelpers::ToTextureDataType(TextureInternalFormat format)
 {
     switch (format)
     {
+		case TextureInternalFormat::R8:
+        case TextureInternalFormat::RG8:
+        case TextureInternalFormat::RGB8:
+        case TextureInternalFormat::RGBA8:
+        case TextureInternalFormat::BGRA8:
+			return GL_UNSIGNED_BYTE;
+
+        case TextureInternalFormat::R8_SNORM:
+        case TextureInternalFormat::RG8_SNORM:
+        case TextureInternalFormat::RGB8_SNORM:
+		case TextureInternalFormat::RGBA8_SNORM:
+        case TextureInternalFormat::BGRA8_SNORM:
+            return GL_BYTE;
+
+        case TextureInternalFormat::R16:
+		case TextureInternalFormat::RG16:
+        case TextureInternalFormat::RGB16:
+        case TextureInternalFormat::RGBA16:
+            return GL_UNSIGNED_SHORT;
+
+        case TextureInternalFormat::R16_SNORM:
+        case TextureInternalFormat::RG16_SNORM:
+            return GL_SHORT;
+
+        case TextureInternalFormat::R16F:
+        case TextureInternalFormat::RG16F:
+        case TextureInternalFormat::RGB16F:
+        case TextureInternalFormat::RGBA16F:
+        case TextureInternalFormat::R32F:
+        case TextureInternalFormat::RG32F:
+        case TextureInternalFormat::RGB32F:
+		case TextureInternalFormat::RGBA32F:
         case TextureInternalFormat::DEPTH_32:
         case TextureInternalFormat::DEPTH_24:
         case TextureInternalFormat::DEPTH_16:
         case TextureInternalFormat::DEPTH_32_STENCIL_8:
         case TextureInternalFormat::DEPTH_24_STENCIL_8:
             return GL_FLOAT;
+
+        case TextureInternalFormat::R8UI:
+        case TextureInternalFormat::R16UI:
+        case TextureInternalFormat::R32UI:
+        case TextureInternalFormat::RG8UI:
+        case TextureInternalFormat::RG16UI:
+        case TextureInternalFormat::RG32UI:
+        case TextureInternalFormat::RGB8UI:
+        case TextureInternalFormat::RGB16UI:
+        case TextureInternalFormat::RGB32UI:
+        case TextureInternalFormat::RGBA8UI:
+        case TextureInternalFormat::RGBA16UI:
+        case TextureInternalFormat::RGBA32UI:
+            return GL_UNSIGNED_INT;
+        
+        case TextureInternalFormat::R8I:
+        case TextureInternalFormat::R16I:
+        case TextureInternalFormat::R32I:
+        case TextureInternalFormat::RG8I:
+        case TextureInternalFormat::RG16I:
+        case TextureInternalFormat::RG32I:
+        case TextureInternalFormat::RGB8I:
+        case TextureInternalFormat::RGB16I:
+        case TextureInternalFormat::RGB32I:
+        case TextureInternalFormat::RGBA8I:
+        case TextureInternalFormat::RGBA16I:
+        case TextureInternalFormat::RGBA32I:
+            return GL_INT;
+
         default:
             return GL_UNSIGNED_BYTE;
     }

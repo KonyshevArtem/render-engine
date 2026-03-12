@@ -4,6 +4,7 @@
 void from_json(const nlohmann::json& json, GraphicsBackendTextureInfo& info)
 {
     json.at("Binding").get_to(info.Binding);
+    json.at("ReadWrite").get_to(info.ReadWrite);
 }
 
 void from_json(const nlohmann::json& json, GraphicsBackendSamplerInfo& info)
@@ -19,14 +20,16 @@ struct nlohmann::adl_serializer<std::shared_ptr<GraphicsBackendBufferInfo>>
         uint32_t binding;
         uint32_t size;
         BufferType bufferType;
+        bool readWrite;
         std::unordered_map<std::string, int> variables;
 
         json.at("Binding").get_to(binding);
         json.at("Size").get_to(size);
         json.at("BufferType").get_to(bufferType);
+        json.at("ReadWrite").get_to(readWrite);
         json.at("Variables").get_to(variables);
 
-        auto info = std::make_shared<GraphicsBackendBufferInfo>(binding, size, bufferType, variables);
+        auto info = std::make_shared<GraphicsBackendBufferInfo>(binding, size, bufferType, readWrite, variables);
         return info;
     }
 };

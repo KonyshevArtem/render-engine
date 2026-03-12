@@ -3,7 +3,7 @@
 
 #include <algorithm>
 
-GraphicsBuffer::GraphicsBuffer(uint64_t size, std::string name, bool doubleBuffered) :
+GraphicsBuffer::GraphicsBuffer(uint64_t size, std::string name, bool doubleBuffered, bool allowCPUWrites) :
         m_Size(Math::Align(size, GraphicsBackend::Current()->GetConstantBufferOffsetAlignment())),
         m_Name(std::move(name)),
         m_DoubleBuffered(doubleBuffered)
@@ -13,7 +13,7 @@ GraphicsBuffer::GraphicsBuffer(uint64_t size, std::string name, bool doubleBuffe
         if (i == 0 || m_DoubleBuffered)
         {
             // add extra alignment to the size to handle non-aligned offset
-            m_Buffer[i] = GraphicsBackend::Current()->CreateBuffer(size + GraphicsBackend::Current()->GetConstantBufferOffsetAlignment(), m_Name + "_0", true);
+            m_Buffer[i] = GraphicsBackend::Current()->CreateBuffer(size + GraphicsBackend::Current()->GetConstantBufferOffsetAlignment(), m_Name + "_0", allowCPUWrites);
         }
     }
 }

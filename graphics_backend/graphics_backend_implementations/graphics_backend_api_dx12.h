@@ -92,11 +92,12 @@ protected:
     void DeleteShader_Internal(GraphicsBackendShaderObject shader) override;
     void DeleteProgram_Internal(GraphicsBackendProgram program) override;
 
-    void BindTexture_Internal(const GraphicsBackendTexture &texture, uint32_t index) override;
-    void BindSampler_Internal(const GraphicsBackendSampler &sampler, uint32_t index) override;
-    void BindBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) override;
-    void BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size, int count) override;
-    void BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) override;
+    void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
+    void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
+    void BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index) override;
+    void BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat) override;
+    void BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size) override;
+    void BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat) override;
 };
 
 #endif // RENDER_BACKEND_DX12

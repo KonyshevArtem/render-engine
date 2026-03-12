@@ -17,7 +17,7 @@ public:
     void FillImGuiFrameData(void* data) override;
 
     GraphicsBackendTexture CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name) override;
-    GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name) override;
+    GraphicsBackendSampler CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name) override;
 
     void GenerateMipmaps(const GraphicsBackendTexture &texture) override;
     void UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData) override;
@@ -94,11 +94,12 @@ protected:
     void DeleteShader_Internal(GraphicsBackendShaderObject shader) override;
     void DeleteProgram_Internal(GraphicsBackendProgram program) override;
 
-    void BindTexture_Internal(const GraphicsBackendTexture &texture, uint32_t index) override;
-    void BindSampler_Internal(const GraphicsBackendSampler &sampler, uint32_t index) override;
-    void BindBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) override;
-    void BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size, int count) override;
-    void BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) override;
+    void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
+    void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
+    void BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index) override;
+    void BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat) override;
+    void BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size) override;
+    void BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat) override;
 
 private:
     std::set<std::string> m_Extensions;

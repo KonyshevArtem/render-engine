@@ -12,6 +12,7 @@ private:
     TextureType Type;
     TextureInternalFormat Format;
     bool IsLinear;
+    bool ReadWrite;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;

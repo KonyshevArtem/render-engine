@@ -1040,6 +1040,10 @@ void GraphicsBackendDX12::BindTexture_Internal(const GraphicsBackendTexture& tex
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
+void GraphicsBackendDX12::BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
+{
+}
+
 void GraphicsBackendDX12::BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index)
 {
     assert(index < DX12Local::k_MaxResourcesPerDraw);
@@ -1270,7 +1274,7 @@ void GraphicsBackendDX12::DeleteBuffer_Internal(const GraphicsBackendBuffer& buf
     delete resourceData;
 }
 
-void GraphicsBackendDX12::BindBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
+void GraphicsBackendDX12::BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
 {
     assert(index < DX12Local::k_MaxResourcesPerDraw);
 
@@ -1279,30 +1283,23 @@ void GraphicsBackendDX12::BindBuffer_Internal(const GraphicsBackendBuffer& buffe
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-    srvDesc.Format = DXGI_FORMAT_R8_UINT;
-    srvDesc.Buffer.FirstElement = offset;
-    srvDesc.Buffer.NumElements = size;
 
-    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_BuffersDescriptorsOffset));
-}
+    if (type == BufferType::STRUCTURED_BUFFER)
+    {
+        const int elementSize = size / elementsCount;
+        const int elementOffset = offset / elementSize;
 
-void GraphicsBackendDX12::BindStructuredBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count)
-{
-    assert(index < DX12Local::k_MaxResourcesPerDraw);
-
-    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
-
-    const int elementSize = size / count;
-    const int elementOffset = offset / elementSize;
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-    srvDesc.Buffer.FirstElement = elementOffset;
-    srvDesc.Buffer.NumElements = count;
-    srvDesc.Buffer.StructureByteStride = elementSize;
+        srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+        srvDesc.Buffer.FirstElement = elementOffset;
+        srvDesc.Buffer.NumElements = elementsCount;
+        srvDesc.Buffer.StructureByteStride = elementSize;
+    }
+    else
+    {
+        srvDesc.Format = DXGI_FORMAT_R8_UINT;
+        srvDesc.Buffer.FirstElement = offset;
+        srvDesc.Buffer.NumElements = size;
+    }
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
     DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_BuffersDescriptorsOffset));
@@ -1322,6 +1319,10 @@ void GraphicsBackendDX12::BindConstantBuffer_Internal(const GraphicsBackendBuffe
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
     DX12Local::s_Device->CreateConstantBufferView(&cbvDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_ConstantBuffersDescriptorsOffset));
+}
+
+void GraphicsBackendDX12::BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
+{
 }
 
 void GraphicsBackendDX12::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void* data)

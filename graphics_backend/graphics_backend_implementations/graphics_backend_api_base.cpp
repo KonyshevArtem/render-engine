@@ -5,6 +5,7 @@
 #include "enums/texture_internal_format.h"
 #include "enums/texture_type.h"
 #include "enums/framebuffer_attachment.h"
+#include "enums/cubemap_face.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "types/graphics_backend_buffer.h"
@@ -97,10 +98,13 @@ void GraphicsBackendBase::DeleteTexture(const GraphicsBackendTexture& texture)
 {
     m_DeletedTextures.emplace_back(texture, BaseBackendLocal::k_DeleteResourceDelay);
 
-    std::erase_if(m_BoundTextures, [&texture](const auto& pair)
+    auto Predicate = [&texture](const std::pair<uint32_t, GraphicsBackendTexture>& pair)
     {
         return pair.second.Texture == texture.Texture;
-    });
+    };
+
+    std::erase_if(m_BoundTextures, Predicate);
+    std::erase_if(m_BoundRWTextures, Predicate);
 }
 
 void GraphicsBackendBase::DeleteSampler(const GraphicsBackendSampler& sampler)
@@ -123,8 +127,8 @@ void GraphicsBackendBase::DeleteBuffer(const GraphicsBackendBuffer& buffer)
     };
 
     std::erase_if(m_BoundBuffers, Predicate);
-    std::erase_if(m_BoundStructuredBuffers, Predicate);
     std::erase_if(m_BoundConstantBuffers, Predicate);
+    std::erase_if(m_BoundRWBuffers, Predicate);
 }
 
 void GraphicsBackendBase::DeleteGeometry(const GraphicsBackendGeometry &geometry)
@@ -155,6 +159,12 @@ void GraphicsBackendBase::BindResources(const GraphicsBackendProgram& program)
             BindTexture_Internal(pair.second, pair.first);
     }
 
+    for (const auto& pair : m_BoundRWTextures)
+    {
+        if (HasBinding(program.RWTextureBindings, pair.first))
+            BindRWTexture_Internal(pair.second, pair.first);
+    }
+
     for (const auto& pair: m_BoundSamplers)
     {
         if (HasBinding(program.SamplerBindings, pair.first))
@@ -165,14 +175,7 @@ void GraphicsBackendBase::BindResources(const GraphicsBackendProgram& program)
     {
         const BufferBindInfo& info = pair.second;
         if (HasBinding(program.BufferBindings, pair.first))
-            BindBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
-    }
-
-    for (const auto& pair: m_BoundStructuredBuffers)
-    {
-        const BufferBindInfo& info = pair.second;
-        if (HasBinding(program.BufferBindings, pair.first))
-            BindStructuredBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size, info.ElementsCount);
+            BindBuffer_Internal(info.Buffer, info.Type, pair.first, info.Offset, info.Size, info.ElementsCount, info.Format);
     }
 
     for (const auto& pair: m_BoundConstantBuffers)
@@ -180,6 +183,13 @@ void GraphicsBackendBase::BindResources(const GraphicsBackendProgram& program)
         const BufferBindInfo& info = pair.second;
         if (HasBinding(program.ConstantBufferBindings, pair.first))
             BindConstantBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
+    }
+
+    for (const auto& pair : m_BoundRWBuffers)
+    {
+        const BufferBindInfo& info = pair.second;
+        if (HasBinding(program.RWBufferBindings, pair.first))
+            BindRWBuffer_Internal(info.Buffer, info.Type, pair.first, info.Offset, info.Size, info.ElementsCount, info.Format);
     }
 }
 
@@ -199,19 +209,49 @@ void GraphicsBackendBase::BindTextureSampler(const GraphicsBackendTexture& textu
     BindSampler(sampler, index);
 }
 
-void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
+void GraphicsBackendBase::BindRWTexture(const GraphicsBackendTexture& texture, uint32_t index)
 {
-    m_BoundBuffers[index] = BufferBindInfo{buffer, offset, size};
+    m_BoundRWTextures[index] = texture;
 }
 
-void GraphicsBackendBase::BindStructuredBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count)
+void GraphicsBackendBase::UploadImagePixels(const GraphicsBackendTexture& texture, int level, int width, int height, int depth, int imageSize, const void* pixelsData)
 {
-    m_BoundStructuredBuffers[index] = BufferBindInfo{buffer, offset, size, count};
+    UploadImagePixels(texture, level, CubemapFace::NEGATIVE_X, width, height, depth, imageSize, pixelsData);
+}
+
+void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
+{
+    m_BoundBuffers[index] = BufferBindInfo{ buffer, BufferType::BYTE_ADDRESS_BUFFER, offset, size };
+}
+
+void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int elementsCount)
+{
+    m_BoundBuffers[index] = BufferBindInfo{ buffer, BufferType::STRUCTURED_BUFFER, offset, size, elementsCount };
+}
+
+void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, TextureInternalFormat format)
+{
+    m_BoundBuffers[index] = BufferBindInfo{ buffer, BufferType::TYPED_BUFFER, offset, size, 0, format };
 }
 
 void GraphicsBackendBase::BindConstantBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
-    m_BoundConstantBuffers[index] = BufferBindInfo{buffer, offset, size};
+    m_BoundConstantBuffers[index] = BufferBindInfo{buffer, BufferType::CONSTANT_BUFFER, offset, size};
+}
+
+void GraphicsBackendBase::BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
+{
+    m_BoundRWBuffers[index] = BufferBindInfo{ buffer, BufferType::BYTE_ADDRESS_BUFFER, offset, size };
+}
+
+void GraphicsBackendBase::BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int elementsCount)
+{
+    m_BoundRWBuffers[index] = BufferBindInfo{ buffer, BufferType::STRUCTURED_BUFFER, offset, size, elementsCount };
+}
+
+void GraphicsBackendBase::BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, TextureInternalFormat format)
+{
+    m_BoundRWBuffers[index] = BufferBindInfo{ buffer, BufferType::TYPED_BUFFER, offset, size, 0, format };
 }
 
 GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor)
@@ -221,17 +261,28 @@ GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, c
     program.BufferBindings = 0;
     program.TextureBindings = 0;
     program.SamplerBindings = 0;
+    program.RWTextureBindings = 0;
+    program.RWBufferBindings = 0;
 
     for (const auto& pair : *descriptor.Buffers)
     {
-        if (pair.second->GetBufferType() == BufferType::CONSTANT_BUFFER)
-            program.ConstantBufferBindings |= 1 << pair.second->GetBinding();
+        const std::shared_ptr<GraphicsBackendBufferInfo>& buffer = pair.second;
+        if (buffer->GetBufferType() == BufferType::CONSTANT_BUFFER)
+            program.ConstantBufferBindings |= 1 << buffer->GetBinding();
+        else if (buffer->GetReadWrite())
+            program.RWBufferBindings |= 1 << buffer->GetBinding();
         else
-            program.BufferBindings |= 1 << pair.second->GetBinding();
+            program.BufferBindings |= 1 << buffer->GetBinding();
     }
 
     for (const auto& pair : *descriptor.Textures)
-        program.TextureBindings |= 1 << pair.second.Binding;
+    {
+        const GraphicsBackendTextureInfo& texture = pair.second;
+        if (texture.ReadWrite)
+            program.RWTextureBindings |= 1 << texture.Binding;
+        else
+			program.TextureBindings |= 1 << texture.Binding;
+    }
 
     for (const auto& pair : *descriptor.Samplers)
         program.SamplerBindings |= 1 << pair.second.Binding;

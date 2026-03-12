@@ -12,6 +12,8 @@ private:
     uint32_t SamplerBindings;
     uint32_t BufferBindings;
     uint32_t ConstantBufferBindings;
+    uint32_t RWTextureBindings;
+    uint32_t RWBufferBindings;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;

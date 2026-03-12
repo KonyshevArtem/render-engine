@@ -257,7 +257,7 @@ void RenderQueue::SetupMatrices(const std::vector<Matrix4x4>& matrices)
     uint64_t offset = s_MatricesBuffer->SetData(matricesBuffer.data(), 0, size);
 
     if (matrices.size() > 1)
-        GraphicsBackend::Current()->BindStructuredBuffer(s_MatricesBuffer->GetBackendBuffer(), GlobalConstants::InstancingMatricesData, offset, size, count);
+        GraphicsBackend::Current()->BindBuffer(s_MatricesBuffer->GetBackendBuffer(), GlobalConstants::InstancingMatricesData, offset, size, count);
     else
         GraphicsBackend::Current()->BindConstantBuffer(s_MatricesBuffer->GetBackendBuffer(), GlobalConstants::MatricesData, offset, size);
 }

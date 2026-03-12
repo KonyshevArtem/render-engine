@@ -2,20 +2,21 @@
 #define RENDER_ENGINE_GRAPHICS_BACKEND_BASE_H
 
 #include "enums/graphics_backend_name.h"
+#include "enums/buffer_type.h"
+#include "enums/texture_internal_format.h"
 #include "types/graphics_backend_vertex_attribute_descriptor.h"
 #include "types/graphics_backend_profiler_marker.h"
 #include "types/graphics_backend_buffer.h"
 #include "types/graphics_backend_stencil_descriptor.h"
 #include "types/graphics_backend_depth_descriptor.h"
 #include "types/graphics_backend_rasterizer_descriptor.h"
+#include "types/graphics_backend_blend_descriptor.h"
 
 #include <string>
 #include <vector>
 #include <memory>
 #include <unordered_map>
 #include <thread>
-
-#include "types/graphics_backend_blend_descriptor.h"
 
 enum class TextureType;
 enum class TextureInternalFormat : uint16_t;
@@ -74,9 +75,11 @@ public:
     void BindTexture(const GraphicsBackendTexture& texture, uint32_t index);
     void BindSampler(const GraphicsBackendSampler& sampler, uint32_t index);
     void BindTextureSampler(const GraphicsBackendTexture& texture, const GraphicsBackendSampler& sampler, uint32_t index);
+    void BindRWTexture(const GraphicsBackendTexture& texture, uint32_t index);
 
     virtual void GenerateMipmaps(const GraphicsBackendTexture &texture) = 0;
     virtual void UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData) = 0;
+    void UploadImagePixels(const GraphicsBackendTexture& texture, int level, int width, int height, int depth, int imageSize, const void* pixelsData);
 
     virtual void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) = 0;
     virtual TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool *outIsLinear) = 0;
@@ -84,8 +87,12 @@ public:
     virtual GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data = nullptr) = 0;
     void DeleteBuffer(const GraphicsBackendBuffer& buffer);
     void BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size);
-    void BindStructuredBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count);
+    void BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int elementsCount);
+    void BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, TextureInternalFormat format);
     void BindConstantBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size);
+    void BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size);
+    void BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int elementsCount);
+    void BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, TextureInternalFormat format);
 
     virtual void SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data) = 0;
     virtual void CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size) = 0;
@@ -192,11 +199,14 @@ protected:
     virtual void DeleteProgram_Internal(GraphicsBackendProgram program) = 0;
 
     void BindResources(const GraphicsBackendProgram& program);
-    virtual void BindTexture_Internal(const GraphicsBackendTexture &texture, uint32_t index) = 0;
-    virtual void BindSampler_Internal(const GraphicsBackendSampler &sampler, uint32_t index) = 0;
-    virtual void BindBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) = 0;
-    virtual void BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size, int count) = 0;
-    virtual void BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) = 0;
+    virtual void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
+    virtual void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
+    virtual void BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index) = 0;
+    virtual void BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat
+                                     dataFormat) = 0;
+    virtual void BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size) = 0;
+    virtual void BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat
+                                       dataFormat) = 0;
 
     GraphicsBackendProgram CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor);
 
@@ -206,9 +216,11 @@ private:
     struct BufferBindInfo
     {
         GraphicsBackendBuffer Buffer;
+        BufferType Type;
         int Offset;
         int Size;
-        int ElementsCount;
+        int ElementsCount = 0;
+        TextureInternalFormat Format = TextureInternalFormat::INVALID;
     };
 
     uint64_t m_FrameCount = 0;
@@ -222,10 +234,11 @@ private:
     std::vector<std::pair<GraphicsBackendProgram, int>> m_DeletedPrograms;
 
     std::unordered_map<uint32_t, GraphicsBackendTexture> m_BoundTextures;
+    std::unordered_map<uint32_t, GraphicsBackendTexture> m_BoundRWTextures;
     std::unordered_map<uint32_t, GraphicsBackendSampler> m_BoundSamplers;
     std::unordered_map<uint32_t, BufferBindInfo> m_BoundBuffers;
     std::unordered_map<uint32_t, BufferBindInfo> m_BoundConstantBuffers;
-    std::unordered_map<uint32_t, BufferBindInfo> m_BoundStructuredBuffers;
+    std::unordered_map<uint32_t, BufferBindInfo> m_BoundRWBuffers;
 
     GraphicsBackendStencilDescriptor m_StencilDescriptor;
     GraphicsBackendDepthDescriptor m_DepthDescriptor;

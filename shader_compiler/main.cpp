@@ -95,11 +95,25 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
         const auto& combinedImageSamplers = glsl->get_combined_image_samplers();
         for (int i = 0; i < combinedImageSamplers.size(); i++)
         {
-            const auto& sampler = combinedImageSamplers[i];
-            const uint32_t binding = glsl->get_decoration(sampler.image_id, spv::DecorationBinding);
-            glsl->set_name(sampler.combined_id, glsl->get_name(sampler.image_id));
-            glsl->set_decoration(sampler.combined_id, spv::DecorationBinding, binding);
-            glsl->set_decoration(sampler.combined_id, spv::DecorationLocation, binding);
+            const spirv_cross::CombinedImageSampler& imageSampler = combinedImageSamplers[i];
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(glsl, imageSampler.image_id);
+
+            const std::string& imageName = glsl->get_name(imageSampler.image_id);
+            glsl->set_name(imageSampler.combined_id, imageName);
+            glsl->set_name(imageSampler.sampler_id, "sampler" + imageName);
+            glsl->set_decoration(imageSampler.combined_id, spv::DecorationBinding, binding);
+            glsl->set_decoration(imageSampler.combined_id, spv::DecorationLocation, binding);
+            glsl->set_decoration(imageSampler.sampler_id, spv::DecorationBinding, binding);
+        }
+
+        spirv_cross::ShaderResources resources = glsl->get_shader_resources();
+        for (const spirv_cross::Resource& buffer : resources.storage_buffers)
+        {
+            if (!SPIRVReflection_Local::IsSPIRVBufferWritable(glsl, buffer.id))
+                continue;
+
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(glsl, buffer.id);
+            glsl->set_decoration(buffer.id, spv::DecorationBinding, binding + k_OpenGLRWBuffersBindingOffset);
         }
 
         return glsl;

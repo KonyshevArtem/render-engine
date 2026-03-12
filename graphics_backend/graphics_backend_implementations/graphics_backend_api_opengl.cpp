@@ -52,6 +52,8 @@ typedef EGLContext GLContext;
 
 namespace OpenGLLocal
 {
+    constexpr uint32_t k_RWBuffersBindingOffset = 16;
+
     struct DebugMessageType
     {
         GLenum Type;

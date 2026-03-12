@@ -56,8 +56,12 @@ inline void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, Reflecti
 
     for (const spirv_cross::Resource& buffer : resources.storage_buffers)
     {
-        WriteBufferDescriptor(compiler->get_name(buffer.id), SPIRVReflection_Local::GetSPIRVBindPoint(compiler, buffer.id), 0, BufferType::STRUCTURED_BUFFER, 
-            SPIRVReflection_Local::IsSPIRVBufferWritable(compiler, buffer.id), reflection.Buffers);
+        uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(compiler, buffer.id);
+        const bool isWritable = SPIRVReflection_Local::IsSPIRVBufferWritable(compiler, buffer.id);
+        if (backend == GRAPHICS_BACKEND_OPENGL && isWritable)
+            binding -= k_OpenGLRWBuffersBindingOffset;
+
+        WriteBufferDescriptor(compiler->get_name(buffer.id), binding, 0, BufferType::STRUCTURED_BUFFER, isWritable, reflection.Buffers);
     }
 
     for (const spirv_cross::Resource& image : resources.separate_images)
@@ -73,13 +77,7 @@ inline void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, Reflecti
 		WriteResourceDescriptor(compiler->get_name(sampler.id), SPIRVReflection_Local::GetSPIRVBindPoint(compiler, sampler.id), reflection.Samplers);
 
 	for (const spirv_cross::Resource& image : resources.sampled_images)
-	{
-		const uint32_t bindPoint = SPIRVReflection_Local::GetSPIRVBindPoint(compiler, image.id);
-		const std::string& imageName = compiler->get_name(image.id);
-
-		WriteTextureDescriptor(imageName, bindPoint, false, reflection.Textures);
-		WriteResourceDescriptor("sampler" + imageName, bindPoint, reflection.Samplers);
-	}
+		WriteTextureDescriptor(compiler->get_name(image.id), SPIRVReflection_Local::GetSPIRVBindPoint(compiler, image.id), false, reflection.Textures);
 
     for (const spirv_cross::Resource& image : resources.storage_images)
     {

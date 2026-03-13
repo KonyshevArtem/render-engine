@@ -12,6 +12,7 @@
 #include "types/graphics_backend_rasterizer_descriptor.h"
 #include "enums/texture_internal_format.h"
 #include "enums/primitive_type.h"
+#include "enums/program_type.h"
 
 #include <vector>
 #include <unordered_map>
@@ -20,6 +21,7 @@
 
 struct GraphicsBackendProgramDescriptor
 {
+    ProgramType Type;
     const std::vector<GraphicsBackendShaderObject>* Shaders;
     const std::vector<GraphicsBackendVertexAttributeDescriptor>* VertexAttributes;
     const std::unordered_map<std::string, GraphicsBackendTextureInfo>* Textures;

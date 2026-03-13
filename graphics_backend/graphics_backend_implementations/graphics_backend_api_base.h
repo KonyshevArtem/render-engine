@@ -202,13 +202,11 @@ protected:
     virtual void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
     virtual void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
     virtual void BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index) = 0;
-    virtual void BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat
-                                     dataFormat) = 0;
+    virtual void BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat) = 0;
     virtual void BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size) = 0;
-    virtual void BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat
-                                       dataFormat) = 0;
+    virtual void BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat) = 0;
 
-    GraphicsBackendProgram CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor);
+	static GraphicsBackendProgram CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor);
 
     uint32_t m_DrawCallCount = 0;
 

@@ -1,12 +1,15 @@
 #ifndef RENDER_ENGINE_GRAPHICS_BACKEND_PROGRAM_H
 #define RENDER_ENGINE_GRAPHICS_BACKEND_PROGRAM_H
 
+#include "enums/program_type.h"
+
 #include <cstdint>
 
 class GraphicsBackendProgram
 {
 private:
     uint64_t Program;
+    ProgramType Type;
 
     uint32_t TextureBindings;
     uint32_t SamplerBindings;

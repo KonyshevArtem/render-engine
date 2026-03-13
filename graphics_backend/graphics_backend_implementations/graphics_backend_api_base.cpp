@@ -258,6 +258,7 @@ GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, c
 {
     GraphicsBackendProgram program{};
     program.Program = programPtr;
+    program.Type = descriptor.Type;
     program.BufferBindings = 0;
     program.TextureBindings = 0;
     program.SamplerBindings = 0;

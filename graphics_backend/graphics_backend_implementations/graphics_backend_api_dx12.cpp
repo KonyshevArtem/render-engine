@@ -312,7 +312,7 @@ namespace DX12Local
     constexpr int k_TexturesDescriptorsOffset = 0;
     constexpr int k_BuffersDescriptorsOffset = k_TexturesDescriptorsOffset + k_MaxResourcesPerDraw;
     constexpr int k_ConstantBuffersDescriptorsOffset = k_BuffersDescriptorsOffset + k_MaxResourcesPerDraw;
-    constexpr int k_ResourceDescriptorHeapAdvance = k_MaxResourcesPerDraw * 3; // SRV Texture, SRV Buffers, CBV
+    constexpr int k_ResourceDescriptorHeapAdvance = k_MaxResourcesPerDraw * 5; // SRV Textures, SRV Buffers, CBV, UAV Textures, UAV Buffers
     constexpr int k_SamplerDescriptorHeapAdvance = k_MaxResourcesPerDraw;
     constexpr int k_ResourceDescriptorHeapCapacity = k_ResourceDescriptorHeapAdvance * 512;
     constexpr int k_SamplerDescriptorHeapCapacity = 2048;
@@ -645,16 +645,18 @@ namespace DX12Local
     {
         CD3DX12_ROOT_PARAMETER1 rootParameters[2];
 
-        CD3DX12_DESCRIPTOR_RANGE1 ranges[3];
-        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // textures
-        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // buffers
-        ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV,  k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // constant buffers
+        CD3DX12_DESCRIPTOR_RANGE1 ranges[5];
+        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // textures
+        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // buffers
+        ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // constant buffers
+        ranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // RW textures
+        ranges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // RW buffers
 
         CD3DX12_DESCRIPTOR_RANGE1 samplersRange;
         samplersRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
         CD3DX12_ROOT_PARAMETER1 resourceParameter{};
-        resourceParameter.InitAsDescriptorTable(3, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
+        resourceParameter.InitAsDescriptorTable(5, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[0] = resourceParameter;
 
         CD3DX12_ROOT_PARAMETER1 samplersParameter{};
@@ -1447,80 +1449,94 @@ GraphicsBackendShaderObject GraphicsBackendDX12::CompileShaderBinary(ShaderType 
 
 GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendProgramDescriptor& descriptor)
 {
-    const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes = *descriptor.VertexAttributes;
-
-    std::vector<D3D12_INPUT_ELEMENT_DESC> dxVertexAttributes;
-    for (const auto& attr: vertexAttributes)
-    {
-        D3D12_INPUT_ELEMENT_DESC desc{};
-        desc.SemanticName = DX12Helpers::ToSemanticName(attr.Semantic);
-        desc.SemanticIndex = 0;
-        desc.Format = DX12Helpers::ToVertexAttributeDataType(attr.DataType, attr.Dimensions, attr.IsNormalized);
-        desc.InputSlot = 0;
-        desc.AlignedByteOffset = attr.Offset;
-        desc.InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
-        desc.InstanceDataStepRate = 0;
-
-        dxVertexAttributes.push_back(desc);
-    }
-
+    ID3D12PipelineState* pso = nullptr;
     const std::vector<GraphicsBackendShaderObject>& shaders = *descriptor.Shaders;
-    ID3DBlob* vertexBlob = reinterpret_cast<ID3DBlob*>(shaders[0].ShaderObject);
-    ID3DBlob* fragmentBlob = reinterpret_cast<ID3DBlob*>(shaders[1].ShaderObject);
 
-    D3D12_BLEND_DESC blendDescriptor = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    blendDescriptor.RenderTarget[0].BlendEnable = descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled;
-    blendDescriptor.RenderTarget[0].SrcBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor);
-    blendDescriptor.RenderTarget[0].DestBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor);
-    blendDescriptor.RenderTarget[0].RenderTargetWriteMask = static_cast<UINT8>(descriptor.ColorAttachmentDescriptor.BlendDescriptor.ColorWriteMask);
-
-    D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    rasterizerDesc.CullMode = DX12Helpers::ToCullFace(descriptor.RasterizerDescriptor.Face);
-    rasterizerDesc.FrontCounterClockwise = descriptor.RasterizerDescriptor.Orientation == CullFaceOrientation::COUNTER_CLOCKWISE;
-
-    auto GetStencilOpDesc = [](GraphicsBackendStencilOperationDescriptor stencilOpDesc)
+    if (descriptor.Type == ProgramType::RENDER)
     {
-        D3D12_DEPTH_STENCILOP_DESC opDesc;
-        opDesc.StencilFailOp = DX12Helpers::ToStencilOp(stencilOpDesc.FailOp);
-        opDesc.StencilDepthFailOp = DX12Helpers::ToStencilOp(stencilOpDesc.DepthFailOp);
-        opDesc.StencilPassOp = DX12Helpers::ToStencilOp(stencilOpDesc.PassOp);
-        opDesc.StencilFunc = stencilOpDesc.ComparisonFunction != ComparisonFunction::NONE
-                                            ? DX12Helpers::ToComparisonFunction(stencilOpDesc.ComparisonFunction)
-                                            : D3D12_COMPARISON_FUNC_NEVER;
-        return opDesc;
-    };
+        const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes = *descriptor.VertexAttributes;
 
-    D3D12_DEPTH_STENCIL_DESC depthStencilDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    depthStencilDesc.DepthEnable = descriptor.DepthDescriptor.Enabled;
-    depthStencilDesc.DepthWriteMask = descriptor.DepthDescriptor.WriteDepth ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
-    depthStencilDesc.DepthFunc = DX12Helpers::ToComparisonFunction(descriptor.DepthDescriptor.DepthFunction);
-    depthStencilDesc.StencilEnable = descriptor.StencilDescriptor.Enabled;
-    depthStencilDesc.StencilReadMask = descriptor.StencilDescriptor.ReadMask;
-    depthStencilDesc.StencilWriteMask = descriptor.StencilDescriptor.WriteMask;
-    depthStencilDesc.StencilWriteMask = descriptor.StencilDescriptor.WriteMask;
-    depthStencilDesc.FrontFace = GetStencilOpDesc(descriptor.StencilDescriptor.FrontFaceOpDescriptor);
-    depthStencilDesc.BackFace = GetStencilOpDesc(descriptor.StencilDescriptor.BackFaceOpDescriptor);
+        std::vector<D3D12_INPUT_ELEMENT_DESC> dxVertexAttributes;
+        for (const GraphicsBackendVertexAttributeDescriptor& attr : vertexAttributes)
+        {
+            D3D12_INPUT_ELEMENT_DESC desc{};
+            desc.SemanticName = DX12Helpers::ToSemanticName(attr.Semantic);
+            desc.SemanticIndex = 0;
+            desc.Format = DX12Helpers::ToVertexAttributeDataType(attr.DataType, attr.Dimensions, attr.IsNormalized);
+            desc.InputSlot = 0;
+            desc.AlignedByteOffset = attr.Offset;
+            desc.InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+            desc.InstanceDataStepRate = 0;
 
-    DXGI_FORMAT colorTargetFormat = DX12Helpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);
-    bool hasColorTarget = colorTargetFormat != DXGI_FORMAT_UNKNOWN;
+            dxVertexAttributes.push_back(desc);
+        }
 
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-    psoDesc.InputLayout = { dxVertexAttributes.data(), static_cast<UINT>(dxVertexAttributes.size()) };
-    psoDesc.pRootSignature = DX12Local::s_RootSignature;
-    psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexBlob);
-    psoDesc.PS = hasColorTarget ? CD3DX12_SHADER_BYTECODE(fragmentBlob) : CD3DX12_SHADER_BYTECODE(nullptr, 0);
-    psoDesc.RasterizerState = rasterizerDesc;
-    psoDesc.BlendState = blendDescriptor;
-    psoDesc.DepthStencilState = depthStencilDesc;
-    psoDesc.SampleMask = UINT_MAX;
-    psoDesc.PrimitiveTopologyType = DX12Helpers::ToPrimitiveTopologyType(descriptor.PrimitiveType);
-    psoDesc.NumRenderTargets = hasColorTarget ? 1 : 0;
-    psoDesc.RTVFormats[0] = colorTargetFormat;
-    psoDesc.DSVFormat = DX12Helpers::ToTextureInternalFormat(descriptor.DepthFormat, true);
-    psoDesc.SampleDesc.Count = 1;
+        ID3DBlob* vertexBlob = reinterpret_cast<ID3DBlob*>(shaders[0].ShaderObject);
+        ID3DBlob* fragmentBlob = reinterpret_cast<ID3DBlob*>(shaders[1].ShaderObject);
 
-    ID3D12PipelineState* pso;
-    ThrowIfFailed(DX12Local::s_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
+        D3D12_BLEND_DESC blendDescriptor = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+        blendDescriptor.RenderTarget[0].BlendEnable = descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled;
+        blendDescriptor.RenderTarget[0].SrcBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor);
+        blendDescriptor.RenderTarget[0].DestBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor);
+        blendDescriptor.RenderTarget[0].RenderTargetWriteMask = static_cast<UINT8>(descriptor.ColorAttachmentDescriptor.BlendDescriptor.ColorWriteMask);
+
+        D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        rasterizerDesc.CullMode = DX12Helpers::ToCullFace(descriptor.RasterizerDescriptor.Face);
+        rasterizerDesc.FrontCounterClockwise = descriptor.RasterizerDescriptor.Orientation == CullFaceOrientation::COUNTER_CLOCKWISE;
+
+        auto GetStencilOpDesc = [](GraphicsBackendStencilOperationDescriptor stencilOpDesc)
+            {
+                D3D12_DEPTH_STENCILOP_DESC opDesc;
+                opDesc.StencilFailOp = DX12Helpers::ToStencilOp(stencilOpDesc.FailOp);
+                opDesc.StencilDepthFailOp = DX12Helpers::ToStencilOp(stencilOpDesc.DepthFailOp);
+                opDesc.StencilPassOp = DX12Helpers::ToStencilOp(stencilOpDesc.PassOp);
+                opDesc.StencilFunc = stencilOpDesc.ComparisonFunction != ComparisonFunction::NONE
+                    ? DX12Helpers::ToComparisonFunction(stencilOpDesc.ComparisonFunction)
+                    : D3D12_COMPARISON_FUNC_NEVER;
+                return opDesc;
+            };
+
+        D3D12_DEPTH_STENCIL_DESC depthStencilDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+        depthStencilDesc.DepthEnable = descriptor.DepthDescriptor.Enabled;
+        depthStencilDesc.DepthWriteMask = descriptor.DepthDescriptor.WriteDepth ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+        depthStencilDesc.DepthFunc = DX12Helpers::ToComparisonFunction(descriptor.DepthDescriptor.DepthFunction);
+        depthStencilDesc.StencilEnable = descriptor.StencilDescriptor.Enabled;
+        depthStencilDesc.StencilReadMask = descriptor.StencilDescriptor.ReadMask;
+        depthStencilDesc.StencilWriteMask = descriptor.StencilDescriptor.WriteMask;
+        depthStencilDesc.StencilWriteMask = descriptor.StencilDescriptor.WriteMask;
+        depthStencilDesc.FrontFace = GetStencilOpDesc(descriptor.StencilDescriptor.FrontFaceOpDescriptor);
+        depthStencilDesc.BackFace = GetStencilOpDesc(descriptor.StencilDescriptor.BackFaceOpDescriptor);
+
+        DXGI_FORMAT colorTargetFormat = DX12Helpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);
+        bool hasColorTarget = colorTargetFormat != DXGI_FORMAT_UNKNOWN;
+
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
+        psoDesc.InputLayout = { dxVertexAttributes.data(), static_cast<UINT>(dxVertexAttributes.size()) };
+        psoDesc.pRootSignature = DX12Local::s_RootSignature;
+        psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexBlob);
+        psoDesc.PS = hasColorTarget ? CD3DX12_SHADER_BYTECODE(fragmentBlob) : CD3DX12_SHADER_BYTECODE(nullptr, 0);
+        psoDesc.RasterizerState = rasterizerDesc;
+        psoDesc.BlendState = blendDescriptor;
+        psoDesc.DepthStencilState = depthStencilDesc;
+        psoDesc.SampleMask = UINT_MAX;
+        psoDesc.PrimitiveTopologyType = DX12Helpers::ToPrimitiveTopologyType(descriptor.PrimitiveType);
+        psoDesc.NumRenderTargets = hasColorTarget ? 1 : 0;
+        psoDesc.RTVFormats[0] = colorTargetFormat;
+        psoDesc.DSVFormat = DX12Helpers::ToTextureInternalFormat(descriptor.DepthFormat, true);
+        psoDesc.SampleDesc.Count = 1;
+
+        ThrowIfFailed(DX12Local::s_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
+    }
+    else
+    {
+        ID3DBlob* computeBlob = reinterpret_cast<ID3DBlob*>(shaders[0].ShaderObject);
+
+        D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc{};
+        psoDesc.pRootSignature = DX12Local::s_RootSignature;
+        psoDesc.CS = CD3DX12_SHADER_BYTECODE(computeBlob);
+
+        ThrowIfFailed(DX12Local::s_Device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
+    }
 
     if (descriptor.Name && !descriptor.Name->empty())
         DX12Local::SetObjectName(pso, (*descriptor.Name) + "_PSO");
@@ -1542,10 +1558,13 @@ void GraphicsBackendDX12::DeleteProgram_Internal(GraphicsBackendProgram program)
 
 void GraphicsBackendDX12::UseProgram(const GraphicsBackendProgram& program)
 {
-    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    const DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
     ID3D12PipelineState* pso = reinterpret_cast<ID3D12PipelineState*>(program.Program);
-    frameData.RenderCommandList->List->SetGraphicsRootSignature(DX12Local::s_RootSignature);
+    if (program.Type == ProgramType::RENDER)
+		frameData.RenderCommandList->List->SetGraphicsRootSignature(DX12Local::s_RootSignature);
+    else
+		frameData.RenderCommandList->List->SetComputeRootSignature(DX12Local::s_RootSignature);
     frameData.RenderCommandList->List->SetPipelineState(pso);
 
     BindResources(program);
@@ -1579,7 +1598,7 @@ void GraphicsBackendDX12::DrawArraysInstanced(const GraphicsBackendGeometry& geo
 {
     ++m_DrawCallCount;
 
-    DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.Geometry);
+    const DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.Geometry);
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
@@ -1606,7 +1625,7 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
 {
     ++m_DrawCallCount;
 
-    DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.Geometry);
+    const DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.Geometry);
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
@@ -1628,6 +1647,14 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
 
 void GraphicsBackendDX12::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    frameData.RenderCommandList->List->SetComputeRootDescriptorTable(0, frameData.BoundResourceDescriptorHeap.GetGPUHandle(0));
+    frameData.RenderCommandList->List->SetComputeRootDescriptorTable(1, frameData.BoundSamplerDescriptorHeap.GetGPUHandle(1));
+    frameData.RenderCommandList->List->Dispatch(x, y, z);
+
+    frameData.BoundResourceDescriptorHeap.AdvanceIndex(DX12Local::k_ResourceDescriptorHeapAdvance);
+    frameData.BoundSamplerDescriptorHeap.AdvanceIndex(DX12Local::k_SamplerDescriptorHeapAdvance);
 }
 
 void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& source, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)

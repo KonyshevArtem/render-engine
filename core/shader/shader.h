@@ -62,9 +62,9 @@ private:
     std::vector<GraphicsBackendShaderObject> m_Shaders;
     std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
 
+    ProgramType m_Type;
     std::string m_Name;
     bool m_SupportInstancing;
-    bool m_IsComputeShader;
 
     std::unordered_map<std::string, GraphicsBackendTextureInfo> m_Textures;
     std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;

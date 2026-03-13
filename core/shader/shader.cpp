@@ -75,7 +75,10 @@ Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders,
     m_Samplers(std::move(samplers)),
     m_Buffers(std::move(buffers))
 {
-    m_IsComputeShader = m_Shaders.size() == 1 && m_Shaders[0].Type == ShaderType::COMPUTE_SHADER;
+    if (m_Shaders.size() == 1 && m_Shaders[0].Type == ShaderType::COMPUTE_SHADER)
+        m_Type = ProgramType::COMPUTE;
+    else
+        m_Type = ProgramType::RENDER;
 }
 
 Shader::~Shader()
@@ -94,14 +97,14 @@ const GraphicsBackendProgram& Shader::GetProgram()
 
 const GraphicsBackendProgram& Shader::GetProgram(const std::shared_ptr<DrawableGeometry>& geometry)
 {
-    if (m_IsComputeShader)
+    if (m_Type == ProgramType::COMPUTE)
         return GetOrCreateComputeProgram();
     return GetProgram(geometry->GetVertexAttributes(), geometry->GetPrimitiveType());
 }
 
 const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType)
 {
-    if (m_IsComputeShader)
+    if (m_Type == ProgramType::COMPUTE)
         return GetOrCreateComputeProgram();
     return GetOrCreateRenderProgram(vertexAttributes, primitiveType);
 }
@@ -129,6 +132,7 @@ const GraphicsBackendProgram& Shader::GetOrCreateRenderProgram(const VertexAttri
     colorAttachmentDescriptor.IsLinear = isLinear;
 
     GraphicsBackendProgramDescriptor programDescriptor{};
+    programDescriptor.Type = m_Type;
     programDescriptor.Shaders = &m_Shaders;
     programDescriptor.VertexAttributes = &vertexAttributes.GetAttributes();
     programDescriptor.Textures = &m_Textures;
@@ -153,6 +157,7 @@ const GraphicsBackendProgram& Shader::GetOrCreateComputeProgram()
         return m_Programs.begin()->second;
 
     GraphicsBackendProgramDescriptor programDescriptor{};
+    programDescriptor.Type = m_Type;
     programDescriptor.Shaders = &m_Shaders;
     programDescriptor.Textures = &m_Textures;
     programDescriptor.Samplers = &m_Samplers;

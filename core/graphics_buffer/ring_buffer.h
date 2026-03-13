@@ -2,6 +2,7 @@
 #define RENDER_ENGINE_RING_BUFFER_H
 
 #include "graphics_buffer.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 
 #include <cstdint>
 #include <memory>
@@ -13,7 +14,7 @@ class GraphicsBackendBuffer;
 class RingBuffer
 {
 public:
-    RingBuffer(uint64_t size, const std::string& name);
+    RingBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name);
     ~RingBuffer() = default;
 
     const GraphicsBackendBuffer& GetBackendBuffer() const
@@ -35,6 +36,8 @@ private:
 
     uint64_t m_CurrentOffset[GraphicsBackend::GetMaxFramesInFlight()];
     uint64_t m_LastCheckFrame;
+
+    GraphicsBackendBufferDescriptor m_Descriptor;
 };
 
 

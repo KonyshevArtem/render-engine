@@ -19,6 +19,7 @@
 #include "graphics/graphics_settings.h"
 #include "editor/gizmos/gizmos.h"
 #include "input/input.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 
 #include <cfloat>
 
@@ -38,28 +39,27 @@ namespace ShadowCasterPassLocal
 }
 
 ShadowCasterPass::ShadowCasterPass(int priority) :
-    RenderPass(priority),
-    m_ShadowsConstantBuffer(std::make_shared<GraphicsBuffer>(sizeof(ShadowsData), "ShadowsData"))
+    RenderPass(priority)
 {
-    GraphicsBackendTextureDescriptor descriptor;
-    descriptor.Format = TextureInternalFormat::DEPTH_32;
-    descriptor.Linear = true;
-    descriptor.RenderTarget = true;
+    GraphicsBackendTextureDescriptor shadowMapDescriptor{};
+    shadowMapDescriptor.Format = TextureInternalFormat::DEPTH_32;
+    shadowMapDescriptor.Linear = true;
+    shadowMapDescriptor.RenderTarget = true;
 
-    descriptor.Width = ShadowCasterPassLocal::k_SpotLightShadowMapSize;
-    descriptor.Height = ShadowCasterPassLocal::k_SpotLightShadowMapSize;
-    descriptor.Depth = GlobalConstants::MaxSpotLightSources;
-    m_SpotLightShadowMapArray = Texture2DArray::Create(descriptor, "SpotLightShadowMap");
+    shadowMapDescriptor.Width = ShadowCasterPassLocal::k_SpotLightShadowMapSize;
+    shadowMapDescriptor.Height = ShadowCasterPassLocal::k_SpotLightShadowMapSize;
+    shadowMapDescriptor.Depth = GlobalConstants::MaxSpotLightSources;
+    m_SpotLightShadowMapArray = Texture2DArray::Create(shadowMapDescriptor, "SpotLightShadowMap");
 
-    descriptor.Width = ShadowCasterPassLocal::k_DirLightShadowMapSize;
-    descriptor.Height = ShadowCasterPassLocal::k_DirLightShadowMapSize;
-    descriptor.Depth = GlobalConstants::ShadowCascadeCount;
-    m_DirectionLightShadowMap = Texture2DArray::Create(descriptor, "DirectionalShadowMap");
+    shadowMapDescriptor.Width = ShadowCasterPassLocal::k_DirLightShadowMapSize;
+    shadowMapDescriptor.Height = ShadowCasterPassLocal::k_DirLightShadowMapSize;
+    shadowMapDescriptor.Depth = GlobalConstants::ShadowCascadeCount;
+    m_DirectionLightShadowMap = Texture2DArray::Create(shadowMapDescriptor, "DirectionalShadowMap");
 
-    descriptor.Width = ShadowCasterPassLocal::k_PointLightShadowMapSize;
-    descriptor.Height = ShadowCasterPassLocal::k_PointLightShadowMapSize;
-    descriptor.Depth = GlobalConstants::MaxPointLightSources * 6;
-    m_PointLightShadowMap = Texture2DArray::Create(descriptor, "PointLightShadowMap");
+    shadowMapDescriptor.Width = ShadowCasterPassLocal::k_PointLightShadowMapSize;
+    shadowMapDescriptor.Height = ShadowCasterPassLocal::k_PointLightShadowMapSize;
+    shadowMapDescriptor.Depth = GlobalConstants::MaxPointLightSources * 6;
+    m_PointLightShadowMap = Texture2DArray::Create(shadowMapDescriptor, "PointLightShadowMap");
 
     m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
     m_DirectionLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
@@ -74,7 +74,13 @@ ShadowCasterPass::ShadowCasterPass(int priority) :
     m_PointLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
     m_PointLightShadowMap->SetComparisonFunction(ComparisonFunction::LEQUAL);
 
-    m_ShadowCasterPassBuffer = std::make_shared<RingBuffer>(sizeof(ShadowCasterPassLocal::ShadowCasterPassData) * 128, "ShadowCasterPassBuffer");
+    GraphicsBackendBufferDescriptor bufferDescriptor{};
+    bufferDescriptor.AllowCPUWrites = true;
+    bufferDescriptor.Size = sizeof(ShadowsData);
+    m_ShadowsConstantBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "ShadowsData");
+
+    bufferDescriptor.Size = sizeof(ShadowCasterPassLocal::ShadowCasterPassData) * 128;
+    m_ShadowCasterPassBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "ShadowCasterPassBuffer");
 }
 
 void ShadowCasterPass::Prepare(const Context& ctx)

@@ -50,6 +50,7 @@ struct GraphicsBackendSamplerInfo;
 struct GraphicsBackendProgramDescriptor;
 struct GraphicsBackendTextureDescriptor;
 struct GraphicsBackendSamplerDescriptor;
+struct GraphicsBackendBufferDescriptor;
 
 class GraphicsBackendBase
 {
@@ -84,7 +85,7 @@ public:
     virtual void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) = 0;
     virtual TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool *outIsLinear) = 0;
 
-    virtual GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data = nullptr) = 0;
+    virtual GraphicsBackendBuffer CreateBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name, const void* data = nullptr) = 0;
     void DeleteBuffer(const GraphicsBackendBuffer& buffer);
     void BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size);
     void BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int elementsCount);

@@ -19,6 +19,7 @@
 #include "mesh/mesh.h"
 #include "graphics/context.h"
 #include "graphics/render_settings/render_settings.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 
 void CheckTexture(std::shared_ptr<Texture2D>& texture)
 {
@@ -103,8 +104,12 @@ void SelectionOutlinePass::Execute(const Context& ctx)
             Vector2 Padding0;
         };
 
+        GraphicsBackendBufferDescriptor bufferDescriptor{};
+        bufferDescriptor.AllowCPUWrites = true;
+        bufferDescriptor.Size = sizeof(OutlineData);
+
         static std::shared_ptr<Shader> blitShader = Shader::Load("core_resources/shaders/outlineBlit", {});
-        static std::shared_ptr<GraphicsBuffer> blitDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(OutlineData), "Selection Outline Data");
+        static std::shared_ptr<GraphicsBuffer> blitDataBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "Selection Outline Data");
 
         Profiler::GPUMarker gpuMarker("Selection Blit Pass");
 

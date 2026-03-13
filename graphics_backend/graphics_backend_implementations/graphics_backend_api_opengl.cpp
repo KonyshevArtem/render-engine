@@ -22,6 +22,7 @@
 #include "types/graphics_backend_program_descriptor.h"
 #include "types/graphics_backend_sampler_descriptor.h"
 #include "types/graphics_backend_texture_descriptor.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 #include "arguments.h"
@@ -528,16 +529,16 @@ TextureInternalFormat GraphicsBackendOpenGL::GetRenderTargetFormat(FramebufferAt
     return TextureInternalFormat::RGBA8;
 }
 
-GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
+GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name, const void* data)
 {
     InitContext();
 
-    const GLbitfield bufferFlags = allowCPUWrites ? GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT : 0;
+    const GLbitfield bufferFlags = descriptor.AllowCPUWrites ? GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT : 0;
 
     GLuint glBuffer;
     glGenBuffers(1, &glBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer);
-    glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, data, bufferFlags);
+    glBufferStorage(GL_SHADER_STORAGE_BUFFER, descriptor.Size, data, bufferFlags);
     if (!name.empty())
     {
         glObjectLabel(GL_BUFFER, glBuffer, name.length(), name.c_str());
@@ -546,11 +547,11 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(int size, const std::s
     OpenGLLocal::BufferData* bufferData = new OpenGLLocal::BufferData();
     bufferData->GLBuffer = glBuffer;
     bufferData->GLTexture = 0;
-    bufferData->Data = allowCPUWrites ? static_cast<uint8_t*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, bufferFlags)) : nullptr;
+    bufferData->Data = descriptor.AllowCPUWrites ? static_cast<uint8_t*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, descriptor.Size, bufferFlags)) : nullptr;
 
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(bufferData);
-    buffer.Size = size;
+    buffer.Size = descriptor.Size;
     return buffer;
 }
 

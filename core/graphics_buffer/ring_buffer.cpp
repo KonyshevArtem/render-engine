@@ -2,15 +2,17 @@
 #include "graphics_buffer.h"
 #include "graphics/graphics.h"
 #include "math_utils.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 
-RingBuffer::RingBuffer(uint64_t size, const std::string& name) :
+RingBuffer::RingBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name) :
     m_Name(name),
-    m_LastCheckFrame(0)
+    m_LastCheckFrame(0),
+	m_Descriptor(descriptor)
 {
     for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
         m_CurrentOffset[i] = 0;
 
-    m_Buffer = std::make_shared<GraphicsBuffer>(size, m_Name);
+    m_Buffer = std::make_shared<GraphicsBuffer>(m_Descriptor, m_Name);
 }
 
 uint64_t RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
@@ -32,7 +34,9 @@ uint64_t RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
     const uint64_t requiredSize = currentOffset + offset + size;
     if (m_Buffer->GetSize() < requiredSize)
     {
-        m_Buffer = std::make_shared<GraphicsBuffer>(std::max(bufferSize * 2, requiredSize), m_Name);
+        m_Descriptor.Size = std::max(bufferSize * 2, requiredSize);
+
+        m_Buffer = std::make_shared<GraphicsBuffer>(m_Descriptor, m_Name);
         m_CurrentOffset[frameIndex] = 0;
     }
 

@@ -7,7 +7,7 @@ class GraphicsBackendBuffer
 {
 public:
     uint64_t Buffer;
-    int Size;
+    uint32_t Size;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;

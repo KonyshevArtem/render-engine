@@ -30,7 +30,11 @@ UIRenderPass::UIRenderPass(int priority) :
     m_ImageShader = Shader::Load("core_resources/shaders/ui/image", {});
     m_TextShader = Shader::Load("core_resources/shaders/ui/text", {});
     m_MaskStencilShader = Shader::Load("core_resources/shaders/ui/maskStencil", {});
-    m_UIDataBuffer = std::make_shared<RingBuffer>(1024, "UI Data");
+
+    GraphicsBackendBufferDescriptor bufferDescriptor{};
+    bufferDescriptor.AllowCPUWrites = true;
+    bufferDescriptor.Size = 1024;
+    m_UIDataBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "UI Data");
 }
 
 void UIRenderPass::Prepare(const Context& ctx)

@@ -6,6 +6,7 @@
 #include "graphics_buffer/graphics_buffer.h"
 #include "shader/shader.h"
 #include "resources/resources.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 
 std::shared_ptr<Mesh> SkyboxPass::m_Mesh = nullptr;
 
@@ -27,8 +28,12 @@ void SkyboxPass::Execute(const Context& ctx)
         Matrix4x4 MVPMatrix;
     };
 
+    GraphicsBackendBufferDescriptor bufferDescriptor{};
+    bufferDescriptor.AllowCPUWrites = true;
+    bufferDescriptor.Size = sizeof(SkyboxData);
+
     static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/skybox", {});
-    static const std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(sizeof(SkyboxData), "Skybox Data");
+    static const std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "Skybox Data");
 
     if (m_Mesh == nullptr || ctx.Skybox == nullptr)
         return;

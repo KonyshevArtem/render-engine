@@ -165,7 +165,13 @@ RenderQueue::RenderQueue()
     DeveloperConsole::AddBoolCommand(L"FrustumCulling.Freeze", &FreezeFrustumCulling);
 
     if (!s_MatricesBuffer)
-        s_MatricesBuffer = std::make_shared<RingBuffer>(sizeof(Matrix4x4) * 4096, "Render Queue Matrices Buffer");
+    {
+        GraphicsBackendBufferDescriptor bufferDescriptor{};
+        bufferDescriptor.AllowCPUWrites = true;
+        bufferDescriptor.Size = sizeof(Matrix4x4) * 4096;
+
+        s_MatricesBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "Render Queue Matrices Buffer");
+    }
 }
 
 void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& renderSettings)

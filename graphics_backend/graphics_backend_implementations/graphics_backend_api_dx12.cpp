@@ -22,6 +22,7 @@
 #include "types/graphics_backend_program_descriptor.h"
 #include "types/graphics_backend_sampler_descriptor.h"
 #include "types/graphics_backend_texture_descriptor.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 #include "helpers/dx12_helpers.h"
 #include "math_utils.h"
 #include "debug.h"
@@ -1232,14 +1233,16 @@ TextureInternalFormat GraphicsBackendDX12::GetRenderTargetFormat(FramebufferAtta
     return state.Format;
 }
 
-GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
+GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name, const void* data)
 {
     ID3D12Resource* dxBuffer;
 
-    D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
-    CD3DX12_HEAP_PROPERTIES heapProps(allowCPUWrites ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT);
+    constexpr D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
+    const CD3DX12_HEAP_PROPERTIES heapProps(descriptor.AllowCPUWrites ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT);
 
-    D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
+    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
+
+    const D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(descriptor.Size, flags);
     ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, state, nullptr, IID_PPV_ARGS(&dxBuffer)));
 
     DX12Local::SetObjectName(dxBuffer, name);
@@ -1250,22 +1253,22 @@ GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(int size, const std::str
 
     if (data)
     {
-        if (allowCPUWrites)
+        if (descriptor.AllowCPUWrites)
         {
-            CD3DX12_RANGE readRange(0, 0);
+            const CD3DX12_RANGE readRange(0, 0);
 
-            UINT8 *bufferData;
+            UINT8* bufferData;
             ThrowIfFailed(dxBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferData)));
-            memcpy(bufferData, data, size);
+            memcpy(bufferData, data, descriptor.Size);
             dxBuffer->Unmap(0, nullptr);
         }
         else
-            DX12Local::UploadGPUData(resourceData, 0, size, size, size, data, IsMainThread());
+            DX12Local::UploadGPUData(resourceData, 0, descriptor.Size, descriptor.Size, descriptor.Size, data, IsMainThread());
     }
 
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(resourceData);
-    buffer.Size = size;
+    buffer.Size = descriptor.Size;
     return buffer;
 }
 

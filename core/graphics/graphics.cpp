@@ -58,8 +58,14 @@ namespace Graphics
 
     void InitConstantBuffers()
     {
-        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData) * 32, "CameraData");
-        s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), "LightingData");
+        GraphicsBackendBufferDescriptor descriptor{};
+        descriptor.AllowCPUWrites = true;
+
+        descriptor.Size = sizeof(CameraData) * 32;
+        s_CameraDataBuffer = std::make_shared<RingBuffer>(descriptor, "CameraData");
+
+        descriptor.Size = sizeof(LightingData);
+        s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(descriptor, "LightingData");
     }
 
     void InitPasses()

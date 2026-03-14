@@ -54,6 +54,7 @@ typedef EGLContext GLContext;
 namespace OpenGLLocal
 {
     constexpr uint32_t k_RWBuffersBindingOffset = 16;
+    constexpr uint32_t k_TypedBuffersBindingOffset = 4;
 
     struct DebugMessageType
     {
@@ -570,7 +571,7 @@ void GraphicsBackendOpenGL::DeleteBuffer_Internal(const GraphicsBackendBuffer &b
     delete bufferData;
 }
 
-void GraphicsBackendOpenGL::BindBuffer_Internal(const GraphicsBackendBuffer &buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
+void GraphicsBackendOpenGL::BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
 {
     OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
 
@@ -584,7 +585,7 @@ void GraphicsBackendOpenGL::BindBuffer_Internal(const GraphicsBackendBuffer &buf
             glTexBuffer(GL_TEXTURE_BUFFER, OpenGLHelpers::ToTextureInternalFormat(dataFormat, true), bufferData->GLBuffer);
         }
 
-        glActiveTexture(OpenGLHelpers::ToTextureUnit(index));
+        glActiveTexture(OpenGLHelpers::ToTextureUnit(index + OpenGLLocal::k_TypedBuffersBindingOffset));
         glBindTexture(GL_TEXTURE_BUFFER, bufferData->GLTexture);
     }
     else if (type == BufferType::STRUCTURED_BUFFER || type == BufferType::BYTE_ADDRESS_BUFFER)
@@ -594,7 +595,7 @@ void GraphicsBackendOpenGL::BindBuffer_Internal(const GraphicsBackendBuffer &buf
     }
 }
 
-void GraphicsBackendOpenGL::BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size)
+void GraphicsBackendOpenGL::BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
     const OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
 
@@ -616,7 +617,7 @@ void GraphicsBackendOpenGL::BindRWBuffer_Internal(const GraphicsBackendBuffer& b
             glTexBuffer(GL_TEXTURE_BUFFER, OpenGLHelpers::ToTextureInternalFormat(dataFormat, true), bufferData->GLBuffer);
         }
 
-        glBindImageTexture(index, bufferData->GLTexture, 0, GL_FALSE, 0, GL_READ_WRITE, OpenGLHelpers::ToTextureInternalFormat(dataFormat, true));
+        glBindImageTexture(index + OpenGLLocal::k_TypedBuffersBindingOffset, bufferData->GLTexture, 0, GL_FALSE, 0, GL_READ_WRITE, OpenGLHelpers::ToTextureInternalFormat(dataFormat, true));
     }
     else if (type == BufferType::STRUCTURED_BUFFER || type == BufferType::BYTE_ADDRESS_BUFFER)
     {

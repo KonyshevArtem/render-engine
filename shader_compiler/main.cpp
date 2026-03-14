@@ -116,6 +116,26 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
             glsl->set_decoration(buffer.id, spv::DecorationBinding, binding + k_OpenGLRWBuffersBindingOffset);
         }
 
+        for (const spirv_cross::Resource& image : resources.separate_images)
+        {
+            const spirv_cross::SPIRType& type = glsl->get_type(image.base_type_id);
+            if (type.image.dim != spv::DimBuffer)
+				continue;
+
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(glsl, image.id);
+            glsl->set_decoration(image.id, spv::DecorationBinding, binding + k_OpenGLTypedBuffersBindingOffset);
+        }
+
+        for (const spirv_cross::Resource& image : resources.storage_images)
+        {
+            const spirv_cross::SPIRType& type = glsl->get_type(image.type_id);
+            if (type.image.dim != spv::DimBuffer)
+                continue;
+
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(glsl, image.id);
+            glsl->set_decoration(image.id, spv::DecorationBinding, binding + k_OpenGLTypedBuffersBindingOffset);
+        }
+
         return glsl;
     }
 

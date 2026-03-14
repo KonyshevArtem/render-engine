@@ -93,7 +93,7 @@ public:
     void BindConstantBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size);
     void BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size);
     void BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int elementsCount);
-    void BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, TextureInternalFormat format);
+    void BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int elementsCount, TextureInternalFormat format);
 
     virtual void SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data) = 0;
     virtual void CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size) = 0;

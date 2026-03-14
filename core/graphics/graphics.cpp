@@ -33,6 +33,7 @@
 #include "graphics_buffer/graphics_buffer.h"
 #include "graphics_buffer/ring_buffer.h"
 #include "global_constants.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 
 #include <cassert>
 

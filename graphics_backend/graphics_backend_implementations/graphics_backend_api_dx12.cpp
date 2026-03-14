@@ -51,8 +51,10 @@ namespace DX12Local
     {
         ID3D12Resource* Resource;
         D3D12_RESOURCE_STATES State;
-        D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle;
-        uint32_t DescriptorIndex;
+        D3D12_CPU_DESCRIPTOR_HANDLE ReadOnlyDescriptorHandle;
+        D3D12_CPU_DESCRIPTOR_HANDLE RWDescriptorHandle;
+        uint32_t ReadOnlyDescriptorIndex;
+        uint32_t RWDescriptorIndex;
     };
 
     struct RenderTargetState
@@ -313,6 +315,8 @@ namespace DX12Local
     constexpr int k_TexturesDescriptorsOffset = 0;
     constexpr int k_BuffersDescriptorsOffset = k_TexturesDescriptorsOffset + k_MaxResourcesPerDraw;
     constexpr int k_ConstantBuffersDescriptorsOffset = k_BuffersDescriptorsOffset + k_MaxResourcesPerDraw;
+    constexpr int k_RWTexturesDescriptorsOffset = k_ConstantBuffersDescriptorsOffset + k_MaxResourcesPerDraw;
+    constexpr int k_RWBufferDescriptorsOffset = k_RWTexturesDescriptorsOffset + k_MaxResourcesPerDraw;
     constexpr int k_ResourceDescriptorHeapAdvance = k_MaxResourcesPerDraw * 5; // SRV Textures, SRV Buffers, CBV, UAV Textures, UAV Buffers
     constexpr int k_SamplerDescriptorHeapAdvance = k_MaxResourcesPerDraw;
     constexpr int k_ResourceDescriptorHeapCapacity = k_ResourceDescriptorHeapAdvance * 512;
@@ -885,6 +889,9 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, cons
         }
     }
 
+    if (descriptor.ReadWrite)
+        flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
     switch (dxResourceFormat)
     {
         case DXGI_FORMAT_D16_UNORM:
@@ -942,44 +949,67 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, cons
     resourceData->Resource = dxTexture;
     resourceData->State = state;
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC resourceViewDesc{};
-    resourceViewDesc.Format = dxViewFormat;
-    resourceViewDesc.ViewDimension = DX12Helpers::ToResourceViewDimension(type);
-    resourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+    srvDesc.Format = dxViewFormat;
+    srvDesc.ViewDimension = DX12Helpers::ToSRVDimension(type);
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    switch (resourceViewDesc.ViewDimension)
+    switch (srvDesc.ViewDimension)
     {
         case D3D12_SRV_DIMENSION_TEXTURE1D:
-            resourceViewDesc.Texture1D.MipLevels = -1;
+            srvDesc.Texture1D.MipLevels = -1;
             break;
         case D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
-            resourceViewDesc.Texture1DArray.MipLevels = -1;
-            resourceViewDesc.Texture1DArray.ArraySize = -1;
+            srvDesc.Texture1DArray.MipLevels = -1;
+            srvDesc.Texture1DArray.ArraySize = -1;
             break;
         case D3D12_SRV_DIMENSION_TEXTURE2D:
-            resourceViewDesc.Texture2D.MipLevels = -1;
+            srvDesc.Texture2D.MipLevels = -1;
             break;
         case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
-            resourceViewDesc.Texture2DArray.MipLevels = -1;
-            resourceViewDesc.Texture2DArray.ArraySize = -1;
+            srvDesc.Texture2DArray.MipLevels = -1;
+            srvDesc.Texture2DArray.ArraySize = -1;
             break;
         case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
-            resourceViewDesc.Texture2DMSArray.ArraySize = -1;
+            srvDesc.Texture2DMSArray.ArraySize = -1;
             break;
         case D3D12_SRV_DIMENSION_TEXTURE3D:
-            resourceViewDesc.Texture3D.MipLevels = -1;
+            srvDesc.Texture3D.MipLevels = -1;
             break;
         case D3D12_SRV_DIMENSION_TEXTURECUBE:
-            resourceViewDesc.TextureCube.MipLevels = -1;
+            srvDesc.TextureCube.MipLevels = -1;
             break;
         case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
-            resourceViewDesc.TextureCubeArray.MipLevels = -1;
-            resourceViewDesc.TextureCubeArray.NumCubes = -1;
+            srvDesc.TextureCubeArray.MipLevels = -1;
+            srvDesc.TextureCubeArray.NumCubes = -1;
             break;
     }
 
-    resourceData->DescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorPool.GetFreeCPUHandle(resourceData->DescriptorIndex);
-    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &resourceViewDesc, resourceData->DescriptorHandle);
+    resourceData->ReadOnlyDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorPool.GetFreeCPUHandle(resourceData->ReadOnlyDescriptorIndex);
+    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, resourceData->ReadOnlyDescriptorHandle);
+
+    if (descriptor.ReadWrite)
+    {
+        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+        uavDesc.Format = dxViewFormat;
+        uavDesc.ViewDimension = DX12Helpers::ToUAVDimension(type);
+
+        switch (uavDesc.ViewDimension)
+        {
+	        case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
+                uavDesc.Texture1DArray.ArraySize = -1;
+	            break;
+	        case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
+                uavDesc.Texture2DArray.ArraySize = -1;
+	            break;
+	        case D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY:
+                uavDesc.Texture2DMSArray.ArraySize = -1;
+	            break;
+        }
+
+        resourceData->RWDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorPool.GetFreeCPUHandle(resourceData->RWDescriptorIndex);
+        DX12Local::s_Device->CreateUnorderedAccessView(resourceData->Resource, nullptr, &uavDesc, resourceData->RWDescriptorHandle);
+    }
 
     GraphicsBackendTexture texture;
     texture.Texture = reinterpret_cast<uint64_t>(resourceData);
@@ -1018,7 +1048,7 @@ GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(const GraphicsBackendS
 void GraphicsBackendDX12::DeleteTexture_Internal(const GraphicsBackendTexture& texture)
 {
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
-    DX12Local::s_AllocatedResourcesDescriptorPool.ReturnCPUHandle(resourceData->DescriptorIndex);
+    DX12Local::s_AllocatedResourcesDescriptorPool.ReturnCPUHandle(resourceData->ReadOnlyDescriptorIndex);
     resourceData->Resource->Release();
     delete resourceData;
 }
@@ -1039,12 +1069,22 @@ void GraphicsBackendDX12::BindTexture_Internal(const GraphicsBackendTexture& tex
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
     DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, frameData.RenderCommandList->List);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE destHandle = frameData.BoundResourceDescriptorHeap.GetCPUHandle(index);
-    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_TexturesDescriptorsOffset);
+    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->ReadOnlyDescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void GraphicsBackendDX12::BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
 {
+    assert(index < DX12Local::k_MaxResourcesPerDraw);
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
+    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, frameData.RenderCommandList->List);
+
+    const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWTexturesDescriptorsOffset);
+    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->ReadOnlyDescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
 }
 
 void GraphicsBackendDX12::BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index)
@@ -1241,6 +1281,8 @@ GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(const GraphicsBackendBuf
     const CD3DX12_HEAP_PROPERTIES heapProps(descriptor.AllowCPUWrites ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT);
 
     D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
+    if (descriptor.AllowGPUWrites)
+        flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
     const D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(descriptor.Size, flags);
     ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, state, nullptr, IID_PPV_ARGS(&dxBuffer)));
@@ -1299,11 +1341,18 @@ void GraphicsBackendDX12::BindBuffer_Internal(const GraphicsBackendBuffer& buffe
         srvDesc.Buffer.NumElements = elementsCount;
         srvDesc.Buffer.StructureByteStride = elementSize;
     }
-    else
+    else if (type == BufferType::TYPED_BUFFER)
     {
-        srvDesc.Format = DXGI_FORMAT_R8_UINT;
+        srvDesc.Format = DX12Helpers::ToTextureInternalFormat(dataFormat, true);
         srvDesc.Buffer.FirstElement = offset;
-        srvDesc.Buffer.NumElements = size;
+        srvDesc.Buffer.NumElements = elementsCount;
+    }
+    else if (type == BufferType::BYTE_ADDRESS_BUFFER)
+    {
+        srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+        srvDesc.Buffer.FirstElement = offset;
+        srvDesc.Buffer.NumElements = size / 4;
+        srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
     }
 
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
@@ -1316,7 +1365,7 @@ void GraphicsBackendDX12::BindConstantBuffer_Internal(const GraphicsBackendBuffe
 
     size = Math::Align(size, GetConstantBufferOffsetAlignment());
 
-    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+    const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
 
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
     cbvDesc.BufferLocation = resourceData->Resource->GetGPUVirtualAddress() + offset;
@@ -1328,6 +1377,39 @@ void GraphicsBackendDX12::BindConstantBuffer_Internal(const GraphicsBackendBuffe
 
 void GraphicsBackendDX12::BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
 {
+    assert(index < DX12Local::k_MaxResourcesPerDraw);
+
+    const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+
+    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+
+    if (type == BufferType::STRUCTURED_BUFFER)
+    {
+        const int elementSize = size / elementsCount;
+        const int elementOffset = offset / elementSize;
+
+        uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+        uavDesc.Buffer.FirstElement = elementOffset;
+        uavDesc.Buffer.NumElements = elementsCount;
+        uavDesc.Buffer.StructureByteStride = elementSize;
+    }
+    else if (type == BufferType::TYPED_BUFFER)
+    {
+        uavDesc.Format = DX12Helpers::ToTextureInternalFormat(dataFormat, true);
+        uavDesc.Buffer.FirstElement = offset;
+        uavDesc.Buffer.NumElements = elementsCount;
+    }
+    else if (type == BufferType::BYTE_ADDRESS_BUFFER)
+    {
+        uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+        uavDesc.Buffer.FirstElement = offset;
+        uavDesc.Buffer.NumElements = size / 4;
+        uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
+    }
+
+    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+    DX12Local::s_Device->CreateUnorderedAccessView(resourceData->Resource, nullptr, &uavDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWBufferDescriptorsOffset));
 }
 
 void GraphicsBackendDX12::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void* data)

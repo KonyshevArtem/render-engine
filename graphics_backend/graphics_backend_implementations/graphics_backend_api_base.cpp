@@ -229,9 +229,9 @@ void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32
     m_BoundBuffers[index] = BufferBindInfo{ buffer, BufferType::STRUCTURED_BUFFER, offset, size, elementsCount };
 }
 
-void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, TextureInternalFormat format)
+void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int elementsCount, TextureInternalFormat format)
 {
-    m_BoundBuffers[index] = BufferBindInfo{ buffer, BufferType::TYPED_BUFFER, offset, size, 0, format };
+    m_BoundBuffers[index] = BufferBindInfo{ buffer, BufferType::TYPED_BUFFER, offset, 0, elementsCount, format };
 }
 
 void GraphicsBackendBase::BindConstantBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
@@ -249,9 +249,9 @@ void GraphicsBackendBase::BindRWBuffer(const GraphicsBackendBuffer& buffer, uint
     m_BoundRWBuffers[index] = BufferBindInfo{ buffer, BufferType::STRUCTURED_BUFFER, offset, size, elementsCount };
 }
 
-void GraphicsBackendBase::BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, TextureInternalFormat format)
+void GraphicsBackendBase::BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int elementsCount, TextureInternalFormat format)
 {
-    m_BoundRWBuffers[index] = BufferBindInfo{ buffer, BufferType::TYPED_BUFFER, offset, size, 0, format };
+    m_BoundRWBuffers[index] = BufferBindInfo{ buffer, BufferType::TYPED_BUFFER, offset, 0, elementsCount, format };
 }
 
 GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor)

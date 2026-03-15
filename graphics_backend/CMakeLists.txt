@@ -63,7 +63,6 @@ add_library(GraphicsBackend
         enums/color_write_mask.h
         types/graphics_backend_texture_descriptor.h
         types/graphics_backend_sampler_descriptor.h
-        enums/program_type.h)
         enums/program_type.h
         types/graphics_backend_buffer_descriptor.h)
 

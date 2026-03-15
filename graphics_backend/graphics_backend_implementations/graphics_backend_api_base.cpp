@@ -54,10 +54,7 @@ GraphicsBackendBase *GraphicsBackendBase::Create()
 #endif
 
 #ifdef RENDER_BACKEND_METAL
-    if (metal)
-    {
-        return new GraphicsBackendMetal();
-    }
+    return new GraphicsBackendMetal();
 #endif
 
 #ifdef RENDER_BACKEND_DX12

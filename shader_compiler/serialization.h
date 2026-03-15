@@ -50,8 +50,7 @@ inline void WriteReflection(const std::filesystem::path& outputDirPath, const Re
     const std::filesystem::path outputPath = std::filesystem::absolute(outputDirPath / "reflection.json");
     std::filesystem::create_directories(outputPath.parent_path());
 
-    FILE* fp;
-	fopen_s(&fp, outputPath.string().c_str(), "w");
+	FILE* fp = fopen(outputPath.string().c_str(), "w");
     fwrite(json.c_str(), json.size(), 1, fp);
     fclose(fp);
 }

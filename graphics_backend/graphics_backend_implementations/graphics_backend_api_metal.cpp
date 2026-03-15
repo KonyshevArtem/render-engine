@@ -17,6 +17,9 @@
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_fence.h"
 #include "types/graphics_backend_program_descriptor.h"
+#include "types/graphics_backend_texture_descriptor.h"
+#include "types/graphics_backend_sampler_descriptor.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 #include "helpers/metal_helpers.h"
 #include "debug.h"
 #include "hash.h"
@@ -139,22 +142,21 @@ void GraphicsBackendMetal::FillImGuiFrameData(void *data)
 {
 }
 
-GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
+GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name)
 {
     MTL::TextureUsage textureUsage = MTL::TextureUsageShaderRead;
-    if (isRenderTarget)
-    {
+    if (descriptor.RenderTarget)
         textureUsage |= MTL::TextureUsageRenderTarget;
-    }
 
-    MTL::TextureDescriptor *descriptor = MTL::TextureDescriptor::alloc()->init();
-    descriptor->setWidth(width);
-    descriptor->setHeight(height);
-    descriptor->setPixelFormat(MetalHelpers::ToTextureInternalFormat(format, isLinear));
-    descriptor->setTextureType(MetalHelpers::ToTextureType(type));
-    descriptor->setStorageMode(MTL::StorageModePrivate);
-    descriptor->setUsage(textureUsage);
-    descriptor->setMipmapLevelCount(mipLevels);
+
+    MTL::TextureDescriptor* mtlTextureDescriptor = MTL::TextureDescriptor::alloc()->init();
+    mtlTextureDescriptor->setWidth(descriptor.Width);
+    mtlTextureDescriptor->setHeight(descriptor.Height);
+    mtlTextureDescriptor->setPixelFormat(MetalHelpers::ToTextureInternalFormat(descriptor.Format, descriptor.Linear));
+    mtlTextureDescriptor->setTextureType(MetalHelpers::ToTextureType(type));
+    mtlTextureDescriptor->setStorageMode(MTL::StorageModePrivate);
+    mtlTextureDescriptor->setUsage(textureUsage);
+    mtlTextureDescriptor->setMipmapLevelCount(descriptor.MipLevels);
 
     const bool isTextureArray = type == TextureType::TEXTURE_1D_ARRAY ||
                                 type == TextureType::TEXTURE_2D_ARRAY ||
@@ -162,63 +164,57 @@ GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height
                                 type == TextureType::TEXTURE_CUBEMAP_ARRAY;
 
     if (type == TextureType::TEXTURE_3D)
-    {
-        descriptor->setDepth(depth);
-    }
+        mtlTextureDescriptor->setDepth(descriptor.Depth);
     else if (isTextureArray)
-    {
-        descriptor->setArrayLength(depth);
-    }
+        mtlTextureDescriptor->setArrayLength(descriptor.Depth);
 
-    MTL::Texture* metalTexture = m_Device->newTexture(descriptor);
-    descriptor->release();
+    MTL::Texture* metalTexture = m_Device->newTexture(mtlTextureDescriptor);
+    mtlTextureDescriptor->release();
 
     if (!name.empty())
-    {
         metalTexture->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
-    }
 
     GraphicsBackendTexture texture{};
     texture.Texture = reinterpret_cast<uint64_t>(metalTexture);
     texture.Type = type;
-    texture.Format = format;
-    texture.IsLinear = isLinear;
+    texture.Format = descriptor.Format;
+    texture.IsLinear = descriptor.Linear;
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name)
+GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name)
 {
-    auto descriptor = MTL::SamplerDescriptor::alloc()->init();
+    MTL::SamplerDescriptor* mtlSamplerDescriptor = MTL::SamplerDescriptor::alloc()->init();
 
-    auto wrap = MetalHelpers::ToTextureWrapMode(wrapMode);
-    descriptor->setRAddressMode(wrap);
-    descriptor->setSAddressMode(wrap);
-    descriptor->setTAddressMode(wrap);
+    const MTL::SamplerAddressMode wrap = MetalHelpers::ToTextureWrapMode(descriptor.WrapMode);
+    mtlSamplerDescriptor->setRAddressMode(wrap);
+    mtlSamplerDescriptor->setSAddressMode(wrap);
+    mtlSamplerDescriptor->setTAddressMode(wrap);
 
-    auto filtering = MetalHelpers::ToTextureFilteringMode(filteringMode);
-    descriptor->setMinFilter(filtering);
-    descriptor->setMagFilter(filtering);
+    const MTL::SamplerMinMagFilter filtering = MetalHelpers::ToTextureFilteringMode(descriptor.FilteringMode);
+    mtlSamplerDescriptor->setMinFilter(filtering);
+    mtlSamplerDescriptor->setMagFilter(filtering);
 
-    if (borderColor != nullptr)
+    if (descriptor.HasBorderColor)
     {
-        auto border = MetalHelpers::ToTextureBorderColor(borderColor);
-        descriptor->setBorderColor(border);
+        auto border = MetalHelpers::ToTextureBorderColor(descriptor.BorderColor);
+        mtlSamplerDescriptor->setBorderColor(border);
     }
 
-    descriptor->setLodMinClamp(minLod);
-    descriptor->setMipFilter(MTL::SamplerMipFilter::SamplerMipFilterNearest);
+    mtlSamplerDescriptor->setLodMinClamp(descriptor.MinLod);
+    mtlSamplerDescriptor->setMipFilter(MTL::SamplerMipFilter::SamplerMipFilterNearest);
 
-    if (comparisonFunction != ComparisonFunction::NONE)
+    if (descriptor.ComparisonFunction != ComparisonFunction::NONE)
     {
-        const MTL::CompareFunction function = MetalHelpers::ToComparisonFunction(comparisonFunction);
-        descriptor->setCompareFunction(function);
+        const MTL::CompareFunction function = MetalHelpers::ToComparisonFunction(descriptor.ComparisonFunction);
+        mtlSamplerDescriptor->setCompareFunction(function);
     }
 
     if (!name.empty())
-        descriptor->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+        mtlSamplerDescriptor->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
 
-    auto metalSampler = m_Device->newSamplerState(descriptor);
-    descriptor->release();
+    auto metalSampler = m_Device->newSamplerState(mtlSamplerDescriptor);
+    mtlSamplerDescriptor->release();
 
     GraphicsBackendSampler sampler{};
     sampler.Sampler = reinterpret_cast<uint64_t>(metalSampler);
@@ -244,6 +240,10 @@ void GraphicsBackendMetal::BindTexture_Internal(const GraphicsBackendTexture& te
     auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
     m_RenderCommandEncoder->setVertexTexture(metalTexture, index);
     m_RenderCommandEncoder->setFragmentTexture(metalTexture, index);
+}
+
+void GraphicsBackendMetal::BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
+{
 }
 
 void GraphicsBackendMetal::BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index)
@@ -346,25 +346,25 @@ TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAtt
     return format;
 }
 
-GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
+GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name, const void* data)
 {
-    const MTL::ResourceOptions storageMode = allowCPUWrites ? MetalLocal::s_DefaultBufferStorageMode : MTL::ResourceStorageModePrivate;
-    MTL::Buffer* metalBuffer = allowCPUWrites && data ? m_Device->newBuffer(data, size, storageMode) : m_Device->newBuffer(size, storageMode);
+    const MTL::ResourceOptions storageMode = descriptor.AllowCPUWrites ? MetalLocal::s_DefaultBufferStorageMode : MTL::ResourceStorageModePrivate;
+    MTL::Buffer* metalBuffer = descriptor.AllowCPUWrites && data
+            ? m_Device->newBuffer(data, descriptor.Size, storageMode)
+            : m_Device->newBuffer(descriptor.Size, storageMode);
 
-    if (!allowCPUWrites)
+    if (data && !descriptor.AllowCPUWrites)
     {
-        MTL::Buffer* tempBuffer = m_Device->newBuffer(data, size, MetalLocal::s_DefaultBufferStorageMode);
+        MTL::Buffer* tempBuffer = m_Device->newBuffer(data, descriptor.Size, MetalLocal::s_DefaultBufferStorageMode);
         BeginCopyPass("Init Buffer " + name);
-        GetBlitCommandEncoder()->copyFromBuffer(tempBuffer, 0, metalBuffer, 0, size);
+        GetBlitCommandEncoder()->copyFromBuffer(tempBuffer, 0, metalBuffer, 0, descriptor.Size);
         EndCopyPass();
 
         tempBuffer->release();
     }
 
     if (!name.empty())
-    {
         metalBuffer->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
-    }
 
     MetalLocal::BufferData* bufferData = new MetalLocal::BufferData();
     bufferData->Buffer = metalBuffer;
@@ -372,7 +372,7 @@ GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, const std::st
 
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(bufferData);
-    buffer.Size = size;
+    buffer.Size = descriptor.Size;
     return buffer;
 }
 
@@ -383,7 +383,7 @@ void GraphicsBackendMetal::DeleteBuffer_Internal(const GraphicsBackendBuffer &bu
     delete bufferData;
 }
 
-void GraphicsBackendMetal::BindBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
+void GraphicsBackendMetal::BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
 {
     assert(m_RenderCommandEncoder != nullptr);
 
@@ -392,14 +392,13 @@ void GraphicsBackendMetal::BindBuffer_Internal(const GraphicsBackendBuffer& buff
     m_RenderCommandEncoder->setFragmentBuffer(bufferData->Buffer, offset, index);
 }
 
-void GraphicsBackendMetal::BindStructuredBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count)
-{
-    BindBuffer_Internal(buffer, index, offset, size);
-}
-
 void GraphicsBackendMetal::BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
-    BindBuffer_Internal(buffer, index + MetalLocal::k_ConstantBufferIndexOffset, offset, size);
+    BindBuffer_Internal(buffer, BufferType::CONSTANT_BUFFER, index + MetalLocal::k_ConstantBufferIndexOffset, offset, size, 0, TextureInternalFormat::INVALID);
+}
+
+void GraphicsBackendMetal::BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
+{
 }
 
 void GraphicsBackendMetal::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data)
@@ -659,6 +658,10 @@ void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &
     const MetalLocal::BufferData* indexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.IndexBuffer.Buffer);
     m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, MetalLocal::k_MaxBuffers - 1);
     m_RenderCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), indexBufferData->Buffer, 0, instanceCount);
+}
+
+void GraphicsBackendMetal::Dispatch(uint32_t x, uint32_t y, uint32_t z)
+{
 }
 
 void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)

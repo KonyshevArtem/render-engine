@@ -69,6 +69,16 @@ namespace Graphics
         s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(descriptor, "LightingData");
     }
 
+    std::shared_ptr<Shader> s_ComputeShader;
+    std::shared_ptr<Texture2D> s_TextureIn;
+    std::shared_ptr<Texture2D> s_TextureOut;
+    std::shared_ptr<GraphicsBuffer> s_TypedBufferIn;
+    std::shared_ptr<GraphicsBuffer> s_TypedBufferOut;
+    std::shared_ptr<GraphicsBuffer> s_StructuredBufferIn;
+    std::shared_ptr<GraphicsBuffer> s_StructuredBufferOut;
+    std::shared_ptr<GraphicsBuffer> s_ByteBufferIn;
+    std::shared_ptr<GraphicsBuffer> s_ByteBufferOut;
+
     void InitPasses()
     {
         s_ShadowCasterPass = std::make_shared<ShadowCasterPass>(0);
@@ -82,6 +92,67 @@ namespace Graphics
         s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>(5);
         s_ShadowMapDebugPass = std::make_shared<ShadowMapDebugPass>(7);
 #endif
+
+        s_ComputeShader = Shader::Load("core_resources/shaders/compute_test", {});
+
+        GraphicsBackendTextureDescriptor descriptor;
+        descriptor.Width = 8;
+        descriptor.Height = 8;
+        descriptor.Linear = true;
+        descriptor.Format = TextureInternalFormat::R32F;
+
+        s_TextureIn = Texture2D::Create(descriptor, "ComputeTest/TextureIn");
+
+        descriptor.ReadWrite = true;
+        s_TextureOut = Texture2D::Create(descriptor, "ComputeTest/TextureOut");
+
+        GraphicsBackendBufferDescriptor readOnlyBufferDescriptor{};
+        readOnlyBufferDescriptor.AllowCPUWrites = true;
+
+        GraphicsBackendBufferDescriptor rwBufferDescriptor{};
+        rwBufferDescriptor.AllowGPUWrites = true;
+
+        readOnlyBufferDescriptor.Size = 64 * sizeof(float);
+        s_TypedBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeText/TypedBufferIn", false);
+
+        rwBufferDescriptor.Size = 64 * sizeof(float);
+        s_TypedBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeText/TypedBufferOut", false);
+
+        float data[64];
+        for (int i = 0; i < 64; ++i)
+            data[i] = i;
+        s_TypedBufferIn->SetData(&data[0], 0, sizeof(data));
+
+        struct TestStruct
+        {
+            float A;
+            float B;
+        };
+
+        readOnlyBufferDescriptor.Size = 64 * sizeof(TestStruct);
+        s_StructuredBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeTest/StructuredBufferIn", false);
+
+        rwBufferDescriptor.Size = 64 * sizeof(TestStruct);
+        s_StructuredBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeTest/StructuredBufferOut", false);
+
+        TestStruct structuredData[64];
+        for (int i = 0; i < 64; ++i)
+        {
+            structuredData[i].A = i;
+            structuredData[i].B = i * 2;
+        }
+        s_StructuredBufferIn->SetData(&structuredData[0], 0, 64 * sizeof(TestStruct));
+
+        readOnlyBufferDescriptor.Size = 64 * sizeof(float);
+        s_ByteBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeText/ByteBufferIn", false);
+
+        rwBufferDescriptor.Size = 64 * sizeof(float);
+        s_ByteBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeText/ByteBufferOut", false);
+        s_ByteBufferIn->SetData(&data[0], 0, sizeof(data));
+
+        float pixels[64] = {1.0f};
+        std::fill(&pixels[0], &pixels[64], 1.0f);
+        GraphicsBackend::Current()->UploadImagePixels(s_TextureIn->GetBackendTexture(), 0, 8, 8, 0, 64 * sizeof(float), &pixels[0]);
     }
 
     void Init()
@@ -241,6 +312,25 @@ namespace Graphics
             {
                 pass->Execute(ctx);
             }
+
+            GraphicsBackend::Current()->BeginRenderPass("Compute Test");
+
+            GraphicsBackend::Current()->BindBuffer(s_TypedBufferIn->GetBackendBuffer(), 0, 0, 64, TextureInternalFormat::R32F);
+            GraphicsBackend::Current()->BindRWBuffer(s_TypedBufferOut->GetBackendBuffer(), 0, 0, 64, TextureInternalFormat::R32F);
+
+            GraphicsBackend::Current()->BindBuffer(s_StructuredBufferIn->GetBackendBuffer(), 1, 0, s_StructuredBufferIn->GetSize(), 64);
+            GraphicsBackend::Current()->BindRWBuffer(s_StructuredBufferOut->GetBackendBuffer(), 1, 0, s_StructuredBufferOut->GetSize(), 64);
+
+            GraphicsBackend::Current()->BindBuffer(s_ByteBufferIn->GetBackendBuffer(), 2, 0, s_ByteBufferIn->GetSize());
+            GraphicsBackend::Current()->BindRWBuffer(s_ByteBufferOut->GetBackendBuffer(), 2, 0, s_ByteBufferOut->GetSize());
+
+            GraphicsBackend::Current()->BindTexture(s_TextureIn->GetBackendTexture(), 0);
+            GraphicsBackend::Current()->BindRWTexture(s_TextureOut->GetBackendTexture(), 0);
+
+            GraphicsBackend::Current()->UseProgram(s_ComputeShader->GetProgram());
+            GraphicsBackend::Current()->Dispatch(1, 1, 1);
+
+            GraphicsBackend::Current()->EndRenderPass();
         }
     }
 

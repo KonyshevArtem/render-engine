@@ -175,6 +175,7 @@ public:
     int GetBlockBytes(TextureInternalFormat format);
     bool IsDepthFormat(TextureInternalFormat format);
     bool IsDepthAttachment(FramebufferAttachment attachment);
+    uint32_t GetFormatSize(TextureInternalFormat format);
 
     uint32_t GetDrawCallCount()
     {

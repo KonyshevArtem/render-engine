@@ -565,3 +565,87 @@ std::string GraphicsBackendBase::GetShaderTypeName(ShaderType shaderType)
         return "Unknown";
     }
 }
+
+uint32_t GraphicsBackendBase::GetFormatSize(TextureInternalFormat format)
+{
+    switch (format)
+    {
+        case TextureInternalFormat::R8:
+        case TextureInternalFormat::R8_SNORM:
+        case TextureInternalFormat::R3_G3_B2:
+        case TextureInternalFormat::RGBA2:
+        case TextureInternalFormat::R8I:
+        case TextureInternalFormat::R8UI:
+            return 1;
+
+        case TextureInternalFormat::R16:
+        case TextureInternalFormat::R16_SNORM:
+        case TextureInternalFormat::RG8:
+        case TextureInternalFormat::RG8_SNORM:
+        case TextureInternalFormat::RGB4:
+        case TextureInternalFormat::RGB5:
+        case TextureInternalFormat::RGBA4:
+        case TextureInternalFormat::RGB5_A1:
+        case TextureInternalFormat::R16F:
+        case TextureInternalFormat::R16I:
+        case TextureInternalFormat::R16UI:
+        case TextureInternalFormat::RG8I:
+        case TextureInternalFormat::RG8UI:
+            return 2;
+
+        case TextureInternalFormat::RGB8:
+        case TextureInternalFormat::RGB8_SNORM:
+        case TextureInternalFormat::RGB8I:
+        case TextureInternalFormat::RGB8UI:
+            return 3;
+
+        case TextureInternalFormat::RG16:
+        case TextureInternalFormat::RG16_SNORM:
+        case TextureInternalFormat::RGBA8:
+        case TextureInternalFormat::RGBA8_SNORM:
+        case TextureInternalFormat::RGB10_A2:
+        case TextureInternalFormat::RGB10_A2UI:
+        case TextureInternalFormat::RG16F:
+        case TextureInternalFormat::R32F:
+        case TextureInternalFormat::R11F_G11F_B10F:
+        case TextureInternalFormat::RGB9_E5:
+        case TextureInternalFormat::R32I:
+        case TextureInternalFormat::R32UI:
+        case TextureInternalFormat::RG16I:
+        case TextureInternalFormat::RG16UI:
+        case TextureInternalFormat::RGBA8I:
+        case TextureInternalFormat::RGBA8UI:
+        case TextureInternalFormat::BGRA8:
+        case TextureInternalFormat::BGRA8_SNORM:
+            return 4;
+
+        case TextureInternalFormat::RGB16:
+        case TextureInternalFormat::RGBA12:
+        case TextureInternalFormat::RGB16F:
+        case TextureInternalFormat::RGB16I:
+        case TextureInternalFormat::RGB16UI:
+            return 6;
+
+        case TextureInternalFormat::RGBA16:
+        case TextureInternalFormat::RGBA16F:
+        case TextureInternalFormat::RG32F:
+        case TextureInternalFormat::RG32I:
+        case TextureInternalFormat::RG32UI:
+        case TextureInternalFormat::RGBA16I:
+        case TextureInternalFormat::RGBA16UI:
+            return 8;
+
+        case TextureInternalFormat::RGB32F:
+        case TextureInternalFormat::RGB32I:
+        case TextureInternalFormat::RGB32UI:
+            return 12;
+
+        case TextureInternalFormat::RGBA32F:
+        case TextureInternalFormat::RGBA32I:
+        case TextureInternalFormat::RGBA32UI:
+            return 16;
+
+        default:
+            return 0;
+    }
+}

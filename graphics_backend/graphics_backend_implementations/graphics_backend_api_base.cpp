@@ -213,7 +213,7 @@ void GraphicsBackendBase::BindRWTexture(const GraphicsBackendTexture& texture, u
 
 void GraphicsBackendBase::UploadImagePixels(const GraphicsBackendTexture& texture, int level, int width, int height, int depth, int imageSize, const void* pixelsData)
 {
-    UploadImagePixels(texture, level, CubemapFace::NEGATIVE_X, width, height, depth, imageSize, pixelsData);
+    UploadImagePixels(texture, level, CubemapFace::POSITIVE_X, width, height, depth, imageSize, pixelsData);
 }
 
 void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)

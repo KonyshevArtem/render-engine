@@ -47,9 +47,26 @@ namespace SPIRVReflection_Local
     }
 }
 
-inline void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, Reflection& reflection, GraphicsBackend backend)
+inline void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, Reflection& reflection, GraphicsBackend backend, ShaderType shaderType)
 {
     const bool isOpenGL = backend == GRAPHICS_BACKEND_OPENGL || backend == GRAPHICS_BACKEND_GLES;
+    const bool isMetal = backend == GRAPHICS_BACKEND_METAL;
+
+    uint32_t typedBufferBindingOffset = 0;
+    if (isOpenGL)
+        typedBufferBindingOffset = k_OpenGLTypedBuffersBindingOffset;
+    else if (isMetal)
+        typedBufferBindingOffset = k_MetalTypedBufferBindingOffset;
+
+    uint32_t rwBuffersBindingOffset = 0;
+    if (isOpenGL)
+        rwBuffersBindingOffset = k_OpenGLRWBuffersBindingOffset;
+    else if (isMetal)
+        rwBuffersBindingOffset = k_MetalRWResourcesBindingOffset;
+
+    uint32_t rwTexturesBindingOffset = 0;
+    if (isMetal)
+        rwTexturesBindingOffset = k_MetalRWResourcesBindingOffset;
 
     spirv_cross::ShaderResources resources = compiler->get_shader_resources();
 
@@ -60,8 +77,8 @@ inline void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, Reflecti
     {
         uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(compiler, buffer.id);
         const bool isWritable = SPIRVReflection_Local::IsSPIRVBufferWritable(compiler, buffer.id);
-        if (isOpenGL && isWritable)
-            binding -= k_OpenGLRWBuffersBindingOffset;
+        if (isWritable)
+            binding -= rwBuffersBindingOffset;
 
         WriteBufferDescriptor(compiler->get_name(buffer.id), binding, 0, BufferType::STRUCTURED_BUFFER, isWritable, reflection.Buffers);
     }
@@ -72,12 +89,7 @@ inline void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, Reflecti
         uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(compiler, image.id);
 
         if (type.image.dim == spv::DimBuffer)
-        {
-            if (isOpenGL)
-                binding -= k_OpenGLTypedBuffersBindingOffset;
-
-            WriteBufferDescriptor(compiler->get_name(image.id), binding, 0, BufferType::TYPED_BUFFER, false, reflection.Buffers);
-        }
+            WriteBufferDescriptor(compiler->get_name(image.id), binding - typedBufferBindingOffset, 0, BufferType::TYPED_BUFFER, false, reflection.Buffers);
         else
 			WriteTextureDescriptor(compiler->get_name(image.id), binding, false, reflection.Textures);
     }
@@ -91,17 +103,18 @@ inline void ExtractReflectionFromSPIRV(spirv_cross::Compiler* compiler, Reflecti
     for (const spirv_cross::Resource& image : resources.storage_images)
     {
         const spirv_cross::SPIRType& type = compiler->get_type(image.type_id);
-        uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(compiler, image.id);
+        uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(compiler, image.id) - rwTexturesBindingOffset;
 
         if (type.image.dim == spv::DimBuffer)
-        {
-            if (isOpenGL)
-                binding -= k_OpenGLTypedBuffersBindingOffset;
-
-            WriteBufferDescriptor(compiler->get_name(image.id), binding, 0, BufferType::TYPED_BUFFER, true, reflection.Buffers);
-        }
+            WriteBufferDescriptor(compiler->get_name(image.id), binding - typedBufferBindingOffset, 0, BufferType::TYPED_BUFFER, true, reflection.Buffers);
         else
             WriteTextureDescriptor(compiler->get_name(image.id), binding, true, reflection.Textures);
+    }
+
+    if (shaderType == ShaderType::COMPUTE_SHADER)
+    {
+        spirv_cross::SPIREntryPoint::WorkgroupSize size = compiler->get_entry_point(GetShaderEntryPoint(shaderType), spv::ExecutionModelGLCompute).workgroup_size;
+        reflection.ThreadGroupSize = { size.x, size.y, size.z };
     }
 }
 

@@ -19,6 +19,13 @@
 #include <string>
 #include <memory>
 
+struct ThreadGroupSize
+{
+    uint32_t X = 1;
+    uint32_t Y = 1;
+    uint32_t Z = 1;
+};
+
 struct GraphicsBackendProgramDescriptor
 {
     ProgramType Type;
@@ -37,6 +44,8 @@ struct GraphicsBackendProgramDescriptor
     GraphicsBackendStencilDescriptor StencilDescriptor;
 
     PrimitiveType PrimitiveType;
+
+    ThreadGroupSize ThreadGroupSize;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_PROGRAM_DESCRIPTOR_H

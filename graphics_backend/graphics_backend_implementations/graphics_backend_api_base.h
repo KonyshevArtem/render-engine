@@ -136,6 +136,8 @@ public:
     virtual void EndRenderPass();
     virtual void BeginCopyPass(const std::string& name) = 0;
     virtual void EndCopyPass() = 0;
+    virtual void BeginComputePass(const std::string& name) = 0;
+    virtual void EndComputePass() = 0;
 
     virtual GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) = 0;
     virtual void DeleteFence(const GraphicsBackendFence& fence) = 0;

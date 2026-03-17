@@ -313,7 +313,7 @@ namespace Graphics
                 pass->Execute(ctx);
             }
 
-            GraphicsBackend::Current()->BeginRenderPass("Compute Test");
+            GraphicsBackend::Current()->BeginComputePass("Compute Test");
 
             GraphicsBackend::Current()->BindBuffer(s_TypedBufferIn->GetBackendBuffer(), 0, 0, 64, TextureInternalFormat::R32F);
             GraphicsBackend::Current()->BindRWBuffer(s_TypedBufferOut->GetBackendBuffer(), 0, 0, 64, TextureInternalFormat::R32F);
@@ -328,9 +328,9 @@ namespace Graphics
             GraphicsBackend::Current()->BindRWTexture(s_TextureOut->GetBackendTexture(), 0);
 
             GraphicsBackend::Current()->UseProgram(s_ComputeShader->GetProgram());
-            GraphicsBackend::Current()->Dispatch(1, 1, 1);
+            GraphicsBackend::Current()->Dispatch(64, 1, 1);
 
-            GraphicsBackend::Current()->EndRenderPass();
+            GraphicsBackend::Current()->EndComputePass();
         }
     }
 

@@ -4,6 +4,7 @@
 #ifdef RENDER_BACKEND_METAL
 
 #include "graphics_backend_api_base.h"
+#include "types/graphics_backend_program_descriptor.h"
 
 #include <shared_mutex>
 
@@ -13,6 +14,7 @@ namespace MTL
     class CommandBuffer;
     class RenderPassDescriptor;
     class RenderCommandEncoder;
+    class ComputeCommandEncoder;
     class BlitCommandEncoder;
     class Texture;
     class CommandQueue;
@@ -82,6 +84,8 @@ public:
     void EndRenderPass() override;
     void BeginCopyPass(const std::string& name) override;
     void EndCopyPass() override;
+    void BeginComputePass(const std::string& name) override;
+    void EndComputePass() override;
 
     GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) override;
     void DeleteFence(const GraphicsBackendFence& fence) override;
@@ -128,6 +132,9 @@ private:
     MTL::RenderPassDescriptor* m_BackbufferDescriptor = nullptr;
     MTL::RenderPassDescriptor* m_RenderPassDescriptor = nullptr;
     MTL::RenderCommandEncoder* m_RenderCommandEncoder = nullptr;
+    MTL::ComputeCommandEncoder* m_ComputeCommandEncoder = nullptr;
+
+    ThreadGroupSize m_CurrentProgramThreadGroupSize;
 
     std::shared_mutex m_UploadCommandBuffersMutex;
     std::unordered_map<std::thread::id, MTL::CommandBuffer*> m_UploadCommandBuffers;

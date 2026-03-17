@@ -67,10 +67,12 @@ Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders,
                std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
                std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
                std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
+               ThreadGroupSize threadGroupSize,
                std::string name, bool supportInstancing) :
     m_Shaders(std::move(shaders)),
     m_Name(std::move(name)),
     m_SupportInstancing(supportInstancing),
+    m_ThreadGroupSize(threadGroupSize),
     m_Textures(std::move(textures)),
     m_Samplers(std::move(samplers)),
     m_Buffers(std::move(buffers))
@@ -163,6 +165,7 @@ const GraphicsBackendProgram& Shader::GetOrCreateComputeProgram()
     programDescriptor.Samplers = &m_Samplers;
     programDescriptor.Buffers = &m_Buffers;
     programDescriptor.Name = &m_Name;
+    programDescriptor.ThreadGroupSize = m_ThreadGroupSize;
 
     const GraphicsBackendProgram program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
     m_Programs[0] = program;

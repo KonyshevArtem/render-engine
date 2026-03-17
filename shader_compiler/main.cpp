@@ -149,11 +149,40 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
         options.enable_decoration_binding = true;
         msl->set_msl_options(options);
 
-        spirv_cross::ShaderResources resource = msl->get_shader_resources();
-        for (const spirv_cross::Resource& buffer : resource.uniform_buffers)
+        spirv_cross::ShaderResources resources = msl->get_shader_resources();
+        for (const spirv_cross::Resource& buffer : resources.uniform_buffers)
         {
             uint32_t binding = msl->get_decoration(buffer.id, spv::DecorationBinding);
             msl->set_decoration(buffer.id, spv::DecorationBinding, binding + k_MetalConstantBufferBindingOffset);
+        }
+
+        for (const spirv_cross::Resource& buffer : resources.storage_buffers)
+        {
+            if (!SPIRVReflection_Local::IsSPIRVBufferWritable(msl, buffer.id))
+                continue;
+
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(msl, buffer.id);
+            msl->set_decoration(buffer.id, spv::DecorationBinding, binding + k_MetalRWResourcesBindingOffset);
+        }
+
+        for (const spirv_cross::Resource& image : resources.separate_images)
+        {
+            const spirv_cross::SPIRType& type = msl->get_type(image.base_type_id);
+            if (type.image.dim != spv::DimBuffer)
+                continue;
+
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(msl, image.id);
+            msl->set_decoration(image.id, spv::DecorationBinding, binding + k_MetalTypedBufferBindingOffset);
+        }
+
+        for (const spirv_cross::Resource& image : resources.storage_images)
+        {
+            const spirv_cross::SPIRType& type = msl->get_type(image.type_id);
+            uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(msl, image.id) + k_MetalRWResourcesBindingOffset;
+            if (type.image.dim == spv::DimBuffer)
+                binding += k_MetalTypedBufferBindingOffset;
+
+            msl->set_decoration(image.id, spv::DecorationBinding, binding);
         }
 
         return msl;
@@ -260,7 +289,7 @@ int main(int argc, char **argv)
             spirv_cross::Compiler* SPIRV = CompileSPIRV(dxc, backend, shaderType);
 
             WriteShaderSource(outputDirPath, SPIRV, shaderType);
-            ExtractReflectionFromSPIRV(SPIRV, reflection, backend);
+            ExtractReflectionFromSPIRV(SPIRV, reflection, backend, shaderType);
         }
     }
 

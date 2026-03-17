@@ -32,6 +32,15 @@ void to_json(nlohmann::json& json, const ResourceDescriptor& desc)
     };
 }
 
+void to_json(nlohmann::json& json, const ThreadGroupSize& threadGroupSize)
+{
+    json = nlohmann::json{
+            {"X",  nlohmann::json(threadGroupSize.X)},
+            {"Y",  nlohmann::json(threadGroupSize.Y)},
+            {"Z",  nlohmann::json(threadGroupSize.Z)},
+    };
+}
+
 void to_json(nlohmann::json& json, const Reflection& reflection)
 {
     std::unordered_map<std::string, int> a;
@@ -40,6 +49,7 @@ void to_json(nlohmann::json& json, const Reflection& reflection)
             {"Buffers",  nlohmann::json(reflection.Buffers)},
             {"Textures", nlohmann::json(reflection.Textures)},
             {"Samplers", nlohmann::json(reflection.Samplers)},
+            {"ThreadGroupSize", nlohmann::json(reflection.ThreadGroupSize)},
     };
 }
 

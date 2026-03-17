@@ -10,6 +10,7 @@
 #include "types/graphics_backend_shader_object.h"
 #include "enums/primitive_type.h"
 #include "drawable_geometry/vertex_attributes/vertex_attributes.h"
+#include "types/graphics_backend_program_descriptor.h"
 
 struct GraphicsBackendTextureInfo;
 struct GraphicsBackendSamplerInfo;
@@ -25,6 +26,7 @@ public:
 		std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
 		std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
 		std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
+        ThreadGroupSize threadGroupSize,
 		std::string name, bool _supportInstancing);
     ~Shader();
 
@@ -65,6 +67,7 @@ private:
     ProgramType m_Type;
     std::string m_Name;
     bool m_SupportInstancing;
+    ThreadGroupSize m_ThreadGroupSize;
 
     std::unordered_map<std::string, GraphicsBackendTextureInfo> m_Textures;
     std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;

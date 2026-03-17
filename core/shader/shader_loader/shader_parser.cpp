@@ -12,6 +12,13 @@ void from_json(const nlohmann::json& json, GraphicsBackendSamplerInfo& info)
     json.at("Binding").get_to(info.Binding);
 }
 
+void from_json(const nlohmann::json& json, ThreadGroupSize& threadGroupSize)
+{
+    json.at("X").get_to(threadGroupSize.X);
+    json.at("Y").get_to(threadGroupSize.Y);
+    json.at("Z").get_to(threadGroupSize.Z);
+}
+
 template <>
 struct nlohmann::adl_serializer<std::shared_ptr<GraphicsBackendBufferInfo>>
 {
@@ -39,11 +46,13 @@ namespace ShaderParser
     void ParseReflection(const std::string& reflectionJson,
         std::unordered_map<std::string, GraphicsBackendTextureInfo>& textures,
         std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& buffers,
-        std::unordered_map<std::string, GraphicsBackendSamplerInfo>& samplers)
+        std::unordered_map<std::string, GraphicsBackendSamplerInfo>& samplers,
+        ThreadGroupSize& threadGroupSize)
     {
         nlohmann::json reflectionObject = nlohmann::json::parse(reflectionJson);
         buffers = std::move(reflectionObject.at("Buffers").template get<std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>>());
         textures = std::move(reflectionObject.at("Textures").template get<std::unordered_map<std::string, GraphicsBackendTextureInfo>>());
         samplers = std::move(reflectionObject.at("Samplers").template get<std::unordered_map<std::string, GraphicsBackendSamplerInfo>>());
+        reflectionObject.at("ThreadGroupSize").get_to(threadGroupSize);
     }
 }

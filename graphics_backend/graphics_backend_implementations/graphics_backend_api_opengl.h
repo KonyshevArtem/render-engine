@@ -65,6 +65,8 @@ public:
     void EndRenderPass() override;
     void BeginCopyPass(const std::string& name) override;
     void EndCopyPass() override;
+    void BeginComputePass(const std::string& name) override;
+    void EndComputePass() override;
 
     GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) override;
     void DeleteFence(const GraphicsBackendFence& fence) override;

@@ -715,7 +715,7 @@ void GraphicsBackendMetal::UseProgram(const GraphicsBackendProgram& program)
         m_CurrentProgramThreadGroupSize = program.ThreadGroupSize;
     }
 
-    BindResources(program);
+    GraphicsBackendBase::UseProgram(program);
 }
 
 void GraphicsBackendMetal::SetClearColor(float r, float g, float b, float a)
@@ -787,14 +787,13 @@ void GraphicsBackendMetal::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
     assert(m_ComputeCommandEncoder != nullptr);
 
+    const ThreadGroupSize& tgSize = m_CurrentProgram.ThreadGroupSize;
+
     MTL::Size groupsPerGrid = MTL::Size(
-            (x + m_CurrentProgramThreadGroupSize.X - 1) / m_CurrentProgramThreadGroupSize.X,
-            (y + m_CurrentProgramThreadGroupSize.Y - 1) / m_CurrentProgramThreadGroupSize.Y,
-            (z + m_CurrentProgramThreadGroupSize.Z - 1) / m_CurrentProgramThreadGroupSize.Z);
-    MTL::Size threadPerGroup = MTL::Size(
-        m_CurrentProgramThreadGroupSize.X,
-        m_CurrentProgramThreadGroupSize.Y,
-        m_CurrentProgramThreadGroupSize.Z);
+            (x + tgSize.X - 1) / tgSize.X,
+            (y + tgSize.Y - 1) / tgSize.Y,
+            (z + tgSize.Z - 1) / tgSize.Z);
+    MTL::Size threadPerGroup = MTL::Size(tgSize.X, tgSize.Y, tgSize.Z);
 
     m_ComputeCommandEncoder->dispatchThreadgroups(groupsPerGrid, threadPerGroup);
 }

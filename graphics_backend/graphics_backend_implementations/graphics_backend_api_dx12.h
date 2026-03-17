@@ -4,6 +4,7 @@
 #ifdef RENDER_BACKEND_DX12
 
 #include "graphics_backend_api_base.h"
+#include "types/graphics_backend_program_descriptor.h"
 
 class GraphicsBackendDX12 : public GraphicsBackendBase
 {
@@ -63,6 +64,8 @@ public:
     void EndRenderPass() override;
     void BeginCopyPass(const std::string& name) override;
     void EndCopyPass() override;
+    void BeginComputePass(const std::string& name) override;
+    void EndComputePass() override;
 
     GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) override;
     void DeleteFence(const GraphicsBackendFence& fence) override;

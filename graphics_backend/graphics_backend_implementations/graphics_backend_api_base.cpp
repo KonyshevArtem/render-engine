@@ -143,6 +143,13 @@ void GraphicsBackendBase::DeleteProgram(GraphicsBackendProgram program)
     m_DeletedPrograms.emplace_back(program, BaseBackendLocal::k_DeleteResourceDelay);
 }
 
+void GraphicsBackendBase::UseProgram(const GraphicsBackendProgram& program)
+{
+    m_CurrentProgram = program;
+
+    BindResources(program);
+}
+
 void GraphicsBackendBase::BindResources(const GraphicsBackendProgram& program)
 {
     auto HasBinding = [](uint32_t bindingFlags, uint32_t binding)

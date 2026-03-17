@@ -11,6 +11,7 @@
 #include "types/graphics_backend_depth_descriptor.h"
 #include "types/graphics_backend_rasterizer_descriptor.h"
 #include "types/graphics_backend_blend_descriptor.h"
+#include "types/graphics_backend_program.h"
 
 #include <string>
 #include <vector>
@@ -38,7 +39,6 @@ enum class ResourceState : uint64_t;
 
 class GraphicsBackendTexture;
 class GraphicsBackendSampler;
-class GraphicsBackendProgram;
 class GraphicsBackendShaderObject;
 class GraphicsBackendGeometry;
 struct GraphicsBackendTextureInfo;
@@ -111,7 +111,7 @@ public:
     virtual GraphicsBackendProgram CreateProgram(const GraphicsBackendProgramDescriptor& descriptor) = 0;
     void DeleteShader(GraphicsBackendShaderObject shader);
     void DeleteProgram(GraphicsBackendProgram program);
-    virtual void UseProgram(const GraphicsBackendProgram& program) = 0;
+    virtual void UseProgram(const GraphicsBackendProgram& program);
 
     virtual void SetClearColor(float r, float g, float b, float a) = 0;
     virtual void SetClearDepth(double depth) = 0;
@@ -179,7 +179,7 @@ public:
     bool IsDepthAttachment(FramebufferAttachment attachment);
     uint32_t GetFormatSize(TextureInternalFormat format);
 
-    uint32_t GetDrawCallCount()
+    uint32_t GetDrawCallCount() const
     {
         return m_DrawCallCount;
     }
@@ -202,7 +202,6 @@ protected:
     virtual void DeleteShader_Internal(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram_Internal(GraphicsBackendProgram program) = 0;
 
-    void BindResources(const GraphicsBackendProgram& program);
     virtual void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
     virtual void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
     virtual void BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index) = 0;
@@ -212,9 +211,12 @@ protected:
 
 	static GraphicsBackendProgram CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor);
 
+    GraphicsBackendProgram m_CurrentProgram{};
     uint32_t m_DrawCallCount = 0;
 
 private:
+    void BindResources(const GraphicsBackendProgram& program);
+
     struct BufferBindInfo
     {
         GraphicsBackendBuffer Buffer;

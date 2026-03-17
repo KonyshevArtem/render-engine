@@ -821,73 +821,76 @@ void GraphicsBackendOpenGL::UseProgram(const GraphicsBackendProgram& program)
 
     glUseProgram(glProgram);
 
-    const GraphicsBackendBlendDescriptor& blendDescriptor = GetBlendState();
-    if (blendDescriptor.Enabled)
+    if (program.Type == ProgramType::RENDER)
     {
-        glEnable(GL_BLEND);
-        glBlendFunc(OpenGLHelpers::ToBlendFactor(blendDescriptor.SourceFactor), OpenGLHelpers::ToBlendFactor(blendDescriptor.DestinationFactor));
-    }
-    else
-        glDisable(GL_BLEND);
+        const GraphicsBackendBlendDescriptor& blendDescriptor = GetBlendState();
+        if (blendDescriptor.Enabled)
+        {
+            glEnable(GL_BLEND);
+            glBlendFunc(OpenGLHelpers::ToBlendFactor(blendDescriptor.SourceFactor), OpenGLHelpers::ToBlendFactor(blendDescriptor.DestinationFactor));
+        }
+        else
+            glDisable(GL_BLEND);
 
-    const uint8_t colorMask = static_cast<uint8_t>(blendDescriptor.ColorWriteMask);
-    glColorMask(
-        (colorMask & static_cast<uint8_t>(ColorWriteMask::RED)) != 0 ? GL_TRUE : GL_FALSE,
-        (colorMask & static_cast<uint8_t>(ColorWriteMask::GREEN)) != 0 ? GL_TRUE : GL_FALSE,
-        (colorMask & static_cast<uint8_t>(ColorWriteMask::BLUE)) != 0 ? GL_TRUE : GL_FALSE,
-        (colorMask & static_cast<uint8_t>(ColorWriteMask::ALPHA)) != 0 ? GL_TRUE : GL_FALSE
-    );
+        const uint8_t colorMask = static_cast<uint8_t>(blendDescriptor.ColorWriteMask);
+        glColorMask(
+            (colorMask & static_cast<uint8_t>(ColorWriteMask::RED)) != 0 ? GL_TRUE : GL_FALSE,
+            (colorMask & static_cast<uint8_t>(ColorWriteMask::GREEN)) != 0 ? GL_TRUE : GL_FALSE,
+            (colorMask & static_cast<uint8_t>(ColorWriteMask::BLUE)) != 0 ? GL_TRUE : GL_FALSE,
+            (colorMask & static_cast<uint8_t>(ColorWriteMask::ALPHA)) != 0 ? GL_TRUE : GL_FALSE
+        );
 
-    const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor = GetRasterizerState();
-    if (rasterizerDescriptor.Face != CullFace::NONE)
-    {
-        glEnable(GL_CULL_FACE);
-        glCullFace(OpenGLHelpers::ToCullFace(rasterizerDescriptor.Face));
-    }
-    else
-        glDisable(GL_CULL_FACE);
+        const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor = GetRasterizerState();
+        if (rasterizerDescriptor.Face != CullFace::NONE)
+        {
+            glEnable(GL_CULL_FACE);
+            glCullFace(OpenGLHelpers::ToCullFace(rasterizerDescriptor.Face));
+        }
+        else
+            glDisable(GL_CULL_FACE);
 
-    const GraphicsBackendStencilDescriptor& stencilDescriptor = GetStencilDescriptor();
-    OpenGLLocal::s_StencilEnabled = stencilDescriptor.Enabled;
-    if (stencilDescriptor.Enabled)
-    {
-        glEnable(GL_STENCIL_TEST);
-        glStencilOpSeparate(
+        const GraphicsBackendStencilDescriptor& stencilDescriptor = GetStencilDescriptor();
+        OpenGLLocal::s_StencilEnabled = stencilDescriptor.Enabled;
+        if (stencilDescriptor.Enabled)
+        {
+            glEnable(GL_STENCIL_TEST);
+            glStencilOpSeparate(
                 GL_FRONT,
                 OpenGLHelpers::ToStencilOp(stencilDescriptor.FrontFaceOpDescriptor.FailOp),
                 OpenGLHelpers::ToStencilOp(stencilDescriptor.FrontFaceOpDescriptor.DepthFailOp),
                 OpenGLHelpers::ToStencilOp(stencilDescriptor.FrontFaceOpDescriptor.PassOp)
             );
-        glStencilOpSeparate(
+            glStencilOpSeparate(
                 GL_BACK,
                 OpenGLHelpers::ToStencilOp(stencilDescriptor.BackFaceOpDescriptor.FailOp),
                 OpenGLHelpers::ToStencilOp(stencilDescriptor.BackFaceOpDescriptor.DepthFailOp),
                 OpenGLHelpers::ToStencilOp(stencilDescriptor.BackFaceOpDescriptor.PassOp)
-        );
-        glStencilMask(stencilDescriptor.WriteMask);
+            );
+            glStencilMask(stencilDescriptor.WriteMask);
 
-        ComparisonFunction frontFunc = stencilDescriptor.FrontFaceOpDescriptor.ComparisonFunction;
-        ComparisonFunction backFunc = stencilDescriptor.BackFaceOpDescriptor.ComparisonFunction;
-        OpenGLLocal::s_StencilFrontFunc = frontFunc != ComparisonFunction::NONE ? OpenGLHelpers::ToComparisonFunction(frontFunc) : GL_ALWAYS;
-        OpenGLLocal::s_StencilBackFunc = backFunc != ComparisonFunction::NONE ? OpenGLHelpers::ToComparisonFunction(backFunc) : GL_ALWAYS;
-        OpenGLLocal::s_StencilReadMask = stencilDescriptor.ReadMask;
+            ComparisonFunction frontFunc = stencilDescriptor.FrontFaceOpDescriptor.ComparisonFunction;
+            ComparisonFunction backFunc = stencilDescriptor.BackFaceOpDescriptor.ComparisonFunction;
+            OpenGLLocal::s_StencilFrontFunc = frontFunc != ComparisonFunction::NONE ? OpenGLHelpers::ToComparisonFunction(frontFunc) : GL_ALWAYS;
+            OpenGLLocal::s_StencilBackFunc = backFunc != ComparisonFunction::NONE ? OpenGLHelpers::ToComparisonFunction(backFunc) : GL_ALWAYS;
+            OpenGLLocal::s_StencilReadMask = stencilDescriptor.ReadMask;
+        }
+        else
+            glDisable(GL_STENCIL_TEST);
+
+        glFrontFace(OpenGLHelpers::ToCullFaceOrientation(rasterizerDescriptor.Orientation));
+
+        const GraphicsBackendDepthDescriptor& depthDescriptor = GetDepthState();
+        if (depthDescriptor.Enabled)
+        {
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(OpenGLHelpers::ToComparisonFunction(depthDescriptor.DepthFunction));
+            glDepthMask(depthDescriptor.WriteDepth);
+        }
+        else
+            glDisable(GL_DEPTH_TEST);
     }
-    else
-        glDisable(GL_STENCIL_TEST);
 
-    glFrontFace(OpenGLHelpers::ToCullFaceOrientation(rasterizerDescriptor.Orientation));
-
-    const GraphicsBackendDepthDescriptor& depthDescriptor = GetDepthState();
-    if (depthDescriptor.Enabled)
-    {
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(OpenGLHelpers::ToComparisonFunction(depthDescriptor.DepthFunction));
-        glDepthMask(depthDescriptor.WriteDepth);
-    }
-    else
-        glDisable(GL_DEPTH_TEST);
-
-    BindResources(program);
+    GraphicsBackendBase::UseProgram(program);
 }
 
 void GraphicsBackendOpenGL::SetClearColor(float r, float g, float b, float a)
@@ -943,6 +946,12 @@ void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry 
 
 void GraphicsBackendOpenGL::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
+    const ThreadGroupSize& tgSize = m_CurrentProgram.ThreadGroupSize;
+
+    x = (x + tgSize.X - 1) / tgSize.X;
+    y = (y + tgSize.Y - 1) / tgSize.Y;
+    z = (z + tgSize.Z - 1) / tgSize.Z;
+
     glDispatchCompute(x, y, z);
 }
 
@@ -1118,6 +1127,16 @@ void GraphicsBackendOpenGL::BeginCopyPass(const std::string& name)
 void GraphicsBackendOpenGL::EndCopyPass()
 {
     PopDebugGroup(GPUQueue::COPY);
+}
+
+void GraphicsBackendOpenGL::BeginComputePass(const std::string& name)
+{
+    PushDebugGroup(name, GPUQueue::RENDER);
+}
+
+void GraphicsBackendOpenGL::EndComputePass()
+{
+    PopDebugGroup(GPUQueue::RENDER);
 }
 
 GraphicsBackendFence GraphicsBackendOpenGL::CreateFence(FenceType fenceType, const std::string& name)

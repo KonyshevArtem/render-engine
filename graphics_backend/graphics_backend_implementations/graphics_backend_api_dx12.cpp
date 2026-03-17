@@ -1652,7 +1652,7 @@ void GraphicsBackendDX12::UseProgram(const GraphicsBackendProgram& program)
 		frameData.RenderCommandList->List->SetComputeRootSignature(DX12Local::s_RootSignature);
     frameData.RenderCommandList->List->SetPipelineState(pso);
 
-    BindResources(program);
+    GraphicsBackendBase::UseProgram(program);
 }
 
 void GraphicsBackendDX12::SetClearColor(float r, float g, float b, float a)
@@ -1733,6 +1733,11 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
 void GraphicsBackendDX12::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
+
+    const ThreadGroupSize& tgSize = m_CurrentProgram.ThreadGroupSize;
+    x = (x + tgSize.X - 1) / tgSize.X;
+    y = (y + tgSize.Y - 1) / tgSize.Y;
+    z = (z + tgSize.Z - 1) / tgSize.Z;
 
     frameData.RenderCommandList->List->SetComputeRootDescriptorTable(0, frameData.BoundResourceDescriptorHeap.GetGPUHandle(0));
     frameData.RenderCommandList->List->SetComputeRootDescriptorTable(1, frameData.BoundSamplerDescriptorHeap.GetGPUHandle(1));
@@ -1943,6 +1948,16 @@ void GraphicsBackendDX12::BeginCopyPass(const std::string& name)
 void GraphicsBackendDX12::EndCopyPass()
 {
     PopDebugGroup(GPUQueue::COPY);
+}
+
+void GraphicsBackendDX12::BeginComputePass(const std::string& name)
+{
+    PushDebugGroup(name, GPUQueue::RENDER);
+}
+
+void GraphicsBackendDX12::EndComputePass()
+{
+    PopDebugGroup(GPUQueue::RENDER);
 }
 
 GraphicsBackendFence GraphicsBackendDX12::CreateFence(FenceType fenceType, const std::string& name)

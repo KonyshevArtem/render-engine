@@ -282,7 +282,7 @@ int main(int argc, char **argv)
         if (backend == GRAPHICS_BACKEND_DX12)
         {
             WriteShaderBinary(outputDirPath, dxc, shaderType);
-            ExtractReflectionFromDXC(dxc, pUtils, reflection);
+            ExtractReflectionFromDXC(dxc, pUtils, reflection, shaderType);
         }
         else
         {

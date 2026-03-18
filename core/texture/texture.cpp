@@ -31,7 +31,8 @@ Texture::~Texture()
         if (i == 0 || m_DoubleBuffered)
             GraphicsBackend::Current()->DeleteTexture(m_Texture[i]);
     }
-    GraphicsBackend::Current()->DeleteSampler(m_Sampler);
+    if (m_HasSampler)
+		GraphicsBackend::Current()->DeleteSampler(m_Sampler);
 }
 
 void Texture::SetMinMipLevel(int minMipLevel)

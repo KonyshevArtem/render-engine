@@ -9,7 +9,7 @@
 class GraphicsBuffer
 {
 public:
-    GraphicsBuffer(const GraphicsBackendBufferDescriptor& descriptor, std::string name, bool doubleBuffered = true);
+    GraphicsBuffer(const GraphicsBackendBufferDescriptor& descriptor, std::string name);
     ~GraphicsBuffer();
 
     void SetData(const void *data, uint64_t offset, uint64_t size);
@@ -21,7 +21,7 @@ public:
 
     inline const GraphicsBackendBuffer& GetBackendBuffer() const
     {
-        return m_Buffer[m_DoubleBuffered ? GraphicsBackend::GetInFlightFrameIndex() : 0];
+        return m_Buffer;
     }
 
     GraphicsBuffer(const GraphicsBuffer &) = delete;
@@ -31,10 +31,9 @@ public:
     GraphicsBuffer &operator()(GraphicsBuffer &&)      = delete;
 
 private:
-    GraphicsBackendBuffer m_Buffer[GraphicsBackend::GetMaxFramesInFlight()];
+    GraphicsBackendBuffer m_Buffer;
     uint64_t m_Size;
     std::string m_Name;
-    bool m_DoubleBuffered;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BUFFER_H

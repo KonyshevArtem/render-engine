@@ -115,10 +115,10 @@ namespace Graphics
         rwBufferDescriptor.AllowGPUWrites = true;
 
         readOnlyBufferDescriptor.Size = 64 * sizeof(float);
-        s_TypedBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeText/TypedBufferIn", false);
+        s_TypedBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeText/TypedBufferIn");
 
         rwBufferDescriptor.Size = 64 * sizeof(float);
-        s_TypedBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeText/TypedBufferOut", false);
+        s_TypedBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeText/TypedBufferOut");
 
         float data[64];
         for (int i = 0; i < 64; ++i)
@@ -132,10 +132,10 @@ namespace Graphics
         };
 
         readOnlyBufferDescriptor.Size = 64 * sizeof(TestStruct);
-        s_StructuredBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeTest/StructuredBufferIn", false);
+        s_StructuredBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeTest/StructuredBufferIn");
 
         rwBufferDescriptor.Size = 64 * sizeof(TestStruct);
-        s_StructuredBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeTest/StructuredBufferOut", false);
+        s_StructuredBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeTest/StructuredBufferOut");
 
         TestStruct structuredData[64];
         for (int i = 0; i < 64; ++i)
@@ -146,10 +146,10 @@ namespace Graphics
         s_StructuredBufferIn->SetData(&structuredData[0], 0, 64 * sizeof(TestStruct));
 
         readOnlyBufferDescriptor.Size = 64 * sizeof(float);
-        s_ByteBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeText/ByteBufferIn", false);
+        s_ByteBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeText/ByteBufferIn");
 
         rwBufferDescriptor.Size = 64 * sizeof(float);
-        s_ByteBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeText/ByteBufferOut", false);
+        s_ByteBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeText/ByteBufferOut");
         s_ByteBufferIn->SetData(&data[0], 0, sizeof(data));
 
         float pixels[64] = {1.0f};

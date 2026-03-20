@@ -7,7 +7,6 @@ Texture::Texture(TextureType textureType, const GraphicsBackendTextureDescriptor
 		m_TextureType(textureType),
 		m_SamplerName(name + "_Sampler"),
 		m_SamplerDescriptor({}),
-        m_DoubleBuffered(descriptor.RenderTarget),
 		m_SamplerDirty(true),
 		m_HasSampler(false)
 {
@@ -16,21 +15,12 @@ Texture::Texture(TextureType textureType, const GraphicsBackendTextureDescriptor
     m_SamplerDescriptor.WrapMode = TextureWrapMode::REPEAT;
     m_SamplerDescriptor.FilteringMode = descriptor.MipLevels > 1 ? TextureFilteringMode::LINEAR_MIPMAP_NEAREST : TextureFilteringMode::LINEAR;
     m_SamplerDescriptor.HasBorderColor = true;
-
-    for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
-    {
-        if (i == 0 || m_DoubleBuffered)
-            m_Texture[i] = GraphicsBackend::Current()->CreateTexture(m_TextureType, m_TextureDescriptor, name + "_0");
-    }
+    m_Texture = GraphicsBackend::Current()->CreateTexture(m_TextureType, m_TextureDescriptor, name);
 }
 
 Texture::~Texture()
 {
-    for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
-    {
-        if (i == 0 || m_DoubleBuffered)
-            GraphicsBackend::Current()->DeleteTexture(m_Texture[i]);
-    }
+    GraphicsBackend::Current()->DeleteTexture(m_Texture);
     if (m_HasSampler)
 		GraphicsBackend::Current()->DeleteSampler(m_Sampler);
 }

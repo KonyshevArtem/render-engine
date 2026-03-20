@@ -30,7 +30,7 @@ public:
 
     inline const GraphicsBackendTexture& GetBackendTexture() const
     {
-        return m_Texture[m_DoubleBuffered ? GraphicsBackend::GetInFlightFrameIndex() : 0];
+        return m_Texture;
     }
 
     const GraphicsBackendSampler& GetBackendSampler();
@@ -65,13 +65,12 @@ private:
     void RecreateSampler();
 
     GraphicsBackendTextureDescriptor m_TextureDescriptor;
-    GraphicsBackendTexture m_Texture[GraphicsBackend::GetMaxFramesInFlight()];
+    GraphicsBackendTexture m_Texture;
     GraphicsBackendSampler m_Sampler{};
     TextureType m_TextureType = TextureType::TEXTURE_2D;
     std::string m_SamplerName;
 
     GraphicsBackendSamplerDescriptor m_SamplerDescriptor;
-    bool m_DoubleBuffered;
     bool m_SamplerDirty;
     bool m_HasSampler;
 

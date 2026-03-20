@@ -1,5 +1,5 @@
 #include "draw_renderers_pass.h"
-#include "graphics/context.h"
+#include "graphics/render_data.h"
 #include "graphics/graphics.h"
 #include "graphics_backend_debug_group.h"
 #include "vector3/vector3.h"
@@ -21,7 +21,7 @@ void DrawRenderersPass::Prepare(const Matrix4x4& viewProjectionMatrix, const std
     m_RenderQueue.Prepare(viewProjectionMatrix, renderers, m_RenderSettings);
 }
 
-void DrawRenderersPass::Execute(const Context& ctx)
+void DrawRenderersPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("DrawRenderersPass::Execute");
 

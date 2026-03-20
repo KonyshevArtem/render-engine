@@ -24,8 +24,8 @@ add_library(
 	time/time.h
 	graphics_buffer/graphics_buffer.cpp
 	graphics_buffer/graphics_buffer.h
-	graphics/context.cpp
-	graphics/context.h
+	graphics/render_data.cpp
+	graphics/render_data.h
 	graphics/passes/shadow_caster_pass.cpp
 	graphics/passes/shadow_caster_pass.h
 	graphics/passes/render_pass.cpp

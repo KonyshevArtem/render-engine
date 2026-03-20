@@ -298,14 +298,18 @@ void GraphicsBackendOpenGL::InitNewFrame()
 {
     GraphicsBackendBase::InitNewFrame();
 
-    GLsync currentFence = OpenGLLocal::s_FrameFinishFence[GraphicsBackend::GetInFlightFrameIndex()];
+    CreatePendingContexts();
+}
+
+void GraphicsBackendOpenGL::WaitForPreviousFrame()
+{
+    const int previousFrameIndex = (GraphicsBackend::Current()->GetFrameNumber() - 1) % GraphicsBackend::GetMaxFramesInFlight();
+    const GLsync currentFence = OpenGLLocal::s_FrameFinishFence[previousFrameIndex];
     if (glIsSync(currentFence))
     {
         glClientWaitSync(currentFence, GL_SYNC_FLUSH_COMMANDS_BIT, 160000000);
         glDeleteSync(currentFence);
     }
-
-    CreatePendingContexts();
 }
 
 void GraphicsBackendOpenGL::FillImGuiInitData(void* data)

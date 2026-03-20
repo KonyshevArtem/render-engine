@@ -11,7 +11,7 @@
 #include <vector>
 #include <memory>
 
-struct Context;
+struct RenderData;
 struct Vector3;
 class Renderer;
 
@@ -22,7 +22,7 @@ public:
     ~DrawRenderersPass() override = default;
 
     void Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers);
-    void Execute(const Context& ctx) override;
+    void Execute(const RenderData& renderData) override;
 
     DrawRenderersPass(const DrawRenderersPass&) = delete;
     DrawRenderersPass(DrawRenderersPass&&) = delete;

@@ -461,6 +461,11 @@ namespace DX12Local
         return s_PerFrameData[GraphicsBackend::GetInFlightFrameIndex()];
     }
 
+    PerFrameData& GetPreviousFrameData()
+    {
+        return s_PerFrameData[(GraphicsBackend::Current()->GetFrameNumber() - 1) % GraphicsBackend::GetMaxFramesInFlight()];
+    }
+
     ResourceData& GetCurrentColorBackbuffer()
     {
         return s_ColorBackbuffers[s_SwapChain->GetCurrentBackBufferIndex()];
@@ -506,7 +511,7 @@ namespace DX12Local
             s_Device->CreateRenderTargetView(s_ColorBackbuffers[i].Resource, nullptr, s_ColorBackbufferDescriptorHeap.GetCPUHandle(i));
             s_ColorBackbuffers[i].State = D3D12_RESOURCE_STATE_COMMON;
 
-            D3D12_RESOURCE_STATES depthBufferState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+            const D3D12_RESOURCE_STATES depthBufferState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
             DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(k_SwapChainDepthFormat, true);
             CD3DX12_CLEAR_VALUE clearValue(format, 1, 0);
             D3D12_RESOURCE_DESC depthBackbufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, s_SwapChainWidth, s_SwapChainHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
@@ -548,9 +553,9 @@ namespace DX12Local
         CreateBackbufferResourcesAndViews();
     }
 
-    void WaitForFrameEnd(PerFrameData& frameData)
+    void WaitForFrameEnd(const PerFrameData& frameData)
     {
-        uint64_t expectedFenceValue = frameData.FenceValue - 1;
+	    const uint64_t expectedFenceValue = frameData.FenceValue - 1;
         if (frameData.RenderQueueFence->GetCompletedValue() < expectedFenceValue || frameData.CopyQueueFence->GetCompletedValue() < expectedFenceValue)
         {
             ThrowIfFailed(frameData.RenderQueueFence->SetEventOnCompletion(expectedFenceValue, frameData.RenderQueueFenceEvent));
@@ -785,13 +790,7 @@ void GraphicsBackendDX12::InitNewFrame()
 {
     GraphicsBackendBase::InitNewFrame();
 
-    DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    DX12Local::WaitForFrameEnd(frameData);
-
-    frameData.BoundResourceDescriptorHeap.CheckSize();
-    frameData.BoundSamplerDescriptorHeap.CheckSize();
-    frameData.ColorTargetDescriptorHeap.CheckSize();
-    frameData.DepthTargetDescriptorHeap.CheckSize();
+    const DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
 
     int windowWidth;
     int windowHeight;
@@ -807,7 +806,7 @@ void GraphicsBackendDX12::InitNewFrame()
         for (DX12Local::ResourceData& backbuffer: DX12Local::s_DepthBackbuffers)
             backbuffer.Resource->Release();
 
-        DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
+        const DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
         DX12Local::s_SwapChain->ResizeBuffers(GraphicsBackend::GetMaxFramesInFlight(), windowWidth, windowHeight, format, 0);
         DX12Local::s_SwapChainWidth = windowWidth;
         DX12Local::s_SwapChainHeight = windowHeight;
@@ -819,6 +818,17 @@ void GraphicsBackendDX12::InitNewFrame()
     frameData.CopyCommandList->InitNewFrame();
 
     DX12Local::TransitionResource(&DX12Local::GetCurrentColorBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, frameData.RenderCommandList->List);
+}
+
+void GraphicsBackendDX12::WaitForPreviousFrame()
+{
+    DX12Local::PerFrameData& frameData = DX12Local::GetPreviousFrameData();
+    DX12Local::WaitForFrameEnd(frameData);
+
+    frameData.BoundResourceDescriptorHeap.CheckSize();
+    frameData.BoundSamplerDescriptorHeap.CheckSize();
+    frameData.ColorTargetDescriptorHeap.CheckSize();
+    frameData.DepthTargetDescriptorHeap.CheckSize();
 }
 
 void GraphicsBackendDX12::FillImGuiInitData(void* data)

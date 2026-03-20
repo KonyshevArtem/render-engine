@@ -14,8 +14,8 @@ public:
     explicit UIRenderPass(int priority);
     ~UIRenderPass() override = default;
 
-    void Prepare(const Context& ctx);
-    void Execute(const Context& ctx) override;
+    void Prepare(const RenderData& renderData);
+    void Execute(const RenderData& renderData) override;
 
 private:
     std::shared_ptr<Shader> m_ImageShader;

@@ -10,11 +10,6 @@
 #include <utility>
 #include <string>
 
-GameWindow::GameWindow(RenderHandler renderHandler):
-    m_RenderHandler(std::move(renderHandler))
-{
-}
-
 GameWindow::~GameWindow()
 {
 #ifdef ENABLE_IMGUI
@@ -22,13 +17,8 @@ GameWindow::~GameWindow()
 #endif
 }
 
-void GameWindow::TickMainLoop(int width, int height)
+void GameWindow::Render() const
 {
-    if (m_RenderHandler)
-    {
-        m_RenderHandler(width, height);
-    }
-
 #ifdef ENABLE_IMGUI
     TopMenuBar::Draw();
     WindowManager::DrawAllWindows();

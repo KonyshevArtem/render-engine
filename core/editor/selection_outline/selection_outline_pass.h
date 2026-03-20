@@ -6,7 +6,7 @@
 #include "graphics/passes/render_pass.h"
 #include "graphics/render_queue/render_queue.h"
 
-struct Context;
+struct RenderData;
 class Material;
 
 class SelectionOutlinePass : public RenderPass
@@ -15,8 +15,8 @@ public:
     explicit SelectionOutlinePass(int priority);
     ~SelectionOutlinePass() override = default;
 
-    bool Prepare(const Context& ctx);
-    void Execute(const Context& ctx) override;
+    bool Prepare(const RenderData& renderData);
+    void Execute(const RenderData& renderData) override;
 
     SelectionOutlinePass(const SelectionOutlinePass&) = delete;
     SelectionOutlinePass(SelectionOutlinePass&&) = delete;

@@ -1,40 +1,43 @@
-#include "context.h"
+#include "render_data.h"
 #include "camera/camera.h"
 #include "gameObject/gameObject.h"
 #include "renderer/renderer.h"
 #include "scene/scene.h"
 #include "light/light.h"
-#include "graphics/graphics.h"
 
-Context::Context()
+RenderData RenderData::GetRenderData(int viewportWidth, int viewportHeight)
 {
+    RenderData data{};
+
     if (Scene::Current == nullptr || Camera::Current == nullptr)
-        return;
+        return data;
 
     const std::shared_ptr<Scene>& scene = Scene::Current;
     const std::shared_ptr<Camera> camera = Camera::Current;
 
-    Viewport = Vector2(Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
-    FoV = camera->GetFov();
-    NearPlane = camera->GetNearClipPlane();
-    FarPlane = camera->GetFarClipPlane();
+    data.Viewport = Vector2(viewportWidth, viewportHeight);
+    data.FoV = camera->GetFov();
+    data.NearPlane = camera->GetNearClipPlane();
+    data.FarPlane = camera->GetFarClipPlane();
 
-    Skybox = scene->GetSkybox();
-    ViewMatrix = camera->GetGameObject()->GetWorldToLocalMatrix();
-    ProjectionMatrix = Matrix4x4::Perspective(FoV, Viewport.x / Viewport.y, camera->GetNearClipPlane(), camera->GetFarClipPlane());
+    data.Skybox = scene->GetSkybox();
+    data.ViewMatrix = camera->GetGameObject()->GetWorldToLocalMatrix();
+    data.ProjectionMatrix = Matrix4x4::Perspective(data.FoV, data.Viewport.x / data.Viewport.y, camera->GetNearClipPlane(), camera->GetFarClipPlane());
 
     const std::vector<std::shared_ptr<GameObject>>& gameObjects = Scene::Current->GetRootGameObjects();
     for (const std::shared_ptr<GameObject>& go : gameObjects)
-        CollectRenderers(go);
+        data.CollectRenderers(go);
 
     for (Light* light : Light::s_Lights)
     {
         if (light != nullptr)
-            Lights.push_back(light);
+            data.Lights.push_back(light);
     }
+
+    return data;
 }
 
-void Context::CollectRenderers(const std::shared_ptr<GameObject> &gameObject)
+void RenderData::CollectRenderers(const std::shared_ptr<GameObject> &gameObject)
 {
     if (!gameObject)
         return;

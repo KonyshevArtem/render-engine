@@ -62,6 +62,7 @@ public:
     virtual void Init(void *data);
     virtual GraphicsBackendName GetName() = 0;
     virtual void InitNewFrame();
+    virtual void WaitForPreviousFrame() = 0;
     virtual void FillImGuiInitData(void* data) = 0;
     virtual void FillImGuiFrameData(void* data) = 0;
 

@@ -3,7 +3,7 @@
 
 #include <memory>
 
-struct Context;
+struct RenderData;
 
 class RenderPass
 {
@@ -11,7 +11,7 @@ public:
     explicit RenderPass(int priority);
     virtual ~RenderPass() = default;
 
-    virtual void Execute(const Context& ctx) = 0;
+    virtual void Execute(const RenderData& renderData) = 0;
 
     RenderPass(const RenderPass &) = delete;
     RenderPass(RenderPass &&) = delete;

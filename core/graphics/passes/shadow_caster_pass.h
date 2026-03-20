@@ -13,7 +13,7 @@
 #include <string>
 
 class GraphicsBuffer;
-struct Context;
+struct RenderData;
 class Texture2DArray;
 class Texture2D;
 class Texture;
@@ -26,8 +26,8 @@ public:
     explicit ShadowCasterPass(int priority);
     ~ShadowCasterPass() override = default;
 
-    void Prepare(const Context& ctx);
-    void Execute(const Context& ctx) override;
+    void Prepare(const RenderData& renderData);
+    void Execute(const RenderData& renderData) override;
 
     ShadowCasterPass(const ShadowCasterPass&) = delete;
     ShadowCasterPass(ShadowCasterPass&&) = delete;

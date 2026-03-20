@@ -21,7 +21,7 @@ void FinalBlitPass::Prepare(const std::shared_ptr<Texture2D>& source)
     m_Source = source;
 }
 
-void FinalBlitPass::Execute(const Context& ctx)
+void FinalBlitPass::Execute(const RenderData& renderData)
 {
     struct BlitData
     {

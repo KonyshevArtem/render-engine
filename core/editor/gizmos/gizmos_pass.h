@@ -10,7 +10,7 @@
 #include <vector>
 #include <memory>
 
-struct Context;
+struct RenderData;
 class Renderer;
 
 class GizmosPass : public RenderPass
@@ -19,8 +19,8 @@ public:
     explicit GizmosPass(int priority);
     ~GizmosPass() override = default;
 
-    bool Prepare(const Context& ctx, const GraphicsBackendFence& waitForFence);
-    void Execute(const Context& ctx) override;
+    bool Prepare(const RenderData& renderData, const GraphicsBackendFence& waitForFence);
+    void Execute(const RenderData& renderData) override;
 
     GizmosPass(const GizmosPass&) = delete;
     GizmosPass(GizmosPass&&) = delete;

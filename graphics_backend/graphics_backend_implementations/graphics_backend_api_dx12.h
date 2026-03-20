@@ -12,6 +12,7 @@ public:
     void Init(void* data) override;
     GraphicsBackendName GetName() override;
     void InitNewFrame() override;
+    void WaitForPreviousFrame() override;
     void FillImGuiInitData(void* data) override;
     void FillImGuiFrameData(void* data) override;
 

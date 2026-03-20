@@ -23,7 +23,7 @@ void CopyDepthPass::Prepare(const GraphicsBackendFence& waitForFence, const std:
     m_SourceDepth = sourceDepth;
 }
 
-void CopyDepthPass::Execute(const Context& ctx)
+void CopyDepthPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("CopyDepthPass::Execute");
     Profiler::GPUMarker gpuMarker("CopyDepthPass::Execute");

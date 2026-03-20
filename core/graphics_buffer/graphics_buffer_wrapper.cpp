@@ -23,7 +23,7 @@ GraphicsBufferWrapper::GraphicsBufferWrapper(const std::shared_ptr<Shader>& shad
         bufferDescriptor.AllowCPUWrites = true;
         bufferDescriptor.Size = bufferInfo->GetSize();
 
-        m_Buffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, name, false);
+        m_Buffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, name);
         m_BufferInfo = bufferInfo;
         m_Data.resize(bufferInfo->GetSize());
     }
@@ -49,7 +49,7 @@ std::shared_ptr<GraphicsBufferWrapper> GraphicsBufferWrapper::Copy()
         bufferDescriptor.AllowCPUWrites = true;
         bufferDescriptor.Size = m_BufferInfo->GetSize();
 
-        bufferWrapper->m_Buffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, m_Name, false);
+        bufferWrapper->m_Buffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, m_Name);
         bufferWrapper->m_Buffer->SetData(&m_Data[0], 0, m_BufferInfo->GetSize());
     }
 

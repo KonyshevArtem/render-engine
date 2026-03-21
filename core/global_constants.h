@@ -22,6 +22,7 @@ namespace GlobalConstants
     constexpr int CameraDataIndex = 6;
     constexpr int ShadowDataIndex = 7;
 
+    constexpr int InstancingMatricesOffsetData = 4;
     constexpr int InstancingMatricesData = 7;
 }
 

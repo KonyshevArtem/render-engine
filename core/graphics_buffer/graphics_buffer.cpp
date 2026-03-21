@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-GraphicsBuffer::GraphicsBuffer(const GraphicsBackendBufferDescriptor& descriptor, std::string name) :
+GraphicsBuffer::GraphicsBuffer(const GraphicsBackendBufferDescriptor& descriptor, std::string name, const void* data) :
         m_Size(Math::Align(descriptor.Size, GraphicsBackend::Current()->GetConstantBufferOffsetAlignment())),
         m_Name(std::move(name))
 {
@@ -12,7 +12,7 @@ GraphicsBuffer::GraphicsBuffer(const GraphicsBackendBufferDescriptor& descriptor
     GraphicsBackendBufferDescriptor resizedDescriptor = descriptor;
     resizedDescriptor.Size += GraphicsBackend::Current()->GetConstantBufferOffsetAlignment();
 
-	m_Buffer = GraphicsBackend::Current()->CreateBuffer(resizedDescriptor, m_Name);
+	m_Buffer = GraphicsBackend::Current()->CreateBuffer(resizedDescriptor, m_Name, data);
 }
 
 GraphicsBuffer::~GraphicsBuffer()

@@ -158,8 +158,10 @@ add_library(
 	native_bridge/native_bridge_apple.cpp
 	native_bridge/native_bridge_apple.h
 	native_bridge/native_bridge_common.h
-    developer_console/developer_console.h
-    developer_console/developer_console.cpp)
+	developer_console/developer_console.h
+	developer_console/developer_console.cpp
+	graphics_buffer/graphics_buffer_view.h
+	graphics_buffer/graphics_buffer_view.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil StringSplit)

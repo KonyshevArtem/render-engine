@@ -23,6 +23,8 @@
 #include "types/graphics_backend_sampler_descriptor.h"
 #include "types/graphics_backend_texture_descriptor.h"
 #include "types/graphics_backend_buffer_descriptor.h"
+#include "types/graphics_backend_buffer_view_descriptor.h"
+#include "types/graphics_backend_buffer_view.h"
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 #include "arguments.h"
@@ -65,8 +67,16 @@ namespace OpenGLLocal
     struct BufferData
     {
         GLuint GLBuffer;
-        GLuint GLTexture;
         uint8_t* Data;
+    };
+
+    struct BufferViewData
+    {
+        GLuint GLView;
+        BufferType Type;
+        TextureInternalFormat Format;
+        uint32_t Offset;
+        uint32_t Size;
     };
 
     struct RenderTargetState
@@ -551,13 +561,39 @@ GraphicsBackendBuffer GraphicsBackendOpenGL::CreateBuffer(const GraphicsBackendB
 
     OpenGLLocal::BufferData* bufferData = new OpenGLLocal::BufferData();
     bufferData->GLBuffer = glBuffer;
-    bufferData->GLTexture = 0;
     bufferData->Data = descriptor.AllowCPUWrites ? static_cast<uint8_t*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, descriptor.Size, bufferFlags)) : nullptr;
 
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(bufferData);
     buffer.Size = descriptor.Size;
     return buffer;
+}
+
+GraphicsBackendBufferView GraphicsBackendOpenGL::CreateBufferView(const GraphicsBackendBufferViewDescriptor& descriptor, const GraphicsBackendBuffer& buffer, const std::string& name)
+{
+    const OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
+
+    OpenGLLocal::BufferViewData* viewData = new OpenGLLocal::BufferViewData();
+    viewData->Type = descriptor.Type;
+    viewData->Format = descriptor.Format;
+    viewData->Size = descriptor.Size;
+    viewData->Offset = descriptor.Offset;
+
+	if (descriptor.Type == BufferType::TYPED_BUFFER)
+	{
+        glGenTextures(1, &viewData->GLView);
+        glBindBuffer(GL_TEXTURE_BUFFER, bufferData->GLBuffer);
+        glBindTexture(GL_TEXTURE_BUFFER, viewData->GLView);
+        glTexBufferRange(GL_TEXTURE_BUFFER, OpenGLHelpers::ToTextureInternalFormat(descriptor.Format, true), bufferData->GLBuffer, descriptor.Offset, descriptor.Size);
+        if (!name.empty())
+            glObjectLabel(GL_TEXTURE, viewData->GLView, name.length(), name.c_str());
+	}
+	else
+		viewData->GLView = bufferData->GLBuffer;
+
+    GraphicsBackendBufferView bufferView{};
+    bufferView.BufferView = reinterpret_cast<void*>(viewData);
+    return bufferView;
 }
 
 void GraphicsBackendOpenGL::DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer)
@@ -570,32 +606,32 @@ void GraphicsBackendOpenGL::DeleteBuffer_Internal(const GraphicsBackendBuffer &b
     }
 
     glDeleteBuffers(1, &bufferData->GLBuffer);
-    if (bufferData->GLTexture)
-        glDeleteTextures(1, &bufferData->GLTexture);
     delete bufferData;
 }
 
-void GraphicsBackendOpenGL::BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
+void GraphicsBackendOpenGL::DeleteBufferView_Internal(const GraphicsBackendBufferView& bufferView)
 {
-    OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
+    const OpenGLLocal::BufferViewData* viewData = static_cast<OpenGLLocal::BufferViewData*>(bufferView.BufferView);
 
-    if (type == BufferType::TYPED_BUFFER)
+    if (viewData->Type == BufferType::TYPED_BUFFER)
+        glDeleteTextures(1, &viewData->GLView);
+
+    delete viewData;
+}
+
+void GraphicsBackendOpenGL::BindBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index)
+{
+    const OpenGLLocal::BufferViewData* viewData = static_cast<OpenGLLocal::BufferViewData*>(bufferView.BufferView);
+
+    if (viewData->Type == BufferType::TYPED_BUFFER)
     {
-        if (!bufferData->GLTexture)
-        {
-            glGenTextures(1, &bufferData->GLTexture);
-            glBindBuffer(GL_TEXTURE_BUFFER, bufferData->GLBuffer);
-            glBindTexture(GL_TEXTURE_BUFFER, bufferData->GLTexture);
-            glTexBuffer(GL_TEXTURE_BUFFER, OpenGLHelpers::ToTextureInternalFormat(dataFormat, true), bufferData->GLBuffer);
-        }
-
         glActiveTexture(OpenGLHelpers::ToTextureUnit(index + OpenGLLocal::k_TypedBuffersBindingOffset));
-        glBindTexture(GL_TEXTURE_BUFFER, bufferData->GLTexture);
+        glBindTexture(GL_TEXTURE_BUFFER, viewData->GLView);
     }
-    else if (type == BufferType::STRUCTURED_BUFFER || type == BufferType::BYTE_ADDRESS_BUFFER)
+    else
     {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufferData->GLBuffer);
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, index, bufferData->GLBuffer, offset, size);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, viewData->GLView);
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, index, viewData->GLView, viewData->Offset, viewData->Size);
     }
 }
 
@@ -607,26 +643,16 @@ void GraphicsBackendOpenGL::BindConstantBuffer_Internal(const GraphicsBackendBuf
     glBindBufferRange(GL_UNIFORM_BUFFER, index, bufferData->GLBuffer, offset, size);
 }
 
-void GraphicsBackendOpenGL::BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
+void GraphicsBackendOpenGL::BindRWBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index)
 {
-    OpenGLLocal::BufferData* bufferData = reinterpret_cast<OpenGLLocal::BufferData*>(buffer.Buffer);
+    const OpenGLLocal::BufferViewData* viewData = static_cast<OpenGLLocal::BufferViewData*>(bufferView.BufferView);
 
-    if (type == BufferType::TYPED_BUFFER)
+    if (viewData->Type == BufferType::TYPED_BUFFER)
+	    glBindImageTexture(index + OpenGLLocal::k_TypedBuffersBindingOffset, viewData->GLView, 0, GL_FALSE, 0, GL_READ_WRITE, OpenGLHelpers::ToTextureInternalFormat(viewData->Format, true));
+    else
     {
-        if (!bufferData->GLTexture)
-        {
-            glGenTextures(1, &bufferData->GLTexture);
-
-            glBindTexture(GL_TEXTURE_BUFFER, bufferData->GLTexture);
-            glTexBuffer(GL_TEXTURE_BUFFER, OpenGLHelpers::ToTextureInternalFormat(dataFormat, true), bufferData->GLBuffer);
-        }
-
-        glBindImageTexture(index + OpenGLLocal::k_TypedBuffersBindingOffset, bufferData->GLTexture, 0, GL_FALSE, 0, GL_READ_WRITE, OpenGLHelpers::ToTextureInternalFormat(dataFormat, true));
-    }
-    else if (type == BufferType::STRUCTURED_BUFFER || type == BufferType::BYTE_ADDRESS_BUFFER)
-    {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufferData->GLBuffer);
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, index + OpenGLLocal::k_RWBuffersBindingOffset, bufferData->GLBuffer, offset, size);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, viewData->GLView);
+		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, index + OpenGLLocal::k_RWBuffersBindingOffset, viewData->GLView, viewData->Offset, viewData->Size);
     }
 }
 

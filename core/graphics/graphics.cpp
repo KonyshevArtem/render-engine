@@ -34,6 +34,7 @@
 #include "graphics_buffer/ring_buffer.h"
 #include "global_constants.h"
 #include "types/graphics_backend_buffer_descriptor.h"
+#include "graphics_buffer/graphics_buffer_view.h"
 
 #include <cassert>
 
@@ -74,12 +75,15 @@ namespace Graphics
     std::shared_ptr<Shader> s_ComputeShader;
     std::shared_ptr<Texture2D> s_TextureIn;
     std::shared_ptr<Texture2D> s_TextureOut;
-    std::shared_ptr<GraphicsBuffer> s_TypedBufferIn;
-    std::shared_ptr<GraphicsBuffer> s_TypedBufferOut;
-    std::shared_ptr<GraphicsBuffer> s_StructuredBufferIn;
-    std::shared_ptr<GraphicsBuffer> s_StructuredBufferOut;
-    std::shared_ptr<GraphicsBuffer> s_ByteBufferIn;
-    std::shared_ptr<GraphicsBuffer> s_ByteBufferOut;
+    std::shared_ptr<GraphicsBuffer> s_TypedBuffer;
+    std::shared_ptr<GraphicsBufferView> s_TypedBufferRead;
+    std::shared_ptr<GraphicsBufferView> s_TypedBufferWrite;
+    std::shared_ptr<GraphicsBuffer> s_StructuredBuffer;
+    std::shared_ptr<GraphicsBufferView> s_StructuredBufferRead;
+    std::shared_ptr<GraphicsBufferView> s_StructuredBufferWrite;
+    std::shared_ptr<GraphicsBuffer> s_ByteBuffer;
+    std::shared_ptr<GraphicsBufferView> s_ByteBufferRead;
+    std::shared_ptr<GraphicsBufferView> s_ByteBufferWrite;
 
     void InitPasses()
     {
@@ -108,22 +112,21 @@ namespace Graphics
         descriptor.ReadWrite = true;
         s_TextureOut = Texture2D::Create(descriptor, "ComputeTest/TextureOut");
 
-        GraphicsBackendBufferDescriptor readOnlyBufferDescriptor{};
-        readOnlyBufferDescriptor.AllowCPUWrites = true;
-
-        GraphicsBackendBufferDescriptor rwBufferDescriptor{};
-        rwBufferDescriptor.AllowGPUWrites = true;
-
-        readOnlyBufferDescriptor.Size = 64 * sizeof(float);
-        s_TypedBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeText/TypedBufferIn");
-
-        rwBufferDescriptor.Size = 64 * sizeof(float);
-        s_TypedBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeText/TypedBufferOut");
-
-        float data[64];
-        for (int i = 0; i < 64; ++i)
+        float data[2 * 64];
+        for (int i = 0; i < 2 * 64; ++i)
             data[i] = i;
-        s_TypedBufferIn->SetData(&data[0], 0, sizeof(data));
+
+        GraphicsBackendBufferDescriptor bufferDescriptor{};
+        bufferDescriptor.AllowGPUWrites = true;
+
+        bufferDescriptor.Size = 2 * 64 * sizeof(float);
+        s_TypedBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "ComputeTest/TypedBuffer", &data[0]);
+
+        GraphicsBackendBufferViewDescriptor bufferViewDescriptor = GraphicsBackendBufferViewDescriptor::Typed(TextureInternalFormat::R32F, 64, 0, false);
+        s_TypedBufferRead = std::make_shared<GraphicsBufferView>(s_TypedBuffer, bufferViewDescriptor, "ComputeTest/TypedBufferRead");
+
+        bufferViewDescriptor = GraphicsBackendBufferViewDescriptor::Typed(TextureInternalFormat::R32F, 64, 64 * sizeof(float), true);
+        s_TypedBufferWrite = std::make_shared<GraphicsBufferView>(s_TypedBuffer, bufferViewDescriptor, "ComputeTest/TypedBufferWrite");
 
         struct TestStruct
         {
@@ -131,26 +134,30 @@ namespace Graphics
             float B;
         };
 
-        readOnlyBufferDescriptor.Size = 64 * sizeof(TestStruct);
-        s_StructuredBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeTest/StructuredBufferIn");
-
-        rwBufferDescriptor.Size = 64 * sizeof(TestStruct);
-        s_StructuredBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeTest/StructuredBufferOut");
-
-        TestStruct structuredData[64];
-        for (int i = 0; i < 64; ++i)
+        TestStruct structuredData[2 * 64];
+        for (int i = 0; i < 2 * 64; ++i)
         {
             structuredData[i].A = i;
             structuredData[i].B = i * 2;
         }
-        s_StructuredBufferIn->SetData(&structuredData[0], 0, 64 * sizeof(TestStruct));
 
-        readOnlyBufferDescriptor.Size = 64 * sizeof(float);
-        s_ByteBufferIn = std::make_shared<GraphicsBuffer>(readOnlyBufferDescriptor, "ComputeText/ByteBufferIn");
+        bufferDescriptor.Size = 2 * 64 * sizeof(TestStruct);
+        s_StructuredBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "ComputeTest/StructuredBuffer", &structuredData[0]);
 
-        rwBufferDescriptor.Size = 64 * sizeof(float);
-        s_ByteBufferOut = std::make_shared<GraphicsBuffer>(rwBufferDescriptor, "ComputeText/ByteBufferOut");
-        s_ByteBufferIn->SetData(&data[0], 0, sizeof(data));
+        bufferViewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(64, sizeof(TestStruct), 0, false);
+        s_StructuredBufferRead = std::make_shared<GraphicsBufferView>(s_StructuredBuffer, bufferViewDescriptor, "ComputeTest/StructuredBufferRead");
+
+        bufferViewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(64, sizeof(TestStruct), 64 * sizeof(TestStruct), true);
+        s_StructuredBufferWrite = std::make_shared<GraphicsBufferView>(s_StructuredBuffer, bufferViewDescriptor, "ComputeTest/StructuredBufferWrite");
+
+        bufferDescriptor.Size = 2 * 64 * sizeof(float);
+        s_ByteBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "ComputeTest/ByteBuffer", &data[0]);
+
+        bufferViewDescriptor = GraphicsBackendBufferViewDescriptor::ByteAddress(64 * sizeof(float), 0, false);
+        s_ByteBufferRead = std::make_shared<GraphicsBufferView>(s_ByteBuffer, bufferViewDescriptor, "ComputeTest/ByteBufferRead");
+
+        bufferViewDescriptor = GraphicsBackendBufferViewDescriptor::ByteAddress(64 * sizeof(float), 64 * sizeof(float), true);
+        s_ByteBufferWrite = std::make_shared<GraphicsBufferView>(s_ByteBuffer, bufferViewDescriptor, "ComputeTest/ByteBufferWrite");
 
         float pixels[64] = {1.0f};
         std::fill(&pixels[0], &pixels[64], 1.0f);
@@ -319,14 +326,14 @@ namespace Graphics
 
         GraphicsBackend::Current()->BeginComputePass("Compute Test");
 
-        GraphicsBackend::Current()->BindBuffer(s_TypedBufferIn->GetBackendBuffer(), 0, 0, 64, TextureInternalFormat::R32F);
-        GraphicsBackend::Current()->BindRWBuffer(s_TypedBufferOut->GetBackendBuffer(), 0, 0, 64, TextureInternalFormat::R32F);
+        GraphicsBackend::Current()->BindBuffer(s_TypedBufferRead->GetBackendBufferView(), 0);
+        GraphicsBackend::Current()->BindRWBuffer(s_TypedBufferWrite->GetBackendBufferView(), 0);
 
-        GraphicsBackend::Current()->BindBuffer(s_StructuredBufferIn->GetBackendBuffer(), 1, 0, s_StructuredBufferIn->GetSize(), 64);
-        GraphicsBackend::Current()->BindRWBuffer(s_StructuredBufferOut->GetBackendBuffer(), 1, 0, s_StructuredBufferOut->GetSize(), 64);
+        GraphicsBackend::Current()->BindBuffer(s_StructuredBufferRead->GetBackendBufferView(), 1);
+        GraphicsBackend::Current()->BindRWBuffer(s_StructuredBufferWrite->GetBackendBufferView(), 1);
 
-        GraphicsBackend::Current()->BindBuffer(s_ByteBufferIn->GetBackendBuffer(), 2, 0, s_ByteBufferIn->GetSize());
-        GraphicsBackend::Current()->BindRWBuffer(s_ByteBufferOut->GetBackendBuffer(), 2, 0, s_ByteBufferOut->GetSize());
+        GraphicsBackend::Current()->BindBuffer(s_ByteBufferRead->GetBackendBufferView(), 2);
+        GraphicsBackend::Current()->BindRWBuffer(s_ByteBufferWrite->GetBackendBufferView(), 2);
 
         GraphicsBackend::Current()->BindTexture(s_TextureIn->GetBackendTexture(), 0);
         GraphicsBackend::Current()->BindRWTexture(s_TextureOut->GetBackendTexture(), 0);

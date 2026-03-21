@@ -27,6 +27,7 @@ public:
     TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear) override;
 
     GraphicsBackendBuffer CreateBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name, const void* data = nullptr) override;
+    GraphicsBackendBufferView CreateBufferView(const GraphicsBackendBufferViewDescriptor& descriptor, const GraphicsBackendBuffer& buffer, const std::string& name) override;
 
     void SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data) override;
     void CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size) override;
@@ -93,6 +94,7 @@ protected:
     void DeleteTexture_Internal(const GraphicsBackendTexture &texture) override;
     void DeleteSampler_Internal(const GraphicsBackendSampler &sampler) override;
     void DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer) override;
+    void DeleteBufferView_Internal(const GraphicsBackendBufferView& bufferView) override;
     void DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry) override;
     void DeleteShader_Internal(GraphicsBackendShaderObject shader) override;
     void DeleteProgram_Internal(GraphicsBackendProgram program) override;
@@ -100,9 +102,9 @@ protected:
     void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
     void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
     void BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index) override;
-    void BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat) override;
+    void BindBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) override;
     void BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size) override;
-    void BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat) override;
+    void BindRWBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) override;
 
 private:
     std::set<std::string> m_Extensions;

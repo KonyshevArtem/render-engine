@@ -9,7 +9,7 @@
 class GraphicsBuffer
 {
 public:
-    GraphicsBuffer(const GraphicsBackendBufferDescriptor& descriptor, std::string name);
+    GraphicsBuffer(const GraphicsBackendBufferDescriptor& descriptor, std::string name, const void* data = nullptr);
     ~GraphicsBuffer();
 
     void SetData(const void *data, uint64_t offset, uint64_t size);

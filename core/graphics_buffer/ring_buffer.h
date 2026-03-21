@@ -17,6 +17,11 @@ public:
     RingBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name);
     ~RingBuffer() = default;
 
+    const std::shared_ptr<GraphicsBuffer> GetBuffer() const
+    {
+        return m_Buffer;
+    }
+
     const GraphicsBackendBuffer& GetBackendBuffer() const
     {
         return m_Buffer->GetBackendBuffer();

@@ -51,6 +51,8 @@ struct GraphicsBackendProgramDescriptor;
 struct GraphicsBackendTextureDescriptor;
 struct GraphicsBackendSamplerDescriptor;
 struct GraphicsBackendBufferDescriptor;
+struct GraphicsBackendBufferViewDescriptor;
+struct GraphicsBackendBufferView;
 
 class GraphicsBackendBase
 {
@@ -87,14 +89,12 @@ public:
     virtual TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool *outIsLinear) = 0;
 
     virtual GraphicsBackendBuffer CreateBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name, const void* data = nullptr) = 0;
+    virtual GraphicsBackendBufferView CreateBufferView(const GraphicsBackendBufferViewDescriptor& descriptor, const GraphicsBackendBuffer& buffer, const std::string& name) = 0;
     void DeleteBuffer(const GraphicsBackendBuffer& buffer);
-    void BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size);
-    void BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int elementsCount);
-    void BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, TextureInternalFormat format);
+    void DeleteBufferView(const GraphicsBackendBufferView& bufferView);
+    void BindBuffer(const GraphicsBackendBufferView& bufferView, uint32_t index);
     void BindConstantBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size);
-    void BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size);
-    void BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int elementsCount);
-    void BindRWBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int elementsCount, TextureInternalFormat format);
+    void BindRWBuffer(const GraphicsBackendBufferView& bufferView, uint32_t index);
 
     virtual void SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data) = 0;
     virtual void CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size) = 0;
@@ -199,6 +199,7 @@ protected:
     virtual void DeleteTexture_Internal(const GraphicsBackendTexture &texture) = 0;
     virtual void DeleteSampler_Internal(const GraphicsBackendSampler &sampler) = 0;
     virtual void DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer) = 0;
+    virtual void DeleteBufferView_Internal(const GraphicsBackendBufferView& bufferView) = 0;
     virtual void DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry) = 0;
     virtual void DeleteShader_Internal(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram_Internal(GraphicsBackendProgram program) = 0;
@@ -206,9 +207,9 @@ protected:
     virtual void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
     virtual void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
     virtual void BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index) = 0;
-    virtual void BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat) = 0;
+    virtual void BindBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) = 0;
     virtual void BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size) = 0;
-    virtual void BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat) = 0;
+    virtual void BindRWBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) = 0;
 
 	static GraphicsBackendProgram CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor);
 
@@ -234,6 +235,7 @@ private:
     std::vector<std::pair<GraphicsBackendTexture, int>> m_DeletedTextures;
     std::vector<std::pair<GraphicsBackendSampler, int>> m_DeletedSamplers;
     std::vector<std::pair<GraphicsBackendBuffer, int>> m_DeletedBuffers;
+    std::vector<std::pair<GraphicsBackendBufferView, int>> m_DeletedBufferViews;
     std::vector<std::pair<GraphicsBackendGeometry, int>> m_DeletedGeometries;
     std::vector<std::pair<GraphicsBackendShaderObject, int>> m_DeletedShaders;
     std::vector<std::pair<GraphicsBackendProgram, int>> m_DeletedPrograms;
@@ -241,9 +243,9 @@ private:
     std::unordered_map<uint32_t, GraphicsBackendTexture> m_BoundTextures;
     std::unordered_map<uint32_t, GraphicsBackendTexture> m_BoundRWTextures;
     std::unordered_map<uint32_t, GraphicsBackendSampler> m_BoundSamplers;
-    std::unordered_map<uint32_t, BufferBindInfo> m_BoundBuffers;
+    std::unordered_map<uint32_t, GraphicsBackendBufferView> m_BoundBuffers;
     std::unordered_map<uint32_t, BufferBindInfo> m_BoundConstantBuffers;
-    std::unordered_map<uint32_t, BufferBindInfo> m_BoundRWBuffers;
+    std::unordered_map<uint32_t, GraphicsBackendBufferView> m_BoundRWBuffers;
 
     GraphicsBackendStencilDescriptor m_StencilDescriptor;
     GraphicsBackendDepthDescriptor m_DepthDescriptor;

@@ -10,12 +10,15 @@
 #include "drawable_geometry/drawable_geometry.h"
 #include "global_constants.h"
 #include "developer_console/developer_console.h"
+#include "graphics_buffer/graphics_buffer_view.h"
 #include "debug.h"
 
 bool RenderQueue::EnableFrustumCulling = true;
 bool RenderQueue::FreezeFrustumCulling = false;
 
+std::shared_ptr<RingBuffer> RenderQueue::s_MatricesOffsetBuffer;
 std::shared_ptr<RingBuffer> RenderQueue::s_MatricesBuffer;
+std::shared_ptr<GraphicsBufferView> RenderQueue::s_MatricesBufferView;
 
 namespace RenderQueueLocal
 {
@@ -166,11 +169,20 @@ RenderQueue::RenderQueue()
 
     if (!s_MatricesBuffer)
     {
+        constexpr uint32_t elementsCount = 2048;
+        constexpr uint32_t elementSize = 2 * sizeof(Matrix4x4);
+
         GraphicsBackendBufferDescriptor bufferDescriptor{};
         bufferDescriptor.AllowCPUWrites = true;
-        bufferDescriptor.Size = sizeof(Matrix4x4) * 4096;
+        bufferDescriptor.Size = elementsCount * elementSize;
 
         s_MatricesBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "Render Queue Matrices Buffer");
+
+        bufferDescriptor.Size = elementsCount * sizeof(uint32_t);
+        s_MatricesOffsetBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "Render Queue Matrices Offset Buffer");
+
+        GraphicsBackendBufferViewDescriptor viewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(elementsCount, elementSize, 0, false);
+        s_MatricesBufferView = std::make_shared<GraphicsBufferView>(s_MatricesBuffer->GetBuffer(), viewDescriptor, "Render Queue Matrices Buffer View");
     }
 }
 
@@ -260,10 +272,16 @@ void RenderQueue::SetupMatrices(const std::vector<Matrix4x4>& matrices)
     }
 
     const uint64_t size = sizeof(Matrix4x4) * matricesBuffer.size();
-    uint64_t offset = s_MatricesBuffer->SetData(matricesBuffer.data(), 0, size);
+    const uint64_t offset = s_MatricesBuffer->SetData(matricesBuffer.data(), 0, size);
 
     if (matrices.size() > 1)
-        GraphicsBackend::Current()->BindBuffer(s_MatricesBuffer->GetBackendBuffer(), GlobalConstants::InstancingMatricesData, offset, size, count);
+    {
+        const uint32_t matricesOffset = offset / (2 * sizeof(Matrix4x4));
+        const uint64_t offsetBufferOffset = s_MatricesOffsetBuffer->SetData(&matricesOffset, 0, sizeof(offset));
+        
+        GraphicsBackend::Current()->BindConstantBuffer(s_MatricesOffsetBuffer->GetBackendBuffer(), GlobalConstants::InstancingMatricesOffsetData, offsetBufferOffset, sizeof(offset));
+        GraphicsBackend::Current()->BindBuffer(s_MatricesBufferView->GetBackendBufferView(), GlobalConstants::InstancingMatricesData);
+    }
     else
         GraphicsBackend::Current()->BindConstantBuffer(s_MatricesBuffer->GetBackendBuffer(), GlobalConstants::MatricesData, offset, size);
 }

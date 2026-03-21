@@ -23,6 +23,8 @@
 #include "types/graphics_backend_sampler_descriptor.h"
 #include "types/graphics_backend_texture_descriptor.h"
 #include "types/graphics_backend_buffer_descriptor.h"
+#include "types/graphics_backend_buffer_view_descriptor.h"
+#include "types/graphics_backend_buffer_view.h"
 #include "helpers/dx12_helpers.h"
 #include "math_utils.h"
 #include "debug.h"
@@ -55,6 +57,12 @@ namespace DX12Local
         D3D12_CPU_DESCRIPTOR_HANDLE RWDescriptorHandle;
         uint32_t ReadOnlyDescriptorIndex;
         uint32_t RWDescriptorIndex;
+    };
+
+    struct ResourceViewData
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle;
+        uint32_t DescriptorIndex;
     };
 
     struct RenderTargetState
@@ -1324,49 +1332,105 @@ GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(const GraphicsBackendBuf
     return buffer;
 }
 
-void GraphicsBackendDX12::DeleteBuffer_Internal(const GraphicsBackendBuffer& buffer)
+GraphicsBackendBufferView GraphicsBackendDX12::CreateBufferView(const GraphicsBackendBufferViewDescriptor& descriptor, const GraphicsBackendBuffer& buffer, const std::string& name)
 {
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+
+    DX12Local::ResourceViewData* resourceViewData = new DX12Local::ResourceViewData();
+    resourceViewData->DescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorPool.GetFreeCPUHandle(resourceViewData->DescriptorIndex);
+
+    if (descriptor.ReadWrite)
+    {
+        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+
+        if (descriptor.Type == BufferType::STRUCTURED_BUFFER)
+        {
+            const int elementSize = descriptor.Size / descriptor.ElementsCount;
+            const int elementOffset = descriptor.Offset / elementSize;
+
+            uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+            uavDesc.Buffer.FirstElement = elementOffset;
+            uavDesc.Buffer.NumElements = descriptor.ElementsCount;
+            uavDesc.Buffer.StructureByteStride = elementSize;
+        }
+        else if (descriptor.Type == BufferType::TYPED_BUFFER)
+        {
+            uavDesc.Format = DX12Helpers::ToTextureInternalFormat(descriptor.Format, true);
+            uavDesc.Buffer.FirstElement = descriptor.Offset / GetFormatSize(descriptor.Format);
+            uavDesc.Buffer.NumElements = descriptor.ElementsCount;
+        }
+        else if (descriptor.Type == BufferType::BYTE_ADDRESS_BUFFER)
+        {
+            uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+            uavDesc.Buffer.FirstElement = descriptor.Offset / 4;
+            uavDesc.Buffer.NumElements = descriptor.Size / 4;
+            uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
+        }
+        
+        DX12Local::s_Device->CreateUnorderedAccessView(resourceData->Resource, nullptr, &uavDesc, resourceViewData->DescriptorHandle);
+    }
+    else
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+
+        if (descriptor.Type == BufferType::STRUCTURED_BUFFER)
+        {
+            const int elementSize = descriptor.Size / descriptor.ElementsCount;
+            const int elementOffset = descriptor.Offset / elementSize;
+
+            srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+            srvDesc.Buffer.FirstElement = elementOffset;
+            srvDesc.Buffer.NumElements = descriptor.ElementsCount;
+            srvDesc.Buffer.StructureByteStride = elementSize;
+        }
+        else if (descriptor.Type == BufferType::TYPED_BUFFER)
+        {
+            srvDesc.Format = DX12Helpers::ToTextureInternalFormat(descriptor.Format, true);
+            srvDesc.Buffer.FirstElement = descriptor.Offset / GetFormatSize(descriptor.Format);
+            srvDesc.Buffer.NumElements = descriptor.ElementsCount;
+        }
+        else if (descriptor.Type == BufferType::BYTE_ADDRESS_BUFFER)
+        {
+            srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+            srvDesc.Buffer.FirstElement = descriptor.Offset / 4;
+            srvDesc.Buffer.NumElements = descriptor.Size / 4;
+            srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+        }
+        
+        DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, resourceViewData->DescriptorHandle);
+    }
+
+    GraphicsBackendBufferView bufferView{};
+    bufferView.BufferView = reinterpret_cast<void*>(resourceViewData);
+    return bufferView;
+}
+
+void GraphicsBackendDX12::DeleteBuffer_Internal(const GraphicsBackendBuffer& buffer)
+{
+    const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
     resourceData->Resource->Release();
     delete resourceData;
 }
 
-void GraphicsBackendDX12::BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
+void GraphicsBackendDX12::DeleteBufferView_Internal(const GraphicsBackendBufferView& bufferView)
+{
+    const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(bufferView.BufferView);
+    DX12Local::s_AllocatedResourcesDescriptorPool.ReturnCPUHandle(resourceViewData->DescriptorIndex);
+    delete resourceViewData;
+}
+
+void GraphicsBackendDX12::BindBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index)
 {
     assert(index < DX12Local::k_MaxResourcesPerDraw);
 
-    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-
-    if (type == BufferType::STRUCTURED_BUFFER)
-    {
-        const int elementSize = size / elementsCount;
-        const int elementOffset = offset / elementSize;
-
-        srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-        srvDesc.Buffer.FirstElement = elementOffset;
-        srvDesc.Buffer.NumElements = elementsCount;
-        srvDesc.Buffer.StructureByteStride = elementSize;
-    }
-    else if (type == BufferType::TYPED_BUFFER)
-    {
-        srvDesc.Format = DX12Helpers::ToTextureInternalFormat(dataFormat, true);
-        srvDesc.Buffer.FirstElement = offset;
-        srvDesc.Buffer.NumElements = elementsCount;
-    }
-    else if (type == BufferType::BYTE_ADDRESS_BUFFER)
-    {
-        srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-        srvDesc.Buffer.FirstElement = offset;
-        srvDesc.Buffer.NumElements = size / 4;
-        srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
-    }
-
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_BuffersDescriptorsOffset));
+    const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(bufferView.BufferView);
+
+    const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_BuffersDescriptorsOffset);
+    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void GraphicsBackendDX12::BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size)
@@ -1385,50 +1449,24 @@ void GraphicsBackendDX12::BindConstantBuffer_Internal(const GraphicsBackendBuffe
     DX12Local::s_Device->CreateConstantBufferView(&cbvDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_ConstantBuffersDescriptorsOffset));
 }
 
-void GraphicsBackendDX12::BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
+void GraphicsBackendDX12::BindRWBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index)
 {
     assert(index < DX12Local::k_MaxResourcesPerDraw);
 
-    const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
-
-    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-
-    if (type == BufferType::STRUCTURED_BUFFER)
-    {
-        const int elementSize = size / elementsCount;
-        const int elementOffset = offset / elementSize;
-
-        uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-        uavDesc.Buffer.FirstElement = elementOffset;
-        uavDesc.Buffer.NumElements = elementsCount;
-        uavDesc.Buffer.StructureByteStride = elementSize;
-    }
-    else if (type == BufferType::TYPED_BUFFER)
-    {
-        uavDesc.Format = DX12Helpers::ToTextureInternalFormat(dataFormat, true);
-        uavDesc.Buffer.FirstElement = offset;
-        uavDesc.Buffer.NumElements = elementsCount;
-    }
-    else if (type == BufferType::BYTE_ADDRESS_BUFFER)
-    {
-        uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-        uavDesc.Buffer.FirstElement = offset;
-        uavDesc.Buffer.NumElements = size / 4;
-        uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
-    }
-
     DX12Local::PerFrameData& frameData = DX12Local::GetCurrentFrameData();
-    DX12Local::s_Device->CreateUnorderedAccessView(resourceData->Resource, nullptr, &uavDesc, frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWBufferDescriptorsOffset));
+    const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(bufferView.BufferView);
+
+    const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = frameData.BoundResourceDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWBufferDescriptorsOffset);
+    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void GraphicsBackendDX12::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void* data)
 {
-    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+    const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
     ID3D12Resource* dxBuffer = resourceData->Resource;
 
-    CD3DX12_RANGE readRange(0, 0);
-    CD3DX12_RANGE writeRange(offset, offset + size);
+    const CD3DX12_RANGE readRange(0, 0);
+    const CD3DX12_RANGE writeRange(offset, offset + size);
 
     UINT8* bufferData;
     ThrowIfFailed(dxBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferData)));

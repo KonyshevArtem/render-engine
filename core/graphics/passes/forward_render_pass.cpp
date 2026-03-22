@@ -5,7 +5,7 @@
 #include "editor/profiler/profiler.h"
 #include "graphics/graphics.h"
 #include "vector4/vector4.h"
-#include "graphics/context.h"
+#include "graphics/render_data.h"
 #include "enums/resource_state.h"
 
 ForwardRenderPass::ForwardRenderPass(int priority) :
@@ -24,20 +24,20 @@ ForwardRenderPass::~ForwardRenderPass()
     GraphicsBackend::Current()->DeleteFence(m_EndFence);
 }
 
-void ForwardRenderPass::Prepare(const Context& ctx, const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor)
+void ForwardRenderPass::Prepare(const RenderData& renderData, const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor)
 {
     Profiler::Marker marker("ForwardRenderPass::Prepare");
 
     m_ColorTargetDescriptor = colorTargetDescriptor;
     m_DepthTargetDescriptor = depthTargetDescriptor;
 
-    const Matrix4x4 viewProj = ctx.ProjectionMatrix * ctx.ViewMatrix;
-    m_OpaquePass->Prepare(viewProj, ctx.Renderers);
+    const Matrix4x4 viewProj = renderData.ProjectionMatrix * renderData.ViewMatrix;
+    m_OpaquePass->Prepare(viewProj, renderData.Renderers);
     m_SkyboxPass->Prepare();
-    m_TransparentPass->Prepare(viewProj, ctx.Renderers);
+    m_TransparentPass->Prepare(viewProj, renderData.Renderers);
 }
 
-void ForwardRenderPass::Execute(const Context& ctx)
+void ForwardRenderPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("ForwardRenderPass::Execute");
     Profiler::GPUMarker gpuMarker("ForwardRenderPass::Execute");
@@ -45,16 +45,16 @@ void ForwardRenderPass::Execute(const Context& ctx)
     GraphicsBackend::Current()->AttachRenderTarget(m_ColorTargetDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(m_DepthTargetDescriptor);
 
-    Graphics::SetCameraData(ctx.ViewMatrix, ctx.ProjectionMatrix, ctx.NearPlane, ctx.FarPlane);
+    Graphics::SetCameraData(renderData.ViewMatrix, renderData.ProjectionMatrix, renderData.NearPlane, renderData.FarPlane);
 
     GraphicsBackend::Current()->BeginRenderPass("Forward Render Pass");
 
-    GraphicsBackend::Current()->SetViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), 0, 1);
-    GraphicsBackend::Current()->SetScissorRect(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
+    GraphicsBackend::Current()->SetViewport(0, 0, renderData.Viewport.x, renderData.Viewport.y, 0, 1);
+    GraphicsBackend::Current()->SetScissorRect(0, 0, renderData.Viewport.x, renderData.Viewport.y);
 
-    m_OpaquePass->Execute(ctx);
-    m_SkyboxPass->Execute(ctx);
-    m_TransparentPass->Execute(ctx);
+    m_OpaquePass->Execute(renderData);
+    m_SkyboxPass->Execute(renderData);
+    m_TransparentPass->Execute(renderData);
 
     GraphicsBackend::Current()->TransitionRenderTarget(m_DepthTargetDescriptor, ResourceState::COMMON, GPUQueue::RENDER);
     GraphicsBackend::Current()->TransitionRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer(), ResourceState::COMMON, GPUQueue::RENDER);

@@ -6,6 +6,7 @@
 struct GraphicsBackendTextureInfo
 {
     uint32_t Binding = 0;
+    bool ReadWrite = false;
 };
 
 #endif //RENDER_ENGINE_UNIFORM_INFO_H

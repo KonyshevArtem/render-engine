@@ -13,20 +13,7 @@
 
 namespace ShaderLoader
 {
-    const int SUPPORTED_SHADERS_COUNT = 3;
-
     const std::string INSTANCING_KEYWORD = "_INSTANCING";
-
-    const ShaderType SHADER_TYPES[SUPPORTED_SHADERS_COUNT]{
-            ShaderType::VERTEX_SHADER,
-            ShaderType::GEOMETRY_SHADER,
-            ShaderType::FRAGMENT_SHADER};
-
-    const std::string SHADER_SOURCE_FILE_NAME[SUPPORTED_SHADERS_COUNT]{
-            "vs",
-            "gs",
-            "ps"
-    };
 
     std::string GetBackendLiteral(GraphicsBackendName backendName)
     {
@@ -74,7 +61,8 @@ namespace ShaderLoader
             std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;
             std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers;
             std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers;
-            ShaderParser::ParseReflection(reflectionJson, textures, buffers, samplers);
+            ThreadGroupSize threadGroupSize;
+            ShaderParser::ParseReflection(reflectionJson, textures, buffers, samplers, threadGroupSize);
 
             std::string shaderDebugName;
             shaderDebugName.append(path.string());
@@ -82,32 +70,35 @@ namespace ShaderLoader
             shaderDebugName.append(keywordHash);
 
             std::vector<GraphicsBackendShaderObject> shaders;
-            for (int i = 0; i < SUPPORTED_SHADERS_COUNT; ++i)
+            for (int i = 0; i < static_cast<int>(ShaderType::COUNT); ++i)
             {
-                std::filesystem::path sourcePath = backendPath / SHADER_SOURCE_FILE_NAME[i];
+                const ShaderType shaderType = static_cast<ShaderType>(i);
+                const std::string& shaderFilename = GraphicsBackendBase::GetShaderTypeName(shaderType);
+
+                std::filesystem::path sourcePath = backendPath / shaderFilename;
                 if (!FileSystem::FileExists(sourcePath))
                     continue;
 
                 std::string shaderFunctionDebugName = shaderDebugName;
                 shaderFunctionDebugName.append("_");
-                shaderFunctionDebugName.append(SHADER_SOURCE_FILE_NAME[i]);
+                shaderFunctionDebugName.append(shaderFilename);
 
                 GraphicsBackendShaderObject shader{};
                 if (GraphicsBackend::Current()->GetName() == GraphicsBackendName::DX12)
                 {
                     std::vector<uint8_t> shaderBinary;
                     FileSystem::ReadFileBytes(sourcePath, shaderBinary);
-                    shader = GraphicsBackend::Current()->CompileShaderBinary(SHADER_TYPES[i], shaderBinary, shaderFunctionDebugName);
+                    shader = GraphicsBackend::Current()->CompileShaderBinary(shaderType, shaderBinary, shaderFunctionDebugName);
                 }
                 else
                 {
                     std::string shaderSource = FileSystem::ReadFile(sourcePath);
-                    shader = GraphicsBackend::Current()->CompileShader(SHADER_TYPES[i], shaderSource, shaderFunctionDebugName);
+                    shader = GraphicsBackend::Current()->CompileShader(shaderType, shaderSource, shaderFunctionDebugName);
                 }
                 shaders.push_back(shader);
             }
 
-            return std::make_shared<Shader>(shaders, textures, buffers, samplers, shaderDebugName, supportInstancing);
+            return std::make_shared<Shader>(shaders, textures, buffers, samplers, threadGroupSize, shaderDebugName, supportInstancing);
         }
         catch (const std::exception &_exception)
         {

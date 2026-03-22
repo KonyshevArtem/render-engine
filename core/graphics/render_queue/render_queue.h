@@ -9,6 +9,7 @@
 
 class Renderer;
 class RingBuffer;
+class GraphicsBufferView;
 struct RenderSettings;
 
 class RenderQueue
@@ -41,7 +42,9 @@ private:
     std::vector<DrawCallInfo> m_DrawCalls;
     Frustum m_Frustum;
 
+    static std::shared_ptr<RingBuffer> s_MatricesOffsetBuffer;
     static std::shared_ptr<RingBuffer> s_MatricesBuffer;
+    static std::shared_ptr<GraphicsBufferView> s_MatricesBufferView;
 
     static void SetupMatrices(const std::vector<Matrix4x4>& matrices);
 };

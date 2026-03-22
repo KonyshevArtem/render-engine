@@ -1,0 +1,10 @@
+#ifndef RENDER_ENGINE_PROGRAM_TYPE_H
+#define RENDER_ENGINE_PROGRAM_TYPE_H
+
+enum class ProgramType
+{
+    RENDER,
+    COMPUTE
+};
+
+#endif //RENDER_ENGINE_PROGRAM_TYPE_H

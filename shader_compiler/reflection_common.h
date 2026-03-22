@@ -6,7 +6,7 @@
 
 enum BufferType
 {
-    RAW_BYTE_BUFFER,
+    BYTE_ADDRESS_BUFFER,
     STRUCTURED_BUFFER,
     CONSTANT_BUFFER,
     TYPED_BUFFER
@@ -30,11 +30,19 @@ struct BufferDescriptor : ResourceDescriptor
     std::unordered_map<std::string, uint32_t> Variables;
 };
 
+struct ThreadGroupSize
+{
+    uint32_t X = 1;
+    uint32_t Y = 1;
+    uint32_t Z = 1;
+};
+
 struct Reflection
 {
     std::unordered_map<std::string, BufferDescriptor> Buffers;
     std::unordered_map<std::string, TextureDescriptor> Textures;
     std::unordered_map<std::string, ResourceDescriptor> Samplers;
+    ThreadGroupSize ThreadGroupSize;
 };
 
 inline void WriteResourceDescriptor(const std::string& resourceName, uint32_t bindPoint, std::unordered_map<std::string, ResourceDescriptor>& resources)

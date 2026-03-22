@@ -4,7 +4,7 @@
 #include "render_pass.h"
 #include <memory>
 
-struct Context;
+struct RenderData;
 class Texture2D;
 
 class FinalBlitPass : public RenderPass
@@ -14,7 +14,7 @@ public:
     ~FinalBlitPass() override = default;
 
     void Prepare(const std::shared_ptr<Texture2D>& source);
-    void Execute(const Context& ctx) override;
+    void Execute(const RenderData& renderData) override;
 
     FinalBlitPass(const FinalBlitPass&) = delete;
     FinalBlitPass(FinalBlitPass&&) = delete;

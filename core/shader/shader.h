@@ -10,6 +10,7 @@
 #include "types/graphics_backend_shader_object.h"
 #include "enums/primitive_type.h"
 #include "drawable_geometry/vertex_attributes/vertex_attributes.h"
+#include "types/graphics_backend_program_descriptor.h"
 
 struct GraphicsBackendTextureInfo;
 struct GraphicsBackendSamplerInfo;
@@ -22,10 +23,11 @@ public:
     static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords);
 
     Shader(std::vector<GraphicsBackendShaderObject> &shaders,
-           std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
-           std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
-           std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
-           std::string name, bool _supportInstancing);
+		std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
+		std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
+		std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
+        ThreadGroupSize threadGroupSize,
+		std::string name, bool _supportInstancing);
     ~Shader();
 
     Shader(const Shader &) = delete;
@@ -34,6 +36,7 @@ public:
     Shader &operator=(const Shader &) = delete;
     Shader &operator=(Shader &&) = delete;
 
+    const GraphicsBackendProgram& GetProgram();
     const GraphicsBackendProgram& GetProgram(const std::shared_ptr<DrawableGeometry>& geometry);
     const GraphicsBackendProgram& GetProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType);
 
@@ -61,12 +64,17 @@ private:
     std::vector<GraphicsBackendShaderObject> m_Shaders;
     std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
 
+    ProgramType m_Type;
     std::string m_Name;
     bool m_SupportInstancing;
+    ThreadGroupSize m_ThreadGroupSize;
 
     std::unordered_map<std::string, GraphicsBackendTextureInfo> m_Textures;
     std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
+
+    const GraphicsBackendProgram& GetOrCreateRenderProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType);
+    const GraphicsBackendProgram& GetOrCreateComputeProgram();
 };
 
 #endif //RENDER_ENGINE_SHADER_H

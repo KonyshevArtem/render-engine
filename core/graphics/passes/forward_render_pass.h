@@ -20,8 +20,8 @@ public:
     explicit ForwardRenderPass(int priority);
     ~ForwardRenderPass() override;
 
-    void Prepare(const Context& ctx, const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor);
-    void Execute(const Context& ctx) override;
+    void Prepare(const RenderData& renderData, const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor);
+    void Execute(const RenderData& renderData) override;
     const GraphicsBackendFence& GetEndFence() const;
 
     ForwardRenderPass(const ForwardRenderPass&) = delete;

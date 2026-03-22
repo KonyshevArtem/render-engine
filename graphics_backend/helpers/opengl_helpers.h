@@ -63,7 +63,6 @@ namespace OpenGLHelpers
 {
     void InitBindings();
 
-    std::string GetShaderTypeName(ShaderType shaderType);
     GLuint ToShaderType(ShaderType shaderType);
     GLenum ToPrimitiveType(PrimitiveType primitiveType);
     GLenum ToIndicesDataType(IndicesDataType dataType);

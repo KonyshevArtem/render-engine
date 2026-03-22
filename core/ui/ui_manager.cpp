@@ -28,11 +28,11 @@ void UIManager::Initialize(float referenceHeight)
     s_PersistentRoot->SetParent(s_Root);
 }
 
-void UIManager::Update()
+void UIManager::Update(float width, float height)
 {
     Profiler::Marker _("UIManager::Update");
 
-    float aspect = static_cast<float>(Graphics::GetScreenWidth()) / static_cast<float>(Graphics::GetScreenHeight());
+    float aspect = width / height;
     s_ReferenceSize.x = aspect * s_ReferenceSize.y;
 
     s_Root->Size = s_ReferenceSize;
@@ -56,11 +56,11 @@ void UIManager::Update()
     {
         Profiler::Marker inputMarker("Handle Input");
 
-        auto ToUIPosition = [](const Vector2& inputPosition)
+        auto ToUIPosition = [width, height](const Vector2& inputPosition)
         {
             Vector2 uiPosition = inputPosition;
-            uiPosition.x = uiPosition.x / Graphics::GetScreenWidth() * s_ReferenceSize.x;
-            uiPosition.y = (1 - uiPosition.y / Graphics::GetScreenHeight()) * s_ReferenceSize.y;
+            uiPosition.x = uiPosition.x / width * s_ReferenceSize.x;
+            uiPosition.y = (1 - uiPosition.y / height) * s_ReferenceSize.y;
             return uiPosition;
         };
 

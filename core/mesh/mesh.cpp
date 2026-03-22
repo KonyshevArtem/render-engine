@@ -2,6 +2,7 @@
 #include "vector2/vector2.h"
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 
 #include <span>
 
@@ -29,8 +30,13 @@ namespace MeshLocal
     {
         Profiler::Marker _("MeshLocal::CreateGeometry");
 
-        GraphicsBackendBuffer vertexBuffer = GraphicsBackend::Current()->CreateBuffer(vertexDataSize, name + "_Vertices", false, vertexData);
-        GraphicsBackendBuffer indexBuffer = GraphicsBackend::Current()->CreateBuffer(indicesCount * sizeof(int), name + "_Indices", false, indices);
+        GraphicsBackendBufferDescriptor bufferDescriptor{};
+
+        bufferDescriptor.Size = vertexDataSize;
+        const GraphicsBackendBuffer vertexBuffer = GraphicsBackend::Current()->CreateBuffer(bufferDescriptor, name + "_Vertices", vertexData);
+
+        bufferDescriptor.Size = indicesCount * sizeof(int);
+        const GraphicsBackendBuffer indexBuffer = GraphicsBackend::Current()->CreateBuffer(bufferDescriptor, name + "_Indices", indices);
 
         return GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, attributes.GetAttributes(), name);
     }

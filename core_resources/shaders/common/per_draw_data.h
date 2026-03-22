@@ -13,10 +13,15 @@ struct PerDrawDataStruct
 
     static uint _InstanceID;
 
+    cbuffer InstanceMatricesOffsetBuffer : register(INSTANCING_MATRICES_OFFSET_DATA)
+	{
+        uint MatricesOffset;
+	}
+
     StructuredBuffer<PerDrawDataStruct> InstanceMatricesBuffer : register(INSTANCING_MATRICES_DATA);
 
-    #define _ModelMatrix            InstanceMatricesBuffer[_InstanceID]._ModelMatrix
-    #define _ModelNormalMatrix      InstanceMatricesBuffer[_InstanceID]._ModelNormalMatrix
+    #define _ModelMatrix            InstanceMatricesBuffer[MatricesOffset + _InstanceID]._ModelMatrix
+    #define _ModelNormalMatrix      InstanceMatricesBuffer[MatricesOffset + _InstanceID]._ModelNormalMatrix
 
     #define DECLARE_INSTANCE_ID_ATTRIBUTE() uint InstanceID : SV_InstanceID;
     #define DECLARE_INSTANCE_ID_VARYING(varID) nointerpolation uint InstanceID : TEXCOORD##varID;

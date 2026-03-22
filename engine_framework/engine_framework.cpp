@@ -18,17 +18,27 @@
 
 GameWindow* window = nullptr;
 
-void display(int width, int height)
+void PrepareFrame(int width, int height)
 {
-    Profiler::Marker marker("Tick Main Loop");
+    Profiler::Marker marker("Prepare Frame");
 
     Time::Update();
     Input::Update();
     DeveloperConsole::Instance->Update();
-    UIManager::Update();
+    UIManager::Update(width, height);
     Scene::Update();
 
-    Graphics::Render(width, height);
+    Graphics::Prepare(width, height);
+}
+
+void RenderFrame()
+{
+    Graphics::Render();
+}
+
+void CleanupFrame()
+{
+    Profiler::Marker marker("Cleanup Frame");
 
     Input::CleanUp();
 }
@@ -45,7 +55,7 @@ void EngineFramework::Initialize(void* fileSystemData, void* graphicsBackendInit
     ImGuiWrapper::Init();
     Worker::Init();
 
-    window = new GameWindow(display);
+    window = new GameWindow();
 
     Graphics::Init();
     Time::Init();
@@ -79,16 +89,26 @@ void EngineFramework::TickMainLoop(int width, int height)
         Profiler::Marker _("EngineFramework::TickMainLoop");
 
         {
+            Profiler::Marker _("GraphicsBackend::InitNewFrame");
+            GraphicsBackend::Current()->InitNewFrame();
+        }
+
+        PrepareFrame(width, height);
+
+        {
             Profiler::Marker _("ImGuiWrapper::NewFrame");
             ImGuiWrapper::NewFrame();
         }
 
         {
-            Profiler::Marker _("GraphicsBackend::InitNewFrame");
-            GraphicsBackend::Current()->InitNewFrame();
+            Profiler::Marker _("GraphicsBackend::WaitForPreviousFrame");
+            GraphicsBackend::Current()->WaitForPreviousFrame();
         }
 
-        window->TickMainLoop(width, height);
+        RenderFrame();
+        CleanupFrame();
+
+        window->Render();
 
         {
             Profiler::Marker _("GraphicsBackend::Flush");

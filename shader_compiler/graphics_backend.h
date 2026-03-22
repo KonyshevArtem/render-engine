@@ -26,6 +26,22 @@ enum ShaderType
 // Must match with value in GraphicsBackendMetal
 constexpr uint32_t k_MetalConstantBufferBindingOffset = 8;
 
+// Used to offset binding index for typed buffers on Metal because they use the same index space as textures
+// Must match with value in GraphicsBackendMetal
+constexpr uint32_t k_MetalTypedBufferBindingOffset = 16;
+
+// Used to offset binding index for RW resources on Metal because they use the same index space as read-only resources
+// Must match with value in GraphicsBackendMetal
+constexpr uint32_t k_MetalRWResourcesBindingOffset = 8;
+
+// Used to offset binding index for RW buffers on OpenGL because they use the same index space as read-only buffers
+// Must match with value in GraphicsBackendOpenGL
+constexpr uint32_t k_OpenGLRWBuffersBindingOffset = 16;
+
+// Used to offset binding index for typed buffers on OpenGL because they use the same index space as textures
+// Must match with value in GraphicsBackendOpenGL
+constexpr uint32_t k_OpenGLTypedBuffersBindingOffset = 4;
+
 std::string GetBackendLiteral(GraphicsBackend backend)
 {
     switch (backend)

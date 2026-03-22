@@ -32,6 +32,15 @@ void to_json(nlohmann::json& json, const ResourceDescriptor& desc)
     };
 }
 
+void to_json(nlohmann::json& json, const ThreadGroupSize& threadGroupSize)
+{
+    json = nlohmann::json{
+            {"X",  nlohmann::json(threadGroupSize.X)},
+            {"Y",  nlohmann::json(threadGroupSize.Y)},
+            {"Z",  nlohmann::json(threadGroupSize.Z)},
+    };
+}
+
 void to_json(nlohmann::json& json, const Reflection& reflection)
 {
     std::unordered_map<std::string, int> a;
@@ -40,6 +49,7 @@ void to_json(nlohmann::json& json, const Reflection& reflection)
             {"Buffers",  nlohmann::json(reflection.Buffers)},
             {"Textures", nlohmann::json(reflection.Textures)},
             {"Samplers", nlohmann::json(reflection.Samplers)},
+            {"ThreadGroupSize", nlohmann::json(reflection.ThreadGroupSize)},
     };
 }
 
@@ -50,8 +60,7 @@ inline void WriteReflection(const std::filesystem::path& outputDirPath, const Re
     const std::filesystem::path outputPath = std::filesystem::absolute(outputDirPath / "reflection.json");
     std::filesystem::create_directories(outputPath.parent_path());
 
-    FILE* fp;
-	fopen_s(&fp, outputPath.string().c_str(), "w");
+	FILE* fp = fopen(outputPath.string().c_str(), "w");
     fwrite(json.c_str(), json.size(), 1, fp);
     fclose(fp);
 }

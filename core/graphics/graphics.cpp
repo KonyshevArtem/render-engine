@@ -1,6 +1,6 @@
 #include "graphics.h"
 #include "camera/camera.h"
-#include "context.h"
+#include "render_data.h"
 #include "draw_call_info.h"
 #include "editor/gizmos/gizmos.h"
 #include "editor/gizmos/gizmos_pass.h"
@@ -33,6 +33,8 @@
 #include "graphics_buffer/graphics_buffer.h"
 #include "graphics_buffer/ring_buffer.h"
 #include "global_constants.h"
+#include "types/graphics_backend_buffer_descriptor.h"
+#include "graphics_buffer/graphics_buffer_view.h"
 
 #include <cassert>
 
@@ -55,11 +57,19 @@ namespace Graphics
 
     int s_ScreenWidth  = 0;
     int s_ScreenHeight = 0;
+    RenderData s_RenderData;
+    std::vector<std::shared_ptr<RenderPass>> s_RenderPasses;
 
     void InitConstantBuffers()
     {
-        s_CameraDataBuffer = std::make_shared<RingBuffer>(sizeof(CameraData) * 32, "CameraData");
-        s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(LightingData), "LightingData");
+        GraphicsBackendBufferDescriptor descriptor{};
+        descriptor.AllowCPUWrites = true;
+
+        descriptor.Size = sizeof(CameraData) * 32;
+        s_CameraDataBuffer = std::make_shared<RingBuffer>(descriptor, "CameraData");
+
+        descriptor.Size = sizeof(LightingData);
+        s_LightingDataBuffer = std::make_shared<GraphicsBuffer>(descriptor, "LightingData");
     }
 
     void InitPasses()
@@ -152,80 +162,90 @@ namespace Graphics
         GraphicsBackend::Current()->BindConstantBuffer(s_LightingDataBuffer->GetBackendBuffer(), GlobalConstants::LightingDataIndex, 0, sizeof(lightingData));
     }
 
-    void Render(int width, int height)
+    void Prepare(int width, int height)
     {
         if (width == 0 || height == 0)
             return;
 
+        Profiler::Marker marker("Graphics::Prepare");
+
+        s_ScreenWidth = width;
+        s_ScreenHeight = height;
+
         static std::shared_ptr<Texture2D> cameraColorTarget;
         static std::shared_ptr<Texture2D> cameraDepthTarget;
 
-        static GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
-        static GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
+        static GraphicsBackendRenderTargetDescriptor colorTargetDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
+        static GraphicsBackendRenderTargetDescriptor depthTargetDescriptor{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
 
-        s_ScreenWidth  = width;
-        s_ScreenHeight = height;
+        s_RenderPasses.clear();
+        s_RenderData = RenderData::GetRenderData(width, height);
 
-        const Context ctx;
-        std::vector<std::shared_ptr<RenderPass>> renderPasses;
+        if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
         {
-            Profiler::Marker marker("Prepare Render");
+	        const TextureInternalFormat depthFormat = GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL ? TextureInternalFormat::DEPTH_32_STENCIL_8 : TextureInternalFormat::DEPTH_24_STENCIL_8;
 
-            if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
-            {
-                const TextureInternalFormat depthFormat = GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL ? TextureInternalFormat::DEPTH_32_STENCIL_8 : TextureInternalFormat::DEPTH_24_STENCIL_8;
+	        GraphicsBackendTextureDescriptor descriptor;
+	        descriptor.Width = width;
+	        descriptor.Height = height;
+	        descriptor.Linear = true;
+	        descriptor.RenderTarget = true;
 
-                cameraColorTarget = Texture2D::Create(width, height, TextureInternalFormat::RGBA16F, true, true, "CameraColorRT");
-                cameraDepthTarget = Texture2D::Create(width, height, depthFormat, true, true, "CameraDepthRT");
-            }
+	        descriptor.Format = TextureInternalFormat::RGBA16F;
+	        cameraColorTarget = Texture2D::Create(descriptor, "CameraColorRT");
 
-            colorTargetDescriptor.Texture = cameraColorTarget->GetBackendTexture();
-            depthTargetDescriptor.Texture = cameraDepthTarget->GetBackendTexture();
+	        descriptor.Format = depthFormat;
+	        cameraDepthTarget = Texture2D::Create(descriptor, "CameraDepthRT");
+        }
 
-            GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
-            GraphicsBackend::Current()->SetClearDepth(1);
+        colorTargetDescriptor.Texture = cameraColorTarget->GetBackendTexture();
+        depthTargetDescriptor.Texture = cameraDepthTarget->GetBackendTexture();
 
-            SetLightingData(ctx.Lights, ctx.Skybox);
+        s_ShadowCasterPass->Prepare(s_RenderData);
+        s_ForwardRenderPass->Prepare(s_RenderData, colorTargetDescriptor, depthTargetDescriptor);
+        s_FinalBlitPass->Prepare(cameraColorTarget);
+        s_UIRenderPass->Prepare(s_RenderData);
 
-            s_ShadowCasterPass->Prepare(ctx);
-            s_ForwardRenderPass->Prepare(ctx, colorTargetDescriptor, depthTargetDescriptor);
-            s_FinalBlitPass->Prepare(cameraColorTarget);
-            s_UIRenderPass->Prepare(ctx);
-
-            renderPasses.push_back(s_ShadowCasterPass);
-            renderPasses.push_back(s_ForwardRenderPass);
-            renderPasses.push_back(s_FinalBlitPass);
-            renderPasses.push_back(s_UIRenderPass);
+        s_RenderPasses.push_back(s_ShadowCasterPass);
+        s_RenderPasses.push_back(s_ForwardRenderPass);
+        s_RenderPasses.push_back(s_FinalBlitPass);
+        s_RenderPasses.push_back(s_UIRenderPass);
 
 #if RENDER_ENGINE_EDITOR
-            const bool executeGizmosPass = s_GizmosPass->Prepare(ctx, s_CopyDepthPass->GetEndFence());
-            const bool executeSelectionPass = s_SelectionOutlinePass->Prepare(ctx);
+        const bool executeGizmosPass = s_GizmosPass->Prepare(s_RenderData, s_CopyDepthPass->GetEndFence());
+        const bool executeSelectionPass = s_SelectionOutlinePass->Prepare(s_RenderData);
 
-            if (executeGizmosPass)
-            {
-                s_CopyDepthPass->Prepare(s_ForwardRenderPass->GetEndFence(), cameraDepthTarget);
-
-                renderPasses.push_back(s_CopyDepthPass);
-                renderPasses.push_back(s_GizmosPass);
-            }
-
-            if (executeSelectionPass)
-                renderPasses.push_back(s_SelectionOutlinePass);
-
-            s_ShadowMapDebugPass->Prepare(cameraDepthTarget);
-            renderPasses.push_back(s_ShadowMapDebugPass);
-#endif
-        }
-
+        if (executeGizmosPass)
         {
-            Profiler::Marker marker("Execute Render");
+	        s_CopyDepthPass->Prepare(s_ForwardRenderPass->GetEndFence(), cameraDepthTarget);
 
-            std::sort(renderPasses.begin(), renderPasses.end(), RenderPass::Comparer());
-            for (const std::shared_ptr<RenderPass>& pass : renderPasses)
-            {
-                pass->Execute(ctx);
-            }
+	        s_RenderPasses.push_back(s_CopyDepthPass);
+	        s_RenderPasses.push_back(s_GizmosPass);
         }
+
+        if (executeSelectionPass)
+            s_RenderPasses.push_back(s_SelectionOutlinePass);
+
+        s_ShadowMapDebugPass->Prepare(cameraDepthTarget);
+        s_RenderPasses.push_back(s_ShadowMapDebugPass);
+#endif
+    }
+
+    void Render()
+    {
+        if (s_RenderData.Viewport.x == 0 || s_RenderData.Viewport.y == 0)
+            return;
+
+        Profiler::Marker marker("Graphics::Render");
+
+        GraphicsBackend::Current()->SetClearColor(0, 0, 0, 0);
+        GraphicsBackend::Current()->SetClearDepth(1);
+
+        SetLightingData(s_RenderData.Lights, s_RenderData.Skybox);
+
+        std::sort(s_RenderPasses.begin(), s_RenderPasses.end(), RenderPass::Comparer());
+        for (const std::shared_ptr<RenderPass>& pass : s_RenderPasses)
+	        pass->Execute(s_RenderData);
     }
 
     int GetScreenWidth()

@@ -9,10 +9,11 @@
 class GraphicsBackendBufferInfo
 {
 public:
-    GraphicsBackendBufferInfo(uint32_t binding, uint32_t size, BufferType bufferType, std::unordered_map<std::string, int> variables) :
+    GraphicsBackendBufferInfo(uint32_t binding, uint32_t size, BufferType bufferType, bool readWrite, std::unordered_map<std::string, int> variables) :
         m_Binding(binding),
         m_Size(size),
         m_BufferType(bufferType),
+		m_ReadWrite(readWrite),
         m_Variables(std::move(variables)) {}
 
     ~GraphicsBackendBufferInfo() = default;
@@ -32,6 +33,11 @@ public:
         return m_BufferType;
     }
 
+    inline bool GetReadWrite() const
+    {
+        return m_ReadWrite;
+    }
+
     inline const std::unordered_map<std::string, int>& GetVariables() const
     {
         return m_Variables;
@@ -47,6 +53,7 @@ private:
     uint32_t m_Binding;
     uint32_t m_Size;
     BufferType m_BufferType;
+    bool m_ReadWrite;
 
     std::unordered_map<std::string, int> m_Variables;
 };

@@ -67,35 +67,51 @@ Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders,
                std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
                std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
                std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
+               ThreadGroupSize threadGroupSize,
                std::string name, bool supportInstancing) :
     m_Shaders(std::move(shaders)),
     m_Name(std::move(name)),
     m_SupportInstancing(supportInstancing),
+    m_ThreadGroupSize(threadGroupSize),
     m_Textures(std::move(textures)),
     m_Samplers(std::move(samplers)),
     m_Buffers(std::move(buffers))
 {
+    if (m_Shaders.size() == 1 && m_Shaders[0].Type == ShaderType::COMPUTE_SHADER)
+        m_Type = ProgramType::COMPUTE;
+    else
+        m_Type = ProgramType::RENDER;
 }
 
 Shader::~Shader()
 {
-    for (auto &pair : m_Programs)
-    {
-        GraphicsBackend::Current()->DeleteProgram(pair.second);
-    }
+    for (const auto& pair : m_Programs)
+	    GraphicsBackend::Current()->DeleteProgram(pair.second);
 
-    for (auto &shader : m_Shaders)
-    {
-        GraphicsBackend::Current()->DeleteShader(shader);
-    }
+    for (const auto& shader : m_Shaders)
+	    GraphicsBackend::Current()->DeleteShader(shader);
+}
+
+const GraphicsBackendProgram& Shader::GetProgram()
+{
+    return GetOrCreateComputeProgram();
 }
 
 const GraphicsBackendProgram& Shader::GetProgram(const std::shared_ptr<DrawableGeometry>& geometry)
 {
+    if (m_Type == ProgramType::COMPUTE)
+        return GetOrCreateComputeProgram();
     return GetProgram(geometry->GetVertexAttributes(), geometry->GetPrimitiveType());
 }
 
-const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexAttributes, PrimitiveType primitiveType)
+const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType)
+{
+    if (m_Type == ProgramType::COMPUTE)
+        return GetOrCreateComputeProgram();
+    return GetOrCreateRenderProgram(vertexAttributes, primitiveType);
+}
+
+const GraphicsBackendProgram& Shader::GetOrCreateRenderProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType)
 {
     bool isLinear;
     const TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
@@ -110,7 +126,7 @@ const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexA
 
     const auto it = m_Programs.find(hash);
     if (it != m_Programs.end())
-	    return it->second;
+        return it->second;
 
     GraphicsBackendColorAttachmentDescriptor colorAttachmentDescriptor{};
     colorAttachmentDescriptor.Format = colorTargetFormat;
@@ -118,6 +134,7 @@ const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexA
     colorAttachmentDescriptor.IsLinear = isLinear;
 
     GraphicsBackendProgramDescriptor programDescriptor{};
+    programDescriptor.Type = m_Type;
     programDescriptor.Shaders = &m_Shaders;
     programDescriptor.VertexAttributes = &vertexAttributes.GetAttributes();
     programDescriptor.Textures = &m_Textures;
@@ -134,4 +151,23 @@ const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes &vertexA
     const GraphicsBackendProgram program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
     m_Programs[hash] = program;
     return m_Programs[hash];
+}
+
+const GraphicsBackendProgram& Shader::GetOrCreateComputeProgram()
+{
+    if (!m_Programs.empty())
+        return m_Programs.begin()->second;
+
+    GraphicsBackendProgramDescriptor programDescriptor{};
+    programDescriptor.Type = m_Type;
+    programDescriptor.Shaders = &m_Shaders;
+    programDescriptor.Textures = &m_Textures;
+    programDescriptor.Samplers = &m_Samplers;
+    programDescriptor.Buffers = &m_Buffers;
+    programDescriptor.Name = &m_Name;
+    programDescriptor.ThreadGroupSize = m_ThreadGroupSize;
+
+    const GraphicsBackendProgram program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
+    m_Programs[0] = program;
+    return m_Programs[0];
 }

@@ -5,6 +5,7 @@
 #include "enums/texture_internal_format.h"
 #include "enums/texture_type.h"
 #include "enums/framebuffer_attachment.h"
+#include "enums/cubemap_face.h"
 #include "types/graphics_backend_texture.h"
 #include "types/graphics_backend_sampler.h"
 #include "types/graphics_backend_buffer.h"
@@ -12,6 +13,7 @@
 #include "types/graphics_backend_shader_object.h"
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_program_descriptor.h"
+#include "types/graphics_backend_buffer_view.h"
 #include "arguments.h"
 #include "hash.h"
 
@@ -53,10 +55,7 @@ GraphicsBackendBase *GraphicsBackendBase::Create()
 #endif
 
 #ifdef RENDER_BACKEND_METAL
-    if (metal)
-    {
-        return new GraphicsBackendMetal();
-    }
+    return new GraphicsBackendMetal();
 #endif
 
 #ifdef RENDER_BACKEND_DX12
@@ -78,6 +77,7 @@ void GraphicsBackendBase::InitNewFrame()
     BaseBackendLocal::DeleteResources<GraphicsBackendTexture>(m_DeletedTextures, [this](GraphicsBackendTexture& texture){ DeleteTexture_Internal(texture); });
     BaseBackendLocal::DeleteResources<GraphicsBackendSampler>(m_DeletedSamplers, [this](GraphicsBackendSampler& sampler){ DeleteSampler_Internal(sampler); });
     BaseBackendLocal::DeleteResources<GraphicsBackendBuffer>(m_DeletedBuffers, [this](GraphicsBackendBuffer& buffer){ DeleteBuffer_Internal(buffer); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendBufferView>(m_DeletedBufferViews, [this](GraphicsBackendBufferView& bufferView){ DeleteBufferView_Internal(bufferView); });
     BaseBackendLocal::DeleteResources<GraphicsBackendGeometry>(m_DeletedGeometries, [this](GraphicsBackendGeometry& geometry){ DeleteGeometry_Internal(geometry); });
     BaseBackendLocal::DeleteResources<GraphicsBackendShaderObject>(m_DeletedShaders, [this](GraphicsBackendShaderObject& shader){ DeleteShader_Internal(shader); });
     BaseBackendLocal::DeleteResources<GraphicsBackendProgram>(m_DeletedPrograms, [this](GraphicsBackendProgram& program){ DeleteProgram_Internal(program); });
@@ -97,10 +97,13 @@ void GraphicsBackendBase::DeleteTexture(const GraphicsBackendTexture& texture)
 {
     m_DeletedTextures.emplace_back(texture, BaseBackendLocal::k_DeleteResourceDelay);
 
-    std::erase_if(m_BoundTextures, [&texture](const auto& pair)
+    auto Predicate = [&texture](const std::pair<uint32_t, GraphicsBackendTexture>& pair)
     {
         return pair.second.Texture == texture.Texture;
-    });
+    };
+
+    std::erase_if(m_BoundTextures, Predicate);
+    std::erase_if(m_BoundRWTextures, Predicate);
 }
 
 void GraphicsBackendBase::DeleteSampler(const GraphicsBackendSampler& sampler)
@@ -122,9 +125,20 @@ void GraphicsBackendBase::DeleteBuffer(const GraphicsBackendBuffer& buffer)
         return pair.second.Buffer.Buffer == buffer.Buffer;
     };
 
-    std::erase_if(m_BoundBuffers, Predicate);
-    std::erase_if(m_BoundStructuredBuffers, Predicate);
     std::erase_if(m_BoundConstantBuffers, Predicate);
+}
+
+void GraphicsBackendBase::DeleteBufferView(const GraphicsBackendBufferView& bufferView)
+{
+    m_DeletedBufferViews.emplace_back(bufferView, BaseBackendLocal::k_DeleteResourceDelay);
+
+    auto Predicate = [&bufferView](const std::pair<uint32_t, GraphicsBackendBufferView>& pair)
+	{
+	    return pair.second.BufferView == bufferView.BufferView;
+	};
+
+	std::erase_if(m_BoundBuffers, Predicate);
+	std::erase_if(m_BoundRWBuffers, Predicate);
 }
 
 void GraphicsBackendBase::DeleteGeometry(const GraphicsBackendGeometry &geometry)
@@ -142,6 +156,13 @@ void GraphicsBackendBase::DeleteProgram(GraphicsBackendProgram program)
     m_DeletedPrograms.emplace_back(program, BaseBackendLocal::k_DeleteResourceDelay);
 }
 
+void GraphicsBackendBase::UseProgram(const GraphicsBackendProgram& program)
+{
+    m_CurrentProgram = program;
+
+    BindResources(program);
+}
+
 void GraphicsBackendBase::BindResources(const GraphicsBackendProgram& program)
 {
     auto HasBinding = [](uint32_t bindingFlags, uint32_t binding)
@@ -155,6 +176,12 @@ void GraphicsBackendBase::BindResources(const GraphicsBackendProgram& program)
             BindTexture_Internal(pair.second, pair.first);
     }
 
+    for (const auto& pair : m_BoundRWTextures)
+    {
+        if (HasBinding(program.RWTextureBindings, pair.first))
+            BindRWTexture_Internal(pair.second, pair.first);
+    }
+
     for (const auto& pair: m_BoundSamplers)
     {
         if (HasBinding(program.SamplerBindings, pair.first))
@@ -163,16 +190,9 @@ void GraphicsBackendBase::BindResources(const GraphicsBackendProgram& program)
 
     for (const auto& pair: m_BoundBuffers)
     {
-        const BufferBindInfo& info = pair.second;
+        const GraphicsBackendBufferView& view = pair.second;
         if (HasBinding(program.BufferBindings, pair.first))
-            BindBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
-    }
-
-    for (const auto& pair: m_BoundStructuredBuffers)
-    {
-        const BufferBindInfo& info = pair.second;
-        if (HasBinding(program.BufferBindings, pair.first))
-            BindStructuredBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size, info.ElementsCount);
+            BindBuffer_Internal(view, pair.first);
     }
 
     for (const auto& pair: m_BoundConstantBuffers)
@@ -180,6 +200,13 @@ void GraphicsBackendBase::BindResources(const GraphicsBackendProgram& program)
         const BufferBindInfo& info = pair.second;
         if (HasBinding(program.ConstantBufferBindings, pair.first))
             BindConstantBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
+    }
+
+    for (const auto& pair : m_BoundRWBuffers)
+    {
+        const GraphicsBackendBufferView& view = pair.second;
+        if (HasBinding(program.RWBufferBindings, pair.first))
+            BindRWBuffer_Internal(view, pair.first);
     }
 }
 
@@ -199,39 +226,62 @@ void GraphicsBackendBase::BindTextureSampler(const GraphicsBackendTexture& textu
     BindSampler(sampler, index);
 }
 
-void GraphicsBackendBase::BindBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
+void GraphicsBackendBase::BindRWTexture(const GraphicsBackendTexture& texture, uint32_t index)
 {
-    m_BoundBuffers[index] = BufferBindInfo{buffer, offset, size};
+    m_BoundRWTextures[index] = texture;
 }
 
-void GraphicsBackendBase::BindStructuredBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count)
+void GraphicsBackendBase::UploadImagePixels(const GraphicsBackendTexture& texture, int level, int width, int height, int depth, int imageSize, const void* pixelsData)
 {
-    m_BoundStructuredBuffers[index] = BufferBindInfo{buffer, offset, size, count};
+    UploadImagePixels(texture, level, CubemapFace::POSITIVE_X, width, height, depth, imageSize, pixelsData);
+}
+
+void GraphicsBackendBase::BindBuffer(const GraphicsBackendBufferView& bufferView, uint32_t index)
+{
+    m_BoundBuffers[index] = bufferView;
 }
 
 void GraphicsBackendBase::BindConstantBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
-    m_BoundConstantBuffers[index] = BufferBindInfo{buffer, offset, size};
+    m_BoundConstantBuffers[index] = BufferBindInfo{buffer, BufferType::CONSTANT_BUFFER, offset, size};
+}
+
+void GraphicsBackendBase::BindRWBuffer(const GraphicsBackendBufferView& bufferView, uint32_t index)
+{
+    m_BoundRWBuffers[index] = bufferView;
 }
 
 GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor)
 {
     GraphicsBackendProgram program{};
     program.Program = programPtr;
+    program.Type = descriptor.Type;
+    program.ThreadGroupSize = descriptor.ThreadGroupSize;
     program.BufferBindings = 0;
     program.TextureBindings = 0;
     program.SamplerBindings = 0;
+    program.RWTextureBindings = 0;
+    program.RWBufferBindings = 0;
 
     for (const auto& pair : *descriptor.Buffers)
     {
-        if (pair.second->GetBufferType() == BufferType::CONSTANT_BUFFER)
-            program.ConstantBufferBindings |= 1 << pair.second->GetBinding();
+        const std::shared_ptr<GraphicsBackendBufferInfo>& buffer = pair.second;
+        if (buffer->GetBufferType() == BufferType::CONSTANT_BUFFER)
+            program.ConstantBufferBindings |= 1 << buffer->GetBinding();
+        else if (buffer->GetReadWrite())
+            program.RWBufferBindings |= 1 << buffer->GetBinding();
         else
-            program.BufferBindings |= 1 << pair.second->GetBinding();
+            program.BufferBindings |= 1 << buffer->GetBinding();
     }
 
     for (const auto& pair : *descriptor.Textures)
-        program.TextureBindings |= 1 << pair.second.Binding;
+    {
+        const GraphicsBackendTextureInfo& texture = pair.second;
+        if (texture.ReadWrite)
+            program.RWTextureBindings |= 1 << texture.Binding;
+        else
+			program.TextureBindings |= 1 << texture.Binding;
+    }
 
     for (const auto& pair : *descriptor.Samplers)
         program.SamplerBindings |= 1 << pair.second.Binding;
@@ -500,4 +550,103 @@ size_t GraphicsBackendBase::GetBlendDescriptorHash(const GraphicsBackendBlendDes
     hash = Hash::Combine(hash, std::hash<BlendFactor>{}(blendDescriptor.DestinationFactor));
     hash = Hash::Combine(hash, std::hash<ColorWriteMask>{}(blendDescriptor.ColorWriteMask));
     return hash;
+}
+
+std::string GraphicsBackendBase::GetShaderTypeName(ShaderType shaderType)
+{
+    switch (shaderType)
+    {
+    case ShaderType::VERTEX_SHADER:
+        return "vs";
+    case ShaderType::FRAGMENT_SHADER:
+        return "ps";
+    case ShaderType::COMPUTE_SHADER:
+        return "cs";
+    default:
+        return "Unknown";
+    }
+}
+
+uint32_t GraphicsBackendBase::GetFormatSize(TextureInternalFormat format)
+{
+    switch (format)
+    {
+        case TextureInternalFormat::R8:
+        case TextureInternalFormat::R8_SNORM:
+        case TextureInternalFormat::R3_G3_B2:
+        case TextureInternalFormat::RGBA2:
+        case TextureInternalFormat::R8I:
+        case TextureInternalFormat::R8UI:
+            return 1;
+
+        case TextureInternalFormat::R16:
+        case TextureInternalFormat::R16_SNORM:
+        case TextureInternalFormat::RG8:
+        case TextureInternalFormat::RG8_SNORM:
+        case TextureInternalFormat::RGB4:
+        case TextureInternalFormat::RGB5:
+        case TextureInternalFormat::RGBA4:
+        case TextureInternalFormat::RGB5_A1:
+        case TextureInternalFormat::R16F:
+        case TextureInternalFormat::R16I:
+        case TextureInternalFormat::R16UI:
+        case TextureInternalFormat::RG8I:
+        case TextureInternalFormat::RG8UI:
+            return 2;
+
+        case TextureInternalFormat::RGB8:
+        case TextureInternalFormat::RGB8_SNORM:
+        case TextureInternalFormat::RGB8I:
+        case TextureInternalFormat::RGB8UI:
+            return 3;
+
+        case TextureInternalFormat::RG16:
+        case TextureInternalFormat::RG16_SNORM:
+        case TextureInternalFormat::RGBA8:
+        case TextureInternalFormat::RGBA8_SNORM:
+        case TextureInternalFormat::RGB10_A2:
+        case TextureInternalFormat::RGB10_A2UI:
+        case TextureInternalFormat::RG16F:
+        case TextureInternalFormat::R32F:
+        case TextureInternalFormat::R11F_G11F_B10F:
+        case TextureInternalFormat::RGB9_E5:
+        case TextureInternalFormat::R32I:
+        case TextureInternalFormat::R32UI:
+        case TextureInternalFormat::RG16I:
+        case TextureInternalFormat::RG16UI:
+        case TextureInternalFormat::RGBA8I:
+        case TextureInternalFormat::RGBA8UI:
+        case TextureInternalFormat::BGRA8:
+        case TextureInternalFormat::BGRA8_SNORM:
+            return 4;
+
+        case TextureInternalFormat::RGB16:
+        case TextureInternalFormat::RGBA12:
+        case TextureInternalFormat::RGB16F:
+        case TextureInternalFormat::RGB16I:
+        case TextureInternalFormat::RGB16UI:
+            return 6;
+
+        case TextureInternalFormat::RGBA16:
+        case TextureInternalFormat::RGBA16F:
+        case TextureInternalFormat::RG32F:
+        case TextureInternalFormat::RG32I:
+        case TextureInternalFormat::RG32UI:
+        case TextureInternalFormat::RGBA16I:
+        case TextureInternalFormat::RGBA16UI:
+            return 8;
+
+        case TextureInternalFormat::RGB32F:
+        case TextureInternalFormat::RGB32I:
+        case TextureInternalFormat::RGB32UI:
+            return 12;
+
+        case TextureInternalFormat::RGBA32F:
+        case TextureInternalFormat::RGBA32I:
+        case TextureInternalFormat::RGBA32UI:
+            return 16;
+
+        default:
+            return 0;
+    }
 }

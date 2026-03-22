@@ -12,7 +12,8 @@ namespace Graphics
 {
     void Init();
     void Shutdown();
-    void Render(int width, int height);
+    void Prepare(int width, int height);
+    void Render();
     void SetCameraData(const Matrix4x4& viewMatrix, const Matrix4x4& projectionMatrix, float nearPlane, float farPlane);
     int GetScreenWidth();
     int GetScreenHeight();

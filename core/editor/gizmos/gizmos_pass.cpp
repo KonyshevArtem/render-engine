@@ -2,7 +2,7 @@
 
 #include "gizmos_pass.h"
 #include "gizmos.h"
-#include "graphics/context.h"
+#include "graphics/render_data.h"
 #include "graphics/graphics.h"
 #include "graphics_backend_debug_group.h"
 #include "shader/shader.h"
@@ -21,7 +21,7 @@ GizmosPass::GizmosPass(int priority) :
 {
 }
 
-bool GizmosPass::Prepare(const Context& ctx, const GraphicsBackendFence& waitForFence)
+bool GizmosPass::Prepare(const RenderData& renderData, const GraphicsBackendFence& waitForFence)
 {
     if (!Gizmos::IsEnabled())
         return false;
@@ -30,7 +30,7 @@ bool GizmosPass::Prepare(const Context& ctx, const GraphicsBackendFence& waitFor
 
     m_Fence = waitForFence;
 
-    for (const std::shared_ptr<Renderer>& renderer : ctx.Renderers)
+    for (const std::shared_ptr<Renderer>& renderer : renderData.Renderers)
     {
         if (renderer)
         {
@@ -39,13 +39,13 @@ bool GizmosPass::Prepare(const Context& ctx, const GraphicsBackendFence& waitFor
         }
     }
 
-    m_3DViewMatrix = ctx.ViewMatrix;
-    m_3DProjectionMatrix = ctx.ProjectionMatrix;
-    m_3DNearPlane = ctx.NearPlane;
-    m_3DFarPlane = ctx.FarPlane;
+    m_3DViewMatrix = renderData.ViewMatrix;
+    m_3DProjectionMatrix = renderData.ProjectionMatrix;
+    m_3DNearPlane = renderData.NearPlane;
+    m_3DFarPlane = renderData.FarPlane;
     m_3DGizmosQueue.Prepare(m_3DProjectionMatrix * m_3DViewMatrix, Gizmos::Get3DGizmosToDraw(), RenderSettings{});
 
-    m_2DProjectionMatrix = Matrix4x4::Orthographic(0, Graphics::GetScreenWidth(), 0, Graphics::GetScreenHeight(), 0.01f, 1);
+    m_2DProjectionMatrix = Matrix4x4::Orthographic(0, renderData.Viewport.x, 0, renderData.Viewport.y, 0.01f, 1);
     m_2DGizmosQueue.Prepare(m_2DProjectionMatrix, Gizmos::Get2DGizmosToDraw(), RenderSettings{.FrustumCullingPlanesBits = 0});
 
     Gizmos::ClearGizmos();
@@ -53,7 +53,7 @@ bool GizmosPass::Prepare(const Context& ctx, const GraphicsBackendFence& waitFor
     return true;
 }
 
-void GizmosPass::Execute(const Context& ctx)
+void GizmosPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("GizmosPass::Execute");
     Profiler::GPUMarker gpuMarker("GizmosPass::Execute");

@@ -17,6 +17,11 @@
 #include "types/graphics_backend_color_attachment_descriptor.h"
 #include "types/graphics_backend_fence.h"
 #include "types/graphics_backend_program_descriptor.h"
+#include "types/graphics_backend_texture_descriptor.h"
+#include "types/graphics_backend_sampler_descriptor.h"
+#include "types/graphics_backend_buffer_descriptor.h"
+#include "types/graphics_backend_buffer_view_descriptor.h"
+#include "types/graphics_backend_buffer_view.h"
 #include "helpers/metal_helpers.h"
 #include "debug.h"
 #include "hash.h"
@@ -25,14 +30,17 @@
 #include "Metal/MTLCounters.hpp"
 #include "MetalKit/MetalKit.hpp"
 
-#include <semaphore>
+#include <mutex>
 #include <unordered_map>
 
 namespace MetalLocal
 {
     constexpr int k_MaxBuffers = 31;
     constexpr int k_MaxTimestampSamples = 100;
+
     constexpr uint32_t k_ConstantBufferIndexOffset = 8;
+    constexpr uint32_t k_TypedBufferIndexOffset = 16;
+    constexpr uint32_t k_RWResourcesBindingOffset = 8;
 
     MTL::ResourceOptions s_DefaultBufferStorageMode;
 
@@ -43,12 +51,20 @@ namespace MetalLocal
     MTL::Timestamp s_CpuStartTimestamp;
     MTL::Timestamp s_GpuStartTimestamp;
 
-    std::counting_semaphore s_FramesInFlightSemaphore{GraphicsBackend::GetMaxFramesInFlight()};
+    std::mutex s_FrameInFlightMutex;
     std::unordered_map<size_t, MTL::DepthStencilState*> s_DepthStencilStates;
 
     struct BufferData {
-        MTL::Buffer *Buffer;
+        MTL::Buffer* Buffer;
         MTL::ResourceOptions StorageMode;
+    };
+
+    struct BufferViewData
+    {
+        void* View;
+        BufferType Type;
+        uint32_t Offset;
+        uint32_t Size;
     };
 
     void SetCounterSampleFinished(uint64_t sampleIndex, int queueIndex, bool finished)
@@ -116,10 +132,13 @@ void GraphicsBackendMetal::InitNewFrame()
 {
     GraphicsBackendBase::InitNewFrame();
 
-    MetalLocal::s_FramesInFlightSemaphore.acquire();
-
     m_BackbufferDescriptor = m_View->currentRenderPassDescriptor();
     SetCommandBuffers(m_RenderCommandQueue->commandBuffer(), m_CopyCommandQueue->commandBuffer());
+}
+
+void GraphicsBackendMetal::WaitForPreviousFrame()
+{
+    MetalLocal::s_FrameInFlightMutex.lock();
 }
 
 void GraphicsBackendMetal::FillImGuiInitData(void* data)
@@ -139,22 +158,22 @@ void GraphicsBackendMetal::FillImGuiFrameData(void *data)
 {
 }
 
-GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name)
+GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name)
 {
     MTL::TextureUsage textureUsage = MTL::TextureUsageShaderRead;
-    if (isRenderTarget)
-    {
+    if (descriptor.RenderTarget)
         textureUsage |= MTL::TextureUsageRenderTarget;
-    }
+    if (descriptor.ReadWrite)
+        textureUsage |= MTL::TextureUsageShaderWrite;
 
-    MTL::TextureDescriptor *descriptor = MTL::TextureDescriptor::alloc()->init();
-    descriptor->setWidth(width);
-    descriptor->setHeight(height);
-    descriptor->setPixelFormat(MetalHelpers::ToTextureInternalFormat(format, isLinear));
-    descriptor->setTextureType(MetalHelpers::ToTextureType(type));
-    descriptor->setStorageMode(MTL::StorageModePrivate);
-    descriptor->setUsage(textureUsage);
-    descriptor->setMipmapLevelCount(mipLevels);
+    MTL::TextureDescriptor* mtlTextureDescriptor = MTL::TextureDescriptor::alloc()->init();
+    mtlTextureDescriptor->setWidth(descriptor.Width);
+    mtlTextureDescriptor->setHeight(descriptor.Height);
+    mtlTextureDescriptor->setPixelFormat(MetalHelpers::ToTextureInternalFormat(descriptor.Format, descriptor.Linear));
+    mtlTextureDescriptor->setTextureType(MetalHelpers::ToTextureType(type));
+    mtlTextureDescriptor->setStorageMode(MTL::StorageModePrivate);
+    mtlTextureDescriptor->setUsage(textureUsage);
+    mtlTextureDescriptor->setMipmapLevelCount(descriptor.MipLevels);
 
     const bool isTextureArray = type == TextureType::TEXTURE_1D_ARRAY ||
                                 type == TextureType::TEXTURE_2D_ARRAY ||
@@ -162,63 +181,57 @@ GraphicsBackendTexture GraphicsBackendMetal::CreateTexture(int width, int height
                                 type == TextureType::TEXTURE_CUBEMAP_ARRAY;
 
     if (type == TextureType::TEXTURE_3D)
-    {
-        descriptor->setDepth(depth);
-    }
+        mtlTextureDescriptor->setDepth(descriptor.Depth);
     else if (isTextureArray)
-    {
-        descriptor->setArrayLength(depth);
-    }
+        mtlTextureDescriptor->setArrayLength(descriptor.Depth);
 
-    MTL::Texture* metalTexture = m_Device->newTexture(descriptor);
-    descriptor->release();
+    MTL::Texture* metalTexture = m_Device->newTexture(mtlTextureDescriptor);
+    mtlTextureDescriptor->release();
 
     if (!name.empty())
-    {
         metalTexture->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
-    }
 
     GraphicsBackendTexture texture{};
     texture.Texture = reinterpret_cast<uint64_t>(metalTexture);
     texture.Type = type;
-    texture.Format = format;
-    texture.IsLinear = isLinear;
+    texture.Format = descriptor.Format;
+    texture.IsLinear = descriptor.Linear;
     return texture;
 }
 
-GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name)
+GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name)
 {
-    auto descriptor = MTL::SamplerDescriptor::alloc()->init();
+    MTL::SamplerDescriptor* mtlSamplerDescriptor = MTL::SamplerDescriptor::alloc()->init();
 
-    auto wrap = MetalHelpers::ToTextureWrapMode(wrapMode);
-    descriptor->setRAddressMode(wrap);
-    descriptor->setSAddressMode(wrap);
-    descriptor->setTAddressMode(wrap);
+    const MTL::SamplerAddressMode wrap = MetalHelpers::ToTextureWrapMode(descriptor.WrapMode);
+    mtlSamplerDescriptor->setRAddressMode(wrap);
+    mtlSamplerDescriptor->setSAddressMode(wrap);
+    mtlSamplerDescriptor->setTAddressMode(wrap);
 
-    auto filtering = MetalHelpers::ToTextureFilteringMode(filteringMode);
-    descriptor->setMinFilter(filtering);
-    descriptor->setMagFilter(filtering);
+    const MTL::SamplerMinMagFilter filtering = MetalHelpers::ToTextureFilteringMode(descriptor.FilteringMode);
+    mtlSamplerDescriptor->setMinFilter(filtering);
+    mtlSamplerDescriptor->setMagFilter(filtering);
 
-    if (borderColor != nullptr)
+    if (descriptor.HasBorderColor)
     {
-        auto border = MetalHelpers::ToTextureBorderColor(borderColor);
-        descriptor->setBorderColor(border);
+        auto border = MetalHelpers::ToTextureBorderColor(descriptor.BorderColor);
+        mtlSamplerDescriptor->setBorderColor(border);
     }
 
-    descriptor->setLodMinClamp(minLod);
-    descriptor->setMipFilter(MTL::SamplerMipFilter::SamplerMipFilterNearest);
+    mtlSamplerDescriptor->setLodMinClamp(descriptor.MinLod);
+    mtlSamplerDescriptor->setMipFilter(MTL::SamplerMipFilter::SamplerMipFilterNearest);
 
-    if (comparisonFunction != ComparisonFunction::NONE)
+    if (descriptor.ComparisonFunction != ComparisonFunction::NONE)
     {
-        const MTL::CompareFunction function = MetalHelpers::ToComparisonFunction(comparisonFunction);
-        descriptor->setCompareFunction(function);
+        const MTL::CompareFunction function = MetalHelpers::ToComparisonFunction(descriptor.ComparisonFunction);
+        mtlSamplerDescriptor->setCompareFunction(function);
     }
 
     if (!name.empty())
-        descriptor->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+        mtlSamplerDescriptor->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
 
-    auto metalSampler = m_Device->newSamplerState(descriptor);
-    descriptor->release();
+    auto metalSampler = m_Device->newSamplerState(mtlSamplerDescriptor);
+    mtlSamplerDescriptor->release();
 
     GraphicsBackendSampler sampler{};
     sampler.Sampler = reinterpret_cast<uint64_t>(metalSampler);
@@ -239,20 +252,35 @@ void GraphicsBackendMetal::DeleteSampler_Internal(const GraphicsBackendSampler &
 
 void GraphicsBackendMetal::BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
 {
-    assert(m_RenderCommandEncoder != nullptr);
+    const MTL::Texture* metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
 
-    auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
-    m_RenderCommandEncoder->setVertexTexture(metalTexture, index);
-    m_RenderCommandEncoder->setFragmentTexture(metalTexture, index);
+    if (m_RenderCommandEncoder)
+    {
+        m_RenderCommandEncoder->setVertexTexture(metalTexture, index);
+        m_RenderCommandEncoder->setFragmentTexture(metalTexture, index);
+    }
+
+    if (m_ComputeCommandEncoder)
+        m_ComputeCommandEncoder->setTexture(metalTexture, index);
+}
+
+void GraphicsBackendMetal::BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
+{
+    BindTexture_Internal(texture, index + MetalLocal::k_RWResourcesBindingOffset);
 }
 
 void GraphicsBackendMetal::BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index)
 {
-    assert(m_RenderCommandEncoder != nullptr);
+    const MTL::SamplerState* metalSampler = reinterpret_cast<MTL::SamplerState*>(sampler.Sampler);
 
-    auto metalSampler = reinterpret_cast<MTL::SamplerState *>(sampler.Sampler);
-    m_RenderCommandEncoder->setVertexSamplerState(metalSampler, index);
-    m_RenderCommandEncoder->setFragmentSamplerState(metalSampler, index);
+    if (m_RenderCommandEncoder)
+    {
+        m_RenderCommandEncoder->setVertexSamplerState(metalSampler, index);
+        m_RenderCommandEncoder->setFragmentSamplerState(metalSampler, index);
+    }
+
+    if (m_ComputeCommandEncoder)
+        m_ComputeCommandEncoder->setSamplerState(metalSampler, index);
 }
 
 void GraphicsBackendMetal::GenerateMipmaps(const GraphicsBackendTexture &texture)
@@ -346,25 +374,25 @@ TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAtt
     return format;
 }
 
-GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data)
+GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name, const void* data)
 {
-    const MTL::ResourceOptions storageMode = allowCPUWrites ? MetalLocal::s_DefaultBufferStorageMode : MTL::ResourceStorageModePrivate;
-    MTL::Buffer* metalBuffer = allowCPUWrites && data ? m_Device->newBuffer(data, size, storageMode) : m_Device->newBuffer(size, storageMode);
+    const MTL::ResourceOptions storageMode = descriptor.AllowCPUWrites ? MetalLocal::s_DefaultBufferStorageMode : MTL::ResourceStorageModePrivate;
+    MTL::Buffer* metalBuffer = descriptor.AllowCPUWrites && data
+            ? m_Device->newBuffer(data, descriptor.Size, storageMode)
+            : m_Device->newBuffer(descriptor.Size, storageMode);
 
-    if (!allowCPUWrites)
+    if (data && !descriptor.AllowCPUWrites)
     {
-        MTL::Buffer* tempBuffer = m_Device->newBuffer(data, size, MetalLocal::s_DefaultBufferStorageMode);
+        MTL::Buffer* tempBuffer = m_Device->newBuffer(data, descriptor.Size, MetalLocal::s_DefaultBufferStorageMode);
         BeginCopyPass("Init Buffer " + name);
-        GetBlitCommandEncoder()->copyFromBuffer(tempBuffer, 0, metalBuffer, 0, size);
+        GetBlitCommandEncoder()->copyFromBuffer(tempBuffer, 0, metalBuffer, 0, descriptor.Size);
         EndCopyPass();
 
         tempBuffer->release();
     }
 
     if (!name.empty())
-    {
         metalBuffer->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
-    }
 
     MetalLocal::BufferData* bufferData = new MetalLocal::BufferData();
     bufferData->Buffer = metalBuffer;
@@ -372,8 +400,50 @@ GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(int size, const std::st
 
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(bufferData);
-    buffer.Size = size;
+    buffer.Size = descriptor.Size;
     return buffer;
+}
+
+GraphicsBackendBufferView GraphicsBackendMetal::CreateBufferView(const GraphicsBackendBufferViewDescriptor& descriptor, const GraphicsBackendBuffer& buffer, const std::string& name)
+{
+    const MetalLocal::BufferData* bufferData = reinterpret_cast<MetalLocal::BufferData*>(buffer.Buffer);
+
+    MetalLocal::BufferViewData* viewData = new MetalLocal::BufferViewData();
+    viewData->Type = descriptor.Type;
+    viewData->Offset = descriptor.Offset;
+    viewData->Size = descriptor.Size;
+
+    if (descriptor.Type == BufferType::TYPED_BUFFER)
+    {
+        // 4096 texture width is defined by SPIRV-Cross
+        const uint32_t width = descriptor.ElementsCount % 4096;
+        const uint32_t height = std::max<uint32_t>(descriptor.ElementsCount / 4096, 1);
+
+        MTL::TextureUsage usage = MTL::TextureUsageShaderRead;
+        if (descriptor.ReadWrite)
+            usage |= MTL::TextureUsageShaderWrite;
+
+        MTL::TextureDescriptor* viewDesc = MTL::TextureDescriptor::alloc()->init();
+        viewDesc->setTextureType(MTL::TextureType::TextureType2D);
+        viewDesc->setPixelFormat(MetalHelpers::ToTextureInternalFormat(descriptor.Format, true));
+        viewDesc->setWidth(width);
+        viewDesc->setHeight(height);
+        viewDesc->setUsage(usage);
+        viewDesc->setResourceOptions(bufferData->StorageMode);
+
+        MTL::Texture* mtlTexture = bufferData->Buffer->newTexture(viewDesc, descriptor.Offset, GetFormatSize(descriptor.Format) * width);
+        if (!name.empty())
+            mtlTexture->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+
+        viewData->View = mtlTexture;
+        viewDesc->release();
+    }
+    else
+        viewData->View = bufferData->Buffer;
+
+    GraphicsBackendBufferView bufferView;
+    bufferView.BufferView = viewData;
+    return bufferView;
 }
 
 void GraphicsBackendMetal::DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer)
@@ -383,23 +453,64 @@ void GraphicsBackendMetal::DeleteBuffer_Internal(const GraphicsBackendBuffer &bu
     delete bufferData;
 }
 
-void GraphicsBackendMetal::BindBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
+void GraphicsBackendMetal::DeleteBufferView_Internal(const GraphicsBackendBufferView& bufferView)
 {
-    assert(m_RenderCommandEncoder != nullptr);
-
-    const MetalLocal::BufferData* bufferData = reinterpret_cast<MetalLocal::BufferData*>(buffer.Buffer);
-    m_RenderCommandEncoder->setVertexBuffer(bufferData->Buffer, offset, index);
-    m_RenderCommandEncoder->setFragmentBuffer(bufferData->Buffer, offset, index);
+    const MetalLocal::BufferViewData* viewData = static_cast<MetalLocal::BufferViewData*>(bufferView.BufferView);
+    if (viewData->Type == BufferType::TYPED_BUFFER)
+        static_cast<MTL::Texture*>(viewData->View)->release();
+    delete viewData;
 }
 
-void GraphicsBackendMetal::BindStructuredBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size, int count)
+void GraphicsBackendMetal::BindBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index)
 {
-    BindBuffer_Internal(buffer, index, offset, size);
+    MetalLocal::BufferViewData* viewData = reinterpret_cast<MetalLocal::BufferViewData*>(bufferView.BufferView);
+
+    if (viewData->Type == BufferType::TYPED_BUFFER)
+    {
+        index += MetalLocal::k_TypedBufferIndexOffset;
+
+        MTL::Texture* mtlTexture = static_cast<MTL::Texture*>(viewData->View);
+        if (m_RenderCommandEncoder)
+        {
+            m_RenderCommandEncoder->setVertexTexture(mtlTexture, index);
+            m_RenderCommandEncoder->setFragmentTexture(mtlTexture, index);
+        }
+
+        if (m_ComputeCommandEncoder)
+            m_ComputeCommandEncoder->setTexture(mtlTexture, index);
+    }
+    else
+    {
+        MTL::Buffer* mtlBuffer = static_cast<MTL::Buffer*>(viewData->View);
+        if (m_RenderCommandEncoder)
+        {
+            m_RenderCommandEncoder->setVertexBuffer(mtlBuffer, viewData->Offset, index);
+            m_RenderCommandEncoder->setFragmentBuffer(mtlBuffer, viewData->Offset, index);
+        }
+
+        if (m_ComputeCommandEncoder)
+            m_ComputeCommandEncoder->setBuffer(mtlBuffer, viewData->Offset, index);
+    }
 }
 
 void GraphicsBackendMetal::BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
-    BindBuffer_Internal(buffer, index + MetalLocal::k_ConstantBufferIndexOffset, offset, size);
+    const MetalLocal::BufferData* bufferData = reinterpret_cast<MetalLocal::BufferData*>(buffer.Buffer);
+
+    index += MetalLocal::k_ConstantBufferIndexOffset;
+    if (m_RenderCommandEncoder)
+    {
+        m_RenderCommandEncoder->setVertexBuffer(bufferData->Buffer, offset, index);
+        m_RenderCommandEncoder->setFragmentBuffer(bufferData->Buffer, offset, index);
+    }
+
+    if (m_ComputeCommandEncoder)
+        m_ComputeCommandEncoder->setBuffer(bufferData->Buffer, offset, index);
+}
+
+void GraphicsBackendMetal::BindRWBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index)
+{
+    BindBuffer_Internal(bufferView, index + MetalLocal::k_RWResourcesBindingOffset);
 }
 
 void GraphicsBackendMetal::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data)
@@ -482,6 +593,7 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShader(ShaderType shade
 
     GraphicsBackendShaderObject shaderObject{};
     shaderObject.ShaderObject = reinterpret_cast<uint64_t>(library);
+    shaderObject.Type = shaderType;
     return shaderObject;
 }
 
@@ -491,58 +603,75 @@ GraphicsBackendShaderObject GraphicsBackendMetal::CompileShaderBinary(ShaderType
 
 GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackendProgramDescriptor& descriptor)
 {
-    assert(descriptor.Shaders->size() == 2);
-
-    MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
-
-    MTL::PixelFormat metalColorFormat = MetalHelpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);
-    MTL::PixelFormat metalDepthFormat = MetalHelpers::ToTextureInternalFormat(descriptor.DepthFormat, false);
-
-    auto attachmentDesc = desc->colorAttachments()->object(0);
-    attachmentDesc->setWriteMask(static_cast<MTL::ColorWriteMask>(descriptor.ColorAttachmentDescriptor.BlendDescriptor.ColorWriteMask));
-    attachmentDesc->setPixelFormat(metalColorFormat);
-    attachmentDesc->setBlendingEnabled(descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled);
-    attachmentDesc->setSourceRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor));
-    attachmentDesc->setDestinationRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor));
-
-    desc->setDepthAttachmentPixelFormat(metalDepthFormat);
-
-    if (descriptor.DepthFormat == TextureInternalFormat::DEPTH_32_STENCIL_8 || descriptor.DepthFormat == TextureInternalFormat::DEPTH_24_STENCIL_8)
-        desc->setStencilAttachmentPixelFormat(metalDepthFormat);
-
-    const std::vector<GraphicsBackendShaderObject>& shaders = *descriptor.Shaders;
-    auto *vertexLib = reinterpret_cast<MTL::Library*>(shaders[0].ShaderObject);
-    auto *fragmentLib = reinterpret_cast<MTL::Library*>(shaders[1].ShaderObject);
-    const MTL::Function* vertexFunction = vertexLib->newFunction(NS::String::string("vertexMain", NS::UTF8StringEncoding));
-    const MTL::Function* fragmentFunction = fragmentLib->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding));
-    desc->setVertexFunction(vertexFunction);
-    desc->setFragmentFunction(fragmentFunction);
-
-    if (descriptor.Name && !descriptor.Name->empty())
-    {
-        desc->setLabel(NS::String::string(descriptor.Name->c_str(), NS::UTF8StringEncoding));
-    }
-
-    auto *vertDesc = desc->vertexDescriptor();
-
-    const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes = *descriptor.VertexAttributes;
-    for (int i = 0; i < vertexAttributes.size(); ++i)
-    {
-        const GraphicsBackendVertexAttributeDescriptor& attr = vertexAttributes[i];
-        auto *attrDesc = vertDesc->attributes()->object(i);
-        attrDesc->setFormat(MetalHelpers::ToVertexFormat(attr.DataType, attr.Dimensions, attr.IsNormalized));
-        attrDesc->setBufferIndex(MetalLocal::k_MaxBuffers - 1);
-        attrDesc->setOffset(attr.Offset);
-    }
-
-    auto *layoutDesc = vertDesc->layouts()->object(MetalLocal::k_MaxBuffers - 1);
-    layoutDesc->setStride(vertexAttributes[0].Stride);
-    layoutDesc->setStepRate(1);
-    layoutDesc->setStepFunction(MTL::VertexStepFunctionPerVertex);
-
     NS::Error* error;
-    MTL::PipelineOption options = MTL::PipelineOptionNone;
-    auto *pso = m_Device->newRenderPipelineState(desc, options, nullptr, &error);
+    uint64_t psoPtr;
+    const MTL::PipelineOption pipelineOption = MTL::PipelineOptionNone;
+
+    if (descriptor.Type == ProgramType::RENDER)
+    {
+        assert(descriptor.Shaders->size() == 2);
+
+        MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
+
+        MTL::PixelFormat metalColorFormat = MetalHelpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);
+        MTL::PixelFormat metalDepthFormat = MetalHelpers::ToTextureInternalFormat(descriptor.DepthFormat, false);
+
+        MTL::RenderPipelineColorAttachmentDescriptor* attachmentDesc = desc->colorAttachments()->object(0);
+        attachmentDesc->setWriteMask(static_cast<MTL::ColorWriteMask>(descriptor.ColorAttachmentDescriptor.BlendDescriptor.ColorWriteMask));
+        attachmentDesc->setPixelFormat(metalColorFormat);
+        attachmentDesc->setBlendingEnabled(descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled);
+        attachmentDesc->setSourceRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor));
+        attachmentDesc->setDestinationRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor));
+
+        desc->setDepthAttachmentPixelFormat(metalDepthFormat);
+
+        if (descriptor.DepthFormat == TextureInternalFormat::DEPTH_32_STENCIL_8 || descriptor.DepthFormat == TextureInternalFormat::DEPTH_24_STENCIL_8)
+            desc->setStencilAttachmentPixelFormat(metalDepthFormat);
+
+        const std::vector<GraphicsBackendShaderObject>& shaders = *descriptor.Shaders;
+        MTL::Library* vertexLib = reinterpret_cast<MTL::Library*>(shaders[0].ShaderObject);
+        MTL::Library* fragmentLib = reinterpret_cast<MTL::Library*>(shaders[1].ShaderObject);
+        const MTL::Function *vertexFunction = vertexLib->newFunction(NS::String::string("vertexMain", NS::UTF8StringEncoding));
+        const MTL::Function *fragmentFunction = fragmentLib->newFunction(NS::String::string("fragmentMain", NS::UTF8StringEncoding));
+        desc->setVertexFunction(vertexFunction);
+        desc->setFragmentFunction(fragmentFunction);
+
+        if (descriptor.Name && !descriptor.Name->empty())
+            desc->setLabel(NS::String::string(descriptor.Name->c_str(), NS::UTF8StringEncoding));
+
+        MTL::VertexDescriptor* vertDesc = desc->vertexDescriptor();
+
+        const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes = *descriptor.VertexAttributes;
+        for (int i = 0; i < vertexAttributes.size(); ++i)
+        {
+            const GraphicsBackendVertexAttributeDescriptor &attr = vertexAttributes[i];
+            auto *attrDesc = vertDesc->attributes()->object(i);
+            attrDesc->setFormat(MetalHelpers::ToVertexFormat(attr.DataType, attr.Dimensions, attr.IsNormalized));
+            attrDesc->setBufferIndex(MetalLocal::k_MaxBuffers - 1);
+            attrDesc->setOffset(attr.Offset);
+        }
+
+        MTL::VertexBufferLayoutDescriptor* layoutDesc = vertDesc->layouts()->object(MetalLocal::k_MaxBuffers - 1);
+        layoutDesc->setStride(vertexAttributes[0].Stride);
+        layoutDesc->setStepRate(1);
+        layoutDesc->setStepFunction(MTL::VertexStepFunctionPerVertex);
+
+        psoPtr = reinterpret_cast<uint64_t>(m_Device->newRenderPipelineState(desc, pipelineOption, nullptr, &error));
+    }
+    else if (descriptor.Type == ProgramType::COMPUTE)
+    {
+        MTL::ComputePipelineDescriptor* desc = MTL::ComputePipelineDescriptor::alloc()->init();
+
+        const std::vector<GraphicsBackendShaderObject>& shaders = *descriptor.Shaders;
+        MTL::Library* computeLib = reinterpret_cast<MTL::Library*>(shaders[0].ShaderObject);
+        const MTL::Function* computeFunction = computeLib->newFunction(NS::String::string("computeMain", NS::UTF8StringEncoding));
+        desc->setComputeFunction(computeFunction);
+
+        if (descriptor.Name && !descriptor.Name->empty())
+            desc->setLabel(NS::String::string(descriptor.Name->c_str(), NS::UTF8StringEncoding));
+
+        psoPtr = reinterpret_cast<uint64_t>(m_Device->newComputePipelineState(desc, pipelineOption, nullptr, &error));
+    }
 
     if (error != nullptr)
     {
@@ -550,7 +679,7 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
         throw std::runtime_error(error->localizedDescription()->utf8String());
     }
 
-    return GraphicsBackendBase::CreateProgram(reinterpret_cast<uint64_t>(pso), descriptor);
+    return GraphicsBackendBase::CreateProgram(psoPtr, descriptor);
 }
 
 void GraphicsBackendMetal::DeleteShader_Internal(GraphicsBackendShaderObject shader)
@@ -566,33 +695,41 @@ void GraphicsBackendMetal::DeleteProgram_Internal(GraphicsBackendProgram program
 
 void GraphicsBackendMetal::UseProgram(const GraphicsBackendProgram& program)
 {
-    assert(m_RenderCommandEncoder != nullptr);
-
-    MTL::RenderPipelineState* pso = reinterpret_cast<MTL::RenderPipelineState*>(program.Program);
-    m_RenderCommandEncoder->setRenderPipelineState(pso);
-
-    const GraphicsBackendDepthDescriptor& depthDescriptor = GetDepthState();
-    const GraphicsBackendStencilDescriptor& stencilDescriptor = GetStencilDescriptor();
-    size_t depthStencilStateHash = Hash::Combine(GetDepthDescriptorHash(depthDescriptor), GetStencilDescriptorHash(stencilDescriptor));
-
-    MTL::DepthStencilState* depthStencilState;
-
-    const auto& it = MetalLocal::s_DepthStencilStates.find(depthStencilStateHash);
-    if (it != MetalLocal::s_DepthStencilStates.end())
-        depthStencilState = it->second;
-    else
+    if (m_RenderCommandEncoder && program.Type == ProgramType::RENDER)
     {
-        depthStencilState = CreateDepthStencilState(depthDescriptor, stencilDescriptor);
-        MetalLocal::s_DepthStencilStates[depthStencilStateHash] = depthStencilState;
+        const MTL::RenderPipelineState* pso = reinterpret_cast<MTL::RenderPipelineState*>(program.Program);
+        m_RenderCommandEncoder->setRenderPipelineState(pso);
+
+        const GraphicsBackendDepthDescriptor& depthDescriptor = GetDepthState();
+        const GraphicsBackendStencilDescriptor& stencilDescriptor = GetStencilDescriptor();
+        size_t depthStencilStateHash = Hash::Combine(GetDepthDescriptorHash(depthDescriptor), GetStencilDescriptorHash(stencilDescriptor));
+
+        MTL::DepthStencilState* depthStencilState;
+
+        const auto &it = MetalLocal::s_DepthStencilStates.find(depthStencilStateHash);
+        if (it != MetalLocal::s_DepthStencilStates.end())
+            depthStencilState = it->second;
+        else {
+            depthStencilState = CreateDepthStencilState(depthDescriptor, stencilDescriptor);
+            MetalLocal::s_DepthStencilStates[depthStencilStateHash] = depthStencilState;
+        }
+
+        m_RenderCommandEncoder->setDepthStencilState(depthStencilState);
+
+        const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor = GetRasterizerState();
+        m_RenderCommandEncoder->setCullMode(MetalHelpers::ToCullFace(rasterizerDescriptor.Face));
+        m_RenderCommandEncoder->setFrontFacingWinding(MetalHelpers::ToCullFaceOrientation(rasterizerDescriptor.Orientation));
     }
 
-    m_RenderCommandEncoder->setDepthStencilState(depthStencilState);
+    if (m_ComputeCommandEncoder && program.Type == ProgramType::COMPUTE)
+    {
+        MTL::ComputePipelineState* pso = reinterpret_cast<MTL::ComputePipelineState*>(program.Program);
+        m_ComputeCommandEncoder->setComputePipelineState(pso);
 
-    const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor = GetRasterizerState();
-    m_RenderCommandEncoder->setCullMode(MetalHelpers::ToCullFace(rasterizerDescriptor.Face));
-    m_RenderCommandEncoder->setFrontFacingWinding(MetalHelpers::ToCullFaceOrientation(rasterizerDescriptor.Orientation));
+        m_CurrentProgramThreadGroupSize = program.ThreadGroupSize;
+    }
 
-    BindResources(program);
+    GraphicsBackendBase::UseProgram(program);
 }
 
 void GraphicsBackendMetal::SetClearColor(float r, float g, float b, float a)
@@ -660,6 +797,21 @@ void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &
     m_RenderCommandEncoder->drawIndexedPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), NS::UInteger(elementsCount), MetalHelpers::ToIndicesDataType(dataType), indexBufferData->Buffer, 0, instanceCount);
 }
 
+void GraphicsBackendMetal::Dispatch(uint32_t x, uint32_t y, uint32_t z)
+{
+    assert(m_ComputeCommandEncoder != nullptr);
+
+    const ThreadGroupSize& tgSize = m_CurrentProgram.ThreadGroupSize;
+
+    MTL::Size groupsPerGrid = MTL::Size(
+            (x + tgSize.X - 1) / tgSize.X,
+            (y + tgSize.Y - 1) / tgSize.Y,
+            (z + tgSize.Z - 1) / tgSize.Z);
+    MTL::Size threadPerGroup = MTL::Size(tgSize.X, tgSize.Y, tgSize.Z);
+
+    m_ComputeCommandEncoder->dispatchThreadgroups(groupsPerGrid, threadPerGroup);
+}
+
 void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
 {
     MTL::BlitCommandEncoder* encoder = GetBlitCommandEncoder();
@@ -679,16 +831,20 @@ void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &so
 
 void GraphicsBackendMetal::PushDebugGroup(const std::string& name, GPUQueue queue)
 {
+    NS::String* nsString = NS::String::string(name.c_str(), NS::UTF8StringEncoding);
+
     switch (queue)
     {
         case GPUQueue::RENDER:
-            assert(m_RenderCommandEncoder != nullptr);
-            m_RenderCommandEncoder->pushDebugGroup(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+            if (m_RenderCommandEncoder)
+                m_RenderCommandEncoder->pushDebugGroup(nsString);
+            if (m_ComputeCommandEncoder)
+                m_ComputeCommandEncoder->pushDebugGroup(nsString);
             break;
         case GPUQueue::COPY:
             MTL::BlitCommandEncoder* encoder = GetBlitCommandEncoder();
             assert(encoder != nullptr);
-            encoder->pushDebugGroup(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+            encoder->pushDebugGroup(nsString);
             break;
     }
 }
@@ -698,8 +854,10 @@ void GraphicsBackendMetal::PopDebugGroup(GPUQueue queue)
     switch (queue)
     {
         case GPUQueue::RENDER:
-            assert(m_RenderCommandEncoder != nullptr);
-            m_RenderCommandEncoder->popDebugGroup();
+            if (m_RenderCommandEncoder)
+                m_RenderCommandEncoder->popDebugGroup();
+            if (m_ComputeCommandEncoder)
+                m_ComputeCommandEncoder->popDebugGroup();
             break;
         case GPUQueue::COPY:
             MTL::BlitCommandEncoder* encoder = GetBlitCommandEncoder();
@@ -814,9 +972,7 @@ void GraphicsBackendMetal::BeginRenderPass(const std::string& name)
     m_RenderCommandEncoder = m_RenderCommandBuffer->renderCommandEncoder(m_RenderPassDescriptor);
 
     if (!name.empty())
-    {
         m_RenderCommandEncoder->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
-    }
 }
 
 void GraphicsBackendMetal::EndRenderPass()
@@ -892,6 +1048,45 @@ void GraphicsBackendMetal::EndCopyPass()
         buffer->waitUntilCompleted();
         SetUploadCommandBuffer(nullptr);
     }
+}
+
+void GraphicsBackendMetal::BeginComputePass(const std::string& name)
+{
+    assert(m_RenderCommandBuffer != nullptr);
+    assert(m_RenderCommandEncoder == nullptr);
+
+    if (m_ProfilerMarkerActive)
+    {
+        uint64_t counterSamplerIndex = MetalLocal::s_CurrentCounterSampleOffsets[k_RenderGPUQueueIndex];
+        MetalLocal::SetCounterSampleFinished(counterSamplerIndex, k_RenderGPUQueueIndex, false);
+
+        MTL::RenderPassSampleBufferAttachmentDescriptor* descriptor = m_RenderPassDescriptor->sampleBufferAttachments()->object(0);
+        descriptor->setSampleBuffer(MetalLocal::s_CounterSampleBuffers[k_RenderGPUQueueIndex]);
+        descriptor->setStartOfVertexSampleIndex(counterSamplerIndex);
+        descriptor->setEndOfVertexSampleIndex(NS::UIntegerMax);
+        descriptor->setStartOfFragmentSampleIndex(NS::UIntegerMax);
+        descriptor->setEndOfFragmentSampleIndex(counterSamplerIndex + 1);
+
+        m_RenderCommandBuffer->addCompletedHandler([counterSamplerIndex](class MTL::CommandBuffer*)
+        {
+            MetalLocal::SetCounterSampleFinished(counterSamplerIndex, k_RenderGPUQueueIndex, true);
+        });
+
+        MetalLocal::s_CurrentCounterSampleOffsets[k_RenderGPUQueueIndex] = (MetalLocal::s_CurrentCounterSampleOffsets[k_RenderGPUQueueIndex] + 2) % MetalLocal::k_MaxTimestampSamples;
+    }
+
+    m_ComputeCommandEncoder = m_RenderCommandBuffer->computeCommandEncoder(MTL::DispatchType::DispatchTypeConcurrent);
+
+    if (!name.empty())
+        m_ComputeCommandEncoder->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+}
+
+void GraphicsBackendMetal::EndComputePass()
+{
+    assert(m_ComputeCommandEncoder != nullptr);
+
+    m_ComputeCommandEncoder->endEncoding();
+    m_ComputeCommandEncoder = nullptr;
 }
 
 GraphicsBackendFence GraphicsBackendMetal::CreateFence(FenceType fenceType, const std::string& name)
@@ -1009,7 +1204,7 @@ void GraphicsBackendMetal::SetBlitCommandEncoder(MTL::BlitCommandEncoder* encode
 void GraphicsBackendMetal::Present()
 {
     m_CopyCommandBuffer->commit();
-    m_RenderCommandBuffer->addCompletedHandler([](MTL::CommandBuffer*){MetalLocal::s_FramesInFlightSemaphore.release();});
+    m_RenderCommandBuffer->addCompletedHandler([](MTL::CommandBuffer*){MetalLocal::s_FrameInFlightMutex.unlock();});
     m_RenderCommandBuffer->presentDrawable(m_View->currentDrawable());
     m_RenderCommandBuffer->commit();
 }

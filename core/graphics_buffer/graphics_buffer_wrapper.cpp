@@ -2,22 +2,28 @@
 #include "graphics_buffer.h"
 #include "shader/shader.h"
 #include "types/graphics_backend_buffer_info.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 #include <cassert>
 
 GraphicsBufferWrapper::GraphicsBufferWrapper(const std::shared_ptr<Shader>& shader, const std::string& bufferName, const std::string& debugName) :
     m_Name(debugName)
 {
-    const auto &buffers = shader->GetBuffers();
+	const std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& buffers = shader->GetBuffers();
 
-    auto it = buffers.find(bufferName);
+    const auto& it = buffers.find(bufferName);
     if (it != buffers.end())
     {
         std::string name = m_Name;
         name.append("_");
         name.append(bufferName);
 
-        const auto &bufferInfo = it->second;
-        m_Buffer = std::make_shared<GraphicsBuffer>(bufferInfo->GetSize(), name, false);
+        const std::shared_ptr<GraphicsBackendBufferInfo>& bufferInfo = it->second;
+
+        GraphicsBackendBufferDescriptor bufferDescriptor{};
+        bufferDescriptor.AllowCPUWrites = true;
+        bufferDescriptor.Size = bufferInfo->GetSize();
+
+        m_Buffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, name);
         m_BufferInfo = bufferInfo;
         m_Data.resize(bufferInfo->GetSize());
     }
@@ -39,7 +45,11 @@ std::shared_ptr<GraphicsBufferWrapper> GraphicsBufferWrapper::Copy()
         bufferWrapper->m_Data.resize(m_BufferInfo->GetSize());
         memcpy(&bufferWrapper->m_Data[0], &m_Data[0], m_BufferInfo->GetSize());
 
-        bufferWrapper->m_Buffer = std::make_shared<GraphicsBuffer>(m_BufferInfo->GetSize(), m_Name, false);
+        GraphicsBackendBufferDescriptor bufferDescriptor{};
+        bufferDescriptor.AllowCPUWrites = true;
+        bufferDescriptor.Size = m_BufferInfo->GetSize();
+
+        bufferWrapper->m_Buffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, m_Name);
         bufferWrapper->m_Buffer->SetData(&m_Data[0], 0, m_BufferInfo->GetSize());
     }
 

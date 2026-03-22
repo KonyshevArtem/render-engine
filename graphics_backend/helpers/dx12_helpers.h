@@ -30,7 +30,8 @@ namespace DX12Helpers
     D3D12_BLEND ToBlendFactor(BlendFactor factor);
     D3D12_PRIMITIVE_TOPOLOGY ToPrimitiveTopology(PrimitiveType primitiveType);
     D3D12_PRIMITIVE_TOPOLOGY_TYPE ToPrimitiveTopologyType(PrimitiveType primitiveType);
-    D3D12_SRV_DIMENSION ToResourceViewDimension(TextureType textureType);
+    D3D12_SRV_DIMENSION ToSRVDimension(TextureType textureType);
+    D3D12_UAV_DIMENSION ToUAVDimension(TextureType textureType);
     D3D12_RTV_DIMENSION ToColorTargetViewDimension(TextureType textureType);
     D3D12_DSV_DIMENSION ToDepthTargetViewDimension(TextureType textureType);
     D3D12_FILTER ToTextureFilterMode(TextureFilteringMode filteringMode, ComparisonFunction comparisonFunction);

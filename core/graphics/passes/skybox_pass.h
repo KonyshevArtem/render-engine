@@ -3,7 +3,7 @@
 
 #include "render_pass.h"
 
-struct Context;
+struct RenderData;
 class Mesh;
 
 class SkyboxPass : public RenderPass
@@ -13,7 +13,7 @@ public:
     ~SkyboxPass() override = default;
 
     void Prepare();
-    void Execute(const Context& ctx) override;
+    void Execute(const RenderData& renderData) override;
 
     SkyboxPass(const SkyboxPass&) = delete;
     SkyboxPass(SkyboxPass&&) = delete;

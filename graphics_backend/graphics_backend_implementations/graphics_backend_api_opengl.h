@@ -13,11 +13,12 @@ public:
     void Init(void* data) override;
     GraphicsBackendName GetName() override;
     void InitNewFrame() override;
+    void WaitForPreviousFrame() override;
     void FillImGuiInitData(void* data) override;
     void FillImGuiFrameData(void* data) override;
 
-    GraphicsBackendTexture CreateTexture(int width, int height, int depth, TextureType type, TextureInternalFormat format, int mipLevels, bool isLinear, bool isRenderTarget, const std::string& name) override;
-    GraphicsBackendSampler CreateSampler(TextureWrapMode wrapMode, TextureFilteringMode filteringMode, const float *borderColor, int minLod, ComparisonFunction comparisonFunction, const std::string& name) override;
+    GraphicsBackendTexture CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name) override;
+    GraphicsBackendSampler CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name) override;
 
     void GenerateMipmaps(const GraphicsBackendTexture &texture) override;
     void UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData) override;
@@ -25,7 +26,8 @@ public:
     void AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor &descriptor) override;
     TextureInternalFormat GetRenderTargetFormat(FramebufferAttachment attachment, bool* outIsLinear) override;
 
-    GraphicsBackendBuffer CreateBuffer(int size, const std::string& name, bool allowCPUWrites, const void* data = nullptr) override;
+    GraphicsBackendBuffer CreateBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name, const void* data = nullptr) override;
+    GraphicsBackendBufferView CreateBufferView(const GraphicsBackendBufferViewDescriptor& descriptor, const GraphicsBackendBuffer& buffer, const std::string& name) override;
 
     void SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data) override;
     void CopyBufferSubData(const GraphicsBackendBuffer& source, const GraphicsBackendBuffer& destination, int sourceOffset, int destinationOffset, int size) override;
@@ -51,6 +53,8 @@ public:
     void DrawElements(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType) override;
     void DrawElementsInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int elementsCount, IndicesDataType dataType, int instanceCount) override;
 
+    void Dispatch(uint32_t x, uint32_t y, uint32_t z) override;
+
     void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) override;
 
     void PushDebugGroup(const std::string& name, GPUQueue queue) override;
@@ -63,6 +67,8 @@ public:
     void EndRenderPass() override;
     void BeginCopyPass(const std::string& name) override;
     void EndCopyPass() override;
+    void BeginComputePass(const std::string& name) override;
+    void EndComputePass() override;
 
     GraphicsBackendFence CreateFence(FenceType fenceType, const std::string& name) override;
     void DeleteFence(const GraphicsBackendFence& fence) override;
@@ -88,15 +94,17 @@ protected:
     void DeleteTexture_Internal(const GraphicsBackendTexture &texture) override;
     void DeleteSampler_Internal(const GraphicsBackendSampler &sampler) override;
     void DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer) override;
+    void DeleteBufferView_Internal(const GraphicsBackendBufferView& bufferView) override;
     void DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry) override;
     void DeleteShader_Internal(GraphicsBackendShaderObject shader) override;
     void DeleteProgram_Internal(GraphicsBackendProgram program) override;
 
-    void BindTexture_Internal(const GraphicsBackendTexture &texture, uint32_t index) override;
-    void BindSampler_Internal(const GraphicsBackendSampler &sampler, uint32_t index) override;
-    void BindBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) override;
-    void BindStructuredBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size, int count) override;
-    void BindConstantBuffer_Internal(const GraphicsBackendBuffer &buffer, uint32_t index, int offset, int size) override;
+    void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
+    void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
+    void BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index) override;
+    void BindBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) override;
+    void BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size) override;
+    void BindRWBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) override;
 
 private:
     std::set<std::string> m_Extensions;

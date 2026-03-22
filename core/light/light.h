@@ -35,7 +35,7 @@ private:
     static std::vector<Light*> s_Lights;
     int m_Index;
 
-    friend class Context;
+    friend class RenderData;
 };
 
 #endif //RENDER_ENGINE_LIGHT_H

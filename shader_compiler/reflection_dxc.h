@@ -45,7 +45,7 @@ namespace DXCReflection_Local
     }
 }
 
-inline void ExtractReflectionFromDXC(const CComPtr<IDxcResult>& results, const CComPtr<IDxcUtils>& utils, Reflection& reflection)
+inline void ExtractReflectionFromDXC(const CComPtr<IDxcResult>& results, const CComPtr<IDxcUtils>& utils, Reflection& reflection, ShaderType shaderType)
 {
     CComPtr<IDxcBlob> pReflectionData;
     results->GetOutput(DXC_OUT_REFLECTION, IID_PPV_ARGS(&pReflectionData), nullptr);
@@ -83,8 +83,11 @@ inline void ExtractReflectionFromDXC(const CComPtr<IDxcResult>& results, const C
             else if (type == D3D_SIT_STRUCTURED || type == D3D_SIT_UAV_RWSTRUCTURED)
                 WriteBufferDescriptor(name, bindPoint, inputDesc.NumSamples, BufferType::STRUCTURED_BUFFER, readWrite, reflection.Buffers);
             else if (type == D3D_SIT_BYTEADDRESS || type == D3D_SIT_UAV_RWBYTEADDRESS)
-                WriteBufferDescriptor(name, bindPoint, 0, BufferType::RAW_BYTE_BUFFER, readWrite, reflection.Buffers);
+                WriteBufferDescriptor(name, bindPoint, 0, BufferType::BYTE_ADDRESS_BUFFER, readWrite, reflection.Buffers);
         }
+
+        if (shaderType == ShaderType::COMPUTE_SHADER)
+	        pReflection->GetThreadGroupSize(&reflection.ThreadGroupSize.X, &reflection.ThreadGroupSize.Y, &reflection.ThreadGroupSize.Z);
     }
 }
 

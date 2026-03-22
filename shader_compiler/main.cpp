@@ -95,11 +95,45 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
         const auto& combinedImageSamplers = glsl->get_combined_image_samplers();
         for (int i = 0; i < combinedImageSamplers.size(); i++)
         {
-            const auto& sampler = combinedImageSamplers[i];
-            const uint32_t binding = glsl->get_decoration(sampler.image_id, spv::DecorationBinding);
-            glsl->set_name(sampler.combined_id, glsl->get_name(sampler.image_id));
-            glsl->set_decoration(sampler.combined_id, spv::DecorationBinding, binding);
-            glsl->set_decoration(sampler.combined_id, spv::DecorationLocation, binding);
+            const spirv_cross::CombinedImageSampler& imageSampler = combinedImageSamplers[i];
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(glsl, imageSampler.image_id);
+
+            const std::string& imageName = glsl->get_name(imageSampler.image_id);
+            glsl->set_name(imageSampler.combined_id, imageName);
+            glsl->set_name(imageSampler.sampler_id, "sampler" + imageName);
+            glsl->set_decoration(imageSampler.combined_id, spv::DecorationBinding, binding);
+            glsl->set_decoration(imageSampler.combined_id, spv::DecorationLocation, binding);
+            glsl->set_decoration(imageSampler.sampler_id, spv::DecorationBinding, binding);
+        }
+
+        spirv_cross::ShaderResources resources = glsl->get_shader_resources();
+        for (const spirv_cross::Resource& buffer : resources.storage_buffers)
+        {
+            if (!SPIRVReflection_Local::IsSPIRVBufferWritable(glsl, buffer.id))
+                continue;
+
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(glsl, buffer.id);
+            glsl->set_decoration(buffer.id, spv::DecorationBinding, binding + k_OpenGLRWBuffersBindingOffset);
+        }
+
+        for (const spirv_cross::Resource& image : resources.separate_images)
+        {
+            const spirv_cross::SPIRType& type = glsl->get_type(image.base_type_id);
+            if (type.image.dim != spv::DimBuffer)
+				continue;
+
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(glsl, image.id);
+            glsl->set_decoration(image.id, spv::DecorationBinding, binding + k_OpenGLTypedBuffersBindingOffset);
+        }
+
+        for (const spirv_cross::Resource& image : resources.storage_images)
+        {
+            const spirv_cross::SPIRType& type = glsl->get_type(image.type_id);
+            if (type.image.dim != spv::DimBuffer)
+                continue;
+
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(glsl, image.id);
+            glsl->set_decoration(image.id, spv::DecorationBinding, binding + k_OpenGLTypedBuffersBindingOffset);
         }
 
         return glsl;
@@ -115,11 +149,40 @@ spirv_cross::Compiler* CompileSPIRV(const CComPtr<IDxcResult>& dxcResult, Graphi
         options.enable_decoration_binding = true;
         msl->set_msl_options(options);
 
-        spirv_cross::ShaderResources resource = msl->get_shader_resources();
-        for (const spirv_cross::Resource& buffer : resource.uniform_buffers)
+        spirv_cross::ShaderResources resources = msl->get_shader_resources();
+        for (const spirv_cross::Resource& buffer : resources.uniform_buffers)
         {
             uint32_t binding = msl->get_decoration(buffer.id, spv::DecorationBinding);
             msl->set_decoration(buffer.id, spv::DecorationBinding, binding + k_MetalConstantBufferBindingOffset);
+        }
+
+        for (const spirv_cross::Resource& buffer : resources.storage_buffers)
+        {
+            if (!SPIRVReflection_Local::IsSPIRVBufferWritable(msl, buffer.id))
+                continue;
+
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(msl, buffer.id);
+            msl->set_decoration(buffer.id, spv::DecorationBinding, binding + k_MetalRWResourcesBindingOffset);
+        }
+
+        for (const spirv_cross::Resource& image : resources.separate_images)
+        {
+            const spirv_cross::SPIRType& type = msl->get_type(image.base_type_id);
+            if (type.image.dim != spv::DimBuffer)
+                continue;
+
+            const uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(msl, image.id);
+            msl->set_decoration(image.id, spv::DecorationBinding, binding + k_MetalTypedBufferBindingOffset);
+        }
+
+        for (const spirv_cross::Resource& image : resources.storage_images)
+        {
+            const spirv_cross::SPIRType& type = msl->get_type(image.type_id);
+            uint32_t binding = SPIRVReflection_Local::GetSPIRVBindPoint(msl, image.id) + k_MetalRWResourcesBindingOffset;
+            if (type.image.dim == spv::DimBuffer)
+                binding += k_MetalTypedBufferBindingOffset;
+
+            msl->set_decoration(image.id, spv::DecorationBinding, binding);
         }
 
         return msl;
@@ -219,14 +282,14 @@ int main(int argc, char **argv)
         if (backend == GRAPHICS_BACKEND_DX12)
         {
             WriteShaderBinary(outputDirPath, dxc, shaderType);
-            ExtractReflectionFromDXC(dxc, pUtils, reflection);
+            ExtractReflectionFromDXC(dxc, pUtils, reflection, shaderType);
         }
         else
         {
             spirv_cross::Compiler* SPIRV = CompileSPIRV(dxc, backend, shaderType);
 
             WriteShaderSource(outputDirPath, SPIRV, shaderType);
-            ExtractReflectionFromSPIRV(SPIRV, reflection, backend);
+            ExtractReflectionFromSPIRV(SPIRV, reflection, backend, shaderType);
         }
     }
 

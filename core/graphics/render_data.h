@@ -13,9 +13,9 @@ class Texture;
 class Cubemap;
 class GameObject;
 
-struct Context
+struct RenderData
 {
-    Context();
+    static RenderData GetRenderData(int viewportWidth, int viewportHeight);
 
     std::vector<Light*> Lights;
 

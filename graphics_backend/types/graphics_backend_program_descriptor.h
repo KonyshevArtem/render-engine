@@ -12,14 +12,23 @@
 #include "types/graphics_backend_rasterizer_descriptor.h"
 #include "enums/texture_internal_format.h"
 #include "enums/primitive_type.h"
+#include "enums/program_type.h"
 
 #include <vector>
 #include <unordered_map>
 #include <string>
 #include <memory>
 
+struct ThreadGroupSize
+{
+    uint32_t X = 1;
+    uint32_t Y = 1;
+    uint32_t Z = 1;
+};
+
 struct GraphicsBackendProgramDescriptor
 {
+    ProgramType Type;
     const std::vector<GraphicsBackendShaderObject>* Shaders;
     const std::vector<GraphicsBackendVertexAttributeDescriptor>* VertexAttributes;
     const std::unordered_map<std::string, GraphicsBackendTextureInfo>* Textures;
@@ -35,6 +44,8 @@ struct GraphicsBackendProgramDescriptor
     GraphicsBackendStencilDescriptor StencilDescriptor;
 
     PrimitiveType PrimitiveType;
+
+    ThreadGroupSize ThreadGroupSize;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_PROGRAM_DESCRIPTOR_H

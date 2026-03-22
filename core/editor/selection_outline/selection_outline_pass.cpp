@@ -7,7 +7,6 @@
 #include "texture_2d/texture_2d.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug_group.h"
-#include "graphics/graphics.h"
 #include "renderer/renderer.h"
 #include "gameObject/gameObject.h"
 #include "enums/framebuffer_attachment.h"
@@ -17,17 +16,22 @@
 #include "vector2/vector2.h"
 #include "graphics_buffer/graphics_buffer.h"
 #include "mesh/mesh.h"
-#include "graphics/context.h"
+#include "graphics/render_data.h"
 #include "graphics/render_settings/render_settings.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 
-void CheckTexture(std::shared_ptr<Texture2D> &_texture)
+void CheckTexture(std::shared_ptr<Texture2D>& texture, int width, int height)
 {
-    const int width  = Graphics::GetScreenWidth();
-    const int height = Graphics::GetScreenHeight();
-    if (!_texture || _texture->GetWidth() != width || _texture->GetHeight() != height)
+    if (!texture || texture->GetWidth() != width || texture->GetHeight() != height)
     {
-        _texture = Texture2D::Create(width, height, TextureInternalFormat::RGBA8, false, true, "SilhouetteRT");
-        _texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
+        GraphicsBackendTextureDescriptor descriptor;
+        descriptor.Width = width;
+        descriptor.Height = height;
+        descriptor.RenderTarget = true;
+        descriptor.Format = TextureInternalFormat::RGBA8;
+
+        texture = Texture2D::Create(descriptor, "SilhouetteRT");
+        texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
     }
 }
 
@@ -38,7 +42,7 @@ SelectionOutlinePass::SelectionOutlinePass(int priority) :
     m_SilhouetteMaterial->DepthDescriptor = GraphicsBackendDepthDescriptor::AlwaysPassNoWrite();
 }
 
-bool SelectionOutlinePass::Prepare(const Context& ctx)
+bool SelectionOutlinePass::Prepare(const RenderData& renderData)
 {
     static std::vector<std::shared_ptr<Renderer>> selectedRenderers;
 
@@ -58,20 +62,20 @@ bool SelectionOutlinePass::Prepare(const Context& ctx)
     RenderSettings settings{};
     settings.OverrideMaterial = m_SilhouetteMaterial;
 
-    const Matrix4x4 vpMatrix = ctx.ProjectionMatrix * ctx.ViewMatrix;
+    const Matrix4x4 vpMatrix = renderData.ProjectionMatrix * renderData.ViewMatrix;
     m_SelectedObjectsQueue.Prepare(vpMatrix, selectedRenderers, settings);
 
     return true;
 }
 
-void SelectionOutlinePass::Execute(const Context& ctx)
+void SelectionOutlinePass::Execute(const RenderData& renderData)
 {
     static std::shared_ptr<Texture2D> silhouetteRenderTarget = nullptr;
     static Vector4 outlineColor {1, 0.73f, 0, 1};
 
     Profiler::Marker marker("SelectionOutlinePass::Execute");
 
-    CheckTexture(silhouetteRenderTarget);
+    CheckTexture(silhouetteRenderTarget, renderData.Viewport.x, renderData.Viewport.y);
 
     GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
 
@@ -97,8 +101,12 @@ void SelectionOutlinePass::Execute(const Context& ctx)
             Vector2 Padding0;
         };
 
+        GraphicsBackendBufferDescriptor bufferDescriptor{};
+        bufferDescriptor.AllowCPUWrites = true;
+        bufferDescriptor.Size = sizeof(OutlineData);
+
         static std::shared_ptr<Shader> blitShader = Shader::Load("core_resources/shaders/outlineBlit", {});
-        static std::shared_ptr<GraphicsBuffer> blitDataBuffer = std::make_shared<GraphicsBuffer>(sizeof(OutlineData), "Selection Outline Data");
+        static std::shared_ptr<GraphicsBuffer> blitDataBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "Selection Outline Data");
 
         Profiler::GPUMarker gpuMarker("Selection Blit Pass");
 

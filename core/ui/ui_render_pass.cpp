@@ -13,6 +13,7 @@
 #include "mesh/mesh.h"
 #include "editor/gizmos/gizmos.h"
 #include "editor/profiler/profiler.h"
+#include "graphics/render_data.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 
 namespace UIRenderPass_Local
@@ -30,10 +31,14 @@ UIRenderPass::UIRenderPass(int priority) :
     m_ImageShader = Shader::Load("core_resources/shaders/ui/image", {});
     m_TextShader = Shader::Load("core_resources/shaders/ui/text", {});
     m_MaskStencilShader = Shader::Load("core_resources/shaders/ui/maskStencil", {});
-    m_UIDataBuffer = std::make_shared<RingBuffer>(1024, "UI Data");
+
+    GraphicsBackendBufferDescriptor bufferDescriptor{};
+    bufferDescriptor.AllowCPUWrites = true;
+    bufferDescriptor.Size = 1024;
+    m_UIDataBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "UI Data");
 }
 
-void UIRenderPass::Prepare(const Context& ctx)
+void UIRenderPass::Prepare(const RenderData& renderData)
 {
     Profiler::Marker _("UIRenderPass::Prepare");
 
@@ -43,8 +48,8 @@ void UIRenderPass::Prepare(const Context& ctx)
             text->PrepareFont();
     }
 
-    const int width = Graphics::GetScreenWidth();
-    const int height = Graphics::GetScreenHeight();
+    const int width = renderData.Viewport.x;
+    const int height = renderData.Viewport.y;
     for (UIElement* element : UIManager::GetElements())
     {
         if (UIText* text = dynamic_cast<UIText*>(element))
@@ -57,7 +62,7 @@ void UIRenderPass::Prepare(const Context& ctx)
     }
 }
 
-void UIRenderPass::Execute(const Context& ctx)
+void UIRenderPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker cpuMarker("UIRenderPass::Execute");
     Profiler::GPUMarker gpuMarker("UIRenderPass::Execute");

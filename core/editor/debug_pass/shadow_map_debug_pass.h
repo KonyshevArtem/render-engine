@@ -16,7 +16,7 @@ public:
     ~ShadowMapDebugPass() override = default;
 
     void Prepare(const std::shared_ptr<Texture2D>& depthMap);
-    void Execute(const Context& ctx) override;
+    void Execute(const RenderData& renderData) override;
 
     ShadowMapDebugPass(const ShadowMapDebugPass&) = delete;
     ShadowMapDebugPass(ShadowMapDebugPass&&) = delete;
@@ -28,8 +28,8 @@ private:
     std::shared_ptr<DrawableGeometry> m_FullscreenMesh;
     std::shared_ptr<Texture2D> m_DepthMap;
 
-    void DrawOverlay(const Context& ctx);
-    void DrawCascades(const Context& ctx);
+    void DrawOverlay(const RenderData& renderData);
+    void DrawCascades(const RenderData& renderData);
 };
 
 #endif //RENDER_ENGINE_SHADOW_MAP_DEBUG_PASS_H

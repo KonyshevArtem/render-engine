@@ -1,13 +1,12 @@
-#ifndef RENDER_ENGINE_GRAPHICS_BACKEND_BUFFER_H
-#define RENDER_ENGINE_GRAPHICS_BACKEND_BUFFER_H
+#ifndef RENDER_ENGINE_GRAPHICS_BACKEND_BUFFER_VIEW_H
+#define RENDER_ENGINE_GRAPHICS_BACKEND_BUFFER_VIEW_H
 
 #include <cstdint>
 
-class GraphicsBackendBuffer
+class GraphicsBackendBufferView
 {
 public:
-    uint64_t Buffer;
-    uint32_t Size;
+    void* BufferView;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;

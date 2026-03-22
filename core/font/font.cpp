@@ -24,7 +24,14 @@ void Font::Prepare(uint16_t fontSize)
     m_TrexAtlas[fontSize] = trexAtlas;
 
     const Trex::Atlas::Bitmap& bitmap = trexAtlas->GetBitmap();
-    std::shared_ptr<Texture> atlas = Texture2D::Create(bitmap.Width(), bitmap.Height(), TextureInternalFormat::R8, true, false, m_FontName + "_Atlas_" + std::to_string(fontSize));
+
+    GraphicsBackendTextureDescriptor descriptor;
+    descriptor.Width = bitmap.Width();
+    descriptor.Height = bitmap.Height();
+    descriptor.Linear = true;
+    descriptor.Format = TextureInternalFormat::R8;
+
+    std::shared_ptr<Texture> atlas = Texture2D::Create(descriptor, m_FontName + "_Atlas_" + std::to_string(fontSize));
     atlas->UploadPixels(reinterpret_cast<const void*>(bitmap.Data().data()), bitmap.Data().size(), 0, 0);
     m_Atlas[fontSize] = atlas;
 

@@ -1,30 +1,23 @@
 #include "graphics_buffer.h"
 #include "math_utils.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 
 #include <algorithm>
 
-GraphicsBuffer::GraphicsBuffer(uint64_t size, std::string name, bool doubleBuffered) :
-        m_Size(Math::Align(size, GraphicsBackend::Current()->GetConstantBufferOffsetAlignment())),
-        m_Name(std::move(name)),
-        m_DoubleBuffered(doubleBuffered)
+GraphicsBuffer::GraphicsBuffer(const GraphicsBackendBufferDescriptor& descriptor, std::string name, const void* data) :
+        m_Size(Math::Align(descriptor.Size, GraphicsBackend::Current()->GetConstantBufferOffsetAlignment())),
+        m_Name(std::move(name))
 {
-    for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
-    {
-        if (i == 0 || m_DoubleBuffered)
-        {
-            // add extra alignment to the size to handle non-aligned offset
-            m_Buffer[i] = GraphicsBackend::Current()->CreateBuffer(size + GraphicsBackend::Current()->GetConstantBufferOffsetAlignment(), m_Name + "_0", true);
-        }
-    }
+    // add extra alignment to the size to handle non-aligned offset
+    GraphicsBackendBufferDescriptor resizedDescriptor = descriptor;
+    resizedDescriptor.Size += GraphicsBackend::Current()->GetConstantBufferOffsetAlignment();
+
+	m_Buffer = GraphicsBackend::Current()->CreateBuffer(resizedDescriptor, m_Name, data);
 }
 
 GraphicsBuffer::~GraphicsBuffer()
 {
-    for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
-    {
-        if (i == 0 || m_DoubleBuffered)
-            GraphicsBackend::Current()->DeleteBuffer(m_Buffer[i]);
-    }
+    GraphicsBackend::Current()->DeleteBuffer(m_Buffer);
 }
 
 void GraphicsBuffer::SetData(const void *data, uint64_t offset, uint64_t size)

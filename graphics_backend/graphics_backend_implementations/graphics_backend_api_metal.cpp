@@ -20,6 +20,8 @@
 #include "types/graphics_backend_texture_descriptor.h"
 #include "types/graphics_backend_sampler_descriptor.h"
 #include "types/graphics_backend_buffer_descriptor.h"
+#include "types/graphics_backend_buffer_view_descriptor.h"
+#include "types/graphics_backend_buffer_view.h"
 #include "helpers/metal_helpers.h"
 #include "debug.h"
 #include "hash.h"
@@ -28,7 +30,7 @@
 #include "Metal/MTLCounters.hpp"
 #include "MetalKit/MetalKit.hpp"
 
-#include <semaphore>
+#include <mutex>
 #include <unordered_map>
 
 namespace MetalLocal
@@ -49,13 +51,20 @@ namespace MetalLocal
     MTL::Timestamp s_CpuStartTimestamp;
     MTL::Timestamp s_GpuStartTimestamp;
 
-    std::counting_semaphore s_FramesInFlightSemaphore{GraphicsBackend::GetMaxFramesInFlight()};
+    std::mutex s_FrameInFlightMutex;
     std::unordered_map<size_t, MTL::DepthStencilState*> s_DepthStencilStates;
 
     struct BufferData {
         MTL::Buffer* Buffer;
-        MTL::Texture* TypedBufferView;
         MTL::ResourceOptions StorageMode;
+    };
+
+    struct BufferViewData
+    {
+        void* View;
+        BufferType Type;
+        uint32_t Offset;
+        uint32_t Size;
     };
 
     void SetCounterSampleFinished(uint64_t sampleIndex, int queueIndex, bool finished)
@@ -123,10 +132,13 @@ void GraphicsBackendMetal::InitNewFrame()
 {
     GraphicsBackendBase::InitNewFrame();
 
-    MetalLocal::s_FramesInFlightSemaphore.acquire();
-
     m_BackbufferDescriptor = m_View->currentRenderPassDescriptor();
     SetCommandBuffers(m_RenderCommandQueue->commandBuffer(), m_CopyCommandQueue->commandBuffer());
+}
+
+void GraphicsBackendMetal::WaitForPreviousFrame()
+{
+    MetalLocal::s_FrameInFlightMutex.lock();
 }
 
 void GraphicsBackendMetal::FillImGuiInitData(void* data)
@@ -384,13 +396,54 @@ GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(const GraphicsBackendBu
 
     MetalLocal::BufferData* bufferData = new MetalLocal::BufferData();
     bufferData->Buffer = metalBuffer;
-    bufferData->TypedBufferView = nullptr;
     bufferData->StorageMode = storageMode;
 
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(bufferData);
     buffer.Size = descriptor.Size;
     return buffer;
+}
+
+GraphicsBackendBufferView GraphicsBackendMetal::CreateBufferView(const GraphicsBackendBufferViewDescriptor& descriptor, const GraphicsBackendBuffer& buffer, const std::string& name)
+{
+    const MetalLocal::BufferData* bufferData = reinterpret_cast<MetalLocal::BufferData*>(buffer.Buffer);
+
+    MetalLocal::BufferViewData* viewData = new MetalLocal::BufferViewData();
+    viewData->Type = descriptor.Type;
+    viewData->Offset = descriptor.Offset;
+    viewData->Size = descriptor.Size;
+
+    if (descriptor.Type == BufferType::TYPED_BUFFER)
+    {
+        // 4096 texture width is defined by SPIRV-Cross
+        const uint32_t width = descriptor.ElementsCount % 4096;
+        const uint32_t height = std::max<uint32_t>(descriptor.ElementsCount / 4096, 1);
+
+        MTL::TextureUsage usage = MTL::TextureUsageShaderRead;
+        if (descriptor.ReadWrite)
+            usage |= MTL::TextureUsageShaderWrite;
+
+        MTL::TextureDescriptor* viewDesc = MTL::TextureDescriptor::alloc()->init();
+        viewDesc->setTextureType(MTL::TextureType::TextureType2D);
+        viewDesc->setPixelFormat(MetalHelpers::ToTextureInternalFormat(descriptor.Format, true));
+        viewDesc->setWidth(width);
+        viewDesc->setHeight(height);
+        viewDesc->setUsage(usage);
+        viewDesc->setResourceOptions(bufferData->StorageMode);
+
+        MTL::Texture* mtlTexture = bufferData->Buffer->newTexture(viewDesc, descriptor.Offset, GetFormatSize(descriptor.Format) * width);
+        if (!name.empty())
+            mtlTexture->setLabel(NS::String::string(name.c_str(), NS::UTF8StringEncoding));
+
+        viewData->View = mtlTexture;
+        viewDesc->release();
+    }
+    else
+        viewData->View = bufferData->Buffer;
+
+    GraphicsBackendBufferView bufferView;
+    bufferView.BufferView = viewData;
+    return bufferView;
 }
 
 void GraphicsBackendMetal::DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer)
@@ -400,103 +453,64 @@ void GraphicsBackendMetal::DeleteBuffer_Internal(const GraphicsBackendBuffer &bu
     delete bufferData;
 }
 
-void GraphicsBackendMetal::BindBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
+void GraphicsBackendMetal::DeleteBufferView_Internal(const GraphicsBackendBufferView& bufferView)
 {
-    MetalLocal::BufferData* bufferData = reinterpret_cast<MetalLocal::BufferData*>(buffer.Buffer);
+    const MetalLocal::BufferViewData* viewData = static_cast<MetalLocal::BufferViewData*>(bufferView.BufferView);
+    if (viewData->Type == BufferType::TYPED_BUFFER)
+        static_cast<MTL::Texture*>(viewData->View)->release();
+    delete viewData;
+}
 
-    if (type == BufferType::TYPED_BUFFER)
+void GraphicsBackendMetal::BindBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index)
+{
+    MetalLocal::BufferViewData* viewData = reinterpret_cast<MetalLocal::BufferViewData*>(bufferView.BufferView);
+
+    if (viewData->Type == BufferType::TYPED_BUFFER)
     {
         index += MetalLocal::k_TypedBufferIndexOffset;
 
-        if (!bufferData->TypedBufferView)
-        {
-            const uint32_t width = elementsCount % 4096;
-            const uint32_t height = std::max<uint32_t>(elementsCount / 4096, 1);
-
-            MTL::TextureDescriptor* texDesc = MTL::TextureDescriptor::alloc()->init();
-            texDesc->setTextureType(MTL::TextureType::TextureType2D);
-            texDesc->setPixelFormat(MetalHelpers::ToTextureInternalFormat(dataFormat, true));
-            texDesc->setWidth(width);
-            texDesc->setHeight(height);
-            texDesc->setUsage(MTL::TextureUsageShaderRead);
-
-            bufferData->TypedBufferView = bufferData->Buffer->newTexture(texDesc, offset, GetFormatSize(dataFormat) * width);
-            texDesc->release();
-        }
-
+        MTL::Texture* mtlTexture = static_cast<MTL::Texture*>(viewData->View);
         if (m_RenderCommandEncoder)
         {
-            m_RenderCommandEncoder->setVertexTexture(bufferData->TypedBufferView, index);
-            m_RenderCommandEncoder->setFragmentTexture(bufferData->TypedBufferView, index);
+            m_RenderCommandEncoder->setVertexTexture(mtlTexture, index);
+            m_RenderCommandEncoder->setFragmentTexture(mtlTexture, index);
         }
 
         if (m_ComputeCommandEncoder)
-            m_ComputeCommandEncoder->setTexture(bufferData->TypedBufferView, index);
+            m_ComputeCommandEncoder->setTexture(mtlTexture, index);
     }
     else
     {
+        MTL::Buffer* mtlBuffer = static_cast<MTL::Buffer*>(viewData->View);
         if (m_RenderCommandEncoder)
         {
-            m_RenderCommandEncoder->setVertexBuffer(bufferData->Buffer, offset, index);
-            m_RenderCommandEncoder->setFragmentBuffer(bufferData->Buffer, offset, index);
+            m_RenderCommandEncoder->setVertexBuffer(mtlBuffer, viewData->Offset, index);
+            m_RenderCommandEncoder->setFragmentBuffer(mtlBuffer, viewData->Offset, index);
         }
 
         if (m_ComputeCommandEncoder)
-            m_ComputeCommandEncoder->setBuffer(bufferData->Buffer, offset, index);
+            m_ComputeCommandEncoder->setBuffer(mtlBuffer, viewData->Offset, index);
     }
 }
 
 void GraphicsBackendMetal::BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
-    BindBuffer_Internal(buffer, BufferType::CONSTANT_BUFFER, index + MetalLocal::k_ConstantBufferIndexOffset, offset, size, 0, TextureInternalFormat::INVALID);
+    const MetalLocal::BufferData* bufferData = reinterpret_cast<MetalLocal::BufferData*>(buffer.Buffer);
+
+    index += MetalLocal::k_ConstantBufferIndexOffset;
+    if (m_RenderCommandEncoder)
+    {
+        m_RenderCommandEncoder->setVertexBuffer(bufferData->Buffer, offset, index);
+        m_RenderCommandEncoder->setFragmentBuffer(bufferData->Buffer, offset, index);
+    }
+
+    if (m_ComputeCommandEncoder)
+        m_ComputeCommandEncoder->setBuffer(bufferData->Buffer, offset, index);
 }
 
-void GraphicsBackendMetal::BindRWBuffer_Internal(const GraphicsBackendBuffer& buffer, BufferType type, uint32_t index, int offset, int size, int elementsCount, TextureInternalFormat dataFormat)
+void GraphicsBackendMetal::BindRWBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index)
 {
-    MetalLocal::BufferData* bufferData = reinterpret_cast<MetalLocal::BufferData*>(buffer.Buffer);
-
-    index += MetalLocal::k_RWResourcesBindingOffset;
-
-    if (type == BufferType::TYPED_BUFFER)
-    {
-        index += MetalLocal::k_TypedBufferIndexOffset;
-
-        if (!bufferData->TypedBufferView)
-        {
-            const uint32_t width = elementsCount % 4096;
-            const uint32_t height = std::max<uint32_t>(elementsCount / 4096, 1);
-
-            MTL::TextureDescriptor* texDesc = MTL::TextureDescriptor::alloc()->init();
-            texDesc->setTextureType(MTL::TextureType::TextureType2D);
-            texDesc->setPixelFormat(MetalHelpers::ToTextureInternalFormat(dataFormat, true));
-            texDesc->setWidth(width);
-            texDesc->setHeight(height);
-            texDesc->setUsage(MTL::TextureUsageShaderRead | MTL::TextureUsageShaderWrite);
-
-            bufferData->TypedBufferView = bufferData->Buffer->newTexture(texDesc, offset, GetFormatSize(dataFormat) * width);
-            texDesc->release();
-        }
-
-        if (m_RenderCommandEncoder)
-        {
-            m_RenderCommandEncoder->setVertexTexture(bufferData->TypedBufferView, index);
-            m_RenderCommandEncoder->setFragmentTexture(bufferData->TypedBufferView, index);
-        }
-
-        if (m_ComputeCommandEncoder)
-            m_ComputeCommandEncoder->setTexture(bufferData->TypedBufferView, index);
-    }
-    else
-    {
-        if (m_RenderCommandEncoder)
-        {
-            m_RenderCommandEncoder->setVertexBuffer(bufferData->Buffer, offset, index);
-            m_RenderCommandEncoder->setFragmentBuffer(bufferData->Buffer, offset, index);
-        }
-
-        if (m_ComputeCommandEncoder)
-            m_ComputeCommandEncoder->setBuffer(bufferData->Buffer, offset, index);
-    }
+    BindBuffer_Internal(bufferView, index + MetalLocal::k_RWResourcesBindingOffset);
 }
 
 void GraphicsBackendMetal::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void *data)
@@ -1190,7 +1204,7 @@ void GraphicsBackendMetal::SetBlitCommandEncoder(MTL::BlitCommandEncoder* encode
 void GraphicsBackendMetal::Present()
 {
     m_CopyCommandBuffer->commit();
-    m_RenderCommandBuffer->addCompletedHandler([](MTL::CommandBuffer*){MetalLocal::s_FramesInFlightSemaphore.release();});
+    m_RenderCommandBuffer->addCompletedHandler([](MTL::CommandBuffer*){MetalLocal::s_FrameInFlightMutex.unlock();});
     m_RenderCommandBuffer->presentDrawable(m_View->currentDrawable());
     m_RenderCommandBuffer->commit();
 }

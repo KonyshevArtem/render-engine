@@ -1,3 +1,5 @@
+core_resources/**/bistro*
+
 .DS_Store
 build
 

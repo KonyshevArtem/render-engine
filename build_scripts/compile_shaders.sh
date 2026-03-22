@@ -125,6 +125,8 @@ Compile ui/image
 Compile ui/text
 Compile ui/maskStencil
 
+Compile compute_test
+
 echo "Finished compiling shaders for ${PLATFORM} ${BACKENDS}";
 if [ -z "$1" ]; then
     read _

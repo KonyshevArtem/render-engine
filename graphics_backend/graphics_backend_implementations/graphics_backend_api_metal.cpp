@@ -121,6 +121,8 @@ void GraphicsBackendMetal::Init(void *data)
             }
         }
     }
+
+    m_BackbufferDescriptor = m_View->currentRenderPassDescriptor();
 }
 
 GraphicsBackendName GraphicsBackendMetal::GetName()
@@ -132,13 +134,13 @@ void GraphicsBackendMetal::InitNewFrame()
 {
     GraphicsBackendBase::InitNewFrame();
 
-    m_BackbufferDescriptor = m_View->currentRenderPassDescriptor();
     SetCommandBuffers(m_RenderCommandQueue->commandBuffer(), m_CopyCommandQueue->commandBuffer());
 }
 
 void GraphicsBackendMetal::WaitForPreviousFrame()
 {
     MetalLocal::s_FrameInFlightMutex.lock();
+    m_BackbufferDescriptor = m_View->currentRenderPassDescriptor();
 }
 
 void GraphicsBackendMetal::FillImGuiInitData(void* data)

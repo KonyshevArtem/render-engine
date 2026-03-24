@@ -6,23 +6,20 @@
 
 RingBuffer::RingBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name) :
     m_Name(name),
+    m_CurrentOffset(0),
     m_LastCheckFrame(0),
 	m_Descriptor(descriptor)
 {
-    for (int i = 0; i < GraphicsBackend::GetMaxFramesInFlight(); ++i)
-        m_CurrentOffset[i] = 0;
-
     m_Buffer = std::make_shared<GraphicsBuffer>(m_Descriptor, m_Name);
 }
 
-uint64_t RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
+uint64_t RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size, bool* outResized)
 {
-    const int frameIndex = GraphicsBackend::GetInFlightFrameIndex();
     const uint64_t currentFrame = GraphicsBackend::Current()->GetFrameNumber();
 
     if (m_LastCheckFrame != currentFrame)
     {
-        m_CurrentOffset[frameIndex] = 0;
+        m_CurrentOffset = 0;
         m_LastCheckFrame = currentFrame;
     }
 
@@ -30,17 +27,22 @@ uint64_t RingBuffer::SetData(const void *data, uint64_t offset, uint64_t size)
     size = Math::Align(size, GraphicsBackend::Current()->GetConstantBufferOffsetAlignment());
 
     const uint64_t bufferSize = m_Buffer->GetSize();
-    const uint64_t currentOffset = m_CurrentOffset[frameIndex];
+    const uint64_t currentOffset = m_CurrentOffset;
     const uint64_t requiredSize = currentOffset + offset + size;
-    if (m_Buffer->GetSize() < requiredSize)
+
+    const bool needsResizing = m_Buffer->GetSize() < requiredSize;
+    if (needsResizing)
     {
         m_Descriptor.Size = std::max(bufferSize * 2, requiredSize);
 
         m_Buffer = std::make_shared<GraphicsBuffer>(m_Descriptor, m_Name);
-        m_CurrentOffset[frameIndex] = 0;
+        m_CurrentOffset = 0;
     }
 
+    if(outResized)
+		*outResized = needsResizing;
+
     m_Buffer->SetData(data, currentOffset + offset, size);
-    m_CurrentOffset[frameIndex] += offset + size;
+    m_CurrentOffset += offset + size;
     return currentOffset;
 }

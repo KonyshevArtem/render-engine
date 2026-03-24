@@ -180,9 +180,6 @@ RenderQueue::RenderQueue()
 
         bufferDescriptor.Size = elementsCount * sizeof(uint32_t);
         s_MatricesOffsetBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "Render Queue Matrices Offset Buffer");
-
-        GraphicsBackendBufferViewDescriptor viewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(elementsCount, elementSize, 0, false);
-        s_MatricesBufferView = std::make_shared<GraphicsBufferView>(s_MatricesBuffer->GetBuffer(), viewDescriptor, "Render Queue Matrices Buffer View");
     }
 }
 
@@ -271,8 +268,18 @@ void RenderQueue::SetupMatrices(const std::vector<Matrix4x4>& matrices)
         matricesBuffer[i * 2 + 1] = matrices[i].Invert().Transpose();
     }
 
+    bool matricesBufferResized;
     const uint64_t size = sizeof(Matrix4x4) * matricesBuffer.size();
-    const uint64_t offset = s_MatricesBuffer->SetData(matricesBuffer.data(), 0, size);
+    const uint64_t offset = s_MatricesBuffer->SetData(matricesBuffer.data(), 0, size, &matricesBufferResized);
+
+    if (!s_MatricesBufferView || matricesBufferResized)
+    {
+        constexpr uint32_t elementSize = 2 * sizeof(Matrix4x4);
+        const uint32_t elementsCount = s_MatricesBuffer->GetBuffer()->GetSize() / elementSize;
+
+        GraphicsBackendBufferViewDescriptor viewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(elementsCount, elementSize, 0, false);
+        s_MatricesBufferView = std::make_shared<GraphicsBufferView>(s_MatricesBuffer->GetBuffer(), viewDescriptor, "Render Queue Matrices Buffer View");
+    }
 
     if (matrices.size() > 1)
     {

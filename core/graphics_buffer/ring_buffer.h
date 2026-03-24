@@ -27,7 +27,7 @@ public:
         return m_Buffer->GetBackendBuffer();
     }
 
-    uint64_t SetData(const void *data, uint64_t offset, uint64_t size);
+    uint64_t SetData(const void *data, uint64_t offset, uint64_t size, bool* outResized = nullptr);
 
     RingBuffer(const RingBuffer &) = delete;
     RingBuffer(RingBuffer &&) = delete;
@@ -39,7 +39,7 @@ private:
     std::shared_ptr<GraphicsBuffer> m_Buffer;
     std::string m_Name;
 
-    uint64_t m_CurrentOffset[GraphicsBackend::GetMaxFramesInFlight()];
+    uint64_t m_CurrentOffset;
     uint64_t m_LastCheckFrame;
 
     GraphicsBackendBufferDescriptor m_Descriptor;

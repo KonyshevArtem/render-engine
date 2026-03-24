@@ -35,6 +35,7 @@
 #include "global_constants.h"
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "graphics_buffer/graphics_buffer_view.h"
+#include "passes/post_process_pass.h"
 
 #include <cassert>
 
@@ -47,10 +48,12 @@ namespace Graphics
     std::shared_ptr<ShadowCasterPass> s_ShadowCasterPass;
     std::shared_ptr<FinalBlitPass> s_FinalBlitPass;
     std::shared_ptr<UIRenderPass> s_UIRenderPass;
+    std::shared_ptr<PostProcessPass> s_PostProcessPass;
 
 #if RENDER_ENGINE_EDITOR
     std::shared_ptr<CopyDepthPass> s_CopyDepthPass;
-    std::shared_ptr<GizmosPass> s_GizmosPass;
+    std::shared_ptr<GizmosPass> s_3DGizmosPass;
+    std::shared_ptr<GizmosPass> s_2DGizmosPass;
     std::shared_ptr<SelectionOutlinePass> s_SelectionOutlinePass;
     std::shared_ptr<ShadowMapDebugPass> s_ShadowMapDebugPass;
 #endif
@@ -76,15 +79,17 @@ namespace Graphics
     {
         s_ShadowCasterPass = std::make_shared<ShadowCasterPass>(0);
         s_ForwardRenderPass = std::make_shared<ForwardRenderPass>(1);
-        s_FinalBlitPass = std::make_shared<FinalBlitPass>(3);
-        s_UIRenderPass = std::make_shared<UIRenderPass>(4);
-
 #if RENDER_ENGINE_EDITOR
-        s_CopyDepthPass = std::make_shared<CopyDepthPass>(2);
-        s_GizmosPass = std::make_shared<GizmosPass>(6);
-        s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>(5);
-        s_ShadowMapDebugPass = std::make_shared<ShadowMapDebugPass>(7);
+        s_ShadowMapDebugPass = std::make_shared<ShadowMapDebugPass>(2);
+        s_3DGizmosPass = std::make_shared<GizmosPass>(3, GizmosPass::Mode::GIZMOS_3D);
+        s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>(4);
 #endif
+        s_PostProcessPass = std::make_shared<PostProcessPass>(5);
+        s_UIRenderPass = std::make_shared<UIRenderPass>(6);
+#if RENDER_ENGINE_EDITOR
+        s_2DGizmosPass = std::make_shared<GizmosPass>(7, GizmosPass::Mode::GIZMOS_2D);
+#endif
+        s_FinalBlitPass = std::make_shared<FinalBlitPass>(8);
     }
 
     void Init()
@@ -106,10 +111,12 @@ namespace Graphics
         s_ShadowCasterPass = nullptr;
         s_FinalBlitPass = nullptr;
         s_UIRenderPass = nullptr;
+        s_PostProcessPass = nullptr;
 
 #if RENDER_ENGINE_EDITOR
         s_CopyDepthPass = nullptr;
-        s_GizmosPass = nullptr;
+        s_3DGizmosPass = nullptr;
+        s_2DGizmosPass = nullptr;
         s_SelectionOutlinePass = nullptr;
         s_ShadowMapDebugPass = nullptr;
 #endif
@@ -172,62 +179,35 @@ namespace Graphics
         s_ScreenWidth = width;
         s_ScreenHeight = height;
 
-        static std::shared_ptr<Texture2D> cameraColorTarget;
-        static std::shared_ptr<Texture2D> cameraDepthTarget;
-
-        static GraphicsBackendRenderTargetDescriptor colorTargetDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::CLEAR };
-        static GraphicsBackendRenderTargetDescriptor depthTargetDescriptor{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .LoadAction = LoadAction::CLEAR };
-
         s_RenderPasses.clear();
         s_RenderData = RenderData::GetRenderData(width, height);
 
-        if (cameraColorTarget == nullptr || cameraColorTarget->GetWidth() != width || cameraColorTarget->GetHeight() != height)
-        {
-	        const TextureInternalFormat depthFormat = GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL ? TextureInternalFormat::DEPTH_32_STENCIL_8 : TextureInternalFormat::DEPTH_24_STENCIL_8;
-
-	        GraphicsBackendTextureDescriptor descriptor;
-	        descriptor.Width = width;
-	        descriptor.Height = height;
-	        descriptor.Linear = true;
-	        descriptor.RenderTarget = true;
-
-	        descriptor.Format = TextureInternalFormat::RGBA16F;
-	        cameraColorTarget = Texture2D::Create(descriptor, "CameraColorRT");
-
-	        descriptor.Format = depthFormat;
-	        cameraDepthTarget = Texture2D::Create(descriptor, "CameraDepthRT");
-        }
-
-        colorTargetDescriptor.Texture = cameraColorTarget->GetBackendTexture();
-        depthTargetDescriptor.Texture = cameraDepthTarget->GetBackendTexture();
-
         s_ShadowCasterPass->Prepare(s_RenderData);
-        s_ForwardRenderPass->Prepare(s_RenderData, colorTargetDescriptor, depthTargetDescriptor);
-        s_FinalBlitPass->Prepare(cameraColorTarget);
+        s_ForwardRenderPass->Prepare(s_RenderData);
+        s_PostProcessPass->Prepare(s_RenderData);
         s_UIRenderPass->Prepare(s_RenderData);
+        s_FinalBlitPass->Prepare(s_RenderData);
 
         s_RenderPasses.push_back(s_ShadowCasterPass);
         s_RenderPasses.push_back(s_ForwardRenderPass);
         s_RenderPasses.push_back(s_FinalBlitPass);
         s_RenderPasses.push_back(s_UIRenderPass);
+        s_RenderPasses.push_back(s_PostProcessPass);
 
 #if RENDER_ENGINE_EDITOR
-        const bool executeGizmosPass = s_GizmosPass->Prepare(s_RenderData, s_CopyDepthPass->GetEndFence());
-        const bool executeSelectionPass = s_SelectionOutlinePass->Prepare(s_RenderData);
+        if (s_3DGizmosPass->Prepare(s_RenderData))
+	        s_RenderPasses.push_back(s_3DGizmosPass);
 
-        if (executeGizmosPass)
-        {
-	        s_CopyDepthPass->Prepare(s_ForwardRenderPass->GetEndFence(), cameraDepthTarget);
+        if (s_2DGizmosPass->Prepare(s_RenderData))
+            s_RenderPasses.push_back(s_2DGizmosPass);
 
-	        s_RenderPasses.push_back(s_CopyDepthPass);
-	        s_RenderPasses.push_back(s_GizmosPass);
-        }
-
-        if (executeSelectionPass)
+        if (s_SelectionOutlinePass->Prepare(s_RenderData))
             s_RenderPasses.push_back(s_SelectionOutlinePass);
 
-        s_ShadowMapDebugPass->Prepare(cameraDepthTarget);
+        s_ShadowMapDebugPass->Prepare(s_RenderData);
         s_RenderPasses.push_back(s_ShadowMapDebugPass);
+
+        Gizmos::ClearGizmos();
 #endif
     }
 

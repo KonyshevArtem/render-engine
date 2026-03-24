@@ -10,6 +10,8 @@
 #include "types/graphics_backend_sampler_info.h"
 #include "developer_console/developer_console.h"
 #include "types/graphics_backend_buffer_descriptor.h"
+#include "types/graphics_backend_buffer_view.h"
+#include "types/graphics_backend_render_target_descriptor.h"
 
 bool ShadowMapDebugPass::DrawShadowMapOverlay = false;
 bool ShadowMapDebugPass::DrawShadowCascades = false;
@@ -22,12 +24,11 @@ ShadowMapDebugPass::ShadowMapDebugPass(int priority) : RenderPass(priority)
     DeveloperConsole::AddBoolCommand(L"Shadows.DrawCascades", &DrawShadowCascades);
 }
 
-void ShadowMapDebugPass::Prepare(const std::shared_ptr<Texture2D>& depthMap)
+void ShadowMapDebugPass::Prepare(const RenderData& renderData)
 {
-    m_DepthMap = depthMap;
 }
 
-void ShadowMapDebugPass::DrawCascades(const RenderData& renderData)
+void ShadowMapDebugPass::DrawCascades(const RenderData& renderData) const
 {
     struct DebugData
     {
@@ -46,20 +47,27 @@ void ShadowMapDebugPass::DrawCascades(const RenderData& renderData)
         DebugData data{};
         data.InvCameraVP = (renderData.ProjectionMatrix * renderData.ViewMatrix).Invert();
 
+        const GraphicsBackendRenderTargetDescriptor colorTarget{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+        GraphicsBackend::Current()->AttachRenderTarget(colorTarget);
+
         GraphicsBackend::Current()->BeginRenderPass("Shadow Cascade Visualize Pass");
+
         buffer->SetData(&data, 0, sizeof(data));
         GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
-        GraphicsBackend::Current()->BindTextureSampler(m_DepthMap->GetBackendTexture(), m_DepthMap->GetBackendSampler(), 0);
+        GraphicsBackend::Current()->BindTextureSampler(renderData.CameraDepthTarget->GetBackendTexture(), renderData.CameraDepthTarget->GetBackendSampler(), 0);
+
         GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::PremultipliedAlphaBlending());
         GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
         GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
+
         GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_FullscreenMesh));
         GraphicsBackend::Current()->DrawElements(m_FullscreenMesh->GetGraphicsBackendGeometry(), m_FullscreenMesh->GetPrimitiveType(), m_FullscreenMesh->GetElementsCount(), m_FullscreenMesh->GetIndicesDataType());
+
         GraphicsBackend::Current()->EndRenderPass();
     }
 }
 
-void ShadowMapDebugPass::DrawOverlay(const RenderData& renderData)
+void ShadowMapDebugPass::DrawOverlay(const RenderData& renderData) const
 {
     struct DebugData
     {
@@ -96,14 +104,21 @@ void ShadowMapDebugPass::DrawOverlay(const RenderData& renderData)
         data.MinDepth = 0.0f;
         data.MaxDepth = 1.0f;
 
+        const GraphicsBackendRenderTargetDescriptor colorTarget{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+        GraphicsBackend::Current()->AttachRenderTarget(colorTarget);
+
         GraphicsBackend::Current()->BeginRenderPass("ShadowMap Overlay Pass");
+
         buffer->SetData(&data, 0, sizeof(data));
         GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
         GraphicsBackend::Current()->BindSampler(sampler, 0);
+
         GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
         GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
+
         GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_FullscreenMesh));
         GraphicsBackend::Current()->DrawElements(m_FullscreenMesh->GetGraphicsBackendGeometry(), m_FullscreenMesh->GetPrimitiveType(), m_FullscreenMesh->GetElementsCount(), m_FullscreenMesh->GetIndicesDataType());
+
         GraphicsBackend::Current()->EndRenderPass();
     }
 }

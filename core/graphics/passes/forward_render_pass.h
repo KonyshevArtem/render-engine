@@ -12,6 +12,7 @@
 class DrawRenderersPass;
 class SkyboxPass;
 class Renderer;
+class Texture;
 struct Vector3;
 
 class ForwardRenderPass : public RenderPass
@@ -20,23 +21,18 @@ public:
     explicit ForwardRenderPass(int priority);
     ~ForwardRenderPass() override;
 
-    void Prepare(const RenderData& renderData, const GraphicsBackendRenderTargetDescriptor& colorTargetDescriptor, const GraphicsBackendRenderTargetDescriptor& depthTargetDescriptor);
+    void Prepare(RenderData& renderData);
     void Execute(const RenderData& renderData) override;
     const GraphicsBackendFence& GetEndFence() const;
-
-    ForwardRenderPass(const ForwardRenderPass&) = delete;
-    ForwardRenderPass(ForwardRenderPass&&) = delete;
-
-    ForwardRenderPass &operator=(const ForwardRenderPass&) = delete;
-    ForwardRenderPass &operator=(ForwardRenderPass&&) = delete;
 
 private:
     std::shared_ptr<DrawRenderersPass> m_OpaquePass;
     std::shared_ptr<DrawRenderersPass> m_TransparentPass;
     std::shared_ptr<SkyboxPass> m_SkyboxPass;
 
-    GraphicsBackendRenderTargetDescriptor m_ColorTargetDescriptor;
-    GraphicsBackendRenderTargetDescriptor m_DepthTargetDescriptor;
+    std::shared_ptr<Texture> m_CameraColorTarget;
+    std::shared_ptr<Texture> m_CameraDepthTarget;
+    
     GraphicsBackendFence m_EndFence;
 };
 

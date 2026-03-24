@@ -75,8 +75,11 @@ void UIRenderPass::Execute(const RenderData& renderData)
 
     const std::shared_ptr<Mesh> quadMesh = Mesh::GetQuadMesh();
 
-    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
-    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer(LoadAction::CLEAR));
+    const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.PostProcessedTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+    const GraphicsBackendRenderTargetDescriptor depthDescriptor{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
+
+    GraphicsBackend::Current()->AttachRenderTarget(colorDescriptor);
+    GraphicsBackend::Current()->AttachRenderTarget(depthDescriptor);
 
     GraphicsBackend::Current()->BeginRenderPass("UI Pass");
 

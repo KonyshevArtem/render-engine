@@ -4,51 +4,61 @@
 #include "gizmos.h"
 #include "graphics/render_data.h"
 #include "graphics/graphics.h"
-#include "graphics_backend_debug_group.h"
-#include "shader/shader.h"
 #include "graphics_backend_api.h"
-#include "material/material.h"
 #include "renderer/renderer.h"
 #include "quaternion/quaternion.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "editor/profiler/profiler.h"
 #include "graphics/render_settings/render_settings.h"
+#include "texture/texture.h"
 
 #include <cmath>
 
-GizmosPass::GizmosPass(int priority) :
-    RenderPass(priority)
+GizmosPass::GizmosPass(int priority, Mode mode) :
+    RenderPass(priority),
+	m_Mode(mode)
 {
 }
 
-bool GizmosPass::Prepare(const RenderData& renderData, const GraphicsBackendFence& waitForFence)
+bool GizmosPass::Prepare(const RenderData& renderData)
 {
-    if (!Gizmos::IsEnabled())
+    if (m_Mode == Mode::GIZMOS_3D && !Gizmos::IsEnabled3D() ||
+        m_Mode == Mode::GIZMOS_2D && !Gizmos::IsEnabled2D())
         return false;
 
     Profiler::Marker marker("GizmosPass::Prepare");
 
-    m_Fence = waitForFence;
-
-    for (const std::shared_ptr<Renderer>& renderer : renderData.Renderers)
+    if (m_Mode == Mode::GIZMOS_3D)
     {
-        if (renderer)
+        for (const std::shared_ptr<Renderer>& renderer : renderData.Renderers)
         {
-            auto bounds = renderer->GetAABB();
-            Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
+            if (renderer)
+            {
+                auto bounds = renderer->GetAABB();
+                Gizmos::DrawWireCube(Matrix4x4::TRS(bounds.GetCenter(), Quaternion(), bounds.GetSize() * 0.5f));
+            }
         }
+
+        m_ColorTarget = renderData.CameraColorTarget;
+        m_DepthTarget = renderData.CameraDepthTarget;
+
+        m_ViewMatrix = renderData.ViewMatrix;
+        m_ProjectionMatrix = renderData.ProjectionMatrix;
+        m_NearPlane = renderData.NearPlane;
+        m_FarPlane = renderData.FarPlane;
+        m_GizmosQueue.Prepare(m_ProjectionMatrix * m_ViewMatrix, Gizmos::Get3DGizmosToDraw(), RenderSettings{});
     }
+    else
+    {
+        m_ColorTarget = renderData.PostProcessedTarget;
+        m_DepthTarget = nullptr;
 
-    m_3DViewMatrix = renderData.ViewMatrix;
-    m_3DProjectionMatrix = renderData.ProjectionMatrix;
-    m_3DNearPlane = renderData.NearPlane;
-    m_3DFarPlane = renderData.FarPlane;
-    m_3DGizmosQueue.Prepare(m_3DProjectionMatrix * m_3DViewMatrix, Gizmos::Get3DGizmosToDraw(), RenderSettings{});
-
-    m_2DProjectionMatrix = Matrix4x4::Orthographic(0, renderData.Viewport.x, 0, renderData.Viewport.y, 0.01f, 1);
-    m_2DGizmosQueue.Prepare(m_2DProjectionMatrix, Gizmos::Get2DGizmosToDraw(), RenderSettings{.FrustumCullingPlanesBits = 0});
-
-    Gizmos::ClearGizmos();
+        m_NearPlane = 0.01f;
+        m_FarPlane = 1.0f;
+        m_ViewMatrix = Matrix4x4::Identity();
+        m_ProjectionMatrix = Matrix4x4::Orthographic(0, renderData.Viewport.x, 0, renderData.Viewport.y, m_NearPlane, m_FarPlane);
+        m_GizmosQueue.Prepare(m_ProjectionMatrix, Gizmos::Get2DGizmosToDraw(), RenderSettings{ .FrustumCullingPlanesBits = 0 });
+    }
 
     return true;
 }
@@ -58,18 +68,18 @@ void GizmosPass::Execute(const RenderData& renderData)
     Profiler::Marker marker("GizmosPass::Execute");
     Profiler::GPUMarker gpuMarker("GizmosPass::Execute");
 
-    GraphicsBackend::Current()->WaitForFence(m_Fence);
+    const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = m_ColorTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+    GraphicsBackendRenderTargetDescriptor depthDescriptor = GraphicsBackendRenderTargetDescriptor::EmptyDepth();
+    if (m_DepthTarget)
+		depthDescriptor = { .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
 
-    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
-    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer());
+    GraphicsBackend::Current()->AttachRenderTarget(colorDescriptor);
+    GraphicsBackend::Current()->AttachRenderTarget(depthDescriptor);
 
     GraphicsBackend::Current()->BeginRenderPass("Gizmos pass");
 
-    Graphics::SetCameraData(m_3DViewMatrix, m_3DProjectionMatrix, m_3DNearPlane, m_3DFarPlane);
-    m_3DGizmosQueue.Draw();
-
-    Graphics::SetCameraData(Matrix4x4::Identity(), m_2DProjectionMatrix, 0.01f, 1.0f);
-    m_2DGizmosQueue.Draw();
+    Graphics::SetCameraData(m_ViewMatrix, m_ProjectionMatrix, m_NearPlane, m_FarPlane);
+    m_GizmosQueue.Draw();
 
     GraphicsBackend::Current()->EndRenderPass();
 }

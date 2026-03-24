@@ -83,7 +83,7 @@ void SelectionOutlinePass::Execute(const RenderData& renderData)
     {
         Profiler::GPUMarker gpuMarker("Selection Outline Pass");
 
-        GraphicsBackendRenderTargetDescriptor colorTarget{FramebufferAttachment::COLOR_ATTACHMENT0, silhouetteRenderTarget->GetBackendTexture(), LoadAction::CLEAR};
+        const GraphicsBackendRenderTargetDescriptor colorTarget{ FramebufferAttachment::COLOR_ATTACHMENT0, silhouetteRenderTarget->GetBackendTexture(), LoadAction::CLEAR, StoreAction::STORE };
         GraphicsBackend::Current()->AttachRenderTarget(colorTarget);
 
         GraphicsBackend::Current()->BeginRenderPass("Selection Outline Pass");
@@ -116,15 +116,20 @@ void SelectionOutlinePass::Execute(const RenderData& renderData)
 
         const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
 
-        GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
+        const GraphicsBackendRenderTargetDescriptor colorTarget{ FramebufferAttachment::COLOR_ATTACHMENT0, renderData.CameraColorTarget->GetBackendTexture(), LoadAction::LOAD, StoreAction::STORE };
+        GraphicsBackend::Current()->AttachRenderTarget(colorTarget);
 
         GraphicsBackend::Current()->BeginRenderPass("Selection Blit Pass");
+
         blitDataBuffer->SetData(&data, 0, sizeof(data));
         GraphicsBackend::Current()->BindConstantBuffer(blitDataBuffer->GetBackendBuffer(), 0, 0, sizeof(data));
         GraphicsBackend::Current()->BindTextureSampler(silhouetteRenderTarget->GetBackendTexture(), silhouetteRenderTarget->GetBackendSampler(), 0);
+
         GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
+
         GraphicsBackend::Current()->UseProgram(blitShader->GetProgram(fullscreenMesh));
         GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
+
         GraphicsBackend::Current()->EndRenderPass();
     }
 }

@@ -8,6 +8,7 @@
 
 struct RenderData;
 class Renderer;
+class Texture;
 
 class GizmosPass : public RenderPass
 {

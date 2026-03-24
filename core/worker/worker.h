@@ -12,6 +12,14 @@
 class Worker
 {
 public:
+    enum Priority
+    {
+	    TASK,
+        LOADING,
+
+        COUNT,
+    };
+
     class Task : public std::enable_shared_from_this<Task>
     {
     public:
@@ -24,6 +32,7 @@ public:
     private:
         std::function<void()> Func;
         std::vector<std::shared_ptr<Task>> Dependencies;
+        Priority Priority;
 
         bool DependenciesFinished();
 
@@ -36,7 +45,7 @@ public:
     static void Init();
     static void Shutdown();
 
-    static std::shared_ptr<Task> CreateTask(const std::function<void()>& taskFunc);
+    static std::shared_ptr<Task> CreateTask(const std::function<void()>& taskFunc, Priority priority);
     static std::shared_ptr<Task> Noop();
 
     static int32_t GetWorkerId();
@@ -44,7 +53,7 @@ public:
 private:
     static std::unordered_map<std::thread::id, int32_t> s_WorkerIds;
     static std::vector<std::shared_ptr<Worker>> s_Workers;
-    static std::vector<std::shared_ptr<Task>> s_Tasks;
+    static std::vector<std::shared_ptr<Task>> s_Tasks[Priority::COUNT];
     static std::mutex s_TasksMutex;
 
     std::thread m_Thread;

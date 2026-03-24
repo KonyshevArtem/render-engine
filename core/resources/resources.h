@@ -55,7 +55,7 @@ public:
             }
             else
             {
-                task = Worker::CreateTask([path](){ LoadTask<T>(path); });
+                task = Worker::CreateTask([path](){ LoadTask<T>(path); }, Worker::Priority::LOADING);
                 task->Schedule();
 
                 AsyncLoadRequest request {task};

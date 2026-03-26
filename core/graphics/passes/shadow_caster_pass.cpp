@@ -38,8 +38,8 @@ namespace ShadowCasterPassLocal
     };
 }
 
-ShadowCasterPass::ShadowCasterPass(int priority) :
-    RenderPass(priority)
+ShadowCasterPass::ShadowCasterPass() :
+    RenderPass()
 {
     GraphicsBackendTextureDescriptor shadowMapDescriptor{};
     shadowMapDescriptor.Format = TextureInternalFormat::DEPTH_32;

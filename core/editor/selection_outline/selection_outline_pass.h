@@ -12,7 +12,7 @@ class Material;
 class SelectionOutlinePass : public RenderPass
 {
 public:
-    explicit SelectionOutlinePass(int priority);
+    SelectionOutlinePass();
     ~SelectionOutlinePass() override = default;
 
     void Prepare(RenderData& renderData) override;

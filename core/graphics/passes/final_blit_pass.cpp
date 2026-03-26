@@ -8,8 +8,8 @@
 #include "graphics_buffer/graphics_buffer.h"
 #include "mesh/mesh.h"
 
-FinalBlitPass::FinalBlitPass(int priority) :
-    RenderPass(priority)
+FinalBlitPass::FinalBlitPass() :
+    RenderPass()
 {
     m_BlitShader = Shader::Load("core_resources/shaders/blit", {});
 }

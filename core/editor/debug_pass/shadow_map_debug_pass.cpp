@@ -16,7 +16,7 @@
 bool ShadowMapDebugPass::DrawShadowMapOverlay = false;
 bool ShadowMapDebugPass::DrawShadowCascades = false;
 
-ShadowMapDebugPass::ShadowMapDebugPass(int priority) : RenderPass(priority)
+ShadowMapDebugPass::ShadowMapDebugPass() : RenderPass()
 {
     m_FullscreenMesh = Mesh::GetFullscreenMesh();
 

@@ -9,7 +9,7 @@ class Mesh;
 class SkyboxPass : public RenderPass
 {
 public:
-    explicit SkyboxPass(int priority);
+    SkyboxPass() = default;
     ~SkyboxPass() override = default;
 
     void Prepare(RenderData& renderData) override;

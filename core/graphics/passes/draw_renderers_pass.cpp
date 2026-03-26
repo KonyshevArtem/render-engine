@@ -7,8 +7,8 @@
 
 #include <utility>
 
-DrawRenderersPass::DrawRenderersPass(std::string name, DrawCallSortMode sorting, DrawCallFilter filter, int priority) :
-    RenderPass(priority),
+DrawRenderersPass::DrawRenderersPass(std::string name, DrawCallSortMode sorting, DrawCallFilter filter) :
+    RenderPass(),
     m_Name(std::move(name)),
     m_RenderSettings(RenderSettings {sorting, std::move(filter), nullptr})
 {

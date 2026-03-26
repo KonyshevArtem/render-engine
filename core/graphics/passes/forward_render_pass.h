@@ -18,7 +18,7 @@ struct Vector3;
 class ForwardRenderPass : public RenderPass
 {
 public:
-    explicit ForwardRenderPass(int priority);
+    ForwardRenderPass();
     ~ForwardRenderPass() override;
 
     void Prepare(RenderData& renderData) override;

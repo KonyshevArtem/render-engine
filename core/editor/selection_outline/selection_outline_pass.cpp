@@ -35,8 +35,8 @@ void CheckTexture(std::shared_ptr<Texture2D>& texture, int width, int height)
     }
 }
 
-SelectionOutlinePass::SelectionOutlinePass(int priority) :
-    RenderPass(priority)
+SelectionOutlinePass::SelectionOutlinePass() :
+    RenderPass()
 {
     m_SilhouetteMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/silhouette", {}), "Silhouette");
     m_SilhouetteMaterial->DepthDescriptor = GraphicsBackendDepthDescriptor::AlwaysPassNoWrite();

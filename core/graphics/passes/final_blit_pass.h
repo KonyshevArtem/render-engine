@@ -9,7 +9,7 @@ class Shader;
 class FinalBlitPass : public RenderPass
 {
 public:
-    explicit FinalBlitPass(int priority);
+    FinalBlitPass();
     ~FinalBlitPass() override = default;
 
     void Prepare(RenderData& renderData) override;

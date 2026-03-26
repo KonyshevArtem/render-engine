@@ -14,8 +14,8 @@
 
 #include <cmath>
 
-GizmosPass::GizmosPass(int priority, Mode mode) :
-    RenderPass(priority),
+GizmosPass::GizmosPass(Mode mode) :
+    RenderPass(),
 	m_Mode(mode)
 {
 }

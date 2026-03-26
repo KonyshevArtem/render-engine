@@ -80,19 +80,17 @@ namespace Graphics
 
     void InitPasses()
     {
-        s_ShadowCasterPass = std::make_shared<ShadowCasterPass>(0);
-        s_ForwardRenderPass = std::make_shared<ForwardRenderPass>(1);
+        s_ShadowCasterPass = std::make_shared<ShadowCasterPass>();
+        s_ForwardRenderPass = std::make_shared<ForwardRenderPass>();
+        s_PostProcessPass = std::make_shared<PostProcessPass>();
+        s_UIRenderPass = std::make_shared<UIRenderPass>();
+        s_FinalBlitPass = std::make_shared<FinalBlitPass>();
 #if RENDER_ENGINE_EDITOR
-        s_ShadowMapDebugPass = std::make_shared<ShadowMapDebugPass>(2);
-        s_3DGizmosPass = std::make_shared<GizmosPass>(3, GizmosPass::Mode::GIZMOS_3D);
-        s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>(4);
+        s_ShadowMapDebugPass = std::make_shared<ShadowMapDebugPass>();
+        s_3DGizmosPass = std::make_shared<GizmosPass>(GizmosPass::Mode::GIZMOS_3D);
+        s_2DGizmosPass = std::make_shared<GizmosPass>(GizmosPass::Mode::GIZMOS_2D);
+        s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>();
 #endif
-        s_PostProcessPass = std::make_shared<PostProcessPass>(5);
-        s_UIRenderPass = std::make_shared<UIRenderPass>(6);
-#if RENDER_ENGINE_EDITOR
-        s_2DGizmosPass = std::make_shared<GizmosPass>(7, GizmosPass::Mode::GIZMOS_2D);
-#endif
-        s_FinalBlitPass = std::make_shared<FinalBlitPass>(8);
     }
 
     void Init()
@@ -251,9 +249,20 @@ namespace Graphics
 
         SetLightingData(s_RenderData.Lights, s_RenderData.Skybox);
 
-        std::sort(s_RenderPasses.begin(), s_RenderPasses.end(), RenderPass::Comparer());
-        for (const std::shared_ptr<RenderPass>& pass : s_RenderPasses)
-	        pass->Execute(s_RenderData);
+    	s_ShadowCasterPass->Execute(s_RenderData);
+        s_ForwardRenderPass->Execute(s_RenderData);
+#if RENDER_ENGINE_EDITOR
+        s_ShadowMapDebugPass->Execute(s_RenderData);
+        s_3DGizmosPass->Execute(s_RenderData);
+        s_SelectionOutlinePass->Execute(s_RenderData);
+#endif
+        s_PostProcessPass->Execute(s_RenderData);
+        s_UIRenderPass->Execute(s_RenderData);
+#if RENDER_ENGINE_EDITOR
+        s_2DGizmosPass->Execute(s_RenderData);
+#endif
+        s_FinalBlitPass->Execute(s_RenderData);
+
     }
 
     int GetScreenWidth()

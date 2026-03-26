@@ -11,7 +11,7 @@ class Texture;
 class PostProcessPass : public RenderPass
 {
 public:
-    explicit PostProcessPass(int priority);
+    PostProcessPass();
     ~PostProcessPass() override = default;
 
     void Prepare(RenderData& renderData) override;

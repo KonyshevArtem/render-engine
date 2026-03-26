@@ -28,7 +28,6 @@ add_library(
 	graphics/render_data.h
 	graphics/passes/shadow_caster_pass.cpp
 	graphics/passes/shadow_caster_pass.h
-	graphics/passes/render_pass.cpp
 	graphics/passes/render_pass.h
 	texture_2d_array/texture_2d_array.cpp
 	texture_2d_array/texture_2d_array.h

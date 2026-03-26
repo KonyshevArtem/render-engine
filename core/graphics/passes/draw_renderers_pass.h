@@ -18,7 +18,7 @@ class Renderer;
 class DrawRenderersPass : public RenderPass
 {
 public:
-    DrawRenderersPass(std::string name, DrawCallSortMode sorting, DrawCallFilter filter, int priority);
+    DrawRenderersPass(std::string name, DrawCallSortMode sorting, DrawCallFilter filter);
     ~DrawRenderersPass() override = default;
 
     void Prepare(RenderData& renderData) override;

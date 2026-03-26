@@ -19,7 +19,7 @@ public:
         GIZMOS_3D
     };
 
-    GizmosPass(int priority, Mode mode);
+    explicit GizmosPass(Mode mode);
     ~GizmosPass() override = default;
 
     void Prepare(RenderData& renderData) override;

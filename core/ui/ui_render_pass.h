@@ -11,7 +11,7 @@ class UIElement;
 class UIRenderPass : public RenderPass
 {
 public:
-    explicit UIRenderPass(int priority);
+    UIRenderPass();
     ~UIRenderPass() override = default;
 
     void Prepare(RenderData& renderData) override;

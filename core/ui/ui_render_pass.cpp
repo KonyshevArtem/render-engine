@@ -25,8 +25,8 @@ namespace UIRenderPass_Local
     }
 }
 
-UIRenderPass::UIRenderPass(int priority) :
-    RenderPass(priority)
+UIRenderPass::UIRenderPass() :
+    RenderPass()
 {
     m_ImageShader = Shader::Load("core_resources/shaders/ui/image", {});
     m_TextShader = Shader::Load("core_resources/shaders/ui/text", {});

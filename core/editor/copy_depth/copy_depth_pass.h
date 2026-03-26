@@ -13,7 +13,7 @@ class Texture2D;
 class CopyDepthPass : public RenderPass
 {
 public:
-    explicit CopyDepthPass(int priority);
+    CopyDepthPass();
     ~CopyDepthPass() override;
 
     void Prepare(RenderData& renderData) override;

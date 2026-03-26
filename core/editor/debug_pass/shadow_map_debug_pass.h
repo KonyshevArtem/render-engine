@@ -12,7 +12,7 @@ public:
     static bool DrawShadowMapOverlay;
     static bool DrawShadowCascades;
 
-    explicit ShadowMapDebugPass(int priority);
+    ShadowMapDebugPass();
     ~ShadowMapDebugPass() override = default;
 
     void Prepare(RenderData& renderData) override;

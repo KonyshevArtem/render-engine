@@ -22,8 +22,8 @@ namespace PostProcessPass_Local
     };
 }
 
-PostProcessPass::PostProcessPass(int priority) :
-    RenderPass(priority)
+PostProcessPass::PostProcessPass() :
+    RenderPass()
 {
     GraphicsBackendBufferDescriptor bufferDescriptor{};
     bufferDescriptor.AllowCPUWrites = true;

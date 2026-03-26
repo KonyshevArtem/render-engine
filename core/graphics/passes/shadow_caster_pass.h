@@ -23,7 +23,7 @@ class Light;
 class ShadowCasterPass : public RenderPass
 {
 public:
-    explicit ShadowCasterPass(int priority);
+    ShadowCasterPass();
     ~ShadowCasterPass() override = default;
 
     void Prepare(RenderData& renderData) override;

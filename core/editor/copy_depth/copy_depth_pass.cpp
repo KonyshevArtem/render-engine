@@ -5,8 +5,8 @@
 #include "texture_2d/texture_2d.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 
-CopyDepthPass::CopyDepthPass(int priority) :
-    RenderPass(priority),
+CopyDepthPass::CopyDepthPass() :
+    RenderPass(),
     m_StartFence(),
     m_EndFence(GraphicsBackend::Current()->CreateFence(FenceType::COPY_TO_RENDER, "After Depth Copy"))
 {

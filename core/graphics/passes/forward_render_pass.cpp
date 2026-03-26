@@ -9,13 +9,13 @@
 #include "enums/resource_state.h"
 #include "texture_2d/texture_2d.h"
 
-ForwardRenderPass::ForwardRenderPass(int priority) :
-    RenderPass(priority),
+ForwardRenderPass::ForwardRenderPass() :
+    RenderPass(),
     m_EndFence(GraphicsBackend::Current()->CreateFence(FenceType::RENDER_TO_COPY, "After Forward Pass"))
 {
-    m_OpaquePass = std::make_unique<DrawRenderersPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque(), 1);
-    m_TransparentPass = std::make_unique<DrawRenderersPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent(), 3);
-    m_SkyboxPass = std::make_unique<SkyboxPass>(2);
+    m_OpaquePass = std::make_unique<DrawRenderersPass>("Opaque", DrawCallSortMode::FRONT_TO_BACK, DrawCallFilter::Opaque());
+    m_TransparentPass = std::make_unique<DrawRenderersPass>("Transparent", DrawCallSortMode::BACK_TO_FRONT, DrawCallFilter::Transparent());
+    m_SkyboxPass = std::make_unique<SkyboxPass>();
 }
 
 ForwardRenderPass::~ForwardRenderPass()

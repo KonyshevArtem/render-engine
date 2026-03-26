@@ -83,7 +83,7 @@ ShadowCasterPass::ShadowCasterPass(int priority) :
     m_ShadowCasterPassBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "ShadowCasterPassBuffer");
 }
 
-void ShadowCasterPass::Prepare(const RenderData& renderData)
+void ShadowCasterPass::Prepare(RenderData& renderData)
 {
     static const Matrix4x4 biasMatrix = Matrix4x4::TRS(Vector3{0.5f, 0.5f, 0.5f}, Quaternion(), Vector3{0.5f, 0.5f, 0.5f});
     static const std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/shadowCaster", {});

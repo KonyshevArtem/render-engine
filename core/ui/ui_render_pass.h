@@ -14,7 +14,7 @@ public:
     explicit UIRenderPass(int priority);
     ~UIRenderPass() override = default;
 
-    void Prepare(const RenderData& renderData);
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
 private:

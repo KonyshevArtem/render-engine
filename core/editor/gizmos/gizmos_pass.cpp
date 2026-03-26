@@ -20,11 +20,11 @@ GizmosPass::GizmosPass(int priority, Mode mode) :
 {
 }
 
-bool GizmosPass::Prepare(const RenderData& renderData)
+void GizmosPass::Prepare(RenderData& renderData)
 {
     if (m_Mode == Mode::GIZMOS_3D && !Gizmos::IsEnabled3D() ||
         m_Mode == Mode::GIZMOS_2D && !Gizmos::IsEnabled2D())
-        return false;
+        return;
 
     Profiler::Marker marker("GizmosPass::Prepare");
 
@@ -39,9 +39,6 @@ bool GizmosPass::Prepare(const RenderData& renderData)
             }
         }
 
-        m_ColorTarget = renderData.CameraColorTarget;
-        m_DepthTarget = renderData.CameraDepthTarget;
-
         m_ViewMatrix = renderData.ViewMatrix;
         m_ProjectionMatrix = renderData.ProjectionMatrix;
         m_NearPlane = renderData.NearPlane;
@@ -50,17 +47,12 @@ bool GizmosPass::Prepare(const RenderData& renderData)
     }
     else
     {
-        m_ColorTarget = renderData.PostProcessedTarget;
-        m_DepthTarget = nullptr;
-
         m_NearPlane = 0.01f;
         m_FarPlane = 1.0f;
         m_ViewMatrix = Matrix4x4::Identity();
         m_ProjectionMatrix = Matrix4x4::Orthographic(0, renderData.Viewport.x, 0, renderData.Viewport.y, m_NearPlane, m_FarPlane);
         m_GizmosQueue.Prepare(m_ProjectionMatrix, Gizmos::Get2DGizmosToDraw(), RenderSettings{ .FrustumCullingPlanesBits = 0 });
     }
-
-    return true;
 }
 
 void GizmosPass::Execute(const RenderData& renderData)
@@ -68,10 +60,16 @@ void GizmosPass::Execute(const RenderData& renderData)
     Profiler::Marker marker("GizmosPass::Execute");
     Profiler::GPUMarker gpuMarker("GizmosPass::Execute");
 
-    const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = m_ColorTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+    if (m_GizmosQueue.IsEmpty())
+        return;
+
+    const std::shared_ptr<Texture> colorTarget = m_Mode == Mode::GIZMOS_3D ? renderData.CameraColorTarget : renderData.PostProcessedTarget;
+    const std::shared_ptr<Texture> depthTarget = m_Mode == Mode::GIZMOS_3D ? renderData.CameraDepthTarget : nullptr;
+
+    const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = colorTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
     GraphicsBackendRenderTargetDescriptor depthDescriptor = GraphicsBackendRenderTargetDescriptor::EmptyDepth();
-    if (m_DepthTarget)
-		depthDescriptor = { .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+    if (depthTarget)
+		depthDescriptor = { .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = depthTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
 
     GraphicsBackend::Current()->AttachRenderTarget(colorDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(depthDescriptor);

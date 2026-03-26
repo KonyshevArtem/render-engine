@@ -14,7 +14,7 @@ FinalBlitPass::FinalBlitPass(int priority) :
     m_BlitShader = Shader::Load("core_resources/shaders/blit", {});
 }
 
-void FinalBlitPass::Prepare(const RenderData& renderData)
+void FinalBlitPass::Prepare(RenderData& renderData)
 {
 }
 

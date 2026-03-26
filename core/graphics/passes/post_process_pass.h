@@ -14,7 +14,7 @@ public:
     explicit PostProcessPass(int priority);
     ~PostProcessPass() override = default;
 
-    void Prepare(RenderData& renderData);
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
 private:

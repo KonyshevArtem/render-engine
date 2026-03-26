@@ -38,7 +38,7 @@ UIRenderPass::UIRenderPass(int priority) :
     m_UIDataBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "UI Data");
 }
 
-void UIRenderPass::Prepare(const RenderData& renderData)
+void UIRenderPass::Prepare(RenderData& renderData)
 {
     Profiler::Marker _("UIRenderPass::Prepare");
 

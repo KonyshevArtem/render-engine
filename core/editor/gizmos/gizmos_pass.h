@@ -22,7 +22,7 @@ public:
     GizmosPass(int priority, Mode mode);
     ~GizmosPass() override = default;
 
-    bool Prepare(const RenderData& renderData);
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
     GizmosPass(const GizmosPass&) = delete;
@@ -38,9 +38,6 @@ private:
     float m_NearPlane;
     float m_FarPlane;
     Mode m_Mode;
-
-    std::shared_ptr<Texture> m_ColorTarget;
-    std::shared_ptr<Texture> m_DepthTarget;
 };
 
 #endif

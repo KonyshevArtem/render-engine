@@ -23,7 +23,7 @@ public:
     class Task : public std::enable_shared_from_this<Task>
     {
     public:
-        std::atomic<bool> IsFinished;
+        std::atomic<bool> IsFinished = false;
 
         void Schedule();
         void Wait();

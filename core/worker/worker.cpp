@@ -98,7 +98,8 @@ void Worker::Run()
 
         if (task)
         {
-            task->Func();
+            if (task->Func)
+				task->Func();
             task->IsFinished = true;
         }
     }

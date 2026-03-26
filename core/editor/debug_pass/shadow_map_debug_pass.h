@@ -15,7 +15,7 @@ public:
     explicit ShadowMapDebugPass(int priority);
     ~ShadowMapDebugPass() override = default;
 
-    void Prepare(const RenderData& renderData);
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
     ShadowMapDebugPass(const ShadowMapDebugPass&) = delete;

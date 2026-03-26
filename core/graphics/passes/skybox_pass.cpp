@@ -15,7 +15,7 @@ SkyboxPass::SkyboxPass(int priority) :
 {
 }
 
-void SkyboxPass::Prepare()
+void SkyboxPass::Prepare(RenderData& renderData)
 {
     if (!m_Mesh)
         m_Mesh = Resources::Load<Mesh>("core_resources/models/Cube");

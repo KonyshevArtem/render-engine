@@ -24,7 +24,7 @@ ShadowMapDebugPass::ShadowMapDebugPass(int priority) : RenderPass(priority)
     DeveloperConsole::AddBoolCommand(L"Shadows.DrawCascades", &DrawShadowCascades);
 }
 
-void ShadowMapDebugPass::Prepare(const RenderData& renderData)
+void ShadowMapDebugPass::Prepare(RenderData& renderData)
 {
 }
 

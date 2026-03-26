@@ -21,7 +21,7 @@ public:
     explicit ForwardRenderPass(int priority);
     ~ForwardRenderPass() override;
 
-    void Prepare(RenderData& renderData);
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
     const GraphicsBackendFence& GetEndFence() const;
 

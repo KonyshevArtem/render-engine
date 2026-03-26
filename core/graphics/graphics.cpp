@@ -62,6 +62,7 @@ namespace Graphics
     int s_ScreenHeight = 0;
     RenderData s_RenderData;
     std::vector<std::shared_ptr<RenderPass>> s_RenderPasses;
+    std::shared_ptr<Worker::Task> s_PrepareTask;
 
     void InitConstantBuffers()
     {
@@ -182,39 +183,58 @@ namespace Graphics
         s_RenderPasses.clear();
         s_RenderData = RenderData::GetRenderData(width, height);
 
-        s_ShadowCasterPass->Prepare(s_RenderData);
-        s_ForwardRenderPass->Prepare(s_RenderData);
-        s_PostProcessPass->Prepare(s_RenderData);
-        s_UIRenderPass->Prepare(s_RenderData);
-        s_FinalBlitPass->Prepare(s_RenderData);
+        s_PrepareTask = std::make_shared<Worker::Task>();
 
-        s_RenderPasses.push_back(s_ShadowCasterPass);
-        s_RenderPasses.push_back(s_ForwardRenderPass);
-        s_RenderPasses.push_back(s_FinalBlitPass);
-        s_RenderPasses.push_back(s_UIRenderPass);
-        s_RenderPasses.push_back(s_PostProcessPass);
+        auto SchedulePrepareTask = [](const std::function<void()>& taskFunc, const std::span<const std::shared_ptr<Worker::Task>>& dependencies)
+            {
+                std::shared_ptr<Worker::Task> prepareTask = Worker::CreateTask(taskFunc, Worker::Priority::TASK);
+                for (const std::shared_ptr<Worker::Task>& dep : dependencies)
+	                prepareTask->AddDependency(dep);
+
+                s_PrepareTask->AddDependency(prepareTask);
+
+                prepareTask->Schedule();
+                return prepareTask;
+            };
+
+        auto SchedulePassPrepare = [&](const std::shared_ptr<RenderPass>& renderPass, const std::span<const std::shared_ptr<Worker::Task>>& dependencies)
+            {
+                s_RenderPasses.push_back(renderPass);
+                return SchedulePrepareTask([renderPass] {renderPass->Prepare(s_RenderData); }, dependencies);
+            };
+
+        SchedulePassPrepare(s_ShadowCasterPass, {});
+
+        const std::shared_ptr<Worker::Task> forwardRenderPrepareTask = SchedulePassPrepare(s_ForwardRenderPass, {});
+
+        const std::shared_ptr<Worker::Task> postProcessDependencies[1] = { forwardRenderPrepareTask };
+        SchedulePassPrepare(s_PostProcessPass, postProcessDependencies);
+
+        const std::shared_ptr<Worker::Task> uiRenderPrepareTask = SchedulePassPrepare(s_UIRenderPass, {});
+        SchedulePassPrepare(s_FinalBlitPass, {});
 
 #if RENDER_ENGINE_EDITOR
-        if (s_3DGizmosPass->Prepare(s_RenderData))
-	        s_RenderPasses.push_back(s_3DGizmosPass);
+        const std::shared_ptr<Worker::Task> gizmos3DPrepareTask = SchedulePassPrepare(s_3DGizmosPass, {});
+        
+        const std::shared_ptr<Worker::Task> gizmos2DDependencies[1] = { uiRenderPrepareTask };
+        const std::shared_ptr<Worker::Task> gizmos2DPrepareTask = SchedulePassPrepare(s_2DGizmosPass, gizmos2DDependencies);
 
-        if (s_2DGizmosPass->Prepare(s_RenderData))
-            s_RenderPasses.push_back(s_2DGizmosPass);
-
-        if (s_SelectionOutlinePass->Prepare(s_RenderData))
-            s_RenderPasses.push_back(s_SelectionOutlinePass);
-
-        s_ShadowMapDebugPass->Prepare(s_RenderData);
-        s_RenderPasses.push_back(s_ShadowMapDebugPass);
-
-        Gizmos::ClearGizmos();
+        const std::shared_ptr<Worker::Task> clearGizmosDependencies[2] = { gizmos2DPrepareTask, gizmos3DPrepareTask };
+        SchedulePrepareTask([] {Gizmos::ClearGizmos(); }, clearGizmosDependencies);
+        
+        SchedulePassPrepare(s_SelectionOutlinePass, {});
+        SchedulePassPrepare(s_ShadowMapDebugPass, {});
 #endif
+
+        s_PrepareTask->Schedule();
     }
 
     void Render()
     {
         if (s_RenderData.Viewport.x == 0 || s_RenderData.Viewport.y == 0)
             return;
+
+        s_PrepareTask->Wait();
 
         Profiler::Marker marker("Graphics::Render");
 

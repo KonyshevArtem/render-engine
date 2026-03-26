@@ -42,13 +42,15 @@ SelectionOutlinePass::SelectionOutlinePass(int priority) :
     m_SilhouetteMaterial->DepthDescriptor = GraphicsBackendDepthDescriptor::AlwaysPassNoWrite();
 }
 
-bool SelectionOutlinePass::Prepare(const RenderData& renderData)
+void SelectionOutlinePass::Prepare(RenderData& renderData)
 {
     static std::vector<std::shared_ptr<Renderer>> selectedRenderers;
 
+    Profiler::Marker marker("SelectionOutlinePass::Prepare");
+
     const std::unordered_set<std::shared_ptr<GameObject>>& selectedGameObjects = Hierarchy::GetSelectedGameObjects();
     if (selectedGameObjects.empty())
-        return false;
+        return;
 
     selectedRenderers.clear();
     selectedRenderers.reserve(selectedGameObjects.size());
@@ -64,8 +66,6 @@ bool SelectionOutlinePass::Prepare(const RenderData& renderData)
 
     const Matrix4x4 vpMatrix = renderData.ProjectionMatrix * renderData.ViewMatrix;
     m_SelectedObjectsQueue.Prepare(vpMatrix, selectedRenderers, settings);
-
-    return true;
 }
 
 void SelectionOutlinePass::Execute(const RenderData& renderData)
@@ -74,6 +74,9 @@ void SelectionOutlinePass::Execute(const RenderData& renderData)
     static Vector4 outlineColor {1, 0.73f, 0, 1};
 
     Profiler::Marker marker("SelectionOutlinePass::Execute");
+
+    if (m_SelectedObjectsQueue.IsEmpty())
+        return;
 
     CheckTexture(silhouetteRenderTarget, renderData.Viewport.x, renderData.Viewport.y);
 

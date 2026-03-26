@@ -11,6 +11,7 @@ public:
     explicit RenderPass(int priority);
     virtual ~RenderPass() = default;
 
+    virtual void Prepare(RenderData& renderData) = 0;
     virtual void Execute(const RenderData& renderData) = 0;
 
     RenderPass(const RenderPass &) = delete;

@@ -48,11 +48,10 @@ void ForwardRenderPass::Prepare(RenderData& renderData)
 
     renderData.CameraColorTarget = m_CameraColorTarget;
     renderData.CameraDepthTarget = m_CameraDepthTarget;
-
-    const Matrix4x4 viewProj = renderData.ProjectionMatrix * renderData.ViewMatrix;
-    m_OpaquePass->Prepare(viewProj, renderData.Renderers);
-    m_SkyboxPass->Prepare();
-    m_TransparentPass->Prepare(viewProj, renderData.Renderers);
+    
+    m_OpaquePass->Prepare(renderData);
+    m_SkyboxPass->Prepare(renderData);
+    m_TransparentPass->Prepare(renderData);
 }
 
 void ForwardRenderPass::Execute(const RenderData& renderData)

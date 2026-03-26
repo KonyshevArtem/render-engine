@@ -102,6 +102,7 @@ namespace Graphics
         InitConstantBuffers();
         InitPasses();
 
+        s_PrepareTaskSingleThreaded = GraphicsBackend::Current()->GetName() == GraphicsBackendName::OPENGL || GraphicsBackend::Current()->GetName() == GraphicsBackendName::GLES;
         DeveloperConsole::AddBoolCommand(L"Graphics.Prepare.SingleThreaded", &s_PrepareTaskSingleThreaded);
     }
 

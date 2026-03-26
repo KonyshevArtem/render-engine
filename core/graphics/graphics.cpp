@@ -36,6 +36,7 @@
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "graphics_buffer/graphics_buffer_view.h"
 #include "passes/post_process_pass.h"
+#include "developer_console/developer_console.h"
 
 #include <cassert>
 
@@ -63,6 +64,7 @@ namespace Graphics
     RenderData s_RenderData;
     std::vector<std::shared_ptr<RenderPass>> s_RenderPasses;
     std::shared_ptr<Worker::Task> s_PrepareTask;
+    bool s_PrepareTaskSingleThreaded = false;
 
     void InitConstantBuffers()
     {
@@ -101,6 +103,8 @@ namespace Graphics
 
         InitConstantBuffers();
         InitPasses();
+
+        DeveloperConsole::AddBoolCommand(L"Graphics.Prepare.SingleThreaded", &s_PrepareTaskSingleThreaded);
     }
 
     void Shutdown()
@@ -193,7 +197,8 @@ namespace Graphics
 
                 s_PrepareTask->AddDependency(prepareTask);
 
-                prepareTask->Schedule();
+				if (!s_PrepareTaskSingleThreaded)
+					prepareTask->Schedule();
                 return prepareTask;
             };
 
@@ -226,7 +231,10 @@ namespace Graphics
         SchedulePassPrepare(s_ShadowMapDebugPass, {});
 #endif
 
-        s_PrepareTask->Schedule();
+        if (s_PrepareTaskSingleThreaded)
+            s_PrepareTask->Execute();
+        else
+			s_PrepareTask->Schedule();
     }
 
     void Render()

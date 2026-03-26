@@ -111,6 +111,20 @@ void Worker::Task::Schedule()
     s_Tasks[Priority].push_back(shared_from_this());
 }
 
+void Worker::Task::Execute()
+{
+    if (IsFinished)
+        return;
+
+    for (const std::shared_ptr<Worker::Task>& dep : Dependencies)
+        dep->Execute();
+
+    if (Func)
+        Func();
+
+    IsFinished = true;
+}
+
 void Worker::Task::Wait()
 {
     Profiler::Marker _("Worker::Task::Wait");

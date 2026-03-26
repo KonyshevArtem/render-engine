@@ -26,6 +26,7 @@ public:
         std::atomic<bool> IsFinished = false;
 
         void Schedule();
+        void Execute();
         void Wait();
         void AddDependency(const std::shared_ptr<Task>& task);
 

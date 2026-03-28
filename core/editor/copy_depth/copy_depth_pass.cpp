@@ -5,8 +5,8 @@
 #include "texture_2d/texture_2d.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 
-CopyDepthPass::CopyDepthPass(int priority) :
-    RenderPass(priority),
+CopyDepthPass::CopyDepthPass() :
+    RenderPass(),
     m_StartFence(),
     m_EndFence(GraphicsBackend::Current()->CreateFence(FenceType::COPY_TO_RENDER, "After Depth Copy"))
 {
@@ -17,21 +17,21 @@ CopyDepthPass::~CopyDepthPass()
     GraphicsBackend::Current()->DeleteFence(m_EndFence);
 }
 
-void CopyDepthPass::Prepare(const GraphicsBackendFence& waitForFence, const std::shared_ptr<Texture2D>& sourceDepth)
+void CopyDepthPass::Prepare(RenderData& renderData)
 {
-    m_StartFence = waitForFence;
-    m_SourceDepth = sourceDepth;
 }
 
 void CopyDepthPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("CopyDepthPass::Execute");
-    Profiler::GPUMarker gpuMarker("CopyDepthPass::Execute");
 
     GraphicsBackend::Current()->WaitForFence(m_StartFence);
 
     GraphicsBackend::Current()->BeginCopyPass("Copy Depth To Backbuffer");
-    GraphicsBackend::Current()->CopyTextureToTexture(m_SourceDepth->GetBackendTexture(), GraphicsBackendRenderTargetDescriptor::DepthBackbuffer(), 0, 0, 0, 0, m_SourceDepth->GetWidth(), m_SourceDepth->GetHeight());
+    {
+        Profiler::GPUMarker gpuMarker("CopyDepthPass::Execute", GPUQueue::COPY);
+        GraphicsBackend::Current()->CopyTextureToTexture(m_SourceDepth->GetBackendTexture(), GraphicsBackendRenderTargetDescriptor::DepthBackbuffer(), 0, 0, 0, 0, m_SourceDepth->GetWidth(), m_SourceDepth->GetHeight());
+    }
     GraphicsBackend::Current()->EndCopyPass();
 
     GraphicsBackend::Current()->SignalFence(m_EndFence);

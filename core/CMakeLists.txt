@@ -28,7 +28,6 @@ add_library(
 	graphics/render_data.h
 	graphics/passes/shadow_caster_pass.cpp
 	graphics/passes/shadow_caster_pass.h
-	graphics/passes/render_pass.cpp
 	graphics/passes/render_pass.h
 	texture_2d_array/texture_2d_array.cpp
 	texture_2d_array/texture_2d_array.h
@@ -161,7 +160,9 @@ add_library(
 	developer_console/developer_console.h
 	developer_console/developer_console.cpp
 	graphics_buffer/graphics_buffer_view.h
-	graphics_buffer/graphics_buffer_view.cpp)
+	graphics_buffer/graphics_buffer_view.cpp
+	graphics/passes/post_process_pass.cpp
+	graphics/passes/post_process_pass.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil StringSplit)

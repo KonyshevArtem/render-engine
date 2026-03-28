@@ -11,10 +11,10 @@ class UIElement;
 class UIRenderPass : public RenderPass
 {
 public:
-    explicit UIRenderPass(int priority);
+    UIRenderPass();
     ~UIRenderPass() override = default;
 
-    void Prepare(const RenderData& renderData);
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
 private:

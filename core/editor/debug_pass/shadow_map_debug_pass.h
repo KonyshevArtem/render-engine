@@ -12,10 +12,10 @@ public:
     static bool DrawShadowMapOverlay;
     static bool DrawShadowCascades;
 
-    explicit ShadowMapDebugPass(int priority);
+    ShadowMapDebugPass();
     ~ShadowMapDebugPass() override = default;
 
-    void Prepare(const std::shared_ptr<Texture2D>& depthMap);
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
     ShadowMapDebugPass(const ShadowMapDebugPass&) = delete;
@@ -26,10 +26,9 @@ public:
 
 private:
     std::shared_ptr<DrawableGeometry> m_FullscreenMesh;
-    std::shared_ptr<Texture2D> m_DepthMap;
 
-    void DrawOverlay(const RenderData& renderData);
-    void DrawCascades(const RenderData& renderData);
+    void DrawOverlay(const RenderData& renderData) const;
+    void DrawCascades(const RenderData& renderData) const;
 };
 
 #endif //RENDER_ENGINE_SHADOW_MAP_DEBUG_PASS_H

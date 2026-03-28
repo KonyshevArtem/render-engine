@@ -31,6 +31,11 @@ struct RenderData
 
     std::shared_ptr<Cubemap> Skybox;
 
+    std::shared_ptr<Texture> CameraColorTarget;
+    std::shared_ptr<Texture> CameraDepthTarget;
+
+    std::shared_ptr<Texture> PostProcessedTarget;
+
 private:
     void CollectRenderers(const std::shared_ptr<GameObject> &gameObject);
 };

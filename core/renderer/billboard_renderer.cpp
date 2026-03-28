@@ -29,7 +29,7 @@ std::shared_ptr<Worker::Task> BillboardRenderer::CreateAsync(const nlohmann::jso
     std::shared_ptr<Worker::Task> textureTask = Resources::LoadAsync<Texture2D>(texturePath, [renderer](std::shared_ptr<Texture2D> texture)
                                                                                 { renderer->SetTexture(texture); });
 
-    std::shared_ptr<Worker::Task> task = Worker::CreateTask([callback, renderer]{ callback(renderer); });
+    std::shared_ptr<Worker::Task> task = Worker::CreateTask([callback, renderer]{ callback(renderer); }, Worker::Priority::LOADING);
     task->AddDependency(textureTask);
     task->Schedule();
 

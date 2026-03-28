@@ -25,8 +25,8 @@ namespace UIRenderPass_Local
     }
 }
 
-UIRenderPass::UIRenderPass(int priority) :
-    RenderPass(priority)
+UIRenderPass::UIRenderPass() :
+    RenderPass()
 {
     m_ImageShader = Shader::Load("core_resources/shaders/ui/image", {});
     m_TextShader = Shader::Load("core_resources/shaders/ui/text", {});
@@ -38,7 +38,7 @@ UIRenderPass::UIRenderPass(int priority) :
     m_UIDataBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "UI Data");
 }
 
-void UIRenderPass::Prepare(const RenderData& renderData)
+void UIRenderPass::Prepare(RenderData& renderData)
 {
     Profiler::Marker _("UIRenderPass::Prepare");
 
@@ -65,7 +65,6 @@ void UIRenderPass::Prepare(const RenderData& renderData)
 void UIRenderPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker cpuMarker("UIRenderPass::Execute");
-    Profiler::GPUMarker gpuMarker("UIRenderPass::Execute");
 
     struct UIData
     {
@@ -75,99 +74,105 @@ void UIRenderPass::Execute(const RenderData& renderData)
 
     const std::shared_ptr<Mesh> quadMesh = Mesh::GetQuadMesh();
 
-    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
-    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::DepthBackbuffer(LoadAction::CLEAR));
+    const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.PostProcessedTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+    const GraphicsBackendRenderTargetDescriptor depthDescriptor{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
+
+    GraphicsBackend::Current()->AttachRenderTarget(colorDescriptor);
+    GraphicsBackend::Current()->AttachRenderTarget(depthDescriptor);
 
     GraphicsBackend::Current()->BeginRenderPass("UI Pass");
-
-    uint8_t maskStencilDepth = 0;
-
-    for (UIElement* element : UIManager::GetElements())
     {
-        if (const UIImage* image = dynamic_cast<UIImage*>(element))
+        Profiler::GPUMarker gpuMarker("UIRenderPass::Execute");
+
+        uint8_t maskStencilDepth = 0;
+
+        for (UIElement* element : UIManager::GetElements())
         {
-            UIData data;
-            data.OffsetScale = UIRenderPass_Local::GetOffsetScale(image->GetGlobalPosition(), image->Size);
-            data.Color = image->Color;
-            const uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
-
-            GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
-            GraphicsBackend::Current()->BindTextureSampler(image->Image->GetBackendTexture(), image->Image->GetBackendSampler(), 0);
-
-            GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::AlphaBlending());
-            GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
-            GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
-            GraphicsBackend::Current()->UseProgram(m_ImageShader->GetProgram(quadMesh));
-            GraphicsBackend::Current()->DrawElements(quadMesh->GetGraphicsBackendGeometry(), quadMesh->GetPrimitiveType(), quadMesh->GetElementsCount(), quadMesh->GetIndicesDataType());
-        }
-
-        if (const UIText* text = dynamic_cast<UIText*>(element))
-        {
-            const std::shared_ptr<Mesh> textMesh = text->GetMesh();
-            const std::shared_ptr<Texture> fontAtlas = text->GetFontAtlas();
-            if (!textMesh || !fontAtlas)
-                continue;
-
-            UIData data;
-            data.OffsetScale = UIRenderPass_Local::GetOffsetScale(text->GetGlobalPosition(), Vector2(1, 1));
-            data.Color = text->Color;
-            const uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
-
-            GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
-            GraphicsBackend::Current()->BindTextureSampler(fontAtlas->GetBackendTexture(), fontAtlas->GetBackendSampler(), 0);
-
-            GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::AlphaBlending());
-            GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
-            GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
-            GraphicsBackend::Current()->UseProgram(m_TextShader->GetProgram(textMesh));
-            GraphicsBackend::Current()->DrawElements(textMesh->GetGraphicsBackendGeometry(), textMesh->GetPrimitiveType(), textMesh->GetElementsCount(), textMesh->GetIndicesDataType());
-        }
-
-        if (const UIMaskStencil* maskStencil = dynamic_cast<UIMaskStencil*>(element))
-        {
-            Vector2 position = maskStencil->GetGlobalPosition();
-            Vector2 size = maskStencil->Size;
-
-            if (!maskStencil->Open)
+            if (const UIImage* image = dynamic_cast<UIImage*>(element))
             {
-                position.x += size.x;
-                size.x *= -1;
+                UIData data;
+                data.OffsetScale = UIRenderPass_Local::GetOffsetScale(image->GetGlobalPosition(), image->Size);
+                data.Color = image->Color;
+                const uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
+
+                GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
+                GraphicsBackend::Current()->BindTextureSampler(image->Image->GetBackendTexture(), image->Image->GetBackendSampler(), 0);
+
+                GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::AlphaBlending());
+                GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
+                GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
+                GraphicsBackend::Current()->UseProgram(m_ImageShader->GetProgram(quadMesh));
+                GraphicsBackend::Current()->DrawElements(quadMesh->GetGraphicsBackendGeometry(), quadMesh->GetPrimitiveType(), quadMesh->GetElementsCount(), quadMesh->GetIndicesDataType());
             }
 
-            Vector4 offsetScale = UIRenderPass_Local::GetOffsetScale(position, size);
-            const uint64_t offset = m_UIDataBuffer->SetData(&offsetScale, 0, sizeof(offsetScale));
-
-            GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(offsetScale));
-
-            GraphicsBackendStencilDescriptor stencilDescriptor{};
-            stencilDescriptor.Enabled = true;
-            stencilDescriptor.FrontFaceOpDescriptor.ComparisonFunction = ComparisonFunction::ALWAYS;
-            stencilDescriptor.FrontFaceOpDescriptor.PassOp = StencilOperation::INCREMENT_SATURATE;
-            stencilDescriptor.BackFaceOpDescriptor.ComparisonFunction = ComparisonFunction::ALWAYS;
-            stencilDescriptor.BackFaceOpDescriptor.PassOp = StencilOperation::DECREMENT_SATURATE;
-
-            GraphicsBackend::Current()->SetStencilState(stencilDescriptor);
-
-            GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::NoColorWrite());
-            GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
-            GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
-            GraphicsBackend::Current()->UseProgram(m_MaskStencilShader->GetProgram(quadMesh));
-            GraphicsBackend::Current()->DrawElements(quadMesh->GetGraphicsBackendGeometry(), quadMesh->GetPrimitiveType(), quadMesh->GetElementsCount(), quadMesh->GetIndicesDataType());
-
-            if (maskStencil->Open)
-                ++maskStencilDepth;
-            else
-                --maskStencilDepth;
-
-            stencilDescriptor = {};
-            if (maskStencilDepth > 0)
+            if (const UIText* text = dynamic_cast<UIText*>(element))
             {
+                const std::shared_ptr<Mesh> textMesh = text->GetMesh();
+                const std::shared_ptr<Texture> fontAtlas = text->GetFontAtlas();
+                if (!textMesh || !fontAtlas)
+                    continue;
+
+                UIData data;
+                data.OffsetScale = UIRenderPass_Local::GetOffsetScale(text->GetGlobalPosition(), Vector2(1, 1));
+                data.Color = text->Color;
+                const uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
+
+                GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
+                GraphicsBackend::Current()->BindTextureSampler(fontAtlas->GetBackendTexture(), fontAtlas->GetBackendSampler(), 0);
+
+                GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::AlphaBlending());
+                GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
+                GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
+                GraphicsBackend::Current()->UseProgram(m_TextShader->GetProgram(textMesh));
+                GraphicsBackend::Current()->DrawElements(textMesh->GetGraphicsBackendGeometry(), textMesh->GetPrimitiveType(), textMesh->GetElementsCount(), textMesh->GetIndicesDataType());
+            }
+
+            if (const UIMaskStencil* maskStencil = dynamic_cast<UIMaskStencil*>(element))
+            {
+                Vector2 position = maskStencil->GetGlobalPosition();
+                Vector2 size = maskStencil->Size;
+
+                if (!maskStencil->Open)
+                {
+                    position.x += size.x;
+                    size.x *= -1;
+                }
+
+                Vector4 offsetScale = UIRenderPass_Local::GetOffsetScale(position, size);
+                const uint64_t offset = m_UIDataBuffer->SetData(&offsetScale, 0, sizeof(offsetScale));
+
+                GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(offsetScale));
+
+                GraphicsBackendStencilDescriptor stencilDescriptor{};
                 stencilDescriptor.Enabled = true;
-                stencilDescriptor.FrontFaceOpDescriptor.ComparisonFunction = ComparisonFunction::EQUAL;
-                GraphicsBackend::Current()->SetStencilValue(maskStencilDepth);
-            }
+                stencilDescriptor.FrontFaceOpDescriptor.ComparisonFunction = ComparisonFunction::ALWAYS;
+                stencilDescriptor.FrontFaceOpDescriptor.PassOp = StencilOperation::INCREMENT_SATURATE;
+                stencilDescriptor.BackFaceOpDescriptor.ComparisonFunction = ComparisonFunction::ALWAYS;
+                stencilDescriptor.BackFaceOpDescriptor.PassOp = StencilOperation::DECREMENT_SATURATE;
 
-            GraphicsBackend::Current()->SetStencilState(stencilDescriptor);
+                GraphicsBackend::Current()->SetStencilState(stencilDescriptor);
+
+                GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::NoColorWrite());
+                GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
+                GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
+                GraphicsBackend::Current()->UseProgram(m_MaskStencilShader->GetProgram(quadMesh));
+                GraphicsBackend::Current()->DrawElements(quadMesh->GetGraphicsBackendGeometry(), quadMesh->GetPrimitiveType(), quadMesh->GetElementsCount(), quadMesh->GetIndicesDataType());
+
+                if (maskStencil->Open)
+                    ++maskStencilDepth;
+                else
+                    --maskStencilDepth;
+
+                stencilDescriptor = {};
+                if (maskStencilDepth > 0)
+                {
+                    stencilDescriptor.Enabled = true;
+                    stencilDescriptor.FrontFaceOpDescriptor.ComparisonFunction = ComparisonFunction::EQUAL;
+                    GraphicsBackend::Current()->SetStencilValue(maskStencilDepth);
+                }
+
+                GraphicsBackend::Current()->SetStencilState(stencilDescriptor);
+            }
         }
     }
 

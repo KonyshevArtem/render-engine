@@ -74,7 +74,7 @@ namespace SceneParser
         std::shared_ptr<Scene> scene = std::make_shared<Scene>();
 
         scene->SetLoading(true);
-        std::shared_ptr<Worker::Task> loadingTask = Worker::CreateTask([scene](){ scene->SetLoading(false); });
+        std::shared_ptr<Worker::Task> loadingTask = Worker::CreateTask([scene](){ scene->SetLoading(false); }, Worker::Priority::LOADING);
 
         for (const GameObjectInfo& info : sceneInfo.GameObjects)
         {

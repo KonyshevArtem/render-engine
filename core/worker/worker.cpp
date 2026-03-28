@@ -1,11 +1,9 @@
 #include "worker.h"
 #include "editor/profiler/profiler.h"
 
-#include <chrono>
-
 std::unordered_map<std::thread::id, int32_t> Worker::s_WorkerIds;
 std::vector<std::shared_ptr<Worker>> Worker::s_Workers;
-std::vector<std::shared_ptr<Worker::Task>> Worker::s_Tasks;
+std::vector<std::shared_ptr<Worker::Task>> Worker::s_Tasks[Worker::Priority::COUNT];
 std::mutex Worker::s_TasksMutex;
 
 Worker::Worker() :
@@ -36,17 +34,19 @@ void Worker::Shutdown()
 {
     {
         std::lock_guard<std::mutex> lock(s_TasksMutex);
-        s_Tasks.clear();
+        for (int i = 0; i < Priority::COUNT; ++i)
+			s_Tasks[i] .clear();
     }
 
     s_Workers.clear();
 }
 
-std::shared_ptr<Worker::Task> Worker::CreateTask(const std::function<void()>& taskFunc)
+std::shared_ptr<Worker::Task> Worker::CreateTask(const std::function<void()>& taskFunc, Priority priority)
 {
     std::shared_ptr<Worker::Task> task = std::make_shared<Worker::Task>();
     task->Func = taskFunc;
     task->IsFinished = false;
+    task->Priority = priority;
     return task;
 }
 
@@ -54,6 +54,7 @@ std::shared_ptr<Worker::Task> Worker::Noop()
 {
     std::shared_ptr<Worker::Task> task = std::make_shared<Worker::Task>();
     task->IsFinished = true;
+    task->Priority = Priority::TASK;
     return task;
 }
 
@@ -71,40 +72,57 @@ void Worker::Run()
         std::shared_ptr<Worker::Task> task;
         {
             std::lock_guard<std::mutex> lock(s_TasksMutex);
-            if (!s_Tasks.empty())
+            for (int prio = 0; prio < Priority::COUNT; ++prio)
             {
-                int taskIndex = -1;
-                for (int i = 0; i < s_Tasks.size(); ++i)
+                if (!s_Tasks[prio].empty())
                 {
-                    if (s_Tasks[i]->DependenciesFinished())
+                    int taskIndex = -1;
+                    for (int i = 0; i < s_Tasks[prio].size(); ++i)
                     {
-                        taskIndex = i;
+                        if (s_Tasks[prio][i]->DependenciesFinished())
+                        {
+                            taskIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (taskIndex >= 0)
+                    {
+                        task = s_Tasks[prio][taskIndex];
+                        s_Tasks[prio].erase(s_Tasks[prio].begin() + taskIndex);
                         break;
                     }
-                }
-
-                if (taskIndex >= 0)
-                {
-                    task = s_Tasks[taskIndex];
-                    s_Tasks.erase(s_Tasks.begin() + taskIndex);
                 }
             }
         }
 
         if (task)
         {
-            task->Func();
+            if (task->Func)
+				task->Func();
             task->IsFinished = true;
         }
-        else
-            std::this_thread::sleep_for(std::chrono::microseconds(1));
     }
 }
 
 void Worker::Task::Schedule()
 {
     std::lock_guard<std::mutex> lock(s_TasksMutex);
-    s_Tasks.push_back(shared_from_this());
+    s_Tasks[Priority].push_back(shared_from_this());
+}
+
+void Worker::Task::Execute()
+{
+    if (IsFinished)
+        return;
+
+    for (const std::shared_ptr<Worker::Task>& dep : Dependencies)
+        dep->Execute();
+
+    if (Func)
+        Func();
+
+    IsFinished = true;
 }
 
 void Worker::Task::Wait()

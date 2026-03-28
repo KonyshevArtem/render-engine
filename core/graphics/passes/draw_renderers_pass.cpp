@@ -7,18 +7,18 @@
 
 #include <utility>
 
-DrawRenderersPass::DrawRenderersPass(std::string name, DrawCallSortMode sorting, DrawCallFilter filter, int priority) :
-    RenderPass(priority),
+DrawRenderersPass::DrawRenderersPass(std::string name, DrawCallSortMode sorting, DrawCallFilter filter) :
+    RenderPass(),
     m_Name(std::move(name)),
     m_RenderSettings(RenderSettings {sorting, std::move(filter), nullptr})
 {
 }
 
-void DrawRenderersPass::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers)
+void DrawRenderersPass::Prepare(RenderData& renderData)
 {
     Profiler::Marker marker("DrawRenderersPass::Prepare");
 
-    m_RenderQueue.Prepare(viewProjectionMatrix, renderers, m_RenderSettings);
+    m_RenderQueue.Prepare(renderData.ProjectionMatrix * renderData.ViewMatrix, renderData.Renderers, m_RenderSettings);
 }
 
 void DrawRenderersPass::Execute(const RenderData& renderData)

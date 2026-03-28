@@ -30,8 +30,8 @@ namespace Gizmos
     const std::vector<RenderQueue::Item>& Get2DGizmosToDraw();
     void ClearGizmos();
 
-    bool IsEnabled();
-    void SetEnabled(bool enabled);
+    bool IsEnabled2D();
+    bool IsEnabled3D();
 } // namespace Gizmos
 
 #endif

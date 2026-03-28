@@ -93,6 +93,8 @@ namespace ImGuiWrapper
 
         ImGuiWrapperCommon::Render();
 
+        GraphicsBackend::Current()->BeginRenderPass("ImGui");
+        
         if (s_Backend == GraphicsBackendName::OPENGL)
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         else if (s_Backend == GraphicsBackendName::DX12)
@@ -102,6 +104,8 @@ namespace ImGuiWrapper
             GraphicsBackend::Current()->FillImGuiFrameData(reinterpret_cast<void*>(&data));
             ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), data.CommandList);
         }
+
+        GraphicsBackend::Current()->EndRenderPass();
     }
 
     void ProcessMessage(void* data)

@@ -2,28 +2,21 @@
 #define RENDER_ENGINE_FINAL_BLIT_PASS_H
 
 #include "render_pass.h"
-#include <memory>
 
 struct RenderData;
-class Texture2D;
+class Shader;
 
 class FinalBlitPass : public RenderPass
 {
 public:
-    explicit FinalBlitPass(int priority);
+    FinalBlitPass();
     ~FinalBlitPass() override = default;
 
-    void Prepare(const std::shared_ptr<Texture2D>& source);
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
-    FinalBlitPass(const FinalBlitPass&) = delete;
-    FinalBlitPass(FinalBlitPass&&) = delete;
-
-    FinalBlitPass &operator=(const FinalBlitPass&) = delete;
-    FinalBlitPass &operator=(FinalBlitPass&&) = delete;
-
 private:
-    std::shared_ptr<Texture2D> m_Source;
+    std::shared_ptr<Shader> m_BlitShader;
 };
 
 

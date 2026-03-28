@@ -59,9 +59,9 @@ public:
 
     void PushDebugGroup(const std::string& name, GPUQueue queue) override;
     void PopDebugGroup(GPUQueue queue) override;
-    GraphicsBackendProfilerMarker PushProfilerMarker() override;
+    GraphicsBackendProfilerMarker PushProfilerMarker(GPUQueue queue) override;
     void PopProfilerMarker(GraphicsBackendProfilerMarker& marker) override;
-    bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults) override;
+    bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResult& outResult) override;
 
     void BeginRenderPass(const std::string& name) override;
     void EndRenderPass() override;

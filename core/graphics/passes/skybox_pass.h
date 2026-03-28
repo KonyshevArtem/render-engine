@@ -9,10 +9,10 @@ class Mesh;
 class SkyboxPass : public RenderPass
 {
 public:
-    explicit SkyboxPass(int priority);
+    SkyboxPass() = default;
     ~SkyboxPass() override = default;
 
-    void Prepare();
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
     SkyboxPass(const SkyboxPass&) = delete;

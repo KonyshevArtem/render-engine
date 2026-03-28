@@ -129,9 +129,9 @@ public:
 
     virtual void PushDebugGroup(const std::string& name, GPUQueue queue) = 0;
     virtual void PopDebugGroup(GPUQueue queue) = 0;
-    virtual GraphicsBackendProfilerMarker PushProfilerMarker() = 0;
+    virtual GraphicsBackendProfilerMarker PushProfilerMarker(GPUQueue queue) = 0;
     virtual void PopProfilerMarker(GraphicsBackendProfilerMarker& marker) = 0;
-    virtual bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults) = 0;
+    virtual bool ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResult& outResult) = 0;
 
     virtual void BeginRenderPass(const std::string& name) = 0;
     virtual void EndRenderPass();

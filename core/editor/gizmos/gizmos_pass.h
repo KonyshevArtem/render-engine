@@ -4,22 +4,25 @@
 #if RENDER_ENGINE_EDITOR
 
 #include "graphics/passes/render_pass.h"
-#include "types/graphics_backend_fence.h"
 #include "graphics/render_queue/render_queue.h"
-
-#include <vector>
-#include <memory>
 
 struct RenderData;
 class Renderer;
+class Texture;
 
 class GizmosPass : public RenderPass
 {
 public:
-    explicit GizmosPass(int priority);
+    enum class Mode
+    {
+	    GIZMOS_2D,
+        GIZMOS_3D
+    };
+
+    explicit GizmosPass(Mode mode);
     ~GizmosPass() override = default;
 
-    bool Prepare(const RenderData& renderData, const GraphicsBackendFence& waitForFence);
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
     GizmosPass(const GizmosPass&) = delete;
@@ -29,14 +32,12 @@ public:
     GizmosPass &operator=(GizmosPass&&) = delete;
 
 private:
-    GraphicsBackendFence m_Fence;
-    RenderQueue m_3DGizmosQueue;
-    RenderQueue m_2DGizmosQueue;
-    Matrix4x4 m_3DViewMatrix;
-    Matrix4x4 m_3DProjectionMatrix;
-    Matrix4x4 m_2DProjectionMatrix;
-    float m_3DNearPlane;
-    float m_3DFarPlane;
+    RenderQueue m_GizmosQueue;
+    Matrix4x4 m_ViewMatrix;
+    Matrix4x4 m_ProjectionMatrix;
+    float m_NearPlane;
+    float m_FarPlane;
+    Mode m_Mode;
 };
 
 #endif

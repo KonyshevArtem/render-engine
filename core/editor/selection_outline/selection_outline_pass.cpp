@@ -35,20 +35,22 @@ void CheckTexture(std::shared_ptr<Texture2D>& texture, int width, int height)
     }
 }
 
-SelectionOutlinePass::SelectionOutlinePass(int priority) :
-    RenderPass(priority)
+SelectionOutlinePass::SelectionOutlinePass() :
+    RenderPass()
 {
     m_SilhouetteMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/silhouette", {}), "Silhouette");
     m_SilhouetteMaterial->DepthDescriptor = GraphicsBackendDepthDescriptor::AlwaysPassNoWrite();
 }
 
-bool SelectionOutlinePass::Prepare(const RenderData& renderData)
+void SelectionOutlinePass::Prepare(RenderData& renderData)
 {
     static std::vector<std::shared_ptr<Renderer>> selectedRenderers;
 
+    Profiler::Marker marker("SelectionOutlinePass::Prepare");
+
     const std::unordered_set<std::shared_ptr<GameObject>>& selectedGameObjects = Hierarchy::GetSelectedGameObjects();
     if (selectedGameObjects.empty())
-        return false;
+        return;
 
     selectedRenderers.clear();
     selectedRenderers.reserve(selectedGameObjects.size());
@@ -64,8 +66,6 @@ bool SelectionOutlinePass::Prepare(const RenderData& renderData)
 
     const Matrix4x4 vpMatrix = renderData.ProjectionMatrix * renderData.ViewMatrix;
     m_SelectedObjectsQueue.Prepare(vpMatrix, selectedRenderers, settings);
-
-    return true;
 }
 
 void SelectionOutlinePass::Execute(const RenderData& renderData)
@@ -75,19 +75,24 @@ void SelectionOutlinePass::Execute(const RenderData& renderData)
 
     Profiler::Marker marker("SelectionOutlinePass::Execute");
 
+    if (m_SelectedObjectsQueue.IsEmpty())
+        return;
+
     CheckTexture(silhouetteRenderTarget, renderData.Viewport.x, renderData.Viewport.y);
 
     GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
 
     // render selected gameObjects
     {
-        Profiler::GPUMarker gpuMarker("Selection Outline Pass");
-
-        GraphicsBackendRenderTargetDescriptor colorTarget{FramebufferAttachment::COLOR_ATTACHMENT0, silhouetteRenderTarget->GetBackendTexture(), LoadAction::CLEAR};
+        const GraphicsBackendRenderTargetDescriptor colorTarget{ FramebufferAttachment::COLOR_ATTACHMENT0, silhouetteRenderTarget->GetBackendTexture(), LoadAction::CLEAR, StoreAction::STORE };
         GraphicsBackend::Current()->AttachRenderTarget(colorTarget);
 
         GraphicsBackend::Current()->BeginRenderPass("Selection Outline Pass");
-        m_SelectedObjectsQueue.Draw();
+        {
+            Profiler::GPUMarker gpuMarker("Selection Outline Pass");
+
+            m_SelectedObjectsQueue.Draw();
+        }
         GraphicsBackend::Current()->EndRenderPass();
     }
 
@@ -108,23 +113,28 @@ void SelectionOutlinePass::Execute(const RenderData& renderData)
         static std::shared_ptr<Shader> blitShader = Shader::Load("core_resources/shaders/outlineBlit", {});
         static std::shared_ptr<GraphicsBuffer> blitDataBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "Selection Outline Data");
 
-        Profiler::GPUMarker gpuMarker("Selection Blit Pass");
-
         OutlineData data{};
         data.Color = outlineColor;
         data.InvTextureSize = Vector2(1.0f / silhouetteRenderTarget->GetWidth(), 1.0f / silhouetteRenderTarget->GetHeight());
 
         const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
 
-        GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
+        const GraphicsBackendRenderTargetDescriptor colorTarget{ FramebufferAttachment::COLOR_ATTACHMENT0, renderData.CameraColorTarget->GetBackendTexture(), LoadAction::LOAD, StoreAction::STORE };
+        GraphicsBackend::Current()->AttachRenderTarget(colorTarget);
 
         GraphicsBackend::Current()->BeginRenderPass("Selection Blit Pass");
-        blitDataBuffer->SetData(&data, 0, sizeof(data));
-        GraphicsBackend::Current()->BindConstantBuffer(blitDataBuffer->GetBackendBuffer(), 0, 0, sizeof(data));
-        GraphicsBackend::Current()->BindTextureSampler(silhouetteRenderTarget->GetBackendTexture(), silhouetteRenderTarget->GetBackendSampler(), 0);
-        GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
-        GraphicsBackend::Current()->UseProgram(blitShader->GetProgram(fullscreenMesh));
-        GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
+        {
+            Profiler::GPUMarker gpuMarker("Selection Blit Pass");
+
+            blitDataBuffer->SetData(&data, 0, sizeof(data));
+            GraphicsBackend::Current()->BindConstantBuffer(blitDataBuffer->GetBackendBuffer(), 0, 0, sizeof(data));
+            GraphicsBackend::Current()->BindTextureSampler(silhouetteRenderTarget->GetBackendTexture(), silhouetteRenderTarget->GetBackendSampler(), 0);
+
+            GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
+
+            GraphicsBackend::Current()->UseProgram(blitShader->GetProgram(fullscreenMesh));
+            GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
+        }
         GraphicsBackend::Current()->EndRenderPass();
     }
 }

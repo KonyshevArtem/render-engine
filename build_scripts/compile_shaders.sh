@@ -36,7 +36,7 @@ Compile()
     done
 }
 
-Compile final_blit
+Compile blit
 
 Compile fallback
 
@@ -124,6 +124,8 @@ Compile editor/shadowCascadeVisualize
 Compile ui/image
 Compile ui/text
 Compile ui/maskStencil
+
+Compile post_process
 
 echo "Finished compiling shaders for ${PLATFORM} ${BACKENDS}";
 if [ -z "$1" ]; then

@@ -28,7 +28,7 @@ std::shared_ptr<MeshRenderer> MeshRenderer::Create(const nlohmann::json& compone
 std::shared_ptr<Worker::Task> MeshRenderer::CreateAsync(const nlohmann::json& componentData, const std::function<void(std::shared_ptr<MeshRenderer>)>& callback)
 {
     std::shared_ptr<MeshRenderer> renderer = std::shared_ptr<MeshRenderer>(new MeshRenderer());
-    std::shared_ptr<Worker::Task> task = Worker::CreateTask([callback, renderer](){callback(renderer);});
+    std::shared_ptr<Worker::Task> task = Worker::CreateTask([callback, renderer](){callback(renderer);}, Worker::Priority::LOADING);
 
     std::string assetPath;
     componentData.at("Mesh").get_to(assetPath);

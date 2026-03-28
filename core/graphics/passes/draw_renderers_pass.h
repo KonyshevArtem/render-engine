@@ -18,10 +18,10 @@ class Renderer;
 class DrawRenderersPass : public RenderPass
 {
 public:
-    DrawRenderersPass(std::string name, DrawCallSortMode sorting, DrawCallFilter filter, int priority);
+    DrawRenderersPass(std::string name, DrawCallSortMode sorting, DrawCallFilter filter);
     ~DrawRenderersPass() override = default;
 
-    void Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers);
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
     DrawRenderersPass(const DrawRenderersPass&) = delete;

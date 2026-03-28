@@ -8,9 +8,10 @@ struct RenderData;
 class RenderPass
 {
 public:
-    explicit RenderPass(int priority);
+    RenderPass() = default;
     virtual ~RenderPass() = default;
 
+    virtual void Prepare(RenderData& renderData) = 0;
     virtual void Execute(const RenderData& renderData) = 0;
 
     RenderPass(const RenderPass &) = delete;
@@ -18,14 +19,6 @@ public:
 
     RenderPass &operator=(const RenderPass &) = delete;
     RenderPass &operator=(RenderPass &&) = delete;
-
-    struct Comparer
-    {
-        bool operator()(const std::shared_ptr<RenderPass>& renderPassA, const std::shared_ptr<RenderPass>& renderPassB) const;
-    };
-
-private:
-    int m_Priority;
 };
 
 #endif //RENDER_ENGINE_RENDER_PASS_H

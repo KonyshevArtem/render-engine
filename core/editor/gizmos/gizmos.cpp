@@ -21,7 +21,8 @@ namespace GizmosLocal
             { 1, 1, 1 }
     };
 
-    bool s_IsEnabled;
+    bool s_IsEnabled2D;
+    bool s_IsEnabled3D;
     std::shared_ptr<Lines> s_WireCubePrimitive;
     std::shared_ptr<Lines> s_WireRectPrimitive;
     std::vector<RenderQueue::Item> s_3DGizmosToDraw;
@@ -65,7 +66,7 @@ namespace GizmosLocal
 
 void Gizmos::DrawWireCube(const Matrix4x4& matrix)
 {
-    if (!GizmosLocal::s_IsEnabled)
+    if (!GizmosLocal::s_IsEnabled3D)
         return;
 
     Vector3 points[8];
@@ -83,7 +84,7 @@ void Gizmos::DrawWireCube(const Matrix4x4& matrix)
 
 void Gizmos::DrawFrustum(const Matrix4x4& matrix)
 {
-    if (!GizmosLocal::s_IsEnabled)
+    if (!GizmosLocal::s_IsEnabled3D)
         return;
 
     Vector3 points[8];
@@ -104,7 +105,7 @@ void Gizmos::DrawFrustum(const Matrix4x4& matrix)
 
 void Gizmos::DrawRect(const Vector2& min, const Vector2& max)
 {
-    if (!GizmosLocal::s_IsEnabled)
+    if (!GizmosLocal::s_IsEnabled2D)
         return;
 
     Vector3 min3 = Vector3(min.x, min.y, 0.5f);
@@ -151,7 +152,8 @@ void Gizmos::Init()
         GizmosLocal::s_WireRectPrimitive = std::make_shared<Lines>(wireRectCorners, wireRectIndices, "WireRect");
     }
 
-    DeveloperConsole::AddBoolCommand(L"Gizmos.Draw", &GizmosLocal::s_IsEnabled);
+    DeveloperConsole::AddBoolCommand(L"Gizmos.Draw2D", &GizmosLocal::s_IsEnabled2D);
+    DeveloperConsole::AddBoolCommand(L"Gizmos.Draw3D", &GizmosLocal::s_IsEnabled3D);
 }
 
 const std::vector<RenderQueue::Item>& Gizmos::Get3DGizmosToDraw()
@@ -170,14 +172,14 @@ void Gizmos::ClearGizmos()
     GizmosLocal::s_2DGizmosToDraw.clear();
 }
 
-bool Gizmos::IsEnabled()
+bool Gizmos::IsEnabled2D()
 {
-    return GizmosLocal::s_IsEnabled;
+    return GizmosLocal::s_IsEnabled2D;
 }
 
-void Gizmos::SetEnabled(bool enabled)
+bool Gizmos::IsEnabled3D()
 {
-    GizmosLocal::s_IsEnabled = enabled;
+    return GizmosLocal::s_IsEnabled3D;
 }
 
 #endif

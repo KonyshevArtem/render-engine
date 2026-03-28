@@ -10,12 +10,7 @@
 
 std::shared_ptr<Mesh> SkyboxPass::m_Mesh = nullptr;
 
-SkyboxPass::SkyboxPass(int priority) :
-    RenderPass(priority)
-{
-}
-
-void SkyboxPass::Prepare()
+void SkyboxPass::Prepare(RenderData& renderData)
 {
     if (!m_Mesh)
         m_Mesh = Resources::Load<Mesh>("core_resources/models/Cube");

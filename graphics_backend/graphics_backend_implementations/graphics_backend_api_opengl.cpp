@@ -1041,28 +1041,28 @@ void GraphicsBackendOpenGL::PopDebugGroup(GPUQueue queue)
 #endif
 }
 
-GraphicsBackendProfilerMarker GraphicsBackendOpenGL::PushProfilerMarker()
+GraphicsBackendProfilerMarker GraphicsBackendOpenGL::PushProfilerMarker(GPUQueue queue)
 {
     GLuint glQueries[2];
     glGenQueries(2, &glQueries[0]);
     glQueryCounter(glQueries[0], GL_TIMESTAMP);
 
     GraphicsBackendProfilerMarker marker{};
-    marker.Info[k_RenderGPUQueueIndex].StartMarker = glQueries[0];
-    marker.Info[k_RenderGPUQueueIndex].EndMarker = glQueries[1];
+    marker.Info.StartMarker = glQueries[0];
+    marker.Info.EndMarker = glQueries[1];
     return marker;
 }
 
 void GraphicsBackendOpenGL::PopProfilerMarker(GraphicsBackendProfilerMarker& marker)
 {
-    const GLuint glQuery = marker.Info[k_RenderGPUQueueIndex].EndMarker;
+    const GLuint glQuery = marker.Info.EndMarker;
     glQueryCounter(glQuery, GL_TIMESTAMP);
 }
 
-bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults)
+bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResult& outResult)
 {
-    const GLuint glQueryStart = marker.Info[k_RenderGPUQueueIndex].StartMarker;
-    const GLuint glQueryEnd = marker.Info[k_RenderGPUQueueIndex].EndMarker;
+    const GLuint glQueryStart = marker.Info.StartMarker;
+    const GLuint glQueryEnd = marker.Info.EndMarker;
 
     GLuint queryStartAvailable;
     GLuint queryEndAvailable;
@@ -1084,12 +1084,12 @@ bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerM
             outTimestamp += OpenGLLocal::s_TimestampDifference;
         };
 
-        resolveQuery(glQueryStart, outResults[k_RenderGPUQueueIndex].StartTimestamp);
-        resolveQuery(glQueryEnd, outResults[k_RenderGPUQueueIndex].EndTimestamp);
+        resolveQuery(glQueryStart, outResult.StartTimestamp);
+        resolveQuery(glQueryEnd, outResult.EndTimestamp);
     }
 
-    outResults[k_RenderGPUQueueIndex].IsActive = markerResolved;
-    outResults[k_CopyGPUQueueIndex].IsActive = false;
+    outResult.IsActive = markerResolved;
+    outResult.IsActive = false;
 
     return markerResolved;
 }

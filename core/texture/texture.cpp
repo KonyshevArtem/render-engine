@@ -28,25 +28,25 @@ Texture::~Texture()
 void Texture::SetMinMipLevel(int minMipLevel)
 {
     m_SamplerDescriptor.MinLod = minMipLevel;
-    m_SamplerDirty = false;
+    m_SamplerDirty = true;
 }
 
 void Texture::SetWrapMode(TextureWrapMode wrapMode)
 {
     m_SamplerDescriptor.WrapMode = wrapMode;
-    m_SamplerDirty = false;
+    m_SamplerDirty = true;
 }
 
 void Texture::SetBorderColor(const Vector4& color)
 {
     memcpy(&m_SamplerDescriptor.BorderColor[0], &color, sizeof(Vector4));
-    m_SamplerDirty = false;
+    m_SamplerDirty = true;
 }
 
 void Texture::SetFilteringMode(TextureFilteringMode mode)
 {
     m_SamplerDescriptor.FilteringMode = mode;
-    m_SamplerDirty = false;
+    m_SamplerDirty = true;
 }
 
 void Texture::SetComparisonFunction(ComparisonFunction function)

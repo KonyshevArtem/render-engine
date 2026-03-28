@@ -13,8 +13,9 @@ private:
         uint64_t EndMarker;
     };
 
-    MarkerInfo Info[static_cast<int>(GPUQueue::MAX)];
+    MarkerInfo Info;
     uint64_t Frame;
+    GPUQueue Queue;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;
@@ -27,7 +28,5 @@ struct ProfilerMarkerResolveResult
     uint64_t StartTimestamp;
     uint64_t EndTimestamp;
 };
-
-using ProfilerMarkerResolveResults = ProfilerMarkerResolveResult[static_cast<int>(GPUQueue::MAX)];
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_PROFILER_MARKER_H

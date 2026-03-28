@@ -122,8 +122,6 @@ namespace DX12Local
             ID3D12CommandList* commandLists[] = {List};
             Queue->ExecuteCommandLists(1, commandLists);
             ThrowIfFailed(Queue->Signal(Fence, ++FenceValue));
-
-            Reset();
         }
 
         void Reset() const
@@ -136,13 +134,12 @@ namespace DX12Local
             ThrowIfFailed(List->Close());
         }
 
-        void InitNewFrame()
+        void ResetAllocator() const
         {
             ThrowIfFailed(Allocator->Reset());
-            Reset();
         }
 
-        void Wait()
+        void Wait() const
         {
             ThrowIfFailed(Fence->SetEventOnCompletion(FenceValue, FenceEvent));
             WaitForSingleObject(FenceEvent, INFINITE);
@@ -594,8 +591,8 @@ namespace DX12Local
 
     void UploadGPUData(ResourceData* resourceData, uint32_t firstSubresource, uint64_t totalSize, uint64_t rowPitch, uint64_t slicePitch, const void* data, bool isMainThread)
     {
-        D3D12_HEAP_PROPERTIES uploadHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-        D3D12_RESOURCE_DESC uploadResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalSize);
+	    const D3D12_HEAP_PROPERTIES uploadHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	    const D3D12_RESOURCE_DESC uploadResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalSize);
 
         ID3D12Resource* bufferUploadHeap;
         ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&uploadHeapProps, D3D12_HEAP_FLAG_NONE, &uploadResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&bufferUploadHeap)));
@@ -612,7 +609,7 @@ namespace DX12Local
         {
             {
                 std::shared_lock lock(DX12Local::s_CommandListPoolMutex);
-                auto it = DX12Local::s_UploadCommandLists.find(std::this_thread::get_id());
+                const auto it = DX12Local::s_UploadCommandLists.find(std::this_thread::get_id());
                 if (it != DX12Local::s_UploadCommandLists.end())
                     commandList = it->second;
             }
@@ -624,21 +621,20 @@ namespace DX12Local
                 DX12Local::s_UploadCommandLists[std::this_thread::get_id()] = commandList;
             }
 
+            commandList->ResetAllocator();
             commandList->Reset();
-            commandList->Close();
-            commandList->InitNewFrame();
         }
 
         DX12Local::TransitionResource(resourceData, isMainThread ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_COMMON, commandList->List);
         UpdateSubresources(commandList->List, resourceData->Resource, bufferUploadHeap, 0, firstSubresource, 1, &subresourceData);
         DX12Local::TransitionResource(resourceData, isMainThread ? D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_COMMON, commandList->List);
 
-        if (!isMainThread)
-        {
-            commandList->Execute();
-            commandList->Close();
-            commandList->Wait();
-        }
+        commandList->Execute();
+
+        if (isMainThread)
+	        commandList->Reset();
+        else
+	        commandList->Wait();
     }
 
     void InitRootSignature()
@@ -761,8 +757,6 @@ void GraphicsBackendDX12::Init(void* data)
 
     DX12Local::s_RenderCommandList->Reset();
     DX12Local::s_CopyCommandList->Reset();
-
-    DX12Local::TransitionResource(&DX12Local::GetCurrentColorBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, DX12Local::s_RenderCommandList->List);
 }
 
 GraphicsBackendName GraphicsBackendDX12::GetName()
@@ -794,16 +788,19 @@ void GraphicsBackendDX12::InitNewFrame()
 
         DX12Local::CreateBackbufferResourcesAndViews();
     }
-
-    DX12Local::s_RenderCommandList->InitNewFrame();
-    DX12Local::s_CopyCommandList->InitNewFrame();
-
-    DX12Local::TransitionResource(&DX12Local::GetCurrentColorBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, DX12Local::s_RenderCommandList->List);
 }
 
 void GraphicsBackendDX12::WaitForPreviousFrame()
 {
     DX12Local::WaitForFrameEnd();
+    
+    DX12Local::s_RenderCommandList->Close();
+    DX12Local::s_RenderCommandList->ResetAllocator();
+    DX12Local::s_RenderCommandList->Reset();
+    
+    DX12Local::s_CopyCommandList->Close();
+    DX12Local::s_CopyCommandList->ResetAllocator();
+    DX12Local::s_CopyCommandList->Reset();
 
     DX12Local::s_BoundResourceDescriptorHeap.CheckSize();
     DX12Local::s_BoundSamplerDescriptorHeap.CheckSize();
@@ -1443,7 +1440,7 @@ void GraphicsBackendDX12::CopyBufferSubData(const GraphicsBackendBuffer& source,
     D3D12_RESOURCE_STATES states[] = {D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST};
     DX12Local::TransitionResources(2, resources, states, DX12Local::s_CopyCommandList->List);
 
-    DX12Local::s_RenderCommandList->List->CopyBufferRegion(resources[1]->Resource, destinationOffset, resources[0]->Resource, sourceOffset, size);
+    DX12Local::s_CopyCommandList->List->CopyBufferRegion(resources[1]->Resource, destinationOffset, resources[0]->Resource, sourceOffset, size);
 
     resources[0]->State = D3D12_RESOURCE_STATE_COMMON;
     resources[1]->State = D3D12_RESOURCE_STATE_COMMON;
@@ -1784,7 +1781,7 @@ void GraphicsBackendDX12::PopDebugGroup(GPUQueue queue)
     PIXEndEvent(DX12Local::GetCommandList(queue));
 }
 
-GraphicsBackendProfilerMarker GraphicsBackendDX12::PushProfilerMarker()
+GraphicsBackendProfilerMarker GraphicsBackendDX12::PushProfilerMarker(GPUQueue queue)
 {
     auto FillMarkerInfo = [](GraphicsBackendProfilerMarker::MarkerInfo& info, DX12Local::TimestampCollector& collector, ID3D12GraphicsCommandList* commandList)
     {
@@ -1796,10 +1793,15 @@ GraphicsBackendProfilerMarker GraphicsBackendDX12::PushProfilerMarker()
 
     GraphicsBackendProfilerMarker marker{};
     marker.Frame = GetFrameNumber();
+    marker.Queue = queue;
 
-    FillMarkerInfo(marker.Info[k_RenderGPUQueueIndex], DX12Local::s_RenderTimestampCollector, DX12Local::s_RenderCommandList->List);
-    if (DX12Local::s_IsCopyTimestampSupported)
-        FillMarkerInfo(marker.Info[k_CopyGPUQueueIndex], DX12Local::s_CopyTimestampCollector, DX12Local::s_CopyCommandList->List);
+    if (queue == GPUQueue::RENDER)
+		FillMarkerInfo(marker.Info, DX12Local::s_RenderTimestampCollector, DX12Local::s_RenderCommandList->List);
+    else if (queue == GPUQueue::COPY)
+    {
+        if (DX12Local::s_IsCopyTimestampSupported)
+            FillMarkerInfo(marker.Info, DX12Local::s_CopyTimestampCollector, DX12Local::s_CopyCommandList->List);
+    }
 
     return marker;
 }
@@ -1812,12 +1814,16 @@ void GraphicsBackendDX12::PopProfilerMarker(GraphicsBackendProfilerMarker& marke
         collector.ResolveTimestamps(commandList, info.StartMarker, 2);
     };
 
-    PopMarker(marker.Info[k_RenderGPUQueueIndex], DX12Local::s_RenderTimestampCollector, DX12Local::s_RenderCommandList->List);
-    if (DX12Local::s_IsCopyTimestampSupported)
-        PopMarker(marker.Info[k_CopyGPUQueueIndex], DX12Local::s_CopyTimestampCollector, DX12Local::s_CopyCommandList->List);
+    if (marker.Queue == GPUQueue::RENDER)
+		PopMarker(marker.Info, DX12Local::s_RenderTimestampCollector, DX12Local::s_RenderCommandList->List);
+    else if (marker.Queue == GPUQueue::COPY)
+    {
+        if (DX12Local::s_IsCopyTimestampSupported)
+            PopMarker(marker.Info, DX12Local::s_CopyTimestampCollector, DX12Local::s_CopyCommandList->List);
+    }
 }
 
-bool GraphicsBackendDX12::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults)
+bool GraphicsBackendDX12::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResult& outResult)
 {
     static uint64_t renderQueueFrequency = 0;
     if (renderQueueFrequency == 0)
@@ -1831,24 +1837,28 @@ bool GraphicsBackendDX12::ResolveProfilerMarker(const GraphicsBackendProfilerMar
         return (static_cast<double>(gpuTimestamp - DX12Local::s_GpuStartTimestamp) / renderQueueFrequency) * 1000000 + DX12Local::s_CpuStartTimestamp;
     };
 
-    auto FillResults = [&ToCPUTimestamp, &marker, &outResults](int gpuQueueIndex, DX12Local::TimestampCollector& collector)
+    auto FillResults = [&ToCPUTimestamp, &marker, &outResult](DX12Local::TimestampCollector& collector)
     {
-        bool isActive = marker.Info[gpuQueueIndex].StartMarker != marker.Info[gpuQueueIndex].EndMarker;
-        outResults[gpuQueueIndex].IsActive = isActive;
+        const bool isActive = marker.Info.StartMarker != marker.Info.EndMarker;
+        outResult.IsActive = isActive;
 
         if (isActive)
         {
             uint64_t timestamps[2];
-            collector.ReadbackTimestamps(marker.Info[gpuQueueIndex].StartMarker, 2, &timestamps[0]);
+            collector.ReadbackTimestamps(marker.Info.StartMarker, 2, &timestamps[0]);
 
-            outResults[gpuQueueIndex].StartTimestamp = ToCPUTimestamp(timestamps[0]);
-            outResults[gpuQueueIndex].EndTimestamp = ToCPUTimestamp(timestamps[1]);
+            outResult.StartTimestamp = ToCPUTimestamp(timestamps[0]);
+            outResult.EndTimestamp = ToCPUTimestamp(timestamps[1]);
         }
     };
 
-    FillResults(k_RenderGPUQueueIndex, DX12Local::s_RenderTimestampCollector);
-    if (DX12Local::s_IsCopyTimestampSupported)
-        FillResults(k_CopyGPUQueueIndex, DX12Local::s_CopyTimestampCollector);
+    if (marker.Queue == GPUQueue::RENDER)
+		FillResults(DX12Local::s_RenderTimestampCollector);
+    else if (marker.Queue == GPUQueue::COPY)
+    {
+        if (DX12Local::s_IsCopyTimestampSupported)
+            FillResults(DX12Local::s_CopyTimestampCollector);
+    }
 
     return true;
 }
@@ -1905,9 +1915,9 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
     DX12Local::s_RenderCommandList->List->SetDescriptorHeaps(2, heaps);
 
     if (!resourcesForTransition.empty())
-        DX12Local::TransitionResources(resourcesForTransition.size(), &resourcesForTransition[0], &resourceAfterStates[0], DX12Local::s_RenderCommandList->List);
+        DX12Local::TransitionResources(resourcesForTransition.size(), resourcesForTransition.data(), resourceAfterStates.data(), DX12Local::s_RenderCommandList->List);
 
-    DX12Local::s_RenderCommandList->List->OMSetRenderTargets(colorTargetHandles.size(), colorTargetHandles.empty() ? nullptr : &colorTargetHandles[0], false, hasDepthTarget ? &depthTargetHandle : nullptr);
+    DX12Local::s_RenderCommandList->List->OMSetRenderTargets(colorTargetHandles.size(), colorTargetHandles.empty() ? nullptr : colorTargetHandles.data(), false, hasDepthTarget ? &depthTargetHandle : nullptr);
 
     for (int i = 0; i < colorTargetHandles.size(); ++i)
     {
@@ -1925,6 +1935,9 @@ void GraphicsBackendDX12::EndRenderPass()
 
     DX12Local::ResetRenderTargetStates();
     PopDebugGroup(GPUQueue::RENDER);
+
+    DX12Local::s_RenderCommandList->Execute();
+    DX12Local::s_RenderCommandList->Reset();
 }
 
 void GraphicsBackendDX12::BeginCopyPass(const std::string& name)
@@ -1935,6 +1948,9 @@ void GraphicsBackendDX12::BeginCopyPass(const std::string& name)
 void GraphicsBackendDX12::EndCopyPass()
 {
     PopDebugGroup(GPUQueue::COPY);
+
+    DX12Local::s_CopyCommandList->Execute();
+    DX12Local::s_CopyCommandList->Reset();
 }
 
 void GraphicsBackendDX12::BeginComputePass(const std::string& name)
@@ -1945,6 +1961,9 @@ void GraphicsBackendDX12::BeginComputePass(const std::string& name)
 void GraphicsBackendDX12::EndComputePass()
 {
     PopDebugGroup(GPUQueue::RENDER);
+
+    DX12Local::s_RenderCommandList->Execute();
+    DX12Local::s_RenderCommandList->Reset();
 }
 
 GraphicsBackendFence GraphicsBackendDX12::CreateFence(FenceType fenceType, const std::string& name)
@@ -1973,11 +1992,9 @@ void GraphicsBackendDX12::SignalFence(const GraphicsBackendFence& fence)
     switch (fence.Type)
     {
         case FenceType::RENDER_TO_COPY:
-            DX12Local::s_RenderCommandList->Execute();
             DX12Local::s_RenderQueue->Signal(dxFence, GetFrameNumber());
             break;
         case FenceType::COPY_TO_RENDER:
-            DX12Local::s_CopyCommandList->Execute();
             DX12Local::s_CopyQueue->Signal(dxFence, GetFrameNumber());
             break;
     }
@@ -1990,11 +2007,9 @@ void GraphicsBackendDX12::WaitForFence(const GraphicsBackendFence& fence)
     switch (fence.Type)
     {
         case FenceType::RENDER_TO_COPY:
-            DX12Local::s_CopyCommandList->Execute();
             DX12Local::s_CopyQueue->Wait(dxFence, GetFrameNumber());
             break;
         case FenceType::COPY_TO_RENDER:
-            DX12Local::s_RenderCommandList->Execute();
             DX12Local::s_RenderQueue->Wait(dxFence, GetFrameNumber());
             break;
     }
@@ -2002,17 +2017,13 @@ void GraphicsBackendDX12::WaitForFence(const GraphicsBackendFence& fence)
 
 void GraphicsBackendDX12::Flush()
 {
-    DX12Local::s_RenderCommandList->Execute();
-    DX12Local::s_CopyCommandList->Execute();
 }
 
 void GraphicsBackendDX12::Present()
 {
     DX12Local::TransitionResource(&DX12Local::GetCurrentColorBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, DX12Local::s_RenderCommandList->List);
-
-    Flush();
-    DX12Local::s_RenderCommandList->Close();
-    DX12Local::s_CopyCommandList->Close();
+    DX12Local::s_RenderCommandList->Execute();
+    DX12Local::s_RenderCommandList->Reset();
 
     DX12Local::s_SwapChain->Present(1, 0);
     DX12Local::PrintInfoQueueMessages();

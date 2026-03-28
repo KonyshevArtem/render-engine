@@ -23,10 +23,10 @@ class Light;
 class ShadowCasterPass : public RenderPass
 {
 public:
-    explicit ShadowCasterPass(int priority);
+    ShadowCasterPass();
     ~ShadowCasterPass() override = default;
 
-    void Prepare(const RenderData& renderData);
+    void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
     ShadowCasterPass(const ShadowCasterPass&) = delete;

@@ -57,7 +57,6 @@ void ForwardRenderPass::Prepare(RenderData& renderData)
 void ForwardRenderPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("ForwardRenderPass::Execute");
-    Profiler::GPUMarker gpuMarker("ForwardRenderPass::Execute");
 
     const GraphicsBackendRenderTargetDescriptor colorDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
     const GraphicsBackendRenderTargetDescriptor depthDescriptor { .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
@@ -68,14 +67,16 @@ void ForwardRenderPass::Execute(const RenderData& renderData)
     Graphics::SetCameraData(renderData.ViewMatrix, renderData.ProjectionMatrix, renderData.NearPlane, renderData.FarPlane);
 
     GraphicsBackend::Current()->BeginRenderPass("Forward Render Pass");
+    {
+        Profiler::GPUMarker gpuMarker("ForwardRenderPass::Execute");
 
-    GraphicsBackend::Current()->SetViewport(0, 0, renderData.Viewport.x, renderData.Viewport.y, 0, 1);
-    GraphicsBackend::Current()->SetScissorRect(0, 0, renderData.Viewport.x, renderData.Viewport.y);
+        GraphicsBackend::Current()->SetViewport(0, 0, renderData.Viewport.x, renderData.Viewport.y, 0, 1);
+        GraphicsBackend::Current()->SetScissorRect(0, 0, renderData.Viewport.x, renderData.Viewport.y);
 
-	m_OpaquePass->Execute(renderData);
-    m_SkyboxPass->Execute(renderData);
-    m_TransparentPass->Execute(renderData);
-
+        m_OpaquePass->Execute(renderData);
+        m_SkyboxPass->Execute(renderData);
+        m_TransparentPass->Execute(renderData);
+    }
     GraphicsBackend::Current()->EndRenderPass();
     GraphicsBackend::Current()->SignalFence(m_EndFence);
 }

@@ -56,14 +56,15 @@ Profiler::MarkerInfo::MarkerInfo(MarkerType type, const char* name, std::optiona
 {
 }
 
-Profiler::GPUMarkerInfo::GPUMarkerInfo(const char* name, int depth, uint64_t frame) :
+Profiler::GPUMarkerInfo::GPUMarkerInfo(const char* name, int depth, uint64_t frame, GPUQueue queue) :
     ProfilerMarker(),
     Name(name),
     Depth(depth),
-    Frame(frame)
+    Frame(frame),
+	Queue(queue)
 {
     if (s_IsEnabled)
-        ProfilerMarker = GraphicsBackend::Current()->PushProfilerMarker();
+        ProfilerMarker = GraphicsBackend::Current()->PushProfilerMarker(Queue);
 }
 
 Profiler::GPUMarkerInfo& Profiler::GPUMarkerInfo::operator=(const GPUMarkerInfo& info)
@@ -72,6 +73,7 @@ Profiler::GPUMarkerInfo& Profiler::GPUMarkerInfo::operator=(const GPUMarkerInfo&
     Name = info.Name;
     Depth = info.Depth;
     Frame = info.Frame;
+    Queue = info.Queue;
     return *this;
 }
 
@@ -89,9 +91,9 @@ Profiler::Marker::~Marker()
     DecrementDepth(m_Context);
 }
 
-Profiler::GPUMarker::GPUMarker(const char* name) :
-    m_Context(MarkerContext::GPU_RENDER),
-    m_Info(name, IncrementDepth(m_Context), GraphicsBackend::Current()->GetFrameNumber())
+Profiler::GPUMarker::GPUMarker(const char* name, GPUQueue queue) :
+    m_Context(queue == GPUQueue::COPY ? MarkerContext::GPU_COPY : MarkerContext::GPU_RENDER),
+    m_Info(name, IncrementDepth(m_Context), GraphicsBackend::Current()->GetFrameNumber(), queue)
 {
 }
 
@@ -135,33 +137,28 @@ void Profiler::BeginNewFrame()
     {
         const GPUMarkerInfo& gpuMarker = s_PendingGPUMarkers[i];
 
-        ProfilerMarkerResolveResults results;
-        if (GraphicsBackend::Current()->ResolveProfilerMarker(gpuMarker.ProfilerMarker, results))
+        ProfilerMarkerResolveResult result{};
+        if (GraphicsBackend::Current()->ResolveProfilerMarker(gpuMarker.ProfilerMarker, result))
         {
-            for (int gpuQueue = 0; gpuQueue < static_cast<int>(GPUQueue::MAX); ++gpuQueue)
+            auto queueToContext = [](GPUQueue queue)
             {
-                auto queueToContext = [](int queueIndex)
+                switch (queue)
                 {
-                    const GPUQueue queue = static_cast<GPUQueue>(queueIndex);
-                    switch (queue)
-                    {
-                        case GPUQueue::COPY:
-                            return MarkerContext::GPU_COPY;
-                        default:
-                            return MarkerContext::GPU_RENDER;
-                    }
-                };
+                    case GPUQueue::COPY:
+                        return MarkerContext::GPU_COPY;
+                    default:
+                        return MarkerContext::GPU_RENDER;
+                }
+            };
+            
+            if (!result.IsActive)
+                continue;
 
-                const ProfilerMarkerResolveResult& result = results[gpuQueue];
-                if (!result.IsActive)
-                    continue;
-
-                MarkerInfo markerInfo(MarkerType::MARKER, gpuMarker.Name, std::nullopt, gpuMarker.Depth, gpuMarker.Frame);
-                markerInfo.Begin = std::chrono::system_clock::time_point(std::chrono::microseconds(result.StartTimestamp));
-                markerInfo.End = std::chrono::system_clock::time_point(std::chrono::microseconds(result.EndTimestamp));
-                markerInfo.Finished = true;
-                AddMarkerInfo(queueToContext(gpuQueue), markerInfo, gpuMarker.Frame);
-            }
+            MarkerInfo markerInfo(MarkerType::MARKER, gpuMarker.Name, std::nullopt, gpuMarker.Depth, gpuMarker.Frame);
+            markerInfo.Begin = std::chrono::system_clock::time_point(std::chrono::microseconds(result.StartTimestamp));
+            markerInfo.End = std::chrono::system_clock::time_point(std::chrono::microseconds(result.EndTimestamp));
+            markerInfo.Finished = true;
+            AddMarkerInfo(queueToContext(gpuMarker.Queue), markerInfo, gpuMarker.Frame);
 
             s_PendingGPUMarkers[i] = s_PendingGPUMarkers.back();
             s_PendingGPUMarkers.pop_back();

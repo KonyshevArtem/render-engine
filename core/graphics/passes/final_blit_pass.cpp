@@ -1,5 +1,6 @@
 #include "final_blit_pass.h"
 #include "editor/profiler/profiler.h"
+#include "enums/resource_state.h"
 #include "graphics/render_data.h"
 #include "texture_2d/texture_2d.h"
 #include "material/material.h"
@@ -21,19 +22,22 @@ void FinalBlitPass::Prepare(RenderData& renderData)
 void FinalBlitPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("FinalBlitPass::Execute");
-    Profiler::GPUMarker gpuMarker("FinalBlitPass::Execute");
 
-    GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::ColorBackbuffer());
+    const GraphicsBackendRenderTargetDescriptor colorBackbufferDesc = GraphicsBackendRenderTargetDescriptor::ColorBackbuffer();
+
+    GraphicsBackend::Current()->AttachRenderTarget(colorBackbufferDesc);
     GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
 
     GraphicsBackend::Current()->BeginRenderPass("Final Blit Pass");
+    {
+        Profiler::GPUMarker gpuMarker("FinalBlitPass::Execute");
 
-    GraphicsBackend::Current()->BindTextureSampler(renderData.PostProcessedTarget->GetBackendTexture(), renderData.PostProcessedTarget->GetBackendSampler(), 0);
-    GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
+        GraphicsBackend::Current()->BindTextureSampler(renderData.PostProcessedTarget->GetBackendTexture(), renderData.PostProcessedTarget->GetBackendSampler(), 0);
+        GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
 
-    const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
-    GraphicsBackend::Current()->UseProgram(m_BlitShader->GetProgram(fullscreenMesh));
-    GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
-
+        const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
+        GraphicsBackend::Current()->UseProgram(m_BlitShader->GetProgram(fullscreenMesh));
+        GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
+    }
     GraphicsBackend::Current()->EndRenderPass();
 }

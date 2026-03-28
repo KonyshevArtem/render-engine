@@ -53,7 +53,6 @@ void PostProcessPass::Prepare(RenderData& renderData)
 void PostProcessPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("PostProcessPass::Execute");
-    Profiler::GPUMarker gpuMarker("PostProcessPass::Execute");
 
     PostProcessPass_Local::Data data{};
     data.OneOverGamma = 1 / GraphicsSettings::GetGamma();
@@ -69,15 +68,17 @@ void PostProcessPass::Execute(const RenderData& renderData)
     GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
 
     GraphicsBackend::Current()->BeginRenderPass("Post Process Pass");
+    {
+        Profiler::GPUMarker gpuMarker("PostProcessPass::Execute");
 
-    m_PostProcessDataBuffer->SetData(&data, 0, sizeof(data));
-    GraphicsBackend::Current()->BindConstantBuffer(m_PostProcessDataBuffer->GetBackendBuffer(), 0, 0, sizeof(data));
-    GraphicsBackend::Current()->BindTextureSampler(renderData.CameraColorTarget->GetBackendTexture(), renderData.CameraColorTarget->GetBackendSampler(), 0);
-    GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
+        m_PostProcessDataBuffer->SetData(&data, 0, sizeof(data));
+        GraphicsBackend::Current()->BindConstantBuffer(m_PostProcessDataBuffer->GetBackendBuffer(), 0, 0, sizeof(data));
+        GraphicsBackend::Current()->BindTextureSampler(renderData.CameraColorTarget->GetBackendTexture(), renderData.CameraColorTarget->GetBackendSampler(), 0);
+        GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
 
-    const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
-    GraphicsBackend::Current()->UseProgram(m_PostProcessShader->GetProgram(fullscreenMesh));
-    GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
-
+        const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
+        GraphicsBackend::Current()->UseProgram(m_PostProcessShader->GetProgram(fullscreenMesh));
+        GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
+    }
     GraphicsBackend::Current()->EndRenderPass();
 }

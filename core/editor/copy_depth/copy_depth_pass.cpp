@@ -24,12 +24,14 @@ void CopyDepthPass::Prepare(RenderData& renderData)
 void CopyDepthPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("CopyDepthPass::Execute");
-    Profiler::GPUMarker gpuMarker("CopyDepthPass::Execute");
 
     GraphicsBackend::Current()->WaitForFence(m_StartFence);
 
     GraphicsBackend::Current()->BeginCopyPass("Copy Depth To Backbuffer");
-    GraphicsBackend::Current()->CopyTextureToTexture(m_SourceDepth->GetBackendTexture(), GraphicsBackendRenderTargetDescriptor::DepthBackbuffer(), 0, 0, 0, 0, m_SourceDepth->GetWidth(), m_SourceDepth->GetHeight());
+    {
+        Profiler::GPUMarker gpuMarker("CopyDepthPass::Execute", GPUQueue::COPY);
+        GraphicsBackend::Current()->CopyTextureToTexture(m_SourceDepth->GetBackendTexture(), GraphicsBackendRenderTargetDescriptor::DepthBackbuffer(), 0, 0, 0, 0, m_SourceDepth->GetWidth(), m_SourceDepth->GetHeight());
+    }
     GraphicsBackend::Current()->EndCopyPass();
 
     GraphicsBackend::Current()->SignalFence(m_EndFence);

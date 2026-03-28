@@ -263,7 +263,6 @@ void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_
     static constexpr GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::DONT_CARE, .StoreAction = StoreAction::DONT_CARE };
 
     Profiler::Marker marker("ShadowCasterPass::Render");
-    Profiler::GPUMarker gpuMarker("ShadowCasterPass::Render");
 
     const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .Texture = target->GetBackendTexture(), .LoadAction = LoadAction::CLEAR, .Layer = targetLayer };
 
@@ -278,13 +277,15 @@ void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_
     Graphics::SetCameraData(cameraData.ViewMatrix, cameraData.ProjectionMatrix, 0.01, cameraData.FarPlane);
 
     GraphicsBackend::Current()->BeginRenderPass(passName);
-    GraphicsBackend::Current()->BindConstantBuffer(m_ShadowCasterPassBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
+    {
+        Profiler::GPUMarker gpuMarker("ShadowCasterPass::Render");
 
-    GraphicsBackend::Current()->SetViewport(0, 0, target->GetWidth(), target->GetHeight(), 0, 1);
-    GraphicsBackend::Current()->SetScissorRect(0, 0, target->GetWidth(), target->GetHeight());
+        GraphicsBackend::Current()->BindConstantBuffer(m_ShadowCasterPassBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
 
-    renderQueue.Draw();
+        GraphicsBackend::Current()->SetViewport(0, 0, target->GetWidth(), target->GetHeight(), 0, 1);
+        GraphicsBackend::Current()->SetScissorRect(0, 0, target->GetWidth(), target->GetHeight());
+
+        renderQueue.Draw();
+    }
     GraphicsBackend::Current()->EndRenderPass();
-
-    GraphicsBackend::Current()->Flush();
 }

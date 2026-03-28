@@ -82,8 +82,9 @@ public:
         const char* Name = nullptr;
         int Depth = 0;
         uint64_t Frame = 0;
+        GPUQueue Queue;
 
-        GPUMarkerInfo(const char* name, int depth, uint64_t frame);
+        GPUMarkerInfo(const char* name, int depth, uint64_t frame, GPUQueue queue);
         GPUMarkerInfo& operator=(const GPUMarkerInfo& info);
     };
 
@@ -100,7 +101,7 @@ public:
 
     struct GPUMarker
     {
-        explicit GPUMarker(const char* name);
+        GPUMarker(const char* name, GPUQueue queue = GPUQueue::RENDER);
         ~GPUMarker();
 
     private:

@@ -58,7 +58,6 @@ void GizmosPass::Prepare(RenderData& renderData)
 void GizmosPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("GizmosPass::Execute");
-    Profiler::GPUMarker gpuMarker("GizmosPass::Execute");
 
     if (m_GizmosQueue.IsEmpty())
         return;
@@ -75,10 +74,12 @@ void GizmosPass::Execute(const RenderData& renderData)
     GraphicsBackend::Current()->AttachRenderTarget(depthDescriptor);
 
     GraphicsBackend::Current()->BeginRenderPass("Gizmos pass");
+    {
+        Profiler::GPUMarker gpuMarker("GizmosPass::Execute");
 
-    Graphics::SetCameraData(m_ViewMatrix, m_ProjectionMatrix, m_NearPlane, m_FarPlane);
-    m_GizmosQueue.Draw();
-
+        Graphics::SetCameraData(m_ViewMatrix, m_ProjectionMatrix, m_NearPlane, m_FarPlane);
+        m_GizmosQueue.Draw();
+    }
     GraphicsBackend::Current()->EndRenderPass();
 }
 

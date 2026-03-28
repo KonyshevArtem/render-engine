@@ -37,6 +37,7 @@
 #include "graphics_buffer/graphics_buffer_view.h"
 #include "passes/post_process_pass.h"
 #include "developer_console/developer_console.h"
+#include "arguments.h"
 
 #include <cassert>
 
@@ -64,7 +65,7 @@ namespace Graphics
     RenderData s_RenderData;
     std::vector<std::shared_ptr<RenderPass>> s_RenderPasses;
     std::shared_ptr<Worker::Task> s_PrepareTask;
-    bool s_PrepareTaskSingleThreaded = false;
+    bool s_SynchronousGraphicsPrepare = false;
 
     void InitConstantBuffers()
     {
@@ -102,8 +103,8 @@ namespace Graphics
         InitConstantBuffers();
         InitPasses();
 
-        s_PrepareTaskSingleThreaded = GraphicsBackend::Current()->GetName() == GraphicsBackendName::OPENGL || GraphicsBackend::Current()->GetName() == GraphicsBackendName::GLES;
-        DeveloperConsole::AddBoolCommand(L"Graphics.Prepare.SingleThreaded", &s_PrepareTaskSingleThreaded);
+        s_SynchronousGraphicsPrepare = Arguments::Contains("-sync_graphics_prepare") || GraphicsBackend::Current()->GetName() == GraphicsBackendName::OPENGL || GraphicsBackend::Current()->GetName() == GraphicsBackendName::GLES;
+        DeveloperConsole::AddBoolCommand(L"Graphics.Prepare.Synchronous", &s_SynchronousGraphicsPrepare);
     }
 
     void Shutdown()
@@ -196,7 +197,7 @@ namespace Graphics
 
                 s_PrepareTask->AddDependency(prepareTask);
 
-				if (!s_PrepareTaskSingleThreaded)
+				if (!s_SynchronousGraphicsPrepare)
 					prepareTask->Schedule();
                 return prepareTask;
             };
@@ -230,7 +231,7 @@ namespace Graphics
         SchedulePassPrepare(s_ShadowMapDebugPass, {});
 #endif
 
-        if (s_PrepareTaskSingleThreaded)
+        if (s_SynchronousGraphicsPrepare)
             s_PrepareTask->Execute();
         else
 			s_PrepareTask->Schedule();

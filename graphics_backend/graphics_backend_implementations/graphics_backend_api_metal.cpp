@@ -869,14 +869,13 @@ void GraphicsBackendMetal::PopDebugGroup(GPUQueue queue)
     }
 }
 
-GraphicsBackendProfilerMarker GraphicsBackendMetal::PushProfilerMarker()
+GraphicsBackendProfilerMarker GraphicsBackendMetal::PushProfilerMarker(GPUQueue queue)
 {
     assert(!m_ProfilerMarkerActive);
     m_ProfilerMarkerActive = m_SupportTimestampCounters;
 
     GraphicsBackendProfilerMarker marker{};
-    for (int gpuQueue = 0; gpuQueue < k_MaxGPUQueuesCount; ++gpuQueue)
-        marker.Info[gpuQueue].StartMarker = MetalLocal::s_CurrentCounterSampleOffsets[gpuQueue];
+    marker.Info.StartMarker = MetalLocal::s_CurrentCounterSampleOffsets[static_cast<int>(queue)];
     return marker;
 }
 
@@ -885,17 +884,14 @@ void GraphicsBackendMetal::PopProfilerMarker(GraphicsBackendProfilerMarker& mark
     assert(m_ProfilerMarkerActive);
     m_ProfilerMarkerActive = false;
 
-    for (int gpuQueue = 0; gpuQueue < k_MaxGPUQueuesCount; ++gpuQueue)
-    {
-        GraphicsBackendProfilerMarker::MarkerInfo& info = marker.Info[gpuQueue];
-        const int currentCounterSampleOffset = MetalLocal::s_CurrentCounterSampleOffsets[gpuQueue];
-        const bool isActive = info.StartMarker != currentCounterSampleOffset;
-        const uint64_t sampleIndex = currentCounterSampleOffset == 0 ? MetalLocal::k_MaxTimestampSamples - 1 : currentCounterSampleOffset - 1;
-        info.EndMarker = isActive ? sampleIndex : info.StartMarker;
-    }
+    GraphicsBackendProfilerMarker::MarkerInfo& info = marker.Info;
+    const int currentCounterSampleOffset = MetalLocal::s_CurrentCounterSampleOffsets[static_cast<int>(marker.Queue)];
+    const bool isActive = info.StartMarker != currentCounterSampleOffset;
+    const uint64_t sampleIndex = currentCounterSampleOffset == 0 ? MetalLocal::k_MaxTimestampSamples - 1 : currentCounterSampleOffset - 1;
+    info.EndMarker = isActive ? sampleIndex : info.StartMarker;
 }
 
-bool GraphicsBackendMetal::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResults& outResults)
+bool GraphicsBackendMetal::ResolveProfilerMarker(const GraphicsBackendProfilerMarker& marker, ProfilerMarkerResolveResult& outResults)
 {
     if (!m_SupportTimestampCounters)
         return true;
@@ -916,8 +912,9 @@ bool GraphicsBackendMetal::ResolveProfilerMarker(const GraphicsBackendProfilerMa
         timestampDifference = systemCpuTimestamp - cpuTimestamp;
     }
 
-    auto tryResolve = [](uint64_t counterOffset, int queueIndex, uint64_t& outCpuTimestamp)
+    auto tryResolve = [&marker](uint64_t counterOffset, uint64_t& outCpuTimestamp)
     {
+        const int queueIndex = static_cast<int>(marker.Queue);
         if (!MetalLocal::s_CounterSampleFinished[queueIndex][counterOffset])
             return false;
 
@@ -932,15 +929,12 @@ bool GraphicsBackendMetal::ResolveProfilerMarker(const GraphicsBackendProfilerMa
     };
 
     bool resolved = true;
-    for (int gpuQueue = 0; gpuQueue < k_MaxGPUQueuesCount; ++gpuQueue)
+    const GraphicsBackendProfilerMarker::MarkerInfo& markerInfo = marker.Info;
+    outResults.IsActive = markerInfo.StartMarker != markerInfo.EndMarker;
+    if (outResults.IsActive)
     {
-        const GraphicsBackendProfilerMarker::MarkerInfo& markerInfo = marker.Info[gpuQueue];
-        outResults[gpuQueue].IsActive = markerInfo.StartMarker != markerInfo.EndMarker;
-        if (!outResults[gpuQueue].IsActive)
-            continue;
-
-        resolved &= tryResolve(markerInfo.StartMarker, gpuQueue, outResults[gpuQueue].StartTimestamp);
-        resolved &= tryResolve(markerInfo.EndMarker, gpuQueue, outResults[gpuQueue].EndTimestamp);
+        resolved &= tryResolve(markerInfo.StartMarker, outResults.StartTimestamp);
+        resolved &= tryResolve(markerInfo.EndMarker, outResults.EndTimestamp);
     }
 
     return resolved;

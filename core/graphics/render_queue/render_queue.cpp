@@ -129,40 +129,12 @@ namespace RenderQueueLocal
         if (sortMode != DrawCallSortMode::NO_SORTING)
             std::sort(outDrawCalls.begin(), outDrawCalls.end(), DrawCallComparer {sortMode, cameraDirection});
     }
-
-    void SetupShaderPass(const Material* material, const VertexAttributes &vertexAttributes, PrimitiveType primitiveType, uint8_t stencilValue)
-    {
-        uint32_t perMaterialDataBinding = 0;
-        const std::shared_ptr<GraphicsBuffer>& perMaterialDataBuffer = material->GetPerMaterialDataBuffer(perMaterialDataBinding);
-        if (perMaterialDataBuffer)
-            GraphicsBackend::Current()->BindConstantBuffer(perMaterialDataBuffer->GetBackendBuffer(), perMaterialDataBinding, 0, perMaterialDataBuffer->GetSize());
-
-        for (const auto& pair: material->GetTextures())
-        {
-            uint32_t binding = pair.first;
-            const std::shared_ptr<Texture>& texture = pair.second;
-
-            if (!texture)
-            {
-                Debug::LogErrorFormat("[RenderQueue] Texture for binding {} is missing on material: {}", std::to_string(binding), material->GetName());
-                continue;
             }
 
-            GraphicsBackend::Current()->BindTextureSampler(texture->GetBackendTexture(), texture->GetBackendSampler(), binding);
-        }
-
-        GraphicsBackend::Current()->SetDepthState(material->DepthDescriptor);
-        GraphicsBackend::Current()->SetRasterizerState(material->RasterizerDescriptor);
-        GraphicsBackend::Current()->SetBlendState(material->BlendDescriptor);
-        GraphicsBackend::Current()->SetStencilState(material->StencilDescriptor);
-        if (material->StencilDescriptor.Enabled)
-            GraphicsBackend::Current()->SetStencilValue(stencilValue);
-
-        GraphicsBackend::Current()->UseProgram(material->GetShader()->GetProgram(vertexAttributes, primitiveType));
-    }
-}
-
-RenderQueue::RenderQueue()
+RenderQueue::RenderQueue() :
+	m_PreviousMaterial(nullptr),
+	m_PreviousVertexAttributesHash(0),
+	m_PreviousPrimitiveType(PrimitiveType::LINES)
 {
     DeveloperConsole::AddBoolCommand(L"FrustumCulling.Enabled", &EnableFrustumCulling);
     DeveloperConsole::AddBoolCommand(L"FrustumCulling.Freeze", &FreezeFrustumCulling);
@@ -185,7 +157,7 @@ RenderQueue::RenderQueue()
 
 void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& renderSettings)
 {
-    m_DrawCalls.clear();
+    Clear();
 
     if (!FreezeFrustumCulling)
         m_Frustum = Frustum(viewProjectionMatrix);
@@ -198,7 +170,7 @@ void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vect
 
 void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<Item>& items, const RenderSettings& renderSettings)
 {
-    m_DrawCalls.clear();
+    Clear();
 
     if (!FreezeFrustumCulling)
         m_Frustum = Frustum(viewProjectionMatrix);
@@ -212,6 +184,9 @@ void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vect
 void RenderQueue::Clear()
 {
     m_DrawCalls.clear();
+    m_PreviousMaterial = nullptr;
+    m_PreviousVertexAttributesHash = 0;
+    m_PreviousPrimitiveType = PrimitiveType::LINES;
 }
 
 bool RenderQueue::IsEmpty() const
@@ -224,7 +199,7 @@ const std::vector<DrawCallInfo>& RenderQueue::GetDrawCalls() const
     return m_DrawCalls;
 }
 
-void RenderQueue::Draw() const
+void RenderQueue::Draw()
 {
     for (const DrawCallInfo& drawCall : m_DrawCalls)
     {
@@ -235,7 +210,7 @@ void RenderQueue::Draw() const
         const bool hasIndices = drawCall.Geometry->HasIndexes();
 
         SetupMatrices(drawCall.ModelMatrices);
-        RenderQueueLocal::SetupShaderPass(drawCall.Material, drawCall.Geometry->GetVertexAttributes(), primitiveType, drawCall.StencilValue);
+        SetupShaderPass(drawCall.Material, drawCall.Geometry->GetVertexAttributes(), primitiveType, drawCall.StencilValue);
 
         if (drawCall.Instanced)
         {
@@ -291,4 +266,44 @@ void RenderQueue::SetupMatrices(const std::vector<Matrix4x4>& matrices)
     }
     else
         GraphicsBackend::Current()->BindConstantBuffer(s_MatricesBuffer->GetBackendBuffer(), GlobalConstants::MatricesData, offset, size);
+}
+
+void RenderQueue::SetupShaderPass(const Material* material, const VertexAttributes& vertexAttributes, PrimitiveType primitiveType, uint8_t stencilValue)
+{
+    if (m_PreviousMaterial != material)
+    {
+        uint32_t perMaterialDataBinding = 0;
+        const std::shared_ptr<GraphicsBuffer>& perMaterialDataBuffer = material->GetPerMaterialDataBuffer(perMaterialDataBinding);
+        if (perMaterialDataBuffer)
+            GraphicsBackend::Current()->BindConstantBuffer(perMaterialDataBuffer->GetBackendBuffer(), perMaterialDataBinding, 0, perMaterialDataBuffer->GetSize());
+
+        for (const auto& pair : material->GetTextures())
+        {
+            const uint32_t binding = pair.first;
+            const std::shared_ptr<Texture>& texture = pair.second;
+
+            if (!texture)
+            {
+                Debug::LogErrorFormat("[RenderQueue] Texture for binding {} is missing on material: {}", std::to_string(binding), material->GetName());
+                continue;
+            }
+
+            GraphicsBackend::Current()->BindTextureSampler(texture->GetBackendTexture(), texture->GetBackendSampler(), binding);
+        }
+
+        GraphicsBackend::Current()->SetDepthState(material->DepthDescriptor);
+        GraphicsBackend::Current()->SetRasterizerState(material->RasterizerDescriptor);
+        GraphicsBackend::Current()->SetBlendState(material->BlendDescriptor);
+        GraphicsBackend::Current()->SetStencilState(material->StencilDescriptor);
+    }
+
+    if (material->StencilDescriptor.Enabled)
+        GraphicsBackend::Current()->SetStencilValue(stencilValue);
+
+    if (m_PreviousMaterial != material || m_PreviousVertexAttributesHash != vertexAttributes.GetHash() || m_PreviousPrimitiveType != primitiveType)
+		GraphicsBackend::Current()->UseProgram(material->GetShader()->GetProgram(vertexAttributes, primitiveType));
+
+    m_PreviousMaterial = material;
+    m_PreviousVertexAttributesHash = vertexAttributes.GetHash();
+    m_PreviousPrimitiveType = primitiveType;
 }

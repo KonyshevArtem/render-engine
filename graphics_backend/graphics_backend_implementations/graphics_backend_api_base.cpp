@@ -159,65 +159,86 @@ void GraphicsBackendBase::DeleteProgram(GraphicsBackendProgram program)
 void GraphicsBackendBase::UseProgram(const GraphicsBackendProgram& program)
 {
     m_CurrentProgram = program;
-
-    BindResources(program);
 }
 
-void GraphicsBackendBase::BindResources(const GraphicsBackendProgram& program)
+void GraphicsBackendBase::BindResources()
 {
-    auto HasBinding = [](uint32_t bindingFlags, uint32_t binding)
-    {
-        return (bindingFlags & (1 << binding)) != 0;
-    };
+    auto RequiresBinding = [](uint32_t bindingMask, uint32_t dirtyMask, uint32_t binding)
+        {
+            const uint32_t bindingBit = 1 << binding;
+            return (bindingMask & bindingBit) != 0 && (dirtyMask & bindingBit) != 0;
+        };
+
+    const GraphicsBackendProgram& program = m_CurrentProgram;
 
     for (const auto& pair: m_BoundTextures)
     {
-        if (HasBinding(program.TextureBindings, pair.first))
+        if (RequiresBinding(program.TextureBindings, m_BoundTexturesDirtyMask, pair.first))
+        {
             BindTexture_Internal(pair.second, pair.first);
+            m_BoundTexturesDirtyMask &= ~(1 << pair.first);
+        }
     }
 
     for (const auto& pair : m_BoundRWTextures)
     {
-        if (HasBinding(program.RWTextureBindings, pair.first))
+        if (RequiresBinding(program.RWTextureBindings, m_BoundRWTexturesDirtyMask, pair.first))
+        {
             BindRWTexture_Internal(pair.second, pair.first);
+            m_BoundRWTexturesDirtyMask &= ~(1 << pair.first);
+        }
     }
 
     for (const auto& pair: m_BoundSamplers)
     {
-        if (HasBinding(program.SamplerBindings, pair.first))
+        if (RequiresBinding(program.SamplerBindings, m_BoundSamplersDirtyMask, pair.first))
+        {
             BindSampler_Internal(pair.second, pair.first);
+            m_BoundSamplersDirtyMask &= ~(1 << pair.first);
+        }
     }
 
     for (const auto& pair: m_BoundBuffers)
     {
         const GraphicsBackendBufferView& view = pair.second;
-        if (HasBinding(program.BufferBindings, pair.first))
+        if (RequiresBinding(program.BufferBindings, m_BoundBuffersDirtyMask, pair.first))
+        {
             BindBuffer_Internal(view, pair.first);
+            m_BoundBuffersDirtyMask &= ~(1 << pair.first);
+        }
     }
 
     for (const auto& pair: m_BoundConstantBuffers)
     {
         const BufferBindInfo& info = pair.second;
-        if (HasBinding(program.ConstantBufferBindings, pair.first))
+        if (RequiresBinding(program.ConstantBufferBindings, m_BoundConstantBuffersDirtyMask, pair.first))
+        {
             BindConstantBuffer_Internal(info.Buffer, pair.first, info.Offset, info.Size);
+            m_BoundConstantBuffersDirtyMask &= ~(1 << pair.first);
+        }
     }
 
     for (const auto& pair : m_BoundRWBuffers)
     {
         const GraphicsBackendBufferView& view = pair.second;
-        if (HasBinding(program.RWBufferBindings, pair.first))
+        if (RequiresBinding(program.RWBufferBindings, m_BoundRWBuffersDirtyMask, pair.first))
+        {
             BindRWBuffer_Internal(view, pair.first);
+            m_BoundRWBuffersDirtyMask &= ~(1 << pair.first);
+        }
     }
 }
 
 void GraphicsBackendBase::BindTexture(const GraphicsBackendTexture& texture, uint32_t index)
 {
     m_BoundTextures[index] = texture;
+    m_BoundTexturesDirtyMask |= 1 << index;
 }
 
 void GraphicsBackendBase::BindSampler(const GraphicsBackendSampler& sampler, uint32_t index)
 {
     m_BoundSamplers[index] = sampler;
+    m_BoundSamplersDirtyMask |= 1 << index;
 }
 
 void GraphicsBackendBase::BindTextureSampler(const GraphicsBackendTexture& texture, const GraphicsBackendSampler& sampler, uint32_t index)
@@ -229,6 +250,7 @@ void GraphicsBackendBase::BindTextureSampler(const GraphicsBackendTexture& textu
 void GraphicsBackendBase::BindRWTexture(const GraphicsBackendTexture& texture, uint32_t index)
 {
     m_BoundRWTextures[index] = texture;
+    m_BoundRWTexturesDirtyMask |= 1 << index;
 }
 
 void GraphicsBackendBase::UploadImagePixels(const GraphicsBackendTexture& texture, int level, int width, int height, int depth, int imageSize, const void* pixelsData)
@@ -239,16 +261,19 @@ void GraphicsBackendBase::UploadImagePixels(const GraphicsBackendTexture& textur
 void GraphicsBackendBase::BindBuffer(const GraphicsBackendBufferView& bufferView, uint32_t index)
 {
     m_BoundBuffers[index] = bufferView;
+    m_BoundBuffersDirtyMask |= 1 << index;
 }
 
 void GraphicsBackendBase::BindConstantBuffer(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size)
 {
     m_BoundConstantBuffers[index] = BufferBindInfo{buffer, BufferType::CONSTANT_BUFFER, offset, size};
+    m_BoundConstantBuffersDirtyMask |= 1 << index;
 }
 
 void GraphicsBackendBase::BindRWBuffer(const GraphicsBackendBufferView& bufferView, uint32_t index)
 {
     m_BoundRWBuffers[index] = bufferView;
+    m_BoundRWBuffersDirtyMask |= 1 << index;
 }
 
 GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor)
@@ -502,6 +527,16 @@ bool GraphicsBackendBase::IsDepthAttachment(FramebufferAttachment attachment)
 bool GraphicsBackendBase::IsMainThread()
 {
     return std::this_thread::get_id() == m_MainThreadId;
+}
+
+bool GraphicsBackendBase::IsBoundResourcesDirty() const
+{
+	return (m_BoundTexturesDirtyMask & m_CurrentProgram.TextureBindings) != 0 || 
+        (m_BoundRWTexturesDirtyMask & m_CurrentProgram.RWTextureBindings) != 0 || 
+        (m_BoundSamplersDirtyMask & m_CurrentProgram.SamplerBindings) != 0 ||
+		(m_BoundBuffersDirtyMask & m_CurrentProgram.BufferBindings) != 0 ||
+        (m_BoundRWBuffersDirtyMask & m_CurrentProgram.RWBufferBindings) != 0 || 
+        (m_BoundConstantBuffersDirtyMask & m_CurrentProgram.ConstantBufferBindings) != 0;
 }
 
 size_t GraphicsBackendBase::GetDepthDescriptorHash(const GraphicsBackendDepthDescriptor& depthDescriptor)

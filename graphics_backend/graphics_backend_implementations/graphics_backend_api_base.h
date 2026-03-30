@@ -195,6 +195,8 @@ public:
 
 protected:
     bool IsMainThread();
+    bool IsBoundResourcesDirty() const;
+    void BindResources();
 
     virtual void DeleteTexture_Internal(const GraphicsBackendTexture &texture) = 0;
     virtual void DeleteSampler_Internal(const GraphicsBackendSampler &sampler) = 0;
@@ -217,8 +219,6 @@ protected:
     uint32_t m_DrawCallCount = 0;
 
 private:
-    void BindResources(const GraphicsBackendProgram& program);
-
     struct BufferBindInfo
     {
         GraphicsBackendBuffer Buffer;
@@ -246,6 +246,13 @@ private:
     std::unordered_map<uint32_t, GraphicsBackendBufferView> m_BoundBuffers;
     std::unordered_map<uint32_t, BufferBindInfo> m_BoundConstantBuffers;
     std::unordered_map<uint32_t, GraphicsBackendBufferView> m_BoundRWBuffers;
+
+    uint32_t m_BoundTexturesDirtyMask = 0;
+    uint32_t m_BoundRWTexturesDirtyMask = 0;
+    uint32_t m_BoundSamplersDirtyMask = 0;
+    uint32_t m_BoundBuffersDirtyMask = 0;
+    uint32_t m_BoundConstantBuffersDirtyMask = 0;
+    uint32_t m_BoundRWBuffersDirtyMask = 0;
 
     GraphicsBackendStencilDescriptor m_StencilDescriptor;
     GraphicsBackendDepthDescriptor m_DepthDescriptor;

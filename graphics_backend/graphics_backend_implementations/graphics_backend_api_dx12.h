@@ -104,6 +104,9 @@ protected:
     void BindBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) override;
     void BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size) override;
     void BindRWBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) override;
+
+private:
+    void BindResources(ProgramType programType);
 };
 
 #endif // RENDER_BACKEND_DX12

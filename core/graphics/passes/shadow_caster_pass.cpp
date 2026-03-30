@@ -258,7 +258,7 @@ void ShadowCasterPass::Execute(const RenderData& renderData)
     GraphicsBackend::Current()->BindTextureSampler(m_PointLightShadowMap->GetBackendTexture(), m_PointLightShadowMap->GetBackendSampler(), GlobalConstants::PointLightShadowMapIndex);
 }
 
-void ShadowCasterPass::Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData& cameraData, const std::string& passName)
+void ShadowCasterPass::Render(RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData& cameraData, const std::string& passName)
 {
     static constexpr GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::DONT_CARE, .StoreAction = StoreAction::DONT_CARE };
 

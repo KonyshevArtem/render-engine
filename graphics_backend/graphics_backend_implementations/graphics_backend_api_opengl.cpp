@@ -942,6 +942,8 @@ void GraphicsBackendOpenGL::DrawArrays(const GraphicsBackendGeometry &geometry, 
 {
     ++m_DrawCallCount;
 
+    BindResources();
+
     OpenGLLocal::UpdateStencil();
     BindGeometry(geometry);
     glDrawArrays(OpenGLHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
@@ -950,6 +952,8 @@ void GraphicsBackendOpenGL::DrawArrays(const GraphicsBackendGeometry &geometry, 
 void GraphicsBackendOpenGL::DrawArraysInstanced(const GraphicsBackendGeometry &geometry, PrimitiveType primitiveType, int firstIndex, int indicesCount, int instanceCount)
 {
     ++m_DrawCallCount;
+
+    BindResources();
 
     OpenGLLocal::UpdateStencil();
     BindGeometry(geometry);
@@ -960,6 +964,8 @@ void GraphicsBackendOpenGL::DrawElements(const GraphicsBackendGeometry &geometry
 {
     ++m_DrawCallCount;
 
+    BindResources();
+
     OpenGLLocal::UpdateStencil();
     BindGeometry(geometry);
     glDrawElements(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr);
@@ -969,6 +975,8 @@ void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry 
 {
     ++m_DrawCallCount;
 
+    BindResources();
+
     OpenGLLocal::UpdateStencil();
     BindGeometry(geometry);
     glDrawElementsInstanced(OpenGLHelpers::ToPrimitiveType(primitiveType), elementsCount, OpenGLHelpers::ToIndicesDataType(dataType), nullptr, instanceCount);
@@ -976,6 +984,8 @@ void GraphicsBackendOpenGL::DrawElementsInstanced(const GraphicsBackendGeometry 
 
 void GraphicsBackendOpenGL::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
+    BindResources();
+
     const ThreadGroupSize& tgSize = m_CurrentProgram.ThreadGroupSize;
 
     x = (x + tgSize.X - 1) / tgSize.X;

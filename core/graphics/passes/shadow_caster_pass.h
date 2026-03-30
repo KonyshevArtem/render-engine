@@ -60,7 +60,7 @@ private:
 
     std::shared_ptr<RingBuffer> m_ShadowCasterPassBuffer;
 
-    void Render(const RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData &cameraData, const std::string& passName);
+    void Render(RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData &cameraData, const std::string& passName);
 };
 
 #endif //RENDER_ENGINE_SHADOW_CASTER_PASS_H

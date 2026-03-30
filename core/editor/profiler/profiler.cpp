@@ -133,6 +133,8 @@ void Profiler::BeginNewFrame()
     FrameInfo& newMainThreadFrame = s_ContextFrames[static_cast<int>(MarkerContext::MAIN_THREAD)][GraphicsBackend::Current()->GetFrameNumber()];
     newMainThreadFrame.Markers.emplace_back(MarkerType::SEPARATOR);
 
+    Profiler::Marker _("Profiler::BeginNewFrame");
+
     for (int i = 0; i < s_PendingGPUMarkers.size(); ++i)
     {
         const GPUMarkerInfo& gpuMarker = s_PendingGPUMarkers[i];

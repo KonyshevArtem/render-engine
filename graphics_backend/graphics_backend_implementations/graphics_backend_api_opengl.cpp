@@ -1050,6 +1050,7 @@ GraphicsBackendProfilerMarker GraphicsBackendOpenGL::PushProfilerMarker(GPUQueue
     GraphicsBackendProfilerMarker marker{};
     marker.Info.StartMarker = glQueries[0];
     marker.Info.EndMarker = glQueries[1];
+    marker.Queue = GPUQueue::RENDER;
     return marker;
 }
 
@@ -1089,7 +1090,6 @@ bool GraphicsBackendOpenGL::ResolveProfilerMarker(const GraphicsBackendProfilerM
     }
 
     outResult.IsActive = markerResolved;
-    outResult.IsActive = false;
 
     return markerResolved;
 }

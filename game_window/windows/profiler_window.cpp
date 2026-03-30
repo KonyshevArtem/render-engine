@@ -45,14 +45,19 @@ void DrawMarker(const Profiler::MarkerInfo& marker, const std::chrono::system_cl
 
     size_t nameHash = std::hash<std::string>{}(marker.Name);
     ImVec4 color = ImGui::ColorConvertU32ToFloat4(*reinterpret_cast<ImU32*>(&nameHash));
-    color.x *= 0.5;
-    color.y *= 0.5;
-    color.z *= 0.5;
+    color.x *= 0.5f;
+    color.y *= 0.5f;
+    color.z *= 0.5f;
     color.w = 1;
+
+    ImVec4 hoveredColor = color;
+    hoveredColor.x *= 0.7f;
+    hoveredColor.y *= 0.7f;
+    hoveredColor.z *= 0.7f;
 
     ImGui::SetCursorPos({posX, posY});
     ImGui::PushStyleColor(ImGuiCol_Button, color);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
     ImGui::Button(marker.Name, {width, k_MarkerHeight});
     if (ImGui::IsItemHovered())

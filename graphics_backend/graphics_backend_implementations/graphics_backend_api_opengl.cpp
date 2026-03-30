@@ -1147,6 +1147,7 @@ void GraphicsBackendOpenGL::EndRenderPass()
     OpenGLLocal::ResetRenderTargetStates();
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     PopDebugGroup(GPUQueue::RENDER);
+    glFlush();
 }
 
 void GraphicsBackendOpenGL::BeginCopyPass(const std::string& name)
@@ -1157,6 +1158,7 @@ void GraphicsBackendOpenGL::BeginCopyPass(const std::string& name)
 void GraphicsBackendOpenGL::EndCopyPass()
 {
     PopDebugGroup(GPUQueue::COPY);
+    glFlush();
 }
 
 void GraphicsBackendOpenGL::BeginComputePass(const std::string& name)
@@ -1167,6 +1169,7 @@ void GraphicsBackendOpenGL::BeginComputePass(const std::string& name)
 void GraphicsBackendOpenGL::EndComputePass()
 {
     PopDebugGroup(GPUQueue::RENDER);
+    glFlush();
 }
 
 GraphicsBackendFence GraphicsBackendOpenGL::CreateFence(FenceType fenceType, const std::string& name)

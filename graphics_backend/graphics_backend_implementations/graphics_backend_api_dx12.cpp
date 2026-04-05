@@ -216,21 +216,20 @@ namespace DX12Local
         bool IsResizable;
         D3D12_DESCRIPTOR_HEAP_TYPE HeapType;
 
-        DescriptorHeap() : Heap(nullptr), DescriptorSize(0), DescriptorsCount(0), DescriptorIndex(0), DescriptorsInUse(0), IsResizable(false), HeapType(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
-        {}
-
-        DescriptorHeap(uint32_t descriptorsCount, D3D12_DESCRIPTOR_HEAP_TYPE type, bool isShaderVisible = false, bool resizable = false) :
-            DescriptorsCount(descriptorsCount),
-            DescriptorIndex(0),
-            DescriptorsInUse(0),
-            IsResizable(resizable),
-			HeapType(type)
+        void Init(uint32_t descriptorsCount, D3D12_DESCRIPTOR_HEAP_TYPE type, const std::string& name, bool isShaderVisible = false, bool resizable = false)
         {
+            DescriptorsCount = descriptorsCount;
+            DescriptorIndex = 0;
+            DescriptorsInUse = 0;
+            IsResizable = resizable;
+            HeapType = type;
+
             D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
             heapDesc.NumDescriptors = descriptorsCount;
             heapDesc.Type = HeapType;
             heapDesc.Flags = isShaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
             ThrowIfFailed(s_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&Heap)));
+            SetObjectName(Heap, name);
 
             DescriptorSize = s_Device->GetDescriptorHandleIncrementSize(HeapType);
         }
@@ -276,12 +275,12 @@ namespace DX12Local
     struct DescriptorPool : public DescriptorHeap
     {
         std::vector<uint32_t> FreeIndices;
+        std::mutex Mutex;
 
-        DescriptorPool() : DescriptorHeap()
-        {}
-
-        DescriptorPool(uint32_t descriptorsCount, D3D12_DESCRIPTOR_HEAP_TYPE type) : DescriptorHeap(descriptorsCount, type, false)
+        void Init(uint32_t descriptorsCount, D3D12_DESCRIPTOR_HEAP_TYPE type, const std::string& name)
         {
+            DescriptorHeap::Init(descriptorsCount, type, name, false);
+
             FreeIndices.resize(descriptorsCount);
             for (uint32_t i = 0; i < descriptorsCount; ++i)
                 FreeIndices[i] = i;
@@ -289,6 +288,8 @@ namespace DX12Local
 
         D3D12_CPU_DESCRIPTOR_HANDLE GetFreeCPUHandle(uint32_t& outIndex)
         {
+            std::lock_guard<std::mutex> lock(Mutex);
+
             assert(!FreeIndices.empty());
 
             outIndex = FreeIndices.back();
@@ -299,6 +300,7 @@ namespace DX12Local
 
         void ReturnCPUHandle(uint32_t index)
         {
+            std::lock_guard<std::mutex> lock(Mutex);
             FreeIndices.push_back(index);
         }
     };
@@ -654,8 +656,8 @@ namespace DX12Local
         ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // textures
         ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // buffers
         ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // constant buffers
-        ranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // RW textures
-        ranges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // RW buffers
+        ranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE); // RW textures
+        ranges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE); // RW buffers
 
         CD3DX12_DESCRIPTOR_RANGE1 samplersRange;
         samplersRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
@@ -698,7 +700,10 @@ void GraphicsBackendDX12::Init(void* data)
     {
         ID3D12Debug3* debugController;
         if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+        {
             debugController->EnableDebugLayer();
+            debugController->SetEnableGPUBasedValidation(TRUE);
+    }
     }
 
     IDXGIFactory7* factory;
@@ -722,22 +727,22 @@ void GraphicsBackendDX12::Init(void* data)
     DX12Local::SetObjectName(DX12Local::s_RenderQueue, "RenderQueue");
     DX12Local::SetObjectName(DX12Local::s_CopyQueue, "CopyQueue");
 
-    DX12Local::s_ColorBackbufferDescriptorHeap = DX12Local::DescriptorHeap(GraphicsBackend::GetMaxFramesInFlight(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    DX12Local::s_DepthBackbufferDescriptorHeap = DX12Local::DescriptorHeap(GraphicsBackend::GetMaxFramesInFlight(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    DX12Local::s_ColorBackbufferDescriptorHeap.Init(GraphicsBackend::GetMaxFramesInFlight(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, "Color Backbuffer Descriptors");
+    DX12Local::s_DepthBackbufferDescriptorHeap.Init(GraphicsBackend::GetMaxFramesInFlight(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "Depth Backbuffer Descriptors");
 
-    DX12Local::s_AllocatedResourcesDescriptorPool = DX12Local::DescriptorPool(DX12Local::k_ResourceDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    DX12Local::s_AllocatedSamplersDescriptorPool = DX12Local::DescriptorPool(DX12Local::k_SamplerDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+    DX12Local::s_AllocatedResourcesDescriptorPool.Init(DX12Local::k_ResourceDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Allocated Resources Descriptors");
+    DX12Local::s_AllocatedSamplersDescriptorPool.Init(DX12Local::k_SamplerDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "Allocated Samplers Descriptors");
 
     DX12Local::s_Window = static_cast<HWND>(data);
     DX12Local::CreateSwapChain(DX12Local::s_Window, factory);
 
-    DX12Local::s_BoundResourceDescriptorHeap = DX12Local::DescriptorHeap(DX12Local::k_ResourceDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true, true);
-    DX12Local::s_BoundResourceStagingDescriptorHeap = DX12Local::DescriptorHeap(DX12Local::k_ResourceDescriptorHeapAdvance, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, false);
-    DX12Local::s_BoundSamplerDescriptorHeap = DX12Local::DescriptorHeap(DX12Local::k_SamplerDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, true);
-    DX12Local::s_BoundSamplerStagingDescriptorHeap = DX12Local::DescriptorHeap(DX12Local::k_SamplerDescriptorHeapAdvance, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+    DX12Local::s_BoundResourceDescriptorHeap.Init(DX12Local::k_ResourceDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Bound Resources Descriptors", true, true);
+    DX12Local::s_BoundResourceStagingDescriptorHeap.Init(DX12Local::k_ResourceDescriptorHeapAdvance, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Bound Resources Staging Descriptor", false);
+    DX12Local::s_BoundSamplerDescriptorHeap.Init(DX12Local::k_SamplerDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "Bound Samplers Descriptor", true);
+    DX12Local::s_BoundSamplerStagingDescriptorHeap.Init(DX12Local::k_SamplerDescriptorHeapAdvance, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "Bound Samplers Staging Descriptors");
 
-    DX12Local::s_ColorTargetDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    DX12Local::s_DepthTargetDescriptorHeap = DX12Local::DescriptorHeap(1024, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    DX12Local::s_ColorTargetDescriptorHeap.Init(1024, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, "Color Target Descriptors");
+    DX12Local::s_DepthTargetDescriptorHeap.Init(1024, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "Depth Target Descriptors");
 
     DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&DX12Local::s_RenderQueueFence));
     DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&DX12Local::s_CopyQueueFence));
@@ -839,7 +844,7 @@ void GraphicsBackendDX12::FillImGuiInitData(void* data)
     initData->MaxFramesInFlight = GraphicsBackend::GetMaxFramesInFlight();
     initData->Format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
 
-    DX12Local::s_ImGuiDescriptorHeap = DX12Local::DescriptorHeap(64, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+    DX12Local::s_ImGuiDescriptorHeap.Init(64, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ImGui Descriptors", true);
 
     initData->DescriptorHeap = DX12Local::s_ImGuiDescriptorHeap.Heap;
     initData->CpuDescriptorHandle = initData->DescriptorHeap->GetCPUDescriptorHandleForHeapStart();

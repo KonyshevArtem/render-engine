@@ -9,19 +9,16 @@ struct PerDrawDataStruct
     float4x4 _ModelNormalMatrix;
 };
 
+StructuredBuffer<PerDrawDataStruct> TransformMatricesBuffer : register(TRANSFORM_MATRICES_DATA);
+
 #ifdef _INSTANCING
 
     static uint _InstanceID;
 
-    cbuffer InstanceMatricesOffsetBuffer : register(INSTANCING_MATRICES_OFFSET_DATA)
-	{
-        uint MatricesOffset;
-	}
-
-    StructuredBuffer<PerDrawDataStruct> InstanceMatricesBuffer : register(INSTANCING_MATRICES_DATA);
-
-    #define _ModelMatrix            InstanceMatricesBuffer[MatricesOffset + _InstanceID]._ModelMatrix
-    #define _ModelNormalMatrix      InstanceMatricesBuffer[MatricesOffset + _InstanceID]._ModelNormalMatrix
+    Buffer<uint> InstanceMatricesEntriesBuffer : register(INSTANCING_MATRICES_ENTRIES_DATA);
+    
+    #define _ModelMatrix            TransformMatricesBuffer[InstanceMatricesEntriesBuffer[_InstanceID]]._ModelMatrix
+    #define _ModelNormalMatrix      TransformMatricesBuffer[InstanceMatricesEntriesBuffer[_InstanceID]]._ModelNormalMatrix
 
     #define DECLARE_INSTANCE_ID_ATTRIBUTE() uint InstanceID : SV_InstanceID;
     #define DECLARE_INSTANCE_ID_VARYING(varID) nointerpolation uint InstanceID : TEXCOORD##varID;
@@ -31,10 +28,8 @@ struct PerDrawDataStruct
 
 #else
 
-    ConstantBuffer<PerDrawDataStruct> PerDrawData : register(MATRICES_DATA);
-
-    #define _ModelMatrix            PerDrawData._ModelMatrix
-    #define _ModelNormalMatrix      PerDrawData._ModelNormalMatrix
+    #define _ModelMatrix            TransformMatricesBuffer[0]._ModelMatrix
+    #define _ModelNormalMatrix      TransformMatricesBuffer[0]._ModelNormalMatrix
 
     #define DECLARE_INSTANCE_ID_ATTRIBUTE()
     #define DECLARE_INSTANCE_ID_VARYING(varID)

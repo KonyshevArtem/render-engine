@@ -22,8 +22,8 @@ namespace GlobalConstants
     constexpr int CameraDataIndex = 6;
     constexpr int ShadowDataIndex = 7;
 
-    constexpr int InstancingMatricesOffsetData = 4;
-    constexpr int InstancingMatricesData = 7;
+    constexpr int InstancingMatricesEntriesData = 6;
+    constexpr int TransformMatricesData = 7;
 }
 
 #endif //RENDER_ENGINE_GLOBAL_CONSTANTS_H

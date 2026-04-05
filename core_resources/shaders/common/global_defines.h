@@ -29,7 +29,7 @@
 #define CAMERA_DATA     b6
 #define SHADOW_DATA     b7
 
-#define INSTANCING_MATRICES_OFFSET_DATA     b4
-#define INSTANCING_MATRICES_DATA            t7, space1
+#define INSTANCING_MATRICES_ENTRIES_DATA   t6, space1
+#define TRANSFORM_MATRICES_DATA            t7, space1
 
 #endif //GLOBAL_DEFINES_H

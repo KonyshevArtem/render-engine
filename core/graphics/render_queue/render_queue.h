@@ -8,9 +8,13 @@
 
 #include <vector>
 #include <memory>
+#include <mutex>
+#include <deque>
+#include <shared_mutex>
 
 class Renderer;
 class RingBuffer;
+class GraphicsBuffer;
 class GraphicsBufferView;
 struct RenderSettings;
 
@@ -37,6 +41,8 @@ public:
 
     void Draw();
 
+    static void FreeMatricesEntry(const std::shared_ptr<GraphicsBufferView>& matricesBufferView);
+
     static bool EnableFrustumCulling;
     static bool FreezeFrustumCulling;
 
@@ -47,12 +53,33 @@ private:
     PrimitiveType m_PreviousPrimitiveType;
     Frustum m_Frustum;
 
-    static std::shared_ptr<RingBuffer> s_MatricesOffsetBuffer;
-    static std::shared_ptr<RingBuffer> s_MatricesBuffer;
-    static std::shared_ptr<GraphicsBufferView> s_MatricesBufferView;
+    std::vector<uint32_t> m_InstancedMatricesEntries;
+    std::vector<uint32_t> m_InstancedMatricesEntriesCounts;
+    std::shared_ptr<GraphicsBuffer> m_InstancedMatricesEntriesBuffer;
 
-    static void SetupMatrices(const std::vector<Matrix4x4>& matrices);
+    std::vector<Matrix4x4> m_TemporaryMatrices;
+    std::shared_ptr<GraphicsBuffer> m_TemporaryMatricesBuffer;
+    std::shared_ptr<GraphicsBufferView> m_TemporaryMatricesBufferView;
+
+    static std::mutex s_PermanentMatricesUpdatesMutex;
+    static std::shared_mutex s_PermanentMatricesBufferRecreateMutex;
+    static std::vector<std::pair<Matrix4x4, uint32_t>> s_PermanentMatricesUpdates;
+    static std::shared_ptr<GraphicsBuffer> s_PermanentMatricesBuffer;
+    static std::shared_ptr<GraphicsBufferView> s_PermanentMatricesBufferView;
+
+    static std::mutex s_FreeMatricesBufferEntriesMutex;
+    static std::deque<uint32_t> s_FreeMatricesBufferEntries;
+    static uint32_t s_MatricesBufferCapacity;
+
+    void SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& settings, const Frustum& frustum);
+    void SetupDrawCalls(const std::vector<Item>& items, const RenderSettings& settings, const Frustum& frustum);
+    void BatchDrawCalls();
+    void SetupMatrices(const DrawCallInfo& drawCallInfo) const;
     void SetupShaderPass(const Material* material, const VertexAttributes& vertexAttributes, PrimitiveType primitiveType, uint8_t stencilValue);
+
+    static int GetMatricesEntry();
+    static void CheckMatricesBufferSize();
+    static void CreatePermanentMatricesBuffer();
 };
 
 #endif //RENDER_QUEUE_H

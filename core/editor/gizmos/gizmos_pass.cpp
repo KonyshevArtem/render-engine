@@ -24,7 +24,10 @@ void GizmosPass::Prepare(RenderData& renderData)
 {
     if (m_Mode == Mode::GIZMOS_3D && !Gizmos::IsEnabled3D() ||
         m_Mode == Mode::GIZMOS_2D && !Gizmos::IsEnabled2D())
+    {
+        m_GizmosQueue.Clear();
         return;
+    }
 
     Profiler::Marker marker("GizmosPass::Prepare");
 

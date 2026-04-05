@@ -50,7 +50,10 @@ void SelectionOutlinePass::Prepare(RenderData& renderData)
 
     const std::unordered_set<std::shared_ptr<GameObject>>& selectedGameObjects = Hierarchy::GetSelectedGameObjects();
     if (selectedGameObjects.empty())
+    {
+        m_SelectedObjectsQueue.Clear();
         return;
+    }
 
     selectedRenderers.clear();
     selectedRenderers.reserve(selectedGameObjects.size());

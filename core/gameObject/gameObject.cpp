@@ -188,6 +188,10 @@ void GameObject::InvalidateTransform()
 {
     m_DirtyTransform = true;
 
+    std::shared_ptr<Renderer> renderer = GetRenderer();
+    if (renderer)
+        renderer->SetTransformDirty(true);
+
     for (const auto &child: Children)
     {
         if (child)

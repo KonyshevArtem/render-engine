@@ -16,60 +16,25 @@
 bool RenderQueue::EnableFrustumCulling = true;
 bool RenderQueue::FreezeFrustumCulling = false;
 
-std::shared_ptr<RingBuffer> RenderQueue::s_MatricesOffsetBuffer;
-std::shared_ptr<RingBuffer> RenderQueue::s_MatricesBuffer;
-std::shared_ptr<GraphicsBufferView> RenderQueue::s_MatricesBufferView;
+std::mutex RenderQueue::s_PermanentMatricesUpdatesMutex;
+std::shared_mutex RenderQueue::s_PermanentMatricesBufferRecreateMutex;
+std::vector<std::pair<Matrix4x4, uint32_t>> RenderQueue::s_PermanentMatricesUpdates;
+std::shared_ptr<GraphicsBuffer> RenderQueue::s_PermanentMatricesBuffer;
+std::shared_ptr<GraphicsBufferView> RenderQueue::s_PermanentMatricesBufferView;
+
+std::deque<uint32_t> RenderQueue::s_FreeMatricesBufferEntries;
+std::mutex RenderQueue::s_FreeMatricesBufferEntriesMutex;
+uint32_t RenderQueue::s_MatricesBufferCapacity = 1024;
 
 namespace RenderQueueLocal
 {
-    uint32_t k_MaxInstancingCount = 256;
+    constexpr uint32_t k_MatricesBufferElementSize = 2 * sizeof(Matrix4x4);
 
     std::size_t GetDrawCallInstancingHash(const DrawCallInfo &drawCallInfo)
     {
         const std::size_t materialHash = std::hash<const Material *> {}(drawCallInfo.Material);
         const std::size_t geometryHash = std::hash<const DrawableGeometry *> {}(drawCallInfo.Geometry);
         return Hash::Combine(materialHash, geometryHash);
-    }
-
-    void SetupDrawCall(const std::shared_ptr<DrawableGeometry>& geometry, const std::shared_ptr<Material>& material, const Matrix4x4& matrix, const Bounds& aabb, bool castShadows, uint8_t stencilValue, const RenderSettings& settings, const Frustum& frustum, std::vector<DrawCallInfo>& outDrawCalls)
-    {
-        const Material* mat = settings.OverrideMaterial ? settings.OverrideMaterial.get() : material.get();
-
-        if (!geometry || !mat)
-            return;
-
-        if (RenderQueue::EnableFrustumCulling && !frustum.IsVisible(aabb, settings.FrustumCullingPlanesBits))
-            return;
-
-        DrawCallInfo info{
-                geometry.get(),
-                mat,
-                {matrix},
-                aabb,
-                castShadows,
-                false,
-                stencilValue
-        };
-        outDrawCalls.push_back(info);
-    }
-
-    void SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& settings, const Frustum& frustum, std::vector<DrawCallInfo>& outDrawCalls)
-    {
-        outDrawCalls.reserve(renderers.size());
-
-        for (const std::shared_ptr<Renderer>& renderer : renderers)
-        {
-            if (renderer)
-                SetupDrawCall(renderer->GetGeometry(), renderer->GetMaterial(), renderer->GetModelMatrix(), renderer->GetAABB(), renderer->CastShadows, renderer->StencilValue, settings, frustum, outDrawCalls);
-        }
-    }
-
-    void SetupDrawCalls(const std::vector<RenderQueue::Item>& items, const RenderSettings& settings, const Frustum& frustum, std::vector<DrawCallInfo>& outDrawCalls)
-    {
-        outDrawCalls.reserve(items.size());
-
-        for (const RenderQueue::Item& item : items)
-            SetupDrawCall(item.Geometry, item.Material, item.Matrix, item.AABB, false, 0, settings, frustum, outDrawCalls);
     }
 
     void FilterDrawCalls(const DrawCallFilter& filter, std::vector<DrawCallInfo>& outDrawCalls)
@@ -86,41 +51,6 @@ namespace RenderQueueLocal
         }
     }
 
-    void BatchDrawCalls(std::vector<DrawCallInfo>& outDrawCalls)
-    {
-        std::unordered_map<std::size_t, DrawCallInfo*> instancingMap;
-
-        for (size_t i = 0; i < outDrawCalls.size(); ++i)
-        {
-            DrawCallInfo& drawCall = outDrawCalls[i];
-            if (!drawCall.Material->GetShader()->SupportInstancing())
-            {
-                continue;
-            }
-
-            const size_t hash = RenderQueueLocal::GetDrawCallInstancingHash(drawCall);
-            const auto it = instancingMap.find(hash);
-
-            if (it == instancingMap.end())
-            {
-                drawCall.Instanced = true;
-                instancingMap[hash] = &drawCall;
-                continue;
-            }
-
-            DrawCallInfo* instancedDrawCall = it->second;
-            instancedDrawCall->ModelMatrices.push_back(drawCall.ModelMatrices[0]);
-            instancedDrawCall->AABB = instancedDrawCall->AABB.Combine(drawCall.AABB);
-
-            outDrawCalls[i] = outDrawCalls[outDrawCalls.size() - 1];
-            outDrawCalls.pop_back();
-            --i;
-
-            if (instancedDrawCall->ModelMatrices.size() >= RenderQueueLocal::k_MaxInstancingCount)
-                instancingMap.erase(it);
-        }
-    }
-
     void SortDrawCalls(DrawCallSortMode sortMode, const Matrix4x4& viewProjectionMatrix, std::vector<DrawCallInfo>& outDrawCalls)
     {
         const Matrix4x4 invViewProjection = viewProjectionMatrix.Invert();
@@ -129,7 +59,16 @@ namespace RenderQueueLocal
         if (sortMode != DrawCallSortMode::NO_SORTING)
             std::sort(outDrawCalls.begin(), outDrawCalls.end(), DrawCallComparer {sortMode, cameraDirection});
     }
-            }
+
+    int GetEntryFromBufferView(const std::shared_ptr<GraphicsBufferView>& view)
+    {
+        if (!view || !view->GetBuffer())
+            return -1;
+
+        const GraphicsBackendBufferViewDescriptor& viewDescriptor = view->GetDescriptor();
+        return viewDescriptor.Offset / k_MatricesBufferElementSize;
+    }
+}
 
 RenderQueue::RenderQueue() :
 	m_PreviousMaterial(nullptr),
@@ -139,20 +78,8 @@ RenderQueue::RenderQueue() :
     DeveloperConsole::AddBoolCommand(L"FrustumCulling.Enabled", &EnableFrustumCulling);
     DeveloperConsole::AddBoolCommand(L"FrustumCulling.Freeze", &FreezeFrustumCulling);
 
-    if (!s_MatricesBuffer)
-    {
-        constexpr uint32_t elementsCount = 2048;
-        constexpr uint32_t elementSize = 2 * sizeof(Matrix4x4);
-
-        GraphicsBackendBufferDescriptor bufferDescriptor{};
-        bufferDescriptor.AllowCPUWrites = true;
-        bufferDescriptor.Size = elementsCount * elementSize;
-
-        s_MatricesBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "Render Queue Matrices Buffer");
-
-        bufferDescriptor.Size = elementsCount * sizeof(uint32_t);
-        s_MatricesOffsetBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "Render Queue Matrices Offset Buffer");
-    }
+    if (!s_PermanentMatricesBuffer)
+	    CreatePermanentMatricesBuffer();
 }
 
 void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& renderSettings)
@@ -162,9 +89,9 @@ void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vect
     if (!FreezeFrustumCulling)
         m_Frustum = Frustum(viewProjectionMatrix);
 
-    RenderQueueLocal::SetupDrawCalls(renderers, renderSettings, m_Frustum, m_DrawCalls);
+    SetupDrawCalls(renderers, renderSettings, m_Frustum);
     RenderQueueLocal::FilterDrawCalls(renderSettings.Filter, m_DrawCalls);
-    RenderQueueLocal::BatchDrawCalls(m_DrawCalls);
+	BatchDrawCalls();
     RenderQueueLocal::SortDrawCalls(renderSettings.Sorting, viewProjectionMatrix, m_DrawCalls);
 }
 
@@ -175,9 +102,9 @@ void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vect
     if (!FreezeFrustumCulling)
         m_Frustum = Frustum(viewProjectionMatrix);
 
-    RenderQueueLocal::SetupDrawCalls(items, renderSettings, m_Frustum, m_DrawCalls);
+    SetupDrawCalls(items, renderSettings, m_Frustum);
     RenderQueueLocal::FilterDrawCalls(renderSettings.Filter, m_DrawCalls);
-    RenderQueueLocal::BatchDrawCalls(m_DrawCalls);
+    BatchDrawCalls();
     RenderQueueLocal::SortDrawCalls(renderSettings.Sorting, viewProjectionMatrix, m_DrawCalls);
 }
 
@@ -187,6 +114,11 @@ void RenderQueue::Clear()
     m_PreviousMaterial = nullptr;
     m_PreviousVertexAttributesHash = 0;
     m_PreviousPrimitiveType = PrimitiveType::LINES;
+
+    m_InstancedMatricesEntries.clear();
+    m_InstancedMatricesEntriesCounts.clear();
+
+    m_TemporaryMatrices.clear();
 }
 
 bool RenderQueue::IsEmpty() const
@@ -201,6 +133,24 @@ const std::vector<DrawCallInfo>& RenderQueue::GetDrawCalls() const
 
 void RenderQueue::Draw()
 {
+    if (!m_InstancedMatricesEntries.empty())
+	    m_InstancedMatricesEntriesBuffer->SetData(m_InstancedMatricesEntries.data(), 0, m_InstancedMatricesEntries.size() * sizeof(uint32_t));
+
+    if (!m_TemporaryMatrices.empty())
+        m_TemporaryMatricesBuffer->SetData(m_TemporaryMatrices.data(), 0, m_TemporaryMatrices.size() * sizeof(Matrix4x4));
+
+    if (!s_PermanentMatricesUpdates.empty())
+    {
+        for (const std::pair<Matrix4x4, uint32_t>& pair : s_PermanentMatricesUpdates)
+        {
+            Matrix4x4 matrices[2];
+            matrices[0] = pair.first;
+            matrices[1] = pair.first.Invert().Transpose();
+            s_PermanentMatricesBuffer->SetData(&matrices[0], pair.second * sizeof(matrices), sizeof(matrices));
+        }
+        s_PermanentMatricesUpdates.clear();
+    }
+
     for (const DrawCallInfo& drawCall : m_DrawCalls)
     {
         const GraphicsBackendGeometry& geom = drawCall.Geometry->GetGraphicsBackendGeometry();
@@ -209,12 +159,12 @@ void RenderQueue::Draw()
         const int elementsCount = drawCall.Geometry->GetElementsCount();
         const bool hasIndices = drawCall.Geometry->HasIndexes();
 
-        SetupMatrices(drawCall.ModelMatrices);
+        SetupMatrices(drawCall);
         SetupShaderPass(drawCall.Material, drawCall.Geometry->GetVertexAttributes(), primitiveType, drawCall.StencilValue);
 
         if (drawCall.Instanced)
         {
-            const int instanceCount = drawCall.ModelMatrices.size();
+            const int instanceCount = drawCall.MatricesBufferViews.size();
             if (hasIndices)
                 GraphicsBackend::Current()->DrawElementsInstanced(geom, primitiveType, elementsCount, indicesDataType, instanceCount);
             else
@@ -230,42 +180,196 @@ void RenderQueue::Draw()
     }
 }
 
-void RenderQueue::SetupMatrices(const std::vector<Matrix4x4>& matrices)
+void RenderQueue::SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& settings, const Frustum& frustum)
 {
-    static std::vector<Matrix4x4> matricesBuffer;
+    m_DrawCalls.reserve(renderers.size());
 
-    const int count = matrices.size();
+    CheckMatricesBufferSize();
 
-    matricesBuffer.resize(count * 2);
-    for (int i = 0; i < count; ++i)
+    std::shared_lock lock(s_PermanentMatricesBufferRecreateMutex);
+
+    for (const std::shared_ptr<Renderer>& renderer : renderers)
     {
-        matricesBuffer[i * 2 + 0] = matrices[i];
-        matricesBuffer[i * 2 + 1] = matrices[i].Invert().Transpose();
+        if (!renderer)
+            continue;
+
+        const Material* material = settings.OverrideMaterial ? settings.OverrideMaterial.get() : renderer->GetMaterial().get();
+        const DrawableGeometry* geometry = renderer->GetGeometry().get();
+
+        if (!geometry || !material)
+            continue;
+
+        if (EnableFrustumCulling && !frustum.IsVisible(renderer->GetAABB(), settings.FrustumCullingPlanesBits))
+            continue;
+
+        std::shared_ptr<GraphicsBufferView> matricesBufferView = nullptr;
+        {
+            std::unique_lock rendererLock(renderer->GetMatricesBufferViewMutex());
+
+            bool matricesBufferViewChanged = false;
+            matricesBufferView = renderer->GetMatricesBufferView();
+            if (!matricesBufferView || !matricesBufferView->GetBuffer())
+            {
+            	const int matricesBufferEntry = GetMatricesEntry();
+                if (matricesBufferEntry >= 0)
+                {
+                    const GraphicsBackendBufferViewDescriptor viewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(1, RenderQueueLocal::k_MatricesBufferElementSize, matricesBufferEntry * RenderQueueLocal::k_MatricesBufferElementSize, false);
+                    matricesBufferView = std::make_shared<GraphicsBufferView>(s_PermanentMatricesBuffer, viewDescriptor, "RenderQueue/PermanentMatricesBufferSingleView");
+                    matricesBufferViewChanged = true;
+                }
+                else
+                    matricesBufferView = nullptr;
+
+                renderer->SetMatricesBufferView(matricesBufferView);
+            }
+
+            if (matricesBufferView && (renderer->IsTransformDirty() || matricesBufferViewChanged))
+            {
+                std::lock_guard<std::mutex> updatesLock(s_PermanentMatricesUpdatesMutex);
+                s_PermanentMatricesUpdates.emplace_back(renderer->GetModelMatrix(), RenderQueueLocal::GetEntryFromBufferView(matricesBufferView));
+                renderer->SetTransformDirty(false);
+            }
+        }
+
+        if (matricesBufferView)
+        {
+            DrawCallInfo info{};
+            info.Geometry = geometry;
+            info.Material = material;
+            info.MatricesBufferViews.push_back(matricesBufferView);
+            info.AABB = renderer->GetAABB();
+            info.CastShadows = renderer->CastShadows;
+            info.StencilValue = renderer->StencilValue;
+
+            m_DrawCalls.push_back(info);
+        }
+    }
+}
+
+void RenderQueue::SetupDrawCalls(const std::vector<Item>& items, const RenderSettings& settings, const Frustum& frustum)
+{
+    m_DrawCalls.reserve(items.size());
+
+    const uint32_t requiredBufferSize = items.size() * RenderQueueLocal::k_MatricesBufferElementSize;
+    m_TemporaryMatrices.reserve(items.size() * 2);
+    if (!m_TemporaryMatricesBuffer || m_TemporaryMatricesBuffer->GetSize() < requiredBufferSize)
+    {
+        GraphicsBackendBufferDescriptor descriptor{};
+        descriptor.AllowCPUWrites = true;
+        descriptor.Size = requiredBufferSize;
+
+        m_TemporaryMatricesBuffer = std::make_shared<GraphicsBuffer>(descriptor, "RenderQueue/TemporaryMatrices");
+
+        const GraphicsBackendBufferViewDescriptor viewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(items.size(), RenderQueueLocal::k_MatricesBufferElementSize, 0, false);
+        m_TemporaryMatricesBufferView = std::make_shared<GraphicsBufferView>(m_TemporaryMatricesBuffer, viewDescriptor, "RenderQueue/TemporaryMatricesFullView");
     }
 
-    bool matricesBufferResized;
-    const uint64_t size = sizeof(Matrix4x4) * matricesBuffer.size();
-    const uint64_t offset = s_MatricesBuffer->SetData(matricesBuffer.data(), 0, size, &matricesBufferResized);
-
-    if (!s_MatricesBufferView || matricesBufferResized)
+    uint32_t offset = 0;
+    for (const Item& item : items)
     {
-        constexpr uint32_t elementSize = 2 * sizeof(Matrix4x4);
-        const uint32_t elementsCount = s_MatricesBuffer->GetBuffer()->GetSize() / elementSize;
+        const Material* material = settings.OverrideMaterial ? settings.OverrideMaterial.get() : item.Material.get();
+        const DrawableGeometry* geometry = item.Geometry.get();
 
-        GraphicsBackendBufferViewDescriptor viewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(elementsCount, elementSize, 0, false);
-        s_MatricesBufferView = std::make_shared<GraphicsBufferView>(s_MatricesBuffer->GetBuffer(), viewDescriptor, "Render Queue Matrices Buffer View");
+        if (!geometry || !material)
+            continue;
+
+        if (EnableFrustumCulling && !frustum.IsVisible(item.AABB, settings.FrustumCullingPlanesBits))
+            continue;
+
+        m_TemporaryMatrices.push_back(item.Matrix);
+        m_TemporaryMatrices.push_back(item.Matrix.Invert().Transpose());
+
+        const GraphicsBackendBufferViewDescriptor viewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(1, RenderQueueLocal::k_MatricesBufferElementSize, offset++ * RenderQueueLocal::k_MatricesBufferElementSize, false);
+        std::shared_ptr<GraphicsBufferView> view = std::make_shared<GraphicsBufferView>(m_TemporaryMatricesBuffer, viewDescriptor, "RenderQueue/TemporaryMatricesSingleView");
+
+        DrawCallInfo info{};
+        info.Geometry = geometry;
+        info.Material = material;
+        info.MatricesBufferViews.push_back(view);
+        info.AABB = item.AABB;
+        info.CastShadows = false;
+
+        m_DrawCalls.push_back(info);
+    }
+}
+
+void RenderQueue::BatchDrawCalls()
+{
+    std::unordered_map<std::size_t, DrawCallInfo*> instancingMap;
+
+    for (size_t i = 0; i < m_DrawCalls.size(); ++i)
+    {
+        DrawCallInfo& drawCall = m_DrawCalls[i];
+        if (!drawCall.Material->GetShader()->SupportInstancing())
+            continue;
+
+        const size_t hash = RenderQueueLocal::GetDrawCallInstancingHash(drawCall);
+        const auto it = instancingMap.find(hash);
+
+        if (it == instancingMap.end())
+        {
+            drawCall.Instanced = true;
+            instancingMap[hash] = &drawCall;
+            continue;
+        }
+
+        DrawCallInfo* instancedDrawCall = it->second;
+        instancedDrawCall->MatricesBufferViews.push_back(drawCall.MatricesBufferViews[0]);
+        instancedDrawCall->AABB = instancedDrawCall->AABB.Combine(drawCall.AABB);
+
+        m_DrawCalls[i] = m_DrawCalls[m_DrawCalls.size() - 1];
+        m_DrawCalls.pop_back();
+        --i;
     }
 
-    if (matrices.size() > 1)
+    uint32_t totalInstancesCount = 0;
+    for (const DrawCallInfo& info : m_DrawCalls)
     {
-        const uint32_t matricesOffset = offset / (2 * sizeof(Matrix4x4));
-        const uint64_t offsetBufferOffset = s_MatricesOffsetBuffer->SetData(&matricesOffset, 0, sizeof(offset));
+        if (info.Instanced)
+            totalInstancesCount += info.MatricesBufferViews.size();
+    }
+
+    const uint32_t requiredBufferSize = totalInstancesCount * sizeof(uint32_t);
+    if (!m_InstancedMatricesEntriesBuffer || m_InstancedMatricesEntriesBuffer->GetSize() < requiredBufferSize)
+    {
+        GraphicsBackendBufferDescriptor descriptor{};
+        descriptor.AllowCPUWrites = true;
+        descriptor.Size = requiredBufferSize;
+
+        m_InstancedMatricesEntriesBuffer = std::make_shared<GraphicsBuffer>(descriptor, "RenderQueue/InstancedMatricesEntries");
+    }
+
+    uint32_t instancesEntriesOffset = 0;
+    for (DrawCallInfo& info : m_DrawCalls)
+    {
+        if (!info.Instanced)
+            continue;
+
+        const uint32_t instancesCount = info.MatricesBufferViews.size();
+
+        m_InstancedMatricesEntries.reserve(instancesCount);
+        m_InstancedMatricesEntriesCounts.push_back(instancesCount);
+        for (const std::shared_ptr<GraphicsBufferView>& view : info.MatricesBufferViews)
+            m_InstancedMatricesEntries.push_back(RenderQueueLocal::GetEntryFromBufferView(view));
         
-        GraphicsBackend::Current()->BindConstantBuffer(s_MatricesOffsetBuffer->GetBackendBuffer(), GlobalConstants::InstancingMatricesOffsetData, offsetBufferOffset, sizeof(offset));
-        GraphicsBackend::Current()->BindBuffer(s_MatricesBufferView->GetBackendBufferView(), GlobalConstants::InstancingMatricesData);
+        const GraphicsBackendBufferViewDescriptor descriptor = GraphicsBackendBufferViewDescriptor::Typed(TextureInternalFormat::R32F, instancesCount, instancesEntriesOffset * sizeof(uint32_t), false);
+        info.InstancedMatricesEntriesView = std::make_shared<GraphicsBufferView>(m_InstancedMatricesEntriesBuffer, descriptor, "RenderQueue/InstancedMatricesEntriesView");
+
+        instancesEntriesOffset += instancesCount;
+    }
+}
+
+void RenderQueue::SetupMatrices(const DrawCallInfo& drawCallInfo) const
+{
+    const bool useTemporaryMatrices = !m_TemporaryMatrices.empty();
+
+    if (drawCallInfo.Instanced)
+    {
+        GraphicsBackend::Current()->BindBuffer(drawCallInfo.InstancedMatricesEntriesView->GetBackendBufferView(), GlobalConstants::InstancingMatricesEntriesData);
+        GraphicsBackend::Current()->BindBuffer(useTemporaryMatrices ? m_TemporaryMatricesBufferView->GetBackendBufferView() : s_PermanentMatricesBufferView->GetBackendBufferView(), GlobalConstants::TransformMatricesData);
     }
     else
-        GraphicsBackend::Current()->BindConstantBuffer(s_MatricesBuffer->GetBackendBuffer(), GlobalConstants::MatricesData, offset, size);
+	    GraphicsBackend::Current()->BindBuffer(drawCallInfo.MatricesBufferViews[0]->GetBackendBufferView(), GlobalConstants::TransformMatricesData);
 }
 
 void RenderQueue::SetupShaderPass(const Material* material, const VertexAttributes& vertexAttributes, PrimitiveType primitiveType, uint8_t stencilValue)
@@ -306,4 +410,52 @@ void RenderQueue::SetupShaderPass(const Material* material, const VertexAttribut
     m_PreviousMaterial = material;
     m_PreviousVertexAttributesHash = vertexAttributes.GetHash();
     m_PreviousPrimitiveType = primitiveType;
+}
+
+int RenderQueue::GetMatricesEntry()
+{
+    std::lock_guard<std::mutex> lock(s_FreeMatricesBufferEntriesMutex);
+
+    if (s_FreeMatricesBufferEntries.empty())
+	    return -1;
+
+    const uint32_t entry = s_FreeMatricesBufferEntries.front();
+    s_FreeMatricesBufferEntries.pop_front();
+    return entry;
+}
+
+void RenderQueue::FreeMatricesEntry(const std::shared_ptr<GraphicsBufferView>& matricesBufferView)
+{
+    const int entry = RenderQueueLocal::GetEntryFromBufferView(matricesBufferView);
+    if (entry < 0)
+        return;
+
+    std::lock_guard<std::mutex> lock(s_FreeMatricesBufferEntriesMutex);
+    s_FreeMatricesBufferEntries.push_back(entry);
+}
+
+void RenderQueue::CheckMatricesBufferSize()
+{
+    std::unique_lock lock(s_PermanentMatricesBufferRecreateMutex);
+
+    if (s_FreeMatricesBufferEntries.empty())
+    {
+        s_MatricesBufferCapacity *= 2;
+        CreatePermanentMatricesBuffer();
+    }
+}
+
+void RenderQueue::CreatePermanentMatricesBuffer()
+{
+    GraphicsBackendBufferDescriptor bufferDescriptor{};
+    bufferDescriptor.AllowCPUWrites = true;
+    bufferDescriptor.Size = s_MatricesBufferCapacity * RenderQueueLocal::k_MatricesBufferElementSize;
+
+    s_PermanentMatricesBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "RenderQueue/PermanentMatricesBuffer");
+    s_FreeMatricesBufferEntries.resize(s_MatricesBufferCapacity);
+    for (uint32_t i = 0; i < s_MatricesBufferCapacity; ++i)
+        s_FreeMatricesBufferEntries[i] = i;
+
+    GraphicsBackendBufferViewDescriptor viewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(s_MatricesBufferCapacity, RenderQueueLocal::k_MatricesBufferElementSize, 0, false);
+    s_PermanentMatricesBufferView = std::make_shared<GraphicsBufferView>(s_PermanentMatricesBuffer, viewDescriptor, "RenderQueue/PermanentMatricesBufferFullView");
 }

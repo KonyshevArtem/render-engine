@@ -95,6 +95,8 @@ uint64_t GraphicsBackendBase::GetFrameNumber() const
 
 void GraphicsBackendBase::DeleteTexture(const GraphicsBackendTexture& texture)
 {
+    std::lock_guard<std::mutex> lock(m_DeletedTexturesMutex);
+
     m_DeletedTextures.emplace_back(texture, BaseBackendLocal::k_DeleteResourceDelay);
 
     auto Predicate = [&texture](const std::pair<uint32_t, GraphicsBackendTexture>& pair)
@@ -108,6 +110,8 @@ void GraphicsBackendBase::DeleteTexture(const GraphicsBackendTexture& texture)
 
 void GraphicsBackendBase::DeleteSampler(const GraphicsBackendSampler& sampler)
 {
+    std::lock_guard<std::mutex> lock(m_DeletedSamplersMutex);
+
     m_DeletedSamplers.emplace_back(sampler, BaseBackendLocal::k_DeleteResourceDelay);
 
     std::erase_if(m_BoundSamplers, [&sampler](const auto& pair)
@@ -118,6 +122,8 @@ void GraphicsBackendBase::DeleteSampler(const GraphicsBackendSampler& sampler)
 
 void GraphicsBackendBase::DeleteBuffer(const GraphicsBackendBuffer& buffer)
 {
+    std::lock_guard<std::mutex> lock(m_DeletedBuffersMutex);
+
     m_DeletedBuffers.emplace_back(buffer, BaseBackendLocal::k_DeleteResourceDelay);
 
     auto Predicate = [&buffer](const std::pair<uint32_t, BufferBindInfo>& pair)
@@ -130,6 +136,8 @@ void GraphicsBackendBase::DeleteBuffer(const GraphicsBackendBuffer& buffer)
 
 void GraphicsBackendBase::DeleteBufferView(const GraphicsBackendBufferView& bufferView)
 {
+    std::lock_guard<std::mutex> lock(m_DeletedBufferViewsMutex);
+
     m_DeletedBufferViews.emplace_back(bufferView, BaseBackendLocal::k_DeleteResourceDelay);
 
     auto Predicate = [&bufferView](const std::pair<uint32_t, GraphicsBackendBufferView>& pair)
@@ -143,16 +151,19 @@ void GraphicsBackendBase::DeleteBufferView(const GraphicsBackendBufferView& buff
 
 void GraphicsBackendBase::DeleteGeometry(const GraphicsBackendGeometry &geometry)
 {
+    std::lock_guard<std::mutex> lock(m_DeletedGeometriesMutex);
     m_DeletedGeometries.emplace_back(geometry, BaseBackendLocal::k_DeleteResourceDelay);
 }
 
 void GraphicsBackendBase::DeleteShader(GraphicsBackendShaderObject shader)
 {
+    std::lock_guard<std::mutex> lock(m_DeletedShadersMutex);
     m_DeletedShaders.emplace_back(shader, BaseBackendLocal::k_DeleteResourceDelay);
 }
 
 void GraphicsBackendBase::DeleteProgram(GraphicsBackendProgram program)
 {
+    std::lock_guard<std::mutex> lock(m_DeletedProgramsMutex);
     m_DeletedPrograms.emplace_back(program, BaseBackendLocal::k_DeleteResourceDelay);
 }
 

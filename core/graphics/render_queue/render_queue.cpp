@@ -11,6 +11,7 @@
 #include "global_constants.h"
 #include "developer_console/developer_console.h"
 #include "graphics_buffer/graphics_buffer_view.h"
+#include "editor/profiler/profiler.h"
 #include "debug.h"
 
 bool RenderQueue::EnableFrustumCulling = true;
@@ -37,22 +38,10 @@ namespace RenderQueueLocal
         return Hash::Combine(materialHash, geometryHash);
     }
 
-    void FilterDrawCalls(const DrawCallFilter& filter, std::vector<DrawCallInfo>& outDrawCalls)
-    {
-        for (size_t i = 0; i < outDrawCalls.size(); ++i)
-        {
-            const DrawCallInfo& drawCall = outDrawCalls[i];
-            if (!filter(drawCall))
-            {
-                outDrawCalls[i] = outDrawCalls[outDrawCalls.size() - 1];
-                outDrawCalls.pop_back();
-                --i;
-            }
-        }
-    }
-
     void SortDrawCalls(DrawCallSortMode sortMode, const Matrix4x4& viewProjectionMatrix, std::vector<DrawCallInfo>& outDrawCalls)
     {
+        Profiler::Marker _("RenderQueue::SortDrawCalls");
+
         const Matrix4x4 invViewProjection = viewProjectionMatrix.Invert();
         const Vector4 cameraDirection = invViewProjection * Vector4(0, 0, 1, 0);
 
@@ -84,32 +73,36 @@ RenderQueue::RenderQueue() :
 
 void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& renderSettings)
 {
+    Profiler::Marker _("RenderQueue::Prepare");
+
     Clear();
 
     if (!FreezeFrustumCulling)
         m_Frustum = Frustum(viewProjectionMatrix);
 
     SetupDrawCalls(renderers, renderSettings, m_Frustum);
-    RenderQueueLocal::FilterDrawCalls(renderSettings.Filter, m_DrawCalls);
 	BatchDrawCalls();
     RenderQueueLocal::SortDrawCalls(renderSettings.Sorting, viewProjectionMatrix, m_DrawCalls);
 }
 
 void RenderQueue::Prepare(const Matrix4x4& viewProjectionMatrix, const std::vector<Item>& items, const RenderSettings& renderSettings)
 {
+    Profiler::Marker _("RenderQueue::Prepare");
+
     Clear();
 
     if (!FreezeFrustumCulling)
         m_Frustum = Frustum(viewProjectionMatrix);
 
     SetupDrawCalls(items, renderSettings, m_Frustum);
-    RenderQueueLocal::FilterDrawCalls(renderSettings.Filter, m_DrawCalls);
     BatchDrawCalls();
     RenderQueueLocal::SortDrawCalls(renderSettings.Sorting, viewProjectionMatrix, m_DrawCalls);
 }
 
 void RenderQueue::Clear()
 {
+    Profiler::Marker _("RenderQueue::Clear");
+
     m_DrawCalls.clear();
     m_PreviousMaterial = nullptr;
     m_PreviousVertexAttributesHash = 0;
@@ -182,6 +175,8 @@ void RenderQueue::Draw()
 
 void RenderQueue::SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& renderers, const RenderSettings& settings, const Frustum& frustum)
 {
+    Profiler::Marker _("RenderQueue::SetupDrawCalls");
+
     m_DrawCalls.reserve(renderers.size());
 
     CheckMatricesBufferSize();
@@ -197,6 +192,16 @@ void RenderQueue::SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& r
         const DrawableGeometry* geometry = renderer->GetGeometry().get();
 
         if (!geometry || !material)
+            continue;
+
+        DrawCallInfo info{};
+        info.Geometry = geometry;
+        info.Material = material;
+        info.AABB = renderer->GetAABB();
+        info.CastShadows = renderer->CastShadows;
+        info.StencilValue = renderer->StencilValue;
+
+        if (!settings.Filter(info))
             continue;
 
         if (EnableFrustumCulling && !frustum.IsVisible(renderer->GetAABB(), settings.FrustumCullingPlanesBits))
@@ -233,14 +238,7 @@ void RenderQueue::SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& r
 
         if (matricesBufferView)
         {
-            DrawCallInfo info{};
-            info.Geometry = geometry;
-            info.Material = material;
             info.MatricesBufferViews.push_back(matricesBufferView);
-            info.AABB = renderer->GetAABB();
-            info.CastShadows = renderer->CastShadows;
-            info.StencilValue = renderer->StencilValue;
-
             m_DrawCalls.push_back(info);
         }
     }
@@ -248,6 +246,8 @@ void RenderQueue::SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& r
 
 void RenderQueue::SetupDrawCalls(const std::vector<Item>& items, const RenderSettings& settings, const Frustum& frustum)
 {
+    Profiler::Marker _("RenderQueue::SetupDrawCalls");
+
     m_DrawCalls.reserve(items.size());
 
     const uint32_t requiredBufferSize = items.size() * RenderQueueLocal::k_MatricesBufferElementSize;
@@ -273,6 +273,15 @@ void RenderQueue::SetupDrawCalls(const std::vector<Item>& items, const RenderSet
         if (!geometry || !material)
             continue;
 
+        DrawCallInfo info{};
+        info.Geometry = geometry;
+        info.Material = material;
+        info.AABB = item.AABB;
+        info.CastShadows = false;
+
+        if (!settings.Filter(info))
+            continue;
+
         if (EnableFrustumCulling && !frustum.IsVisible(item.AABB, settings.FrustumCullingPlanesBits))
             continue;
 
@@ -282,19 +291,15 @@ void RenderQueue::SetupDrawCalls(const std::vector<Item>& items, const RenderSet
         const GraphicsBackendBufferViewDescriptor viewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(1, RenderQueueLocal::k_MatricesBufferElementSize, offset++ * RenderQueueLocal::k_MatricesBufferElementSize, false);
         std::shared_ptr<GraphicsBufferView> view = std::make_shared<GraphicsBufferView>(m_TemporaryMatricesBuffer, viewDescriptor, "RenderQueue/TemporaryMatricesSingleView");
 
-        DrawCallInfo info{};
-        info.Geometry = geometry;
-        info.Material = material;
         info.MatricesBufferViews.push_back(view);
-        info.AABB = item.AABB;
-        info.CastShadows = false;
-
         m_DrawCalls.push_back(info);
     }
 }
 
 void RenderQueue::BatchDrawCalls()
 {
+    Profiler::Marker _("RenderQueue::BatchDrawCalls");
+
     std::unordered_map<std::size_t, DrawCallInfo*> instancingMap;
 
     for (size_t i = 0; i < m_DrawCalls.size(); ++i)
@@ -436,6 +441,14 @@ void RenderQueue::FreeMatricesEntry(const std::shared_ptr<GraphicsBufferView>& m
 
 void RenderQueue::CheckMatricesBufferSize()
 {
+    Profiler::Marker _("RenderQueue::CheckMatricesBufferSize");
+
+    {
+        std::shared_lock lock(s_PermanentMatricesBufferRecreateMutex);
+        if (!s_FreeMatricesBufferEntries.empty())
+            return;
+    }
+
     std::unique_lock lock(s_PermanentMatricesBufferRecreateMutex);
 
     if (s_FreeMatricesBufferEntries.empty())

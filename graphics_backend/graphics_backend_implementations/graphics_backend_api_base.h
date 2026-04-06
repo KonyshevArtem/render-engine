@@ -18,6 +18,7 @@
 #include <memory>
 #include <unordered_map>
 #include <thread>
+#include <mutex>
 
 enum class TextureType;
 enum class TextureInternalFormat : uint16_t;
@@ -239,6 +240,14 @@ private:
     std::vector<std::pair<GraphicsBackendGeometry, int>> m_DeletedGeometries;
     std::vector<std::pair<GraphicsBackendShaderObject, int>> m_DeletedShaders;
     std::vector<std::pair<GraphicsBackendProgram, int>> m_DeletedPrograms;
+
+    std::mutex m_DeletedTexturesMutex;
+    std::mutex m_DeletedSamplersMutex;
+    std::mutex m_DeletedBuffersMutex;
+    std::mutex m_DeletedBufferViewsMutex;
+    std::mutex m_DeletedGeometriesMutex;
+    std::mutex m_DeletedShadersMutex;
+    std::mutex m_DeletedProgramsMutex;
 
     std::unordered_map<uint32_t, GraphicsBackendTexture> m_BoundTextures;
     std::unordered_map<uint32_t, GraphicsBackendTexture> m_BoundRWTextures;

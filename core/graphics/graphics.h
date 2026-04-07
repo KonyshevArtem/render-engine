@@ -18,6 +18,8 @@ namespace Graphics
     int GetScreenWidth();
     int GetScreenHeight();
     Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix);
+
+    bool IsPrepareSynchronous();
 }; // namespace Graphics
 
 #endif //RENDER_ENGINE_GRAPHICS_H

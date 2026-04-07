@@ -4,6 +4,7 @@
 #include "render_pass.h"
 #include "graphics/data_structs/shadows_data.h"
 #include "graphics/render_queue/render_queue.h"
+#include "graphics/render_settings/render_settings.h"
 #include "global_constants.h"
 #include "light/light.h"
 #include "graphics_buffer/ring_buffer.h"
@@ -19,6 +20,7 @@ class Texture2D;
 class Texture;
 class Renderer;
 class Light;
+class Shader;
 
 class ShadowCasterPass : public RenderPass
 {
@@ -60,7 +62,12 @@ private:
 
     std::shared_ptr<RingBuffer> m_ShadowCasterPassBuffer;
 
+    Matrix4x4 m_BiasMatrix;
+    std::shared_ptr<Shader> m_Shader;
+    std::shared_ptr<Material> m_Material;
+
     void Render(RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData &cameraData, const std::string& passName);
+    void PrepareCascade(int cascade, RenderData& renderData, const std::shared_ptr<GameObject>& lightGameObject);
 };
 
 #endif //RENDER_ENGINE_SHADOW_CASTER_PASS_H

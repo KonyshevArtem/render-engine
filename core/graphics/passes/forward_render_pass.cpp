@@ -8,6 +8,7 @@
 #include "graphics/render_data.h"
 #include "enums/resource_state.h"
 #include "texture_2d/texture_2d.h"
+#include "worker/worker.h"
 
 ForwardRenderPass::ForwardRenderPass() :
     RenderPass(),
@@ -48,10 +49,18 @@ void ForwardRenderPass::Prepare(RenderData& renderData)
 
     renderData.CameraColorTarget = m_CameraColorTarget;
     renderData.CameraDepthTarget = m_CameraDepthTarget;
-    
+
+    const std::shared_ptr<Worker::Task> transparentPrepareTask = Worker::CreateTask([this, &renderData] {m_TransparentPass->Prepare(renderData); }, Worker::Priority::TASK);
+    if (!Graphics::IsPrepareSynchronous())
+		transparentPrepareTask->Schedule();
+
     m_OpaquePass->Prepare(renderData);
     m_SkyboxPass->Prepare(renderData);
-    m_TransparentPass->Prepare(renderData);
+
+    if (Graphics::IsPrepareSynchronous())
+        transparentPrepareTask->Execute();
+    else
+        transparentPrepareTask->Wait();
 }
 
 void ForwardRenderPass::Execute(const RenderData& renderData)

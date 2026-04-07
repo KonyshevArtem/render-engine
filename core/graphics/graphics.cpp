@@ -308,4 +308,9 @@ namespace Graphics
 
         return gpuProjectionMatrix;
     }
+
+    bool IsPrepareSynchronous()
+    {
+        return s_SynchronousGraphicsPrepare;
+    }
 } // namespace Graphics

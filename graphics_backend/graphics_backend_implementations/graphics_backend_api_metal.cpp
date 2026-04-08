@@ -759,6 +759,8 @@ void GraphicsBackendMetal::DrawArrays(const GraphicsBackendGeometry &geometry, P
 
     ++m_DrawCallCount;
 
+    BindResources();
+
     const MetalLocal::BufferData* vertexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.VertexBuffer.Buffer);
     m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, MetalLocal::k_MaxBuffers - 1);
     m_RenderCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, count);
@@ -770,6 +772,8 @@ void GraphicsBackendMetal::DrawArraysInstanced(const GraphicsBackendGeometry &ge
 
     ++m_DrawCallCount;
 
+    BindResources();
+
     const MetalLocal::BufferData* vertexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.VertexBuffer.Buffer);
     m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, MetalLocal::k_MaxBuffers - 1);
     m_RenderCommandEncoder->drawPrimitives(MetalHelpers::ToPrimitiveType(primitiveType), firstIndex, indicesCount, indicesCount);
@@ -780,6 +784,8 @@ void GraphicsBackendMetal::DrawElements(const GraphicsBackendGeometry &geometry,
     assert(m_RenderCommandEncoder != nullptr);
 
     ++m_DrawCallCount;
+
+    BindResources();
 
     const MetalLocal::BufferData* vertexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.VertexBuffer.Buffer);
     const MetalLocal::BufferData* indexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.IndexBuffer.Buffer);
@@ -793,6 +799,8 @@ void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &
 
     ++m_DrawCallCount;
 
+    BindResources();
+
     const MetalLocal::BufferData* vertexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.VertexBuffer.Buffer);
     const MetalLocal::BufferData* indexBufferData = reinterpret_cast<MetalLocal::BufferData*>(geometry.IndexBuffer.Buffer);
     m_RenderCommandEncoder->setVertexBuffer(vertexBufferData->Buffer, 0, MetalLocal::k_MaxBuffers - 1);
@@ -802,6 +810,8 @@ void GraphicsBackendMetal::DrawElementsInstanced(const GraphicsBackendGeometry &
 void GraphicsBackendMetal::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
     assert(m_ComputeCommandEncoder != nullptr);
+
+    BindResources();
 
     const ThreadGroupSize& tgSize = m_CurrentProgram.ThreadGroupSize;
 

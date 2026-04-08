@@ -222,6 +222,9 @@ void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerConte
         for (auto& pair : profilerFrames)
         {
             const Profiler::FrameInfo& frameInfo = pair.second;
+            if (frameInfo.Markers.empty() || frameInfo.Markers[0].Begin > rangeEnd || frameInfo.Markers[frameInfo.Markers.size() - 1].End < rangeBegin)
+                continue;
+
             for (const Profiler::MarkerInfo& marker : frameInfo.Markers)
             {
                 if (marker.Finished && (marker.Begin > rangeEnd || marker.End < rangeBegin))

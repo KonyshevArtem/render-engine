@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 
-struct Vector4;
 struct Matrix4x4;
 
 namespace Graphics

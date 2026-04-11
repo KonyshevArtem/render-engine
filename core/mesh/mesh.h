@@ -5,12 +5,12 @@
 #include "drawable_geometry/drawable_geometry.h"
 #include "resources/resource.h"
 #include "types/graphics_backend_blas.h"
+#include "vector2/vector2.h"
+#include "vector3/vector3.h"
 
 #include <memory>
 #include <string>
 
-struct Vector2;
-struct Vector3;
 class Material;
 
 class Mesh: public DrawableGeometry, public Resource

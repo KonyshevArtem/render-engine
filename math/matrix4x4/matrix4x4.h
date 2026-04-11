@@ -2,10 +2,10 @@
 #define RENDER_ENGINE_MATRIX4X4_H
 
 #include <string>
+#include "vector3/vector3.h"
+#include "vector4/vector4.h"
 
 struct Quaternion;
-struct Vector3;
-struct Vector4;
 
 struct [[nodiscard]] Matrix4x4
 {

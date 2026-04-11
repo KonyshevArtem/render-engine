@@ -4,11 +4,11 @@
 #define RENDER_ENGINE_GIZMOS_H
 
 #include "graphics/render_queue/render_queue.h"
+#include "vector2/vector2.h"
 
 #include <vector>
 #include <memory>
 
-struct Vector2;
 struct Matrix4x4;
 class DrawableGeometry;
 

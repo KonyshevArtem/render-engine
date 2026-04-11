@@ -1,27 +1,65 @@
 #ifndef RENDER_ENGINE_VECTOR4_H
 #define RENDER_ENGINE_VECTOR4_H
 
-struct [[nodiscard]] Vector4
+#include <cmath>
+#include <limits>
+
+template<typename T>
+struct [[nodiscard]] Vector4Base
 {
 public:
-    float x;
-    float y;
-    float z;
-    float w;
+    T x;
+    T y;
+    T z;
+    T w;
 
-    Vector4();
+    Vector4Base() : x(0), y(0), z(0), w(0) {}
+    Vector4Base(T _x, T _y, T _z, T _w) : x(_x), y(_y), z(_z), w(_w) {}
 
-    Vector4(float _x, float _y, float _z, float _w);
+    [[nodiscard]] T Length() const
+    {
+        return sqrt(this->x * this->x +
+            this->y * this->y +
+            this->z * this->z +
+            this->w * this->w);
+    }
 
-    [[nodiscard]] float Length() const;
+    Vector4Base Normalize() const
+    {
+        const T length = this->Length();
+        if (length < std::numeric_limits<T>::epsilon())
+            return Zero();
 
-    Vector4 Normalize() const;
+        return {
+                this->x / length,
+                this->y / length,
+                this->z / length,
+                this->w / length,
+        };
+    }
 
-    static const Vector4 &Zero();
+    static const Vector4Base& Zero()
+    {
+        static const Vector4Base zero = Vector4Base();
+        return zero;
+    }
 
-    Vector4 operator /(float a);
+    Vector4Base operator/(T a)
+    {
+        return Vector4Base(x / a, y / a, z / a, w / a);
+    }
 
-    void operator /=(float a);
+    void operator/=(T a)
+    {
+        x /= a;
+        y /= a;
+        z /= a;
+        w /= a;
+    }
 };
+
+using Vector4 = Vector4Base<float>;
+using Vector4I = Vector4Base<int>;
+using Vector4UI = Vector4Base<uint32_t>;
 
 #endif //RENDER_ENGINE_VECTOR4_H

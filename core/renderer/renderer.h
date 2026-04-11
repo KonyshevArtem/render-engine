@@ -12,7 +12,6 @@ class Shader;
 class Material;
 class GraphicsBuffer;
 class GraphicsBufferView;
-struct Vector4;
 struct Matrix4x4;
 struct Bounds;
 struct DrawableGeometry;

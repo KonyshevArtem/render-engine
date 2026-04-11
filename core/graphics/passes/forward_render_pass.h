@@ -13,7 +13,6 @@ class DrawRenderersPass;
 class SkyboxPass;
 class Renderer;
 class Texture;
-struct Vector3;
 
 class ForwardRenderPass : public RenderPass
 {

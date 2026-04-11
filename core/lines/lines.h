@@ -3,11 +3,10 @@
 
 #include "drawable_geometry/drawable_geometry.h"
 #include "bounds/bounds.h"
+#include "vector3/vector3.h"
 
 #include <vector>
 #include <string>
-
-struct Vector3;
 
 class Lines : public DrawableGeometry
 {

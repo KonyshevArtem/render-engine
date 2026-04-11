@@ -1,37 +1,77 @@
 #ifndef RENDER_ENGINE_VECTOR2_H
 #define RENDER_ENGINE_VECTOR2_H
 
-struct [[nodiscard]] Vector2
+#include <cmath>
+
+template<typename T>
+struct [[nodiscard]] Vector2Base
 {
 public:
-    float x;
-    float y;
+    T x;
+    T y;
 
-    Vector2();
+    Vector2Base() : x(0), y(0) {}
+    Vector2Base(T _x, T _y) : x(_x), y(_y) {}
 
-    Vector2(float _x, float _y);
+    static const Vector2Base& Zero()
+    {
+        static const Vector2Base zero = Vector2Base();
+        return zero;
+    }
 
-    static const Vector2 &Zero();
+    Vector2Base operator-() const
+    {
+        return { -this->x, -this->y };
+    }
 
-    Vector2 operator-() const;
+    Vector2Base operator+(const Vector2Base& _vector) const
+    {
+        return { this->x + _vector.x, this->y + _vector.y };
+    }
 
-    Vector2 operator+(const Vector2 &_vector) const;
+    void operator+=(const Vector2Base& vector)
+    {
+        *this = *this + vector;
+    }
 
-    void operator+=(const Vector2& vector);
+    Vector2Base operator-(const Vector2Base&_vector) const
+    {
+        return { this->x - _vector.x, this->y - _vector.y };
+    }
 
-    Vector2 operator-(const Vector2 &_vector) const;
+    void operator-=(const Vector2Base& vector)
+    {
+        *this = *this - vector;
+    }
 
-    void operator-=(const Vector2& vector);
+    Vector2Base operator*(T _value) const
+    {
+        return { this->x * _value, this->y * _value };
+    }
 
-    Vector2 operator*(float _value) const;
+    Vector2Base operator/(T value) const
+    {
+        return { x / value, y / value };
+    }
 
-    Vector2 operator/(float value) const;
+    bool operator==(const Vector2Base& vector) const
+    {
+        return x == vector.x && y == vector.y;
+    }
 
-    bool operator==(const Vector2& vector) const;
+    bool operator!=(const Vector2Base& vector) const
+    {
+        return !(*this == vector);
+    }
 
-    bool operator!=(const Vector2& vector) const;
-
-    float Length() const;
+    T Length() const
+    {
+        return sqrt(x * x + y * y);
+    }
 };
+
+using Vector2 = Vector2Base<float>;
+using Vector2I = Vector2Base<int>;
+using Vector2UI = Vector2Base<uint32_t>;
 
 #endif //RENDER_ENGINE_VECTOR2_H

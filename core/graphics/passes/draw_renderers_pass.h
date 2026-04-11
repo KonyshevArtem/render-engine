@@ -12,7 +12,6 @@
 #include <memory>
 
 struct RenderData;
-struct Vector3;
 class Renderer;
 
 class DrawRenderersPass : public RenderPass

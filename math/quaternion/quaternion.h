@@ -1,7 +1,7 @@
 #ifndef RENDER_ENGINE_QUATERNION_H
 #define RENDER_ENGINE_QUATERNION_H
 
-struct Vector3;
+#include "vector3/vector3.h"
 
 struct [[nodiscard]] Quaternion
 {

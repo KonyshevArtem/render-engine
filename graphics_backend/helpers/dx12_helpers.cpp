@@ -604,4 +604,17 @@ D3D12_STENCIL_OP DX12Helpers::ToStencilOp(StencilOperation op)
     }
 }
 
+DXGI_FORMAT DX12Helpers::ToIndicesDataType(IndicesDataType indicesDataType)
+{
+    switch (indicesDataType)
+    {
+	    case IndicesDataType::UNSIGNED_BYTE:
+	        return DXGI_FORMAT_R8_UINT;
+		case IndicesDataType::UNSIGNED_SHORT:
+            return DXGI_FORMAT_R16_UINT;
+		case IndicesDataType::UNSIGNED_INT:
+            return DXGI_FORMAT_R32_UINT;
+    }
+}
+
 #endif

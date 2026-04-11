@@ -26,7 +26,7 @@ namespace MeshLocal
             attributes.Add({VertexAttributeSemantic::TANGENT, 3, VertexAttributeDataType::FLOAT, false, vertexSize, posSize + normalsSize + uvSize});
     }
 
-    GraphicsBackendGeometry CreateGeometry(const VertexAttributes& attributes, const uint8_t* vertexData, uint64_t vertexDataSize, const int* indices, uint64_t indicesCount, const std::string& name)
+    GraphicsBackendGeometry CreateGeometry(const VertexAttributes& attributes, const uint8_t* vertexData, uint64_t vertexDataSize, const int* indices, uint64_t indicesCount, IndicesDataType indicesDataType, const std::string& name)
     {
         Profiler::Marker _("MeshLocal::CreateGeometry");
 
@@ -38,7 +38,7 @@ namespace MeshLocal
         bufferDescriptor.Size = indicesCount * sizeof(int);
         const GraphicsBackendBuffer indexBuffer = GraphicsBackend::Current()->CreateBuffer(bufferDescriptor, name + "_Indices", indices);
 
-        return GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, attributes.GetAttributes(), name);
+        return GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, attributes.GetAttributes(), indicesDataType, name);
     }
 }
 
@@ -50,20 +50,32 @@ Mesh::Mesh(const std::vector<Vector3>& vertices, const std::vector<int>& indices
 Mesh::Mesh(const std::span<uint8_t>& vertexData, const std::span<int>& indices, bool hasUV, bool hasNormals, bool hasTangents,
            const Vector3& minPoint, const Vector3& maxPoint, const std::string& name) :
     DrawableGeometry(PrimitiveType::TRIANGLES, indices.size(), true),
-    m_Bounds(minPoint, maxPoint)
+    m_Bounds(minPoint, maxPoint),
+	m_IndexCount(indices.size()),
+	m_Name(name)
 {
     MeshLocal::FillVertexAttributes(m_VertexAttributes, hasUV, hasNormals, hasTangents);
-    m_GraphicsBackendGeometry = MeshLocal::CreateGeometry(m_VertexAttributes, vertexData.data(), vertexData.size(), indices.data(), indices.size(), name);
+    m_GraphicsBackendGeometry = MeshLocal::CreateGeometry(m_VertexAttributes, vertexData.data(), vertexData.size(), indices.data(), indices.size(), GetIndicesDataType(), name);
+    m_VertexCount = vertexData.size() / m_VertexAttributes.GetAttributes()[0].Stride;
+}
+
+Mesh::~Mesh()
+{
+    if (BLAS.IsValid())
+        GraphicsBackend::Current()->DeleteBLAS(BLAS);
 }
 
 Mesh::Mesh(const std::vector<Vector3>& vertices,
            const std::vector<Vector3>& normals,
-           const std::vector<int>& indexes,
+           const std::vector<int>& indices,
            const std::vector<Vector2>& uvs,
            const std::vector<Vector3>& tangents,
            const std::string& name) :
-    DrawableGeometry(PrimitiveType::TRIANGLES, indexes.size(), true),
-    m_Bounds(Bounds::FromPoints(std::span<const Vector3> {vertices.data(), vertices.size()}))
+    DrawableGeometry(PrimitiveType::TRIANGLES, indices.size(), true),
+    m_Bounds(Bounds::FromPoints(std::span<const Vector3> {vertices.data(), vertices.size()})),
+	m_VertexCount(vertices.size()),
+	m_IndexCount(indices.size()),
+	m_Name(name)
 {
     size_t vertexCount = vertices.size();
     bool hasUV = !uvs.empty();
@@ -106,7 +118,7 @@ Mesh::Mesh(const std::vector<Vector3>& vertices,
         }
     }
 
-    m_GraphicsBackendGeometry = MeshLocal::CreateGeometry(m_VertexAttributes, vertexData.data(), vertexData.size(), indexes.data(), indexes.size(), name);
+    m_GraphicsBackendGeometry = MeshLocal::CreateGeometry(m_VertexAttributes, vertexData.data(), vertexData.size(), indices.data(), indices.size(), GetIndicesDataType(), name);
 }
 
 const std::shared_ptr<Mesh>& Mesh::GetFullscreenMesh()

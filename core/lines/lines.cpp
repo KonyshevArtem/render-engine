@@ -15,5 +15,5 @@ Lines::Lines(const std::vector<Vector3>& points, const std::vector<int>& indices
 
     bufferDescriptor.Size = sizeof(int) * indices.size();
     const GraphicsBackendBuffer indexBuffer = GraphicsBackend::Current()->CreateBuffer(bufferDescriptor, name + "_Indices", indices.data());
-    m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, m_VertexAttributes.GetAttributes(), name);
+    m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, m_VertexAttributes.GetAttributes(), GetIndicesDataType(), name);
 }

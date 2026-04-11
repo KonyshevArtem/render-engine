@@ -8,9 +8,10 @@
 class VertexAttributes
 {
 public:
-    void Add(const GraphicsBackendVertexAttributeDescriptor &attribute);
+    void Add(const GraphicsBackendVertexAttributeDescriptor& attribute);
 
-    const std::vector<GraphicsBackendVertexAttributeDescriptor> &GetAttributes() const;
+    const std::vector<GraphicsBackendVertexAttributeDescriptor>& GetAttributes() const;
+    bool TryGetAttribute(VertexAttributeSemantic semantic, GraphicsBackendVertexAttributeDescriptor& outAttributeDescriptor) const;
     size_t GetHash() const;
 
     static size_t GetHash(const std::vector<GraphicsBackendVertexAttributeDescriptor> &attributes);

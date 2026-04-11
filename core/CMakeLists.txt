@@ -162,7 +162,9 @@ add_library(
 	graphics_buffer/graphics_buffer_view.h
 	graphics_buffer/graphics_buffer_view.cpp
 	graphics/passes/post_process_pass.cpp
-	graphics/passes/post_process_pass.h)
+	graphics/passes/post_process_pass.h
+        raytracing/raytracing_scene.h
+        raytracing/raytracing_scene.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil StringSplit)

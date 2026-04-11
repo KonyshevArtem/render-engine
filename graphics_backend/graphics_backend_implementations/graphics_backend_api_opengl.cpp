@@ -320,6 +320,8 @@ void GraphicsBackendOpenGL::WaitForPreviousFrame()
         glClientWaitSync(currentFence, GL_SYNC_FLUSH_COMMANDS_BIT, 160000000);
         glDeleteSync(currentFence);
     }
+
+    DeleteResources();
 }
 
 void GraphicsBackendOpenGL::FillImGuiInitData(void* data)
@@ -699,7 +701,7 @@ int GraphicsBackendOpenGL::GetConstantBufferOffsetAlignment()
     return alignment;
 }
 
-GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name)
+GraphicsBackendGeometry GraphicsBackendOpenGL::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, IndicesDataType indicesDataType, const std::string& name)
 {
     OpenGLLocal::GeometryData* geometryData = new OpenGLLocal::GeometryData();
 

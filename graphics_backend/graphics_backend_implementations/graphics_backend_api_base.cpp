@@ -21,21 +21,12 @@
 
 namespace BaseBackendLocal
 {
-    constexpr int k_DeleteResourceDelay = 2;
-
     template<typename T>
-    void DeleteResources(std::vector<std::pair<T, int>>& deletedResources, const std::function<void(T&)>& deleteFunction)
+    void DeleteResources(std::vector<T>& deletedResources, const std::function<void(T&)>& deleteFunction)
     {
-        for (int i = deletedResources.size() - 1; i >= 0; --i)
-        {
-            auto& pair = deletedResources[i];
-            if (--pair.second == 0)
-            {
-                deleteFunction(pair.first);
-                std::swap(deletedResources[i], deletedResources.back());
-                deletedResources.pop_back();
-            }
-        }
+	    for (T& resource : deletedResources)
+		    deleteFunction(resource);
+        deletedResources.clear();
     }
 }
 
@@ -73,14 +64,6 @@ void GraphicsBackendBase::Init(void* data)
 void GraphicsBackendBase::InitNewFrame()
 {
     m_DrawCallCount = 0;
-
-    BaseBackendLocal::DeleteResources<GraphicsBackendTexture>(m_DeletedTextures, [this](GraphicsBackendTexture& texture){ DeleteTexture_Internal(texture); });
-    BaseBackendLocal::DeleteResources<GraphicsBackendSampler>(m_DeletedSamplers, [this](GraphicsBackendSampler& sampler){ DeleteSampler_Internal(sampler); });
-    BaseBackendLocal::DeleteResources<GraphicsBackendBuffer>(m_DeletedBuffers, [this](GraphicsBackendBuffer& buffer){ DeleteBuffer_Internal(buffer); });
-    BaseBackendLocal::DeleteResources<GraphicsBackendBufferView>(m_DeletedBufferViews, [this](GraphicsBackendBufferView& bufferView){ DeleteBufferView_Internal(bufferView); });
-    BaseBackendLocal::DeleteResources<GraphicsBackendGeometry>(m_DeletedGeometries, [this](GraphicsBackendGeometry& geometry){ DeleteGeometry_Internal(geometry); });
-    BaseBackendLocal::DeleteResources<GraphicsBackendShaderObject>(m_DeletedShaders, [this](GraphicsBackendShaderObject& shader){ DeleteShader_Internal(shader); });
-    BaseBackendLocal::DeleteResources<GraphicsBackendProgram>(m_DeletedPrograms, [this](GraphicsBackendProgram& program){ DeleteProgram_Internal(program); });
 }
 
 void GraphicsBackendBase::IncrementFrameNumber()
@@ -97,7 +80,7 @@ void GraphicsBackendBase::DeleteTexture(const GraphicsBackendTexture& texture)
 {
     std::lock_guard<std::mutex> lock(m_DeletedTexturesMutex);
 
-    m_DeletedTextures.emplace_back(texture, BaseBackendLocal::k_DeleteResourceDelay);
+    m_DeletedTextures.emplace_back(texture);
 
     auto Predicate = [&texture](const std::pair<uint32_t, GraphicsBackendTexture>& pair)
     {
@@ -112,7 +95,7 @@ void GraphicsBackendBase::DeleteSampler(const GraphicsBackendSampler& sampler)
 {
     std::lock_guard<std::mutex> lock(m_DeletedSamplersMutex);
 
-    m_DeletedSamplers.emplace_back(sampler, BaseBackendLocal::k_DeleteResourceDelay);
+    m_DeletedSamplers.emplace_back(sampler);
 
     std::erase_if(m_BoundSamplers, [&sampler](const auto& pair)
     {
@@ -124,7 +107,7 @@ void GraphicsBackendBase::DeleteBuffer(const GraphicsBackendBuffer& buffer)
 {
     std::lock_guard<std::mutex> lock(m_DeletedBuffersMutex);
 
-    m_DeletedBuffers.emplace_back(buffer, BaseBackendLocal::k_DeleteResourceDelay);
+    m_DeletedBuffers.emplace_back(buffer);
 
     auto Predicate = [&buffer](const std::pair<uint32_t, BufferBindInfo>& pair)
     {
@@ -138,7 +121,7 @@ void GraphicsBackendBase::DeleteBufferView(const GraphicsBackendBufferView& buff
 {
     std::lock_guard<std::mutex> lock(m_DeletedBufferViewsMutex);
 
-    m_DeletedBufferViews.emplace_back(bufferView, BaseBackendLocal::k_DeleteResourceDelay);
+    m_DeletedBufferViews.emplace_back(bufferView);
 
     auto Predicate = [&bufferView](const std::pair<uint32_t, GraphicsBackendBufferView>& pair)
 	{
@@ -152,19 +135,19 @@ void GraphicsBackendBase::DeleteBufferView(const GraphicsBackendBufferView& buff
 void GraphicsBackendBase::DeleteGeometry(const GraphicsBackendGeometry &geometry)
 {
     std::lock_guard<std::mutex> lock(m_DeletedGeometriesMutex);
-    m_DeletedGeometries.emplace_back(geometry, BaseBackendLocal::k_DeleteResourceDelay);
+    m_DeletedGeometries.emplace_back(geometry);
 }
 
 void GraphicsBackendBase::DeleteShader(GraphicsBackendShaderObject shader)
 {
     std::lock_guard<std::mutex> lock(m_DeletedShadersMutex);
-    m_DeletedShaders.emplace_back(shader, BaseBackendLocal::k_DeleteResourceDelay);
+    m_DeletedShaders.emplace_back(shader);
 }
 
 void GraphicsBackendBase::DeleteProgram(GraphicsBackendProgram program)
 {
     std::lock_guard<std::mutex> lock(m_DeletedProgramsMutex);
-    m_DeletedPrograms.emplace_back(program, BaseBackendLocal::k_DeleteResourceDelay);
+    m_DeletedPrograms.emplace_back(program);
 }
 
 void GraphicsBackendBase::UseProgram(const GraphicsBackendProgram& program)
@@ -238,6 +221,19 @@ void GraphicsBackendBase::BindResources()
             m_BoundRWBuffersDirtyMask &= ~(1 << pair.first);
         }
     }
+}
+
+void GraphicsBackendBase::DeleteResources()
+{
+    BaseBackendLocal::DeleteResources<GraphicsBackendTexture>(m_DeletedTextures, [this](GraphicsBackendTexture& texture) { DeleteTexture_Internal(texture); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendSampler>(m_DeletedSamplers, [this](GraphicsBackendSampler& sampler) { DeleteSampler_Internal(sampler); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendBuffer>(m_DeletedBuffers, [this](GraphicsBackendBuffer& buffer) { DeleteBuffer_Internal(buffer); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendBufferView>(m_DeletedBufferViews, [this](GraphicsBackendBufferView& bufferView) { DeleteBufferView_Internal(bufferView); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendGeometry>(m_DeletedGeometries, [this](GraphicsBackendGeometry& geometry) { DeleteGeometry_Internal(geometry); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendShaderObject>(m_DeletedShaders, [this](GraphicsBackendShaderObject& shader) { DeleteShader_Internal(shader); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendProgram>(m_DeletedPrograms, [this](GraphicsBackendProgram& program) { DeleteProgram_Internal(program); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendBLAS>(m_DeletedBLASes, [this](GraphicsBackendBLAS& BLAS) { DeleteBLAS_Internal(BLAS); });
+    BaseBackendLocal::DeleteResources<GraphicsBackendTLAS>(m_DeletedTLASes, [this](GraphicsBackendTLAS& TLAS) { DeleteTLAS_Internal(TLAS); });
 }
 
 void GraphicsBackendBase::BindTexture(const GraphicsBackendTexture& texture, uint32_t index)
@@ -535,7 +531,7 @@ bool GraphicsBackendBase::IsDepthAttachment(FramebufferAttachment attachment)
             attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
 }
 
-bool GraphicsBackendBase::IsMainThread()
+bool GraphicsBackendBase::IsMainThread() const
 {
     return std::this_thread::get_id() == m_MainThreadId;
 }
@@ -695,4 +691,31 @@ uint32_t GraphicsBackendBase::GetFormatSize(TextureInternalFormat format)
         default:
             return 0;
     }
+}
+
+bool GraphicsBackendBase::SupportsRaytracing() const
+{
+    return false;
+}
+
+GraphicsBackendBLAS GraphicsBackendBase::CreateBLAS(const GraphicsBackendBLASDescriptor& descriptor, const std::string& name)
+{
+    return GraphicsBackendBLAS{};
+}
+
+GraphicsBackendTLAS GraphicsBackendBase::CreateTLAS(const std::vector<GraphicsBackendRaytracingInstanceDescriptor>& instanceDescriptors, const std::string& name)
+{
+    return GraphicsBackendTLAS{};
+}
+
+void GraphicsBackendBase::DeleteBLAS(GraphicsBackendBLAS& BLAS)
+{
+    std::lock_guard<std::mutex> lock(m_DeletedBLASesMutex);
+    m_DeletedBLASes.push_back(BLAS);
+}
+
+void GraphicsBackendBase::DeleteTLAS(GraphicsBackendTLAS& TLAS)
+{
+    std::lock_guard<std::mutex> lock(m_DeletedTLASesMutex);
+    m_DeletedTLASes.push_back(TLAS);
 }

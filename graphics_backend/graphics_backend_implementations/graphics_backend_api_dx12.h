@@ -6,6 +6,11 @@
 #include "graphics_backend_api_base.h"
 #include "types/graphics_backend_program_descriptor.h"
 
+namespace DX12Local
+{
+    struct ResourceData;
+}
+
 class GraphicsBackendDX12 : public GraphicsBackendBase
 {
 public:
@@ -33,7 +38,7 @@ public:
     uint64_t GetMaxConstantBufferSize() override;
     int GetConstantBufferOffsetAlignment() override;
 
-    GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) override;
+    GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, IndicesDataType indicesDataType, const std::string& name) override;
 
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
     void SetScissorRect(int x, int y, int width, int height) override;
@@ -89,6 +94,10 @@ public:
     bool RequireRasterizerStateForPSO() const override;
     bool RequireBlendStateForPSO() const override;
 
+    bool SupportsRaytracing() const override;
+	GraphicsBackendBLAS CreateBLAS(const GraphicsBackendBLASDescriptor& descriptor, const std::string& name) override;
+    GraphicsBackendTLAS CreateTLAS(const std::vector<GraphicsBackendRaytracingInstanceDescriptor>& instanceDescriptors, const std::string& name) override;
+
 protected:
     void DeleteTexture_Internal(const GraphicsBackendTexture &texture) override;
     void DeleteSampler_Internal(const GraphicsBackendSampler &sampler) override;
@@ -97,6 +106,8 @@ protected:
     void DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry) override;
     void DeleteShader_Internal(GraphicsBackendShaderObject shader) override;
     void DeleteProgram_Internal(GraphicsBackendProgram program) override;
+    void DeleteBLAS_Internal(GraphicsBackendBLAS& blas) override;
+    void DeleteTLAS_Internal(GraphicsBackendTLAS& tlas) override;
 
     void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
     void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
@@ -107,6 +118,10 @@ protected:
 
 private:
     void BindResources(ProgramType programType);
+    DX12Local::ResourceData* CreateBufferInternal(const GraphicsBackendBufferDescriptor& descriptor, ResourceState state, const std::string& name, const void* data) const;
+
+    bool m_CopyTimestampSupported = false;
+    uint32_t m_RaytracingTier = 0;
 };
 
 #endif // RENDER_BACKEND_DX12

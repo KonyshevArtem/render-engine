@@ -12,6 +12,8 @@
 #include "types/graphics_backend_rasterizer_descriptor.h"
 #include "types/graphics_backend_blend_descriptor.h"
 #include "types/graphics_backend_program.h"
+#include "types/graphics_backend_blas.h"
+#include "types/graphics_backend_tlas.h"
 
 #include <string>
 #include <vector>
@@ -54,6 +56,8 @@ struct GraphicsBackendSamplerDescriptor;
 struct GraphicsBackendBufferDescriptor;
 struct GraphicsBackendBufferViewDescriptor;
 struct GraphicsBackendBufferView;
+struct GraphicsBackendRaytracingInstanceDescriptor;
+struct GraphicsBackendBLASDescriptor;
 
 class GraphicsBackendBase
 {
@@ -102,7 +106,7 @@ public:
     virtual uint64_t GetMaxConstantBufferSize() = 0;
     virtual int GetConstantBufferOffsetAlignment() = 0;
 
-    virtual GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) = 0;
+    virtual GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer& vertexBuffer, const GraphicsBackendBuffer& indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, IndicesDataType indicesDataType, const std::string& name) = 0;
     void DeleteGeometry(const GraphicsBackendGeometry &geometry);
 
     virtual void SetViewport(int x, int y, int width, int height, float near, float far) = 0;
@@ -186,6 +190,12 @@ public:
         return m_DrawCallCount;
     }
 
+    virtual bool SupportsRaytracing() const;
+    virtual GraphicsBackendBLAS CreateBLAS(const GraphicsBackendBLASDescriptor& descriptor, const std::string& name);
+    virtual GraphicsBackendTLAS CreateTLAS(const std::vector<GraphicsBackendRaytracingInstanceDescriptor>& instanceDescriptors, const std::string& name);
+    void DeleteBLAS(GraphicsBackendBLAS& BLAS);
+    void DeleteTLAS(GraphicsBackendTLAS& TLAS);
+
     static size_t GetDepthDescriptorHash(const GraphicsBackendDepthDescriptor& depthDescriptor);
     static size_t GetStencilOperationDescriptorHash(const GraphicsBackendStencilOperationDescriptor& stencilOperationDescriptor);
     static size_t GetStencilDescriptorHash(const GraphicsBackendStencilDescriptor& stencilDescriptor);
@@ -195,9 +205,10 @@ public:
     static std::string GetShaderTypeName(ShaderType shaderType);
 
 protected:
-    bool IsMainThread();
+    bool IsMainThread() const;
     bool IsBoundResourcesDirty() const;
     void BindResources();
+    void DeleteResources();
 
     virtual void DeleteTexture_Internal(const GraphicsBackendTexture &texture) = 0;
     virtual void DeleteSampler_Internal(const GraphicsBackendSampler &sampler) = 0;
@@ -206,6 +217,8 @@ protected:
     virtual void DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry) = 0;
     virtual void DeleteShader_Internal(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram_Internal(GraphicsBackendProgram program) = 0;
+    virtual void DeleteBLAS_Internal(GraphicsBackendBLAS& blas){}
+    virtual void DeleteTLAS_Internal(GraphicsBackendTLAS& tlas){}
 
     virtual void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
     virtual void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
@@ -233,13 +246,15 @@ private:
     uint64_t m_FrameCount = 0;
     std::thread::id m_MainThreadId;
 
-    std::vector<std::pair<GraphicsBackendTexture, int>> m_DeletedTextures;
-    std::vector<std::pair<GraphicsBackendSampler, int>> m_DeletedSamplers;
-    std::vector<std::pair<GraphicsBackendBuffer, int>> m_DeletedBuffers;
-    std::vector<std::pair<GraphicsBackendBufferView, int>> m_DeletedBufferViews;
-    std::vector<std::pair<GraphicsBackendGeometry, int>> m_DeletedGeometries;
-    std::vector<std::pair<GraphicsBackendShaderObject, int>> m_DeletedShaders;
-    std::vector<std::pair<GraphicsBackendProgram, int>> m_DeletedPrograms;
+    std::vector<GraphicsBackendTexture> m_DeletedTextures;
+    std::vector<GraphicsBackendSampler> m_DeletedSamplers;
+    std::vector<GraphicsBackendBuffer> m_DeletedBuffers;
+    std::vector<GraphicsBackendBufferView> m_DeletedBufferViews;
+    std::vector<GraphicsBackendGeometry> m_DeletedGeometries;
+    std::vector<GraphicsBackendShaderObject> m_DeletedShaders;
+    std::vector<GraphicsBackendProgram> m_DeletedPrograms;
+    std::vector<GraphicsBackendBLAS> m_DeletedBLASes;
+    std::vector<GraphicsBackendTLAS> m_DeletedTLASes;
 
     std::mutex m_DeletedTexturesMutex;
     std::mutex m_DeletedSamplersMutex;
@@ -248,6 +263,8 @@ private:
     std::mutex m_DeletedGeometriesMutex;
     std::mutex m_DeletedShadersMutex;
     std::mutex m_DeletedProgramsMutex;
+    std::mutex m_DeletedBLASesMutex;
+    std::mutex m_DeletedTLASesMutex;
 
     std::unordered_map<uint32_t, GraphicsBackendTexture> m_BoundTextures;
     std::unordered_map<uint32_t, GraphicsBackendTexture> m_BoundRWTextures;

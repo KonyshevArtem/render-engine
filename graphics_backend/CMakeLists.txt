@@ -65,8 +65,12 @@ add_library(GraphicsBackend
         types/graphics_backend_sampler_descriptor.h
         enums/program_type.h
         types/graphics_backend_buffer_descriptor.h
-	    types/graphics_backend_buffer_view_descriptor.h
-	    types/graphics_backend_buffer_view.h)
+	types/graphics_backend_buffer_view_descriptor.h
+	types/graphics_backend_buffer_view.h
+        types/graphics_backend_blas.h
+        types/graphics_backend_blas_descriptor.h
+        types/graphics_backend_tlas.h
+        types/graphics_backend_raytracing_instance_descriptor.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

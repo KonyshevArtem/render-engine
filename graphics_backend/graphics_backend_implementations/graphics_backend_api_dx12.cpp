@@ -25,6 +25,8 @@
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "types/graphics_backend_buffer_view_descriptor.h"
 #include "types/graphics_backend_buffer_view.h"
+#include "types/graphics_backend_blas_descriptor.h"
+#include "types/graphics_backend_raytracing_instance_descriptor.h"
 #include "helpers/dx12_helpers.h"
 #include "math_utils.h"
 #include "debug.h"
@@ -79,8 +81,6 @@ namespace DX12Local
     {
         D3D12_VERTEX_BUFFER_VIEW* VertexBufferView;
         D3D12_INDEX_BUFFER_VIEW* IndexBufferView;
-        ResourceData* VertexBufferData;
-        ResourceData* IndexBufferData;
     };
 
     struct SamplerData
@@ -362,7 +362,6 @@ namespace DX12Local
     ID3D12Fence* s_TimestampFence;
     uint64_t s_GpuStartTimestamp;
     uint64_t s_CpuStartTimestamp;
-    bool s_IsCopyTimestampSupported;
 
     std::shared_mutex s_CommandListPoolMutex;
     std::unordered_map<std::thread::id, CommandList*> s_UploadCommandLists;
@@ -758,11 +757,15 @@ void GraphicsBackendDX12::Init(void* data)
 
     DX12Local::s_RenderTimestampCollector.Init(D3D12_QUERY_HEAP_TYPE_TIMESTAMP);
 
-    D3D12_FEATURE_DATA_D3D12_OPTIONS3 options;
-    ThrowIfFailed(DX12Local::s_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &options, sizeof(options)));
-    DX12Local::s_IsCopyTimestampSupported = options.CopyQueueTimestampQueriesSupported;
-    if (DX12Local::s_IsCopyTimestampSupported)
+    D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3;
+    ThrowIfFailed(DX12Local::s_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &options3, sizeof(options3)));
+    m_CopyTimestampSupported = options3.CopyQueueTimestampQueriesSupported;
+    if (m_CopyTimestampSupported)
         DX12Local::s_CopyTimestampCollector.Init(D3D12_QUERY_HEAP_TYPE_COPY_QUEUE_TIMESTAMP);
+
+    D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5;
+    ThrowIfFailed(DX12Local::s_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5)));
+    m_RaytracingTier = options5.RaytracingTier;
 
     ThrowIfFailed(DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&DX12Local::s_TimestampFence)));
 
@@ -810,6 +813,8 @@ void GraphicsBackendDX12::InitNewFrame()
 void GraphicsBackendDX12::WaitForPreviousFrame()
 {
     DX12Local::WaitForFrameEnd();
+
+    DeleteResources();
     
     DX12Local::s_RenderCommandList->Close();
     DX12Local::s_RenderCommandList->ResetAllocator();
@@ -1081,7 +1086,7 @@ void GraphicsBackendDX12::BindRWTexture_Internal(const GraphicsBackendTexture& t
     DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWTexturesDescriptorsOffset);
-    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->ReadOnlyDescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->RWDescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 }
 
@@ -1270,38 +1275,7 @@ TextureInternalFormat GraphicsBackendDX12::GetRenderTargetFormat(FramebufferAtta
 
 GraphicsBackendBuffer GraphicsBackendDX12::CreateBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name, const void* data)
 {
-    ID3D12Resource* dxBuffer;
-
-    constexpr D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
-    const CD3DX12_HEAP_PROPERTIES heapProps(descriptor.AllowCPUWrites ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT);
-
-    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
-    if (descriptor.AllowGPUWrites)
-        flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-    const D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(descriptor.Size, flags);
-    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, state, nullptr, IID_PPV_ARGS(&dxBuffer)));
-
-    DX12Local::SetObjectName(dxBuffer, name);
-
-    DX12Local::ResourceData* resourceData = new DX12Local::ResourceData();
-    resourceData->Resource = dxBuffer;
-    resourceData->State = state;
-
-    if (data)
-    {
-        if (descriptor.AllowCPUWrites)
-        {
-            const CD3DX12_RANGE readRange(0, 0);
-
-            UINT8* bufferData;
-            ThrowIfFailed(dxBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferData)));
-            memcpy(bufferData, data, descriptor.Size);
-            dxBuffer->Unmap(0, nullptr);
-        }
-        else
-            DX12Local::UploadGPUData(resourceData, 0, descriptor.Size, descriptor.Size, descriptor.Size, data, IsMainThread());
-    }
+    DX12Local::ResourceData* resourceData = CreateBufferInternal(descriptor, ResourceState::COMMON, name, data);
 
     GraphicsBackendBuffer buffer{};
     buffer.Buffer = reinterpret_cast<uint64_t>(resourceData);
@@ -1473,13 +1447,13 @@ int GraphicsBackendDX12::GetConstantBufferOffsetAlignment()
     return 256;
 }
 
-GraphicsBackendGeometry GraphicsBackendDX12::CreateGeometry(const GraphicsBackendBuffer& vertexBuffer, const GraphicsBackendBuffer& indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, const std::string& name)
+GraphicsBackendGeometry GraphicsBackendDX12::CreateGeometry(const GraphicsBackendBuffer& vertexBuffer, const GraphicsBackendBuffer& indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, IndicesDataType indicesDataType, const std::string& name)
 {
-    DX12Local::ResourceData* vertexResourceData = reinterpret_cast<DX12Local::ResourceData*>(vertexBuffer.Buffer);
-    DX12Local::ResourceData* indexResourceData = reinterpret_cast<DX12Local::ResourceData*>(indexBuffer.Buffer);
+    const DX12Local::ResourceData* vertexResourceData = reinterpret_cast<DX12Local::ResourceData*>(vertexBuffer.Buffer);
+    const DX12Local::ResourceData* indexResourceData = reinterpret_cast<DX12Local::ResourceData*>(indexBuffer.Buffer);
 
-    ID3D12Resource* dxVertexBuffer = reinterpret_cast<ID3D12Resource*>(vertexResourceData->Resource);
-    ID3D12Resource* dxIndexBuffer = reinterpret_cast<ID3D12Resource*>(indexResourceData->Resource);
+    ID3D12Resource* dxVertexBuffer = vertexResourceData->Resource;
+    ID3D12Resource* dxIndexBuffer = indexResourceData->Resource;
 
     D3D12_VERTEX_BUFFER_VIEW* vertexBufferView = new D3D12_VERTEX_BUFFER_VIEW;
     vertexBufferView->BufferLocation = dxVertexBuffer->GetGPUVirtualAddress();
@@ -1492,17 +1466,17 @@ GraphicsBackendGeometry GraphicsBackendDX12::CreateGeometry(const GraphicsBacken
         indexBufferView = new D3D12_INDEX_BUFFER_VIEW;
         indexBufferView->BufferLocation = dxIndexBuffer->GetGPUVirtualAddress();
         indexBufferView->SizeInBytes = indexBuffer.Size;
-        indexBufferView->Format = DXGI_FORMAT_R32_UINT;
+        indexBufferView->Format = DX12Helpers::ToIndicesDataType(indicesDataType);
     }
 
     DX12Local::GeometryData* geometryData = new DX12Local::GeometryData;
     geometryData->VertexBufferView = vertexBufferView;
     geometryData->IndexBufferView = indexBufferView;
-    geometryData->VertexBufferData = vertexResourceData;
-    geometryData->IndexBufferData = indexResourceData;
 
     GraphicsBackendGeometry geometry;
     geometry.Geometry = reinterpret_cast<uint64_t>(geometryData);
+    geometry.VertexBuffer = vertexBuffer;
+    geometry.IndexBuffer = indexBuffer;
     return geometry;
 }
 
@@ -1661,6 +1635,20 @@ void GraphicsBackendDX12::DeleteProgram_Internal(GraphicsBackendProgram program)
     pso->Release();
 }
 
+void GraphicsBackendDX12::DeleteBLAS_Internal(GraphicsBackendBLAS& blas)
+{
+    const DX12Local::ResourceData* blasData = static_cast<DX12Local::ResourceData*>(blas.BLAS);
+    blasData->Resource->Release();
+    delete blasData;
+}
+
+void GraphicsBackendDX12::DeleteTLAS_Internal(GraphicsBackendTLAS& tlas)
+{
+    const DX12Local::ResourceData* blasData = static_cast<DX12Local::ResourceData*>(tlas.TLAS);
+    blasData->Resource->Release();
+    delete blasData;
+}
+
 void GraphicsBackendDX12::UseProgram(const GraphicsBackendProgram& program)
 {
     ID3D12PipelineState* pso = reinterpret_cast<ID3D12PipelineState*>(program.Program);
@@ -1703,8 +1691,9 @@ void GraphicsBackendDX12::DrawArraysInstanced(const GraphicsBackendGeometry& geo
     BindResources(ProgramType::RENDER);
 
     const DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.Geometry);
+    DX12Local::ResourceData* vertexBufferData = reinterpret_cast<DX12Local::ResourceData*>(geometry.VertexBuffer.Buffer);
 
-    DX12Local::TransitionResource(geometryData->VertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, DX12Local::s_RenderCommandList->List);
+    DX12Local::TransitionResource(vertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, DX12Local::s_RenderCommandList->List);
 
     DX12Local::s_RenderCommandList->List->RSSetViewports(1, &DX12Local::s_CurrentViewport);
     DX12Local::s_RenderCommandList->List->RSSetScissorRects(1, &DX12Local::s_CurrentScissorsRect);
@@ -1725,9 +1714,11 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
     BindResources(ProgramType::RENDER);
 
     const DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.Geometry);
+    DX12Local::ResourceData* vertexBufferData = reinterpret_cast<DX12Local::ResourceData*>(geometry.VertexBuffer.Buffer);
+    DX12Local::ResourceData* indexBufferData = reinterpret_cast<DX12Local::ResourceData*>(geometry.IndexBuffer.Buffer);
 
-    DX12Local::TransitionResource(geometryData->VertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, DX12Local::s_RenderCommandList->List);
-    DX12Local::TransitionResource(geometryData->IndexBufferData, D3D12_RESOURCE_STATE_INDEX_BUFFER, DX12Local::s_RenderCommandList->List);
+    DX12Local::TransitionResource(vertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, DX12Local::s_RenderCommandList->List);
+    DX12Local::TransitionResource(indexBufferData, D3D12_RESOURCE_STATE_INDEX_BUFFER, DX12Local::s_RenderCommandList->List);
 
     DX12Local::s_RenderCommandList->List->RSSetViewports(1, &DX12Local::s_CurrentViewport);
     DX12Local::s_RenderCommandList->List->RSSetScissorRects(1, &DX12Local::s_CurrentScissorsRect);
@@ -1807,7 +1798,7 @@ GraphicsBackendProfilerMarker GraphicsBackendDX12::PushProfilerMarker(GPUQueue q
 		FillMarkerInfo(marker.Info, DX12Local::s_RenderTimestampCollector, DX12Local::s_RenderCommandList->List);
     else if (queue == GPUQueue::COPY)
     {
-        if (DX12Local::s_IsCopyTimestampSupported)
+        if (m_CopyTimestampSupported)
             FillMarkerInfo(marker.Info, DX12Local::s_CopyTimestampCollector, DX12Local::s_CopyCommandList->List);
     }
 
@@ -1826,7 +1817,7 @@ void GraphicsBackendDX12::PopProfilerMarker(GraphicsBackendProfilerMarker& marke
 		PopMarker(marker.Info, DX12Local::s_RenderTimestampCollector, DX12Local::s_RenderCommandList->List);
     else if (marker.Queue == GPUQueue::COPY)
     {
-        if (DX12Local::s_IsCopyTimestampSupported)
+        if (m_CopyTimestampSupported)
             PopMarker(marker.Info, DX12Local::s_CopyTimestampCollector, DX12Local::s_CopyCommandList->List);
     }
 }
@@ -1864,7 +1855,7 @@ bool GraphicsBackendDX12::ResolveProfilerMarker(const GraphicsBackendProfilerMar
 		FillResults(DX12Local::s_RenderTimestampCollector);
     else if (marker.Queue == GPUQueue::COPY)
     {
-        if (DX12Local::s_IsCopyTimestampSupported)
+        if (m_CopyTimestampSupported)
             FillResults(DX12Local::s_CopyTimestampCollector);
     }
 
@@ -2106,6 +2097,138 @@ bool GraphicsBackendDX12::RequireBlendStateForPSO() const
     return true;
 }
 
+bool GraphicsBackendDX12::SupportsRaytracing() const
+{
+    return m_RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+}
+
+GraphicsBackendBLAS GraphicsBackendDX12::CreateBLAS(const GraphicsBackendBLASDescriptor& descriptor, const std::string& name)
+{
+    const DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(descriptor.Geometry.Geometry);
+
+    D3D12_RAYTRACING_GEOMETRY_DESC geomDesc{};
+    geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+    geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+    geomDesc.Triangles.VertexBuffer.StartAddress = geometryData->VertexBufferView->BufferLocation;
+    geomDesc.Triangles.VertexBuffer.StrideInBytes = geometryData->VertexBufferView->StrideInBytes;
+    geomDesc.Triangles.VertexFormat = DX12Helpers::ToVertexAttributeDataType(descriptor.VertexAttributeDescriptor.DataType, descriptor.VertexAttributeDescriptor.Dimensions, descriptor.VertexAttributeDescriptor.IsNormalized);
+    geomDesc.Triangles.VertexCount = descriptor.VertexCount;
+    geomDesc.Triangles.IndexBuffer = geometryData->IndexBufferView->BufferLocation;
+    geomDesc.Triangles.IndexFormat = DX12Helpers::ToIndicesDataType(descriptor.IndicesDataType);
+    geomDesc.Triangles.IndexCount = descriptor.IndexCount;
+
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS blasInputs{};
+    blasInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+    blasInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+    blasInputs.NumDescs = 1;
+    blasInputs.pGeometryDescs = &geomDesc;
+
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO blasInfo{};
+    DX12Local::s_Device->GetRaytracingAccelerationStructurePrebuildInfo(&blasInputs, &blasInfo);
+
+    GraphicsBackendBufferDescriptor bufferDesc{};
+    bufferDesc.AllowGPUWrites = true;
+
+    bufferDesc.Size = blasInfo.ScratchDataSizeInBytes;
+    GraphicsBackendBuffer scratchBuffer = CreateBuffer(bufferDesc, "BLAS_Scratch", nullptr);
+    DX12Local::ResourceData* scratchBufferData = reinterpret_cast<DX12Local::ResourceData*>(scratchBuffer.Buffer);
+
+    bufferDesc.Size = blasInfo.ResultDataMaxSizeInBytes;
+    DX12Local::ResourceData* resultBufferData = CreateBufferInternal(bufferDesc, ResourceState::RAYTRACING_ACCELERATION_STRUCTURE, name + "_BLAS", nullptr);
+
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC blasDesc{};
+    blasDesc.Inputs = blasInputs;
+    blasDesc.ScratchAccelerationStructureData = scratchBufferData->Resource->GetGPUVirtualAddress();
+    blasDesc.DestAccelerationStructureData = resultBufferData->Resource->GetGPUVirtualAddress();
+
+    DX12Local::s_RenderCommandList->List->BuildRaytracingAccelerationStructure(&blasDesc, 0, nullptr);
+
+    const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::UAV(resultBufferData->Resource);
+    DX12Local::s_RenderCommandList->List->ResourceBarrier(1, &barrier);
+
+    DeleteBuffer(scratchBuffer);
+
+    GraphicsBackendBLAS blas{};
+    blas.BLAS = resultBufferData;
+    return blas;
+}
+
+GraphicsBackendTLAS GraphicsBackendDX12::CreateTLAS(const std::vector<GraphicsBackendRaytracingInstanceDescriptor>& instanceDescriptors, const std::string& name)
+{
+    std::vector<D3D12_RAYTRACING_INSTANCE_DESC> dxDescriptors;
+    dxDescriptors.reserve(instanceDescriptors.size());
+
+    for (const GraphicsBackendRaytracingInstanceDescriptor& desc : instanceDescriptors)
+    {
+        const DX12Local::ResourceData* blasData = static_cast<DX12Local::ResourceData*>(desc.BLAS.BLAS);
+
+        D3D12_RAYTRACING_INSTANCE_DESC instanceDesc{};
+        instanceDesc.Transform[0][0] = desc.Transform.m00;
+        instanceDesc.Transform[0][1] = desc.Transform.m10;
+        instanceDesc.Transform[0][2] = desc.Transform.m20;
+        instanceDesc.Transform[0][3] = desc.Transform.m30;
+        instanceDesc.Transform[1][0] = desc.Transform.m01;
+        instanceDesc.Transform[1][1] = desc.Transform.m11;
+        instanceDesc.Transform[1][2] = desc.Transform.m21;
+        instanceDesc.Transform[1][3] = desc.Transform.m31;
+        instanceDesc.Transform[2][0] = desc.Transform.m02;
+        instanceDesc.Transform[2][1] = desc.Transform.m12;
+        instanceDesc.Transform[2][2] = desc.Transform.m22;
+        instanceDesc.Transform[2][3] = desc.Transform.m32;
+
+        instanceDesc.InstanceID = 0;
+        instanceDesc.InstanceMask = 0xFF;
+        instanceDesc.InstanceContributionToHitGroupIndex = 0;
+        instanceDesc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
+        instanceDesc.AccelerationStructure = blasData->Resource->GetGPUVirtualAddress();
+
+        dxDescriptors.push_back(instanceDesc);
+    }
+
+    GraphicsBackendBufferDescriptor instanceBufferDesc{};
+    instanceBufferDesc.Size = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * dxDescriptors.size();
+
+    GraphicsBackendBuffer instanceBuffer = CreateBuffer(instanceBufferDesc, "TLAS_Instances", dxDescriptors.data());
+    DX12Local::ResourceData* instanceBufferData = reinterpret_cast<DX12Local::ResourceData*>(instanceBuffer.Buffer);
+    DX12Local::TransitionResource(instanceBufferData, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
+
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS tlasInputs{};
+    tlasInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
+    tlasInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+    tlasInputs.NumDescs = dxDescriptors.size();
+    tlasInputs.InstanceDescs = instanceBufferData->Resource->GetGPUVirtualAddress();
+
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO tlasInfo{};
+    DX12Local::s_Device->GetRaytracingAccelerationStructurePrebuildInfo(&tlasInputs, &tlasInfo);
+
+    GraphicsBackendBufferDescriptor bufferDesc{};
+    bufferDesc.AllowGPUWrites = true;
+
+    bufferDesc.Size = tlasInfo.ScratchDataSizeInBytes;
+    GraphicsBackendBuffer scratchBuffer = CreateBuffer(bufferDesc, "TLAS_Scratch", nullptr);
+    DX12Local::ResourceData* scratchBufferData = reinterpret_cast<DX12Local::ResourceData*>(scratchBuffer.Buffer);
+
+    bufferDesc.Size = tlasInfo.ResultDataMaxSizeInBytes;
+    DX12Local::ResourceData* resultBufferData = CreateBufferInternal(bufferDesc, ResourceState::RAYTRACING_ACCELERATION_STRUCTURE, name + "_TLAS", nullptr);
+
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC tlasDesc{};
+    tlasDesc.Inputs = tlasInputs;
+    tlasDesc.ScratchAccelerationStructureData = scratchBufferData->Resource->GetGPUVirtualAddress();
+    tlasDesc.DestAccelerationStructureData = resultBufferData->Resource->GetGPUVirtualAddress();
+
+    DX12Local::s_RenderCommandList->List->BuildRaytracingAccelerationStructure(&tlasDesc, 0, nullptr);
+
+    const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::UAV(resultBufferData->Resource);
+    DX12Local::s_RenderCommandList->List->ResourceBarrier(1, &barrier);
+
+    DeleteBuffer(scratchBuffer);
+    DeleteBuffer(instanceBuffer);
+
+    GraphicsBackendTLAS tlas{};
+    tlas.TLAS = resultBufferData;
+    return tlas;
+}
+
 void GraphicsBackendDX12::BindResources(ProgramType programType)
 {
     if (IsBoundResourcesDirty())
@@ -2129,6 +2252,44 @@ void GraphicsBackendDX12::BindResources(ProgramType programType)
         DX12Local::s_BoundResourceDescriptorHeap.AdvanceIndex(DX12Local::k_ResourceDescriptorHeapAdvance);
         DX12Local::s_BoundSamplerDescriptorHeap.AdvanceIndex(DX12Local::k_SamplerDescriptorHeapAdvance);
     }
+}
+
+DX12Local::ResourceData* GraphicsBackendDX12::CreateBufferInternal(const GraphicsBackendBufferDescriptor& descriptor, ResourceState state, const std::string& name, const void* data) const
+{
+    ID3D12Resource* dxBuffer;
+
+    const D3D12_RESOURCE_STATES dxState = DX12Helpers::ToResourceState(state);
+    const CD3DX12_HEAP_PROPERTIES heapProps(descriptor.AllowCPUWrites ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT);
+
+    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
+    if (descriptor.AllowGPUWrites)
+        flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+    const D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(descriptor.Size, flags);
+    ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, dxState, nullptr, IID_PPV_ARGS(&dxBuffer)));
+
+    DX12Local::SetObjectName(dxBuffer, name);
+
+    DX12Local::ResourceData* resourceData = new DX12Local::ResourceData();
+    resourceData->Resource = dxBuffer;
+    resourceData->State = dxState;
+
+    if (data)
+    {
+        if (descriptor.AllowCPUWrites)
+        {
+            const CD3DX12_RANGE readRange(0, 0);
+
+            UINT8* bufferData;
+            ThrowIfFailed(dxBuffer->Map(0, &readRange, reinterpret_cast<void**>(&bufferData)));
+            memcpy(bufferData, data, descriptor.Size);
+            dxBuffer->Unmap(0, nullptr);
+        }
+        else
+            DX12Local::UploadGPUData(resourceData, 0, descriptor.Size, descriptor.Size, descriptor.Size, data, IsMainThread());
+    }
+
+    return resourceData;
 }
 
 #undef ThrowIfFailed

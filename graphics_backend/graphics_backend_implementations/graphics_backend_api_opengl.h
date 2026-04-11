@@ -34,7 +34,7 @@ public:
     uint64_t GetMaxConstantBufferSize() override;
     int GetConstantBufferOffsetAlignment() override;
 
-    GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name) override;
+    GraphicsBackendGeometry CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, IndicesDataType indicesDataType, const std::string& name) override;
 
     void SetViewport(int x, int y, int width, int height, float near, float far) override;
     void SetScissorRect(int x, int y, int width, int height) override;

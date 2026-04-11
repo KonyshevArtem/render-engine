@@ -13,5 +13,5 @@ Point::Point(const std::string& name) :
     bufferDescriptor.Size = sizeof(zero);
 
     const GraphicsBackendBuffer vertexBuffer = GraphicsBackend::Current()->CreateBuffer(bufferDescriptor, name + "_Vertex", &zero);
-    m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, {}, m_VertexAttributes.GetAttributes(), name);
+    m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, {}, m_VertexAttributes.GetAttributes(), GetIndicesDataType(), name);
 }

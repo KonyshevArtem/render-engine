@@ -141,6 +141,8 @@ void GraphicsBackendMetal::WaitForPreviousFrame()
 {
     MetalLocal::s_FrameInFlightMutex.lock();
     m_BackbufferDescriptor = m_View->currentRenderPassDescriptor();
+
+    DeleteResources();
 }
 
 void GraphicsBackendMetal::FillImGuiInitData(void* data)

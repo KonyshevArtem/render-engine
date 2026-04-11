@@ -37,6 +37,7 @@
 #include "graphics_buffer/graphics_buffer_view.h"
 #include "passes/post_process_pass.h"
 #include "developer_console/developer_console.h"
+#include "raytracing/raytracing_scene.h"
 #include "arguments.h"
 
 #include <cassert>
@@ -66,6 +67,8 @@ namespace Graphics
     std::vector<std::shared_ptr<RenderPass>> s_RenderPasses;
     std::shared_ptr<Worker::Task> s_PrepareTask;
     bool s_SynchronousGraphicsPrepare = false;
+
+    std::shared_ptr<RaytracingScene> s_RaytracingScene;
 
     void InitConstantBuffers()
     {
@@ -102,6 +105,9 @@ namespace Graphics
 
         InitConstantBuffers();
         InitPasses();
+
+        if (GraphicsBackend::Current()->SupportsRaytracing())
+            s_RaytracingScene = std::make_shared<RaytracingScene>();
 
         s_SynchronousGraphicsPrepare = Arguments::Contains("-sync_graphics_prepare") || GraphicsBackend::Current()->GetName() == GraphicsBackendName::OPENGL || GraphicsBackend::Current()->GetName() == GraphicsBackendName::GLES;
         DeveloperConsole::AddBoolCommand(L"Graphics.Prepare.Synchronous", &s_SynchronousGraphicsPrepare);
@@ -250,6 +256,9 @@ namespace Graphics
         GraphicsBackend::Current()->SetClearDepth(1);
 
         SetLightingData(s_RenderData.Lights, s_RenderData.Skybox);
+
+        if (s_RaytracingScene)
+            s_RaytracingScene->Update(s_RenderData);
 
     	s_ShadowCasterPass->Execute(s_RenderData);
         s_ForwardRenderPass->Execute(s_RenderData);

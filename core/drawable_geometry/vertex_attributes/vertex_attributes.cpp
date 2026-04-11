@@ -23,6 +23,20 @@ const std::vector<GraphicsBackendVertexAttributeDescriptor> &VertexAttributes::G
     return m_Attributes;
 }
 
+bool VertexAttributes::TryGetAttribute(VertexAttributeSemantic semantic, GraphicsBackendVertexAttributeDescriptor& outAttributeDescriptor) const
+{
+	for (const GraphicsBackendVertexAttributeDescriptor& descriptor : m_Attributes)
+	{
+        if (descriptor.Semantic == semantic)
+        {
+            outAttributeDescriptor = descriptor;
+            return true;
+        }
+	}
+
+    return false;
+}
+
 size_t VertexAttributes::GetHash() const
 {
     return m_Hash;

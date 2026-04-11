@@ -49,6 +49,7 @@ void to_json(nlohmann::json& json, const Reflection& reflection)
             {"Buffers",  nlohmann::json(reflection.Buffers)},
             {"Textures", nlohmann::json(reflection.Textures)},
             {"Samplers", nlohmann::json(reflection.Samplers)},
+			{"TLASes", nlohmann::json(reflection.TLASes)},
             {"ThreadGroupSize", nlohmann::json(reflection.ThreadGroupSize)},
     };
 }

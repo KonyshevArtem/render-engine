@@ -63,10 +63,11 @@ std::shared_ptr<Shader> Shader::Load(const std::filesystem::path& path, const st
     return shader;
 }
 
-Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders,
+Shader::Shader(std::vector<GraphicsBackendShaderObject>& shaders,
                std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
                std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
                std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
+               std::unordered_map<std::string, GraphicsBackendTLASInfo> TLASes,
                ThreadGroupSize threadGroupSize,
                std::string name, bool supportInstancing) :
     m_Shaders(std::move(shaders)),
@@ -75,7 +76,8 @@ Shader::Shader(std::vector<GraphicsBackendShaderObject> &shaders,
     m_ThreadGroupSize(threadGroupSize),
     m_Textures(std::move(textures)),
     m_Samplers(std::move(samplers)),
-    m_Buffers(std::move(buffers))
+    m_Buffers(std::move(buffers)),
+	m_TLASes(std::move(TLASes))
 {
     if (m_Shaders.size() == 1 && m_Shaders[0].Type == ShaderType::COMPUTE_SHADER)
         m_Type = ProgramType::COMPUTE;
@@ -140,6 +142,7 @@ const GraphicsBackendProgram& Shader::GetOrCreateRenderProgram(const VertexAttri
     programDescriptor.Textures = &m_Textures;
     programDescriptor.Samplers = &m_Samplers;
     programDescriptor.Buffers = &m_Buffers;
+    programDescriptor.TLASes = &m_TLASes;
     programDescriptor.Name = &m_Name;
     programDescriptor.ColorAttachmentDescriptor = colorAttachmentDescriptor;
     programDescriptor.DepthFormat = depthTargetFormat;
@@ -164,6 +167,7 @@ const GraphicsBackendProgram& Shader::GetOrCreateComputeProgram()
     programDescriptor.Textures = &m_Textures;
     programDescriptor.Samplers = &m_Samplers;
     programDescriptor.Buffers = &m_Buffers;
+    programDescriptor.TLASes = &m_TLASes;
     programDescriptor.Name = &m_Name;
     programDescriptor.ThreadGroupSize = m_ThreadGroupSize;
 

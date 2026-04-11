@@ -42,6 +42,7 @@ struct Reflection
     std::unordered_map<std::string, BufferDescriptor> Buffers;
     std::unordered_map<std::string, TextureDescriptor> Textures;
     std::unordered_map<std::string, ResourceDescriptor> Samplers;
+    std::unordered_map<std::string, ResourceDescriptor> TLASes;
     ThreadGroupSize ThreadGroupSize;
 };
 

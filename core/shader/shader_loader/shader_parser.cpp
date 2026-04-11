@@ -12,6 +12,11 @@ void from_json(const nlohmann::json& json, GraphicsBackendSamplerInfo& info)
     json.at("Binding").get_to(info.Binding);
 }
 
+void from_json(const nlohmann::json& json, GraphicsBackendTLASInfo& info)
+{
+    json.at("Binding").get_to(info.Binding);
+}
+
 void from_json(const nlohmann::json& json, ThreadGroupSize& threadGroupSize)
 {
     json.at("X").get_to(threadGroupSize.X);
@@ -47,12 +52,14 @@ namespace ShaderParser
         std::unordered_map<std::string, GraphicsBackendTextureInfo>& textures,
         std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& buffers,
         std::unordered_map<std::string, GraphicsBackendSamplerInfo>& samplers,
+        std::unordered_map<std::string, GraphicsBackendTLASInfo>& TLASes,
         ThreadGroupSize& threadGroupSize)
     {
         nlohmann::json reflectionObject = nlohmann::json::parse(reflectionJson);
-        buffers = std::move(reflectionObject.at("Buffers").template get<std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>>());
-        textures = std::move(reflectionObject.at("Textures").template get<std::unordered_map<std::string, GraphicsBackendTextureInfo>>());
-        samplers = std::move(reflectionObject.at("Samplers").template get<std::unordered_map<std::string, GraphicsBackendSamplerInfo>>());
+        buffers = reflectionObject.at("Buffers").template get<std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>>();
+        textures = reflectionObject.at("Textures").template get<std::unordered_map<std::string, GraphicsBackendTextureInfo>>();
+        samplers = reflectionObject.at("Samplers").template get<std::unordered_map<std::string, GraphicsBackendSamplerInfo>>();
+        TLASes = reflectionObject.at("TLASes").template get<std::unordered_map<std::string, GraphicsBackendTLASInfo>>();
         reflectionObject.at("ThreadGroupSize").get_to(threadGroupSize);
     }
 }

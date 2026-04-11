@@ -14,6 +14,7 @@
 
 struct GraphicsBackendTextureInfo;
 struct GraphicsBackendSamplerInfo;
+struct GraphicsBackendTLASInfo;
 class GraphicsBackendBufferInfo;
 class DrawableGeometry;
 
@@ -22,10 +23,11 @@ class Shader
 public:
     static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords);
 
-    Shader(std::vector<GraphicsBackendShaderObject> &shaders,
+    Shader(std::vector<GraphicsBackendShaderObject>& shaders,
 		std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
 		std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
 		std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
+        std::unordered_map<std::string, GraphicsBackendTLASInfo> TLASes,
         ThreadGroupSize threadGroupSize,
 		std::string name, bool _supportInstancing);
     ~Shader();
@@ -72,6 +74,7 @@ private:
     std::unordered_map<std::string, GraphicsBackendTextureInfo> m_Textures;
     std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
+    std::unordered_map<std::string, GraphicsBackendTLASInfo> m_TLASes;
 
     const GraphicsBackendProgram& GetOrCreateRenderProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType);
     const GraphicsBackendProgram& GetOrCreateComputeProgram();

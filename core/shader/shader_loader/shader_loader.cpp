@@ -61,8 +61,9 @@ namespace ShaderLoader
             std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;
             std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers;
             std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers;
+            std::unordered_map<std::string, GraphicsBackendTLASInfo> TLASes;
             ThreadGroupSize threadGroupSize;
-            ShaderParser::ParseReflection(reflectionJson, textures, buffers, samplers, threadGroupSize);
+            ShaderParser::ParseReflection(reflectionJson, textures, buffers, samplers, TLASes, threadGroupSize);
 
             std::string shaderDebugName;
             shaderDebugName.append(path.string());
@@ -98,7 +99,7 @@ namespace ShaderLoader
                 shaders.push_back(shader);
             }
 
-            return std::make_shared<Shader>(shaders, textures, buffers, samplers, threadGroupSize, shaderDebugName, supportInstancing);
+            return std::make_shared<Shader>(shaders, textures, buffers, samplers, TLASes, threadGroupSize, shaderDebugName, supportInstancing);
         }
         catch (const std::exception &_exception)
         {

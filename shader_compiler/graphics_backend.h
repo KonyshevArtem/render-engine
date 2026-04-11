@@ -122,11 +122,11 @@ std::wstring GetShaderProfile(ShaderType type)
     switch (type)
     {
     case VERTEX_SHADER:
-        return L"vs_6_0";
+        return L"vs_6_5";
     case FRAGMENT_SHADER:
-        return L"ps_6_0";
+        return L"ps_6_5";
     case COMPUTE_SHADER:
-        return L"cs_6_0";
+        return L"cs_6_5";
     }
 }
 

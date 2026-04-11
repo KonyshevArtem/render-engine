@@ -70,7 +70,8 @@ add_library(GraphicsBackend
         types/graphics_backend_blas.h
         types/graphics_backend_blas_descriptor.h
         types/graphics_backend_tlas.h
-        types/graphics_backend_raytracing_instance_descriptor.h)
+        types/graphics_backend_raytracing_instance_descriptor.h
+        types/graphics_backend_tlas_info.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

@@ -10,6 +10,7 @@
 #include "types/graphics_backend_stencil_descriptor.h"
 #include "types/graphics_backend_depth_descriptor.h"
 #include "types/graphics_backend_rasterizer_descriptor.h"
+#include "types/graphics_backend_tlas_info.h"
 #include "enums/texture_internal_format.h"
 #include "enums/primitive_type.h"
 #include "enums/program_type.h"
@@ -34,6 +35,7 @@ struct GraphicsBackendProgramDescriptor
     const std::unordered_map<std::string, GraphicsBackendTextureInfo>* Textures;
     const std::unordered_map<std::string, GraphicsBackendSamplerInfo>* Samplers;
     const std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>* Buffers;
+    const std::unordered_map<std::string, GraphicsBackendTLASInfo>* TLASes;
     const std::string* Name;
 
     GraphicsBackendColorAttachmentDescriptor ColorAttachmentDescriptor;

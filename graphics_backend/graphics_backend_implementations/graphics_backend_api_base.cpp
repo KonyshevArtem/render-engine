@@ -318,6 +318,9 @@ GraphicsBackendProgram GraphicsBackendBase::CreateProgram(uint64_t programPtr, c
     for (const auto& pair : *descriptor.Samplers)
         program.SamplerBindings |= 1 << pair.second.Binding;
 
+    for (const auto& pair : *descriptor.TLASes)
+        program.TLASBindings |= 1 << pair.second.Binding;
+
     return program;
 }
 

@@ -19,6 +19,7 @@ private:
     uint32_t ConstantBufferBindings;
     uint32_t RWTextureBindings;
     uint32_t RWBufferBindings;
+    uint32_t TLASBindings;
 
     friend class GraphicsBackendOpenGL;
     friend class GraphicsBackendMetal;

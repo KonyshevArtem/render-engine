@@ -1083,7 +1083,7 @@ void GraphicsBackendDX12::BindRWTexture_Internal(const GraphicsBackendTexture& t
     assert(index < DX12Local::k_MaxResourcesPerDraw);
 
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
-    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
+    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, DX12Local::s_RenderCommandList->List);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWTexturesDescriptorsOffset);
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->RWDescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

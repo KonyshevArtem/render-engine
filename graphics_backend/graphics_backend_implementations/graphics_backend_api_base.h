@@ -193,6 +193,7 @@ public:
     virtual bool SupportsRaytracing() const;
     virtual GraphicsBackendBLAS CreateBLAS(const GraphicsBackendBLASDescriptor& descriptor, const std::string& name);
     virtual GraphicsBackendTLAS CreateTLAS(const std::vector<GraphicsBackendRaytracingInstanceDescriptor>& instanceDescriptors, const std::string& name);
+    void BindTLAS(const GraphicsBackendTLAS& TLAS, uint32_t index);
     void DeleteBLAS(GraphicsBackendBLAS& BLAS);
     void DeleteTLAS(GraphicsBackendTLAS& TLAS);
 
@@ -226,6 +227,7 @@ protected:
     virtual void BindBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) = 0;
     virtual void BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size) = 0;
     virtual void BindRWBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) = 0;
+    virtual void BindTLAS_Internal(const GraphicsBackendTLAS& TLAS, uint32_t index) {}
 
 	static GraphicsBackendProgram CreateProgram(uint64_t programPtr, const GraphicsBackendProgramDescriptor& descriptor);
 
@@ -272,6 +274,7 @@ private:
     std::unordered_map<uint32_t, GraphicsBackendBufferView> m_BoundBuffers;
     std::unordered_map<uint32_t, BufferBindInfo> m_BoundConstantBuffers;
     std::unordered_map<uint32_t, GraphicsBackendBufferView> m_BoundRWBuffers;
+    std::unordered_map<uint32_t, GraphicsBackendTLAS> m_BoundTLASes;
 
     uint32_t m_BoundTexturesDirtyMask = 0;
     uint32_t m_BoundRWTexturesDirtyMask = 0;
@@ -279,6 +282,7 @@ private:
     uint32_t m_BoundBuffersDirtyMask = 0;
     uint32_t m_BoundConstantBuffersDirtyMask = 0;
     uint32_t m_BoundRWBuffersDirtyMask = 0;
+    uint32_t m_BoundTLASesDirtyMask = 0;
 
     GraphicsBackendStencilDescriptor m_StencilDescriptor;
     GraphicsBackendDepthDescriptor m_DepthDescriptor;

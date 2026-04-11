@@ -1408,6 +1408,16 @@ void GraphicsBackendDX12::BindRWBuffer_Internal(const GraphicsBackendBufferView&
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
+void GraphicsBackendDX12::BindTLAS_Internal(const GraphicsBackendTLAS& TLAS, uint32_t index)
+{
+    assert(index < DX12Local::k_MaxResourcesPerDraw);
+
+    const DX12Local::ResourceData* tlasData = static_cast<DX12Local::ResourceData*>(TLAS.TLAS);
+
+    const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_BuffersDescriptorsOffset);
+    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, tlasData->ReadOnlyDescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
+
 void GraphicsBackendDX12::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void* data)
 {
     const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
@@ -1644,9 +1654,10 @@ void GraphicsBackendDX12::DeleteBLAS_Internal(GraphicsBackendBLAS& blas)
 
 void GraphicsBackendDX12::DeleteTLAS_Internal(GraphicsBackendTLAS& tlas)
 {
-    const DX12Local::ResourceData* blasData = static_cast<DX12Local::ResourceData*>(tlas.TLAS);
-    blasData->Resource->Release();
-    delete blasData;
+    const DX12Local::ResourceData* tlasData = static_cast<DX12Local::ResourceData*>(tlas.TLAS);
+    DX12Local::s_AllocatedResourcesDescriptorPool.ReturnCPUHandle(tlasData->ReadOnlyDescriptorIndex);
+    tlasData->Resource->Release();
+    delete tlasData;
 }
 
 void GraphicsBackendDX12::UseProgram(const GraphicsBackendProgram& program)
@@ -2223,6 +2234,14 @@ GraphicsBackendTLAS GraphicsBackendDX12::CreateTLAS(const std::vector<GraphicsBa
 
     const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::UAV(resultBufferData->Resource);
     DX12Local::s_RenderCommandList->List->ResourceBarrier(1, &barrier);
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.RaytracingAccelerationStructure.Location = resultBufferData->Resource->GetGPUVirtualAddress();
+
+    resultBufferData->ReadOnlyDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorPool.GetFreeCPUHandle(resultBufferData->ReadOnlyDescriptorIndex);
+    DX12Local::s_Device->CreateShaderResourceView(nullptr, &srvDesc, resultBufferData->ReadOnlyDescriptorHandle);
 
     DeleteBuffer(scratchBuffer);
     DeleteBuffer(instanceBuffer);

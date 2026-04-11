@@ -221,6 +221,16 @@ void GraphicsBackendBase::BindResources()
             m_BoundRWBuffersDirtyMask &= ~(1 << pair.first);
         }
     }
+
+    for (const auto& pair : m_BoundTLASes)
+    {
+        const GraphicsBackendTLAS& tlas = pair.second;
+        if (RequiresBinding(program.TLASBindings, m_BoundTLASesDirtyMask, pair.first))
+        {
+            BindTLAS_Internal(tlas, pair.first);
+            m_BoundTLASesDirtyMask &= ~(1 << pair.first);
+        }
+    }
 }
 
 void GraphicsBackendBase::DeleteResources()
@@ -711,6 +721,12 @@ GraphicsBackendTLAS GraphicsBackendBase::CreateTLAS(const std::vector<GraphicsBa
     return GraphicsBackendTLAS{};
 }
 
+void GraphicsBackendBase::BindTLAS(const GraphicsBackendTLAS& TLAS, uint32_t index)
+{
+    m_BoundTLASes[index] = TLAS;
+    m_BoundTLASesDirtyMask |= 1 << index;
+}
+
 void GraphicsBackendBase::DeleteBLAS(GraphicsBackendBLAS& BLAS)
 {
     std::lock_guard<std::mutex> lock(m_DeletedBLASesMutex);
@@ -720,5 +736,10 @@ void GraphicsBackendBase::DeleteBLAS(GraphicsBackendBLAS& BLAS)
 void GraphicsBackendBase::DeleteTLAS(GraphicsBackendTLAS& TLAS)
 {
     std::lock_guard<std::mutex> lock(m_DeletedTLASesMutex);
-    m_DeletedTLASes.push_back(TLAS);
+    m_DeletedTLASes.emplace_back(TLAS);
+
+    std::erase_if(m_BoundTLASes, [&TLAS](const auto& pair)
+        {
+            return pair.second.TLAS == TLAS.TLAS;
+        });
 }

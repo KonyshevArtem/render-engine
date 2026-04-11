@@ -1955,6 +1955,9 @@ void GraphicsBackendDX12::EndCopyPass()
 void GraphicsBackendDX12::BeginComputePass(const std::string& name)
 {
     PushDebugGroup(name, GPUQueue::RENDER);
+
+    ID3D12DescriptorHeap* heaps[] = { DX12Local::s_BoundResourceDescriptorHeap.Heap, DX12Local::s_BoundSamplerDescriptorHeap.Heap };
+    DX12Local::s_RenderCommandList->List->SetDescriptorHeaps(2, heaps);
 }
 
 void GraphicsBackendDX12::EndComputePass()

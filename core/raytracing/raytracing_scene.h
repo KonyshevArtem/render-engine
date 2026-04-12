@@ -12,6 +12,11 @@ public:
 
 	void Update(RenderData& renderData);
 
+	const GraphicsBackendTLAS& GetTLAS() const
+	{
+		return m_TLAS;
+	}
+
 private:
 	bool m_RecreateBLASes;
 

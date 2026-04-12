@@ -18,63 +18,63 @@ void RaytracingScene::Update(RenderData& renderData)
 	Profiler::Marker cpuMarker("RaytracingScene::Update");
 
 	GraphicsBackend::Current()->BeginComputePass("Update Raytracing Scene");
-
-	Profiler::GPUMarker gpuMarker("RaytracingScene::Update");
-
-	for (const std::shared_ptr<Renderer>& renderer : renderData.Renderers)
 	{
-		if (!renderer)
-			continue;
+		Profiler::GPUMarker gpuMarker("RaytracingScene::Update");
 
-		std::shared_ptr<DrawableGeometry> geometry = renderer->GetGeometry();
-		if (!geometry)
-			continue;
+		for (const std::shared_ptr<Renderer>& renderer : renderData.Renderers)
+		{
+			if (!renderer)
+				continue;
 
-		const std::shared_ptr<Mesh> mesh = std::dynamic_pointer_cast<Mesh, DrawableGeometry>(geometry);
-		if (!mesh || (mesh->BLAS.IsValid() && !m_RecreateBLASes))
-			continue;
+			std::shared_ptr<DrawableGeometry> geometry = renderer->GetGeometry();
+			if (!geometry)
+				continue;
 
-		GraphicsBackendBLASDescriptor descriptor{};
-		if (!mesh->GetVertexAttributes().TryGetAttribute(VertexAttributeSemantic::POSITION, descriptor.VertexAttributeDescriptor))
-			continue;
+			const std::shared_ptr<Mesh> mesh = std::dynamic_pointer_cast<Mesh, DrawableGeometry>(geometry);
+			if (!mesh || (mesh->BLAS.IsValid() && !m_RecreateBLASes))
+				continue;
 
-		descriptor.Geometry = mesh->GetGraphicsBackendGeometry();
-		descriptor.VertexCount = mesh->GetVertexCount();
-		descriptor.IndexCount = mesh->GetIndexCount();
-		descriptor.IndicesDataType = mesh->GetIndicesDataType();
+			GraphicsBackendBLASDescriptor descriptor{};
+			if (!mesh->GetVertexAttributes().TryGetAttribute(VertexAttributeSemantic::POSITION, descriptor.VertexAttributeDescriptor))
+				continue;
 
-		mesh->BLAS = GraphicsBackend::Current()->CreateBLAS(descriptor, mesh->GetName());
+			descriptor.Geometry = mesh->GetGraphicsBackendGeometry();
+			descriptor.VertexCount = mesh->GetVertexCount();
+			descriptor.IndexCount = mesh->GetIndexCount();
+			descriptor.IndicesDataType = mesh->GetIndicesDataType();
+
+			mesh->BLAS = GraphicsBackend::Current()->CreateBLAS(descriptor, mesh->GetName());
+		}
+
+		if (m_TLAS.IsValid())
+			GraphicsBackend::Current()->DeleteTLAS(m_TLAS);
+
+		std::vector<GraphicsBackendRaytracingInstanceDescriptor> instanceDescriptors;
+		instanceDescriptors.reserve(renderData.Renderers.size());
+
+		for (const std::shared_ptr<Renderer>& renderer : renderData.Renderers)
+		{
+			if (!renderer)
+				continue;
+
+			std::shared_ptr<DrawableGeometry> geometry = renderer->GetGeometry();
+			if (!geometry)
+				continue;
+
+			const std::shared_ptr<Mesh> mesh = std::dynamic_pointer_cast<Mesh, DrawableGeometry>(geometry);
+			if (!mesh || !mesh->BLAS.IsValid())
+				continue;
+
+			GraphicsBackendRaytracingInstanceDescriptor descriptor{};
+			descriptor.BLAS = mesh->BLAS;
+			descriptor.Transform = renderer->GetModelMatrix();
+
+			instanceDescriptors.push_back(descriptor);
+		}
+
+		if (!instanceDescriptors.empty())
+			m_TLAS = GraphicsBackend::Current()->CreateTLAS(instanceDescriptors, "RT_Scene");
 	}
-
-	if (m_TLAS.IsValid())
-		GraphicsBackend::Current()->DeleteTLAS(m_TLAS);
-
-	std::vector<GraphicsBackendRaytracingInstanceDescriptor> instanceDescriptors;
-	instanceDescriptors.reserve(renderData.Renderers.size());
-
-	for (const std::shared_ptr<Renderer>& renderer : renderData.Renderers)
-	{
-		if (!renderer)
-			continue;
-
-		std::shared_ptr<DrawableGeometry> geometry = renderer->GetGeometry();
-		if (!geometry)
-			continue;
-
-		const std::shared_ptr<Mesh> mesh = std::dynamic_pointer_cast<Mesh, DrawableGeometry>(geometry);
-		if (!mesh || !mesh->BLAS.IsValid())
-			continue;
-
-		GraphicsBackendRaytracingInstanceDescriptor descriptor{};
-		descriptor.BLAS = mesh->BLAS;
-		descriptor.Transform = renderer->GetModelMatrix();
-
-		instanceDescriptors.push_back(descriptor);
-	}
-
-	if (!instanceDescriptors.empty())
-		m_TLAS = GraphicsBackend::Current()->CreateTLAS(instanceDescriptors, "RT_Scene");
-
 	GraphicsBackend::Current()->EndComputePass();
 
 	m_RecreateBLASes = false;

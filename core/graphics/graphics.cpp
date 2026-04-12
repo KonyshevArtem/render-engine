@@ -38,6 +38,7 @@
 #include "passes/post_process_pass.h"
 #include "developer_console/developer_console.h"
 #include "raytracing/raytracing_scene.h"
+#include "raytracing/raytracing_pass.h"
 #include "arguments.h"
 
 #include <cassert>
@@ -52,6 +53,7 @@ namespace Graphics
     std::shared_ptr<FinalBlitPass> s_FinalBlitPass;
     std::shared_ptr<UIRenderPass> s_UIRenderPass;
     std::shared_ptr<PostProcessPass> s_PostProcessPass;
+    std::shared_ptr<RaytracingPass> s_RaytracingPass;
 
 #if RENDER_ENGINE_EDITOR
     std::shared_ptr<CopyDepthPass> s_CopyDepthPass;
@@ -95,6 +97,12 @@ namespace Graphics
         s_2DGizmosPass = std::make_shared<GizmosPass>(GizmosPass::Mode::GIZMOS_2D);
         s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>();
 #endif
+
+        if (GraphicsBackend::Current()->SupportsRaytracing())
+        {
+            s_RaytracingScene = std::make_shared<RaytracingScene>();
+            s_RaytracingPass = std::make_shared<RaytracingPass>(s_RaytracingScene);
+        }
     }
 
     void Init()
@@ -105,9 +113,6 @@ namespace Graphics
 
         InitConstantBuffers();
         InitPasses();
-
-        if (GraphicsBackend::Current()->SupportsRaytracing())
-            s_RaytracingScene = std::make_shared<RaytracingScene>();
 
         s_SynchronousGraphicsPrepare = Arguments::Contains("-sync_graphics_prepare") || GraphicsBackend::Current()->GetName() == GraphicsBackendName::OPENGL || GraphicsBackend::Current()->GetName() == GraphicsBackendName::GLES;
         DeveloperConsole::AddBoolCommand(L"Graphics.Prepare.Synchronous", &s_SynchronousGraphicsPrepare);
@@ -258,14 +263,16 @@ namespace Graphics
         SetLightingData(s_RenderData.Lights, s_RenderData.Skybox);
 
         if (s_RaytracingScene)
-            s_RaytracingScene->Update(s_RenderData);
+	        s_RaytracingScene->Update(s_RenderData);
 
-    	s_ShadowCasterPass->Execute(s_RenderData);
+        s_ShadowCasterPass->Execute(s_RenderData);
         s_ForwardRenderPass->Execute(s_RenderData);
 #if RENDER_ENGINE_EDITOR
         s_ShadowMapDebugPass->Execute(s_RenderData);
         s_3DGizmosPass->Execute(s_RenderData);
         s_SelectionOutlinePass->Execute(s_RenderData);
+        if (s_RaytracingPass)
+            s_RaytracingPass->ExecutePrimaryRaysDebug(s_RenderData);
 #endif
         s_PostProcessPass->Execute(s_RenderData);
         s_UIRenderPass->Execute(s_RenderData);

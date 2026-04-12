@@ -127,6 +127,8 @@ Compile ui/maskStencil
 
 Compile post_process
 
+Compile raytracing/primary_rays_debug
+
 echo "Finished compiling shaders for ${PLATFORM} ${BACKENDS}";
 if [ -z "$1" ]; then
     read _

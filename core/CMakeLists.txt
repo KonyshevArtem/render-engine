@@ -164,7 +164,9 @@ add_library(
 	graphics/passes/post_process_pass.cpp
 	graphics/passes/post_process_pass.h
         raytracing/raytracing_scene.h
-        raytracing/raytracing_scene.cpp)
+        raytracing/raytracing_scene.cpp
+        raytracing/raytracing_pass.h
+        raytracing/raytracing_pass.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil StringSplit)

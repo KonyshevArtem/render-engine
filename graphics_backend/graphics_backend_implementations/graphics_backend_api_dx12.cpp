@@ -2172,8 +2172,9 @@ GraphicsBackendTLAS GraphicsBackendDX12::CreateTLAS(const std::vector<GraphicsBa
     std::vector<D3D12_RAYTRACING_INSTANCE_DESC> dxDescriptors;
     dxDescriptors.reserve(instanceDescriptors.size());
 
-    for (const GraphicsBackendRaytracingInstanceDescriptor& desc : instanceDescriptors)
+    for (int i = 0; i < instanceDescriptors.size(); ++i)
     {
+        const GraphicsBackendRaytracingInstanceDescriptor& desc = instanceDescriptors[i];
         const DX12Local::ResourceData* blasData = static_cast<DX12Local::ResourceData*>(desc.BLAS.BLAS);
 
         D3D12_RAYTRACING_INSTANCE_DESC instanceDesc{};
@@ -2190,7 +2191,7 @@ GraphicsBackendTLAS GraphicsBackendDX12::CreateTLAS(const std::vector<GraphicsBa
         instanceDesc.Transform[2][2] = desc.Transform.m22;
         instanceDesc.Transform[2][3] = desc.Transform.m32;
 
-        instanceDesc.InstanceID = 0;
+        instanceDesc.InstanceID = i;
         instanceDesc.InstanceMask = 0xFF;
         instanceDesc.InstanceContributionToHitGroupIndex = 0;
         instanceDesc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;

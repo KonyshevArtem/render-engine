@@ -31,7 +31,7 @@ void RaytracingPass::Execute(const RenderData& renderData)
 
 void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 {
-	if (!m_PrimaryRaysDebugEnabled)
+	if (!m_PrimaryRaysDebugEnabled || !m_RaytracingScene->GetTLAS().IsValid())
 		return;
 
 	Profiler::Marker _("RaytracingPass::ExecutePrimaryRaysDebug");

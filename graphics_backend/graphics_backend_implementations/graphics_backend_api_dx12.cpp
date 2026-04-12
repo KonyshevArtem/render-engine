@@ -44,7 +44,7 @@ namespace DX12Local
     inline void ThrowIfFailed(HRESULT result);
 
     ID3D12Device5* s_Device;
-
+    
     void SetObjectName(ID3D12Object* object, const std::string& name)
     {
         if (!name.empty())
@@ -2140,13 +2140,10 @@ GraphicsBackendBLAS GraphicsBackendDX12::CreateBLAS(const GraphicsBackendBLASDes
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO blasInfo{};
     DX12Local::s_Device->GetRaytracingAccelerationStructurePrebuildInfo(&blasInputs, &blasInfo);
 
+	DX12Local::ResourceData* scratchBufferData = GetRTScratchBuffer(blasInfo.ScratchDataSizeInBytes);
+
     GraphicsBackendBufferDescriptor bufferDesc{};
     bufferDesc.AllowGPUWrites = true;
-
-    bufferDesc.Size = blasInfo.ScratchDataSizeInBytes;
-    GraphicsBackendBuffer scratchBuffer = CreateBuffer(bufferDesc, "BLAS_Scratch", nullptr);
-    DX12Local::ResourceData* scratchBufferData = reinterpret_cast<DX12Local::ResourceData*>(scratchBuffer.Buffer);
-
     bufferDesc.Size = blasInfo.ResultDataMaxSizeInBytes;
     DX12Local::ResourceData* resultBufferData = CreateBufferInternal(bufferDesc, ResourceState::RAYTRACING_ACCELERATION_STRUCTURE, name + "_BLAS", nullptr);
 
@@ -2159,8 +2156,6 @@ GraphicsBackendBLAS GraphicsBackendDX12::CreateBLAS(const GraphicsBackendBLASDes
 
     const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::UAV(resultBufferData->Resource);
     DX12Local::s_RenderCommandList->List->ResourceBarrier(1, &barrier);
-
-    DeleteBuffer(scratchBuffer);
 
     GraphicsBackendBLAS blas{};
     blas.BLAS = resultBufferData;
@@ -2200,11 +2195,10 @@ GraphicsBackendTLAS GraphicsBackendDX12::CreateTLAS(const std::vector<GraphicsBa
         dxDescriptors.push_back(instanceDesc);
     }
 
-    GraphicsBackendBufferDescriptor instanceBufferDesc{};
-    instanceBufferDesc.Size = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * dxDescriptors.size();
+	const uint32_t instanceBufferSize = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * dxDescriptors.size();
+	DX12Local::ResourceData* instanceBufferData = GetRTInstancesBuffer(instanceBufferSize);
 
-    GraphicsBackendBuffer instanceBuffer = CreateBuffer(instanceBufferDesc, "TLAS_Instances", dxDescriptors.data());
-    DX12Local::ResourceData* instanceBufferData = reinterpret_cast<DX12Local::ResourceData*>(instanceBuffer.Buffer);
+	DX12Local::UploadGPUData(instanceBufferData, 0, instanceBufferSize, instanceBufferSize, instanceBufferSize, dxDescriptors.data(), IsMainThread());
     DX12Local::TransitionResource(instanceBufferData, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS tlasInputs{};
@@ -2216,13 +2210,10 @@ GraphicsBackendTLAS GraphicsBackendDX12::CreateTLAS(const std::vector<GraphicsBa
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO tlasInfo{};
     DX12Local::s_Device->GetRaytracingAccelerationStructurePrebuildInfo(&tlasInputs, &tlasInfo);
 
+	DX12Local::ResourceData* scratchBufferData = GetRTScratchBuffer(tlasInfo.ScratchDataSizeInBytes);
+
     GraphicsBackendBufferDescriptor bufferDesc{};
     bufferDesc.AllowGPUWrites = true;
-
-    bufferDesc.Size = tlasInfo.ScratchDataSizeInBytes;
-    GraphicsBackendBuffer scratchBuffer = CreateBuffer(bufferDesc, "TLAS_Scratch", nullptr);
-    DX12Local::ResourceData* scratchBufferData = reinterpret_cast<DX12Local::ResourceData*>(scratchBuffer.Buffer);
-
     bufferDesc.Size = tlasInfo.ResultDataMaxSizeInBytes;
     DX12Local::ResourceData* resultBufferData = CreateBufferInternal(bufferDesc, ResourceState::RAYTRACING_ACCELERATION_STRUCTURE, name + "_TLAS", nullptr);
 
@@ -2243,9 +2234,6 @@ GraphicsBackendTLAS GraphicsBackendDX12::CreateTLAS(const std::vector<GraphicsBa
 
     resultBufferData->ReadOnlyDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorPool.GetFreeCPUHandle(resultBufferData->ReadOnlyDescriptorIndex);
     DX12Local::s_Device->CreateShaderResourceView(nullptr, &srvDesc, resultBufferData->ReadOnlyDescriptorHandle);
-
-    DeleteBuffer(scratchBuffer);
-    DeleteBuffer(instanceBuffer);
 
     GraphicsBackendTLAS tlas{};
     tlas.TLAS = resultBufferData;
@@ -2313,6 +2301,37 @@ DX12Local::ResourceData* GraphicsBackendDX12::CreateBufferInternal(const Graphic
     }
 
     return resourceData;
+}
+
+DX12Local::ResourceData* GraphicsBackendDX12::GetRTScratchBuffer(uint32_t requiredSize)
+{
+    if (m_RaytracingScratchBuffer.Buffer == 0 || m_RaytracingScratchBuffer.Size < requiredSize)
+    {
+        if (m_RaytracingScratchBuffer.Buffer != 0)
+            DeleteBuffer(m_RaytracingScratchBuffer);
+
+        GraphicsBackendBufferDescriptor bufferDesc{};
+		bufferDesc.AllowGPUWrites = true;
+        bufferDesc.Size = requiredSize;
+        m_RaytracingScratchBuffer = CreateBuffer(bufferDesc, "RT_Scratch", nullptr);
+    }
+
+    return reinterpret_cast<DX12Local::ResourceData*>(m_RaytracingScratchBuffer.Buffer);
+}
+
+DX12Local::ResourceData* GraphicsBackendDX12::GetRTInstancesBuffer(uint32_t requiredSize)
+{
+    if (m_RaytracingInstancesBuffer.Buffer == 0 || m_RaytracingInstancesBuffer.Size < requiredSize)
+    {
+        if (m_RaytracingInstancesBuffer.Buffer != 0)
+            DeleteBuffer(m_RaytracingInstancesBuffer);
+
+        GraphicsBackendBufferDescriptor bufferDesc{};
+        bufferDesc.Size = requiredSize;
+        m_RaytracingInstancesBuffer = CreateBuffer(bufferDesc, "RT_Instances", nullptr);
+    }
+
+    return reinterpret_cast<DX12Local::ResourceData*>(m_RaytracingInstancesBuffer.Buffer);
 }
 
 #undef ThrowIfFailed

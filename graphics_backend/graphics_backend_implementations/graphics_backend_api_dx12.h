@@ -120,9 +120,13 @@ protected:
 private:
     void BindResources(ProgramType programType);
     DX12Local::ResourceData* CreateBufferInternal(const GraphicsBackendBufferDescriptor& descriptor, ResourceState state, const std::string& name, const void* data) const;
+	DX12Local::ResourceData* GetRTScratchBuffer(uint32_t requiredSize);
+	DX12Local::ResourceData* GetRTInstancesBuffer(uint32_t requiredSize);
 
     bool m_CopyTimestampSupported = false;
     uint32_t m_RaytracingTier = 0;
+    GraphicsBackendBuffer m_RaytracingScratchBuffer{};
+	GraphicsBackendBuffer m_RaytracingInstancesBuffer{};
 };
 
 #endif // RENDER_BACKEND_DX12

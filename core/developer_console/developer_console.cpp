@@ -15,6 +15,7 @@
 
 std::shared_ptr<DeveloperConsole> DeveloperConsole::Instance = nullptr;
 std::unordered_map<std::wstring, bool*> DeveloperConsole::s_BoolCommands;
+std::unordered_map<std::wstring, int*> DeveloperConsole::s_IntCommands;
 std::unordered_map<std::wstring, std::function<void(const std::string&)>> DeveloperConsole::s_FunctionCommands;
 
 void DeveloperConsole::Init()
@@ -25,6 +26,11 @@ void DeveloperConsole::Init()
 void DeveloperConsole::AddBoolCommand(const std::wstring& command, bool* outResult)
 {
 	s_BoolCommands[StringEncodingUtil::ToLower(command)] = outResult;
+}
+
+void DeveloperConsole::AddIntCommand(const std::wstring& command, int* outResult)
+{
+	s_IntCommands[StringEncodingUtil::ToLower(command)] = outResult;
 }
 
 void DeveloperConsole::AddFunctionCommand(const std::wstring& command, std::function<void(const std::string&)> func)
@@ -133,6 +139,16 @@ void DeveloperConsole::HandleCommand(const std::wstring& command)
 			AddUITextHistory(split[0] + (currentState ? L" true" : L" false"));
 		}
 	}
+	else if (const auto& it = s_IntCommands.find(cmd); it != s_IntCommands.end())
+	{
+		if (split.size() > 1)
+		{
+			*it->second = std::wcstol(split[1].c_str(), nullptr, 10);
+			AddUITextHistory(command);
+		}
+		else
+			AddUITextHistory(split[0] + L" " + std::to_wstring(*it->second));
+	}
 	else if (const auto& it = s_FunctionCommands.find(cmd); it != s_FunctionCommands.end())
 	{
 		if (split.size() > 1)
@@ -178,6 +194,8 @@ void DeveloperConsole::UpdatePrompt(const std::wstring& text)
 
 		m_Prompts.clear();
 		for (const auto& it : s_BoolCommands)
+			CheckCommand(it.first);
+		for (const auto& it : s_IntCommands)
 			CheckCommand(it.first);
 		for (const auto& it : s_FunctionCommands)
 			CheckCommand(it.first);

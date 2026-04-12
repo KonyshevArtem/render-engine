@@ -219,6 +219,7 @@ namespace Graphics
                 return SchedulePrepareTask([renderPass] {renderPass->Prepare(s_RenderData); }, dependencies);
             };
 
+        SchedulePrepareTask([] {s_RaytracingScene->Prepare(s_RenderData); }, {});
         SchedulePassPrepare(s_ShadowCasterPass, {});
 
         const std::shared_ptr<Worker::Task> forwardRenderPrepareTask = SchedulePassPrepare(s_ForwardRenderPass, {});

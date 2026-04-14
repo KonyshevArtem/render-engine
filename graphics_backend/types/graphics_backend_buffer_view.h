@@ -6,6 +6,9 @@
 class GraphicsBackendBufferView
 {
 public:
+    uint32_t BindlessIndex = 0;
+
+private:
     void* BufferView;
 
     friend class GraphicsBackendOpenGL;

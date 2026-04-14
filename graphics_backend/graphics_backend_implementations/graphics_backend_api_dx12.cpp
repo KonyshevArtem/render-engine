@@ -211,21 +211,24 @@ namespace DX12Local
         ID3D12DescriptorHeap* Heap;
         UINT DescriptorSize;
         uint32_t DescriptorsCount;
+		uint32_t BindlessDescriptorsCount;
         uint32_t DescriptorIndex;
         uint32_t DescriptorsInUse;
         bool IsResizable;
         D3D12_DESCRIPTOR_HEAP_TYPE HeapType;
+		std::mutex Mutex;
 
-        void Init(uint32_t descriptorsCount, D3D12_DESCRIPTOR_HEAP_TYPE type, const std::string& name, bool isShaderVisible = false, bool resizable = false)
+        void Init(uint32_t descriptorsCount, uint32_t bindlessDescriptorsCount, D3D12_DESCRIPTOR_HEAP_TYPE type, const std::string& name, bool isShaderVisible = false, bool resizable = false)
         {
             DescriptorsCount = descriptorsCount;
+			BindlessDescriptorsCount = bindlessDescriptorsCount;
             DescriptorIndex = 0;
             DescriptorsInUse = 0;
             IsResizable = resizable;
             HeapType = type;
 
             D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
-            heapDesc.NumDescriptors = descriptorsCount;
+            heapDesc.NumDescriptors = descriptorsCount + bindlessDescriptorsCount;
             heapDesc.Type = HeapType;
             heapDesc.Flags = isShaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
             ThrowIfFailed(s_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&Heap)));
@@ -239,25 +242,39 @@ namespace DX12Local
             return CD3DX12_CPU_DESCRIPTOR_HANDLE(Heap->GetCPUDescriptorHandleForHeapStart(), DescriptorIndex + index, DescriptorSize);
         }
 
+        D3D12_CPU_DESCRIPTOR_HANDLE GetBindlessCPUHandle(int index) const
+        {
+            return CD3DX12_CPU_DESCRIPTOR_HANDLE(Heap->GetCPUDescriptorHandleForHeapStart(), DescriptorsCount + index, DescriptorSize);
+		}
+
         D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(int index) const
         {
             return CD3DX12_GPU_DESCRIPTOR_HANDLE(Heap->GetGPUDescriptorHandleForHeapStart(), DescriptorIndex + index, DescriptorSize);
         }
 
-        void CheckSize()
+        D3D12_GPU_DESCRIPTOR_HANDLE GetBindlessGPUHandle(int index) const
         {
-            if (DescriptorsInUse > DescriptorsCount && IsResizable)
+            return CD3DX12_GPU_DESCRIPTOR_HANDLE(Heap->GetGPUDescriptorHandleForHeapStart(), DescriptorsCount + index, DescriptorSize);
+		}
+
+        bool CheckSize()
+        {
+			const bool needsResize = DescriptorsInUse > DescriptorsCount && IsResizable;
+            if (needsResize)
             {
+				std::lock_guard<std::mutex> lock(Mutex);
+
                 DescriptorsCount = DescriptorsInUse * 2;
 
                 ID3D12DescriptorHeap* oldHeap = Heap;
                 D3D12_DESCRIPTOR_HEAP_DESC heapDesc = oldHeap->GetDesc();
-                heapDesc.NumDescriptors = DescriptorsCount;
+                heapDesc.NumDescriptors = DescriptorsCount + BindlessDescriptorsCount;
                 ThrowIfFailed(s_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&Heap)));
                 oldHeap->Release();
             }
 
             DescriptorsInUse = 0;
+			return needsResize;
         }
 
         void AdvanceIndex(int offset)
@@ -266,43 +283,49 @@ namespace DX12Local
             DescriptorsInUse += offset;
         }
 
-        void CopyDescriptors(const DescriptorHeap& heap, int descriptorsCount) const
+        void CopyDescriptors(const DescriptorHeap& heap, int descriptorsCount)
         {
+            std::lock_guard<std::mutex> lock(Mutex);
 			s_Device->CopyDescriptorsSimple(descriptorsCount, GetCPUHandle(0), heap.GetCPUHandle(0), HeapType);
+        }
+
+        void CopyBindlessDescriptors(const DescriptorHeap& heap, int descriptorIndex, int descriptorsCount)
+        {
+            std::lock_guard<std::mutex> lock(Mutex);
+            s_Device->CopyDescriptorsSimple(descriptorsCount, GetBindlessCPUHandle(descriptorIndex), heap.GetCPUHandle(descriptorIndex), HeapType);
         }
     };
 
-    struct DescriptorPool : public DescriptorHeap
+    struct IndexPool
     {
-        std::vector<uint32_t> FreeIndices;
-        std::mutex Mutex;
-
-        void Init(uint32_t descriptorsCount, D3D12_DESCRIPTOR_HEAP_TYPE type, const std::string& name)
+        void Init(uint32_t indexCount)
         {
-            DescriptorHeap::Init(descriptorsCount, type, name, false);
-
-            FreeIndices.resize(descriptorsCount);
-            for (uint32_t i = 0; i < descriptorsCount; ++i)
-                FreeIndices[i] = i;
+            FreeIndices.resize(indexCount);
+            for (uint32_t i = 0; i < indexCount; ++i)
+                FreeIndices[i] = indexCount - i - 1;
         }
 
-        D3D12_CPU_DESCRIPTOR_HANDLE GetFreeCPUHandle(uint32_t& outIndex)
+        uint32_t GetFreeIndex()
         {
             std::lock_guard<std::mutex> lock(Mutex);
 
             assert(!FreeIndices.empty());
 
-            outIndex = FreeIndices.back();
+            const uint32_t index = FreeIndices.back();
             FreeIndices.pop_back();
 
-            return GetCPUHandle(outIndex);
+            return index;
         }
 
-        void ReturnCPUHandle(uint32_t index)
+        void ReturnIndex(uint32_t index)
         {
             std::lock_guard<std::mutex> lock(Mutex);
             FreeIndices.push_back(index);
         }
+
+	private:
+        std::vector<uint32_t> FreeIndices;
+        std::mutex Mutex;
     };
 
     constexpr TextureInternalFormat k_SwapChainColorFormat = TextureInternalFormat::RGBA8;
@@ -342,8 +365,10 @@ namespace DX12Local
     DescriptorHeap s_BoundSamplerStagingDescriptorHeap;
     DescriptorHeap s_ImGuiDescriptorHeap;
 
-    DescriptorPool s_AllocatedResourcesDescriptorPool;
-    DescriptorPool s_AllocatedSamplersDescriptorPool;
+	IndexPool s_AllocatedResourcesIndexPool;
+	IndexPool s_AllocatedSamplersIndexPool;
+    DescriptorHeap s_AllocatedResourcesDescriptorHeap;
+    DescriptorHeap s_AllocatedSamplersDescriptorHeap;
 
     float s_ClearColor[4] = {0, 0, 0, 0};
     float s_ClearDepth = 1;
@@ -649,29 +674,38 @@ namespace DX12Local
 
     void InitRootSignature()
     {
-        CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+		constexpr int rootParametersCount = 3;
+        CD3DX12_ROOT_PARAMETER1 rootParameters[rootParametersCount];
 
-        CD3DX12_DESCRIPTOR_RANGE1 ranges[5];
-        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // textures
-        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // buffers
-        ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // constant buffers
-        ranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE); // RW textures
-        ranges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE); // RW buffers
+		constexpr int resourceRangesCount = 5;
+        CD3DX12_DESCRIPTOR_RANGE1 resourceRanges[resourceRangesCount];
+        resourceRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // textures
+        resourceRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // buffers
+        resourceRanges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // constant buffers
+        resourceRanges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE); // RW textures
+        resourceRanges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE); // RW buffers
 
         CD3DX12_DESCRIPTOR_RANGE1 samplersRange;
         samplersRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
+        CD3DX12_DESCRIPTOR_RANGE1 bindlessResourcesRange;
+        bindlessResourcesRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, 0, 2, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // bindless textures
+
         CD3DX12_ROOT_PARAMETER1 resourceParameter{};
-        resourceParameter.InitAsDescriptorTable(5, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
+        resourceParameter.InitAsDescriptorTable(resourceRangesCount, &resourceRanges[0], D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[0] = resourceParameter;
 
         CD3DX12_ROOT_PARAMETER1 samplersParameter{};
         samplersParameter.InitAsDescriptorTable(1, &samplersRange, D3D12_SHADER_VISIBILITY_ALL);
         rootParameters[1] = samplersParameter;
 
+		CD3DX12_ROOT_PARAMETER1 bindlessResourcesParameter{};
+        bindlessResourcesParameter.InitAsDescriptorTable(1, &bindlessResourcesRange, D3D12_SHADER_VISIBILITY_ALL);
+		rootParameters[2] = bindlessResourcesParameter;
+
         D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc{};
         rootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-        rootSignatureDesc.Desc_1_1.NumParameters = 2;
+        rootSignatureDesc.Desc_1_1.NumParameters = rootParametersCount;
         rootSignatureDesc.Desc_1_1.pParameters = &rootParameters[0];
         rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
@@ -726,22 +760,24 @@ void GraphicsBackendDX12::Init(void* data)
     DX12Local::SetObjectName(DX12Local::s_RenderQueue, "RenderQueue");
     DX12Local::SetObjectName(DX12Local::s_CopyQueue, "CopyQueue");
 
-    DX12Local::s_ColorBackbufferDescriptorHeap.Init(GraphicsBackend::GetMaxFramesInFlight(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, "Color Backbuffer Descriptors");
-    DX12Local::s_DepthBackbufferDescriptorHeap.Init(GraphicsBackend::GetMaxFramesInFlight(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "Depth Backbuffer Descriptors");
+    DX12Local::s_ColorBackbufferDescriptorHeap.Init(GraphicsBackend::GetMaxFramesInFlight(), 0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, "Color Backbuffer Descriptors");
+    DX12Local::s_DepthBackbufferDescriptorHeap.Init(GraphicsBackend::GetMaxFramesInFlight(), 0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "Depth Backbuffer Descriptors");
 
-    DX12Local::s_AllocatedResourcesDescriptorPool.Init(DX12Local::k_ResourceDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Allocated Resources Descriptors");
-    DX12Local::s_AllocatedSamplersDescriptorPool.Init(DX12Local::k_SamplerDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "Allocated Samplers Descriptors");
+	DX12Local::s_AllocatedResourcesIndexPool.Init(DX12Local::k_ResourceDescriptorHeapCapacity);
+	DX12Local::s_AllocatedSamplersIndexPool.Init(DX12Local::k_SamplerDescriptorHeapCapacity);
+    DX12Local::s_AllocatedResourcesDescriptorHeap.Init(DX12Local::k_ResourceDescriptorHeapCapacity, 0, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Allocated Resources Descriptors");
+    DX12Local::s_AllocatedSamplersDescriptorHeap.Init(DX12Local::k_SamplerDescriptorHeapCapacity, 0, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "Allocated Samplers Descriptors");
 
     DX12Local::s_Window = static_cast<HWND>(data);
     DX12Local::CreateSwapChain(DX12Local::s_Window, factory);
 
-    DX12Local::s_BoundResourceDescriptorHeap.Init(DX12Local::k_ResourceDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Bound Resources Descriptors", true, true);
-    DX12Local::s_BoundResourceStagingDescriptorHeap.Init(DX12Local::k_ResourceDescriptorHeapAdvance, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Bound Resources Staging Descriptor", false);
-    DX12Local::s_BoundSamplerDescriptorHeap.Init(DX12Local::k_SamplerDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "Bound Samplers Descriptor", true);
-    DX12Local::s_BoundSamplerStagingDescriptorHeap.Init(DX12Local::k_SamplerDescriptorHeapAdvance, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "Bound Samplers Staging Descriptors");
+    DX12Local::s_BoundResourceDescriptorHeap.Init(DX12Local::k_ResourceDescriptorHeapCapacity, DX12Local::k_ResourceDescriptorHeapCapacity, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Bound Resources Descriptors", true, true);
+    DX12Local::s_BoundResourceStagingDescriptorHeap.Init(DX12Local::k_ResourceDescriptorHeapAdvance, 0, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Bound Resources Staging Descriptor", false);
+    DX12Local::s_BoundSamplerDescriptorHeap.Init(DX12Local::k_SamplerDescriptorHeapCapacity, 0, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "Bound Samplers Descriptor", true);
+    DX12Local::s_BoundSamplerStagingDescriptorHeap.Init(DX12Local::k_SamplerDescriptorHeapAdvance, 0, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, "Bound Samplers Staging Descriptors");
 
-    DX12Local::s_ColorTargetDescriptorHeap.Init(1024, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, "Color Target Descriptors");
-    DX12Local::s_DepthTargetDescriptorHeap.Init(1024, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "Depth Target Descriptors");
+    DX12Local::s_ColorTargetDescriptorHeap.Init(1024, 0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, "Color Target Descriptors");
+    DX12Local::s_DepthTargetDescriptorHeap.Init(1024, 0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "Depth Target Descriptors");
 
     DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&DX12Local::s_RenderQueueFence));
     DX12Local::s_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&DX12Local::s_CopyQueueFence));
@@ -824,7 +860,8 @@ void GraphicsBackendDX12::WaitForPreviousFrame()
     DX12Local::s_CopyCommandList->ResetAllocator();
     DX12Local::s_CopyCommandList->Reset();
 
-    DX12Local::s_BoundResourceDescriptorHeap.CheckSize();
+    if (DX12Local::s_BoundResourceDescriptorHeap.CheckSize())
+        DX12Local::s_BoundResourceDescriptorHeap.CopyBindlessDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, 0, DX12Local::s_BoundResourceDescriptorHeap.BindlessDescriptorsCount);
     DX12Local::s_BoundSamplerDescriptorHeap.CheckSize();
     DX12Local::s_ColorTargetDescriptorHeap.CheckSize();
     DX12Local::s_DepthTargetDescriptorHeap.CheckSize();
@@ -849,7 +886,7 @@ void GraphicsBackendDX12::FillImGuiInitData(void* data)
     initData->MaxFramesInFlight = GraphicsBackend::GetMaxFramesInFlight();
     initData->Format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
 
-    DX12Local::s_ImGuiDescriptorHeap.Init(64, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ImGui Descriptors", true);
+    DX12Local::s_ImGuiDescriptorHeap.Init(64, 0, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ImGui Descriptors", true);
 
     initData->DescriptorHeap = DX12Local::s_ImGuiDescriptorHeap.Heap;
     initData->CpuDescriptorHandle = initData->DescriptorHeap->GetCPUDescriptorHandleForHeapStart();
@@ -992,8 +1029,10 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, cons
             break;
     }
 
-    resourceData->ReadOnlyDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorPool.GetFreeCPUHandle(resourceData->ReadOnlyDescriptorIndex);
+	resourceData->ReadOnlyDescriptorIndex = DX12Local::s_AllocatedResourcesIndexPool.GetFreeIndex();
+    resourceData->ReadOnlyDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorHeap.GetCPUHandle(resourceData->ReadOnlyDescriptorIndex);
     DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, resourceData->ReadOnlyDescriptorHandle);
+	DX12Local::s_BoundResourceDescriptorHeap.CopyBindlessDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, resourceData->ReadOnlyDescriptorIndex, 1);
 
     if (descriptor.ReadWrite)
     {
@@ -1014,7 +1053,8 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, cons
 	            break;
         }
 
-        resourceData->RWDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorPool.GetFreeCPUHandle(resourceData->RWDescriptorIndex);
+		resourceData->RWDescriptorIndex = DX12Local::s_AllocatedResourcesIndexPool.GetFreeIndex();
+        resourceData->RWDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorHeap.GetCPUHandle(resourceData->RWDescriptorIndex);
         DX12Local::s_Device->CreateUnorderedAccessView(resourceData->Resource, nullptr, &uavDesc, resourceData->RWDescriptorHandle);
     }
 
@@ -1023,6 +1063,7 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, cons
     texture.Format = descriptor.Format;
     texture.Type = type;
     texture.IsLinear = descriptor.Linear;
+	texture.BindlessIndex = resourceData->ReadOnlyDescriptorIndex;
     return texture;
 }
 
@@ -1044,7 +1085,8 @@ GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(const GraphicsBackendS
     samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
 
     DX12Local::SamplerData* samplerData = new DX12Local::SamplerData();
-    samplerData->DescriptorHandle = DX12Local::s_AllocatedSamplersDescriptorPool.GetFreeCPUHandle(samplerData->DescriptorIndex);
+	samplerData->DescriptorIndex = DX12Local::s_AllocatedSamplersIndexPool.GetFreeIndex();
+    samplerData->DescriptorHandle = DX12Local::s_AllocatedSamplersDescriptorHeap.GetCPUHandle(samplerData->DescriptorIndex);
     DX12Local::s_Device->CreateSampler(&samplerDesc, samplerData->DescriptorHandle);
 
     GraphicsBackendSampler sampler{};
@@ -1054,16 +1096,16 @@ GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(const GraphicsBackendS
 
 void GraphicsBackendDX12::DeleteTexture_Internal(const GraphicsBackendTexture& texture)
 {
-    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
-    DX12Local::s_AllocatedResourcesDescriptorPool.ReturnCPUHandle(resourceData->ReadOnlyDescriptorIndex);
+    const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
+    DX12Local::s_AllocatedResourcesIndexPool.ReturnIndex(resourceData->ReadOnlyDescriptorIndex);
     resourceData->Resource->Release();
     delete resourceData;
 }
 
 void GraphicsBackendDX12::DeleteSampler_Internal(const GraphicsBackendSampler& sampler)
 {
-    DX12Local::SamplerData* samplerData = reinterpret_cast<DX12Local::SamplerData*>(sampler.Sampler);
-    DX12Local::s_AllocatedSamplersDescriptorPool.ReturnCPUHandle(samplerData->DescriptorIndex);
+    const DX12Local::SamplerData* samplerData = reinterpret_cast<DX12Local::SamplerData*>(sampler.Sampler);
+    DX12Local::s_AllocatedSamplersIndexPool.ReturnIndex(samplerData->DescriptorIndex);
     delete samplerData;
 }
 
@@ -1288,7 +1330,8 @@ GraphicsBackendBufferView GraphicsBackendDX12::CreateBufferView(const GraphicsBa
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
 
     DX12Local::ResourceViewData* resourceViewData = new DX12Local::ResourceViewData();
-    resourceViewData->DescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorPool.GetFreeCPUHandle(resourceViewData->DescriptorIndex);
+	resourceViewData->DescriptorIndex = DX12Local::s_AllocatedResourcesIndexPool.GetFreeIndex();
+    resourceViewData->DescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorHeap.GetCPUHandle(resourceViewData->DescriptorIndex);
 
     if (descriptor.ReadWrite)
     {
@@ -1352,6 +1395,7 @@ GraphicsBackendBufferView GraphicsBackendDX12::CreateBufferView(const GraphicsBa
         }
         
         DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, resourceViewData->DescriptorHandle);
+		DX12Local::s_BoundResourceDescriptorHeap.CopyBindlessDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, resourceViewData->DescriptorIndex, 1);
     }
 
     GraphicsBackendBufferView bufferView{};
@@ -1369,7 +1413,7 @@ void GraphicsBackendDX12::DeleteBuffer_Internal(const GraphicsBackendBuffer& buf
 void GraphicsBackendDX12::DeleteBufferView_Internal(const GraphicsBackendBufferView& bufferView)
 {
     const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(bufferView.BufferView);
-    DX12Local::s_AllocatedResourcesDescriptorPool.ReturnCPUHandle(resourceViewData->DescriptorIndex);
+    DX12Local::s_AllocatedResourcesIndexPool.ReturnIndex(resourceViewData->DescriptorIndex);
     delete resourceViewData;
 }
 
@@ -1655,7 +1699,7 @@ void GraphicsBackendDX12::DeleteBLAS_Internal(GraphicsBackendBLAS& blas)
 void GraphicsBackendDX12::DeleteTLAS_Internal(GraphicsBackendTLAS& tlas)
 {
     const DX12Local::ResourceData* tlasData = static_cast<DX12Local::ResourceData*>(tlas.TLAS);
-    DX12Local::s_AllocatedResourcesDescriptorPool.ReturnCPUHandle(tlasData->ReadOnlyDescriptorIndex);
+    DX12Local::s_AllocatedResourcesIndexPool.ReturnIndex(tlasData->ReadOnlyDescriptorIndex);
     tlasData->Resource->Release();
     delete tlasData;
 }
@@ -1921,8 +1965,7 @@ void GraphicsBackendDX12::BeginRenderPass(const std::string& name)
         }
     }
 
-    ID3D12DescriptorHeap* heaps[] = { DX12Local::s_BoundResourceDescriptorHeap.Heap, DX12Local::s_BoundSamplerDescriptorHeap.Heap};
-    DX12Local::s_RenderCommandList->List->SetDescriptorHeaps(2, heaps);
+	SetResourceDescriptorHeaps();
 
     if (!resourcesForTransition.empty())
         DX12Local::TransitionResources(resourcesForTransition.size(), resourcesForTransition.data(), resourceAfterStates.data(), DX12Local::s_RenderCommandList->List);
@@ -1967,8 +2010,7 @@ void GraphicsBackendDX12::BeginComputePass(const std::string& name)
 {
     PushDebugGroup(name, GPUQueue::RENDER);
 
-    ID3D12DescriptorHeap* heaps[] = { DX12Local::s_BoundResourceDescriptorHeap.Heap, DX12Local::s_BoundSamplerDescriptorHeap.Heap };
-    DX12Local::s_RenderCommandList->List->SetDescriptorHeaps(2, heaps);
+	SetResourceDescriptorHeaps();
 }
 
 void GraphicsBackendDX12::EndComputePass()
@@ -2232,7 +2274,8 @@ GraphicsBackendTLAS GraphicsBackendDX12::CreateTLAS(const std::vector<GraphicsBa
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srvDesc.RaytracingAccelerationStructure.Location = resultBufferData->Resource->GetGPUVirtualAddress();
 
-    resultBufferData->ReadOnlyDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorPool.GetFreeCPUHandle(resultBufferData->ReadOnlyDescriptorIndex);
+	resultBufferData->ReadOnlyDescriptorIndex = DX12Local::s_AllocatedResourcesIndexPool.GetFreeIndex();
+    resultBufferData->ReadOnlyDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorHeap.GetCPUHandle(resultBufferData->ReadOnlyDescriptorIndex);
     DX12Local::s_Device->CreateShaderResourceView(nullptr, &srvDesc, resultBufferData->ReadOnlyDescriptorHandle);
 
     GraphicsBackendTLAS tlas{};
@@ -2253,11 +2296,13 @@ void GraphicsBackendDX12::BindResources(ProgramType programType)
         {
             DX12Local::s_RenderCommandList->List->SetGraphicsRootDescriptorTable(0, DX12Local::s_BoundResourceDescriptorHeap.GetGPUHandle(0));
             DX12Local::s_RenderCommandList->List->SetGraphicsRootDescriptorTable(1, DX12Local::s_BoundSamplerDescriptorHeap.GetGPUHandle(0));
+			DX12Local::s_RenderCommandList->List->SetGraphicsRootDescriptorTable(2, DX12Local::s_BoundResourceDescriptorHeap.GetBindlessGPUHandle(0));
         }
         else
         {
             DX12Local::s_RenderCommandList->List->SetComputeRootDescriptorTable(0, DX12Local::s_BoundResourceDescriptorHeap.GetGPUHandle(0));
             DX12Local::s_RenderCommandList->List->SetComputeRootDescriptorTable(1, DX12Local::s_BoundSamplerDescriptorHeap.GetGPUHandle(0));
+			DX12Local::s_RenderCommandList->List->SetComputeRootDescriptorTable(2, DX12Local::s_BoundResourceDescriptorHeap.GetBindlessGPUHandle(0));
         }
 
         DX12Local::s_BoundResourceDescriptorHeap.AdvanceIndex(DX12Local::k_ResourceDescriptorHeapAdvance);
@@ -2332,6 +2377,12 @@ DX12Local::ResourceData* GraphicsBackendDX12::GetRTInstancesBuffer(uint32_t requ
     }
 
     return reinterpret_cast<DX12Local::ResourceData*>(m_RaytracingInstancesBuffer.Buffer);
+}
+
+void GraphicsBackendDX12::SetResourceDescriptorHeaps()
+{
+    ID3D12DescriptorHeap* heaps[] = { DX12Local::s_BoundResourceDescriptorHeap.Heap, DX12Local::s_BoundSamplerDescriptorHeap.Heap };
+    DX12Local::s_RenderCommandList->List->SetDescriptorHeaps(2, heaps);
 }
 
 #undef ThrowIfFailed

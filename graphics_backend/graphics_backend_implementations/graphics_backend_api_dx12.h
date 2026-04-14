@@ -122,6 +122,7 @@ private:
     DX12Local::ResourceData* CreateBufferInternal(const GraphicsBackendBufferDescriptor& descriptor, ResourceState state, const std::string& name, const void* data) const;
 	DX12Local::ResourceData* GetRTScratchBuffer(uint32_t requiredSize);
 	DX12Local::ResourceData* GetRTInstancesBuffer(uint32_t requiredSize);
+    static void SetResourceDescriptorHeaps();
 
     bool m_CopyTimestampSupported = false;
     uint32_t m_RaytracingTier = 0;

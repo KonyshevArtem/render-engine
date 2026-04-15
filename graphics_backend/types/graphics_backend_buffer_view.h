@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-class GraphicsBackendBufferView
+struct GraphicsBackendBufferView
 {
 public:
     uint32_t BindlessIndex = 0;

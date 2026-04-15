@@ -5,6 +5,7 @@
 #include "drawable_geometry/drawable_geometry.h"
 #include "resources/resource.h"
 #include "types/graphics_backend_blas.h"
+#include "types/graphics_backend_buffer_view.h"
 #include "vector2/vector2.h"
 #include "vector3/vector3.h"
 
@@ -42,6 +43,16 @@ public:
         return m_IndexCount;
     }
 
+    const GraphicsBackendBufferView& GetVertexBufferView() const
+    {
+        return m_VertexBufferView;
+    }
+
+    const GraphicsBackendBufferView& GetIndexBufferView() const
+    {
+        return m_IndexBufferView;
+    }
+
     const std::string& GetName() const
     {
         return m_Name;
@@ -61,10 +72,14 @@ public:
 private:
     Bounds m_Bounds;
 
+	GraphicsBackendBufferView m_VertexBufferView{};
+	GraphicsBackendBufferView m_IndexBufferView{};
     int m_VertexCount;
     int m_IndexCount;
 
     std::string m_Name;
+
+    void CreateGeometry(const uint8_t* vertexData, uint64_t vertexDataSize, const int* indices, uint64_t indicesCount, IndicesDataType indicesDataType, const std::string& name);
 };
 
 

@@ -3,6 +3,7 @@
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
 #include "types/graphics_backend_buffer_descriptor.h"
+#include "types/graphics_backend_buffer_view_descriptor.h"
 
 #include <span>
 
@@ -25,21 +26,6 @@ namespace MeshLocal
         if (hasTangents)
             attributes.Add({VertexAttributeSemantic::TANGENT, 3, VertexAttributeDataType::FLOAT, false, vertexSize, posSize + normalsSize + uvSize});
     }
-
-    GraphicsBackendGeometry CreateGeometry(const VertexAttributes& attributes, const uint8_t* vertexData, uint64_t vertexDataSize, const int* indices, uint64_t indicesCount, IndicesDataType indicesDataType, const std::string& name)
-    {
-        Profiler::Marker _("MeshLocal::CreateGeometry");
-
-        GraphicsBackendBufferDescriptor bufferDescriptor{};
-
-        bufferDescriptor.Size = vertexDataSize;
-        const GraphicsBackendBuffer vertexBuffer = GraphicsBackend::Current()->CreateBuffer(bufferDescriptor, name + "_Vertices", vertexData);
-
-        bufferDescriptor.Size = indicesCount * sizeof(int);
-        const GraphicsBackendBuffer indexBuffer = GraphicsBackend::Current()->CreateBuffer(bufferDescriptor, name + "_Indices", indices);
-
-        return GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, attributes.GetAttributes(), indicesDataType, name);
-    }
 }
 
 Mesh::Mesh(const std::vector<Vector3>& vertices, const std::vector<int>& indices, const std::string& name)
@@ -55,12 +41,15 @@ Mesh::Mesh(const std::span<uint8_t>& vertexData, const std::span<int>& indices, 
 	m_Name(name)
 {
     MeshLocal::FillVertexAttributes(m_VertexAttributes, hasUV, hasNormals, hasTangents);
-    m_GraphicsBackendGeometry = MeshLocal::CreateGeometry(m_VertexAttributes, vertexData.data(), vertexData.size(), indices.data(), indices.size(), GetIndicesDataType(), name);
+    CreateGeometry(vertexData.data(), vertexData.size(), indices.data(), indices.size(), GetIndicesDataType(), name);
     m_VertexCount = vertexData.size() / m_VertexAttributes.GetAttributes()[0].Stride;
 }
 
 Mesh::~Mesh()
 {
+    GraphicsBackend::Current()->DeleteBufferView(m_VertexBufferView);
+	GraphicsBackend::Current()->DeleteBufferView(m_IndexBufferView);
+
     if (BLAS.IsValid())
         GraphicsBackend::Current()->DeleteBLAS(BLAS);
 }
@@ -118,7 +107,7 @@ Mesh::Mesh(const std::vector<Vector3>& vertices,
         }
     }
 
-    m_GraphicsBackendGeometry = MeshLocal::CreateGeometry(m_VertexAttributes, vertexData.data(), vertexData.size(), indices.data(), indices.size(), GetIndicesDataType(), name);
+    CreateGeometry(vertexData.data(), vertexData.size(), indices.data(), indices.size(), GetIndicesDataType(), name);
 }
 
 const std::shared_ptr<Mesh>& Mesh::GetFullscreenMesh()
@@ -151,4 +140,26 @@ const std::shared_ptr<Mesh>& Mesh::GetQuadMesh()
     }
 
     return quadMesh;
+}
+
+void Mesh::CreateGeometry(const uint8_t* vertexData, uint64_t vertexDataSize, const int* indices, uint64_t indicesCount, IndicesDataType indicesDataType, const std::string& name)
+{
+    Profiler::Marker _("MeshLocal::CreateGeometry");
+
+    GraphicsBackendBufferDescriptor bufferDescriptor{};
+
+    bufferDescriptor.Size = vertexDataSize;
+    const GraphicsBackendBuffer vertexBuffer = GraphicsBackend::Current()->CreateBuffer(bufferDescriptor, name + "_Vertices", vertexData);
+
+	const uint32_t indicesDataTypeSize = GraphicsBackendBase::GetIndicesDataTypeSize(indicesDataType) * indicesCount;
+    bufferDescriptor.Size = indicesDataTypeSize;
+    const GraphicsBackendBuffer indexBuffer = GraphicsBackend::Current()->CreateBuffer(bufferDescriptor, name + "_Indices", indices);
+
+    GraphicsBackendBufferViewDescriptor bufferViewDescriptor = GraphicsBackendBufferViewDescriptor::ByteAddress(vertexDataSize, 0, false);
+	m_VertexBufferView = GraphicsBackend::Current()->CreateBufferView(bufferViewDescriptor, vertexBuffer, name + "_VertexBufferView");
+
+	bufferViewDescriptor = GraphicsBackendBufferViewDescriptor::ByteAddress(indicesDataTypeSize, 0, false);
+	m_IndexBufferView = GraphicsBackend::Current()->CreateBufferView(bufferViewDescriptor, indexBuffer, name + "_IndexBufferView");
+
+    m_GraphicsBackendGeometry = GraphicsBackend::Current()->CreateGeometry(vertexBuffer, indexBuffer, m_VertexAttributes.GetAttributes(), indicesDataType, name);
 }

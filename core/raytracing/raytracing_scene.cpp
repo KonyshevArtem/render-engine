@@ -5,6 +5,7 @@
 #include "renderer/renderer.h"
 #include "developer_console/developer_console.h"
 #include "types/graphics_backend_blas_descriptor.h"
+#include "types/graphics_backend_buffer_descriptor.h"
 #include "types/graphics_backend_raytracing_instance_descriptor.h"
 
 RaytracingScene::RaytracingScene() :
@@ -22,6 +23,7 @@ void RaytracingScene::Prepare(RenderData& renderData)
 
 	m_PendingBLASes.clear();
 	m_TLASInstances.clear();
+	m_PerInstanceData.clear();
 
     for (const std::shared_ptr<Renderer>& renderer : renderData.Renderers)
 	{
@@ -54,6 +56,16 @@ void RaytracingScene::Prepare(RenderData& renderData)
 			descriptor.Transform = renderer->GetModelMatrix();
 
 			m_TLASInstances.push_back(descriptor);
+
+			PerInstanceData data{};
+			data.VerticesBufferIndex = mesh->GetVertexBufferView().BindlessIndex;
+			data.IndicesBufferIndex = mesh->GetIndexBufferView().BindlessIndex;
+
+			GraphicsBackendVertexAttributeDescriptor vertexAttributeDescriptor;
+			if (mesh->GetVertexAttributes().TryGetAttribute(VertexAttributeSemantic::POSITION, vertexAttributeDescriptor))
+				data.VertexStride = vertexAttributeDescriptor.Stride;
+
+			m_PerInstanceData.push_back(data);
 		}
 	}
 
@@ -89,7 +101,23 @@ void RaytracingScene::Update(RenderData& renderData)
 		}
 
 		if (!m_TLASInstances.empty())
+		{
 			m_TLAS = GraphicsBackend::Current()->CreateTLAS(m_TLASInstances, "RT_Scene");
+
+			const uint32_t perInstanceDataRequiredSize = sizeof(PerInstanceData) * m_PerInstanceData.size();
+			if (!m_PerInstanceDataBuffer || m_PerInstanceDataBuffer->GetSize() < perInstanceDataRequiredSize)
+			{
+				GraphicsBackendBufferDescriptor bufferDescriptor{};
+				bufferDescriptor.Size = perInstanceDataRequiredSize;
+				bufferDescriptor.AllowCPUWrites = true;
+				m_PerInstanceDataBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "RT_Scene_PerInstanceData", nullptr);
+
+				GraphicsBackendBufferViewDescriptor bufferViewDescriptor = GraphicsBackendBufferViewDescriptor::Structured(m_PerInstanceData.size(), sizeof(PerInstanceData), 0, false);
+				m_PerInstanceDataBufferView = std::make_shared<GraphicsBufferView>(m_PerInstanceDataBuffer, bufferViewDescriptor, "RT_Scene_PerInstanceDataView");
+			}
+
+			GraphicsBackend::Current()->SetBufferData(m_PerInstanceDataBuffer->GetBackendBuffer(), 0, perInstanceDataRequiredSize, m_PerInstanceData.data());
+		}
 	}
 	GraphicsBackend::Current()->EndComputePass();
 }

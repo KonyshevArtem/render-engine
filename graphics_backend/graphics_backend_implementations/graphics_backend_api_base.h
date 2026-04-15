@@ -184,6 +184,7 @@ public:
     bool IsDepthFormat(TextureInternalFormat format);
     bool IsDepthAttachment(FramebufferAttachment attachment);
     uint32_t GetFormatSize(TextureInternalFormat format);
+	static uint32_t GetIndicesDataTypeSize(IndicesDataType dataType);
 
     uint32_t GetDrawCallCount() const
     {

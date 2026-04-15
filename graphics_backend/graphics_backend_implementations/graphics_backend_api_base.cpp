@@ -14,6 +14,7 @@
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_program_descriptor.h"
 #include "types/graphics_backend_buffer_view.h"
+#include "enums/indices_data_type.h"
 #include "arguments.h"
 #include "hash.h"
 
@@ -704,6 +705,21 @@ uint32_t GraphicsBackendBase::GetFormatSize(TextureInternalFormat format)
         default:
             return 0;
     }
+}
+
+uint32_t GraphicsBackendBase::GetIndicesDataTypeSize(IndicesDataType dataType)
+{
+	switch (dataType)
+	{
+	case IndicesDataType::UNSIGNED_BYTE:
+		return 1;
+	case IndicesDataType::UNSIGNED_SHORT:
+		return 2;
+	case IndicesDataType::UNSIGNED_INT:
+		return 4;
+	default:
+		return 0;
+	}
 }
 
 bool GraphicsBackendBase::SupportsRaytracing() const

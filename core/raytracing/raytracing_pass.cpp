@@ -16,7 +16,7 @@ RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) 
 	m_PrimaryRaysDebugEnabled(false),
 	m_RaytracingScene(rtScene)
 {
-	m_PrimaryRaysDebugShader = Shader::Load("core_resources/shaders/raytracing/primary_rays_debug", {});
+	m_PrimaryRaysDebugShader = Shader::Load("core_resources/shaders/raytracing/primary_rays_debug", {"_RECEIVE_SHADOWS"});
 
 	DeveloperConsole::AddBoolCommand(L"Raytracing.Debug.PrimaryRays", &m_PrimaryRaysDebugEnabled);
 }
@@ -72,6 +72,7 @@ void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 		GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor{});
 
 		GraphicsBackend::Current()->BindTLAS(m_RaytracingScene->GetTLAS(), 0);
+		GraphicsBackend::Current()->BindBuffer(m_RaytracingScene->GetPerInstanceDataBufferView()->GetBackendBufferView(), 1);
 		GraphicsBackend::Current()->BindConstantBuffer(m_PrimaryRaysDebugDataBuffer->GetBackendBuffer(), 0, 0, sizeof(constants));
 
 		const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();

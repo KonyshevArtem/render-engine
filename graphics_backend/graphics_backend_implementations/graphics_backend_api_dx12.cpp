@@ -1400,6 +1400,7 @@ GraphicsBackendBufferView GraphicsBackendDX12::CreateBufferView(const GraphicsBa
 
     GraphicsBackendBufferView bufferView{};
     bufferView.BufferView = reinterpret_cast<void*>(resourceViewData);
+	bufferView.BindlessIndex = resourceViewData->DescriptorIndex;
     return bufferView;
 }
 

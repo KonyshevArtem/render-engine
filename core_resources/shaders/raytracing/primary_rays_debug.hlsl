@@ -1,19 +1,7 @@
 #include "../common/global_defines.h"
 #include "../common/camera_data.h"
 #include "../common/lighting.h"
-
-struct PerInstanceData
-{
-    uint VerticesBufferIndex;
-    uint IndicesBufferIndex;
-    uint VertexStride;
-    float Padding0;
-};
-
-RaytracingAccelerationStructure RTScene : register(t0, space1);
-StructuredBuffer<PerInstanceData> PerInstanceDataBuffer : register(t1, space1);
-
-ByteAddressBuffer VertexAndIndexBuffers[] : register(t0, space2);
+#include "raytracing_common.h"
 
 cbuffer Data : register(b0)
 {
@@ -37,21 +25,6 @@ float3 GetPixelWorldDirection(float2 pixelCoord)
     far = far / far.w;
 
     return normalize(far.xyz - near.xyz);
-}
-
-float3 GetWorldNormal(uint instanceIndex, uint primitiveIndex, float3x4 worldToObjectMatrix)
-{
-    PerInstanceData instanceData = PerInstanceDataBuffer[instanceIndex];
-    ByteAddressBuffer vertexBuffer = VertexAndIndexBuffers[instanceData.VerticesBufferIndex];
-    ByteAddressBuffer indexBuffer = VertexAndIndexBuffers[instanceData.IndicesBufferIndex];
-        
-    uint3 indices = indexBuffer.Load3(primitiveIndex * 3 * 4);
-    float3 p1 = asfloat(vertexBuffer.Load3(instanceData.VertexStride * indices.x));
-    float3 p2 = asfloat(vertexBuffer.Load3(instanceData.VertexStride * indices.y));
-    float3 p3 = asfloat(vertexBuffer.Load3(instanceData.VertexStride * indices.z));
-        
-    float3 objectNormal = normalize(cross(p2 - p1, p3 - p1));
-    return normalize(mul(objectNormal, (float3x3) worldToObjectMatrix));
 }
 
 struct Attributes
@@ -90,7 +63,7 @@ float4 fragmentMain(float4 pixelCoord : SV_Position) : SV_Target
     if (query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
     {
         float3 worldPos = ray.Origin + ray.Direction * query.CommittedRayT();
-        float3 worldNormal = GetWorldNormal(query.CommittedInstanceIndex(), query.CommittedPrimitiveIndex(), query.CommittedWorldToObject3x4());
+        float3 worldNormal = GetHitWorldNormal(query.CommittedInstanceIndex(), query.CommittedPrimitiveIndex(), query.CommittedWorldToObject3x4());
         
         float3 light = getLightPBR(worldPos, worldNormal, colors[query.CommittedInstanceID() % 6].xyz, 1, 0, float3(0, 0, 0), _CameraPosWS);
         return float4(light, 1);

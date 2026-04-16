@@ -11,6 +11,7 @@
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "mesh/mesh.h"
 #include "types/graphics_backend_render_target_descriptor.h"
+#include "global_constants.h"
 
 RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) :
 	m_PrimaryRaysDebugEnabled(false),
@@ -71,8 +72,8 @@ void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 		GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
 		GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor{});
 
-		GraphicsBackend::Current()->BindTLAS(m_RaytracingScene->GetTLAS(), 0);
-		GraphicsBackend::Current()->BindBuffer(m_RaytracingScene->GetPerInstanceDataBufferView()->GetBackendBufferView(), 1);
+		GraphicsBackend::Current()->BindTLAS(m_RaytracingScene->GetTLAS(), GlobalConstants::RTSceneIndex);
+		GraphicsBackend::Current()->BindBuffer(m_RaytracingScene->GetPerInstanceDataBufferView()->GetBackendBufferView(), GlobalConstants::RTPerInstanceDataIndex);
 		GraphicsBackend::Current()->BindConstantBuffer(m_PrimaryRaysDebugDataBuffer->GetBackendBuffer(), 0, 0, sizeof(constants));
 
 		const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();

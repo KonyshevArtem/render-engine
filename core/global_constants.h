@@ -24,6 +24,9 @@ namespace GlobalConstants
 
     constexpr int InstancingMatricesEntriesData = 6;
     constexpr int TransformMatricesData = 7;
+
+	constexpr int RTSceneIndex = 0;
+	constexpr int RTPerInstanceDataIndex = 5;
 }
 
 #endif //RENDER_ENGINE_GLOBAL_CONSTANTS_H

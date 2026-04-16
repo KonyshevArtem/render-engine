@@ -332,13 +332,18 @@ namespace DX12Local
     constexpr TextureInternalFormat k_SwapChainDepthFormat = TextureInternalFormat::DEPTH_24_STENCIL_8;
 
     constexpr int k_MaxResourcesPerDraw = 8;
+    constexpr int k_MaxRTResources = 1;
+
     constexpr int k_TexturesDescriptorsOffset = 0;
     constexpr int k_BuffersDescriptorsOffset = k_TexturesDescriptorsOffset + k_MaxResourcesPerDraw;
     constexpr int k_ConstantBuffersDescriptorsOffset = k_BuffersDescriptorsOffset + k_MaxResourcesPerDraw;
     constexpr int k_RWTexturesDescriptorsOffset = k_ConstantBuffersDescriptorsOffset + k_MaxResourcesPerDraw;
     constexpr int k_RWBufferDescriptorsOffset = k_RWTexturesDescriptorsOffset + k_MaxResourcesPerDraw;
-    constexpr int k_ResourceDescriptorHeapAdvance = k_MaxResourcesPerDraw * 5; // SRV Textures, SRV Buffers, CBV, UAV Textures, UAV Buffers
+    constexpr int k_RTResourcesDescriptorsOffset = k_RWBufferDescriptorsOffset + k_MaxResourcesPerDraw;
+
+	constexpr int k_ResourceDescriptorHeapAdvance = k_MaxResourcesPerDraw * 5 + k_MaxRTResources; // SRV Textures, SRV Buffers, CBV, UAV Textures, UAV Buffers, RT Resources
     constexpr int k_SamplerDescriptorHeapAdvance = k_MaxResourcesPerDraw;
+
     constexpr int k_ResourceDescriptorHeapCapacity = k_ResourceDescriptorHeapAdvance * 512;
     constexpr int k_SamplerDescriptorHeapCapacity = 2048;
 
@@ -677,13 +682,14 @@ namespace DX12Local
 		constexpr int rootParametersCount = 3;
         CD3DX12_ROOT_PARAMETER1 rootParameters[rootParametersCount];
 
-		constexpr int resourceRangesCount = 5;
+		constexpr int resourceRangesCount = 6;
         CD3DX12_DESCRIPTOR_RANGE1 resourceRanges[resourceRangesCount];
         resourceRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // textures
         resourceRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // buffers
         resourceRanges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // constant buffers
         resourceRanges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE); // RW textures
         resourceRanges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, k_MaxResourcesPerDraw, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE); // RW buffers
+        resourceRanges[5].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, k_MaxRTResources, 0, 3, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // RT resources
 
         CD3DX12_DESCRIPTOR_RANGE1 samplersRange;
         samplersRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, k_MaxResourcesPerDraw, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
@@ -1455,11 +1461,11 @@ void GraphicsBackendDX12::BindRWBuffer_Internal(const GraphicsBackendBufferView&
 
 void GraphicsBackendDX12::BindTLAS_Internal(const GraphicsBackendTLAS& TLAS, uint32_t index)
 {
-    assert(index < DX12Local::k_MaxResourcesPerDraw);
+    assert(index < DX12Local::k_MaxRTResources);
 
     const DX12Local::ResourceData* tlasData = static_cast<DX12Local::ResourceData*>(TLAS.TLAS);
 
-    const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_BuffersDescriptorsOffset);
+    const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_RTResourcesDescriptorsOffset);
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, tlasData->ReadOnlyDescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 

@@ -32,4 +32,9 @@
 #define INSTANCING_MATRICES_ENTRIES_DATA   t6, space1
 #define TRANSFORM_MATRICES_DATA            t7, space1
 
+#define RT_SCENE                t0, space3
+#define RT_PER_INSTANCE_DATA    t5, space1
+
+#define BINDLESS_RESOURCES t0, space2
+
 #endif //GLOBAL_DEFINES_H

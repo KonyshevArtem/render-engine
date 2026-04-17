@@ -15,29 +15,31 @@
 
 namespace ShaderLocal
 {
-    size_t GetPSOHash(size_t vertexAttributesHash, TextureInternalFormat colorTargetFormat, bool isLinear, TextureInternalFormat depthTargetFormat, PrimitiveType primitiveType,
-        const GraphicsBackendStencilDescriptor& stencilDescriptor,
-        const GraphicsBackendDepthDescriptor& depthDescriptor,
-        const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor,
-        const GraphicsBackendBlendDescriptor& blendDescriptor)
+    size_t GetPSOHash(size_t vertexAttributesHash, const GraphicsBackendProgramDescriptor& programDescriptor)
     {
         size_t hash = 0;
         if (GraphicsBackend::Current()->RequireRTFormatsForPSO())
         {
-            hash = Hash::Combine(hash, std::hash<TextureInternalFormat>{}(colorTargetFormat));
-            hash = Hash::Combine(hash, std::hash<TextureInternalFormat>{}(depthTargetFormat));
-            hash = Hash::Combine(hash, std::hash<bool>{}(isLinear));
+            for (const GraphicsBackendColorAttachmentDescriptor& descriptor : programDescriptor.ColorAttachmentDescriptors)
+            {
+	            hash = Hash::Combine(hash, std::hash<TextureInternalFormat>{}(descriptor.Format));
+                hash = Hash::Combine(hash, std::hash<bool>{}(descriptor.IsLinear));
+            }
+            hash = Hash::Combine(hash, std::hash<TextureInternalFormat>{}(programDescriptor.DepthFormat));
         }
         if (GraphicsBackend::Current()->RequirePrimitiveTypeForPSO())
-			hash = Hash::Combine(hash, std::hash<PrimitiveType>{}(primitiveType));
+			hash = Hash::Combine(hash, std::hash<PrimitiveType>{}(programDescriptor.PrimitiveType));
         if (GraphicsBackend::Current()->RequireStencilStateForPSO())
-			hash = Hash::Combine(hash, GraphicsBackendBase::GetStencilDescriptorHash(stencilDescriptor));
+			hash = Hash::Combine(hash, GraphicsBackendBase::GetStencilDescriptorHash(programDescriptor.StencilDescriptor));
         if (GraphicsBackend::Current()->RequireDepthStateForPSO())
-			hash = Hash::Combine(hash, GraphicsBackendBase::GetDepthDescriptorHash(depthDescriptor));
+			hash = Hash::Combine(hash, GraphicsBackendBase::GetDepthDescriptorHash(programDescriptor.DepthDescriptor));
         if (GraphicsBackend::Current()->RequireRasterizerStateForPSO())
-			hash = Hash::Combine(hash, GraphicsBackendBase::GetRasterizerDescriptorHash(rasterizerDescriptor));
+			hash = Hash::Combine(hash, GraphicsBackendBase::GetRasterizerDescriptorHash(programDescriptor.RasterizerDescriptor));
         if (GraphicsBackend::Current()->RequireBlendStateForPSO())
-			hash = Hash::Combine(hash, GraphicsBackendBase::GetBlendDescriptorHash(blendDescriptor));
+        {
+			for (const GraphicsBackendColorAttachmentDescriptor& descriptor : programDescriptor.ColorAttachmentDescriptors)
+				hash = Hash::Combine(hash, GraphicsBackendBase::GetBlendDescriptorHash(descriptor.BlendDescriptor));
+        }
         if (GraphicsBackend::Current()->RequireVertexAttributesForPSO())
 			hash = Hash::Combine(hash, vertexAttributesHash);
         return hash;
@@ -115,27 +117,27 @@ const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes& vertexA
 
 const GraphicsBackendProgram& Shader::GetOrCreateRenderProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType)
 {
-    bool isLinear;
-    const TextureInternalFormat colorTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::COLOR_ATTACHMENT0, &isLinear);
-    const TextureInternalFormat depthTargetFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
+	constexpr int colorAttachmentsCount = static_cast<int>(FramebufferAttachment::COLOR_ATTACHMENTS_COUNT);
 
-    const GraphicsBackendStencilDescriptor& stencilDescriptor = GraphicsBackend::Current()->GetStencilDescriptor();
-    const GraphicsBackendDepthDescriptor& depthDescriptor = GraphicsBackend::Current()->GetDepthState();
-    const GraphicsBackendRasterizerDescriptor& rasterizerDescriptor = GraphicsBackend::Current()->GetRasterizerState();
-    const GraphicsBackendBlendDescriptor& blendDescriptor = GraphicsBackend::Current()->GetBlendState();
+    GraphicsBackendProgramDescriptor programDescriptor{};
+    programDescriptor.StencilDescriptor = GraphicsBackend::Current()->GetStencilDescriptor();
+    programDescriptor.DepthDescriptor = GraphicsBackend::Current()->GetDepthState();
+    programDescriptor.RasterizerDescriptor = GraphicsBackend::Current()->GetRasterizerState();
+	programDescriptor.PrimitiveType = primitiveType;
 
-    const size_t hash = ShaderLocal::GetPSOHash(vertexAttributes.GetHash(), colorTargetFormat, isLinear, depthTargetFormat, primitiveType, stencilDescriptor, depthDescriptor, rasterizerDescriptor, blendDescriptor);
+    for (int i = 0; i < colorAttachmentsCount; ++i)
+    {
+        programDescriptor.ColorAttachmentDescriptors[i].Format = GraphicsBackend::Current()->GetRenderTargetFormat(static_cast<FramebufferAttachment>(i), &programDescriptor.ColorAttachmentDescriptors[i].IsLinear);
+        programDescriptor.ColorAttachmentDescriptors[i].BlendDescriptor = GraphicsBackend::Current()->GetBlendState();
+    }
+    programDescriptor.DepthFormat = GraphicsBackend::Current()->GetRenderTargetFormat(FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, nullptr);
+
+    const size_t hash = ShaderLocal::GetPSOHash(vertexAttributes.GetHash(), programDescriptor);
 
     const auto it = m_Programs.find(hash);
     if (it != m_Programs.end())
         return it->second;
 
-    GraphicsBackendColorAttachmentDescriptor colorAttachmentDescriptor{};
-    colorAttachmentDescriptor.Format = colorTargetFormat;
-    colorAttachmentDescriptor.BlendDescriptor = blendDescriptor;
-    colorAttachmentDescriptor.IsLinear = isLinear;
-
-    GraphicsBackendProgramDescriptor programDescriptor{};
     programDescriptor.Type = m_Type;
     programDescriptor.Shaders = &m_Shaders;
     programDescriptor.VertexAttributes = &vertexAttributes.GetAttributes();
@@ -144,12 +146,6 @@ const GraphicsBackendProgram& Shader::GetOrCreateRenderProgram(const VertexAttri
     programDescriptor.Buffers = &m_Buffers;
     programDescriptor.TLASes = &m_TLASes;
     programDescriptor.Name = &m_Name;
-    programDescriptor.ColorAttachmentDescriptor = colorAttachmentDescriptor;
-    programDescriptor.DepthFormat = depthTargetFormat;
-    programDescriptor.RasterizerDescriptor = rasterizerDescriptor;
-    programDescriptor.DepthDescriptor = depthDescriptor;
-    programDescriptor.StencilDescriptor = stencilDescriptor;
-    programDescriptor.PrimitiveType = primitiveType;
 
     const GraphicsBackendProgram program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
     m_Programs[hash] = program;

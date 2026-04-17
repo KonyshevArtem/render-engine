@@ -14,6 +14,7 @@
 #include "enums/texture_internal_format.h"
 #include "enums/primitive_type.h"
 #include "enums/program_type.h"
+#include "enums/framebuffer_attachment.h"
 
 #include <vector>
 #include <unordered_map>
@@ -38,7 +39,7 @@ struct GraphicsBackendProgramDescriptor
     const std::unordered_map<std::string, GraphicsBackendTLASInfo>* TLASes;
     const std::string* Name;
 
-    GraphicsBackendColorAttachmentDescriptor ColorAttachmentDescriptor;
+    GraphicsBackendColorAttachmentDescriptor ColorAttachmentDescriptors[static_cast<int>(FramebufferAttachment::COLOR_ATTACHMENTS_COUNT)];
     TextureInternalFormat DepthFormat;
 
     GraphicsBackendRasterizerDescriptor RasterizerDescriptor;

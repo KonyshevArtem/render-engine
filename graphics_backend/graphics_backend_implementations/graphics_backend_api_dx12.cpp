@@ -426,6 +426,8 @@ namespace DX12Local
             RenderTargetState& state = s_RenderTargetStates[i];
             state.IsEnabled = attachment == FramebufferAttachment::COLOR_ATTACHMENT0;
             state.NeedClear = false;
+            if (!state.IsEnabled)
+	            state.Format = TextureInternalFormat::INVALID;
         }
     }
 
@@ -1615,10 +1617,17 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
         ID3DBlob* fragmentBlob = reinterpret_cast<ID3DBlob*>(shaders[1].ShaderObject);
 
         D3D12_BLEND_DESC blendDescriptor = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-        blendDescriptor.RenderTarget[0].BlendEnable = descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled;
-        blendDescriptor.RenderTarget[0].SrcBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor);
-        blendDescriptor.RenderTarget[0].DestBlend = DX12Helpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor);
-        blendDescriptor.RenderTarget[0].RenderTargetWriteMask = static_cast<UINT8>(descriptor.ColorAttachmentDescriptor.BlendDescriptor.ColorWriteMask);
+        for (int i = 0; i < 8; ++i)
+        {
+			const GraphicsBackendColorAttachmentDescriptor& attachmentDescriptor = descriptor.ColorAttachmentDescriptors[i];
+            if (attachmentDescriptor.Format != TextureInternalFormat::INVALID)
+            {
+                blendDescriptor.RenderTarget[i].BlendEnable = attachmentDescriptor.BlendDescriptor.Enabled;
+                blendDescriptor.RenderTarget[i].SrcBlend = DX12Helpers::ToBlendFactor(attachmentDescriptor.BlendDescriptor.SourceFactor);
+                blendDescriptor.RenderTarget[i].DestBlend = DX12Helpers::ToBlendFactor(attachmentDescriptor.BlendDescriptor.DestinationFactor);
+                blendDescriptor.RenderTarget[i].RenderTargetWriteMask = static_cast<UINT8>(attachmentDescriptor.BlendDescriptor.ColorWriteMask);
+            }
+        }
 
         D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
         rasterizerDesc.CullMode = DX12Helpers::ToCullFace(descriptor.RasterizerDescriptor.Face);
@@ -1647,23 +1656,30 @@ GraphicsBackendProgram GraphicsBackendDX12::CreateProgram(const GraphicsBackendP
         depthStencilDesc.FrontFace = GetStencilOpDesc(descriptor.StencilDescriptor.FrontFaceOpDescriptor);
         depthStencilDesc.BackFace = GetStencilOpDesc(descriptor.StencilDescriptor.BackFaceOpDescriptor);
 
-        DXGI_FORMAT colorTargetFormat = DX12Helpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);
-        bool hasColorTarget = colorTargetFormat != DXGI_FORMAT_UNKNOWN;
-
         D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
         psoDesc.InputLayout = { dxVertexAttributes.data(), static_cast<UINT>(dxVertexAttributes.size()) };
         psoDesc.pRootSignature = DX12Local::s_RootSignature;
         psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexBlob);
-        psoDesc.PS = hasColorTarget ? CD3DX12_SHADER_BYTECODE(fragmentBlob) : CD3DX12_SHADER_BYTECODE(nullptr, 0);
         psoDesc.RasterizerState = rasterizerDesc;
         psoDesc.BlendState = blendDescriptor;
         psoDesc.DepthStencilState = depthStencilDesc;
         psoDesc.SampleMask = UINT_MAX;
         psoDesc.PrimitiveTopologyType = DX12Helpers::ToPrimitiveTopologyType(descriptor.PrimitiveType);
-        psoDesc.NumRenderTargets = hasColorTarget ? 1 : 0;
-        psoDesc.RTVFormats[0] = colorTargetFormat;
         psoDesc.DSVFormat = DX12Helpers::ToTextureInternalFormat(descriptor.DepthFormat, true);
         psoDesc.SampleDesc.Count = 1;
+
+		uint32_t renderTargetCount = 0;
+        for (int i = 0; i < 8; ++i)
+        {
+            const GraphicsBackendColorAttachmentDescriptor& attachmentDescriptor = descriptor.ColorAttachmentDescriptors[i];
+            if (attachmentDescriptor.Format != TextureInternalFormat::INVALID)
+            {
+                psoDesc.RTVFormats[i] = DX12Helpers::ToTextureInternalFormat(attachmentDescriptor.Format, attachmentDescriptor.IsLinear);
+                ++renderTargetCount;
+            }
+        }
+		psoDesc.NumRenderTargets = renderTargetCount;
+        psoDesc.PS = renderTargetCount > 0 ? CD3DX12_SHADER_BYTECODE(fragmentBlob) : CD3DX12_SHADER_BYTECODE(nullptr, 0);
 
         ThrowIfFailed(DX12Local::s_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
     }

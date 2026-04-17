@@ -1131,6 +1131,9 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, OpenGLLocal::s_Framebuffers[GraphicsBackend::GetInFlightFrameIndex()][0]);
 
         constexpr int maxAttachments = static_cast<int>(FramebufferAttachment::MAX);
+		GLenum drawBuffers[maxAttachments];
+		int attachmentCount = 0;
+
         for (int i = 0; i < maxAttachments; ++i)
         {
             const OpenGLLocal::RenderTargetState& state = OpenGLLocal::s_RenderTargetStates[i];
@@ -1139,7 +1142,12 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
 
             const GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(static_cast<FramebufferAttachment>(i));
             AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, state.TextureType, state.Target, state.Level, state.Layer);
+
+			if (i < static_cast<int>(FramebufferAttachment::COLOR_ATTACHMENTS_COUNT))
+				drawBuffers[attachmentCount++] = glAttachment;
         }
+
+		glDrawBuffers(attachmentCount, &drawBuffers[0]);
     }
 
     if (clearFlag != 0)

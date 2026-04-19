@@ -84,6 +84,7 @@ namespace OpenGLLocal
         GLuint Target;
         GLbitfield ClearFlags;
         bool IsBackbuffer;
+        bool WasColorEnabled;
         bool IsEnabled;
 
         TextureType TextureType;
@@ -191,6 +192,7 @@ namespace OpenGLLocal
             state.Target = 0;
             state.ClearFlags = 0;
             state.IsBackbuffer = true;
+            state.WasColorEnabled = state.IsEnabled && attachment < FramebufferAttachment::COLOR_ATTACHMENTS_COUNT;
             state.IsEnabled = attachment == FramebufferAttachment::COLOR_ATTACHMENT0 || attachment == FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT;
             state.TextureType = TextureType::TEXTURE_2D;
             state.Level = 0;
@@ -1137,17 +1139,23 @@ void GraphicsBackendOpenGL::BeginRenderPass(const std::string& name)
         for (int i = 0; i < maxAttachments; ++i)
         {
             const OpenGLLocal::RenderTargetState& state = OpenGLLocal::s_RenderTargetStates[i];
-            if (!state.IsEnabled)
+            if (!state.IsEnabled && !state.WasColorEnabled)
                 continue;
 
             const GLenum glAttachment = OpenGLHelpers::ToFramebufferAttachment(static_cast<FramebufferAttachment>(i));
             AttachTextureToFramebuffer(GL_DRAW_FRAMEBUFFER, glAttachment, state.TextureType, state.Target, state.Level, state.Layer);
 
-			if (i < static_cast<int>(FramebufferAttachment::COLOR_ATTACHMENTS_COUNT))
+			if (i < static_cast<int>(FramebufferAttachment::COLOR_ATTACHMENTS_COUNT) && state.Target != 0)
 				drawBuffers[attachmentCount++] = glAttachment;
         }
 
-		glDrawBuffers(attachmentCount, &drawBuffers[0]);
+        if (attachmentCount > 0)
+			glDrawBuffers(attachmentCount, &drawBuffers[0]);
+        else
+        {
+			constexpr GLenum none = GL_NONE;
+			glDrawBuffers(1, &none);
+        }
     }
 
     if (clearFlag != 0)

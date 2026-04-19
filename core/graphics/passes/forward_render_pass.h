@@ -2,12 +2,8 @@
 #define RENDER_ENGINE_FORWARD_RENDER_PASS_H
 
 #include "render_pass.h"
-#include "types/graphics_backend_render_target_descriptor.h"
 #include "types/graphics_backend_fence.h"
-#include "matrix4x4/matrix4x4.h"
-
-#include <memory>
-#include <vector>
+#include "graphics/render_queue/render_queue.h"
 
 class DrawRenderersPass;
 class SkyboxPass;
@@ -25,13 +21,7 @@ public:
     const GraphicsBackendFence& GetEndFence() const;
 
 private:
-    std::shared_ptr<DrawRenderersPass> m_OpaquePass;
-    std::shared_ptr<DrawRenderersPass> m_TransparentPass;
-    std::shared_ptr<SkyboxPass> m_SkyboxPass;
-
-    std::shared_ptr<Texture> m_CameraColorTarget;
-    std::shared_ptr<Texture> m_CameraDepthTarget;
-    
+	RenderQueue m_RenderQueue;
     GraphicsBackendFence m_EndFence;
 };
 

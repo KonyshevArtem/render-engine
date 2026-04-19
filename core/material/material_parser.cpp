@@ -9,6 +9,7 @@
 #include "types/graphics_backend_depth_descriptor.h"
 #include "types/graphics_backend_rasterizer_descriptor.h"
 #include "types/graphics_backend_blend_descriptor.h"
+#include "global_constants.h"
 
 NLOHMANN_JSON_SERIALIZE_ENUM(BlendFactor, {
                              {BlendFactor::ZERO, "ZERO"},
@@ -198,6 +199,13 @@ namespace MaterialParser
 
         MaterialInfo materialInfo;
         materialJson.get_to(materialInfo);
+
+        if (materialInfo.RenderQueue < GlobalConstants::TransparentRenderQueue)
+        {
+            materialInfo.Shader.Keywords.emplace_back("_GBUFFER");
+			std::erase(materialInfo.Shader.Keywords, "_REFLECTION");
+			std::erase(materialInfo.Shader.Keywords, "_RECEIVE_SHADOWS");
+        }
 
         std::shared_ptr<Shader> shader = Shader::Load(materialInfo.Shader.Path, materialInfo.Shader.Keywords);
         std::shared_ptr<Material> material = std::make_shared<Material>(shader, path.string());

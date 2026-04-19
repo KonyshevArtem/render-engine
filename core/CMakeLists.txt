@@ -88,8 +88,6 @@ add_library(
 	graphics_buffer/ring_buffer.h
 	file_system/file_system.cpp
 	file_system/file_system.h
-	graphics/passes/draw_renderers_pass.cpp
-	graphics/passes/draw_renderers_pass.h
 	graphics/passes/forward_render_pass.cpp
 	graphics/passes/forward_render_pass.h
 	editor/copy_depth/copy_depth_pass.cpp
@@ -166,7 +164,11 @@ add_library(
         raytracing/raytracing_scene.h
         raytracing/raytracing_scene.cpp
         raytracing/raytracing_pass.h
-        raytracing/raytracing_pass.cpp)
+        raytracing/raytracing_pass.cpp
+        graphics/passes/gbuffer_pass.h
+        graphics/passes/gbuffer_pass.cpp
+        graphics/passes/deferred_light_pass.h
+        graphics/passes/deferred_light_pass.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil StringSplit)

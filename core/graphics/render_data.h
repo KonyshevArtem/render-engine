@@ -31,6 +31,7 @@ struct RenderData
 
     std::shared_ptr<Cubemap> Skybox;
 
+	std::shared_ptr<Texture> GBuffers[2];
     std::shared_ptr<Texture> CameraColorTarget;
     std::shared_ptr<Texture> CameraDepthTarget;
 

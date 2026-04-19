@@ -1,6 +1,7 @@
 #include "common/camera_data.h"
 #include "common/per_draw_data.h"
 #include "common/lighting.h"
+#include "gbuffer/gbuffer_common.h"
 
 struct Attributes
 {
@@ -22,6 +23,13 @@ struct Varyings
 #endif
     DECLARE_INSTANCE_ID_VARYING(4)
 };
+
+#ifndef _GBUFFER
+struct Output
+{
+    float4 Color : SV_Target0;
+};
+#endif
 
 cbuffer PerMaterialData : register(b0)
 {
@@ -64,7 +72,12 @@ Varyings vertexMain(Attributes attributes)
     return vars;
 }
 
-half4 fragmentMain(Varyings vars) : SV_Target
+#ifdef _GBUFFER
+GBufferOutput 
+#else
+Output
+#endif
+fragmentMain(Varyings vars)
 {
     SETUP_INSTANCE_ID(vars)
 
@@ -90,12 +103,15 @@ half4 fragmentMain(Varyings vars) : SV_Target
         discard;
 #endif
 
-#ifdef _REFLECTION
-    half3 reflection = sampleReflection(normalWS, vars.PositionWS.xyz, roughness, _CameraPosWS);
+#ifdef _GBUFFER
+    GBufferOutput output;
+    output.AlbedoRoughness = float4(albedo.rgb, roughness);
+    output.NormalMetallness = float4(normalWS * 0.5f + 0.5f, metallness);
 #else
-    half3 reflection = (half3) 0.0h;
+    Output output;
+    output.Color.xyz = getLightPBR(vars.PositionWS.xyz, normalWS, albedo.rgb, roughness, metallness, _CameraPosWS);
+    output.Color.w = albedo.a;
 #endif
-
-    half3 finalColor = (half3) getLightPBR(vars.PositionWS.xyz, normalWS, albedo.rgb, roughness, metallness, reflection, _CameraPosWS);
-    return half4(finalColor.rgb, albedo.a);
+    
+    return output;
 }

@@ -148,7 +148,7 @@ void getLightSourcePBR(float3 normalWS, float3 viewDirWS, float3 lightDirWS, flo
     diffuse = kD / PI;
 }
 
-float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, half3 reflectionIrradiance, float3 cameraPosWS)
+float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, float3 cameraPosWS)
 {
     float3 viewDirWS = normalize(cameraPosWS - posWS);
     float3 F0 = lerp((float3) 0.04, albedo, metallness);
@@ -206,7 +206,11 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
     }
 
     float3 indirectLighting = _AmbientLight;
-    indirectLighting += F0 * float3(reflectionIrradiance);
+
+#ifdef _REFLECTION
+    float3 reflectionIrradiance = sampleReflection(normalWS, posWS, roughness, cameraPosWS);
+    indirectLighting += F0 * reflectionIrradiance;
+#endif
 
     return albedo.rgb * indirectLighting + directLighting;
 }

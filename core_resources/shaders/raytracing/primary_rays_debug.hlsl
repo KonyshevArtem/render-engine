@@ -65,7 +65,7 @@ float4 fragmentMain(float4 pixelCoord : SV_Position) : SV_Target
         float3 worldPos = ray.Origin + ray.Direction * query.CommittedRayT();
         float3 worldNormal = GetHitWorldNormal(query.CommittedInstanceIndex(), query.CommittedPrimitiveIndex(), query.CommittedWorldToObject3x4());
         
-        float3 light = getLightPBR(worldPos, worldNormal, colors[query.CommittedInstanceID() % 6].xyz, 1, 0, float3(0, 0, 0), _CameraPosWS);
+        float3 light = getLightPBR(worldPos, worldNormal, colors[query.CommittedInstanceID() % 6].xyz, 1, 0, _CameraPosWS);
         return float4(light, 1);
     }
     

@@ -1,5 +1,6 @@
 #include "common/per_draw_data.h"
 #include "common/camera_data.h"
+#include "gbuffer/gbuffer_common.h"
 
 struct Attributes
 {
@@ -58,10 +59,14 @@ Varyings vertexMain(Attributes input, uint vid : SV_VertexID)
     return vars;
 }
 
-half4 fragmentMain(Varyings input) : SV_Target
+GBufferOutput fragmentMain(Varyings input)
 {
-    float4 texColor = _Texture.Sample(sampler_Texture, input.Uv);
+	float4 texColor = _Texture.Sample(sampler_Texture, input.Uv);
     if (texColor.a < 0.1)
         discard;
-    return texColor;
+
+    GBufferOutput output;
+    output.AlbedoRoughness = float4(texColor.rgb, 1);
+    output.NormalMetallness = float4(0, 0, -0.5, 0);
+    return output;
 }

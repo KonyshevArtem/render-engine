@@ -39,6 +39,9 @@
 #include "developer_console/developer_console.h"
 #include "raytracing/raytracing_scene.h"
 #include "raytracing/raytracing_pass.h"
+#include "passes/gbuffer_pass.h"
+#include "passes/deferred_light_pass.h"
+#include "passes/skybox_pass.h"
 #include "arguments.h"
 
 #include <cassert>
@@ -49,6 +52,9 @@ namespace Graphics
     std::shared_ptr<RingBuffer> s_CameraDataBuffer;
 
     std::shared_ptr<ForwardRenderPass> s_ForwardRenderPass;
+    std::shared_ptr<SkyboxPass> s_SkyboxPass;
+	std::shared_ptr<GBufferPass> s_GBufferPass;
+    std::shared_ptr<DeferredLightPass> s_DeferredLightPass;
     std::shared_ptr<ShadowCasterPass> s_ShadowCasterPass;
     std::shared_ptr<FinalBlitPass> s_FinalBlitPass;
     std::shared_ptr<UIRenderPass> s_UIRenderPass;
@@ -87,7 +93,10 @@ namespace Graphics
     void InitPasses()
     {
         s_ShadowCasterPass = std::make_shared<ShadowCasterPass>();
+		s_GBufferPass = std::make_shared<GBufferPass>();
+		s_DeferredLightPass = std::make_shared<DeferredLightPass>();
         s_ForwardRenderPass = std::make_shared<ForwardRenderPass>();
+		s_SkyboxPass = std::make_shared<SkyboxPass>();
         s_PostProcessPass = std::make_shared<PostProcessPass>();
         s_UIRenderPass = std::make_shared<UIRenderPass>();
         s_FinalBlitPass = std::make_shared<FinalBlitPass>();
@@ -124,6 +133,9 @@ namespace Graphics
         s_CameraDataBuffer = nullptr;
 
         s_ForwardRenderPass = nullptr;
+		s_SkyboxPass = nullptr;
+		s_GBufferPass = nullptr;
+		s_DeferredLightPass = nullptr;
         s_ShadowCasterPass = nullptr;
         s_FinalBlitPass = nullptr;
         s_UIRenderPass = nullptr;
@@ -219,12 +231,20 @@ namespace Graphics
                 return SchedulePrepareTask([renderPass] {renderPass->Prepare(s_RenderData); }, dependencies);
             };
 
-        SchedulePrepareTask([] {s_RaytracingScene->Prepare(s_RenderData); }, {});
+		if (s_RaytracingScene)
+			SchedulePrepareTask([] {s_RaytracingScene->Prepare(s_RenderData); }, {});
         SchedulePassPrepare(s_ShadowCasterPass, {});
 
-        const std::shared_ptr<Worker::Task> forwardRenderPrepareTask = SchedulePassPrepare(s_ForwardRenderPass, {});
+		const std::shared_ptr<Worker::Task> gBufferPrepareTask = SchedulePassPrepare(s_GBufferPass, {});
 
-        const std::shared_ptr<Worker::Task> postProcessDependencies[1] = { forwardRenderPrepareTask };
+        const std::shared_ptr<Worker::Task> forwardRenderPassDependencies[1] = { gBufferPrepareTask };
+        SchedulePassPrepare(s_ForwardRenderPass, forwardRenderPassDependencies);
+
+		SchedulePassPrepare(s_SkyboxPass, {});
+
+        const std::shared_ptr<Worker::Task> deferredLightPrepareTask = SchedulePassPrepare(s_DeferredLightPass, forwardRenderPassDependencies);
+
+        const std::shared_ptr<Worker::Task> postProcessDependencies[1] = { deferredLightPrepareTask };
         SchedulePassPrepare(s_PostProcessPass, postProcessDependencies);
 
         const std::shared_ptr<Worker::Task> uiRenderPrepareTask = SchedulePassPrepare(s_UIRenderPass, {});
@@ -267,6 +287,9 @@ namespace Graphics
 	        s_RaytracingScene->Update(s_RenderData);
 
         s_ShadowCasterPass->Execute(s_RenderData);
+		s_GBufferPass->Execute(s_RenderData);
+		s_DeferredLightPass->Execute(s_RenderData);
+		s_SkyboxPass->Execute(s_RenderData);
         s_ForwardRenderPass->Execute(s_RenderData);
 #if RENDER_ENGINE_EDITOR
         s_ShadowMapDebugPass->Execute(s_RenderData);

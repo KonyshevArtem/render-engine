@@ -103,7 +103,11 @@ namespace ShaderLoader
         }
         catch (const std::exception &_exception)
         {
-            Debug::LogErrorFormat("[ShaderLoader] Can't load shader {}\n{}", path.string(), _exception.what());
+            std::string keywordString = keywords.empty() ? "<no defines>" : "";
+            for (const std::string& keyword : keywords)
+                keywordString += keyword + " ";
+
+            Debug::LogErrorFormat("[ShaderLoader] Can't load shader {}\n{}\n{}", path.string(), keywordString, _exception.what());
             return nullptr;
         }
     }

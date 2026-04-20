@@ -327,6 +327,7 @@ namespace Graphics
         cameraData.NearClipPlane = nearPlane;
         cameraData.FarClipPlane = farPlane;
         cameraData.ViewProjectionMatrix = gpuProjectionMatrix * viewMatrix;
+		cameraData.InvViewProjectionMatrix = (projectionMatrix * viewMatrix).Invert();
         cameraData.CameraDirection = invViewMatrix * Vector4{0, 0, 1, 0};
 
         uint64_t offset = s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));

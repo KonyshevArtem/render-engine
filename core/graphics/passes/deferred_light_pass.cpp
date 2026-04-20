@@ -38,8 +38,6 @@ void DeferredLightPass::Execute(const RenderData& renderData)
 
     struct
     {
-		Matrix4x4 InvCameraVP;
-
         Vector2 InvTargetSize;
         Vector2 Padding;
     } constants{};
@@ -52,8 +50,7 @@ void DeferredLightPass::Execute(const RenderData& renderData)
 
         m_LightingDataBuffer = std::make_shared<GraphicsBuffer>(descriptor, "DeferredLight/Data");
     }
-
-	constants.InvCameraVP = (renderData.ProjectionMatrix * renderData.ViewMatrix).Invert();
+    
 	constants.InvTargetSize = Vector2(1.0f / renderData.CameraColorTarget->GetWidth(), 1.0f / renderData.CameraColorTarget->GetHeight());
     m_LightingDataBuffer->SetData(&constants, 0, sizeof(constants));
 

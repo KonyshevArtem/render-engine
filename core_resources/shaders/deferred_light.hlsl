@@ -7,10 +7,8 @@ struct Attributes
     float3 positionOS : POSITION;
 };
 
-cbuffer DeferredLightData : register(b0)
-{
-    float4x4 _InvCameraVP;
-    
+cbuffer RaytracedShadowsData : register(b0)
+{    
     float2 _InvTargetSize;
     float2 _Padding;
 };
@@ -35,7 +33,7 @@ float4 fragmentMain(float4 pixelCoord : SV_Position) : SV_Target
     clipPos.y = -clipPos.y;
 #endif
     
-    float4 worldPos = mul(_InvCameraVP, float4(clipPos, depth * 2 - 1, 1));
+    float4 worldPos = mul(_InvVPMatrix, float4(clipPos, depth * 2 - 1, 1));
     worldPos /= worldPos.w;
     
     float3 worldNormal = normalMetallic.xyz * 2 - 1;

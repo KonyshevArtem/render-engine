@@ -5,8 +5,6 @@
 
 cbuffer Data : register(b0)
 {
-    float4x4 InvVPMatrix;
-
     uint2 TargetSize;
     float2 Padding0;
 };
@@ -18,8 +16,8 @@ float3 GetPixelWorldDirection(float2 pixelCoord)
     ndc.y *= -1;
 #endif
 
-    float4 near = mul(InvVPMatrix, float4(ndc, 0, 1));
-    float4 far = mul(InvVPMatrix, float4(ndc, 1, 1));
+    float4 near = mul(_InvVPMatrix, float4(ndc, 0, 1));
+    float4 far = mul(_InvVPMatrix, float4(ndc, 1, 1));
 
     near = near / near.w;
     far = far / far.w;

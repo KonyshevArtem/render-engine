@@ -6,8 +6,11 @@
 cbuffer CameraData : register(CAMERA_DATA)
 {
     float4x4   _VPMatrix;
+	float4x4   _InvVPMatrix;
+
     float3     _CameraPosWS;
     float      _NearClipPlane;
+
     float3     _CameraFwdWS;
     float      _FarClipPlane;
 };

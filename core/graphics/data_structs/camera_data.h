@@ -4,12 +4,15 @@
 #include "vector3/vector3.h"
 #include "matrix4x4/matrix4x4.h"
 
-// Keep in-sync with shaders/common/camera_data.cg
+// Keep in-sync with shaders/common/camera_data.h
 struct CameraData
 {
     Matrix4x4 ViewProjectionMatrix{};
+	Matrix4x4 InvViewProjectionMatrix{};
+
     Vector3 CameraPosition{};
     float NearClipPlane = 0;
+
     Vector3 CameraDirection{};
     float FarClipPlane = 0;
 };

@@ -50,13 +50,10 @@ void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 
 		struct
 		{
-			Matrix4x4 InvVPMatrix;
-
 			Vector2UI TargetSize;
 			Vector2 Padding0;
 		} constants;
 
-		constants.InvVPMatrix = (renderData.ProjectionMatrix * renderData.ViewMatrix).Invert();
 		constants.TargetSize = Vector2UI(renderData.CameraColorTarget->GetWidth(), renderData.CameraColorTarget->GetHeight());
 
 		if (!m_PrimaryRaysDebugDataBuffer)

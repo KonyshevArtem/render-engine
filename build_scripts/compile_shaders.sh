@@ -113,8 +113,10 @@ Compile ui/maskStencil
 Compile post_process
 
 Compile raytracing/primary_rays_debug _RECEIVE_SHADOWS
+Compile raytracing/raytraced_shadows
 
 Compile deferred_light _RECEIVE_SHADOWS,_REFLECTION
+Compile deferred_light _RECEIVE_SHADOWS,_REFLECTION,_RAYTRACED_SHADOWS
 
 echo "Finished compiling shaders for ${PLATFORM} ${BACKENDS}";
 if [ -z "$1" ]; then

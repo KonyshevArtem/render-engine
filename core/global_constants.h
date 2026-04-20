@@ -16,6 +16,7 @@ namespace GlobalConstants
     constexpr int DirectionalShadowMapIndex = 5;
     constexpr int SpotLightShadowMapIndex = 6;
     constexpr int PointLightShadowMapIndex = 7;
+	constexpr int RaytracedShadowMapIndex = DirectionalShadowMapIndex;
 
     constexpr int MatricesData = 4;
     constexpr int LightingDataIndex = 5;

@@ -8,7 +8,8 @@
 
 DeferredLightPass::DeferredLightPass()
 {
-	m_LightShader = Shader::Load("core_resources/shaders/deferred_light", {"_REFLECTION", "_RECEIVE_SHADOWS"});
+	m_LightShaders[0] = Shader::Load("core_resources/shaders/deferred_light", {"_REFLECTION", "_RECEIVE_SHADOWS"});
+	m_LightShaders[1] = Shader::Load("core_resources/shaders/deferred_light", {"_REFLECTION", "_RECEIVE_SHADOWS", "_RAYTRACED_SHADOWS"});
 }
 
 void DeferredLightPass::Prepare(RenderData& renderData)
@@ -71,7 +72,7 @@ void DeferredLightPass::Execute(const RenderData& renderData)
 		GraphicsBackend::Current()->BindConstantBuffer(m_LightingDataBuffer->GetBackendBuffer(), 0, 0, sizeof(constants));
 
 		const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
-        GraphicsBackend::Current()->UseProgram(m_LightShader->GetProgram(fullscreenMesh));
+        GraphicsBackend::Current()->UseProgram(m_LightShaders[renderData.UseRaytracedShadows]->GetProgram(fullscreenMesh));
         GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
 	}
 	GraphicsBackend::Current()->EndRenderPass();

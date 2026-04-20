@@ -237,6 +237,9 @@ namespace Graphics
 
 		const std::shared_ptr<Worker::Task> gBufferPrepareTask = SchedulePassPrepare(s_GBufferPass, {});
 
+		const std::shared_ptr<Worker::Task> raytracedShadowsDependencies[1] = { gBufferPrepareTask };
+		SchedulePassPrepare(s_RaytracingPass, raytracedShadowsDependencies);
+
         const std::shared_ptr<Worker::Task> forwardRenderPassDependencies[1] = { gBufferPrepareTask };
         SchedulePassPrepare(s_ForwardRenderPass, forwardRenderPassDependencies);
 
@@ -288,6 +291,8 @@ namespace Graphics
 
         s_ShadowCasterPass->Execute(s_RenderData);
 		s_GBufferPass->Execute(s_RenderData);
+        if (s_RaytracingPass)
+			s_RaytracingPass->ExecuteRaytracedShadows(s_RenderData);
 		s_DeferredLightPass->Execute(s_RenderData);
 		s_SkyboxPass->Execute(s_RenderData);
         s_ForwardRenderPass->Execute(s_RenderData);
@@ -322,12 +327,16 @@ namespace Graphics
         const Matrix4x4 gpuProjectionMatrix = GetGPUProjectionMatrix(projectionMatrix);
         const Matrix4x4 invViewMatrix = viewMatrix.Invert();
 
+		Matrix4x4 depthRemap = Matrix4x4::Identity();
+        depthRemap.m22 = 2.0f;
+		depthRemap.m32 = -1.0f;
+
         CameraData cameraData{};
         cameraData.CameraPosition = invViewMatrix.GetPosition();
         cameraData.NearClipPlane = nearPlane;
         cameraData.FarClipPlane = farPlane;
         cameraData.ViewProjectionMatrix = gpuProjectionMatrix * viewMatrix;
-		cameraData.InvViewProjectionMatrix = (projectionMatrix * viewMatrix).Invert();
+		cameraData.InvViewProjectionMatrix = (projectionMatrix * viewMatrix).Invert() * depthRemap;
         cameraData.CameraDirection = invViewMatrix * Vector4{0, 0, 1, 0};
 
         uint64_t offset = s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));

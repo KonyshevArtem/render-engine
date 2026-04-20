@@ -1,5 +1,6 @@
 #include "../common/global_defines.h"
 #include "../common/shadows.h"
+#include "../common/helper_functions.h"
 
 struct Attributes
 {
@@ -40,12 +41,11 @@ float4 fragmentMain(Varyings vars) : SV_Target
 #endif
 
     float depth = _Depth.Sample(sampler_Depth, depthUV);
-    float4 posWS = mul(_InvCameraVP, float4(vars.UV.xy * 2 - 1, depth * 2 - 1, 1));
-    posWS /= posWS.w;
+    float3 posWS = ClipToWorldPosition(float3(vars.UV.xy * 2 - 1, depth), _InvCameraVP);
 
     for (int i = 0; i < SHADOW_CASCADE_COUNT; ++i)
     {
-        float3 shadowCoord = mul(_DirLightShadow[i].LightViewProjMatrix, float4(posWS.xyz, 1)).xyz;
+        float3 shadowCoord = mul(_DirLightShadow[i].LightViewProjMatrix, float4(posWS, 1)).xyz;
         if (isFragVisibleXY(shadowCoord.xy))
         {
             float r = i == 2 || i == 3 ? 1 : 0;

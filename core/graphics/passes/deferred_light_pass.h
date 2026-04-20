@@ -16,7 +16,7 @@ public:
 	void Execute(const RenderData& renderData) override;
 
 private:
-	std::shared_ptr<Shader> m_LightShader;
+	std::shared_ptr<Shader> m_LightShaders[2];
 	std::shared_ptr<Texture> m_CameraColorTarget;
 	std::shared_ptr<GraphicsBuffer> m_LightingDataBuffer;
 };

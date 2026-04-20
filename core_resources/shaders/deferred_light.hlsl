@@ -1,13 +1,14 @@
 #include "common/global_defines.h"
 #include "common/lighting.h"
 #include "common/camera_data.h"
+#include "common/helper_functions.h"
 
 struct Attributes
 {
     float3 positionOS : POSITION;
 };
 
-cbuffer RaytracedShadowsData : register(b0)
+cbuffer DeferredLightData : register(b0)
 {    
     float2 _InvTargetSize;
     float2 _Padding;
@@ -28,16 +29,10 @@ float4 fragmentMain(float4 pixelCoord : SV_Position) : SV_Target
     float4 normalMetallic = GBuffer1.Load(int3(pixelCoord.xy, 0));
     float depth = Depth.Load(int3(pixelCoord.xy, 0));
     
-    float2 clipPos = float2(pixelCoord.xy) * _InvTargetSize * 2 - 1;
-#if SCREEN_UV_UPSIDE_DOWN
-    clipPos.y = -clipPos.y;
-#endif
-    
-    float4 worldPos = mul(_InvVPMatrix, float4(clipPos, depth * 2 - 1, 1));
-    worldPos /= worldPos.w;
-    
+    float2 clipPos = PixelToClipPosition(pixelCoord.xy, _InvTargetSize);
+    float3 worldPos = ClipToWorldPosition(float3(clipPos, depth), _InvVPMatrix);
     float3 worldNormal = normalMetallic.xyz * 2 - 1;
-    float3 finalColor = getLightPBR(worldPos.xyz, worldNormal, albedoRoughness.xyz, albedoRoughness.w, normalMetallic.w, _CameraPosWS);
+    float3 finalColor = getLightPBR(worldPos.xyz, worldNormal, albedoRoughness.xyz, albedoRoughness.w, normalMetallic.w, _CameraPosWS, pixelCoord.xy);
     
     return float4(finalColor, 1);
 }

@@ -1,6 +1,7 @@
 #ifndef RENDER_ENGINE_RAYTRACING_PASS_H
 #define RENDER_ENGINE_RAYTRACING_PASS_H
 
+#include "file_system/file_watcher.h"
 #include "graphics/passes/render_pass.h"
 
 struct RenderData;
@@ -32,6 +33,10 @@ private:
     bool m_RaytracedShadowsEnabled;
 
     std::shared_ptr<RaytracingScene> m_RaytracingScene;
+
+	FileWatcher m_FileWatcher;
+
+    void LoadShaders();
 };
 
 

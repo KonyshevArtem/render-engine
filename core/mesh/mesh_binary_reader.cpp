@@ -7,7 +7,7 @@ bool MeshBinaryReader::ReadMesh(const std::filesystem::path &path)
 
     m_MeshBinaryData.clear();
 
-    if (!FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / path, m_MeshBinaryData))
+    if (!FileSystem::ReadFileBytes(FileSystem::GetBuildResourcesPath() / path, m_MeshBinaryData))
         return false;
 
     m_Header = *reinterpret_cast<MeshHeader*>(m_MeshBinaryData.data());

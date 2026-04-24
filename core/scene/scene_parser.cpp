@@ -65,7 +65,7 @@ namespace SceneParser
 
     std::shared_ptr<Scene> Parse(const std::filesystem::path& path)
     {
-        std::string sceneText = FileSystem::ReadFile(FileSystem::GetResourcesPath() / path);
+        std::string sceneText = FileSystem::ReadFile(FileSystem::GetBuildResourcesPath() / path);
         nlohmann::json sceneJson = nlohmann::json::parse(sceneText);
 
         SceneInfo sceneInfo;

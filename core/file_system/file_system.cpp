@@ -38,8 +38,13 @@ namespace FileSystem
         return s_FileSystem->ReadFileBytes(relativePath, bytes);
     }
 
-    const std::filesystem::path& GetResourcesPath()
+    const std::filesystem::path& GetBuildResourcesPath()
     {
-        return s_FileSystem->GetResourcesPath();
+        return s_FileSystem->GetBuildResourcesPath();
     }
+
+    const std::filesystem::path& GetEditorResourcesPath()
+    {
+        return s_FileSystem->GetEditorResourcesPath();
+	}
 }

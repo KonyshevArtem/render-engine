@@ -5,7 +5,7 @@
 
 FileSystemApple::FileSystemApple() : FileSystemBase()
 {
-    m_ResourcesPath = NS::Bundle::mainBundle()->resourcePath()->cString(NS::UTF8StringEncoding);
+    m_BuildResourcesPath = NS::Bundle::mainBundle()->resourcePath()->cString(NS::UTF8StringEncoding);
 }
 
 #endif

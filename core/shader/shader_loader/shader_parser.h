@@ -10,6 +10,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <filesystem>
 
 namespace ShaderParser
 {
@@ -19,6 +20,8 @@ namespace ShaderParser
         std::unordered_map<std::string, GraphicsBackendSamplerInfo>& samplers,
         std::unordered_map<std::string, GraphicsBackendTLASInfo>& TLASes,
         ThreadGroupSize& threadGroupSize);
+
+    void ParseDependencies(const std::string& dependenciesJson, std::unordered_map<std::string, std::filesystem::file_time_type::duration::rep>& outDependencies);
 }
 
 #endif //RENDER_ENGINE_SHADER_PARSER_H

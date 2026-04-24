@@ -12,6 +12,18 @@ if (${RENDER_ENGINE_WINDOWS_PLATFORM})
             COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:RenderEngineLauncher>/core_resources
             COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/build_resources/windows/core_resources $<TARGET_FILE_DIR:RenderEngineLauncher>/core_resources
             COMMAND ${CMAKE_COMMAND} -E echo \"[Pre Build] Resources copied\")
-    add_dependencies(RenderEngineLauncher PreBuildWindows)
+
+    # setup symlinks for editor resources
+    add_custom_target(PreBuildWindowsEditor ALL
+            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:RenderEngineLauncher>/editor_resources
+            COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/core_resources $<TARGET_FILE_DIR:RenderEngineLauncher>/editor_resources/core_resources
+            COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/build_resources/windows/core_resources $<TARGET_FILE_DIR:RenderEngineLauncher>/core_resources
+            COMMAND ${CMAKE_COMMAND} -E echo \"[Pre Build] Editor resources setup\")            
+
+    if (${RENDER_ENGINE_EDITOR})
+        add_dependencies(RenderEngineLauncher PreBuildWindowsEditor)
+    else()
+        add_dependencies(RenderEngineLauncher PreBuildWindows)
+    endif()
 
 endif ()

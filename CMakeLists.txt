@@ -40,7 +40,6 @@ endif ()
 if ((${RENDER_ENGINE_WINDOWS_PLATFORM}) OR (${RENDER_ENGINE_MACOS_PLATFORM}))
 
 	set(RENDER_ENGINE_BUILD_TOOLS 1)
-	add_compile_definitions(RENDER_ENGINE_EDITOR_RESOURCE_PATH="${CMAKE_SOURCE_DIR}")
 
 endif ()
 
@@ -63,6 +62,7 @@ add_library(
 
 # TODO add non-editor compile target
 add_compile_definitions(RENDER_ENGINE_EDITOR)
+set(RENDER_ENGINE_EDITOR 1)
 
 #launchers source code
 add_subdirectory(launchers/windows_launcher)

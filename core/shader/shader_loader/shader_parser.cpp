@@ -62,4 +62,10 @@ namespace ShaderParser
         TLASes = reflectionObject.at("TLASes").template get<std::unordered_map<std::string, GraphicsBackendTLASInfo>>();
         reflectionObject.at("ThreadGroupSize").get_to(threadGroupSize);
     }
+
+    void ParseDependencies(const std::string& dependenciesJson, std::unordered_map<std::string, std::filesystem::file_time_type::duration::rep>& outDependencies)
+    {
+        const nlohmann::json dependenciesObject = nlohmann::json::parse(dependenciesJson);
+        outDependencies = dependenciesObject.template get<std::unordered_map<std::string, std::filesystem::file_time_type::duration::rep>>();
+	}
 }

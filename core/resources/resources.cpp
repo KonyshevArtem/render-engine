@@ -144,7 +144,7 @@ std::shared_ptr<Font> Resources::Load(const std::filesystem::path &path, bool as
         return font;
 
     std::vector<uint8_t> bytes;
-    if (!FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / path, bytes))
+    if (!FileSystem::ReadFileBytes(FileSystem::GetBuildResourcesPath() / path, bytes))
     {
         Debug::LogErrorFormat("[Resources] Cannot load font: {}", path.string());
         return nullptr;

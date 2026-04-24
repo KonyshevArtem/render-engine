@@ -14,7 +14,8 @@ namespace FileSystem
     bool ReadFileBytes(const std::filesystem::path& path, std::vector<uint8_t>& bytes);
     void WriteFile(const std::filesystem::path& path, const std::string& content);
 
-    const std::filesystem::path& GetResourcesPath();
+    const std::filesystem::path& GetBuildResourcesPath();
+    const std::filesystem::path& GetEditorResourcesPath();
 }
 
 #endif //RENDER_ENGINE_FILE_SYSTEM_H

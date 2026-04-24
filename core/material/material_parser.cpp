@@ -194,7 +194,7 @@ namespace MaterialParser
 
     std::shared_ptr<Material> Parse(const std::filesystem::path& path, bool asyncTextureLoads)
     {
-        std::string materialText = FileSystem::ReadFile(FileSystem::GetResourcesPath() / path);
+        std::string materialText = FileSystem::ReadFile(FileSystem::GetBuildResourcesPath() / path);
         nlohmann::json materialJson = nlohmann::json::parse(materialText);
 
         MaterialInfo materialInfo;

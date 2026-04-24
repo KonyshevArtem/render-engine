@@ -7,7 +7,7 @@ bool TextureBinaryReader::ReadTexture(const std::filesystem::path &path)
 
     m_TextureBinaryData.clear();
 
-    if (!FileSystem::ReadFileBytes(FileSystem::GetResourcesPath() / path, m_TextureBinaryData))
+    if (!FileSystem::ReadFileBytes(FileSystem::GetBuildResourcesPath() / path, m_TextureBinaryData))
     {
         return false;
     }

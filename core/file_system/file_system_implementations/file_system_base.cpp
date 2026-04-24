@@ -15,17 +15,17 @@ std::string FileSystemBase::ReadFile(const std::filesystem::path& path)
 {
     FILE* file = fopen(path.string().c_str(), "r");
     if (file == nullptr)
-        throw std::runtime_error("[Utils] Can't open file: " + path.string());
+	    throw std::runtime_error("[Utils] Can't open file: " + path.string());
 
     if (fseek(file, 0, SEEK_END) != 0)
-        throw std::runtime_error("[Utils] Error reading file: " + path.string());
+	    throw std::runtime_error("[Utils] Error reading file: " + path.string());
 
     auto fileSize = ftell(file);
     if (fileSize == -1L)
-        throw std::runtime_error("[Utils] Error reading file: " + path.string());
+	    throw std::runtime_error("[Utils] Error reading file: " + path.string());
 
     if (fseek(file, 0, SEEK_SET) != 0)
-        throw std::runtime_error("[Utils] Error reading file: " + path.string());
+	    throw std::runtime_error("[Utils] Error reading file: " + path.string());
 
     std::string content(fileSize, ' ');
     int c;
@@ -71,7 +71,12 @@ void FileSystemBase::WriteFile(const std::filesystem::path& path, const std::str
     o.close();
 }
 
-const std::filesystem::path &FileSystemBase::GetResourcesPath()
+const std::filesystem::path& FileSystemBase::GetBuildResourcesPath()
 {
-    return m_ResourcesPath;
+    return m_BuildResourcesPath;
+}
+
+const std::filesystem::path& FileSystemBase::GetEditorResourcesPath()
+{
+	return m_EditorResourcesPath;
 }

@@ -1,15 +1,11 @@
 #ifndef RENDER_ENGINE_SHADER_COMPILER_DEFINES_H
 #define RENDER_ENGINE_SHADER_COMPILER_DEFINES_H
 
-#include <iostream>
+#include <string>
 #include <vector>
 
-#include "string_split.h"
-
-std::vector<std::wstring> GetDefines(const std::string& commaSeparatedDefines)
+std::vector<std::wstring> ConvertDefines(const std::vector<std::string>& defines)
 {
-    std::vector<std::string> defines = StringSplit::Split(commaSeparatedDefines, ',');
-
     std::vector<std::wstring> wideDefines;
     for (const std::string& d : defines)
     {
@@ -48,22 +44,18 @@ std::string GetDefinesHash(std::vector<std::wstring> defines)
     return std::to_string(HashFNV1a(combinedDefines));
 }
 
-void PrintDefines(const std::vector<std::wstring>& defines, const std::string& definesHash)
+std::string CombineDefines(const std::vector<std::string>& defines)
 {
-    std::cout << "Hash: " << definesHash << std::endl;
-
+	std::string combinedDefines;
     if (defines.empty())
-    {
-        std::cout << "<No defines>";
-    }
+		combinedDefines = "<no defines>";
     else
     {
-        for (auto& define: defines)
-        {
-            std::wcout << define << " ";
-        }
-    }
-    std::cout << std::endl;
+        for (const std::string& define : defines)
+            combinedDefines += define + ",";
+	}
+
+    return combinedDefines;
 }
 
 #endif //RENDER_ENGINE_SHADER_COMPILER_DEFINES_H

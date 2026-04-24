@@ -237,8 +237,11 @@ namespace Graphics
 
 		const std::shared_ptr<Worker::Task> gBufferPrepareTask = SchedulePassPrepare(s_GBufferPass, {});
 
-		const std::shared_ptr<Worker::Task> raytracedShadowsDependencies[1] = { gBufferPrepareTask };
-		SchedulePassPrepare(s_RaytracingPass, raytracedShadowsDependencies);
+        if (s_RaytracingPass)
+        {
+            const std::shared_ptr<Worker::Task> raytracedShadowsDependencies[1] = { gBufferPrepareTask };
+            SchedulePassPrepare(s_RaytracingPass, raytracedShadowsDependencies);
+        }
 
         const std::shared_ptr<Worker::Task> forwardRenderPassDependencies[1] = { gBufferPrepareTask };
         SchedulePassPrepare(s_ForwardRenderPass, forwardRenderPassDependencies);

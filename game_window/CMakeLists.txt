@@ -19,6 +19,8 @@ add_library(
         windows/graphics_settings_window.h
         windows/profiler_window.cpp
         windows/profiler_window.h
+        windows/texture_viewer_window.h
+        windows/texture_viewer_window.cpp
 )
 
 target_include_directories(GameWindow PUBLIC .)

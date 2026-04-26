@@ -19,6 +19,7 @@ public:
 
     GraphicsBackendTexture CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name) override;
     GraphicsBackendSampler CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name) override;
+	void* GetImGuiTextureId(const GraphicsBackendTexture& texture) override;
 
     void GenerateMipmaps(const GraphicsBackendTexture &texture) override;
     void UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData) override;
@@ -55,7 +56,7 @@ public:
 
     void Dispatch(uint32_t x, uint32_t y, uint32_t z) override;
 
-    void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) override;
+    void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height, GPUQueue queue) override;
 
     void PushDebugGroup(const std::string& name, GPUQueue queue) override;
     void PopDebugGroup(GPUQueue queue) override;

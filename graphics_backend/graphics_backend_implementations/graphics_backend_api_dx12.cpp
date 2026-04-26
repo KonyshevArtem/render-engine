@@ -283,16 +283,16 @@ namespace DX12Local
             DescriptorsInUse += offset;
         }
 
-        void CopyDescriptors(const DescriptorHeap& heap, int descriptorsCount)
+        void CopyDescriptors(const DescriptorHeap& heap, uint32_t sourceDescriptorIndex, uint32_t destDescriptorIndex, uint32_t descriptorsCount)
         {
             std::lock_guard<std::mutex> lock(Mutex);
-			s_Device->CopyDescriptorsSimple(descriptorsCount, GetCPUHandle(0), heap.GetCPUHandle(0), HeapType);
+			s_Device->CopyDescriptorsSimple(descriptorsCount, GetCPUHandle(destDescriptorIndex), heap.GetCPUHandle(sourceDescriptorIndex), HeapType);
         }
 
-        void CopyBindlessDescriptors(const DescriptorHeap& heap, int descriptorIndex, int descriptorsCount)
+        void CopyBindlessDescriptors(const DescriptorHeap& heap, uint32_t sourceDescriptorIndex, uint32_t destDescriptorIndex, uint32_t descriptorsCount)
         {
             std::lock_guard<std::mutex> lock(Mutex);
-            s_Device->CopyDescriptorsSimple(descriptorsCount, GetBindlessCPUHandle(descriptorIndex), heap.GetCPUHandle(descriptorIndex), HeapType);
+            s_Device->CopyDescriptorsSimple(descriptorsCount, GetBindlessCPUHandle(destDescriptorIndex), heap.GetCPUHandle(sourceDescriptorIndex), HeapType);
         }
     };
 
@@ -869,10 +869,11 @@ void GraphicsBackendDX12::WaitForPreviousFrame()
     DX12Local::s_CopyCommandList->Reset();
 
     if (DX12Local::s_BoundResourceDescriptorHeap.CheckSize())
-        DX12Local::s_BoundResourceDescriptorHeap.CopyBindlessDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, 0, DX12Local::s_BoundResourceDescriptorHeap.BindlessDescriptorsCount);
+        DX12Local::s_BoundResourceDescriptorHeap.CopyBindlessDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, 0, 0, DX12Local::s_BoundResourceDescriptorHeap.BindlessDescriptorsCount);
     DX12Local::s_BoundSamplerDescriptorHeap.CheckSize();
     DX12Local::s_ColorTargetDescriptorHeap.CheckSize();
     DX12Local::s_DepthTargetDescriptorHeap.CheckSize();
+	DX12Local::s_ImGuiDescriptorHeap.CheckSize();
 }
 
 void GraphicsBackendDX12::FillImGuiInitData(void* data)
@@ -894,11 +895,11 @@ void GraphicsBackendDX12::FillImGuiInitData(void* data)
     initData->MaxFramesInFlight = GraphicsBackend::GetMaxFramesInFlight();
     initData->Format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
 
-    DX12Local::s_ImGuiDescriptorHeap.Init(64, 0, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ImGui Descriptors", true);
+    DX12Local::s_ImGuiDescriptorHeap.Init(64, 64, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ImGui Descriptors", true);
 
     initData->DescriptorHeap = DX12Local::s_ImGuiDescriptorHeap.Heap;
-    initData->CpuDescriptorHandle = initData->DescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-    initData->GpuDescriptorHandle = initData->DescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+    initData->CpuDescriptorHandle = DX12Local::s_ImGuiDescriptorHeap.GetCPUHandle(64);
+    initData->GpuDescriptorHandle = DX12Local::s_ImGuiDescriptorHeap.GetGPUHandle(64);
 }
 
 void GraphicsBackendDX12::FillImGuiFrameData(void *data)
@@ -1040,7 +1041,7 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, cons
 	resourceData->ReadOnlyDescriptorIndex = DX12Local::s_AllocatedResourcesIndexPool.GetFreeIndex();
     resourceData->ReadOnlyDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorHeap.GetCPUHandle(resourceData->ReadOnlyDescriptorIndex);
     DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, resourceData->ReadOnlyDescriptorHandle);
-	DX12Local::s_BoundResourceDescriptorHeap.CopyBindlessDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, resourceData->ReadOnlyDescriptorIndex, 1);
+	DX12Local::s_BoundResourceDescriptorHeap.CopyBindlessDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, resourceData->ReadOnlyDescriptorIndex, resourceData->ReadOnlyDescriptorIndex, 1);
 
     if (descriptor.ReadWrite)
     {
@@ -1100,6 +1101,18 @@ GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(const GraphicsBackendS
     GraphicsBackendSampler sampler{};
     sampler.Sampler = reinterpret_cast<uint64_t>(samplerData);
     return sampler;
+}
+
+void* GraphicsBackendDX12::GetImGuiTextureId(const GraphicsBackendTexture& texture)
+{
+	const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
+
+	const uint32_t descriptorIndex = resourceData->ReadOnlyDescriptorIndex;
+	DX12Local::s_ImGuiDescriptorHeap.CopyDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, descriptorIndex, 0, 1);
+
+	const D3D12_GPU_DESCRIPTOR_HANDLE handle = DX12Local::s_ImGuiDescriptorHeap.GetGPUHandle(0);
+	DX12Local::s_ImGuiDescriptorHeap.AdvanceIndex(1);
+	return reinterpret_cast<void*>(handle.ptr);
 }
 
 void GraphicsBackendDX12::DeleteTexture_Internal(const GraphicsBackendTexture& texture)
@@ -1403,7 +1416,7 @@ GraphicsBackendBufferView GraphicsBackendDX12::CreateBufferView(const GraphicsBa
         }
         
         DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, resourceViewData->DescriptorHandle);
-		DX12Local::s_BoundResourceDescriptorHeap.CopyBindlessDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, resourceViewData->DescriptorIndex, 1);
+		DX12Local::s_BoundResourceDescriptorHeap.CopyBindlessDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, resourceViewData->DescriptorIndex, resourceViewData->DescriptorIndex, 1);
     }
 
     GraphicsBackendBufferView bufferView{};
@@ -1818,7 +1831,7 @@ void GraphicsBackendDX12::Dispatch(uint32_t x, uint32_t y, uint32_t z)
     DX12Local::s_RenderCommandList->List->Dispatch(x, y, z);
 }
 
-void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& source, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
+void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& source, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height, GPUQueue queue)
 {
     DX12Local::ResourceData* resourcesData[2];
     resourcesData[0] = reinterpret_cast<DX12Local::ResourceData*>(source.Texture);
@@ -1835,17 +1848,17 @@ void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& sou
         resourcesData[1] = reinterpret_cast<DX12Local::ResourceData*>(destinationDescriptor.Texture.Texture);
 
     D3D12_RESOURCE_STATES states[] = {D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST};
-    DX12Local::TransitionResources(2, resourcesData, states, DX12Local::s_CopyCommandList->List);
+    DX12Local::TransitionResources(2, resourcesData, states, DX12Local::GetCommandList(queue));
 
-    D3D12_BOX box = CD3DX12_BOX(sourceX, sourceY, sourceX + width, sourceY + height);
+    const D3D12_BOX box = CD3DX12_BOX(sourceX, sourceY, sourceX + width, sourceY + height);
 
-    D3D12_TEXTURE_COPY_LOCATION sourceLocation = CD3DX12_TEXTURE_COPY_LOCATION(resourcesData[0]->Resource);
-    D3D12_TEXTURE_COPY_LOCATION destinationLocation = CD3DX12_TEXTURE_COPY_LOCATION(resourcesData[1]->Resource);
+    const D3D12_TEXTURE_COPY_LOCATION sourceLocation = CD3DX12_TEXTURE_COPY_LOCATION(resourcesData[0]->Resource);
+    const D3D12_TEXTURE_COPY_LOCATION destinationLocation = CD3DX12_TEXTURE_COPY_LOCATION(resourcesData[1]->Resource);
 
-    DX12Local::s_CopyCommandList->List->CopyTextureRegion(&destinationLocation, destinationX, destinationY, 0, &sourceLocation, &box);
+    DX12Local::GetCommandList(queue)->CopyTextureRegion(&destinationLocation, destinationX, destinationY, 0, &sourceLocation, &box);
 
-    resourcesData[0]->State = D3D12_RESOURCE_STATE_COMMON;
-    resourcesData[1]->State = D3D12_RESOURCE_STATE_COMMON;
+    D3D12_RESOURCE_STATES statesAfter[] = { D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COMMON };
+    DX12Local::TransitionResources(2, resourcesData, states, DX12Local::GetCommandList(queue));
 }
 
 void GraphicsBackendDX12::PushDebugGroup(const std::string& name, GPUQueue queue)
@@ -2312,8 +2325,8 @@ void GraphicsBackendDX12::BindResources(ProgramType programType)
     {
         GraphicsBackendBase::BindResources();
 
-        DX12Local::s_BoundResourceDescriptorHeap.CopyDescriptors(DX12Local::s_BoundResourceStagingDescriptorHeap, DX12Local::k_ResourceDescriptorHeapAdvance);
-        DX12Local::s_BoundSamplerDescriptorHeap.CopyDescriptors(DX12Local::s_BoundSamplerStagingDescriptorHeap, DX12Local::k_SamplerDescriptorHeapAdvance);
+        DX12Local::s_BoundResourceDescriptorHeap.CopyDescriptors(DX12Local::s_BoundResourceStagingDescriptorHeap, 0, 0, DX12Local::k_ResourceDescriptorHeapAdvance);
+        DX12Local::s_BoundSamplerDescriptorHeap.CopyDescriptors(DX12Local::s_BoundSamplerStagingDescriptorHeap, 0, 0, DX12Local::k_SamplerDescriptorHeapAdvance);
 
         if (programType == ProgramType::RENDER)
         {

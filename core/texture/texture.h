@@ -50,6 +50,11 @@ public:
         return m_TextureDescriptor.MipLevels;
     }
 
+	inline const GraphicsBackendTextureDescriptor& GetTextureDescriptor() const
+    {
+        return m_TextureDescriptor;
+    }
+
     Texture(const Texture &) = delete;
     Texture(Texture &&) = delete;
 

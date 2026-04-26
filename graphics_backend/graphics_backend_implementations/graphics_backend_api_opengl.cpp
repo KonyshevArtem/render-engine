@@ -407,6 +407,11 @@ GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(const GraphicsBacken
     return sampler;
 }
 
+void* GraphicsBackendOpenGL::GetImGuiTextureId(const GraphicsBackendTexture& texture)
+{
+    return reinterpret_cast<void*>(texture.Texture);
+}
+
 void GraphicsBackendOpenGL::DeleteTexture_Internal(const GraphicsBackendTexture &texture)
 {
     glDeleteTextures(1, reinterpret_cast<const GLuint *>(&texture.Texture));
@@ -999,7 +1004,7 @@ void GraphicsBackendOpenGL::Dispatch(uint32_t x, uint32_t y, uint32_t z)
     glDispatchCompute(x, y, z);
 }
 
-void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
+void GraphicsBackendOpenGL::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height, GPUQueue queue)
 {
     if (destinationDescriptor.Texture.Texture == 0 && !destinationDescriptor.IsBackbuffer)
         return;

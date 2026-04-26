@@ -161,16 +161,18 @@ add_library(
 	graphics_buffer/graphics_buffer_view.cpp
 	graphics/passes/post_process_pass.cpp
 	graphics/passes/post_process_pass.h
-        raytracing/raytracing_scene.h
-        raytracing/raytracing_scene.cpp
-        raytracing/raytracing_pass.h
-        raytracing/raytracing_pass.cpp
-        graphics/passes/gbuffer_pass.h
-        graphics/passes/gbuffer_pass.cpp
-        graphics/passes/deferred_light_pass.h
-        graphics/passes/deferred_light_pass.cpp
-        file_system/file_watcher.h
-        file_system/file_watcher.cpp)
+	raytracing/raytracing_scene.h
+	raytracing/raytracing_scene.cpp
+	raytracing/raytracing_pass.h
+	raytracing/raytracing_pass.cpp
+	graphics/passes/gbuffer_pass.h
+	graphics/passes/gbuffer_pass.cpp
+	graphics/passes/deferred_light_pass.h
+	graphics/passes/deferred_light_pass.cpp
+	file_system/file_watcher.h
+	file_system/file_watcher.cpp
+	editor/texture_viewer/texture_viewer.h
+	editor/texture_viewer/texture_viewer.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil StringSplit)

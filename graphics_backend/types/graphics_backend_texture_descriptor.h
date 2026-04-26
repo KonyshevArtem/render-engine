@@ -13,6 +13,8 @@ struct GraphicsBackendTextureDescriptor
     bool Linear = false;
     bool RenderTarget = false;
     bool ReadWrite = false;
+
+    bool operator==(const GraphicsBackendTextureDescriptor& desc) const = default;
 };
 
 #endif //RENDER_ENGINE_GRAPHICS_BACKEND_TEXTURE_DESCRIPTOR_H

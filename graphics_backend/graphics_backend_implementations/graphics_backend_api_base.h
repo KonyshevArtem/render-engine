@@ -78,6 +78,7 @@ public:
 
     virtual GraphicsBackendTexture CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name) = 0;
     virtual GraphicsBackendSampler CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name) = 0;
+    virtual void* GetImGuiTextureId(const GraphicsBackendTexture& texture) = 0;
     void DeleteTexture(const GraphicsBackendTexture& texture);
     void DeleteSampler(const GraphicsBackendSampler& sampler);
 
@@ -130,7 +131,7 @@ public:
 
     virtual void Dispatch(uint32_t x, uint32_t y, uint32_t z) = 0;
 
-    virtual void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height) = 0;
+    virtual void CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height, GPUQueue queue = GPUQueue::COPY) = 0;
 
     virtual void PushDebugGroup(const std::string& name, GPUQueue queue) = 0;
     virtual void PopDebugGroup(GPUQueue queue) = 0;

@@ -6,6 +6,7 @@
 #include "graphics/render_settings/render_settings.h"
 #include "graphics/graphics.h"
 #include "editor/profiler/profiler.h"
+#include "editor/texture_viewer/texture_viewer.h"
 
 void GBufferPass::Prepare(RenderData& renderData)
 {
@@ -74,4 +75,7 @@ void GBufferPass::Execute(const RenderData& renderData)
 		m_RenderQueue.Draw();
 	}
 	GraphicsBackend::Current()->EndRenderPass();
+
+	for (int i = 0; i < 2; ++i)
+		TextureViewer::RegisterTexture(renderData.GBuffers[i], "GBuffer/" + std::to_string(i));
 }

@@ -12,6 +12,7 @@
 #include "mesh/mesh.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "global_constants.h"
+#include "editor/texture_viewer/texture_viewer.h"
 
 RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) :
 	m_PrimaryRaysDebugEnabled(false),
@@ -104,9 +105,10 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 		GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
 
 		GraphicsBackend::Current()->BindTexture(renderData.RaytracedShadowsTarget->GetBackendTexture(), GlobalConstants::RaytracedShadowMapIndex);
-
 	}
 	GraphicsBackend::Current()->EndRenderPass();
+
+	TextureViewer::RegisterTexture(renderData.RaytracedShadowsTarget, "Raytracing/Shadows");
 }
 
 void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)

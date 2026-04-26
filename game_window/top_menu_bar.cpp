@@ -2,14 +2,12 @@
 
 #include "top_menu_bar.h"
 #include "imgui.h"
-#include "editor/gizmos/gizmos.h"
 #include "windows/debug_console_window.h"
 #include "windows/scene_hierarchy_window.h"
 #include "windows/graphics_settings_window.h"
 #include "windows/profiler_window.h"
+#include "windows/texture_viewer_window.h"
 #include "graphics_backend_api.h"
-#include "graphics/render_queue/render_queue.h"
-#include "editor/debug_pass/shadow_map_debug_pass.h"
 
 namespace TopMenuBarLocal
 {
@@ -34,24 +32,19 @@ void DrawWindowsMenu()
     if (ImGui::BeginMenu("Windows"))
     {
         if (ImGui::MenuItem("Scene Hierarchy"))
-        {
-            WindowManager::Create<SceneHierarchyWindow>();
-        }
+	        WindowManager::Create<SceneHierarchyWindow>();
 
         if (ImGui::MenuItem("Debug Console"))
-        {
-            WindowManager::Create<DebugConsoleWindow>();
-        }
+	        WindowManager::Create<DebugConsoleWindow>();
 
         if (ImGui::MenuItem("Graphics Settings"))
-        {
-            WindowManager::Create<GraphicsSettingsWindow>();
-        }
+	        WindowManager::Create<GraphicsSettingsWindow>();
 
         if (ImGui::MenuItem("Profiler"))
-        {
-            WindowManager::Create<ProfilerWindow>();
-        }
+	        WindowManager::Create<ProfilerWindow>();
+
+        if (ImGui::MenuItem("Texture Viewer"))
+	        WindowManager::Create<TextureViewerWindow>();
 
         ImGui::EndMenu();
     }

@@ -15,6 +15,12 @@ TextureViewerWindow::TextureViewerWindow() :
 	TextureViewer::SetColorMask(m_ColorMask);
 }
 
+TextureViewerWindow::~TextureViewerWindow()
+{
+	TextureViewer::SetTextureRegisteredCallback(nullptr);
+	TextureViewer::SetSelectedTextureName("");
+}
+
 void TextureViewerWindow::DrawTopBar()
 {
 	ImGui::PushItemWidth(300);

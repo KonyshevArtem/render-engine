@@ -15,6 +15,7 @@ class TextureViewerWindow : public BaseWindow
 {
 public:
     TextureViewerWindow();
+    ~TextureViewerWindow() override;
 
 protected:
     void DrawInternal() override;

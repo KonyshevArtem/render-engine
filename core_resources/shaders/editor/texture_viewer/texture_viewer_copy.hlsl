@@ -1,4 +1,5 @@
 #include "../../common/global_defines.h"
+#include "../../common/helper_functions.h"
 
 Texture2D<float4> srcTexture : register(t0);
 RWTexture2D<float4> dstTexture : register(u0);
@@ -6,9 +7,12 @@ RWTexture2D<float4> dstTexture : register(u0);
 cbuffer Data : register(b0)
 {
     uint2 Size;
-    float2 Padding;
+    float2 MinMaxValues;
 
     uint4 ColorMask;
+
+    uint3 Padding0;
+    uint ShouldLinearizeDepth;
 }
 
 float4 GetBackgroundColor(uint2 dtid)
@@ -42,6 +46,11 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
 
     color.xyz = lerp(backgroundColor.xyz, color.xyz, color.w);
     color.w = 1;
+
+    if (ShouldLinearizeDepth)
+        color.x = LinearizeDepth(color.x);
+
+    color.xyz = (color.xyz - MinMaxValues.x) / (MinMaxValues.y - MinMaxValues.x);
 
     dstTexture[dtid.xy] = color;
 }

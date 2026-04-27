@@ -3,9 +3,12 @@
 #include "texture_2d/texture_2d.h"
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "vector2/vector2.h"
+#include "vector3/vector3.h"
 
 std::string TextureViewer::s_SelectedTextureName;
 Vector4I TextureViewer::s_ColorMask;
+Vector2 TextureViewer::s_MinMaxValues;
+bool TextureViewer::s_LinearizeDepth;
 std::function<void(const std::string&)> TextureViewer::s_TextureRegisteredCallback = nullptr;
 
 std::shared_ptr<Texture> TextureViewer::s_SelectedTextureCopy = nullptr;
@@ -34,9 +37,12 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<Texture>& texture, con
 		struct
 		{
 			Vector2I Size;
-			Vector2 Padding;
+			Vector2 MinMax;
 
 			Vector4I ColorMask;
+
+			Vector3 Padding0;
+			uint32_t ShouldLinearizeDepth;
 		} data{};
 
 		if (!s_DataBuffer)
@@ -51,6 +57,8 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<Texture>& texture, con
 		GraphicsBackendTextureDescriptor desc = texture->GetTextureDescriptor();
 		desc.ReadWrite = true;
 		desc.RenderTarget = false;
+		if (GraphicsBackend::Current()->IsDepthFormat(desc.Format))
+			desc.Format = TextureInternalFormat::R32F;
 
 		if (!s_SelectedTextureCopy || s_SelectedTextureCopy->GetTextureDescriptor() != desc)
 			s_SelectedTextureCopy = Texture2D::Create(desc, "Texture Viewer Copy");
@@ -59,6 +67,9 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<Texture>& texture, con
 
 		data.Size = Vector2I(texture->GetWidth(), texture->GetHeight());
 		data.ColorMask = s_ColorMask;
+		data.MinMax = s_MinMaxValues;
+		data.ShouldLinearizeDepth = s_LinearizeDepth;
+
 		GraphicsBackend::Current()->SetBufferData(s_DataBuffer->GetBackendBuffer(), 0, sizeof(data), &data);
 		GraphicsBackend::Current()->BindConstantBuffer(s_DataBuffer->GetBackendBuffer(), 0, 0, sizeof(data));
 
@@ -80,6 +91,16 @@ void TextureViewer::SetSelectedTextureName(const std::string& name)
 void TextureViewer::SetColorMask(Vector4I mask)
 {
 	s_ColorMask = mask;
+}
+
+void TextureViewer::SetMinMaxValues(Vector2 minMax)
+{
+	s_MinMaxValues = minMax;
+}
+
+void TextureViewer::SetLinearizeDepth(bool linearize)
+{
+	s_LinearizeDepth = linearize;
 }
 
 void TextureViewer::SetTextureRegisteredCallback(std::function<void(const std::string&)> callback)

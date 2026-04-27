@@ -5,6 +5,7 @@
 
 #include "base_window.h"
 #include "vector4/vector4.h"
+#include "vector2/vector2.h"
 
 #include <string>
 #include <unordered_set>
@@ -25,9 +26,12 @@ private:
     std::string m_SelectedTextureName;
 	std::unordered_set<std::string> m_RegisteredTextures;
     Vector4I m_ColorMask;
+    Vector2 m_MinMaxValues;
+    bool m_LinearizeDepth;
 
     void DrawTextureSelector();
     void DrawColorMaskSelector();
+    void DrawMinMaxValuesSelector();
     void OnTextureRegistered(const std::string& textureName);
 };
 

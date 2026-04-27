@@ -9,7 +9,9 @@
 TextureViewerWindow::TextureViewerWindow() :
 	BaseWindow(600, 400, "Texture Viewer", typeid(TextureViewerWindow).hash_code()),
 	m_SelectedTextureName("Search..."),
-	m_ColorMask(1, 1, 1, 1)
+	m_ColorMask(1, 1, 1, 1),
+	m_MinMaxValues(0, 1),
+	m_LinearizeDepth(false)
 {
 	TextureViewer::SetTextureRegisteredCallback([this](const std::string& textureName) {OnTextureRegistered(textureName); });
 	TextureViewer::SetColorMask(m_ColorMask);
@@ -23,16 +25,14 @@ TextureViewerWindow::~TextureViewerWindow()
 
 void TextureViewerWindow::DrawTopBar()
 {
-	ImGui::PushItemWidth(300);
-
 	DrawTextureSelector();
 	DrawColorMaskSelector();
-
-    ImGui::PopItemWidth();
+	DrawMinMaxValuesSelector();
 }
 
 void TextureViewerWindow::DrawTextureSelector()
 {
+	ImGui::PushItemWidth(300);
 	if (!ImGui::BeginCombo("Texture select", m_SelectedTextureName.c_str()))
 		return;
 
@@ -63,6 +63,7 @@ void TextureViewerWindow::DrawTextureSelector()
 	}
 
 	ImGui::EndCombo();
+	ImGui::PopItemWidth();
 }
 
 void TextureViewerWindow::DrawColorMaskSelector()
@@ -97,6 +98,26 @@ void TextureViewerWindow::DrawColorMaskSelector()
 	
 	ImGui::SameLine();
 	ImGui::TextUnformatted("Color Mask");
+}
+
+void TextureViewerWindow::DrawMinMaxValuesSelector()
+{
+	ImGui::PushItemWidth(60);
+
+	ImGui::SameLine();
+	ImGui::InputFloat("Min", &m_MinMaxValues.x);
+
+	ImGui::SameLine();
+	ImGui::InputFloat("Max", &m_MinMaxValues.y);
+
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Linear Depth", m_LinearizeDepth))
+		m_LinearizeDepth = !m_LinearizeDepth;
+
+	ImGui::PopItemWidth();
+
+	TextureViewer::SetMinMaxValues(m_MinMaxValues);
+	TextureViewer::SetLinearizeDepth(m_LinearizeDepth);
 }
 
 void TextureViewerWindow::OnTextureRegistered(const std::string& textureName)

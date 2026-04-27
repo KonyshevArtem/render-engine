@@ -78,4 +78,5 @@ void GBufferPass::Execute(const RenderData& renderData)
 
 	for (int i = 0; i < 2; ++i)
 		TextureViewer::RegisterTexture(renderData.GBuffers[i], "GBuffer/" + std::to_string(i));
+	TextureViewer::RegisterTexture(renderData.CameraDepthTarget, "GBuffer/Depth");
 }

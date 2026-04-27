@@ -19,6 +19,8 @@ public:
     static void Initialize(float referenceHeight);
     static void Update(float width, float height);
     static void DestroySceneUI();
+
+    static bool HasFocus();
     static void ResetFocus();
     static void ChangeFocus(const std::shared_ptr<UIElement>& newFocusedElement);
 

@@ -1,5 +1,6 @@
 #include "input.h"
 #include "graphics_backend_api.h"
+#include "ui/ui_manager.h"
 
 namespace Input
 {
@@ -68,12 +69,26 @@ namespace Input
         s_PendingTouches.clear();
     }
 
-    void Update()
+    void Update(bool receiveInput)
     {
         s_MouseDelta = s_OldMousePosition - s_MousePosition;
         s_OldMousePosition = s_MousePosition;
 
-        ProcessPendingTouches();
+        if (receiveInput)
+        {
+            ProcessPendingTouches();
+        }
+        else
+        {
+            s_Touches.clear();
+            s_PendingTouches.clear();
+            s_KeyboardKeys.clear();
+            s_SpecialKeys.clear();
+            s_CharInputs.clear();
+            s_MouseButtonBits = 0;
+            s_MouseButtonDownBits = 0;
+            s_MouseButtonUpBits = 0;
+        }
     }
 
     void CleanUp()
@@ -166,6 +181,9 @@ namespace Input
 
     bool CheckKeyState(unsigned char key, KeyState state)
     {
+        if (UIManager::HasFocus())
+            return false;
+
         const auto& it = s_KeyboardKeys.find(key);
         if (it != s_KeyboardKeys.end())
             return (it->second.State & state) != 0;

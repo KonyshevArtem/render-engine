@@ -18,12 +18,17 @@
 
 GameWindow* window = nullptr;
 
+bool ImGuiHasInput()
+{
+    return window && window->CaptureKeyboard();
+}
+
 void PrepareFrame(int width, int height)
 {
     Profiler::Marker marker("Prepare Frame");
 
     Time::Update();
-    Input::Update();
+    Input::Update(!ImGuiHasInput());
     DeveloperConsole::Instance->Update();
     UIManager::Update(width, height);
     Scene::Update();
@@ -147,31 +152,26 @@ void EngineFramework::Shutdown()
 
 void EngineFramework::ProcessMouseClick(int mouseButton, bool pressed)
 {
-    if (!window || !window->CaptureMouse())
         Input::HandleMouseClick(static_cast<Input::MouseButton>(mouseButton), pressed);
 }
 
 void EngineFramework::ProcessMouseMove(float x, float y)
 {
-    if (!window || !window->CaptureMouse())
         Input::HandleMouseMove(x, y);
 }
 
 void EngineFramework::ProcessKeyPress(char key, bool pressed)
 {
-    if (!window || !window->CaptureKeyboard())
         Input::HandleKeyboardInput(key, pressed);
 }
 
 void EngineFramework::ProcessCharInput(wchar_t ch)
 {
-    if (!window || !window->CaptureKeyboard())
         Input::HandleCharInput(ch);
 }
 
 void EngineFramework::ProcessSpecialKey(int keyId, bool pressed)
 {
-    if (!window || !window->CaptureKeyboard())
         Input::HandleSpecialKeyInput(keyId, pressed);
 }
 

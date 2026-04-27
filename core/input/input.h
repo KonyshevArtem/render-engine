@@ -78,7 +78,7 @@ namespace Input
         Vector2 Delta{};
     };
 
-    void Update();
+    void Update(bool receiveInput);
     void CleanUp();
 
     void HandleKeyboardInput(unsigned char key, bool isPressed);

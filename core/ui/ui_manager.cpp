@@ -153,6 +153,11 @@ void UIManager::DestroySceneUI()
         element->Destroy();
 }
 
+bool UIManager::HasFocus()
+{
+    return s_FocusedElement != nullptr;
+}
+
 void UIManager::ResetFocus()
 {
     ChangeFocus(nullptr);

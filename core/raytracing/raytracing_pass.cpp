@@ -13,6 +13,7 @@
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "global_constants.h"
 #include "editor/texture_viewer/texture_viewer.h"
+#include "graphics/graphics_settings.h"
 
 RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) :
 	m_PrimaryRaysDebugEnabled(false),
@@ -77,10 +78,12 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 		struct
 		{
 			Vector2 InvTargetSize;
-			Vector2 Padding0;
+			float ShadowsDistance;
+			float Padding0;
 		} constants;
 		
 		constants.InvTargetSize = Vector2(1.0f / renderData.RaytracedShadowsTarget->GetWidth(), 1.0f / renderData.RaytracedShadowsTarget->GetHeight());
+		constants.ShadowsDistance = GraphicsSettings::GetShadowDistance();
 
 		if (!m_RaytracedShadowsDataBuffer)
 		{

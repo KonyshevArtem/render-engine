@@ -10,7 +10,8 @@ Texture2D<float4> NormalTexture : register(t1);
 cbuffer RaytracedShadowsData : register(b0)
 {
     float2 InvTargetSize;
-    float2 Padding0;
+    float ShadowsDistance;
+    float Padding0;
 };
 
 struct Attributes
@@ -35,11 +36,13 @@ float fragmentMain(float4 pixelCoord : SV_Position) : SV_Target
     if (depth == 1 || dot(normal, lightDir) <= 0)
         discard;
     
+    float linearDepth = LinearizeDepth(depth);
+
     RayDesc ray;
-    ray.Origin = worldPos;
+    ray.Origin = worldPos + (lightDir + normal) * linearDepth * 0.005;
     ray.Direction = lightDir;
     ray.TMin = 0.01;
-    ray.TMax = 1000;
+    ray.TMax = ShadowsDistance;
 
     RayQuery<RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH> query;
     query.TraceRayInline(RTScene, RAY_FLAG_NONE, 0xFF, ray);

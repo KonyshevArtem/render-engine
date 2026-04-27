@@ -252,7 +252,7 @@ namespace ShaderCompilerLib
         const std::string definesHash = GetDefinesHash(wDefines);
 
         const std::filesystem::path hlslPath = std::filesystem::absolute(inputPath);
-        Debug::LogInfoFormat("Compiling shader: {}\n{}", hlslPath.string(), CombineDefines(defines));
+        Debug::LogInfoFormat("Compiling shader: {}\n{}", hlslPath.filename().string(), CombineDefines(defines));
 
         CComPtr<IDxcUtils> pUtils;
         CComPtr<IDxcCompiler3> pCompiler;

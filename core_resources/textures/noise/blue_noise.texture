@@ -1,0 +1,14 @@
+{
+  "Paths": [
+    "blue_noise.png"
+  ],
+  "Type": "2D",
+  "Formats": {
+    "Windows": "BC5",
+    "Android": "ASTC_6X6",
+    "Mac": "ASTC_6X6",
+    "iOS": "ASTC_6X6"
+  },
+  "Linear": true,
+  "Mips": false
+}

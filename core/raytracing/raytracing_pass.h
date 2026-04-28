@@ -4,6 +4,8 @@
 #include "file_system/file_watcher.h"
 #include "graphics/passes/render_pass.h"
 
+#include <random>
+
 struct RenderData;
 class Shader;
 class RaytracingScene;
@@ -31,10 +33,13 @@ private:
     std::shared_ptr<Texture> m_RaytracedShadowsTarget;
     std::shared_ptr<GraphicsBuffer> m_RaytracedShadowsDataBuffer;
     bool m_RaytracedShadowsEnabled;
+    int m_RaytracedShadowsSamplesCount = 1;
 
     std::shared_ptr<RaytracingScene> m_RaytracingScene;
+    std::shared_ptr<Texture> m_BlueNoiseTexture;
 
 	FileWatcher m_FileWatcher;
+    std::mt19937 m_Rng;
 
     void LoadShaders();
 };

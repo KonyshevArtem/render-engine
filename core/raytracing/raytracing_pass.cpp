@@ -14,11 +14,13 @@
 #include "global_constants.h"
 #include "editor/texture_viewer/texture_viewer.h"
 #include "graphics/graphics_settings.h"
+#include "resources/resources.h"
 
 RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) :
 	m_PrimaryRaysDebugEnabled(false),
 	m_RaytracedShadowsEnabled(true),
-	m_RaytracingScene(rtScene)
+	m_RaytracingScene(rtScene),
+	m_Rng(std::random_device{}())
 {
 	LoadShaders();
 	m_FileWatcher.AddFile("core_resources/shaders/raytracing/primary_rays_debug.hlsl");
@@ -27,6 +29,9 @@ RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) 
 
 	DeveloperConsole::AddBoolCommand(L"Raytracing.Debug.PrimaryRays", &m_PrimaryRaysDebugEnabled);
 	DeveloperConsole::AddBoolCommand(L"Raytracing.Shadows.Enabled", &m_RaytracedShadowsEnabled);
+	DeveloperConsole::AddIntCommand(L"Raytracing.Shadows.Samples", &m_RaytracedShadowsSamplesCount);
+
+	m_BlueNoiseTexture = Resources::Load<Texture2D>("core_resources/textures/noise/blue_noise");
 }
 
 void RaytracingPass::Prepare(RenderData& renderData)
@@ -59,7 +64,7 @@ void RaytracingPass::Execute(const RenderData& renderData)
 
 void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 {
-	if (!m_RaytracedShadowsEnabled || !m_RaytracingScene->GetTLAS().IsValid())
+	if (!m_RaytracedShadowsEnabled || !m_RaytracingScene->GetTLAS().IsValid() || !m_RaytracedShadowsShader)
 		return;
 
 	Profiler::Marker _("RaytracingPass::ExecuteRaytracedShadows");
@@ -79,11 +84,18 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 		{
 			Vector2 InvTargetSize;
 			float ShadowsDistance;
-			float Padding0;
+			uint32_t SamplesCount;
+
+			Vector2 Random;
+			Vector2 Padding0;
 		} constants;
-		
+
+		std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+
 		constants.InvTargetSize = Vector2(1.0f / renderData.RaytracedShadowsTarget->GetWidth(), 1.0f / renderData.RaytracedShadowsTarget->GetHeight());
 		constants.ShadowsDistance = GraphicsSettings::GetShadowDistance();
+		constants.SamplesCount = m_RaytracedShadowsSamplesCount;
+		constants.Random = Vector2(dist(m_Rng), dist(m_Rng));
 
 		if (!m_RaytracedShadowsDataBuffer)
 		{
@@ -101,6 +113,7 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 		GraphicsBackend::Current()->BindTLAS(m_RaytracingScene->GetTLAS(), GlobalConstants::RTSceneIndex);
 		GraphicsBackend::Current()->BindTexture(renderData.CameraDepthTarget->GetBackendTexture(), 0);
 		GraphicsBackend::Current()->BindTexture(renderData.GBuffers[1]->GetBackendTexture(), 1);
+		GraphicsBackend::Current()->BindTextureSampler(m_BlueNoiseTexture->GetBackendTexture(), m_BlueNoiseTexture->GetBackendSampler(), 2);
 		GraphicsBackend::Current()->BindConstantBuffer(m_RaytracedShadowsDataBuffer->GetBackendBuffer(), 0, 0, sizeof(constants));
 
 		const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();

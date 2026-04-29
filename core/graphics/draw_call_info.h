@@ -20,7 +20,7 @@ struct DrawCallInfo
     bool CastShadows = false;
     bool Instanced = false;
     uint8_t StencilValue = 0;
-    std::shared_ptr<GraphicsBufferView> InstancedMatricesEntriesView;
+    std::shared_ptr<GraphicsBufferView> InstancedMatricesEntriesView = nullptr;
 };
 
 #endif

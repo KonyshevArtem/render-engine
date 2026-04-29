@@ -239,7 +239,7 @@ void RenderQueue::SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& r
         if (matricesBufferView)
         {
             info.MatricesBufferViews.push_back(matricesBufferView);
-            m_DrawCalls.push_back(info);
+            m_DrawCalls.push_back(std::move(info));
         }
     }
 }
@@ -292,7 +292,7 @@ void RenderQueue::SetupDrawCalls(const std::vector<Item>& items, const RenderSet
         std::shared_ptr<GraphicsBufferView> view = std::make_shared<GraphicsBufferView>(m_TemporaryMatricesBuffer, viewDescriptor, "RenderQueue/TemporaryMatricesSingleView");
 
         info.MatricesBufferViews.push_back(view);
-        m_DrawCalls.push_back(info);
+        m_DrawCalls.push_back(std::move(info));
     }
 }
 

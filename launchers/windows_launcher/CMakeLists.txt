@@ -15,6 +15,7 @@ if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 
     # setup symlinks for editor resources
     add_custom_target(PreBuildWindowsEditor ALL
+            COMMAND ${CMAKE_COMMAND} -E rm -rf $<TARGET_FILE_DIR:RenderEngineLauncher>/core_resources
             COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:RenderEngineLauncher>/editor_resources
             COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/core_resources $<TARGET_FILE_DIR:RenderEngineLauncher>/editor_resources/core_resources
             COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/build_resources/windows/core_resources $<TARGET_FILE_DIR:RenderEngineLauncher>/core_resources

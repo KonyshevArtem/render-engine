@@ -665,17 +665,8 @@ namespace DX12Local
         return reinterpret_cast<ResourceData*>(buffer.Buffer)->Resource;
     }
 
-    void UploadGPUData(ResourceData* resourceData, uint32_t firstSubresource, uint64_t totalSize, uint64_t rowPitch, uint64_t slicePitch, const void* data, bool isMainThread)
+    CommandList* GetUploadCommandList(const std::thread::id& threadId, bool isMainThread)
     {
-        const std::thread::id threadId = std::this_thread::get_id();
-
-        ID3D12Resource* bufferUploadHeap = GetUploadBuffer(threadId, totalSize);
-
-        D3D12_SUBRESOURCE_DATA subresourceData{};
-        subresourceData.pData = data;
-        subresourceData.RowPitch = rowPitch;
-        subresourceData.SlicePitch = slicePitch;
-
         CommandList* commandList = nullptr;
         if (isMainThread)
             commandList = s_RenderCommandList;
@@ -691,7 +682,7 @@ namespace DX12Local
             if (!commandList)
             {
                 std::unique_lock lock(s_CommandListPoolMutex);
-                commandList = new CommandList(s_CopyQueue, D3D12_COMMAND_LIST_TYPE_COPY, "AsyncCommandList");
+                commandList = new CommandList(s_CopyQueue, D3D12_COMMAND_LIST_TYPE_COPY, "UploadCommandList");
                 s_UploadCommandLists[threadId] = commandList;
             }
 
@@ -699,16 +690,57 @@ namespace DX12Local
             commandList->Reset();
         }
 
-        TransitionResource(resourceData, isMainThread ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_COMMON, commandList->List);
-        UpdateSubresources(commandList->List, resourceData->Resource, bufferUploadHeap, 0, firstSubresource, 1, &subresourceData);
-        TransitionResource(resourceData, isMainThread ? D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_COMMON, commandList->List);
+        return commandList;
+    }
 
+    void ReleaseUploadCommandList(CommandList* commandList, bool isMainThread)
+    {
         commandList->Execute();
 
         if (isMainThread)
-	        commandList->Reset();
+            commandList->Reset();
         else
-	        commandList->Wait();
+            commandList->Wait();
+    }
+
+    void UploadBufferData(ResourceData* resourceData, uint64_t size, const void* data, bool isMainThread)
+    {
+        const std::thread::id threadId = std::this_thread::get_id();
+
+        ID3D12Resource* bufferUploadHeap = GetUploadBuffer(threadId, size);
+        CommandList* commandList = GetUploadCommandList(threadId, isMainThread);
+
+        TransitionResource(resourceData, isMainThread ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_COMMON, commandList->List);
+
+        void* mapped = nullptr;
+        const D3D12_RANGE range = CD3DX12_RANGE(0, 0);
+        bufferUploadHeap->Map(0, &range, &mapped);
+        memcpy(mapped, data, size);
+        bufferUploadHeap->Unmap(0, nullptr);
+        commandList->List->CopyBufferRegion(resourceData->Resource, 0, bufferUploadHeap, 0, size);
+
+        TransitionResource(resourceData, isMainThread ? D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_COMMON, commandList->List);
+
+        ReleaseUploadCommandList(commandList, isMainThread);
+    }
+
+    void UploadTextureData(ResourceData* resourceData, uint32_t firstSubresource, uint64_t totalSize, uint64_t rowPitch, uint64_t slicePitch, const void* data, bool isMainThread)
+    {
+        const std::thread::id threadId = std::this_thread::get_id();
+
+        ID3D12Resource* bufferUploadHeap = GetUploadBuffer(threadId, totalSize);
+        CommandList* commandList = GetUploadCommandList(threadId, isMainThread);
+
+        D3D12_SUBRESOURCE_DATA subresourceData{};
+        subresourceData.pData = data;
+        subresourceData.RowPitch = rowPitch;
+        subresourceData.SlicePitch = slicePitch;
+
+        TransitionResource(resourceData, isMainThread ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_COMMON, commandList->List);
+        UpdateSubresources<1>(commandList->List, resourceData->Resource, bufferUploadHeap, 0, firstSubresource, 1, &subresourceData);
+        TransitionResource(resourceData, isMainThread ? D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_COMMON, commandList->List);
+
+        ReleaseUploadCommandList(commandList, isMainThread);
     }
 
     void InitRootSignature()
@@ -1224,8 +1256,8 @@ void GraphicsBackendDX12::UploadImagePixels(const GraphicsBackendTexture& textur
         firstSubresource = static_cast<UINT>(cubemapFace) * mipLevels + level;
     }
 
-    UINT64 uploadBufferSize = GetRequiredIntermediateSize(dxTexture, level, 1);
-    DX12Local::UploadGPUData(resourceData, firstSubresource, uploadBufferSize, bytesPerRow, imageSize, pixelsData, IsMainThread());
+    UINT64 uploadBufferSize = GetRequiredIntermediateSize(dxTexture, firstSubresource, 1);
+    DX12Local::UploadTextureData(resourceData, firstSubresource, uploadBufferSize, bytesPerRow, imageSize, pixelsData, IsMainThread());
 }
 
 void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDescriptor& descriptor)
@@ -2308,7 +2340,7 @@ GraphicsBackendTLAS GraphicsBackendDX12::CreateTLAS(const std::vector<GraphicsBa
 	const uint32_t instanceBufferSize = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * dxDescriptors.size();
 	DX12Local::ResourceData* instanceBufferData = GetRTInstancesBuffer(instanceBufferSize);
 
-	DX12Local::UploadGPUData(instanceBufferData, 0, instanceBufferSize, instanceBufferSize, instanceBufferSize, dxDescriptors.data(), IsMainThread());
+	DX12Local::UploadBufferData(instanceBufferData, instanceBufferSize, dxDescriptors.data(), IsMainThread());
     DX12Local::TransitionResource(instanceBufferData, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS tlasInputs{};
@@ -2410,7 +2442,7 @@ DX12Local::ResourceData* GraphicsBackendDX12::CreateBufferInternal(const Graphic
             dxBuffer->Unmap(0, nullptr);
         }
         else
-            DX12Local::UploadGPUData(resourceData, 0, descriptor.Size, descriptor.Size, descriptor.Size, data, IsMainThread());
+	        DX12Local::UploadBufferData(resourceData, descriptor.Size, data, IsMainThread());
     }
 
     return resourceData;

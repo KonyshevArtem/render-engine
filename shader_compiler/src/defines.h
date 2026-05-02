@@ -3,6 +3,9 @@
 
 #include <string>
 #include <vector>
+#include <set>
+
+#include "hash.h"
 
 std::vector<std::wstring> ConvertDefines(const std::vector<std::string>& defines)
 {
@@ -15,33 +18,17 @@ std::vector<std::wstring> ConvertDefines(const std::vector<std::string>& defines
     return wideDefines;
 }
 
-std::string GetDefinesHash(std::vector<std::wstring> defines)
+std::string GetDefinesHash(const std::vector<std::string>& defines)
 {
-    auto HashFNV1a = [](const std::string &str)
-    {
-        constexpr uint64_t fnvPrime = 1099511628211ULL;
-        constexpr uint64_t fnvOffsetBasis = 14695981039346656037ULL;
-
-        uint64_t hash = fnvOffsetBasis;
-
-        for (const char c: str) {
-            hash ^= c;
-            hash *= fnvPrime;
-        }
-
-        return hash;
-    };
-
-    std::sort(defines.begin(), defines.end());
+    std::set<std::string> orderedDefines;
+    for (const std::string& define : defines)
+	    orderedDefines.insert(define);
 
     std::string combinedDefines;
-    for (const auto& define : defines)
-    {
-        std::string d(define.begin(), define.end());
-        combinedDefines += d + ",";
-    }
+    for (const std::string& define : orderedDefines)
+	    combinedDefines += define;
 
-    return std::to_string(HashFNV1a(combinedDefines));
+    return std::to_string(Hash::FNV1a(combinedDefines));
 }
 
 std::string CombineDefines(const std::vector<std::string>& defines)

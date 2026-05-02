@@ -7,7 +7,9 @@
 #include <functional>
 #include <shared_mutex>
 #include <vector>
+#include <string>
 
+#include "shader/shader.h"
 #include "worker/worker.h"
 #include "arguments.h"
 
@@ -21,10 +23,12 @@ public:
     template<typename T>
     static std::shared_ptr<T> Load(const std::filesystem::path& path, bool asyncSubresourceLoads = false);
 
+    static std::shared_ptr<Shader> LoadShader(const std::filesystem::path& path, const std::vector<std::string>& defines);
+
     template<typename T>
     static std::shared_ptr<Worker::Task> LoadAsync(const std::filesystem::path& path, const std::function<void(std::shared_ptr<T>)>& callback)
     {
-        static bool syncLoading = Arguments::Contains("-resources_sync_load");
+        static const bool syncLoading = Arguments::Contains("-resources_sync_load");
         if (syncLoading)
         {
             std::shared_ptr<T> resource = Load<T>(path);
@@ -32,8 +36,10 @@ public:
             return Worker::Noop();
         }
 
+        const std::string& cacheKey = path.string();
+
         std::shared_ptr<T> cachedResource;
-        if (TryGetFromCache(path, cachedResource))
+        if (TryGetFromCache(cacheKey, cachedResource))
         {
             callback(cachedResource);
             return Worker::Noop();
@@ -47,7 +53,7 @@ public:
             };
 
             std::unique_lock lock(s_AsyncLoadRequestsMutex);
-            auto it = s_AsyncLoadRequests.find(path);
+            const auto it = s_AsyncLoadRequests.find(cacheKey);
             if (it != s_AsyncLoadRequests.end())
             {
                 AddCallback(it->second);
@@ -60,7 +66,7 @@ public:
 
                 AsyncLoadRequest request {task};
                 AddCallback(request);
-                s_AsyncLoadRequests[path] = std::move(request);
+                s_AsyncLoadRequests[cacheKey] = std::move(request);
             }
         }
 
@@ -78,19 +84,19 @@ private:
 
     static void UploadPixels(Texture& texture, int facesCount, int mipCount, TextureBinaryReader& reader);
 
-    static std::unordered_map<std::filesystem::path, std::shared_ptr<Resource>> s_LoadedResources;
-    static std::unordered_map<std::filesystem::path, AsyncLoadRequest> s_AsyncLoadRequests;
+    static std::unordered_map<std::string, std::shared_ptr<Resource>> s_LoadedResources;
+    static std::unordered_map<std::string, AsyncLoadRequest> s_AsyncLoadRequests;
 
     static std::shared_mutex s_LoadedResourcesMutex;
     static std::shared_mutex s_AsyncLoadRequestsMutex;
 
-    static void AddToCache(const std::filesystem::path& path, std::shared_ptr<Resource> resource);
+    static void AddToCache(const std::string& cacheKey, std::shared_ptr<Resource> resource);
 
     template<typename T>
-    static bool TryGetFromCache(const std::filesystem::path& path, std::shared_ptr<T>& outResource)
+    static bool TryGetFromCache(const std::string& cacheKey, std::shared_ptr<T>& outResource)
     {
         std::shared_lock lock(s_LoadedResourcesMutex);
-        auto it = s_LoadedResources.find(path);
+        const auto it = s_LoadedResources.find(cacheKey);
         if (it == s_LoadedResources.end())
             return false;
 
@@ -103,13 +109,15 @@ private:
     {
         std::shared_ptr<T> resource = Load<T>(path, true);
 
+        const std::string cacheKey = path.string();
+
         std::unique_lock lock(s_AsyncLoadRequestsMutex);
-        AsyncLoadRequest& request = s_AsyncLoadRequests[path];
+        const AsyncLoadRequest& request = s_AsyncLoadRequests[cacheKey];
 
         for (const auto& callback: request.Callbacks)
             callback(resource);
 
-        s_AsyncLoadRequests.erase(path);
+        s_AsyncLoadRequests.erase(cacheKey);
     }
 };
 

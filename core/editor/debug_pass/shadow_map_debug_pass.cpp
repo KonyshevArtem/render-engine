@@ -12,6 +12,7 @@
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "types/graphics_backend_buffer_view.h"
 #include "types/graphics_backend_render_target_descriptor.h"
+#include "resources/resources.h"
 
 bool ShadowMapDebugPass::DrawShadowMapOverlay = false;
 bool ShadowMapDebugPass::DrawShadowCascades = false;
@@ -39,7 +40,7 @@ void ShadowMapDebugPass::DrawCascades(const RenderData& renderData) const
     bufferDescriptor.AllowCPUWrites = true;
     bufferDescriptor.Size = sizeof(DebugData);
 
-    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowCascadeVisualize", {});
+    static std::shared_ptr<Shader> shader = Resources::LoadShader("core_resources/shaders/editor/shadowCascadeVisualize", {});
     static std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "ShadowCascadeVisualizeData");
 
     if (DrawShadowCascades)
@@ -89,7 +90,7 @@ void ShadowMapDebugPass::DrawOverlay(const RenderData& renderData) const
     bufferDescriptor.AllowCPUWrites = true;
     bufferDescriptor.Size = sizeof(DebugData);
 
-    static std::shared_ptr<Shader> shader = Shader::Load("core_resources/shaders/editor/shadowMapOverlay", {});
+    static std::shared_ptr<Shader> shader = Resources::LoadShader("core_resources/shaders/editor/shadowMapOverlay", {});
     static std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "ShadowMapOverlayData");
     static GraphicsBackendSampler sampler = GraphicsBackend::Current()->CreateSampler(samplerDescriptor, "ShadowMap Overlay Sampler");
 

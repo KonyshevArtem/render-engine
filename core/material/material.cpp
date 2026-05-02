@@ -10,7 +10,8 @@ Material::Material(std::shared_ptr<Shader> shader, const std::string& name) :
     m_Name(name),
     m_Shader(std::move(shader))
 {
-    m_PerMaterialDataBufferWrapper = std::make_shared<GraphicsBufferWrapper>(m_Shader, GlobalConstants::PerMaterialDataBufferName, name);
+    if (m_Shader)
+		m_PerMaterialDataBufferWrapper = std::make_shared<GraphicsBufferWrapper>(m_Shader, GlobalConstants::PerMaterialDataBufferName, name);
 }
 
 std::shared_ptr<Material> Material::Copy()
@@ -20,12 +21,16 @@ std::shared_ptr<Material> Material::Copy()
     material->m_Shader = m_Shader;
     material->m_RenderQueue = m_RenderQueue;
     material->m_Textures = m_Textures;
-    material->m_PerMaterialDataBufferWrapper = m_PerMaterialDataBufferWrapper->Copy();
+    if (m_PerMaterialDataBufferWrapper)
+		material->m_PerMaterialDataBufferWrapper = m_PerMaterialDataBufferWrapper->Copy();
     return material;
 }
 
 void Material::SetTexture(const std::string& name, std::shared_ptr<Texture> texture)
 {
+    if (!m_Shader)
+        return;
+
     const std::unordered_map<std::string, GraphicsBackendTextureInfo>& shaderTextures = m_Shader->GetTextures();
     auto it = shaderTextures.find(name);
     if (it == shaderTextures.end())
@@ -64,10 +69,11 @@ void Material::SetInt(const std::string &name, int value)
 
 void Material::SetDataToConstantBuffer(const std::string &name, const void *data, uint64_t size)
 {
-    m_PerMaterialDataBufferWrapper->TrySetVariable(name, data, size);
+    if (m_PerMaterialDataBufferWrapper)
+		m_PerMaterialDataBufferWrapper->TrySetVariable(name, data, size);
 }
 
 std::shared_ptr<GraphicsBuffer> Material::GetPerMaterialDataBuffer(uint32_t& bindingIndex) const
 {
-    return m_PerMaterialDataBufferWrapper->GetBuffer(bindingIndex);
+	return m_PerMaterialDataBufferWrapper ? m_PerMaterialDataBufferWrapper->GetBuffer(bindingIndex) : nullptr;
 }

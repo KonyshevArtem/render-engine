@@ -8,11 +8,12 @@
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "graphics_buffer/graphics_buffer.h"
 #include "mesh/mesh.h"
+#include "resources/resources.h"
 
 FinalBlitPass::FinalBlitPass() :
     RenderPass()
 {
-    m_BlitShader = Shader::Load("core_resources/shaders/blit", {});
+    m_BlitShader = Resources::LoadShader("core_resources/shaders/blit", {});
 }
 
 void FinalBlitPass::Prepare(RenderData& renderData)

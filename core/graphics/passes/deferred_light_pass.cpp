@@ -5,11 +5,12 @@
 #include "mesh/mesh.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "types/graphics_backend_buffer_descriptor.h"
+#include "resources/resources.h"
 
 DeferredLightPass::DeferredLightPass()
 {
-	m_LightShaders[0] = Shader::Load("core_resources/shaders/deferred_light", {"_REFLECTION", "_RECEIVE_SHADOWS"});
-	m_LightShaders[1] = Shader::Load("core_resources/shaders/deferred_light", {"_REFLECTION", "_RECEIVE_SHADOWS", "_RAYTRACED_SHADOWS"});
+	m_LightShaders[0] = Resources::LoadShader("core_resources/shaders/deferred_light", {"_REFLECTION", "_RECEIVE_SHADOWS"});
+	m_LightShaders[1] = Resources::LoadShader("core_resources/shaders/deferred_light", {"_REFLECTION", "_RECEIVE_SHADOWS", "_RAYTRACED_SHADOWS"});
 }
 
 void DeferredLightPass::Prepare(RenderData& renderData)
@@ -36,6 +37,10 @@ void DeferredLightPass::Prepare(RenderData& renderData)
 void DeferredLightPass::Execute(const RenderData& renderData)
 {
 	Profiler::Marker marker("DeferredLightPass::Execute");
+
+    const std::shared_ptr<Shader> shader = m_LightShaders[renderData.UseRaytracedShadows];
+    if (!shader)
+        return;
 
     struct
     {
@@ -72,7 +77,7 @@ void DeferredLightPass::Execute(const RenderData& renderData)
 		GraphicsBackend::Current()->BindConstantBuffer(m_LightingDataBuffer->GetBackendBuffer(), 0, 0, sizeof(constants));
 
 		const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
-        GraphicsBackend::Current()->UseProgram(m_LightShaders[renderData.UseRaytracedShadows]->GetProgram(fullscreenMesh));
+        GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh));
         GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
 	}
 	GraphicsBackend::Current()->EndRenderPass();

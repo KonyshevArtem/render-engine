@@ -20,6 +20,7 @@
 #include "editor/gizmos/gizmos.h"
 #include "input/input.h"
 #include "types/graphics_backend_buffer_descriptor.h"
+#include "resources/resources.h"
 
 #include <cfloat>
 
@@ -41,7 +42,7 @@ namespace ShadowCasterPassLocal
 ShadowCasterPass::ShadowCasterPass() :
     RenderPass(),
 	m_BiasMatrix(Matrix4x4::TRS(Vector3{ 0.5f, 0.5f, 0.5f }, Quaternion(), Vector3{ 0.5f, 0.5f, 0.5f })),
-    m_Shader(Shader::Load("core_resources/shaders/shadowCaster", {})),
+    m_Shader(Resources::LoadShader("core_resources/shaders/shadowCaster", {})),
 	m_Material(std::make_shared<Material>(m_Shader, "ShadowCaster"))
 {
     GraphicsBackendTextureDescriptor shadowMapDescriptor{};

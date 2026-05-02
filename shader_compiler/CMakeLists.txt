@@ -14,7 +14,7 @@ if (${RENDER_ENGINE_BUILD_TOOLS})
         src/defines.h
         src/include_handler.h)
     target_include_directories(ShaderCompilerLib PUBLIC include)
-    target_link_libraries(ShaderCompilerLib DXC spirv-cross-msl spirv-cross-glsl nlohmann_json::nlohmann_json DebugUtil)
+    target_link_libraries(ShaderCompilerLib DXC spirv-cross-msl spirv-cross-glsl nlohmann_json::nlohmann_json DebugUtil Hash)
 
     set(CMAKE_CXX_STANDARD 20)
 

@@ -46,25 +46,6 @@ namespace ShaderLocal
     }
 }
 
-std::shared_ptr<Shader> Shader::Load(const std::filesystem::path& path, const std::vector<std::string>& keywords)
-{
-    Profiler::Marker _("Shader::Load", path.string());
-
-    auto shader = ShaderLoader::Load(path, keywords);
-
-    if (!shader)
-    {
-        static std::shared_ptr<Shader> fallback = ShaderLoader::Load("core_resources/shaders/fallback", {});
-
-        if (!fallback)
-            exit(1);
-
-        return fallback;
-    }
-
-    return shader;
-}
-
 Shader::Shader(std::vector<GraphicsBackendShaderObject>& shaders,
                std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
                std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
@@ -138,6 +119,8 @@ const GraphicsBackendProgram& Shader::GetOrCreateRenderProgram(const VertexAttri
     if (it != m_Programs.end())
         return it->second;
 
+    const std::string& psoName = m_Name + "_" + std::to_string(hash);
+
     programDescriptor.Type = m_Type;
     programDescriptor.Shaders = &m_Shaders;
     programDescriptor.VertexAttributes = &vertexAttributes.GetAttributes();
@@ -145,7 +128,7 @@ const GraphicsBackendProgram& Shader::GetOrCreateRenderProgram(const VertexAttri
     programDescriptor.Samplers = &m_Samplers;
     programDescriptor.Buffers = &m_Buffers;
     programDescriptor.TLASes = &m_TLASes;
-    programDescriptor.Name = &m_Name;
+    programDescriptor.Name = &psoName;
 
     const GraphicsBackendProgram program = GraphicsBackend::Current()->CreateProgram(programDescriptor);
     m_Programs[hash] = program;

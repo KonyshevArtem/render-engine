@@ -15,6 +15,7 @@
 #include "editor/profiler/profiler.h"
 #include "graphics/render_data.h"
 #include "types/graphics_backend_render_target_descriptor.h"
+#include "resources/resources.h"
 
 namespace UIRenderPass_Local
 {
@@ -28,9 +29,9 @@ namespace UIRenderPass_Local
 UIRenderPass::UIRenderPass() :
     RenderPass()
 {
-    m_ImageShader = Shader::Load("core_resources/shaders/ui/image", {});
-    m_TextShader = Shader::Load("core_resources/shaders/ui/text", {});
-    m_MaskStencilShader = Shader::Load("core_resources/shaders/ui/maskStencil", {});
+    m_ImageShader = Resources::LoadShader("core_resources/shaders/ui/image", {});
+    m_TextShader = Resources::LoadShader("core_resources/shaders/ui/text", {});
+    m_MaskStencilShader = Resources::LoadShader("core_resources/shaders/ui/maskStencil", {});
 
     GraphicsBackendBufferDescriptor bufferDescriptor{};
     bufferDescriptor.AllowCPUWrites = true;

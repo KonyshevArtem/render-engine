@@ -5,12 +5,14 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <unordered_set>
 
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
 #include "enums/primitive_type.h"
 #include "drawable_geometry/vertex_attributes/vertex_attributes.h"
 #include "types/graphics_backend_program_descriptor.h"
+#include "resources/resource.h"
 
 struct GraphicsBackendTextureInfo;
 struct GraphicsBackendSamplerInfo;
@@ -18,11 +20,9 @@ struct GraphicsBackendTLASInfo;
 class GraphicsBackendBufferInfo;
 class DrawableGeometry;
 
-class Shader
+class Shader : public Resource
 {
 public:
-    static std::shared_ptr<Shader> Load(const std::filesystem::path &_path, const std::vector<std::string> &_keywords);
-
     Shader(std::vector<GraphicsBackendShaderObject>& shaders,
 		std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
 		std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
@@ -30,7 +30,7 @@ public:
         std::unordered_map<std::string, GraphicsBackendTLASInfo> TLASes,
         ThreadGroupSize threadGroupSize,
 		std::string name, bool _supportInstancing);
-    ~Shader();
+    virtual ~Shader();
 
     Shader(const Shader &) = delete;
     Shader(Shader &&)      = delete;

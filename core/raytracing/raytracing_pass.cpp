@@ -180,6 +180,6 @@ void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 
 void RaytracingPass::LoadShaders()
 {
-	m_PrimaryRaysDebugShader = Shader::Load("core_resources/shaders/raytracing/primary_rays_debug", { "_RECEIVE_SHADOWS" });
-	m_RaytracedShadowsShader = Shader::Load("core_resources/shaders/raytracing/raytraced_shadows", {});
+	m_PrimaryRaysDebugShader = Resources::LoadShader("core_resources/shaders/raytracing/primary_rays_debug", { "_RECEIVE_SHADOWS" });
+	m_RaytracedShadowsShader = Resources::LoadShader("core_resources/shaders/raytracing/raytraced_shadows", {});
 }

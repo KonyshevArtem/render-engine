@@ -10,6 +10,7 @@
 #include "graphics_buffer/graphics_buffer.h"
 #include "mesh/mesh.h"
 #include "types/graphics_backend_buffer_descriptor.h"
+#include "resources/resources.h"
 
 namespace PostProcessPass_Local
 {
@@ -29,7 +30,7 @@ PostProcessPass::PostProcessPass() :
     bufferDescriptor.AllowCPUWrites = true;
     bufferDescriptor.Size = sizeof(PostProcessPass_Local::Data);
 
-    m_PostProcessShader = Shader::Load("core_resources/shaders/post_process", {});
+    m_PostProcessShader = Resources::LoadShader("core_resources/shaders/post_process", {});
     m_PostProcessDataBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "Post Process Data");
 }
 

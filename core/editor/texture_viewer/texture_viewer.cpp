@@ -4,6 +4,7 @@
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "vector2/vector2.h"
 #include "vector3/vector3.h"
+#include "resources/resources.h"
 
 std::string TextureViewer::s_SelectedTextureName;
 Vector4I TextureViewer::s_ColorMask;
@@ -28,7 +29,7 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<Texture>& texture, con
 			if (!s_CopyShader)
 				s_FileWatcher.AddFile("core_resources/shaders/editor/texture_viewer/texture_viewer_copy.hlsl");
 
-			s_CopyShader = Shader::Load("core_resources/shaders/editor/texture_viewer/texture_viewer_copy", {});
+			s_CopyShader = Resources::LoadShader("core_resources/shaders/editor/texture_viewer/texture_viewer_copy", {});
 		}
 
 		if (!s_CopyShader)

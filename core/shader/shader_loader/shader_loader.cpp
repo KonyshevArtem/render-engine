@@ -10,9 +10,11 @@
 #include "hash.h"
 #include "shader_compiler.h"
 
+#include <set>
+
 namespace ShaderLoader
 {
-    const std::string INSTANCING_KEYWORD = "_INSTANCING";
+    const std::string INSTANCING_DEFINE = "_INSTANCING";
 
     std::string GetBackendLiteral(GraphicsBackendName backendName)
     {
@@ -31,29 +33,32 @@ namespace ShaderLoader
         }
     }
 
-    std::string GetKeywordsHash(std::vector<std::string> keywords, bool& outSupportInstancing)
+    std::string GetDefinesHash(const std::vector<std::string>& defines)
     {
-        outSupportInstancing = false;
+        std::set<std::string> orderedDefines;
+        for (const std::string& define : defines)
+            orderedDefines.insert(define);
 
-        std::string keywordsDirectives;
-        std::sort(keywords.begin(), keywords.end());
-        for (const auto &keyword: keywords)
-        {
-            keywordsDirectives += keyword + ",";
-            outSupportInstancing |= keyword == INSTANCING_KEYWORD;
-        }
+        std::string combinedDefines;
+        for (const std::string& define : orderedDefines)
+            combinedDefines += define;
 
-        return std::to_string(Hash::FNV1a(keywordsDirectives));
+        return std::to_string(Hash::FNV1a(combinedDefines));
     }
 
-    std::shared_ptr<Shader> LoadCompiledShader(const std::filesystem::path& path, const std::vector<std::string>& keywords)
+    bool HasDefine(const std::vector<std::string>& defines, const std::string& define)
     {
-        bool supportInstancing = false;
-        const std::string keywordHash = GetKeywordsHash(keywords, supportInstancing);
+        return std::ranges::find(defines, define) != defines.end();
+    }
+
+    std::shared_ptr<Shader> LoadCompiledShader(const std::filesystem::path& path, const std::vector<std::string>& defines)
+    {
+        const std::string definesHash = GetDefinesHash(defines);
+        const bool supportInstancing = HasDefine(defines, INSTANCING_DEFINE);
 
         const std::string backendLiteral = GetBackendLiteral(GraphicsBackend::Current()->GetName());
         const std::filesystem::path compiledShaderPath = FileSystem::GetBuildResourcesPath() / path;
-        const std::filesystem::path compiledShaderPermutationPath = compiledShaderPath / backendLiteral / keywordHash;
+        const std::filesystem::path compiledShaderPermutationPath = compiledShaderPath / backendLiteral / definesHash;
 
 #ifdef RENDER_ENGINE_EDITOR
         const std::filesystem::path editorShaderPath = FileSystem::GetEditorResourcesPath() / (path.string() + ".hlsl");
@@ -70,13 +75,13 @@ namespace ShaderLoader
                 const std::filesystem::path dependencyPath = editorShaderDirPath / pair.first;
                 if (!FileSystem::FileExists(dependencyPath) || std::filesystem::last_write_time(dependencyPath).time_since_epoch().count() != pair.second)
                 {
-                    if (!ShaderCompilerLib::CompileShader(editorShaderPath, compiledShaderPath, backendLiteral, keywords, false))
+                    if (!ShaderCompilerLib::CompileShader(editorShaderPath, compiledShaderPath, backendLiteral, defines, false))
                         return nullptr;
                     break;
                 }
             }
         }
-        else if (!ShaderCompilerLib::CompileShader(editorShaderPath, compiledShaderPath, backendLiteral, keywords, false))
+        else if (!ShaderCompilerLib::CompileShader(editorShaderPath, compiledShaderPath, backendLiteral, defines, false))
             return nullptr;
 #endif
 
@@ -95,7 +100,7 @@ namespace ShaderLoader
         std::string shaderDebugName;
         shaderDebugName.append(path.string());
         shaderDebugName.append("_");
-        shaderDebugName.append(keywordHash);
+        shaderDebugName.append(definesHash);
 
         std::vector<GraphicsBackendShaderObject> shaders;
         for (int i = 0; i < static_cast<int>(ShaderType::COUNT); ++i)
@@ -132,17 +137,17 @@ namespace ShaderLoader
         return std::make_shared<Shader>(shaders, textures, buffers, samplers, TLASes, threadGroupSize, shaderDebugName, supportInstancing);
     }
 
-	std::shared_ptr<Shader> Load(const std::filesystem::path& path, const std::vector<std::string>& keywords)
+	std::shared_ptr<Shader> Load(const std::filesystem::path& path, const std::vector<std::string>& defines)
     {
-        std::shared_ptr<Shader> shader = LoadCompiledShader(path, keywords);
+        std::shared_ptr<Shader> shader = LoadCompiledShader(path, defines);
 
         if (!shader)
         {
-            std::string keywordString = keywords.empty() ? "<no defines>" : "";
-            for (const std::string& keyword : keywords)
-                keywordString += keyword + " ";
+            std::string definesString = defines.empty() ? "<no defines>" : "";
+            for (const std::string& define : defines)
+                definesString += define + " ";
 
-            Debug::LogErrorFormat("[ShaderLoader] Can't load shader {}\n{}", path.string(), keywordString);
+            Debug::LogErrorFormat("[ShaderLoader] Can't load shader {}\n{}", path.string(), definesString);
             return nullptr;
         }
 

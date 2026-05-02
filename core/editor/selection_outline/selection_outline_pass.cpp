@@ -19,6 +19,7 @@
 #include "graphics/render_data.h"
 #include "graphics/render_settings/render_settings.h"
 #include "types/graphics_backend_buffer_descriptor.h"
+#include "resources/resources.h"
 
 void CheckTexture(std::shared_ptr<Texture2D>& texture, int width, int height)
 {
@@ -38,7 +39,7 @@ void CheckTexture(std::shared_ptr<Texture2D>& texture, int width, int height)
 SelectionOutlinePass::SelectionOutlinePass() :
     RenderPass()
 {
-    m_SilhouetteMaterial = std::make_shared<Material>(Shader::Load("core_resources/shaders/silhouette", {}), "Silhouette");
+    m_SilhouetteMaterial = std::make_shared<Material>(Resources::LoadShader("core_resources/shaders/silhouette", {}), "Silhouette");
     m_SilhouetteMaterial->DepthDescriptor = GraphicsBackendDepthDescriptor::AlwaysPassNoWrite();
 }
 
@@ -113,7 +114,7 @@ void SelectionOutlinePass::Execute(const RenderData& renderData)
         bufferDescriptor.AllowCPUWrites = true;
         bufferDescriptor.Size = sizeof(OutlineData);
 
-        static std::shared_ptr<Shader> blitShader = Shader::Load("core_resources/shaders/outlineBlit", {});
+        static std::shared_ptr<Shader> blitShader = Resources::LoadShader("core_resources/shaders/outlineBlit", {});
         static std::shared_ptr<GraphicsBuffer> blitDataBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "Selection Outline Data");
 
         OutlineData data{};

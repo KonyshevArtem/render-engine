@@ -11,10 +11,11 @@
 #include "font/font.h"
 #include "file_system/file_system.h"
 #include "resource.h"
+#include "shader/shader_loader/shader_loader.h"
 #include "debug.h"
 
-std::unordered_map<std::filesystem::path, std::shared_ptr<Resource>> Resources::s_LoadedResources;
-std::unordered_map<std::filesystem::path, Resources::AsyncLoadRequest> Resources::s_AsyncLoadRequests;
+std::unordered_map<std::string, std::shared_ptr<Resource>> Resources::s_LoadedResources;
+std::unordered_map<std::string, Resources::AsyncLoadRequest> Resources::s_AsyncLoadRequests;
 
 std::shared_mutex Resources::s_LoadedResourcesMutex;
 std::shared_mutex Resources::s_AsyncLoadRequestsMutex;
@@ -24,8 +25,10 @@ std::shared_ptr<Texture2D> Resources::Load(const std::filesystem::path& path, bo
 {
     Profiler::Marker _("Resources::Load<Texture2D>", path.string());
 
+    const std::string cacheKey = path.string();
+
     std::shared_ptr<Texture2D> texture;
-    if (TryGetFromCache(path, texture))
+    if (TryGetFromCache(cacheKey, texture))
         return texture;
 
     TextureBinaryReader reader;
@@ -46,7 +49,7 @@ std::shared_ptr<Texture2D> Resources::Load(const std::filesystem::path& path, bo
 
     texture = std::shared_ptr<Texture2D>(new Texture2D(descriptor, path.string()));
     UploadPixels(*texture, 1, header.MipCount, reader);
-    AddToCache(path, texture);
+    AddToCache(cacheKey, texture);
 
     return texture;
 }
@@ -56,8 +59,10 @@ std::shared_ptr<Cubemap> Resources::Load(const std::filesystem::path& path, bool
 {
     Profiler::Marker _("Resources::Load<Cubemap>", path.string());
 
+    const std::string cacheKey = path.string();
+
     std::shared_ptr<Cubemap> cubemap;
-    if (TryGetFromCache(path, cubemap))
+    if (TryGetFromCache(cacheKey, cubemap))
         return cubemap;
 
     TextureBinaryReader reader;
@@ -85,7 +90,7 @@ std::shared_ptr<Cubemap> Resources::Load(const std::filesystem::path& path, bool
 
     cubemap = std::shared_ptr<Cubemap>(new Cubemap(descriptor, path.string()));
     UploadPixels(*cubemap, facesCount, header.MipCount, reader);
-    AddToCache(path, cubemap);
+    AddToCache(cacheKey, cubemap);
 
     return cubemap;
 }
@@ -95,12 +100,14 @@ std::shared_ptr<Material> Resources::Load(const std::filesystem::path& path, boo
 {
     Profiler::Marker _("Resources::Load<Material>", path.string());
 
+    const std::string cacheKey = path.string();
+
     std::shared_ptr<Material> material;
-    if (TryGetFromCache(path, material))
+    if (TryGetFromCache(cacheKey, material))
         return material;
 
     material = MaterialParser::Parse(path, asyncSubresourceLoads);
-    AddToCache(path, material);
+    AddToCache(cacheKey, material);
     return material;
 }
 
@@ -114,8 +121,10 @@ std::shared_ptr<Mesh> Resources::Load(const std::filesystem::path& path, bool as
 {
     Profiler::Marker _("Resources::Load<Mesh>", path.string());
 
+    const std::string cacheKey = path.string();
+
     std::shared_ptr<Mesh> mesh;
-    if (TryGetFromCache(path, mesh))
+    if (TryGetFromCache(cacheKey, mesh))
         return mesh;
 
     MeshBinaryReader reader;
@@ -129,7 +138,7 @@ std::shared_ptr<Mesh> Resources::Load(const std::filesystem::path& path, bool as
     mesh = std::make_shared<Mesh>(reader.GetVertexData(), reader.GetIndices(), header.HasUV, header.HasNormals, header.HasTangents,
                                                         header.MinPoint, header.MaxPoint, header.Name);
 
-    AddToCache(path, mesh);
+    AddToCache(cacheKey, mesh);
 
     return mesh;
 }
@@ -139,8 +148,10 @@ std::shared_ptr<Font> Resources::Load(const std::filesystem::path &path, bool as
 {
     Profiler::Marker _("Resources::Load<Font>", path.string());
 
+    const std::string cacheKey = path.string();
+
     std::shared_ptr<Font> font;
-    if (TryGetFromCache(path, font))
+    if (TryGetFromCache(cacheKey, font))
         return font;
 
     std::vector<uint8_t> bytes;
@@ -151,9 +162,25 @@ std::shared_ptr<Font> Resources::Load(const std::filesystem::path &path, bool as
     }
 
     font = std::make_shared<Font>(bytes, path.string());
-    AddToCache(path, font);
+    AddToCache(cacheKey, font);
 
     return font;
+}
+
+std::shared_ptr<Shader> Resources::LoadShader(const std::filesystem::path& path, const std::vector<std::string>& defines)
+{
+    Profiler::Marker _("Resources::Load<Shader>", path.string());
+
+    const std::string cacheKey = path.string() + ShaderLoader::GetDefinesHash(defines);
+
+    std::shared_ptr<Shader> shader;
+    if (TryGetFromCache(cacheKey, shader))
+        return shader;
+
+    shader = ShaderLoader::Load(path, defines);
+    AddToCache(cacheKey, shader);
+
+    return shader;
 }
 
 void Resources::UploadPixels(Texture& texture, int facesCount, int mipCount, TextureBinaryReader& reader)
@@ -168,8 +195,8 @@ void Resources::UploadPixels(Texture& texture, int facesCount, int mipCount, Tex
     }
 }
 
-void Resources::AddToCache(const std::filesystem::path& path, std::shared_ptr<Resource> resource)
+void Resources::AddToCache(const std::string& cacheKey, std::shared_ptr<Resource> resource)
 {
     std::unique_lock lock(s_LoadedResourcesMutex);
-    s_LoadedResources[path] = resource;
+    s_LoadedResources[cacheKey] = resource;
 }

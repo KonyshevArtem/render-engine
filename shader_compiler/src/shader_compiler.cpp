@@ -23,7 +23,7 @@ namespace ShaderCompilerLib
 
     CComPtr<IDxcResult> CompileDXC(const std::filesystem::path& hlslPath, const std::filesystem::path& outputPath, const CComPtr<IDxcUtils>& pUtils, const CComPtr<IDxcCompiler3>& pCompiler,
         const CComPtr<IDxcIncludeHandler>& pIncludeHandler, GraphicsBackend backend,
-        const std::vector<std::wstring>& defines, ShaderType shaderType, bool debug)
+        const std::vector<std::string>& defines, ShaderType shaderType, bool debug)
     {
         const std::wstring parentPath = hlslPath.parent_path().wstring();
         const std::wstring hlslPathString = hlslPath.wstring();
@@ -50,7 +50,8 @@ namespace ShaderCompilerLib
         vszArgs.push_back(L"-I");
         vszArgs.push_back(parentPath.c_str());
 
-        for (const auto& define : defines)
+        const std::vector<std::wstring> wDefines = ConvertDefines(defines);
+        for (const std::wstring& define : wDefines)
         {
             vszArgs.push_back(L"-D");
             vszArgs.push_back(define.c_str());
@@ -248,9 +249,6 @@ namespace ShaderCompilerLib
             return false;
         }
 
-        const std::vector<std::wstring> wDefines = ConvertDefines(defines);
-        const std::string definesHash = GetDefinesHash(wDefines);
-
         const std::filesystem::path hlslPath = std::filesystem::absolute(inputPath);
         Debug::LogInfoFormat("Compiling shader: {}\n{}", hlslPath.filename().string(), CombineDefines(defines));
 
@@ -264,6 +262,8 @@ namespace ShaderCompilerLib
 
         IncludeHandler includeHandler(hlslPath.parent_path(), pUtils);
 
+        const std::string definesHash = GetDefinesHash(defines);
+
         Reflection reflection;
         const std::filesystem::path outputDirPath = outputPath / GetBackendLiteral(backend) / definesHash;
 
@@ -275,7 +275,7 @@ namespace ShaderCompilerLib
             if (hlslText.find(entryPoint) == std::string::npos)
                 continue;
 
-            CComPtr<IDxcResult> dxc = CompileDXC(hlslPath, outputDirPath, pUtils, pCompiler, &includeHandler, backend, wDefines, shaderType, debug);
+            CComPtr<IDxcResult> dxc = CompileDXC(hlslPath, outputDirPath, pUtils, pCompiler, &includeHandler, backend, defines, shaderType, debug);
             if (!dxc)
                 return false;
 

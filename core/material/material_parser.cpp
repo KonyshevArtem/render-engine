@@ -207,7 +207,7 @@ namespace MaterialParser
 			std::erase(materialInfo.Shader.Keywords, "_RECEIVE_SHADOWS");
         }
 
-        std::shared_ptr<Shader> shader = Shader::Load(materialInfo.Shader.Path, materialInfo.Shader.Keywords);
+        std::shared_ptr<Shader> shader = Resources::LoadShader(materialInfo.Shader.Path, materialInfo.Shader.Keywords);
         std::shared_ptr<Material> material = std::make_shared<Material>(shader, path.string());
 
         material->StencilDescriptor = materialInfo.Shader.StencilDescriptor;

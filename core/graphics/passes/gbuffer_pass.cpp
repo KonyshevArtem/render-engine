@@ -46,7 +46,7 @@ void GBufferPass::Prepare(RenderData& renderData)
 	renderData.CameraDepthTarget = m_CameraDepthTarget;
 
 	RenderSettings renderSettings{};
-	renderSettings.Sorting = DrawCallSortMode::FRONT_TO_BACK;
+	renderSettings.Sorting = DrawCallSortMode::MATERIAL;
 	renderSettings.Filter = DrawCallFilter::Opaque();
 	m_RenderQueue.Prepare(renderData.ProjectionMatrix * renderData.ViewMatrix, renderData.Renderers, renderSettings);
 }

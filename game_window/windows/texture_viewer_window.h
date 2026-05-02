@@ -28,10 +28,12 @@ private:
     Vector4I m_ColorMask;
     Vector2 m_MinMaxValues;
     bool m_LinearizeDepth;
+    int m_TextureSlice;
 
     void DrawTextureSelector();
     void DrawColorMaskSelector();
     void DrawMinMaxValuesSelector();
+    void DrawTextureSliceSelector();
     void OnTextureRegistered(const std::string& textureName);
 };
 

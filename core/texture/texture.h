@@ -55,6 +55,11 @@ public:
         return m_TextureDescriptor;
     }
 
+    inline TextureType GetTextureType() const
+    {
+        return m_TextureType;
+    }
+
     Texture(const Texture &) = delete;
     Texture(Texture &&) = delete;
 

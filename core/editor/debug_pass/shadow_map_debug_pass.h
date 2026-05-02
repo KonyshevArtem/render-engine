@@ -9,7 +9,6 @@ class DrawableGeometry;
 class ShadowMapDebugPass : public RenderPass
 {
 public:
-    static bool DrawShadowMapOverlay;
     static bool DrawShadowCascades;
 
     ShadowMapDebugPass();
@@ -26,9 +25,6 @@ public:
 
 private:
     std::shared_ptr<DrawableGeometry> m_FullscreenMesh;
-
-    void DrawOverlay(const RenderData& renderData) const;
-    void DrawCascades(const RenderData& renderData) const;
 };
 
 #endif //RENDER_ENGINE_SHADOW_MAP_DEBUG_PASS_H

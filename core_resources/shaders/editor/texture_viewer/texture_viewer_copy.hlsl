@@ -1,8 +1,13 @@
 #include "../../common/global_defines.h"
 #include "../../common/helper_functions.h"
 
-Texture2D<float4> srcTexture : register(t0);
-RWTexture2D<float4> dstTexture : register(u0);
+#ifdef TEXTURE_2D_ARRAY
+Texture2DArray<float4> SrcTexture : register(t0);
+#else
+Texture2D<float4> SrcTexture : register(t0);
+#endif
+
+RWTexture2D<float4> DstTexture : register(u0);
 
 cbuffer Data : register(b0)
 {
@@ -11,7 +16,8 @@ cbuffer Data : register(b0)
 
     uint4 ColorMask;
 
-    uint3 Padding0;
+    uint2 Padding0;
+    uint TextureSlice;
     uint ShouldLinearizeDepth;
 }
 
@@ -33,7 +39,12 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
     srcPixel.y = Size.y - srcPixel.y - 1;
 #endif
 
-    float4 color = srcTexture.Load(int3(srcPixel.xy, 0));
+#ifdef TEXTURE_2D_ARRAY
+    float4 color = SrcTexture.Load(int4(srcPixel.xy, TextureSlice, 0));
+#else
+    float4 color = SrcTexture.Load(int3(srcPixel.xy, 0));
+#endif
+
     if (all(ColorMask == uint4(0, 0, 0, 1)))
         color = float4(color.w, color.w, color.w, 1);
     else
@@ -52,5 +63,5 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
 
     color.xyz = (color.xyz - MinMaxValues.x) / (MinMaxValues.y - MinMaxValues.x);
 
-    dstTexture[dtid.xy] = color;
+    DstTexture[dtid.xy] = color;
 }

@@ -10,10 +10,11 @@ std::string TextureViewer::s_SelectedTextureName;
 Vector4I TextureViewer::s_ColorMask;
 Vector2 TextureViewer::s_MinMaxValues;
 bool TextureViewer::s_LinearizeDepth;
+int TextureViewer::s_TextureSlice = 0;
 std::function<void(const std::string&)> TextureViewer::s_TextureRegisteredCallback = nullptr;
 
 std::shared_ptr<Texture> TextureViewer::s_SelectedTextureCopy = nullptr;
-std::shared_ptr<Shader> TextureViewer::s_CopyShader = nullptr;
+std::shared_ptr<Shader> TextureViewer::s_CopyShaders[2];
 std::shared_ptr<GraphicsBuffer> TextureViewer::s_DataBuffer = nullptr;
 FileWatcher TextureViewer::s_FileWatcher;
 
@@ -24,15 +25,17 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<Texture>& texture, con
 
 	if (s_SelectedTextureName == name)
 	{
-		if (!s_CopyShader || s_FileWatcher.FilesChanged())
+		if (!s_CopyShaders[0] || s_FileWatcher.FilesChanged())
 		{
-			if (!s_CopyShader)
+			if (!s_CopyShaders[0])
 				s_FileWatcher.AddFile("core_resources/shaders/editor/texture_viewer/texture_viewer_copy.hlsl");
 
-			s_CopyShader = Resources::LoadShader("core_resources/shaders/editor/texture_viewer/texture_viewer_copy", {});
+			s_CopyShaders[0] = Resources::LoadShader("core_resources/shaders/editor/texture_viewer/texture_viewer_copy", {});
+			s_CopyShaders[1] = Resources::LoadShader("core_resources/shaders/editor/texture_viewer/texture_viewer_copy", {"TEXTURE_2D_ARRAY"});
 		}
 
-		if (!s_CopyShader)
+		const std::shared_ptr<Shader> shader = s_CopyShaders[texture->GetTextureType() == TextureType::TEXTURE_2D_ARRAY ? 1 : 0];
+		if (!shader)
 			return;
 
 		struct
@@ -42,7 +45,8 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<Texture>& texture, con
 
 			Vector4I ColorMask;
 
-			Vector3 Padding0;
+			Vector2 Padding0;
+			uint32_t TextureSlice;
 			uint32_t ShouldLinearizeDepth;
 		} data{};
 
@@ -69,6 +73,7 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<Texture>& texture, con
 		data.Size = Vector2I(texture->GetWidth(), texture->GetHeight());
 		data.ColorMask = s_ColorMask;
 		data.MinMax = s_MinMaxValues;
+		data.TextureSlice = s_TextureSlice;
 		data.ShouldLinearizeDepth = s_LinearizeDepth;
 
 		GraphicsBackend::Current()->SetBufferData(s_DataBuffer->GetBackendBuffer(), 0, sizeof(data), &data);
@@ -77,7 +82,7 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<Texture>& texture, con
 		GraphicsBackend::Current()->BindTexture(texture->GetBackendTexture(), 0);
 		GraphicsBackend::Current()->BindRWTexture(s_SelectedTextureCopy->GetBackendTexture(), 0);
 
-		GraphicsBackend::Current()->UseProgram(s_CopyShader->GetProgram());
+		GraphicsBackend::Current()->UseProgram(shader->GetProgram());
 		GraphicsBackend::Current()->Dispatch(data.Size.x, data.Size.y, 1);
 
 		GraphicsBackend::Current()->EndComputePass();
@@ -102,6 +107,11 @@ void TextureViewer::SetMinMaxValues(Vector2 minMax)
 void TextureViewer::SetLinearizeDepth(bool linearize)
 {
 	s_LinearizeDepth = linearize;
+}
+
+void TextureViewer::SetTextureSlice(int slice)
+{
+	s_TextureSlice = slice;
 }
 
 void TextureViewer::SetTextureRegisteredCallback(std::function<void(const std::string&)> callback)

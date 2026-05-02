@@ -7,11 +7,12 @@
 #include "editor/texture_viewer/texture_viewer.h"
 
 TextureViewerWindow::TextureViewerWindow() :
-	BaseWindow(600, 400, "Texture Viewer", typeid(TextureViewerWindow).hash_code()),
+	BaseWindow(650, 400, "Texture Viewer", typeid(TextureViewerWindow).hash_code()),
 	m_SelectedTextureName("Search..."),
 	m_ColorMask(1, 1, 1, 1),
 	m_MinMaxValues(0, 1),
-	m_LinearizeDepth(false)
+	m_LinearizeDepth(false),
+	m_TextureSlice(0)
 {
 	TextureViewer::SetTextureRegisteredCallback([this](const std::string& textureName) {OnTextureRegistered(textureName); });
 	TextureViewer::SetColorMask(m_ColorMask);
@@ -28,6 +29,7 @@ void TextureViewerWindow::DrawTopBar()
 	DrawTextureSelector();
 	DrawColorMaskSelector();
 	DrawMinMaxValuesSelector();
+	DrawTextureSliceSelector();
 }
 
 void TextureViewerWindow::DrawTextureSelector()
@@ -77,6 +79,7 @@ void TextureViewerWindow::DrawColorMaskSelector()
 	};
 	constexpr ImVec4 inactiveColor = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
 
+	ImGui::Separator();
 	ImGui::PushID("Color Mask");
 	for (int i = 0; i < 4; i++) 
 	{
@@ -102,6 +105,7 @@ void TextureViewerWindow::DrawColorMaskSelector()
 
 void TextureViewerWindow::DrawMinMaxValuesSelector()
 {
+	ImGui::Separator();
 	ImGui::PushItemWidth(60);
 
 	ImGui::SameLine();
@@ -118,6 +122,22 @@ void TextureViewerWindow::DrawMinMaxValuesSelector()
 
 	TextureViewer::SetMinMaxValues(m_MinMaxValues);
 	TextureViewer::SetLinearizeDepth(m_LinearizeDepth);
+}
+
+void TextureViewerWindow::DrawTextureSliceSelector()
+{
+	ImGui::Separator();
+	ImGui::PushItemWidth(100);
+
+	ImGui::SameLine();
+	ImGui::InputInt("Slice", &m_TextureSlice);
+
+	if (m_TextureSlice < 0)
+		m_TextureSlice = 0;
+
+	ImGui::PopItemWidth();
+
+	TextureViewer::SetTextureSlice(m_TextureSlice);
 }
 
 void TextureViewerWindow::OnTextureRegistered(const std::string& textureName)

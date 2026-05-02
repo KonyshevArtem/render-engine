@@ -20,6 +20,7 @@ public:
 	static void SetColorMask(Vector4I mask);
 	static void SetMinMaxValues(Vector2 minMax);
 	static void SetLinearizeDepth(bool linearize);
+	static void SetTextureSlice(int slice);
 	static void SetTextureRegisteredCallback(std::function<void(const std::string&)> callback);
 
 	static std::shared_ptr<Texture> GetSelectedTextureCopy();
@@ -29,10 +30,11 @@ private:
 	static Vector4I s_ColorMask;
 	static Vector2 s_MinMaxValues;
 	static bool s_LinearizeDepth;
+	static int s_TextureSlice;
 	static std::function<void(const std::string&)> s_TextureRegisteredCallback;
 
 	static std::shared_ptr<Texture> s_SelectedTextureCopy;
-	static std::shared_ptr<Shader> s_CopyShader;
+	static std::shared_ptr<Shader> s_CopyShaders[2];
 	static std::shared_ptr<GraphicsBuffer> s_DataBuffer;
 	static FileWatcher s_FileWatcher;
 };

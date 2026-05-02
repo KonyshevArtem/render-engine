@@ -103,7 +103,6 @@ Compile billboard
 Compile gizmos _INSTANCING
 Compile gizmos _INSTANCING,_FRUSTUM_GIZMO
 
-Compile editor/shadowMapOverlay
 Compile editor/shadowCascadeVisualize
 
 Compile ui/image

@@ -21,6 +21,7 @@
 #include "input/input.h"
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "resources/resources.h"
+#include "editor/texture_viewer/texture_viewer.h"
 
 #include <cfloat>
 
@@ -216,6 +217,10 @@ void ShadowCasterPass::Execute(const RenderData& renderData)
     GraphicsBackend::Current()->BindTextureSampler(m_DirectionLightShadowMap->GetBackendTexture(), m_DirectionLightShadowMap->GetBackendSampler(), GlobalConstants::DirectionalShadowMapIndex);
     GraphicsBackend::Current()->BindTextureSampler(m_SpotLightShadowMapArray->GetBackendTexture(), m_SpotLightShadowMapArray->GetBackendSampler(), GlobalConstants::SpotLightShadowMapIndex);
     GraphicsBackend::Current()->BindTextureSampler(m_PointLightShadowMap->GetBackendTexture(), m_PointLightShadowMap->GetBackendSampler(), GlobalConstants::PointLightShadowMapIndex);
+
+    TextureViewer::RegisterTexture(m_DirectionLightShadowMap, "Shadows/DirectionalSM");
+    TextureViewer::RegisterTexture(m_PointLightShadowMap, "Shadows/PointLightSM");
+    TextureViewer::RegisterTexture(m_SpotLightShadowMapArray, "Shadows/SpotLightSM");
 }
 
 void ShadowCasterPass::Render(RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData& cameraData, const std::string& passName)

@@ -13,6 +13,10 @@
 
 #include <vector>
 
+size_t Shader::s_GlobalDefinesHash;
+std::mutex Shader::s_GlobalDefinesMutex;
+std::unordered_set<std::string> Shader::s_GlobalDefines;
+
 namespace ShaderLocal
 {
     size_t GetPSOHash(size_t vertexAttributesHash, const GraphicsBackendProgramDescriptor& programDescriptor)
@@ -46,35 +50,30 @@ namespace ShaderLocal
     }
 }
 
-Shader::Shader(std::vector<GraphicsBackendShaderObject>& shaders,
-               std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
-               std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
-               std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
-               std::unordered_map<std::string, GraphicsBackendTLASInfo> TLASes,
-               ThreadGroupSize threadGroupSize,
-               std::string name, bool supportInstancing) :
-    m_Shaders(std::move(shaders)),
-    m_Name(std::move(name)),
-    m_SupportInstancing(supportInstancing),
-    m_ThreadGroupSize(threadGroupSize),
-    m_Textures(std::move(textures)),
-    m_Samplers(std::move(samplers)),
-    m_Buffers(std::move(buffers)),
-	m_TLASes(std::move(TLASes))
+Shader::Shader(std::filesystem::path path, std::vector<std::string> defines) :
+    m_Path(std::move(path)),
+    m_Defines(std::move(defines))
 {
-    if (m_Shaders.size() == 1 && m_Shaders[0].Type == ShaderType::COMPUTE_SHADER)
-        m_Type = ProgramType::COMPUTE;
-    else
-        m_Type = ProgramType::RENDER;
+    Init();
 }
 
 Shader::~Shader()
 {
-    for (const auto& pair : m_Programs)
-	    GraphicsBackend::Current()->DeleteProgram(pair.second);
+    DeInit();
+}
 
-    for (const auto& shader : m_Shaders)
-	    GraphicsBackend::Current()->DeleteShader(shader);
+void Shader::AddGlobalDefine(const std::string& define)
+{
+    std::lock_guard<std::mutex> lock(s_GlobalDefinesMutex);
+    s_GlobalDefines.insert(define);
+    s_GlobalDefinesHash = ShaderLoader::GetDefinesHash(s_GlobalDefines);
+}
+
+void Shader::RemoveGlobalDefine(const std::string& define)
+{
+    std::lock_guard<std::mutex> lock(s_GlobalDefinesMutex);
+    s_GlobalDefines.erase(define);
+    s_GlobalDefinesHash = ShaderLoader::GetDefinesHash(s_GlobalDefines);
 }
 
 const GraphicsBackendProgram& Shader::GetProgram()
@@ -96,8 +95,54 @@ const GraphicsBackendProgram& Shader::GetProgram(const VertexAttributes& vertexA
     return GetOrCreateRenderProgram(vertexAttributes, primitiveType);
 }
 
+void Shader::Init()
+{
+    DeInit();
+
+    std::vector<std::string> defines;
+    defines.reserve(m_Defines.size() + s_GlobalDefines.size());
+
+    for (const std::string& define : m_Defines)
+        defines.push_back(define);
+    for (const std::string& define : s_GlobalDefines)
+        defines.push_back(define);
+
+    ShaderLoader::Load(m_Path, defines, m_Shaders, m_Textures, m_Buffers, m_Samplers, m_TLASes, m_ThreadGroupSize, m_Name, m_SupportInstancing);
+
+    if (m_Shaders.size() == 1 && m_Shaders[0].Type == ShaderType::COMPUTE_SHADER)
+        m_Type = ProgramType::COMPUTE;
+    else
+        m_Type = ProgramType::RENDER;
+
+    m_LastGlobalDefinesHash = s_GlobalDefinesHash;
+}
+
+void Shader::DeInit()
+{
+    for (const auto& pair : m_Programs)
+        GraphicsBackend::Current()->DeleteProgram(pair.second);
+
+    for (const auto& shader : m_Shaders)
+        GraphicsBackend::Current()->DeleteShader(shader);
+
+    m_Programs.clear();
+    m_Shaders.clear();
+    m_Textures.clear();
+    m_Buffers.clear();
+    m_Samplers.clear();
+    m_TLASes.clear();
+}
+
+void Shader::CheckGlobalDefines()
+{
+    if (s_GlobalDefinesHash != m_LastGlobalDefinesHash)
+        Init();
+}
+
 const GraphicsBackendProgram& Shader::GetOrCreateRenderProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType)
 {
+    CheckGlobalDefines();
+
 	constexpr int colorAttachmentsCount = static_cast<int>(FramebufferAttachment::COLOR_ATTACHMENTS_COUNT);
 
     GraphicsBackendProgramDescriptor programDescriptor{};
@@ -137,6 +182,8 @@ const GraphicsBackendProgram& Shader::GetOrCreateRenderProgram(const VertexAttri
 
 const GraphicsBackendProgram& Shader::GetOrCreateComputeProgram()
 {
+    CheckGlobalDefines();
+
     if (!m_Programs.empty())
         return m_Programs.begin()->second;
 

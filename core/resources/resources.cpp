@@ -171,13 +171,13 @@ std::shared_ptr<Shader> Resources::LoadShader(const std::filesystem::path& path,
 {
     Profiler::Marker _("Resources::Load<Shader>", path.string());
 
-    const std::string cacheKey = path.string() + ShaderLoader::GetDefinesHash(defines);
+    const std::string cacheKey = path.string() + std::to_string(ShaderLoader::GetDefinesHash(defines));
 
     std::shared_ptr<Shader> shader;
     if (TryGetFromCache(cacheKey, shader))
         return shader;
 
-    shader = ShaderLoader::Load(path, defines);
+    shader = std::make_shared<Shader>(path, defines);
     AddToCache(cacheKey, shader);
 
     return shader;

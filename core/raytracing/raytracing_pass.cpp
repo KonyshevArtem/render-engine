@@ -38,10 +38,11 @@ void RaytracingPass::Prepare(RenderData& renderData)
 {
 	if (m_FileWatcher.FilesChanged())
 		LoadShaders();
-
-	renderData.UseRaytracedShadows = m_RaytracedShadowsEnabled;
+	
 	if (m_RaytracedShadowsEnabled)
 	{
+		Shader::AddGlobalDefine("_RAYTRACED_SHADOWS");
+
 		if (!m_RaytracedShadowsTarget || m_RaytracedShadowsTarget->GetWidth() != renderData.CameraDepthTarget->GetWidth() || m_RaytracedShadowsTarget->GetHeight() != renderData.CameraDepthTarget->GetHeight())
 		{
 			GraphicsBackendTextureDescriptor textureDescriptor{};
@@ -56,6 +57,8 @@ void RaytracingPass::Prepare(RenderData& renderData)
 
 		renderData.RaytracedShadowsTarget = m_RaytracedShadowsTarget;
 	}
+	else
+		Shader::RemoveGlobalDefine("_RAYTRACED_SHADOWS");
 }
 
 void RaytracingPass::Execute(const RenderData& renderData)
@@ -120,7 +123,7 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 		GraphicsBackend::Current()->UseProgram(m_RaytracedShadowsShader->GetProgram(fullscreenMesh));
 		GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
 
-		GraphicsBackend::Current()->BindTexture(renderData.RaytracedShadowsTarget->GetBackendTexture(), GlobalConstants::RaytracedShadowMapIndex);
+		GraphicsBackend::Current()->BindTexture(renderData.RaytracedShadowsTarget->GetBackendTexture(), GlobalConstants::RaytracedShadowMaskIndex);
 	}
 	GraphicsBackend::Current()->EndRenderPass();
 

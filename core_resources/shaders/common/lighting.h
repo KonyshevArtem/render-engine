@@ -162,11 +162,7 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
         float3 lightDirWS = normalize(-_DirLightDirectionWS);
         
         float NdotL = max(dot(normalWS, lightDirWS), 0.0);
-#ifdef _RAYTRACED_SHADOWS
-		float shadowTerm = getRaytracedShadowTerm(pixelPos);
-#else
-        float shadowTerm = getDirLightShadowTerm(posWS);
-#endif
+        float shadowTerm = getDirLightShadowTerm(posWS, pixelPos);
         float3 radiance = _DirLightIntensity * NdotL * shadowTerm;
 
         getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness, diffuse, specular);

@@ -7,10 +7,8 @@
 #include "types/graphics_backend_shader_object.h"
 #include "graphics_backend_api.h"
 #include "shader_parser.h"
-#include "hash.h"
 #include "shader_compiler.h"
 
-#include <set>
 
 namespace ShaderLoader
 {
@@ -33,28 +31,23 @@ namespace ShaderLoader
         }
     }
 
-    std::string GetDefinesHash(const std::vector<std::string>& defines)
-    {
-        std::set<std::string> orderedDefines;
-        for (const std::string& define : defines)
-            orderedDefines.insert(define);
-
-        std::string combinedDefines;
-        for (const std::string& define : orderedDefines)
-            combinedDefines += define;
-
-        return std::to_string(Hash::FNV1a(combinedDefines));
-    }
-
     bool HasDefine(const std::vector<std::string>& defines, const std::string& define)
     {
         return std::ranges::find(defines, define) != defines.end();
     }
 
-    std::shared_ptr<Shader> LoadCompiledShader(const std::filesystem::path& path, const std::vector<std::string>& defines)
+    bool LoadCompiledShader(const std::filesystem::path& path, const std::vector<std::string>& defines,
+        std::vector<GraphicsBackendShaderObject>& outShaders,
+        std::unordered_map<std::string, GraphicsBackendTextureInfo>& outTextures,
+        std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& outBuffers,
+        std::unordered_map<std::string, GraphicsBackendSamplerInfo>& outSamplers,
+        std::unordered_map<std::string, GraphicsBackendTLASInfo>& outTLASes,
+        ThreadGroupSize& outThreadGroupSize,
+        std::string& outName,
+        bool& outSupportInstancing)
     {
-        const std::string definesHash = GetDefinesHash(defines);
-        const bool supportInstancing = HasDefine(defines, INSTANCING_DEFINE);
+        const std::string definesHash = std::to_string(GetDefinesHash(defines));
+        outSupportInstancing = HasDefine(defines, INSTANCING_DEFINE);
 
         const std::string backendLiteral = GetBackendLiteral(GraphicsBackend::Current()->GetName());
         const std::filesystem::path compiledShaderPath = FileSystem::GetBuildResourcesPath() / path;
@@ -76,31 +69,25 @@ namespace ShaderLoader
                 if (!FileSystem::FileExists(dependencyPath) || std::filesystem::last_write_time(dependencyPath).time_since_epoch().count() != pair.second)
                 {
                     if (!ShaderCompilerLib::CompileShader(editorShaderPath, compiledShaderPath, backendLiteral, defines, false))
-                        return nullptr;
+                        return false;
                     break;
                 }
             }
         }
         else if (!ShaderCompilerLib::CompileShader(editorShaderPath, compiledShaderPath, backendLiteral, defines, false))
-            return nullptr;
+            return false;
 #endif
 
         const std::filesystem::path reflectionPath = compiledShaderPermutationPath / "reflection.json";
         if (!FileSystem::FileExists(reflectionPath))
-            return nullptr;
+            return false;
 
         const std::string reflectionJson = FileSystem::ReadFile(reflectionPath);
-        std::unordered_map<std::string, GraphicsBackendTextureInfo> textures;
-        std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers;
-        std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers;
-        std::unordered_map<std::string, GraphicsBackendTLASInfo> TLASes;
-        ThreadGroupSize threadGroupSize;
-        ShaderParser::ParseReflection(reflectionJson, textures, buffers, samplers, TLASes, threadGroupSize);
+        ShaderParser::ParseReflection(reflectionJson, outTextures, outBuffers, outSamplers, outTLASes, outThreadGroupSize);
 
-        std::string shaderDebugName;
-        shaderDebugName.append(path.string());
-        shaderDebugName.append("_");
-        shaderDebugName.append(definesHash);
+        outName = path.string();
+        outName.append("_");
+        outName.append(definesHash);
 
         std::vector<GraphicsBackendShaderObject> shaders;
         for (int i = 0; i < static_cast<int>(ShaderType::COUNT); ++i)
@@ -112,7 +99,7 @@ namespace ShaderLoader
             if (!FileSystem::FileExists(sourcePath))
                 continue;
 
-            std::string shaderFunctionDebugName = shaderDebugName;
+            std::string shaderFunctionDebugName = outName;
             shaderFunctionDebugName.append("_");
             shaderFunctionDebugName.append(shaderFilename);
 
@@ -128,29 +115,34 @@ namespace ShaderLoader
                 std::string shaderSource = FileSystem::ReadFile(sourcePath);
                 shader = GraphicsBackend::Current()->CompileShader(shaderType, shaderSource, shaderFunctionDebugName);
             }
-            shaders.push_back(shader);
+            outShaders.push_back(shader);
         }
 
-        if (shaders.empty())
-            return nullptr;
+        if (outShaders.empty())
+            return false;
 
-        return std::make_shared<Shader>(shaders, textures, buffers, samplers, TLASes, threadGroupSize, shaderDebugName, supportInstancing);
+        return true;
     }
 
-	std::shared_ptr<Shader> Load(const std::filesystem::path& path, const std::vector<std::string>& defines)
+	void Load(const std::filesystem::path& path, const std::vector<std::string>& defines,
+        std::vector<GraphicsBackendShaderObject>& outShaders,
+        std::unordered_map<std::string, GraphicsBackendTextureInfo>& outTextures,
+        std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& outBuffers,
+        std::unordered_map<std::string, GraphicsBackendSamplerInfo>& outSamplers,
+        std::unordered_map<std::string, GraphicsBackendTLASInfo>& outTLASes,
+        ThreadGroupSize& outThreadGroupSize,
+        std::string& outName,
+        bool& outSupportInstancing)
     {
-        std::shared_ptr<Shader> shader = LoadCompiledShader(path, defines);
+        const bool success = LoadCompiledShader(path, defines, outShaders, outTextures, outBuffers, outSamplers, outTLASes, outThreadGroupSize, outName, outSupportInstancing);
 
-        if (!shader)
+        if (!success)
         {
             std::string definesString = defines.empty() ? "<no defines>" : "";
             for (const std::string& define : defines)
                 definesString += define + " ";
 
             Debug::LogErrorFormat("[ShaderLoader] Can't load shader {}\n{}", path.string(), definesString);
-            return nullptr;
         }
-
-        return shader;
     }
 } // namespace ShaderLoader

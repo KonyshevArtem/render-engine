@@ -22,7 +22,7 @@ cbuffer Shadows : register(SHADOW_DATA)
 };
 
 #ifdef _RAYTRACED_SHADOWS
-Texture2D<float> _RaytracedShadows : register(RAYTRACED_SHADOW_MAP);
+Texture2D<float> _RaytracedShadowMask : register(RAYTRACED_SHADOW_MASK);
 #else
 Texture2DArray<float> _DirLightShadowMap : register(DIRECTIONAL_SHADOW_MAP);
 SamplerComparisonState sampler_DirLightShadowMap : register(DIRECTIONAL_SHADOW_MAP_SAMPLER);
@@ -44,9 +44,12 @@ bool isFragVisibleXY(float2 fragXY)
     return all(fragXY >= 0) && all(fragXY <= 1);
 }
 
-float getDirLightShadowTerm(float3 posWS)
+float getDirLightShadowTerm(float3 posWS, uint2 pixelCoord)
 {
-#if defined(_RECEIVE_SHADOWS) && !defined(_RAYTRACED_SHADOWS)
+#if defined(_RECEIVE_SHADOWS)
+    #if defined(_RAYTRACED_SHADOWS)
+    return 1.0 - _RaytracedShadowMask.Load(uint3(pixelCoord, 0)).x;
+    #else
     float3 shadowCoord;
     int cascadeIndex = -1;
     for (int i = 0; i < SHADOW_CASCADE_COUNT; ++i)
@@ -66,15 +69,7 @@ float getDirLightShadowTerm(float3 posWS)
     #endif
 
     return _DirLightShadowMap.SampleCmpLevelZero(sampler_DirLightShadowMap, float3(shadowCoord.xy, cascadeIndex), saturate(shadowCoord.z)).x;
-#else
-    return 1;
-#endif
-}
-
-float getRaytracedShadowTerm(uint2 pixelCoord)
-{
-#if defined(_RECEIVE_SHADOWS) && defined(_RAYTRACED_SHADOWS)
-    return 1.0 - _RaytracedShadows.Load(uint3(pixelCoord, 0)).x;
+    #endif
 #else
     return 1;
 #endif

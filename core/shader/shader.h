@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 #include <unordered_set>
+#include <mutex>
 
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_shader_object.h"
@@ -23,20 +24,11 @@ class DrawableGeometry;
 class Shader : public Resource
 {
 public:
-    Shader(std::vector<GraphicsBackendShaderObject>& shaders,
-		std::unordered_map<std::string, GraphicsBackendTextureInfo> textures,
-		std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> buffers,
-		std::unordered_map<std::string, GraphicsBackendSamplerInfo> samplers,
-        std::unordered_map<std::string, GraphicsBackendTLASInfo> TLASes,
-        ThreadGroupSize threadGroupSize,
-		std::string name, bool _supportInstancing);
+    Shader(std::filesystem::path path, std::vector<std::string> defines);
     virtual ~Shader();
 
-    Shader(const Shader &) = delete;
-    Shader(Shader &&)      = delete;
-
-    Shader &operator=(const Shader &) = delete;
-    Shader &operator=(Shader &&) = delete;
+    static void AddGlobalDefine(const std::string& define);
+    static void RemoveGlobalDefine(const std::string& define);
 
     const GraphicsBackendProgram& GetProgram();
     const GraphicsBackendProgram& GetProgram(const std::shared_ptr<DrawableGeometry>& geometry);
@@ -63,18 +55,30 @@ public:
     }
 
 private:
+    std::filesystem::path m_Path;
+    std::vector<std::string> m_Defines;
+
     std::vector<GraphicsBackendShaderObject> m_Shaders;
     std::unordered_map<size_t, GraphicsBackendProgram> m_Programs;
 
     ProgramType m_Type;
     std::string m_Name;
-    bool m_SupportInstancing;
+    bool m_SupportInstancing = false;
     ThreadGroupSize m_ThreadGroupSize;
+    size_t m_LastGlobalDefinesHash;
 
     std::unordered_map<std::string, GraphicsBackendTextureInfo> m_Textures;
     std::unordered_map<std::string, GraphicsBackendSamplerInfo> m_Samplers;
     std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>> m_Buffers;
     std::unordered_map<std::string, GraphicsBackendTLASInfo> m_TLASes;
+
+    static size_t s_GlobalDefinesHash;
+    static std::mutex s_GlobalDefinesMutex;
+    static std::unordered_set<std::string> s_GlobalDefines;
+
+    void Init();
+    void DeInit();
+    void CheckGlobalDefines();
 
     const GraphicsBackendProgram& GetOrCreateRenderProgram(const VertexAttributes& vertexAttributes, PrimitiveType primitiveType);
     const GraphicsBackendProgram& GetOrCreateComputeProgram();

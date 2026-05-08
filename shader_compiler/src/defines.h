@@ -18,7 +18,7 @@ std::vector<std::wstring> ConvertDefines(const std::vector<std::string>& defines
     return wideDefines;
 }
 
-std::string GetDefinesHash(const std::vector<std::string>& defines)
+size_t GetDefinesHash(const std::vector<std::string>& defines)
 {
     std::set<std::string> orderedDefines;
     for (const std::string& define : defines)
@@ -28,7 +28,12 @@ std::string GetDefinesHash(const std::vector<std::string>& defines)
     for (const std::string& define : orderedDefines)
 	    combinedDefines += define;
 
-    return std::to_string(Hash::FNV1a(combinedDefines));
+    return Hash::FNV1a(combinedDefines);
+}
+
+std::string GetShaderHash(size_t definesHash, bool debug)
+{
+    return std::to_string(Hash::Combine(definesHash, debug ? 1 : 0));
 }
 
 std::string CombineDefines(const std::vector<std::string>& defines)

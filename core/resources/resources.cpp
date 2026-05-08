@@ -171,7 +171,9 @@ std::shared_ptr<Shader> Resources::LoadShader(const std::filesystem::path& path,
 {
     Profiler::Marker _("Resources::Load<Shader>", path.string());
 
-    const std::string cacheKey = path.string() + std::to_string(ShaderLoader::GetDefinesHash(defines));
+    const bool shaderDebug = Arguments::Contains("-shaderdebug");
+
+    const std::string cacheKey = path.string() + ShaderLoader::GetShaderHash(ShaderLoader::GetDefinesHash(defines), shaderDebug);
 
     std::shared_ptr<Shader> shader;
     if (TryGetFromCache(cacheKey, shader))

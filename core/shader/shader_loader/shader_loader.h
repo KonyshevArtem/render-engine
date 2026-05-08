@@ -26,6 +26,8 @@ namespace ShaderLoader
         return Hash::FNV1a(combinedDefines);
     }
 
+    std::string GetShaderHash(size_t definesHash, bool debug);
+
 	void Load(const std::filesystem::path& path, const std::vector<std::string>& defines,
         std::vector<GraphicsBackendShaderObject>& outShaders,
         std::unordered_map<std::string, GraphicsBackendTextureInfo>& outTextures,

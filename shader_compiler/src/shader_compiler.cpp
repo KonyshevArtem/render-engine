@@ -39,6 +39,7 @@ namespace ShaderCompilerLib
         {
             vszArgs.push_back(L"-Zi");
             vszArgs.push_back(L"-Qembed_debug");
+            vszArgs.push_back(L"-Qsource_in_debug_module");
         }
 
         vszArgs.push_back(L"-E");
@@ -262,7 +263,7 @@ namespace ShaderCompilerLib
 
         IncludeHandler includeHandler(hlslPath.parent_path(), pUtils);
 
-        const std::string definesHash = GetDefinesHash(defines);
+        const std::string definesHash = GetShaderHash(GetDefinesHash(defines), debug);
 
         Reflection reflection;
         const std::filesystem::path outputDirPath = outputPath / GetBackendLiteral(backend) / definesHash;

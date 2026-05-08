@@ -8,7 +8,7 @@
 #include "graphics_backend_api.h"
 #include "shader_parser.h"
 #include "shader_compiler.h"
-
+#include "arguments.h"
 
 namespace ShaderLoader
 {
@@ -46,12 +46,14 @@ namespace ShaderLoader
         std::string& outName,
         bool& outSupportInstancing)
     {
-        const std::string definesHash = std::to_string(GetDefinesHash(defines));
+        const bool shaderDebug = Arguments::Contains("-shaderdebug");
+
+        const std::string shaderHash = GetShaderHash(GetDefinesHash(defines), shaderDebug);
         outSupportInstancing = HasDefine(defines, INSTANCING_DEFINE);
 
         const std::string backendLiteral = GetBackendLiteral(GraphicsBackend::Current()->GetName());
         const std::filesystem::path compiledShaderPath = FileSystem::GetBuildResourcesPath() / path;
-        const std::filesystem::path compiledShaderPermutationPath = compiledShaderPath / backendLiteral / definesHash;
+        const std::filesystem::path compiledShaderPermutationPath = compiledShaderPath / backendLiteral / shaderHash;
 
 #ifdef RENDER_ENGINE_EDITOR
         const std::filesystem::path editorShaderPath = FileSystem::GetEditorResourcesPath() / (path.string() + ".hlsl");
@@ -68,13 +70,13 @@ namespace ShaderLoader
                 const std::filesystem::path dependencyPath = editorShaderDirPath / pair.first;
                 if (!FileSystem::FileExists(dependencyPath) || std::filesystem::last_write_time(dependencyPath).time_since_epoch().count() != pair.second)
                 {
-                    if (!ShaderCompilerLib::CompileShader(editorShaderPath, compiledShaderPath, backendLiteral, defines, false))
+                    if (!ShaderCompilerLib::CompileShader(editorShaderPath, compiledShaderPath, backendLiteral, defines, shaderDebug))
                         return false;
                     break;
                 }
             }
         }
-        else if (!ShaderCompilerLib::CompileShader(editorShaderPath, compiledShaderPath, backendLiteral, defines, false))
+        else if (!ShaderCompilerLib::CompileShader(editorShaderPath, compiledShaderPath, backendLiteral, defines, shaderDebug))
             return false;
 #endif
 
@@ -87,7 +89,7 @@ namespace ShaderLoader
 
         outName = path.string();
         outName.append("_");
-        outName.append(definesHash);
+        outName.append(shaderHash);
 
         std::vector<GraphicsBackendShaderObject> shaders;
         for (int i = 0; i < static_cast<int>(ShaderType::COUNT); ++i)
@@ -124,15 +126,20 @@ namespace ShaderLoader
         return true;
     }
 
+    std::string GetShaderHash(size_t definesHash, bool debug)
+    {
+        return std::to_string(Hash::Combine(definesHash, debug ? 1 : 0));
+    }
+
 	void Load(const std::filesystem::path& path, const std::vector<std::string>& defines,
-        std::vector<GraphicsBackendShaderObject>& outShaders,
-        std::unordered_map<std::string, GraphicsBackendTextureInfo>& outTextures,
-        std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& outBuffers,
-        std::unordered_map<std::string, GraphicsBackendSamplerInfo>& outSamplers,
-        std::unordered_map<std::string, GraphicsBackendTLASInfo>& outTLASes,
-        ThreadGroupSize& outThreadGroupSize,
-        std::string& outName,
-        bool& outSupportInstancing)
+              std::vector<GraphicsBackendShaderObject>& outShaders,
+              std::unordered_map<std::string, GraphicsBackendTextureInfo>& outTextures,
+              std::unordered_map<std::string, std::shared_ptr<GraphicsBackendBufferInfo>>& outBuffers,
+              std::unordered_map<std::string, GraphicsBackendSamplerInfo>& outSamplers,
+              std::unordered_map<std::string, GraphicsBackendTLASInfo>& outTLASes,
+              ThreadGroupSize& outThreadGroupSize,
+              std::string& outName,
+              bool& outSupportInstancing)
     {
         const bool success = LoadCompiledShader(path, defines, outShaders, outTextures, outBuffers, outSamplers, outTLASes, outThreadGroupSize, outName, outSupportInstancing);
 

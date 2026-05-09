@@ -144,6 +144,8 @@ void RenderQueue::Draw()
         s_PermanentMatricesUpdates.clear();
     }
 
+    CheckMatricesBufferSize();
+
     for (const DrawCallInfo& drawCall : m_DrawCalls)
     {
         const GraphicsBackendGeometry& geom = drawCall.Geometry->GetGraphicsBackendGeometry();
@@ -178,8 +180,6 @@ void RenderQueue::SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& r
     Profiler::Marker _("RenderQueue::SetupDrawCalls");
 
     m_DrawCalls.reserve(renderers.size());
-
-    CheckMatricesBufferSize();
 
     std::shared_lock lock(s_PermanentMatricesBufferRecreateMutex);
 

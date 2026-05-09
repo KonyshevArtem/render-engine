@@ -3,6 +3,7 @@ add_subdirectory(OpenFBX)
 add_subdirectory(imgui)
 add_subdirectory(dxc)
 add_subdirectory(DirectX-Headers)
+add_subdirectory(NvidiaAftermath)
 
 set(SPIRV_CROSS_CLI OFF CACHE BOOL "" FORCE)
 set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE BOOL "" FORCE)

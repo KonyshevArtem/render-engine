@@ -28,6 +28,7 @@
 #include "types/graphics_backend_blas_descriptor.h"
 #include "types/graphics_backend_raytracing_instance_descriptor.h"
 #include "helpers/dx12_helpers.h"
+#include "helpers/aftermath.h"
 #include "math_utils.h"
 #include "debug.h"
 #include "hash.h"
@@ -49,6 +50,15 @@ namespace DX12Local
     {
         if (!name.empty())
             ThrowIfFailed(object->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str()));
+    }
+
+    void SetResourceName(ID3D12Resource* resource, const std::string& name)
+    {
+	    if (!name.empty())
+	    {
+            ThrowIfFailed(resource->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str()));
+            Aftermath::RegisterResource(resource);
+	    }
     }
 
     struct ResourceData
@@ -168,7 +178,7 @@ namespace DX12Local
             D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(k_MaxPendingTimestamps * sizeof(uint64_t));
             ThrowIfFailed(s_Device->CreateCommittedResource(&bufferHeapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, Buffer.State, nullptr, IID_PPV_ARGS(&Buffer.Resource)));
 
-            SetObjectName(Buffer.Resource, "TimestampBuffer");
+            SetResourceName(Buffer.Resource, "TimestampBuffer");
         }
 
         uint32_t GetNextTimestampIndex()
@@ -532,6 +542,8 @@ namespace DX12Local
             else
                 Debug::LogErrorFormat("[GraphicsBackend] Failed with HRESULT {:#08X}", resultCode);
 
+            Aftermath::CreateDump();
+
             throw std::exception();
         }
     }
@@ -553,8 +565,8 @@ namespace DX12Local
             s_Device->CreateDepthStencilView(s_DepthBackbuffers[i].Resource, nullptr, s_DepthBackbufferDescriptorHeap.GetCPUHandle(i));
             s_DepthBackbuffers[i].State = depthBufferState;
 
-            SetObjectName(s_ColorBackbuffers[i].Resource, "ColorBackbuffer_" + std::to_string(i));
-            SetObjectName(s_DepthBackbuffers[i].Resource, "DepthBackbuffer_" + std::to_string(i));
+            SetResourceName(s_ColorBackbuffers[i].Resource, "ColorBackbuffer_" + std::to_string(i));
+            SetResourceName(s_DepthBackbuffers[i].Resource, "DepthBackbuffer_" + std::to_string(i));
         }
     }
 
@@ -799,16 +811,24 @@ void GraphicsBackendDX12::Init(void* data)
 {
     GraphicsBackendBase::Init(data);
 
-    const bool createDebugLayer = Arguments::Contains("-debuglayer");
+    const int debugLayer = Arguments::Get<int>("-debuglayer");
+    const bool enableAftermath = Arguments::Contains("-aftermath");
 
-    if (createDebugLayer)
+    Aftermath::SetEnabled(enableAftermath);
+
+    if (debugLayer)
     {
         ID3D12Debug3* debugController;
         if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
         {
-            debugController->EnableDebugLayer();
-            debugController->SetEnableGPUBasedValidation(TRUE);
-    }
+            if (debugLayer > 0)
+				debugController->EnableDebugLayer();
+            if (debugLayer > 1)
+            {
+                debugController->SetEnableGPUBasedValidation(TRUE);
+                debugController->SetEnableSynchronizedCommandQueueValidation(true);
+            }
+		}
     }
 
     IDXGIFactory7* factory;
@@ -819,7 +839,9 @@ void GraphicsBackendDX12::Init(void* data)
 
     ThrowIfFailed(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&DX12Local::s_Device)));
 
-    if (createDebugLayer)
+	Aftermath::Initialize(DX12Local::s_Device);
+
+    if (debugLayer)
         ThrowIfFailed(DX12Local::s_Device->QueryInterface(IID_PPV_ARGS(&DX12Local::s_InfoQueue)));
 
     D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
@@ -885,6 +907,9 @@ void GraphicsBackendDX12::Init(void* data)
 
     DX12Local::s_RenderCommandList->Reset();
     DX12Local::s_CopyCommandList->Reset();
+
+    Aftermath::CreateContextHandle(DX12Local::s_RenderCommandList->List);
+    Aftermath::CreateContextHandle(DX12Local::s_CopyCommandList->List);
 }
 
 GraphicsBackendName GraphicsBackendDX12::GetName()
@@ -903,11 +928,17 @@ void GraphicsBackendDX12::InitNewFrame()
     {
         DX12Local::WaitForFrameEnd();
 
-        for (DX12Local::ResourceData& backbuffer: DX12Local::s_ColorBackbuffers)
+        for (DX12Local::ResourceData& backbuffer : DX12Local::s_ColorBackbuffers)
+        {
+            Aftermath::UnregisterResource(backbuffer.Resource);
             backbuffer.Resource->Release();
+        }
 
-        for (DX12Local::ResourceData& backbuffer: DX12Local::s_DepthBackbuffers)
+        for (DX12Local::ResourceData& backbuffer : DX12Local::s_DepthBackbuffers)
+        {
+            Aftermath::UnregisterResource(backbuffer.Resource);
             backbuffer.Resource->Release();
+        }
 
         const DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
         DX12Local::s_SwapChain->ResizeBuffers(GraphicsBackend::GetMaxFramesInFlight(), windowWidth, windowHeight, format, 0);
@@ -1060,7 +1091,7 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, cons
     ID3D12Resource* dxTexture;
     ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, state, descriptor.RenderTarget ? &clearValue : nullptr, IID_PPV_ARGS(&dxTexture)));
 
-    DX12Local::SetObjectName(dxTexture, name);
+    DX12Local::SetResourceName(dxTexture, name);
 
     DX12Local::ResourceData* resourceData = new DX12Local::ResourceData();
     resourceData->Resource = dxTexture;
@@ -1183,6 +1214,7 @@ void GraphicsBackendDX12::DeleteTexture_Internal(const GraphicsBackendTexture& t
 {
     const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
     DX12Local::s_AllocatedResourcesIndexPool.ReturnIndex(resourceData->ReadOnlyDescriptorIndex);
+    Aftermath::UnregisterResource(resourceData->Resource);
     resourceData->Resource->Release();
     delete resourceData;
 }
@@ -1492,6 +1524,7 @@ GraphicsBackendBufferView GraphicsBackendDX12::CreateBufferView(const GraphicsBa
 void GraphicsBackendDX12::DeleteBuffer_Internal(const GraphicsBackendBuffer& buffer)
 {
     const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+    Aftermath::UnregisterResource(resourceData->Resource);
     resourceData->Resource->Release();
     delete resourceData;
 }
@@ -1927,12 +1960,16 @@ void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& sou
 
 void GraphicsBackendDX12::PushDebugGroup(const std::string& name, GPUQueue queue)
 {
-    PIXBeginEvent(DX12Local::GetCommandList(queue), 0, name.c_str());
+    ID3D12GraphicsCommandList* commandList = DX12Local::GetCommandList(queue);
+    PIXBeginEvent(commandList, 0, name.c_str());
+    Aftermath::SetEventMarker(commandList, name);
 }
 
 void GraphicsBackendDX12::PopDebugGroup(GPUQueue queue)
 {
-    PIXEndEvent(DX12Local::GetCommandList(queue));
+    ID3D12GraphicsCommandList* commandList = DX12Local::GetCommandList(queue);
+    PIXEndEvent(commandList);
+    Aftermath::SetLastEventMarker(commandList);
 }
 
 GraphicsBackendProfilerMarker GraphicsBackendDX12::PushProfilerMarker(GPUQueue queue)
@@ -2424,7 +2461,7 @@ DX12Local::ResourceData* GraphicsBackendDX12::CreateBufferInternal(const Graphic
     const D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(descriptor.Size, flags);
     ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, dxState, nullptr, IID_PPV_ARGS(&dxBuffer)));
 
-    DX12Local::SetObjectName(dxBuffer, name);
+    DX12Local::SetResourceName(dxBuffer, name);
 
     DX12Local::ResourceData* resourceData = new DX12Local::ResourceData();
     resourceData->Resource = dxBuffer;

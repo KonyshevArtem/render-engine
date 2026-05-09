@@ -92,10 +92,16 @@ namespace Graphics
 
     void InitPasses()
     {
+        if (GraphicsBackend::Current()->SupportsRaytracing())
+        {
+            s_RaytracingScene = std::make_shared<RaytracingScene>();
+            s_RaytracingPass = std::make_shared<RaytracingPass>(s_RaytracingScene);
+        }
+
         s_ShadowCasterPass = std::make_shared<ShadowCasterPass>();
 		s_GBufferPass = std::make_shared<GBufferPass>();
 		s_DeferredLightPass = std::make_shared<DeferredLightPass>();
-        s_ForwardRenderPass = std::make_shared<ForwardRenderPass>();
+        s_ForwardRenderPass = std::make_shared<ForwardRenderPass>(s_RaytracingScene);
 		s_SkyboxPass = std::make_shared<SkyboxPass>();
         s_PostProcessPass = std::make_shared<PostProcessPass>();
         s_UIRenderPass = std::make_shared<UIRenderPass>();
@@ -106,12 +112,6 @@ namespace Graphics
         s_2DGizmosPass = std::make_shared<GizmosPass>(GizmosPass::Mode::GIZMOS_2D);
         s_SelectionOutlinePass = std::make_shared<SelectionOutlinePass>();
 #endif
-
-        if (GraphicsBackend::Current()->SupportsRaytracing())
-        {
-            s_RaytracingScene = std::make_shared<RaytracingScene>();
-            s_RaytracingPass = std::make_shared<RaytracingPass>(s_RaytracingScene);
-        }
     }
 
     void Init()
@@ -216,7 +216,10 @@ namespace Graphics
             {
                 std::shared_ptr<Worker::Task> prepareTask = Worker::CreateTask(taskFunc, Worker::Priority::TASK);
                 for (const std::shared_ptr<Worker::Task>& dep : dependencies)
-	                prepareTask->AddDependency(dep);
+                {
+                    if (dep)
+                        prepareTask->AddDependency(dep);
+                }
 
                 s_PrepareTask->AddDependency(prepareTask);
 
@@ -233,15 +236,17 @@ namespace Graphics
 
 		if (s_RaytracingScene)
 			SchedulePrepareTask([] {s_RaytracingScene->Prepare(s_RenderData); }, {});
-        SchedulePassPrepare(s_ShadowCasterPass, {});
 
-		const std::shared_ptr<Worker::Task> gBufferPrepareTask = SchedulePassPrepare(s_GBufferPass, {});
-
+        std::shared_ptr<Worker::Task> raytracedShadowsPrepareTask = nullptr;
+        const std::shared_ptr<Worker::Task> gBufferPrepareTask = SchedulePassPrepare(s_GBufferPass, {});
         if (s_RaytracingPass)
         {
             const std::shared_ptr<Worker::Task> raytracedShadowsDependencies[1] = { gBufferPrepareTask };
-            SchedulePassPrepare(s_RaytracingPass, raytracedShadowsDependencies);
+            raytracedShadowsPrepareTask = SchedulePassPrepare(s_RaytracingPass, raytracedShadowsDependencies);
         }
+
+        const std::shared_ptr<Worker::Task> shadowsPrepareTask[1] = { raytracedShadowsPrepareTask };
+        SchedulePassPrepare(s_ShadowCasterPass, shadowsPrepareTask);
 
         const std::shared_ptr<Worker::Task> forwardRenderPassDependencies[1] = { gBufferPrepareTask };
         SchedulePassPrepare(s_ForwardRenderPass, forwardRenderPassDependencies);

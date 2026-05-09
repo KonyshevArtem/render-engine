@@ -158,6 +158,9 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
         }
         else if (light->Type == LightType::DIRECTIONAL)
         {
+            if (renderData.RaytracedShadowsEnabled)
+	            continue;
+
             Profiler::Marker marker("Prepare Directional Light");
 
             std::shared_ptr<Worker::Task> cascadesPrepareTask = std::make_shared<Worker::Task>();

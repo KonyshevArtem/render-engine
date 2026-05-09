@@ -148,7 +148,7 @@ void getLightSourcePBR(float3 normalWS, float3 viewDirWS, float3 lightDirWS, flo
     diffuse = kD / PI;
 }
 
-float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, float3 cameraPosWS, uint2 pixelPos)
+float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, float3 cameraPosWS, uint2 pixelPos, bool isOpaque)
 {
     float3 viewDirWS = normalize(cameraPosWS - posWS);
     float3 F0 = lerp((float3) 0.04, albedo, metallness);
@@ -162,7 +162,7 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
         float3 lightDirWS = normalize(-_DirLightDirectionWS);
         
         float NdotL = max(dot(normalWS, lightDirWS), 0.0);
-        float shadowTerm = getDirLightShadowTerm(posWS, pixelPos);
+        float shadowTerm = getDirLightShadowTerm(posWS, normalWS, lightDirWS, pixelPos, isOpaque);
         float3 radiance = _DirLightIntensity * NdotL * shadowTerm;
 
         getLightSourcePBR(normalWS, viewDirWS, lightDirWS, roughness, F0, metallness, diffuse, specular);
@@ -217,7 +217,7 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
 
 float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, float3 cameraPosWS)
 {
-	return getLightPBR(posWS, normalWS, albedo, roughness, metallness, cameraPosWS, uint2(0, 0));
+	return getLightPBR(posWS, normalWS, albedo, roughness, metallness, cameraPosWS, uint2(0, 0), false);
 }
 
 #endif // LIGHTING_H

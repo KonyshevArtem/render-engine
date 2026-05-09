@@ -36,6 +36,7 @@ struct RenderData
     std::shared_ptr<Texture> CameraDepthTarget;
 
     std::shared_ptr<Texture> RaytracedShadowsTarget;
+    bool RaytracedShadowsEnabled;
 
     std::shared_ptr<Texture> PostProcessedTarget;
 

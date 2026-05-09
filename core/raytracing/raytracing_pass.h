@@ -29,10 +29,11 @@ private:
     std::shared_ptr<GraphicsBuffer> m_PrimaryRaysDebugDataBuffer;
     bool m_PrimaryRaysDebugEnabled;
 
-    std::shared_ptr<Shader> m_RaytracedShadowsShader;
+    std::shared_ptr<Shader> m_RaytracedShadowsShaders[2];
     std::shared_ptr<Texture> m_RaytracedShadowsTarget;
     std::shared_ptr<GraphicsBuffer> m_RaytracedShadowsDataBuffer;
     bool m_RaytracedShadowsEnabled;
+    bool m_RaytracedSoftShadowsEnabled;
     int m_RaytracedShadowsSamplesCount = 1;
 
     std::shared_ptr<RaytracingScene> m_RaytracingScene;

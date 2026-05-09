@@ -6,10 +6,12 @@
 #include "texture_2d/texture_2d.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "graphics/render_settings/render_settings.h"
+#include "raytracing/raytracing_scene.h"
 
-ForwardRenderPass::ForwardRenderPass() :
+ForwardRenderPass::ForwardRenderPass(std::shared_ptr<RaytracingScene> raytracingScene) :
     RenderPass(),
-    m_EndFence(GraphicsBackend::Current()->CreateFence(FenceType::RENDER_TO_COPY, "After Forward Pass"))
+    m_EndFence(GraphicsBackend::Current()->CreateFence(FenceType::RENDER_TO_COPY, "After Forward Pass")),
+	m_RaytracingScene(std::move(raytracingScene))
 {
 }
 
@@ -30,6 +32,9 @@ void ForwardRenderPass::Prepare(RenderData& renderData)
 
 void ForwardRenderPass::Execute(const RenderData& renderData)
 {
+    if (m_RenderQueue.IsEmpty())
+        return;
+
     Profiler::Marker marker("ForwardRenderPass::Execute");
 
     const GraphicsBackendRenderTargetDescriptor colorDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
@@ -46,6 +51,9 @@ void ForwardRenderPass::Execute(const RenderData& renderData)
 
         GraphicsBackend::Current()->SetViewport(0, 0, renderData.Viewport.x, renderData.Viewport.y, 0, 1);
         GraphicsBackend::Current()->SetScissorRect(0, 0, renderData.Viewport.x, renderData.Viewport.y);
+
+        if (m_RaytracingScene)
+            GraphicsBackend::Current()->BindTLAS(m_RaytracingScene->GetTLAS(), 0);
 
 		m_RenderQueue.Draw();
     }

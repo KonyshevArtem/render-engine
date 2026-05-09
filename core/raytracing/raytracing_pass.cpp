@@ -19,6 +19,7 @@
 RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) :
 	m_PrimaryRaysDebugEnabled(false),
 	m_RaytracedShadowsEnabled(true),
+	m_RaytracedSoftShadowsEnabled(true),
 	m_RaytracingScene(rtScene),
 	m_Rng(std::random_device{}())
 {
@@ -29,6 +30,7 @@ RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) 
 
 	DeveloperConsole::AddBoolCommand(L"Raytracing.Debug.PrimaryRays", &m_PrimaryRaysDebugEnabled);
 	DeveloperConsole::AddBoolCommand(L"Raytracing.Shadows.Enabled", &m_RaytracedShadowsEnabled);
+	DeveloperConsole::AddBoolCommand(L"Raytracing.Shadows.Soft", &m_RaytracedSoftShadowsEnabled);
 	DeveloperConsole::AddIntCommand(L"Raytracing.Shadows.Samples", &m_RaytracedShadowsSamplesCount);
 
 	m_BlueNoiseTexture = Resources::Load<Texture2D>("core_resources/textures/noise/blue_noise");
@@ -38,7 +40,8 @@ void RaytracingPass::Prepare(RenderData& renderData)
 {
 	if (m_FileWatcher.FilesChanged())
 		LoadShaders();
-	
+
+	renderData.RaytracedShadowsEnabled = m_RaytracedShadowsEnabled;
 	if (m_RaytracedShadowsEnabled)
 	{
 		Shader::AddGlobalDefine("_RAYTRACED_SHADOWS");
@@ -67,7 +70,11 @@ void RaytracingPass::Execute(const RenderData& renderData)
 
 void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 {
-	if (!m_RaytracedShadowsEnabled || !m_RaytracingScene->GetTLAS().IsValid() || !m_RaytracedShadowsShader)
+	if (!m_RaytracedShadowsEnabled || !m_RaytracingScene->GetTLAS().IsValid())
+		return;
+
+	const std::shared_ptr<Shader> shader = m_RaytracedShadowsShaders[m_RaytracedSoftShadowsEnabled ? 1 : 0];
+	if (!shader)
 		return;
 
 	Profiler::Marker _("RaytracingPass::ExecuteRaytracedShadows");
@@ -120,7 +127,7 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 		GraphicsBackend::Current()->BindConstantBuffer(m_RaytracedShadowsDataBuffer->GetBackendBuffer(), 0, 0, sizeof(constants));
 
 		const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
-		GraphicsBackend::Current()->UseProgram(m_RaytracedShadowsShader->GetProgram(fullscreenMesh));
+		GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh));
 		GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
 
 		GraphicsBackend::Current()->BindTexture(renderData.RaytracedShadowsTarget->GetBackendTexture(), GlobalConstants::RaytracedShadowMaskIndex);
@@ -184,5 +191,6 @@ void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 void RaytracingPass::LoadShaders()
 {
 	m_PrimaryRaysDebugShader = Resources::LoadShader("core_resources/shaders/raytracing/primary_rays_debug", { "_RECEIVE_SHADOWS" });
-	m_RaytracedShadowsShader = Resources::LoadShader("core_resources/shaders/raytracing/raytraced_shadows", {});
+	m_RaytracedShadowsShaders[0] = Resources::LoadShader("core_resources/shaders/raytracing/raytraced_shadows", {});
+	m_RaytracedShadowsShaders[1] = Resources::LoadShader("core_resources/shaders/raytracing/raytraced_shadows", {"RAYTRACED_SOFT_SHADOWS"});
 }

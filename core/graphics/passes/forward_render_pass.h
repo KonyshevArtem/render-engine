@@ -9,11 +9,12 @@ class DrawRenderersPass;
 class SkyboxPass;
 class Renderer;
 class Texture;
+class RaytracingScene;
 
 class ForwardRenderPass : public RenderPass
 {
 public:
-    ForwardRenderPass();
+    explicit ForwardRenderPass(std::shared_ptr<RaytracingScene> raytracingScene);
     ~ForwardRenderPass() override;
 
     void Prepare(RenderData& renderData) override;
@@ -23,6 +24,8 @@ public:
 private:
 	RenderQueue m_RenderQueue;
     GraphicsBackendFence m_EndFence;
+
+    std::shared_ptr<RaytracingScene> m_RaytracingScene;
 };
 
 #endif //RENDER_ENGINE_FORWARD_RENDER_PASS_H

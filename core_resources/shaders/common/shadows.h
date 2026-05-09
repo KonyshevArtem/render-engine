@@ -3,6 +3,10 @@
 
 #include "global_defines.h"
 
+#ifdef _RAYTRACED_SHADOWS
+#include "../raytracing/raytracing_shadows.h"
+#endif
+
 struct ShadowData
 {
     float4x4 LightViewProjMatrix;
@@ -44,11 +48,14 @@ bool isFragVisibleXY(float2 fragXY)
     return all(fragXY >= 0) && all(fragXY <= 1);
 }
 
-float getDirLightShadowTerm(float3 posWS, uint2 pixelCoord)
+float getDirLightShadowTerm(float3 posWS, float3 normalWS, float3 lightDir, uint2 pixelCoord, bool isOpaque)
 {
 #if defined(_RECEIVE_SHADOWS)
     #if defined(_RAYTRACED_SHADOWS)
-    return 1.0 - _RaytracedShadowMask.Load(uint3(pixelCoord, 0)).x;
+    if (isOpaque)
+        return 1.0 - _RaytracedShadowMask.Load(uint3(pixelCoord, 0)).x;
+    else
+        return 1.0 - TraceShadowRay(posWS, normalWS, lightDir, 50);
     #else
     float3 shadowCoord;
     int cascadeIndex = -1;

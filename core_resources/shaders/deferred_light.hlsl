@@ -32,7 +32,7 @@ float4 fragmentMain(float4 pixelCoord : SV_Position) : SV_Target
     float2 clipPos = PixelToClipPosition(pixelCoord.xy, _InvTargetSize);
     float3 worldPos = ClipToWorldPosition(float3(clipPos, depth), _InvVPMatrix);
     float3 worldNormal = normalMetallic.xyz * 2 - 1;
-    float3 finalColor = getLightPBR(worldPos.xyz, worldNormal, albedoRoughness.xyz, albedoRoughness.w, normalMetallic.w, _CameraPosWS, pixelCoord.xy);
+    float3 finalColor = getLightPBR(worldPos.xyz, worldNormal, albedoRoughness.xyz, albedoRoughness.w, normalMetallic.w, _CameraPosWS, pixelCoord.xy, true);
     
     return float4(finalColor, 1);
 }

@@ -86,8 +86,6 @@ add_library(
 	drawable_geometry/vertex_attributes/vertex_attributes.h
 	graphics_buffer/ring_buffer.cpp
 	graphics_buffer/ring_buffer.h
-	file_system/file_system.cpp
-	file_system/file_system.h
 	graphics/passes/forward_render_pass.cpp
 	graphics/passes/forward_render_pass.h
 	editor/copy_depth/copy_depth_pass.cpp
@@ -96,14 +94,6 @@ add_library(
 	graphics/render_queue/render_queue.h
 	editor/profiler/profiler.cpp
 	editor/profiler/profiler.h
-	file_system/file_system_implementations/file_system_base.h
-	file_system/file_system_implementations/file_system_base.cpp
-	file_system/file_system_implementations/file_system_windows.cpp
-	file_system/file_system_implementations/file_system_windows.h
-	file_system/file_system_implementations/file_system_apple.cpp
-	file_system/file_system_implementations/file_system_apple.h
-	file_system/file_system_implementations/file_system_android.cpp
-	file_system/file_system_implementations/file_system_android.h
 	editor/debug_pass/shadow_map_debug_pass.cpp
 	editor/debug_pass/shadow_map_debug_pass.h
 	component/component.h
@@ -169,13 +159,11 @@ add_library(
 	graphics/passes/gbuffer_pass.cpp
 	graphics/passes/deferred_light_pass.h
 	graphics/passes/deferred_light_pass.cpp
-	file_system/file_watcher.h
-	file_system/file_watcher.cpp
 	editor/texture_viewer/texture_viewer.h
 	editor/texture_viewer/texture_viewer.cpp)
 
 target_include_directories(Core PUBLIC .)
-target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil StringSplit)
+target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil StringSplit FileSystem)
 
 if ((${RENDER_ENGINE_WINDOWS_PLATFORM}) OR (${RENDER_ENGINE_MACOS_PLATFORM}))
 	target_link_libraries(Core ShaderCompilerLib)

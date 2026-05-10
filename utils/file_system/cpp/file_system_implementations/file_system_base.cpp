@@ -65,10 +65,20 @@ bool FileSystemBase::ReadFileBytes(const std::filesystem::path& path, std::vecto
 
 void FileSystemBase::WriteFile(const std::filesystem::path& path, const std::string& content)
 {
-    std::ofstream o;
-    o.open(path, std::ios::trunc);
-    o << content;
-    o.close();
+    std::filesystem::create_directories(path.parent_path());
+
+    FILE* fp = fopen(path.string().c_str(), "w");
+    fwrite(content.c_str(), content.size(), 1, fp);
+    fclose(fp);
+}
+
+void FileSystemBase::WriteFileBytes(const std::filesystem::path& path, const std::span<const uint8_t>& bytes)
+{
+    std::filesystem::create_directories(path.parent_path());
+
+    FILE* fp = fopen(path.string().c_str(), "wb");
+    fwrite(bytes.data(), bytes.size(), 1, fp);
+    fclose(fp);
 }
 
 const std::filesystem::path& FileSystemBase::GetBuildResourcesPath()
@@ -79,4 +89,19 @@ const std::filesystem::path& FileSystemBase::GetBuildResourcesPath()
 const std::filesystem::path& FileSystemBase::GetEditorResourcesPath()
 {
 	return m_EditorResourcesPath;
+}
+
+const std::filesystem::path& FileSystemBase::GetSpecialFolderPath(SpecialFolder folder)
+{
+    const auto it = m_SpecialFolderPaths.find(folder);
+    if (it != m_SpecialFolderPaths.end())
+	    return it->second;
+
+    m_SpecialFolderPaths[folder] = GetSpecialFolderPath_Internal(folder);
+    return m_SpecialFolderPaths[folder];
+}
+
+std::filesystem::path FileSystemBase::GetSpecialFolderPath_Internal(SpecialFolder folder)
+{
+    return "";
 }

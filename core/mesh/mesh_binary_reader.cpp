@@ -1,5 +1,5 @@
 #include "mesh_binary_reader.h"
-#include "file_system/file_system.h"
+#include "file_system.h"
 
 bool MeshBinaryReader::ReadMesh(const std::filesystem::path &path)
 {

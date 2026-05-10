@@ -7,7 +7,7 @@
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
 #include "imgui_wrapper.h"
-#include "file_system/file_system.h"
+#include "file_system.h"
 #include "arguments.h"
 #include "../scripts/game_components_register.h"
 #include "core_components_register.h"

@@ -1,5 +1,5 @@
 #include "scene_parser.h"
-#include "file_system/file_system.h"
+#include "file_system.h"
 #include "component/component.h"
 #include "nlohmann/json.hpp"
 #include "cubemap/cubemap.h"

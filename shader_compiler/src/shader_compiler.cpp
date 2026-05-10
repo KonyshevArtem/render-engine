@@ -6,21 +6,10 @@
 #include "include_handler.h"
 #include "defines.h"
 #include "debug.h"
-
-#include <fstream>
-#include <unordered_set>
-#include <iostream>
+#include "file_system.h"
 
 namespace ShaderCompilerLib
 {
-    std::string ReadFile(const std::filesystem::path& path)
-    {
-        std::ifstream file(path, std::ios::binary);
-        return std::string(
-            std::istreambuf_iterator<char>(file),
-            std::istreambuf_iterator<char>());
-    }
-
     CComPtr<IDxcResult> CompileDXC(const std::filesystem::path& hlslPath, const std::filesystem::path& outputPath, const CComPtr<IDxcUtils>& pUtils, const CComPtr<IDxcCompiler3>& pCompiler,
         const CComPtr<IDxcIncludeHandler>& pIncludeHandler, GraphicsBackend backend,
         const std::vector<std::string>& defines, ShaderType shaderType, bool debug)
@@ -206,12 +195,8 @@ namespace ShaderCompilerLib
         results->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShader), nullptr);
         if (pShader != nullptr)
         {
-            const std::filesystem::path outputPath = outputDirPath / GetShaderOutputFilename(shaderType);
-            std::filesystem::create_directories(outputPath.parent_path());
-
-            FILE* fp = fopen(outputPath.string().c_str(), "wb");
-            fwrite(pShader->GetBufferPointer(), pShader->GetBufferSize(), 1, fp);
-            fclose(fp);
+            const std::filesystem::path outputPath = outputDirPath / GetShaderOutputFilename(shaderType);            
+            FileSystem::WriteFileBytes(outputPath, std::span(static_cast<uint8_t*>(pShader->GetBufferPointer()), pShader->GetBufferSize()));
         }
     }
 
@@ -219,9 +204,6 @@ namespace ShaderCompilerLib
     {
         if (!compiler)
             return;
-
-        const std::filesystem::path outputPath = outputDirPath / GetShaderOutputFilename(shaderType);
-        std::filesystem::create_directories(outputPath.parent_path());
 
         std::string shaderSource;
         try
@@ -232,9 +214,8 @@ namespace ShaderCompilerLib
         {
         }
 
-        FILE* fp = fopen(outputPath.string().c_str(), "w");
-        fwrite(shaderSource.c_str(), shaderSource.size(), 1, fp);
-        fclose(fp);
+        const std::filesystem::path outputPath = outputDirPath / GetShaderOutputFilename(shaderType);
+        FileSystem::WriteFile(outputPath, shaderSource);
     }
 
     bool CompileShader(const std::filesystem::path& inputPath, const std::filesystem::path& outputPath, const std::string& backendName, const std::vector<std::string>& defines, bool debug)
@@ -268,7 +249,7 @@ namespace ShaderCompilerLib
         Reflection reflection;
         const std::filesystem::path outputDirPath = outputPath / GetBackendLiteral(backend) / definesHash;
 
-        const std::string hlslText = ReadFile(hlslPath);
+        const std::string hlslText = FileSystem::ReadFile(hlslPath);
         for (int i = 0; i < ShaderType::COUNT; ++i)
         {
             const ShaderType shaderType = static_cast<ShaderType>(i);

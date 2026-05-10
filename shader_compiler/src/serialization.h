@@ -3,6 +3,7 @@
 
 #include "reflection_common.h"
 #include "nlohmann/json.hpp"
+#include "file_system.h"
 
 #include <filesystem>
 
@@ -59,11 +60,7 @@ inline void WriteReflection(const std::filesystem::path& outputDirPath, const Re
     const std::string json = nlohmann::json(reflection).dump();
 
     const std::filesystem::path outputPath = std::filesystem::absolute(outputDirPath / "reflection.json");
-    std::filesystem::create_directories(outputPath.parent_path());
-
-	FILE* fp = fopen(outputPath.string().c_str(), "w");
-    fwrite(json.c_str(), json.size(), 1, fp);
-    fclose(fp);
+    FileSystem::WriteFile(outputPath, json);
 }
 
 #endif //RENDER_ENGINE_SHADER_COMPILER_SERIALIZATION_H

@@ -4,7 +4,7 @@
 #include "texture/texture.h"
 #include "shader/shader.h"
 #include "graphics_buffer/graphics_buffer.h"
-#include "file_system/file_watcher.h"
+#include "file_watcher.h"
 #include "vector2/vector2.h"
 #include "vector4/vector4.h"
 

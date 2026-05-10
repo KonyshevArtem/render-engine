@@ -1,5 +1,5 @@
 #include "texture_binary_reader.h"
-#include "file_system/file_system.h"
+#include "file_system.h"
 
 bool TextureBinaryReader::ReadTexture(const std::filesystem::path &path)
 {

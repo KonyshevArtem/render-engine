@@ -9,7 +9,7 @@
 #include "mesh/mesh.h"
 #include "mesh/mesh_binary_reader.h"
 #include "font/font.h"
-#include "file_system/file_system.h"
+#include "file_system.h"
 #include "resource.h"
 #include "shader/shader_loader/shader_loader.h"
 #include "debug.h"

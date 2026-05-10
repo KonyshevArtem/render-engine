@@ -33,3 +33,5 @@ target_include_directories(Hash PUBLIC .)
 target_include_directories(Arguments PUBLIC .)
 target_include_directories(StringSplit PUBLIC .)
 target_include_directories(StringEncodingUtil PUBLIC .)
+
+add_subdirectory(file_system)

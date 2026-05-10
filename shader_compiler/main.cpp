@@ -1,6 +1,7 @@
 #include "shader_compiler.h"
 #include "arguments.h"
 #include "string_split.h"
+#include "file_system.h"
 
 #include <iostream>
 
@@ -13,6 +14,8 @@ int main(int argc, char **argv)
         std::cout << "No HLSL path or no target backend are specified" << std::endl;
         return 1;
     }
+
+    FileSystem::Init(nullptr);
 
     const std::string backendName = Arguments::Get("-backend");
     const std::filesystem::path inputPath = Arguments::Get("-input");

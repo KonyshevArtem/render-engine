@@ -1,6 +1,6 @@
 #include "material_parser.h"
 #include "nlohmann/json.hpp"
-#include "file_system/file_system.h"
+#include "file_system.h"
 #include "shader/shader.h"
 #include "texture_2d/texture_2d.h"
 #include "cubemap/cubemap.h"

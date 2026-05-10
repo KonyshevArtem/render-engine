@@ -1,11 +1,10 @@
 #include "aftermath.h"
 #include "debug.h"
 #include "helpers/dx12_helpers.h"
+#include "file_system.h"
 
 #include <filesystem>
 #include <mutex>
-#include <ShlObj.h>
-#include <fstream>
 
 #include "GFSDK_Aftermath.h"
 #include "GFSDK_Aftermath_GpuCrashDumpDecoding.h"
@@ -20,15 +19,6 @@ namespace Aftermath
     std::unordered_map<const void*, GFSDK_Aftermath_ResourceHandle> s_RegisteredResourceHandles;
     std::unordered_map<const void*, GFSDK_Aftermath_ContextHandle> s_ContextHandles;
 
-    std::filesystem::path GetDocumentsPath()
-    {
-        PWSTR path = nullptr;
-        SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_CREATE, nullptr, &path);
-        std::filesystem::path result(path);
-        CoTaskMemFree(path);
-        return result;
-    }
-
     std::string GetTimestampedFilename(const std::string& base, const std::string& ext)
     {
         auto now = std::chrono::system_clock::now();
@@ -37,15 +27,17 @@ namespace Aftermath
         return std::format("{}_{:%Y-%m-%d_%H-%M-%S}.{}", base, time, ext);
     }
 
+    std::filesystem::path GetDumpsPath()
+    {
+        return FileSystem::GetSpecialFolderPath(SpecialFolder::DOCUMENTS) / "RenderEngine" / "AftermathDumps";
+    }
+
     void GpuCrashDumpCallback(const void* pGpuCrashDump, const uint32_t gpuCrashDumpSize, void* pUserData)
     {
         std::lock_guard<std::mutex> lock(s_Mutex);
 
-        const std::filesystem::path path = GetDocumentsPath() / "RenderEngine" / "AftermathDumps" / GetTimestampedFilename("Crash", "nv-gpudmp");
-        std::filesystem::create_directories(path.parent_path());
-
-        std::ofstream file(path, std::ios::binary);
-        file.write(static_cast<const char*>(pGpuCrashDump), gpuCrashDumpSize);
+        const std::filesystem::path path = GetDumpsPath() / GetTimestampedFilename("Crash", "nv-gpudmp");
+        FileSystem::WriteFileBytes(path, std::span(static_cast<const uint8_t*>(pGpuCrashDump), gpuCrashDumpSize));
 
         Debug::LogInfoFormat("[GraphicsBackend] Aftermath dump saved to: {}", path.string());
     }
@@ -58,11 +50,8 @@ namespace Aftermath
         GFSDK_Aftermath_GetShaderDebugInfoIdentifier(GFSDK_Aftermath_Version_API, pShaderDebugInfo, shaderDebugInfoSize, &identifier);
 
         const std::string fileName = "shader-" + std::to_string(identifier.id[0]) + "-" + std::to_string(identifier.id[1]) + ".nvdbg";
-        const std::filesystem::path path = GetDocumentsPath() / "RenderEngine" / "AftermathDumps" / "ShaderDebugInfo" / fileName;
-        std::filesystem::create_directories(path.parent_path());
-
-        std::ofstream file(path, std::ios::binary);
-        file.write(static_cast<const char*>(pShaderDebugInfo), shaderDebugInfoSize);
+        const std::filesystem::path path = GetDumpsPath() / "ShaderDebugInfo" / fileName;
+        FileSystem::WriteFileBytes(path, std::span(static_cast<const uint8_t*>(pShaderDebugInfo), shaderDebugInfoSize));
 
         Debug::LogInfoFormat("[GraphicsBackend] Aftermath shader info saved to: {}", path.string());
     }

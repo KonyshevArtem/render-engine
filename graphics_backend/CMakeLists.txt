@@ -83,7 +83,7 @@ if (${RENDER_ENGINE_WINDOWS_PLATFORM})
     target_link_libraries(GraphicsBackend ${GLEW_LIBRARIES} glu32.lib opengl32.lib)
 
     # dx12 for windows
-    target_link_libraries(GraphicsBackend DirectX-Headers DirectX-Guids d3d12.lib dxgi.lib d3dcompiler.lib dxguid.lib NvidiaAftermath)
+    target_link_libraries(GraphicsBackend DirectX-Headers DirectX-Guids d3d12.lib dxgi.lib d3dcompiler.lib dxguid.lib NvidiaAftermath FileSystem)
 
     target_compile_definitions(GraphicsBackend PUBLIC RENDER_BACKEND_OPENGL RENDER_BACKEND_DX12 OPENGL_MAJOR_VERSION=4 OPENGL_MINOR_VERSION=6)
 

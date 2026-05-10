@@ -1,6 +1,8 @@
 #ifndef RENDER_ENGINE_INCLUDE_HANDLER_H
 #define RENDER_ENGINE_INCLUDE_HANDLER_H
 
+#include "file_system.h"
+
 struct IncludeHandler : public IDxcIncludeHandler
 {
     IncludeHandler(std::filesystem::path basePath, IDxcUtils* utils) :
@@ -83,11 +85,7 @@ inline void WriteIncludeFiles(const std::filesystem::path& outputDirPath, const 
     const std::string json = nlohmann::json(includePaths).dump();
 
     const std::filesystem::path outputPath = std::filesystem::absolute(outputDirPath / "dependencies.json");
-    std::filesystem::create_directories(outputPath.parent_path());
-
-    FILE* fp = fopen(outputPath.string().c_str(), "w");
-    fwrite(json.c_str(), json.size(), 1, fp);
-    fclose(fp);
+    FileSystem::WriteFile(outputPath, json);
 }
 
 #endif

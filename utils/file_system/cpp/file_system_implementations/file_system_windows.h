@@ -9,6 +9,9 @@ class FileSystemWindows : public FileSystemBase
 {
 public:
     FileSystemWindows();
+
+protected:
+    std::filesystem::path GetSpecialFolderPath_Internal(SpecialFolder folder) override;
 };
 
 #endif

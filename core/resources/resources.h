@@ -23,7 +23,7 @@ public:
     template<typename T>
     static std::shared_ptr<T> Load(const std::filesystem::path& path, bool asyncSubresourceLoads = false);
 
-    static std::shared_ptr<Shader> LoadShader(const std::filesystem::path& path, const std::vector<std::string>& defines);
+    static std::shared_ptr<Shader> LoadShader(const std::filesystem::path& path, const std::vector<std::string>& defines, bool reload = false);
 
     template<typename T>
     static std::shared_ptr<Worker::Task> LoadAsync(const std::filesystem::path& path, const std::function<void(std::shared_ptr<T>)>& callback)

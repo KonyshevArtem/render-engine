@@ -25,13 +25,14 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<Texture>& texture, con
 
 	if (s_SelectedTextureName == name)
 	{
-		if (!s_CopyShaders[0] || s_FileWatcher.FilesChanged())
+		const bool filesChanged = s_FileWatcher.FilesChanged();
+		if (!s_CopyShaders[0] || filesChanged)
 		{
 			if (!s_CopyShaders[0])
 				s_FileWatcher.AddFile("core_resources/shaders/editor/texture_viewer/texture_viewer_copy.hlsl");
 
-			s_CopyShaders[0] = Resources::LoadShader("core_resources/shaders/editor/texture_viewer/texture_viewer_copy", {});
-			s_CopyShaders[1] = Resources::LoadShader("core_resources/shaders/editor/texture_viewer/texture_viewer_copy", {"TEXTURE_2D_ARRAY"});
+			s_CopyShaders[0] = Resources::LoadShader("core_resources/shaders/editor/texture_viewer/texture_viewer_copy", {}, filesChanged);
+			s_CopyShaders[1] = Resources::LoadShader("core_resources/shaders/editor/texture_viewer/texture_viewer_copy", {"TEXTURE_2D_ARRAY"}, filesChanged);
 		}
 
 		const std::shared_ptr<Shader> shader = s_CopyShaders[texture->GetTextureType() == TextureType::TEXTURE_2D_ARRAY ? 1 : 0];

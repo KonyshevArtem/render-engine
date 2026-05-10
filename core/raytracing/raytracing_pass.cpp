@@ -23,7 +23,7 @@ RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) 
 	m_RaytracingScene(rtScene),
 	m_Rng(std::random_device{}())
 {
-	LoadShaders();
+	LoadShaders(false);
 	m_FileWatcher.AddFile("core_resources/shaders/raytracing/primary_rays_debug.hlsl");
 	m_FileWatcher.AddFile("core_resources/shaders/raytracing/raytraced_shadows.hlsl");
 	m_FileWatcher.AddFile("core_resources/shaders/raytracing/raytracing_common.h");
@@ -39,7 +39,7 @@ RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) 
 void RaytracingPass::Prepare(RenderData& renderData)
 {
 	if (m_FileWatcher.FilesChanged())
-		LoadShaders();
+		LoadShaders(true);
 
 	renderData.RaytracedShadowsEnabled = m_RaytracedShadowsEnabled;
 	if (m_RaytracedShadowsEnabled)
@@ -188,9 +188,9 @@ void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 	GraphicsBackend::Current()->EndRenderPass();
 }
 
-void RaytracingPass::LoadShaders()
+void RaytracingPass::LoadShaders(bool reload)
 {
-	m_PrimaryRaysDebugShader = Resources::LoadShader("core_resources/shaders/raytracing/primary_rays_debug", { "_RECEIVE_SHADOWS" });
-	m_RaytracedShadowsShaders[0] = Resources::LoadShader("core_resources/shaders/raytracing/raytraced_shadows", {});
-	m_RaytracedShadowsShaders[1] = Resources::LoadShader("core_resources/shaders/raytracing/raytraced_shadows", {"RAYTRACED_SOFT_SHADOWS"});
+	m_PrimaryRaysDebugShader = Resources::LoadShader("core_resources/shaders/raytracing/primary_rays_debug", { "_RECEIVE_SHADOWS" }, reload);
+	m_RaytracedShadowsShaders[0] = Resources::LoadShader("core_resources/shaders/raytracing/raytraced_shadows", {}, reload);
+	m_RaytracedShadowsShaders[1] = Resources::LoadShader("core_resources/shaders/raytracing/raytraced_shadows", {"RAYTRACED_SOFT_SHADOWS"}, reload);
 }

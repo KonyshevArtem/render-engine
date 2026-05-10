@@ -42,7 +42,7 @@ private:
 	FileWatcher m_FileWatcher;
     std::mt19937 m_Rng;
 
-    void LoadShaders();
+    void LoadShaders(bool reload);
 };
 
 

@@ -167,7 +167,7 @@ std::shared_ptr<Font> Resources::Load(const std::filesystem::path &path, bool as
     return font;
 }
 
-std::shared_ptr<Shader> Resources::LoadShader(const std::filesystem::path& path, const std::vector<std::string>& defines)
+std::shared_ptr<Shader> Resources::LoadShader(const std::filesystem::path& path, const std::vector<std::string>& defines, bool reload)
 {
     Profiler::Marker _("Resources::Load<Shader>", path.string());
 
@@ -176,7 +176,7 @@ std::shared_ptr<Shader> Resources::LoadShader(const std::filesystem::path& path,
     const std::string cacheKey = path.string() + ShaderLoader::GetShaderHash(ShaderLoader::GetDefinesHash(defines), shaderDebug);
 
     std::shared_ptr<Shader> shader;
-    if (TryGetFromCache(cacheKey, shader))
+    if (!reload && TryGetFromCache(cacheKey, shader))
         return shader;
 
     shader = std::make_shared<Shader>(path, defines);

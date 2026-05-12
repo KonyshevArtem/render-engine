@@ -39,7 +39,9 @@ endif ()
 
 if ((${RENDER_ENGINE_WINDOWS_PLATFORM}) OR (${RENDER_ENGINE_MACOS_PLATFORM}))
 
+	add_compile_definitions(RENDER_ENGINE_EDITOR)
 	set(RENDER_ENGINE_BUILD_TOOLS 1)
+	set(RENDER_ENGINE_EDITOR 1)
 
 endif ()
 
@@ -59,10 +61,6 @@ add_library(
 	scripts/test_scene/test_scene_updater.h
 	scripts/test_scene/test_scene_updater.cpp
 )
-
-# TODO add non-editor compile target
-add_compile_definitions(RENDER_ENGINE_EDITOR)
-set(RENDER_ENGINE_EDITOR 1)
 
 #launchers source code
 add_subdirectory(launchers/windows_launcher)

@@ -25,6 +25,7 @@ set(
         trex
         StringEncodingUtil
         StringSplit
+        FileSystem
 )
 
 foreach (LIB ${DEPENDENCIES})

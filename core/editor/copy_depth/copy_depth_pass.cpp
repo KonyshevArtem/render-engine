@@ -1,3 +1,5 @@
+#ifdef RENDER_ENGINE_EDITOR
+
 #include "copy_depth_pass.h"
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
@@ -41,3 +43,5 @@ const GraphicsBackendFence & CopyDepthPass::GetEndFence() const
 {
     return m_EndFence;
 }
+
+#endif

@@ -7,7 +7,9 @@
 #include "types/graphics_backend_shader_object.h"
 #include "graphics_backend_api.h"
 #include "shader_parser.h"
+#ifdef RENDER_ENGINE_EDITOR
 #include "shader_compiler.h"
+#endif
 #include "arguments.h"
 
 namespace ShaderLoader

@@ -1,6 +1,8 @@
 #ifndef GRAPHICS_BACKEND_AFTERMATH_H
 #define GRAPHICS_BACKEND_AFTERMATH_H
 
+#ifdef RENDER_BACKEND_DX12
+
 #include <string>
 
 namespace Aftermath
@@ -17,5 +19,7 @@ namespace Aftermath
 
 	void CreateDump();
 }
+
+#endif
 
 #endif

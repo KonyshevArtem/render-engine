@@ -56,10 +56,12 @@ void UIRenderPass::Prepare(RenderData& renderData)
         if (UIText* text = dynamic_cast<UIText*>(element))
             text->PrepareMesh();
 
+#if RENDER_ENGINE_EDITOR
         Vector4 offsetScale = UIRenderPass_Local::GetOffsetScale(element->GetGlobalPosition(), element->Size);
         Vector2 position = Vector2(offsetScale.x * width, offsetScale.y * height);
         Vector2 size = Vector2(offsetScale.z * width, offsetScale.w * height);
         Gizmos::DrawRect(position, position + size);
+#endif
     }
 }
 

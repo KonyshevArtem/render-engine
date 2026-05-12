@@ -1,3 +1,5 @@
+#ifdef RENDER_BACKEND_DX12
+
 #include "aftermath.h"
 #include "debug.h"
 #include "helpers/dx12_helpers.h"
@@ -181,3 +183,5 @@ namespace Aftermath
             Debug::LogInfoFormat("[GraphicsBackend] Unexpected crash dump status after timeout: {}", std::to_string(status));
 	}
 }
+
+#endif

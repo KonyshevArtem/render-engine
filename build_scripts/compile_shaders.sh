@@ -6,7 +6,7 @@ fi
 
 OS=$(uname)
 if [ "$OS" = "Darwin" ]; then
-    EXECUTABLE="../cmake-build-release-mac-arm64/shader_compiler/ShaderCompiler.app/Contents/MacOS/ShaderCompiler"
+    EXECUTABLE="../cmake-build-release-mac-arm64/shader_compiler/Release/ShaderCompiler.app/Contents/MacOS/ShaderCompiler"
 else
     EXECUTABLE="../cmake-build-release-win64/shader_compiler/Release/ShaderCompiler.exe"
 fi

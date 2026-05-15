@@ -242,6 +242,11 @@ GraphicsBackendSampler GraphicsBackendMetal::CreateSampler(const GraphicsBackend
     return sampler;
 }
 
+void* GraphicsBackendMetal::GetImGuiTextureId(const GraphicsBackendTexture& texture)
+{
+    return reinterpret_cast<void*>(texture.Texture);
+}
+
 void GraphicsBackendMetal::DeleteTexture_Internal(const GraphicsBackendTexture &texture)
 {
     auto metalTexture = reinterpret_cast<MTL::Texture*>(texture.Texture);
@@ -372,10 +377,15 @@ TextureInternalFormat GraphicsBackendMetal::GetRenderTargetFormat(FramebufferAtt
     }
 
     int index = static_cast<int>(attachment);
-    TextureInternalFormat format = MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->colorAttachments()->object(index)->texture()->pixelFormat(), isLinear);
-    if (outIsLinear)
-        *outIsLinear = isLinear;
-    return format;
+    if (index < 8)
+    {
+        TextureInternalFormat format = MetalHelpers::FromTextureInternalFormat(m_RenderPassDescriptor->colorAttachments()->object(index)->texture()->pixelFormat(), isLinear);
+        if (outIsLinear)
+            *outIsLinear = isLinear;
+        return format;
+    }
+
+    return TextureInternalFormat::INVALID;
 }
 
 GraphicsBackendBuffer GraphicsBackendMetal::CreateBuffer(const GraphicsBackendBufferDescriptor& descriptor, const std::string& name, const void* data)
@@ -555,7 +565,7 @@ int GraphicsBackendMetal::GetConstantBufferOffsetAlignment()
     return 4;
 }
 
-GraphicsBackendGeometry GraphicsBackendMetal::CreateGeometry(const GraphicsBackendBuffer &vertexBuffer, const GraphicsBackendBuffer &indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor> &vertexAttributes, const std::string& name)
+GraphicsBackendGeometry GraphicsBackendMetal::CreateGeometry(const GraphicsBackendBuffer& vertexBuffer, const GraphicsBackendBuffer& indexBuffer, const std::vector<GraphicsBackendVertexAttributeDescriptor>& vertexAttributes, IndicesDataType indicesDataType, const std::string& name)
 {
     GraphicsBackendGeometry geometry{};
     geometry.VertexBuffer = vertexBuffer;
@@ -617,16 +627,23 @@ GraphicsBackendProgram GraphicsBackendMetal::CreateProgram(const GraphicsBackend
 
         MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
 
-        MTL::PixelFormat metalColorFormat = MetalHelpers::ToTextureInternalFormat(descriptor.ColorAttachmentDescriptor.Format, descriptor.ColorAttachmentDescriptor.IsLinear);
+        for (int i = 0; i < static_cast<int>(FramebufferAttachment::COLOR_ATTACHMENTS_COUNT); ++i)
+        {
+            const GraphicsBackendColorAttachmentDescriptor& colorAttachmentDesc = descriptor.ColorAttachmentDescriptors[i];
+            if (colorAttachmentDesc.Format == TextureInternalFormat::INVALID)
+                continue;
+
+            MTL::PixelFormat metalColorFormat = MetalHelpers::ToTextureInternalFormat(colorAttachmentDesc.Format, colorAttachmentDesc.IsLinear);
+
+            MTL::RenderPipelineColorAttachmentDescriptor* attachmentDesc = desc->colorAttachments()->object(i);
+            attachmentDesc->setWriteMask(static_cast<MTL::ColorWriteMask>(colorAttachmentDesc.BlendDescriptor.ColorWriteMask));
+            attachmentDesc->setPixelFormat(metalColorFormat);
+            attachmentDesc->setBlendingEnabled(colorAttachmentDesc.BlendDescriptor.Enabled);
+            attachmentDesc->setSourceRGBBlendFactor(MetalHelpers::ToBlendFactor(colorAttachmentDesc.BlendDescriptor.SourceFactor));
+            attachmentDesc->setDestinationRGBBlendFactor(MetalHelpers::ToBlendFactor(colorAttachmentDesc.BlendDescriptor.DestinationFactor));
+        }
+
         MTL::PixelFormat metalDepthFormat = MetalHelpers::ToTextureInternalFormat(descriptor.DepthFormat, false);
-
-        MTL::RenderPipelineColorAttachmentDescriptor* attachmentDesc = desc->colorAttachments()->object(0);
-        attachmentDesc->setWriteMask(static_cast<MTL::ColorWriteMask>(descriptor.ColorAttachmentDescriptor.BlendDescriptor.ColorWriteMask));
-        attachmentDesc->setPixelFormat(metalColorFormat);
-        attachmentDesc->setBlendingEnabled(descriptor.ColorAttachmentDescriptor.BlendDescriptor.Enabled);
-        attachmentDesc->setSourceRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.SourceFactor));
-        attachmentDesc->setDestinationRGBBlendFactor(MetalHelpers::ToBlendFactor(descriptor.ColorAttachmentDescriptor.BlendDescriptor.DestinationFactor));
-
         desc->setDepthAttachmentPixelFormat(metalDepthFormat);
 
         if (descriptor.DepthFormat == TextureInternalFormat::DEPTH_32_STENCIL_8 || descriptor.DepthFormat == TextureInternalFormat::DEPTH_24_STENCIL_8)
@@ -826,7 +843,7 @@ void GraphicsBackendMetal::Dispatch(uint32_t x, uint32_t y, uint32_t z)
     m_ComputeCommandEncoder->dispatchThreadgroups(groupsPerGrid, threadPerGroup);
 }
 
-void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height)
+void GraphicsBackendMetal::CopyTextureToTexture(const GraphicsBackendTexture &source, const GraphicsBackendRenderTargetDescriptor &destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height, GPUQueue queue)
 {
     MTL::BlitCommandEncoder* encoder = GetBlitCommandEncoder();
     assert(encoder != nullptr);
@@ -992,7 +1009,7 @@ void GraphicsBackendMetal::EndRenderPass()
     m_RenderCommandEncoder->endEncoding();
     m_RenderCommandEncoder = nullptr;
 
-    const NS::UInteger colorTargetCount = m_RenderPassDescriptor->colorAttachments()->retainCount();
+    const NS::UInteger colorTargetCount = 8;
     for (int i = 0; i < colorTargetCount; ++i)
     {
         m_RenderPassDescriptor->colorAttachments()->setObject(m_BackbufferDescriptor->colorAttachments()->object(i), i);

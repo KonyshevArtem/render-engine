@@ -14,3 +14,4 @@ add_library(FileSystem STATIC
 	cpp/file_system_implementations/file_system_android.h)
 
 target_include_directories(FileSystem PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(FileSystem AppleFoundation)

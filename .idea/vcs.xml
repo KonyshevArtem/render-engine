@@ -2,6 +2,30 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-ios/_deps/freetype-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-ios/_deps/freetype-src/subprojects/dlg" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-ios/_deps/harfbuzz-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-ios/_deps/stb-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-mac-arm64/_deps/freetype-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-mac-arm64/_deps/freetype-src/subprojects/dlg" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-mac-arm64/_deps/harfbuzz-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-mac-arm64/_deps/stb-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/freetype-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/freetype-src/subprojects/dlg" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/harfbuzz-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/stb-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-ios/_deps/freetype-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-ios/_deps/freetype-src/subprojects/dlg" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-ios/_deps/harfbuzz-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-ios/_deps/stb-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-mac-arm64/_deps/freetype-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-mac-arm64/_deps/freetype-src/subprojects/dlg" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-mac-arm64/_deps/harfbuzz-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-mac-arm64/_deps/stb-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release/_deps/freetype-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release/_deps/freetype-src/subprojects/dlg" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release/_deps/harfbuzz-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release/_deps/stb-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/Cuttlefish" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/FreeImage" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/Cuttlefish/lib/ISPCTextureCompressor" vcs="Git" />
@@ -17,5 +41,6 @@
     <mapping directory="$PROJECT_DIR$/external/SPIRV-Cross" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/imgui/imgui" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/json" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/trex" vcs="Git" />
   </component>
 </project>

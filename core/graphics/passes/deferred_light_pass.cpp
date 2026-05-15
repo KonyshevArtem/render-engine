@@ -6,6 +6,7 @@
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "resources/resources.h"
+#include "graphics/graphics.h"
 
 DeferredLightPass::DeferredLightPass()
 {
@@ -63,6 +64,8 @@ void DeferredLightPass::Execute(const RenderData& renderData)
 
     GraphicsBackend::Current()->AttachRenderTarget(colorDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
+
+    Graphics::SetCameraData(renderData.ViewMatrix, renderData.ProjectionMatrix, renderData.NearPlane, renderData.FarPlane);
 
     GraphicsBackend::Current()->BeginRenderPass("Deferred Light Pass");
 	{

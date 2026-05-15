@@ -6,7 +6,7 @@ fi
 
 OS=$(uname)
 if [ "$OS" = "Darwin" ]; then
-    EXECUTABLE="../cmake-build-release-mac-arm64/model_compiler/ModelCompiler.app/Contents/MacOS/ModelCompiler"
+    EXECUTABLE="../cmake-build-release-mac-arm64/model_compiler/Release/ModelCompiler.app/Contents/MacOS/ModelCompiler"
 else
     EXECUTABLE="../cmake-build-release-win64/model_compiler/Release/ModelCompiler.exe"
 fi

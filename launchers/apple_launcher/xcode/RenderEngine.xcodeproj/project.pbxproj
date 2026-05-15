@@ -32,6 +32,8 @@
 		464258552CE29ED0009D7BB1 /* TrackingAreaProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 464258532CE29ED0009D7BB1 /* TrackingAreaProvider.m */; };
 		464258572CE29EEB009D7BB1 /* TrackingAreaProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 464258562CE29EEB009D7BB1 /* TrackingAreaProvider.h */; };
 		464258582CE29EEB009D7BB1 /* TrackingAreaProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 464258562CE29EEB009D7BB1 /* TrackingAreaProvider.h */; };
+		468056602FB72BED006E02E3 /* libdxcompiler.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 468056462FB3BB3A006E02E3 /* libdxcompiler.dylib */; };
+		468056612FB72CAB006E02E3 /* libdxcompiler.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 468056462FB3BB3A006E02E3 /* libdxcompiler.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		46D157792D39BF5D009BDACA /* core_resources in Resources */ = {isa = PBXBuildFile; fileRef = 46D157782D39BF5D009BDACA /* core_resources */; };
 		46FE0FBD2F144FAB00C306C1 /* NativeBridge.h in Headers */ = {isa = PBXBuildFile; fileRef = 46FE0FBA2F144FAB00C306C1 /* NativeBridge.h */; };
 		46FE0FBE2F144FAB00C306C1 /* NativeBridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = 46FE0FBB2F144FAB00C306C1 /* NativeBridge.mm */; };
@@ -48,6 +50,20 @@
 		93A9F0472BB0452E0023B4D5 /* AAPLAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD52F22283BC300050D28E /* AAPLAppDelegate.m */; };
 		93A9F05B2BB0658E0023B4D5 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 935D1E222BAA41CE00362748 /* GameController.framework */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		468056622FB72CAB006E02E3 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				468056612FB72CAB006E02E3 /* libdxcompiler.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		3A40C5A72277F0F500DBB29F /* AAPLMetalRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AAPLMetalRenderer.h; sourceTree = "<group>"; };
@@ -94,6 +110,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				468056602FB72BED006E02E3 /* libdxcompiler.dylib in Frameworks */,
 				461F181E2F12729F00F75837 /* libbz2.1.0.8.tbd in Frameworks */,
 				93A9F05B2BB0658E0023B4D5 /* GameController.framework in Frameworks */,
 			);
@@ -293,6 +310,7 @@
 				3A40C5B22277F0F500DBB29F /* Frameworks */,
 				3A40C5B32277F0F500DBB29F /* Resources */,
 				4680565F2FB64FDC006E02E3 /* ShellScript */,
+				468056622FB72CAB006E02E3 /* Embed Libraries */,
 			);
 			buildRules = (
 			);

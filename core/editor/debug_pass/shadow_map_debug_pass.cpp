@@ -40,6 +40,9 @@ void ShadowMapDebugPass::Execute(const RenderData& renderData)
 
     if (DrawShadowCascades)
     {
+        if (!shader || !shader->IsValid())
+			return;
+
         DebugData data{};
         data.InvCameraVP = (renderData.ProjectionMatrix * renderData.ViewMatrix).Invert();
 

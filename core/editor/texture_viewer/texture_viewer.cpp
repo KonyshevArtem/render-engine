@@ -36,7 +36,7 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<Texture>& texture, con
 		}
 
 		const std::shared_ptr<Shader> shader = s_CopyShaders[texture->GetTextureType() == TextureType::TEXTURE_2D_ARRAY ? 1 : 0];
-		if (!shader)
+		if (!shader || !shader->IsValid())
 			return;
 
 		struct

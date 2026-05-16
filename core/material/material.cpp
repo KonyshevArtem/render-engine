@@ -10,7 +10,7 @@ Material::Material(std::shared_ptr<Shader> shader, const std::string& name) :
     m_Name(name),
     m_Shader(std::move(shader))
 {
-    if (m_Shader)
+    if (m_Shader && m_Shader->IsValid())
 		m_PerMaterialDataBufferWrapper = std::make_shared<GraphicsBufferWrapper>(m_Shader, GlobalConstants::PerMaterialDataBufferName, name);
 }
 
@@ -28,7 +28,7 @@ std::shared_ptr<Material> Material::Copy()
 
 void Material::SetTexture(const std::string& name, std::shared_ptr<Texture> texture)
 {
-    if (!m_Shader)
+    if (!m_Shader || !m_Shader->IsValid())
         return;
 
     const std::unordered_map<std::string, GraphicsBackendTextureInfo>& shaderTextures = m_Shader->GetTextures();

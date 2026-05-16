@@ -54,6 +54,11 @@ public:
         return m_SupportInstancing;
     }
 
+    inline bool IsValid() const
+    {
+        return !m_Shaders.empty();
+    }
+
 private:
     std::filesystem::path m_Path;
     std::vector<std::string> m_Defines;

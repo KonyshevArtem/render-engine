@@ -35,7 +35,7 @@ void SkyboxPass::Execute(const RenderData& renderData)
     static const std::shared_ptr<Shader> shader = Resources::LoadShader("core_resources/shaders/skybox", {});
     static const std::shared_ptr<GraphicsBuffer> buffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "Skybox Data");
 
-    if (m_Mesh == nullptr || renderData.Skybox == nullptr)
+    if (!m_Mesh || !renderData.Skybox || !shader || !shader->IsValid())
         return;
 
     const Matrix4x4 modelMatrix = Matrix4x4::Translation(renderData.ViewMatrix.Invert().GetPosition());

@@ -74,7 +74,7 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 		return;
 
 	const std::shared_ptr<Shader> shader = m_RaytracedShadowsShaders[m_RaytracedSoftShadowsEnabled ? 1 : 0];
-	if (!shader)
+	if (!shader || !shader->IsValid())
 		return;
 
 	Profiler::Marker _("RaytracingPass::ExecuteRaytracedShadows");
@@ -143,6 +143,9 @@ void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 		return;
 
 	Profiler::Marker _("RaytracingPass::ExecutePrimaryRaysDebug");
+
+	if (!m_PrimaryRaysDebugShader || !m_PrimaryRaysDebugShader->IsValid())
+		return;
 
 	GraphicsBackendRenderTargetDescriptor colorTargetDescriptor{};
 	colorTargetDescriptor.Texture = renderData.CameraColorTarget->GetBackendTexture();

@@ -55,6 +55,9 @@ void PostProcessPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("PostProcessPass::Execute");
 
+    if (!m_PostProcessShader || !m_PostProcessShader->IsValid())
+		return;
+
     PostProcessPass_Local::Data data{};
     data.OneOverGamma = 1 / GraphicsSettings::GetGamma();
     data.Exposure = GraphicsSettings::GetExposure();

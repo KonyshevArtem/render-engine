@@ -190,6 +190,9 @@ void ShadowCasterPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("ShadowCasterPass::Execute");
 
+    if (!m_Shader || !m_Shader->IsValid())
+		return;
+
     m_ShadowsConstantBuffer->SetData(&m_ShadowsGPUData, 0, sizeof(ShadowsData));
     GraphicsBackend::Current()->BindConstantBuffer(m_ShadowsConstantBuffer->GetBackendBuffer(), GlobalConstants::ShadowDataIndex, 0, sizeof(ShadowsData));
 

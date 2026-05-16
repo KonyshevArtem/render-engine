@@ -24,6 +24,9 @@ void FinalBlitPass::Execute(const RenderData& renderData)
 {
     Profiler::Marker marker("FinalBlitPass::Execute");
 
+    if (!m_BlitShader || !m_BlitShader->IsValid())
+		return;
+
     const GraphicsBackendRenderTargetDescriptor colorBackbufferDesc = GraphicsBackendRenderTargetDescriptor::ColorBackbuffer();
 
     GraphicsBackend::Current()->AttachRenderTarget(colorBackbufferDesc);

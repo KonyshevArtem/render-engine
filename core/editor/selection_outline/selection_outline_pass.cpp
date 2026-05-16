@@ -117,6 +117,9 @@ void SelectionOutlinePass::Execute(const RenderData& renderData)
         static std::shared_ptr<Shader> blitShader = Resources::LoadShader("core_resources/shaders/outlineBlit", {});
         static std::shared_ptr<GraphicsBuffer> blitDataBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "Selection Outline Data");
 
+        if (!blitShader || !blitShader->IsValid())
+			return;
+
         OutlineData data{};
         data.Color = outlineColor;
         data.InvTextureSize = Vector2(1.0f / silhouetteRenderTarget->GetWidth(), 1.0f / silhouetteRenderTarget->GetHeight());

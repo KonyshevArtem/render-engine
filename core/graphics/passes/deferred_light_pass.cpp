@@ -39,7 +39,7 @@ void DeferredLightPass::Execute(const RenderData& renderData)
 	Profiler::Marker marker("DeferredLightPass::Execute");
 
     const std::shared_ptr<Shader> shader = m_LightShader;
-    if (!shader)
+    if (!shader || !shader->IsValid())
         return;
 
     struct

@@ -93,6 +93,9 @@ void UIRenderPass::Execute(const RenderData& renderData)
         {
             if (const UIImage* image = dynamic_cast<UIImage*>(element))
             {
+                if (!m_ImageShader || !m_ImageShader->IsValid())
+					continue;
+
                 UIData data;
                 data.OffsetScale = UIRenderPass_Local::GetOffsetScale(image->GetGlobalPosition(), image->Size);
                 data.Color = image->Color;
@@ -112,7 +115,7 @@ void UIRenderPass::Execute(const RenderData& renderData)
             {
                 const std::shared_ptr<Mesh> textMesh = text->GetMesh();
                 const std::shared_ptr<Texture> fontAtlas = text->GetFontAtlas();
-                if (!textMesh || !fontAtlas)
+                if (!textMesh || !fontAtlas || !m_TextShader || !m_TextShader->IsValid())
                     continue;
 
                 UIData data;
@@ -132,6 +135,9 @@ void UIRenderPass::Execute(const RenderData& renderData)
 
             if (const UIMaskStencil* maskStencil = dynamic_cast<UIMaskStencil*>(element))
             {
+				if (!m_MaskStencilShader || !m_MaskStencilShader->IsValid())
+					continue;
+
                 Vector2 position = maskStencil->GetGlobalPosition();
                 Vector2 size = maskStencil->Size;
 

@@ -191,8 +191,12 @@ void RenderQueue::SetupDrawCalls(const std::vector<std::shared_ptr<Renderer>>& r
         const Material* material = settings.OverrideMaterial ? settings.OverrideMaterial.get() : renderer->GetMaterial().get();
         const DrawableGeometry* geometry = renderer->GetGeometry().get();
 
-        if (!geometry || !material || !material->GetShader())
+        if (!geometry || !material)
             continue;
+
+		const std::shared_ptr<Shader> shader = material->GetShader();
+		if (!shader || !shader->IsValid())
+			continue;
 
         DrawCallInfo info{};
         info.Geometry = geometry;
@@ -270,8 +274,12 @@ void RenderQueue::SetupDrawCalls(const std::vector<Item>& items, const RenderSet
         const Material* material = settings.OverrideMaterial ? settings.OverrideMaterial.get() : item.Material.get();
         const DrawableGeometry* geometry = item.Geometry.get();
 
-        if (!geometry || !material || !material->GetShader())
+        if (!geometry || !material)
             continue;
+
+        const std::shared_ptr<Shader> shader = material->GetShader();
+        if (!shader || !shader->IsValid())
+			continue;
 
         DrawCallInfo info{};
         info.Geometry = geometry;
@@ -306,7 +314,7 @@ void RenderQueue::BatchDrawCalls()
     {
         DrawCallInfo& drawCall = m_DrawCalls[i];
         const std::shared_ptr<Shader> shader = drawCall.Material->GetShader();
-        if (!shader || !shader->SupportInstancing())
+        if (!shader || !shader->IsValid() || !shader->SupportInstancing())
             continue;
 
         const size_t hash = RenderQueueLocal::GetDrawCallInstancingHash(drawCall);

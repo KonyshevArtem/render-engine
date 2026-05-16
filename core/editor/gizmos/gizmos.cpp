@@ -153,8 +153,8 @@ void Gizmos::Init()
         GizmosLocal::s_WireRectPrimitive = std::make_shared<Lines>(wireRectCorners, wireRectIndices, "WireRect");
     }
 
-    DeveloperConsole::AddBoolCommand(L"Gizmos.Draw2D", &GizmosLocal::s_IsEnabled2D);
-    DeveloperConsole::AddBoolCommand(L"Gizmos.Draw3D", &GizmosLocal::s_IsEnabled3D);
+    DeveloperConsole::AddCommand(L"Gizmos.Draw2D", &GizmosLocal::s_IsEnabled2D);
+    DeveloperConsole::AddCommand(L"Gizmos.Draw3D", &GizmosLocal::s_IsEnabled3D);
 }
 
 const std::vector<RenderQueue::Item>& Gizmos::Get3DGizmosToDraw()

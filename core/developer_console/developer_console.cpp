@@ -14,28 +14,20 @@
 #include <algorithm>
 
 std::shared_ptr<DeveloperConsole> DeveloperConsole::Instance = nullptr;
-std::unordered_map<std::wstring, bool*> DeveloperConsole::s_BoolCommands;
-std::unordered_map<std::wstring, int*> DeveloperConsole::s_IntCommands;
-std::unordered_map<std::wstring, std::function<void(const std::string&)>> DeveloperConsole::s_FunctionCommands;
+std::unordered_map<std::wstring, DeveloperConsole::Command> DeveloperConsole::s_Commands;
 
 void DeveloperConsole::Init()
 {
 	Instance = std::make_shared<DeveloperConsole>();
 }
 
-void DeveloperConsole::AddBoolCommand(const std::wstring& command, bool* outResult)
-{
-	s_BoolCommands[StringEncodingUtil::ToLower(command)] = outResult;
-}
-
-void DeveloperConsole::AddIntCommand(const std::wstring& command, int* outResult)
-{
-	s_IntCommands[StringEncodingUtil::ToLower(command)] = outResult;
-}
-
 void DeveloperConsole::AddFunctionCommand(const std::wstring& command, std::function<void(const std::string&)> func)
 {
-	s_FunctionCommands[StringEncodingUtil::ToLower(command)] = func;
+	Command cmd;
+	cmd.Getter = [] { return L""; };
+	cmd.Setter = std::move(func);
+
+	s_Commands[StringEncodingUtil::ToLower(command)] = cmd;
 }
 
 void DeveloperConsole::Update()
@@ -126,35 +118,18 @@ void DeveloperConsole::HandleCommand(const std::wstring& command)
 	const std::vector<std::wstring> split = StringSplit::Split(command, ' ');
 	const std::wstring cmd = StringEncodingUtil::ToLower(split[0]);
 
-	if (const auto& it = s_BoolCommands.find(cmd); it != s_BoolCommands.end())
+	if (const auto& it = s_Commands.find(cmd); it != s_Commands.end())
 	{
 		if (split.size() > 1)
 		{
-			*it->second = std::wcstol(split[1].c_str(), nullptr, 10) > 0;
+			it->second.Setter(StringEncodingUtil::WStringToString(split[1]));
 			AddUITextHistory(command);
 		}
 		else
 		{
-			const bool currentState = *it->second;
-			AddUITextHistory(split[0] + (currentState ? L" true" : L" false"));
+			const std::wstring& currentValue = it->second.Getter();
+			AddUITextHistory(split[0] + L" " + currentValue);
 		}
-	}
-	else if (const auto& it = s_IntCommands.find(cmd); it != s_IntCommands.end())
-	{
-		if (split.size() > 1)
-		{
-			*it->second = std::wcstol(split[1].c_str(), nullptr, 10);
-			AddUITextHistory(command);
-		}
-		else
-			AddUITextHistory(split[0] + L" " + std::to_wstring(*it->second));
-	}
-	else if (const auto& it = s_FunctionCommands.find(cmd); it != s_FunctionCommands.end())
-	{
-		if (split.size() > 1)
-			it->second(StringEncodingUtil::WStringToString(split[1]));
-
-		AddUITextHistory(command);
 	}
 	else
 		AddUITextHistory(L"Unknown command");
@@ -193,11 +168,7 @@ void DeveloperConsole::UpdatePrompt(const std::wstring& text)
 			};
 
 		m_Prompts.clear();
-		for (const auto& it : s_BoolCommands)
-			CheckCommand(it.first);
-		for (const auto& it : s_IntCommands)
-			CheckCommand(it.first);
-		for (const auto& it : s_FunctionCommands)
+		for (const auto& it : s_Commands)
 			CheckCommand(it.first);
 
 		std::ranges::sort(m_Prompts);

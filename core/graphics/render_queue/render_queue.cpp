@@ -64,8 +64,8 @@ RenderQueue::RenderQueue() :
 	m_PreviousVertexAttributesHash(0),
 	m_PreviousPrimitiveType(PrimitiveType::LINES)
 {
-    DeveloperConsole::AddBoolCommand(L"FrustumCulling.Enabled", &EnableFrustumCulling);
-    DeveloperConsole::AddBoolCommand(L"FrustumCulling.Freeze", &FreezeFrustumCulling);
+    DeveloperConsole::AddCommand(L"FrustumCulling.Enabled", &EnableFrustumCulling);
+    DeveloperConsole::AddCommand(L"FrustumCulling.Freeze", &FreezeFrustumCulling);
 
     if (!s_PermanentMatricesBuffer)
 	    CreatePermanentMatricesBuffer();

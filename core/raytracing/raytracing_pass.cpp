@@ -28,10 +28,10 @@ RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) 
 	m_FileWatcher.AddFile("core_resources/shaders/raytracing/raytraced_shadows.hlsl");
 	m_FileWatcher.AddFile("core_resources/shaders/raytracing/raytracing_common.h");
 
-	DeveloperConsole::AddBoolCommand(L"Raytracing.Debug.PrimaryRays", &m_PrimaryRaysDebugEnabled);
-	DeveloperConsole::AddBoolCommand(L"Raytracing.Shadows.Enabled", &m_RaytracedShadowsEnabled);
-	DeveloperConsole::AddBoolCommand(L"Raytracing.Shadows.Soft", &m_RaytracedSoftShadowsEnabled);
-	DeveloperConsole::AddIntCommand(L"Raytracing.Shadows.Samples", &m_RaytracedShadowsSamplesCount);
+	DeveloperConsole::AddCommand(L"Raytracing.Debug.PrimaryRays", &m_PrimaryRaysDebugEnabled);
+	DeveloperConsole::AddCommand(L"Raytracing.Shadows.Enabled", &m_RaytracedShadowsEnabled);
+	DeveloperConsole::AddCommand(L"Raytracing.Shadows.Soft", &m_RaytracedSoftShadowsEnabled);
+	DeveloperConsole::AddCommand(L"Raytracing.Shadows.Samples", &m_RaytracedShadowsSamplesCount);
 
 	m_BlueNoiseTexture = Resources::Load<Texture2D>("core_resources/textures/noise/blue_noise");
 }

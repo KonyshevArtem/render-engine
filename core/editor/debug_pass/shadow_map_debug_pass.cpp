@@ -17,7 +17,7 @@ ShadowMapDebugPass::ShadowMapDebugPass() : RenderPass()
 {
     m_FullscreenMesh = Mesh::GetFullscreenMesh();
     
-    DeveloperConsole::AddBoolCommand(L"Shadows.DrawCascades", &DrawShadowCascades);
+    DeveloperConsole::AddCommand(L"Shadows.DrawCascades", &DrawShadowCascades);
 }
 
 void ShadowMapDebugPass::Prepare(RenderData& renderData)

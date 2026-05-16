@@ -12,8 +12,8 @@ RaytracingScene::RaytracingScene() :
 	m_RecreateBLASes(false),
 	m_BLASesPerFrameLimit(10)
 {
-	DeveloperConsole::AddBoolCommand(L"Raytracing.Debug.RecreateBLASes", &m_RecreateBLASes);
-	DeveloperConsole::AddIntCommand(L"Raytracing.Debug.BLASPerFrameLimit", &m_BLASesPerFrameLimit);
+	DeveloperConsole::AddCommand(L"Raytracing.Debug.RecreateBLASes", &m_RecreateBLASes);
+	DeveloperConsole::AddCommand(L"Raytracing.Debug.BLASPerFrameLimit", &m_BLASesPerFrameLimit);
 }
 
 

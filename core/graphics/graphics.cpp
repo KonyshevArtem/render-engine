@@ -124,7 +124,7 @@ namespace Graphics
         InitPasses();
 
         s_SynchronousGraphicsPrepare = Arguments::Contains("-sync_graphics_prepare") || GraphicsBackend::Current()->GetName() == GraphicsBackendName::OPENGL || GraphicsBackend::Current()->GetName() == GraphicsBackendName::GLES;
-        DeveloperConsole::AddBoolCommand(L"Graphics.Prepare.Synchronous", &s_SynchronousGraphicsPrepare);
+        DeveloperConsole::AddCommand(L"Graphics.Prepare.Synchronous", &s_SynchronousGraphicsPrepare);
     }
 
     void Shutdown()

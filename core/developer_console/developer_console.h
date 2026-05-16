@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <functional>
 
+#include "string_encoding_util.h"
+
 class UIElement;
 class UIImage;
 class UITextField;
@@ -21,16 +23,42 @@ public:
 	DeveloperConsole() = default;
 	~DeveloperConsole() = default;
 
-	static void AddBoolCommand(const std::wstring& command, bool* outResult);
-	static void AddIntCommand(const std::wstring& command, int* outResult);
+	template<typename T>
+	static void AddCommand(const std::wstring& command, T* outResult)
+	{
+		Command cmd;
+		cmd.Getter = [outResult]
+			{
+				if constexpr (std::is_same_v<T, bool>)
+					return *outResult ? L"true" : L"false";
+				else
+					return std::to_wstring(*outResult);
+			};
+		cmd.Setter = [outResult](const std::string& value)
+			{
+				if constexpr (std::is_same_v<T, bool>)
+					*outResult = std::stoi(value) > 0;
+				else if constexpr (std::is_integral_v<T>)
+					*outResult = std::stoll(value);
+				else if constexpr (std::is_floating_point_v<T>)
+					*outResult = std::stod(value);
+			};
+
+		s_Commands[StringEncodingUtil::ToLower(command)] = cmd;
+	}
+
 	static void AddFunctionCommand(const std::wstring& command, std::function<void(const std::string&)> func);
 
 	void Update();
 
 private:
-	static std::unordered_map<std::wstring, bool*> s_BoolCommands;
-	static std::unordered_map<std::wstring, int*> s_IntCommands;
-	static std::unordered_map<std::wstring, std::function<void(const std::string&)>> s_FunctionCommands;
+	struct Command
+	{
+		std::function<const std::wstring()> Getter;
+		std::function<void(const std::string&)> Setter;
+	};
+
+	static std::unordered_map<std::wstring, Command> s_Commands;
 
 	std::shared_ptr<UIElement> m_Root;
 	std::shared_ptr<UIImage> m_Background;

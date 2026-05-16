@@ -29,6 +29,8 @@ private:
     Vector2 m_MinMaxValues;
     bool m_LinearizeDepth;
     int m_TextureSlice;
+    float m_Zoom;
+    Vector2 m_ZoomCenter;
 
     void DrawTextureSelector();
     void DrawColorMaskSelector();

@@ -1,3 +1,4 @@
+#include "imgui_internal.h"
 #ifdef ENABLE_IMGUI
 
 #include "texture_viewer_window.h"
@@ -12,7 +13,9 @@ TextureViewerWindow::TextureViewerWindow() :
 	m_ColorMask(1, 1, 1, 1),
 	m_MinMaxValues(0, 1),
 	m_LinearizeDepth(false),
-	m_TextureSlice(0)
+	m_TextureSlice(0),
+	m_Zoom(1),
+	m_ZoomCenter(0.5f, 0.5f)
 {
 	TextureViewer::SetTextureRegisteredCallback([this](const std::string& textureName) {OnTextureRegistered(textureName); });
 	TextureViewer::SetColorMask(m_ColorMask);
@@ -155,15 +158,52 @@ void TextureViewerWindow::DrawInternal()
 	const float maxW = contentRegion.x;
 	const float maxH = contentRegion.y - ImGui::GetTextLineHeight();
 	const float aspect = static_cast<float>(selectedTexture->GetWidth()) / static_cast<float>(selectedTexture->GetHeight());
-	float displayW = maxW;
-	float displayH = displayW / aspect;
-	if (displayH > maxH)
+	ImVec2 imageSize{ maxW, maxW / aspect };
+	if (imageSize.y > maxH)
 	{
-		displayH = maxH;
-		displayW = displayH * aspect;
+		imageSize.y = maxH;
+		imageSize.x = maxH * aspect;
 	}
 
-	ImGui::Image(GraphicsBackend::Current()->GetImGuiTextureId(selectedTexture->GetBackendTexture()), ImVec2(displayW, displayH));
+	ImGui::BeginChild("##image", imageSize, false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+	float uvSize = 1.0f / m_Zoom;
+	const ImVec2 uv0(m_ZoomCenter.x - uvSize * 0.5f, m_ZoomCenter.y - uvSize * 0.5f);
+	const ImVec2 uv1(m_ZoomCenter.x + uvSize * 0.5f, m_ZoomCenter.y + uvSize * 0.5f);
+
+	ImGui::Image(GraphicsBackend::Current()->GetImGuiTextureId(selectedTexture->GetBackendTexture()), imageSize, uv0, uv1);
+
+	if (ImGui::IsItemHovered())
+	{
+		const float wheel = ImGui::GetIO().MouseWheel;
+
+		const ImVec2 mousePos = ImGui::GetIO().MousePos;
+		const ImVec2 itemMin = ImGui::GetItemRectMin();
+		const ImVec2 itemSize = ImGui::GetItemRectSize();
+
+		if (wheel != 0.0f)
+		{
+			const ImVec2 mousePosUV(
+				uv0.x + (mousePos.x - itemMin.x) / itemSize.x * (uv1.x - uv0.x),
+				uv0.y + (mousePos.y - itemMin.y) / itemSize.y * (uv1.y - uv0.y)
+			);
+
+			m_Zoom = ImClamp(m_Zoom * (1.0f + wheel * 0.1f), 1.0f, 32.0f);
+			uvSize = 1.0f / m_Zoom;
+
+			m_ZoomCenter.x = ImClamp(mousePosUV.x, uvSize * 0.5f, 1.0f - uvSize * 0.5f);
+			m_ZoomCenter.y = ImClamp(mousePosUV.y, uvSize * 0.5f, 1.0f - uvSize * 0.5f);
+		}
+
+		if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+		{
+			const ImVec2 delta = ImGui::GetIO().MouseDelta;
+			m_ZoomCenter.x = ImClamp(m_ZoomCenter.x - delta.x / itemSize.x * uvSize, uvSize * 0.5f, 1.0f - uvSize * 0.5f);
+			m_ZoomCenter.y = ImClamp(m_ZoomCenter.y - delta.y / itemSize.y * uvSize, uvSize * 0.5f, 1.0f - uvSize * 0.5f);
+		}
+	}
+
+	ImGui::EndChild();
 
 	ImGui::Text("Size: %ix%i", selectedTexture->GetWidth(), selectedTexture->GetHeight());
 }

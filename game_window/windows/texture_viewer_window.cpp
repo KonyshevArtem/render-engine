@@ -153,7 +153,7 @@ void TextureViewerWindow::DrawInternal()
 
 	const ImVec2 contentRegion = ImGui::GetContentRegionAvail();
 	const float maxW = contentRegion.x;
-	const float maxH = contentRegion.y;
+	const float maxH = contentRegion.y - ImGui::GetTextLineHeight();
 	const float aspect = static_cast<float>(selectedTexture->GetWidth()) / static_cast<float>(selectedTexture->GetHeight());
 	float displayW = maxW;
 	float displayH = displayW / aspect;
@@ -164,6 +164,8 @@ void TextureViewerWindow::DrawInternal()
 	}
 
 	ImGui::Image(GraphicsBackend::Current()->GetImGuiTextureId(selectedTexture->GetBackendTexture()), ImVec2(displayW, displayH));
+
+	ImGui::Text("Size: %ix%i", selectedTexture->GetWidth(), selectedTexture->GetHeight());
 }
 
 #endif

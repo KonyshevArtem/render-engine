@@ -56,7 +56,7 @@ void DebugConsoleWindow::DrawTopBar()
 
 void DebugConsoleWindow::DrawInternal()
 {
-    if (ImGui::BeginChild("Small Logs", {0, -200}, ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY))
+    if (ImGui::BeginChild("Small Logs", {0, -200}, ImGuiChildFlags_ResizeY))
     {
         ImGuiListClipper clipper;
         clipper.Begin(m_Logs.size());
@@ -75,7 +75,7 @@ void DebugConsoleWindow::DrawInternal()
     }
     ImGui::EndChild();
 
-    if (ImGui::BeginChild("Full Log", ImVec2(0, 0), ImGuiChildFlags_Border))
+    if (ImGui::BeginChild("Full Log", ImVec2(0, 0)))
     {
         if (m_Selected != -1)
         {

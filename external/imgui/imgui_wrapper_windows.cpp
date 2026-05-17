@@ -17,6 +17,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 namespace ImGuiWrapper
 {
     GraphicsBackendName s_Backend;
+    std::function<void(D3D12_CPU_DESCRIPTOR_HANDLE*, D3D12_GPU_DESCRIPTOR_HANDLE*)> s_SrvDescriptorAllocFn;
+    std::function<void(D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE)> s_SrvDescriptorFreeFn;
 
     void Init()
     {
@@ -31,11 +33,13 @@ namespace ImGuiWrapper
         {
             void* Window;
             ID3D12Device* Device;
+            ID3D12CommandQueue* CommandQueue;
             int MaxFramesInFlight;
-            DXGI_FORMAT Format;
+            DXGI_FORMAT ColorFormat;
+            DXGI_FORMAT DepthFormat;
             ID3D12DescriptorHeap* DescriptorHeap;
-            D3D12_CPU_DESCRIPTOR_HANDLE CpuDescriptorHandle;
-            D3D12_GPU_DESCRIPTOR_HANDLE GpuDescriptorHandle;
+            std::function<void(D3D12_CPU_DESCRIPTOR_HANDLE*, D3D12_GPU_DESCRIPTOR_HANDLE*)> SrvDescriptorAllocFn;
+            std::function<void(D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE)> SrvDescriptorFreeFn;
         };
 
         s_Backend = GraphicsBackend::Current()->GetName();
@@ -45,7 +49,7 @@ namespace ImGuiWrapper
         if (s_Backend == GraphicsBackendName::OPENGL)
         {
             InitDataOpenGL data;
-            GraphicsBackend::Current()->FillImGuiInitData(reinterpret_cast<void*>(&data));
+            GraphicsBackend::Current()->FillImGuiInitData(&data);
 
             std::string glslVersion = "#version " + std::to_string(data.OpenGLMajorVersion * 100 + data.OpenGLMinorVersion * 10);
 
@@ -55,10 +59,23 @@ namespace ImGuiWrapper
         else if (s_Backend == GraphicsBackendName::DX12)
         {
             InitDataDX12 data;
-            GraphicsBackend::Current()->FillImGuiInitData(reinterpret_cast<void*>(&data));
+            GraphicsBackend::Current()->FillImGuiInitData(&data);
+
+			s_SrvDescriptorAllocFn = data.SrvDescriptorAllocFn;
+			s_SrvDescriptorFreeFn = data.SrvDescriptorFreeFn;
+
+            ImGui_ImplDX12_InitInfo info{};
+            info.Device = data.Device;
+            info.CommandQueue = data.CommandQueue;
+            info.NumFramesInFlight = data.MaxFramesInFlight;
+            info.RTVFormat = data.ColorFormat;
+            info.DSVFormat = data.DepthFormat;
+            info.SrvDescriptorHeap = data.DescriptorHeap;
+            info.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE* outCpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE* outGpuHandle) { s_SrvDescriptorAllocFn(outCpuHandle, outGpuHandle); };
+            info.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle) { s_SrvDescriptorFreeFn(cpuHandle, gpuHandle); };
 
             ImGui_ImplWin32_Init(data.Window);
-            ImGui_ImplDX12_Init(data.Device, data.MaxFramesInFlight, data.Format, data.DescriptorHeap, data.CpuDescriptorHandle, data.GpuDescriptorHandle);
+            ImGui_ImplDX12_Init(&info);
         }
     }
 

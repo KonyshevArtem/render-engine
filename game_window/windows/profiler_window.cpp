@@ -149,8 +149,12 @@ void ProfilerWindow::DrawInternal()
     {
         for (int i = 0; i < static_cast<int>(Profiler::MarkerContext::MAX); ++i)
         {
+			ImGui::PushID(i);
+
             const Profiler::MarkerContext context = static_cast<Profiler::MarkerContext>(i);
             DrawMarkers(GetContextLabel(context), context, rangeBegin, rangeEnd, rangeToWidth);
+
+			ImGui::PopID();
         }
     }
 }
@@ -219,16 +223,22 @@ void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerConte
 
     DraggableContentRegion region(label.c_str(), rangeToWidth, 0, markerLines * k_MarkerHeight + k_MarkerContentMargin, this);
     {
+        int frameId = 0;
         for (auto& pair : profilerFrames)
         {
             const Profiler::FrameInfo& frameInfo = pair.second;
             if (frameInfo.Markers.empty() || frameInfo.Markers[0].Begin > rangeEnd || frameInfo.Markers[frameInfo.Markers.size() - 1].End < rangeBegin)
                 continue;
 
+            ImGui::PushID(frameId++);
+
+            int markerId = 0;
             for (const Profiler::MarkerInfo& marker : frameInfo.Markers)
             {
                 if (marker.Finished && (marker.Begin > rangeEnd || marker.End < rangeBegin))
                     continue;
+
+				ImGui::PushID(markerId++);
 
                 int depthOffset = 0;
                 if (handleOverlap)
@@ -267,7 +277,11 @@ void ProfilerWindow::DrawMarkers(const std::string& label, Profiler::MarkerConte
                         DrawSeparator(marker, rangeBegin, rangeToWidth);
                         break;
                 }
+
+				ImGui::PopID();
             }
+
+            ImGui::PopID();
         }
     }
 }

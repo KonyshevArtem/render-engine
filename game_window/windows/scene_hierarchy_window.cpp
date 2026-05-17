@@ -206,9 +206,11 @@ void SceneHierarchyWindow::DrawContextMenu(std::shared_ptr<GameObject> &go, std:
     }
 }
 
-void DrawInBetweenDropTarget()
+void DrawInBetweenDropTarget(int id)
 {
+	ImGui::PushID(id);
     ImGui::InvisibleButton("In-between drop", {ImGui::GetContentRegionMax().x, 3});
+	ImGui::PopID();
 }
 
 void ChangeIndent(bool indent, int depth)
@@ -239,7 +241,7 @@ void SceneHierarchyWindow::DrawGameObjectsHierarchy(std::unordered_set<std::shar
         auto go = entry.GameObject.lock();
         auto &children = go->Children;
 
-        DrawInBetweenDropTarget();
+        DrawInBetweenDropTarget(i);
         HandleDrop(go->GetParent(), entry.LocalIndex);
 
         bool isRenaming = DrawRenameInput(go);
@@ -381,7 +383,7 @@ void SceneHierarchyWindow::DrawInternal()
     BuildLinearHierarchy(rootGameObjects, 0);
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
-    if (ImGui::BeginChild("Hierarchy", {0, 0}, ImGuiChildFlags_Border))
+    if (ImGui::BeginChild("Hierarchy", {0, 0}))
     {
         DrawGameObjectsHierarchy(selectedGameObjects, selectAll, selectRange);
         HandleFreeDrop(rootGameObjects.size());

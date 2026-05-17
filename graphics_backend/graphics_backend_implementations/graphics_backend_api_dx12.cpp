@@ -225,8 +225,11 @@ namespace DX12Local
         uint32_t DescriptorIndex;
         uint32_t DescriptorsInUse;
         bool IsResizable;
+		bool IsShaderVisible;
         D3D12_DESCRIPTOR_HEAP_TYPE HeapType;
 		std::mutex Mutex;
+		D3D12_CPU_DESCRIPTOR_HANDLE CpuDescriptorHandleStart;
+		D3D12_GPU_DESCRIPTOR_HANDLE GpuDescriptorHandleStart;
 
         void Init(uint32_t descriptorsCount, uint32_t bindlessDescriptorsCount, D3D12_DESCRIPTOR_HEAP_TYPE type, const std::string& name, bool isShaderVisible = false, bool resizable = false)
         {
@@ -235,6 +238,7 @@ namespace DX12Local
             DescriptorIndex = 0;
             DescriptorsInUse = 0;
             IsResizable = resizable;
+			IsShaderVisible = isShaderVisible;
             HeapType = type;
 
             D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
@@ -244,28 +248,37 @@ namespace DX12Local
             ThrowIfFailed(s_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&Heap)));
             SetObjectName(Heap, name);
 
+			CpuDescriptorHandleStart = Heap->GetCPUDescriptorHandleForHeapStart();
+			if (isShaderVisible)
+				GpuDescriptorHandleStart = Heap->GetGPUDescriptorHandleForHeapStart();
+
             DescriptorSize = s_Device->GetDescriptorHandleIncrementSize(HeapType);
         }
 
         D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(int index) const
         {
-            return CD3DX12_CPU_DESCRIPTOR_HANDLE(Heap->GetCPUDescriptorHandleForHeapStart(), DescriptorIndex + index, DescriptorSize);
+            return CD3DX12_CPU_DESCRIPTOR_HANDLE(CpuDescriptorHandleStart, DescriptorIndex + index, DescriptorSize);
         }
 
         D3D12_CPU_DESCRIPTOR_HANDLE GetBindlessCPUHandle(int index) const
         {
-            return CD3DX12_CPU_DESCRIPTOR_HANDLE(Heap->GetCPUDescriptorHandleForHeapStart(), DescriptorsCount + index, DescriptorSize);
+            return CD3DX12_CPU_DESCRIPTOR_HANDLE(CpuDescriptorHandleStart, DescriptorsCount + index, DescriptorSize);
 		}
 
         D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(int index) const
         {
-            return CD3DX12_GPU_DESCRIPTOR_HANDLE(Heap->GetGPUDescriptorHandleForHeapStart(), DescriptorIndex + index, DescriptorSize);
+            return CD3DX12_GPU_DESCRIPTOR_HANDLE(GpuDescriptorHandleStart, DescriptorIndex + index, DescriptorSize);
         }
 
         D3D12_GPU_DESCRIPTOR_HANDLE GetBindlessGPUHandle(int index) const
         {
-            return CD3DX12_GPU_DESCRIPTOR_HANDLE(Heap->GetGPUDescriptorHandleForHeapStart(), DescriptorsCount + index, DescriptorSize);
+            return CD3DX12_GPU_DESCRIPTOR_HANDLE(GpuDescriptorHandleStart, DescriptorsCount + index, DescriptorSize);
 		}
+
+        uint32_t GetDescriptorHandleIndex(D3D12_CPU_DESCRIPTOR_HANDLE handle) const
+        {
+            return (static_cast<int64_t>(handle.ptr) - static_cast<int64_t>(CpuDescriptorHandleStart.ptr)) / DescriptorSize;
+        }
 
         bool CheckSize()
         {
@@ -281,6 +294,10 @@ namespace DX12Local
                 heapDesc.NumDescriptors = DescriptorsCount + BindlessDescriptorsCount;
                 ThrowIfFailed(s_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&Heap)));
                 oldHeap->Release();
+
+                CpuDescriptorHandleStart = Heap->GetCPUDescriptorHandleForHeapStart();
+                if (IsShaderVisible)
+                    GpuDescriptorHandleStart = Heap->GetGPUDescriptorHandleForHeapStart();
             }
 
             DescriptorsInUse = 0;
@@ -378,6 +395,8 @@ namespace DX12Local
     DescriptorHeap s_BoundResourceStagingDescriptorHeap;
     DescriptorHeap s_BoundSamplerDescriptorHeap;
     DescriptorHeap s_BoundSamplerStagingDescriptorHeap;
+
+	IndexPool s_ImGuiDescriptorIndexPool;
     DescriptorHeap s_ImGuiDescriptorHeap;
 
 	IndexPool s_AllocatedResourcesIndexPool;
@@ -977,24 +996,38 @@ void GraphicsBackendDX12::FillImGuiInitData(void* data)
     {
         void* Window;
         ID3D12Device* Device;
+        ID3D12CommandQueue* CommandQueue;
         int MaxFramesInFlight;
-        DXGI_FORMAT Format;
+        DXGI_FORMAT ColorFormat;
+        DXGI_FORMAT DepthFormat;
         ID3D12DescriptorHeap* DescriptorHeap;
-        D3D12_CPU_DESCRIPTOR_HANDLE CpuDescriptorHandle;
-        D3D12_GPU_DESCRIPTOR_HANDLE GpuDescriptorHandle;
+        std::function<void(D3D12_CPU_DESCRIPTOR_HANDLE*, D3D12_GPU_DESCRIPTOR_HANDLE*)> SrvDescriptorAllocFn;
+        std::function<void(D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE)> SrvDescriptorFreeFn;
     };
 
-    InitDataDX12* initData = reinterpret_cast<InitDataDX12*>(data);
+    InitDataDX12* initData = static_cast<InitDataDX12*>(data);
     initData->Window = DX12Local::s_Window;
     initData->Device = DX12Local::s_Device;
+    initData->CommandQueue = DX12Local::s_RenderQueue;
     initData->MaxFramesInFlight = GraphicsBackend::GetMaxFramesInFlight();
-    initData->Format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
+    initData->ColorFormat = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
+    initData->DepthFormat = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainDepthFormat, true);
 
+	DX12Local::s_ImGuiDescriptorIndexPool.Init(64);
     DX12Local::s_ImGuiDescriptorHeap.Init(64, 64, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "ImGui Descriptors", true);
 
     initData->DescriptorHeap = DX12Local::s_ImGuiDescriptorHeap.Heap;
-    initData->CpuDescriptorHandle = DX12Local::s_ImGuiDescriptorHeap.GetCPUHandle(64);
-    initData->GpuDescriptorHandle = DX12Local::s_ImGuiDescriptorHeap.GetGPUHandle(64);
+    initData->SrvDescriptorAllocFn = [](D3D12_CPU_DESCRIPTOR_HANDLE* outCpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE* outGpuHandle)
+        {
+            const uint32_t index = DX12Local::s_ImGuiDescriptorIndexPool.GetFreeIndex();
+            *outCpuHandle = DX12Local::s_ImGuiDescriptorHeap.GetBindlessCPUHandle(index);
+			*outGpuHandle = DX12Local::s_ImGuiDescriptorHeap.GetBindlessGPUHandle(index);
+        };
+    initData->SrvDescriptorFreeFn = [](D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle)
+        {
+            const uint32_t index = DX12Local::s_ImGuiDescriptorHeap.GetDescriptorHandleIndex(cpuHandle);
+            DX12Local::s_ImGuiDescriptorIndexPool.ReturnIndex(index);
+        };
 }
 
 void GraphicsBackendDX12::FillImGuiFrameData(void *data)

@@ -63,6 +63,9 @@ void TextureViewerWindow::DrawTextureSelector()
 			m_SelectedTextureName = name;
 			TextureViewer::SetSelectedTextureName(m_SelectedTextureName);
 
+			m_Zoom = 1;
+			m_ZoomCenter = Vector2(0.5f, 0.5f);
+
 			ImGui::CloseCurrentPopup();
 		}
 	}
@@ -171,7 +174,10 @@ void TextureViewerWindow::DrawInternal()
 	const ImVec2 uv0(m_ZoomCenter.x - uvSize * 0.5f, m_ZoomCenter.y - uvSize * 0.5f);
 	const ImVec2 uv1(m_ZoomCenter.x + uvSize * 0.5f, m_ZoomCenter.y + uvSize * 0.5f);
 
+	ImDrawList* drawList = ImGui::GetWindowDrawList();
+	drawList->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerNearest);
 	ImGui::Image(GraphicsBackend::Current()->GetImGuiTextureId(selectedTexture->GetBackendTexture()), imageSize, uv0, uv1);
+	drawList->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerLinear);
 
 	if (ImGui::IsItemHovered())
 	{
@@ -191,8 +197,13 @@ void TextureViewerWindow::DrawInternal()
 			m_Zoom = ImClamp(m_Zoom * (1.0f + wheel * 0.1f), 1.0f, 32.0f);
 			uvSize = 1.0f / m_Zoom;
 
-			m_ZoomCenter.x = ImClamp(mousePosUV.x, uvSize * 0.5f, 1.0f - uvSize * 0.5f);
-			m_ZoomCenter.y = ImClamp(mousePosUV.y, uvSize * 0.5f, 1.0f - uvSize * 0.5f);
+			const ImVec2 distance(
+				mousePosUV.x - m_ZoomCenter.x,
+				mousePosUV.y - m_ZoomCenter.y
+			);
+
+			m_ZoomCenter.x = ImClamp(m_ZoomCenter.x + distance.x * 0.5f * (wheel > 0 ? 1 : -1), uvSize * 0.5f, 1.0f - uvSize * 0.5f);
+			m_ZoomCenter.y = ImClamp(m_ZoomCenter.y + distance.y * 0.5f * (wheel > 0 ? 1 : -1), uvSize * 0.5f, 1.0f - uvSize * 0.5f);
 		}
 
 		if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))

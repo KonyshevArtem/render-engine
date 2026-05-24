@@ -5,8 +5,11 @@ void FileWatcher::AddFile(const std::filesystem::path& filePath)
 {
 #ifdef RENDER_ENGINE_EDITOR
 	const std::filesystem::path editorResourcesPath = FileSystem::GetEditorResourcesPath() / filePath;
-	const std::filesystem::file_time_type lastWriteTime = std::filesystem::last_write_time(editorResourcesPath);
-	m_WatchedFiles[editorResourcesPath] = lastWriteTime;
+	if (std::filesystem::exists(editorResourcesPath))
+	{
+		const std::filesystem::file_time_type lastWriteTime = std::filesystem::last_write_time(editorResourcesPath);
+		m_WatchedFiles[editorResourcesPath] = lastWriteTime;
+	}
 #endif
 }
 

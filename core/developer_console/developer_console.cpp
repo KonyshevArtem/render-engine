@@ -115,6 +115,9 @@ void DeveloperConsole::UpdateUI()
 
 void DeveloperConsole::HandleCommand(const std::wstring& command)
 {
+	if (command.empty())
+		return;
+
 	const std::vector<std::wstring> split = StringSplit::Split(command, ' ');
 	const std::wstring cmd = StringEncodingUtil::ToLower(split[0]);
 

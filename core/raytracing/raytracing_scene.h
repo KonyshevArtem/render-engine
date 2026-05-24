@@ -18,15 +18,7 @@ public:
 	void Prepare(RenderData& renderData);
 	void Update(RenderData& renderData);
 
-	const GraphicsBackendTLAS& GetTLAS() const
-	{
-		return m_TLAS;
-	}
-
-	const std::shared_ptr<GraphicsBufferView> GetPerInstanceDataBufferView() const
-	{
-		return m_PerInstanceDataBufferView;
-	}
+	void BindResources() const;
 
 private:
 	struct PerInstanceData

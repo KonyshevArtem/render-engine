@@ -8,7 +8,8 @@ struct Attributes
     float3 positionOS : POSITION;
 };
 
-cbuffer DeferredLightData : register(b0)
+
+cbuffer DeferredLightData : register(b1)
 {    
     float2 _InvTargetSize;
     float2 _Padding;

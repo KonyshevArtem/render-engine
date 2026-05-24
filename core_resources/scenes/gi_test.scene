@@ -1,0 +1,150 @@
+{
+  "GameObjects": [
+    {
+      "Name": "Camera",
+      "Position": { "x": 0, "y": 1.6, "z": 0 },
+      "Rotation": { "x": 0, "y": 0, "z": 0, "w": 1 },
+      "Scale": { "x": 1, "y": 1, "z": 1 },
+      "Components": [
+        {
+          "Name": "Camera",
+          "Data": { "Fov": 75, "NearClip": 0.01, "FarClip": 200, "ShadowDistance": 100 }
+        },
+        { "Name": "CameraFlyController", "Data": {} }
+      ]
+    },
+
+    {
+      "Name": "Floor",
+      "Position": { "x": 0, "y": -1, "z": 0 },
+      "Rotation": { "x": 0, "y": 0, "z": 0, "w": 1 },
+      "Scale": { "x": 20, "y": 1, "z": 20 },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "Mesh": "core_resources/models/Cube",
+            "Material": "core_resources/materials/test_scene/standard_opaque.material"
+          }
+        }
+      ]
+    },
+
+    {
+      "Name": "Ceiling",
+      "Position": { "x": 0, "y": 7, "z": 0 },
+      "Rotation": { "x": 0, "y": 0, "z": 0, "w": 1 },
+      "Scale": { "x": 20, "y": 1, "z": 20 },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "Mesh": "core_resources/models/Cube",
+            "Material": "core_resources/materials/test_scene/standard_opaque.material"
+          }
+        }
+      ]
+    },
+
+    {
+      "Name": "Back Wall",
+      "Position": { "x": 0, "y": 3, "z": -10 },
+      "Rotation": { "x": 0, "y": 0, "z": 0, "w": 1 },
+      "Scale": { "x": 20, "y": 8, "z": 0.3 },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "Mesh": "core_resources/models/Cube",
+            "Material": "core_resources/materials/test_scene/standard_opaque.material"
+          }
+        }
+      ]
+    },
+
+    {
+      "Name": "Left Wall",
+      "Position": { "x": -10, "y": 3, "z": 0 },
+      "Rotation": { "x": 0, "y": 0, "z": 0, "w": 1 },
+      "Scale": { "x": 0.3, "y": 8, "z": 20 },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "Mesh": "core_resources/models/Cube",
+            "Material": "core_resources/materials/test_scene/standard_opaque.material"
+          }
+        }
+      ]
+    },
+
+    {
+      "Name": "Right Wall",
+      "Position": { "x": 10, "y": 3, "z": 0 },
+      "Rotation": { "x": 0, "y": 0, "z": 0, "w": 1 },
+      "Scale": { "x": 0.3, "y": 8, "z": 20 },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "Mesh": "core_resources/models/Cube",
+            "Material": "core_resources/materials/test_scene/standard_opaque.material"
+          }
+        }
+      ]
+    },
+
+    {
+      "Name": "Front Wall Left",
+      "Position": { "x": -10, "y": 3, "z": 10 },
+      "Rotation": { "x": 0, "y": 0, "z": 0, "w": 1 },
+      "Scale": { "x": 8, "y": 8, "z": 0.3 },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "Mesh": "core_resources/models/Cube",
+            "Material": "core_resources/materials/test_scene/standard_opaque.material"
+          }
+        }
+      ]
+    },
+
+    {
+      "Name": "Front Wall Right",
+      "Position": { "x": 10, "y": 3, "z": 10 },
+      "Rotation": { "x": 0, "y": 0, "z": 0, "w": 1 },
+      "Scale": { "x": 8, "y": 8, "z": 0.3 },
+      "Components": [
+        {
+          "Name": "MeshRenderer",
+          "Data": {
+            "Mesh": "core_resources/models/Cube",
+            "Material": "core_resources/materials/test_scene/standard_opaque.material"
+          }
+        }
+      ]
+    },
+
+    {
+      "Name": "Directional Light",
+      "Position": { "x": 0, "y": 0, "z": 0 },
+      "Rotation": {
+        "x": 0.003,
+        "y": 0.995,
+        "z": -0.097,
+        "w": -0.034
+      },
+      "Scale": { "x": 1, "y": 1, "z": 1 },
+      "Components": [
+        {
+          "Name": "Light",
+          "Data": {
+            "Type": "DIRECTIONAL",
+            "Intensity": { "x": 1, "y": 1, "z": 1 }
+          }
+        }
+      ]
+    }
+  ]
+}

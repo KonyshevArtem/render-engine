@@ -160,7 +160,9 @@ add_library(
 	graphics/passes/deferred_light_pass.h
 	graphics/passes/deferred_light_pass.cpp
 	editor/texture_viewer/texture_viewer.h
-	editor/texture_viewer/texture_viewer.cpp)
+	editor/texture_viewer/texture_viewer.cpp
+	raytracing/raytracing_probes.h
+	raytracing/raytracing_probes.cpp)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil StringSplit FileSystem)

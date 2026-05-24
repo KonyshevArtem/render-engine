@@ -8,14 +8,21 @@
 #include "resources/resources.h"
 #include "graphics/graphics.h"
 
-DeferredLightPass::DeferredLightPass()
+DeferredLightPass::DeferredLightPass(std::shared_ptr<RaytracingProbes> raytracingProbes) :
+	m_RaytracingProbes(std::move(raytracingProbes))
 {
-	m_LightShader = Resources::LoadShader("core_resources/shaders/deferred_light", {"_REFLECTION", "_RECEIVE_SHADOWS"});
+	LoadShaders(false);
+
+	m_FileWatcher.AddFile("core_resources/shaders/deferred_light.hlsl");
+	m_FileWatcher.AddFile("core_resources/shaders/common/lighting.h");
 }
 
 void DeferredLightPass::Prepare(RenderData& renderData)
 {
 	Profiler::Marker marker("DeferredLightPass::Prepare");
+
+    if (m_FileWatcher.FilesChanged())
+		LoadShaders(true);
 
     const uint32_t width = renderData.Viewport.x;
     const uint32_t height = renderData.Viewport.y;
@@ -76,11 +83,19 @@ void DeferredLightPass::Execute(const RenderData& renderData)
         for (int i = 0; i < 2; i++)
 	        GraphicsBackend::Current()->BindTexture(renderData.GBuffers[i]->GetBackendTexture(), i);
         GraphicsBackend::Current()->BindTexture(renderData.CameraDepthTarget->GetBackendTexture(), 2);
-		GraphicsBackend::Current()->BindConstantBuffer(m_LightingDataBuffer->GetBackendBuffer(), 0, 0, sizeof(constants));
+		GraphicsBackend::Current()->BindConstantBuffer(m_LightingDataBuffer->GetBackendBuffer(), 1, 0, sizeof(constants));
+
+        if (m_RaytracingProbes)
+			m_RaytracingProbes->BindResources();
 
 		const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
         GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh));
         GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
 	}
 	GraphicsBackend::Current()->EndRenderPass();
+}
+
+void DeferredLightPass::LoadShaders(bool reload)
+{
+    m_LightShader = Resources::LoadShader("core_resources/shaders/deferred_light", { "_REFLECTION", "_RECEIVE_SHADOWS", "DEFERRED_LIGHTING"}, reload);
 }

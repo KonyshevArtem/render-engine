@@ -52,8 +52,7 @@ void ForwardRenderPass::Execute(const RenderData& renderData)
         GraphicsBackend::Current()->SetViewport(0, 0, renderData.Viewport.x, renderData.Viewport.y, 0, 1);
         GraphicsBackend::Current()->SetScissorRect(0, 0, renderData.Viewport.x, renderData.Viewport.y);
 
-        if (m_RaytracingScene && m_RaytracingScene->GetTLAS().IsValid())
-            GraphicsBackend::Current()->BindTLAS(m_RaytracingScene->GetTLAS(), 0);
+		m_RaytracingScene->BindResources();
 
 		m_RenderQueue.Draw();
     }

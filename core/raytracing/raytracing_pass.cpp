@@ -70,7 +70,7 @@ void RaytracingPass::Execute(const RenderData& renderData)
 
 void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 {
-	if (!m_RaytracedShadowsEnabled || !m_RaytracingScene->GetTLAS().IsValid())
+	if (!m_RaytracedShadowsEnabled)
 		return;
 
 	const std::shared_ptr<Shader> shader = m_RaytracedShadowsShaders[m_RaytracedSoftShadowsEnabled ? 1 : 0];
@@ -120,7 +120,8 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 		GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
 		GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor{});
 
-		GraphicsBackend::Current()->BindTLAS(m_RaytracingScene->GetTLAS(), GlobalConstants::RTSceneIndex);
+		m_RaytracingScene->BindResources();
+
 		GraphicsBackend::Current()->BindTexture(renderData.CameraDepthTarget->GetBackendTexture(), 0);
 		GraphicsBackend::Current()->BindTexture(renderData.GBuffers[1]->GetBackendTexture(), 1);
 		GraphicsBackend::Current()->BindTextureSampler(m_BlueNoiseTexture->GetBackendTexture(), m_BlueNoiseTexture->GetBackendSampler(), 2);
@@ -139,7 +140,7 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 
 void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 {
-	if (!m_PrimaryRaysDebugEnabled || !m_RaytracingScene->GetTLAS().IsValid())
+	if (!m_PrimaryRaysDebugEnabled)
 		return;
 
 	Profiler::Marker _("RaytracingPass::ExecutePrimaryRaysDebug");
@@ -179,8 +180,7 @@ void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 		GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
 		GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor{});
 
-		GraphicsBackend::Current()->BindTLAS(m_RaytracingScene->GetTLAS(), GlobalConstants::RTSceneIndex);
-		GraphicsBackend::Current()->BindBuffer(m_RaytracingScene->GetPerInstanceDataBufferView()->GetBackendBufferView(), GlobalConstants::RTPerInstanceDataIndex);
+		m_RaytracingScene->BindResources();
 		GraphicsBackend::Current()->BindConstantBuffer(m_PrimaryRaysDebugDataBuffer->GetBackendBuffer(), 0, 0, sizeof(constants));
 
 		const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();

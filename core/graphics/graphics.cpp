@@ -42,6 +42,7 @@
 #include "passes/gbuffer_pass.h"
 #include "passes/deferred_light_pass.h"
 #include "passes/skybox_pass.h"
+#include "raytracing/raytracing_probes.h"
 #include "arguments.h"
 
 #include <cassert>
@@ -60,6 +61,7 @@ namespace Graphics
     std::shared_ptr<UIRenderPass> s_UIRenderPass;
     std::shared_ptr<PostProcessPass> s_PostProcessPass;
     std::shared_ptr<RaytracingPass> s_RaytracingPass;
+	std::shared_ptr<RaytracingProbes> s_RaytracingProbes;
 
 #if RENDER_ENGINE_EDITOR
     std::shared_ptr<CopyDepthPass> s_CopyDepthPass;
@@ -96,11 +98,12 @@ namespace Graphics
         {
             s_RaytracingScene = std::make_shared<RaytracingScene>();
             s_RaytracingPass = std::make_shared<RaytracingPass>(s_RaytracingScene);
+			s_RaytracingProbes = std::make_shared<RaytracingProbes>(s_RaytracingScene);
         }
 
         s_ShadowCasterPass = std::make_shared<ShadowCasterPass>();
 		s_GBufferPass = std::make_shared<GBufferPass>();
-		s_DeferredLightPass = std::make_shared<DeferredLightPass>();
+		s_DeferredLightPass = std::make_shared<DeferredLightPass>(s_RaytracingProbes);
         s_ForwardRenderPass = std::make_shared<ForwardRenderPass>(s_RaytracingScene);
 		s_SkyboxPass = std::make_shared<SkyboxPass>();
         s_PostProcessPass = std::make_shared<PostProcessPass>();
@@ -152,7 +155,7 @@ namespace Graphics
 
     void SetLightingData(const std::vector<Light*>& lights, const std::shared_ptr<Texture>& skybox)
     {
-        const std::shared_ptr<Texture> reflectionCube = skybox ? skybox : Cubemap::White();
+        const std::shared_ptr<Texture> reflectionCube = skybox ? skybox : Cubemap::Black();
 
         LightingData lightingData{};
         lightingData.AmbientLight = GraphicsSettings::GetAmbientLightColor() * GraphicsSettings::GetAmbientLightIntensity();
@@ -245,6 +248,9 @@ namespace Graphics
             raytracedShadowsPrepareTask = SchedulePassPrepare(s_RaytracingPass, raytracedShadowsDependencies);
         }
 
+        if (s_RaytracingProbes)
+	        SchedulePassPrepare(s_RaytracingProbes, {});
+
         const std::shared_ptr<Worker::Task> shadowsPrepareTask[1] = { raytracedShadowsPrepareTask };
         SchedulePassPrepare(s_ShadowCasterPass, shadowsPrepareTask);
 
@@ -301,6 +307,8 @@ namespace Graphics
 		s_GBufferPass->Execute(s_RenderData);
         if (s_RaytracingPass)
 			s_RaytracingPass->ExecuteRaytracedShadows(s_RenderData);
+        if (s_RaytracingProbes)
+			s_RaytracingProbes->Execute(s_RenderData);
 		s_DeferredLightPass->Execute(s_RenderData);
 		s_SkyboxPass->Execute(s_RenderData);
         s_ForwardRenderPass->Execute(s_RenderData);
@@ -310,6 +318,8 @@ namespace Graphics
         s_SelectionOutlinePass->Execute(s_RenderData);
         if (s_RaytracingPass)
             s_RaytracingPass->ExecutePrimaryRaysDebug(s_RenderData);
+        if (s_RaytracingProbes)
+			s_RaytracingProbes->ExecuteDebug(s_RenderData);
 #endif
         s_PostProcessPass->Execute(s_RenderData);
         s_UIRenderPass->Execute(s_RenderData);

@@ -1,4 +1,5 @@
 #include "raytracing_scene.h"
+#include "global_constants.h"
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
 #include "mesh/mesh.h"
@@ -120,4 +121,12 @@ void RaytracingScene::Update(RenderData& renderData)
 		}
 	}
 	GraphicsBackend::Current()->EndComputePass();
+}
+
+void RaytracingScene::BindResources() const
+{
+	if (m_TLAS.IsValid())
+		GraphicsBackend::Current()->BindTLAS(m_TLAS, GlobalConstants::RTSceneIndex);
+	if (m_PerInstanceDataBuffer)
+		GraphicsBackend::Current()->BindBuffer(m_PerInstanceDataBufferView->GetBackendBufferView(), GlobalConstants::RTPerInstanceDataIndex);
 }

@@ -121,7 +121,7 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
             continue;
 
         std::shared_ptr<GameObject> lightGo = light->GetGameObject();
-        if (light->Type == LightType::SPOT)
+        if (light->Type == LightType::SPOT && spotLightIndex < GlobalConstants::MaxSpotLightSources)
         {
             Profiler::Marker marker("Prepare Spot Light");
 
@@ -136,7 +136,7 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
 
             ++spotLightIndex;
         }
-        if (light->Type == LightType::POINT)
+        if (light->Type == LightType::POINT && pointLightsIndex < GlobalConstants::MaxPointLightSources)
         {
             Profiler::Marker marker("Prepare Point Light");
 

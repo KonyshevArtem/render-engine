@@ -7,11 +7,12 @@
 #include "texture/texture.h"
 #include "raytracing/raytracing_probes.h"
 #include "file_watcher.h"
+#include "graphics/passes/shadow_caster_pass.h"
 
 class DeferredLightPass : public RenderPass
 {
 public:
-	DeferredLightPass(std::shared_ptr<RaytracingProbes> raytracingProbes);
+	DeferredLightPass(std::shared_ptr<RaytracingProbes> raytracingProbes, std::shared_ptr<ShadowCasterPass> shadowCasterPass);
 	~DeferredLightPass() override = default;
 
 	void Prepare(RenderData& renderData) override;
@@ -22,6 +23,7 @@ private:
 	std::shared_ptr<Texture> m_CameraColorTarget;
 	std::shared_ptr<GraphicsBuffer> m_LightingDataBuffer;
 
+	std::shared_ptr<ShadowCasterPass> m_ShadowCasterPass;
 	std::shared_ptr<RaytracingProbes> m_RaytracingProbes;
 
 	FileWatcher m_FileWatcher;

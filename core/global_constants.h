@@ -12,22 +12,33 @@ namespace GlobalConstants
 
     constexpr int TransparentRenderQueue = 3000;
 
-    constexpr int ReflectionCubeIndex = 4;
-    constexpr int DirectionalShadowMapIndex = 5;
-    constexpr int SpotLightShadowMapIndex = 6;
-    constexpr int PointLightShadowMapIndex = 7;
-	constexpr int RaytracedShadowMaskIndex = DirectionalShadowMapIndex;
+    enum TextureIndex
+    {
+        REFLECTION_CUBE = 4,
+        DIRECTIONAL_SHADOW_MAP = 5,
+        PUNCTUAL_LIGHT_SHADOW_ATLAS = 6,
+        RT_SHADOW_MASK = DIRECTIONAL_SHADOW_MAP,
+    };
 
-    constexpr int MatricesData = 4;
-    constexpr int LightingDataIndex = 5;
-    constexpr int CameraDataIndex = 6;
-    constexpr int ShadowDataIndex = 7;
+    enum ConstantBufferIndex
+    {
+        MATRICES = 4,
+		LIGHTING_DATA= 5,
+		CAMERA_DATA = 6,
+		SHADOW_DATA = 7,
+    };
 
-    constexpr int InstancingMatricesEntriesData = 6;
-    constexpr int TransformMatricesData = 7;
+    enum BufferIndex
+    {
+        RT_PER_INSTANCE_DATA = 5,
+        INSTANCING_MATRICES_ENTRIES = 6,
+		TRANSFORM_MATRICES = 7,
+    };
 
-	constexpr int RTSceneIndex = 0;
-	constexpr int RTPerInstanceDataIndex = 5;
+    enum TLASIndex
+    {
+        RT_SCENE = 0,
+    };
 }
 
 #endif //RENDER_ENGINE_GLOBAL_CONSTANTS_H

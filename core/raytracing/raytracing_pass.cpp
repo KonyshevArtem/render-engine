@@ -131,7 +131,7 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 		GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh));
 		GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
 
-		GraphicsBackend::Current()->BindTexture(renderData.RaytracedShadowsTarget->GetBackendTexture(), GlobalConstants::RaytracedShadowMaskIndex);
+		GraphicsBackend::Current()->BindTexture(renderData.RaytracedShadowsTarget->GetBackendTexture(), GlobalConstants::TextureIndex::RT_SHADOW_MASK);
 	}
 	GraphicsBackend::Current()->EndRenderPass();
 

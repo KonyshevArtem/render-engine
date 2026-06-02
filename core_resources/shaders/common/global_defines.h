@@ -15,17 +15,14 @@
     #define SCREEN_UV_UPSIDE_DOWN 1
 #endif
 
-#define REFLECTION_CUBE                 t4
-#define REFLECTION_CUBE_SAMPLER         s4
-#define DIRECTIONAL_SHADOW_MAP          t5
-#define DIRECTIONAL_SHADOW_MAP_SAMPLER  s5
-#define SPOTLIGHT_SHADOW_MAP            t6
-#define SPOTLIGHT_SHADOW_MAP_SAMPLER    s6
-#define POINTLIGHT_SHADOW_MAP           t7
-#define POINTLIGHT_SHADOW_MAP_SAMPLER   s7
-#define RAYTRACED_SHADOW_MASK           DIRECTIONAL_SHADOW_MAP
+#define REFLECTION_CUBE                        t4
+#define REFLECTION_CUBE_SAMPLER                s4
+#define DIRECTIONAL_SHADOW_MAP                 t5
+#define DIRECTIONAL_SHADOW_MAP_SAMPLER         s5
+#define PUNCTUAL_LIGHT_SHADOW_ATLAS            t6
+#define PUNCTUAL_LIGHT_SHADOW_ATLAS_SAMPLER    s6
+#define RAYTRACED_SHADOW_MASK                  DIRECTIONAL_SHADOW_MAP
 
-#define MATRICES_DATA   b4
 #define LIGHTING_DATA   b5
 #define CAMERA_DATA     b6
 #define SHADOW_DATA     b7

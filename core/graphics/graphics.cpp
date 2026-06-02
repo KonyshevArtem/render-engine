@@ -103,7 +103,7 @@ namespace Graphics
 
         s_ShadowCasterPass = std::make_shared<ShadowCasterPass>();
 		s_GBufferPass = std::make_shared<GBufferPass>();
-		s_DeferredLightPass = std::make_shared<DeferredLightPass>(s_RaytracingProbes);
+		s_DeferredLightPass = std::make_shared<DeferredLightPass>(s_RaytracingProbes, s_ShadowCasterPass);
         s_ForwardRenderPass = std::make_shared<ForwardRenderPass>(s_RaytracingScene);
 		s_SkyboxPass = std::make_shared<SkyboxPass>();
         s_PostProcessPass = std::make_shared<PostProcessPass>();
@@ -194,10 +194,10 @@ namespace Graphics
             }
         }
 
-        GraphicsBackend::Current()->BindTextureSampler(reflectionCube->GetBackendTexture(), reflectionCube->GetBackendSampler(), GlobalConstants::ReflectionCubeIndex);
+        GraphicsBackend::Current()->BindTextureSampler(reflectionCube->GetBackendTexture(), reflectionCube->GetBackendSampler(), GlobalConstants::TextureIndex::REFLECTION_CUBE);
 
         s_LightingDataBuffer->SetData(&lightingData, 0, sizeof(lightingData));
-        GraphicsBackend::Current()->BindConstantBuffer(s_LightingDataBuffer->GetBackendBuffer(), GlobalConstants::LightingDataIndex, 0, sizeof(lightingData));
+        GraphicsBackend::Current()->BindConstantBuffer(s_LightingDataBuffer->GetBackendBuffer(), GlobalConstants::ConstantBufferIndex::LIGHTING_DATA, 0, sizeof(lightingData));
     }
 
     void Prepare(int width, int height)
@@ -358,7 +358,7 @@ namespace Graphics
         cameraData.CameraDirection = invViewMatrix * Vector4{0, 0, 1, 0};
 
         uint64_t offset = s_CameraDataBuffer->SetData(&cameraData, 0, sizeof(cameraData));
-        GraphicsBackend::Current()->BindConstantBuffer(s_CameraDataBuffer->GetBackendBuffer(), GlobalConstants::CameraDataIndex, offset, sizeof(cameraData));
+        GraphicsBackend::Current()->BindConstantBuffer(s_CameraDataBuffer->GetBackendBuffer(), GlobalConstants::ConstantBufferIndex::CAMERA_DATA, offset, sizeof(cameraData));
     }
 
     Matrix4x4 GetGPUProjectionMatrix(const Matrix4x4& projectionMatrix)

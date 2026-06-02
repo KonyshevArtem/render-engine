@@ -8,8 +8,9 @@
 #include "resources/resources.h"
 #include "graphics/graphics.h"
 
-DeferredLightPass::DeferredLightPass(std::shared_ptr<RaytracingProbes> raytracingProbes) :
-	m_RaytracingProbes(std::move(raytracingProbes))
+DeferredLightPass::DeferredLightPass(std::shared_ptr<RaytracingProbes> raytracingProbes, std::shared_ptr<ShadowCasterPass> shadowCasterPass) :
+	m_RaytracingProbes(std::move(raytracingProbes)),
+	m_ShadowCasterPass(std::move(shadowCasterPass))
 {
 	LoadShaders(false);
 
@@ -87,6 +88,8 @@ void DeferredLightPass::Execute(const RenderData& renderData)
 
         if (m_RaytracingProbes)
 			m_RaytracingProbes->BindResources();
+        if (m_ShadowCasterPass)
+            m_ShadowCasterPass->BindShadowMaps();
 
 		const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
         GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh));

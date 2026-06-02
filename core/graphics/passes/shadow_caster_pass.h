@@ -31,11 +31,7 @@ public:
     void Prepare(RenderData& renderData) override;
     void Execute(const RenderData& renderData) override;
 
-    ShadowCasterPass(const ShadowCasterPass&) = delete;
-    ShadowCasterPass(ShadowCasterPass&&) = delete;
-
-    ShadowCasterPass &operator=(const ShadowCasterPass&) = delete;
-    ShadowCasterPass &operator=(ShadowCasterPass&&) = delete;
+    void BindShadowMaps() const;
 
 private:
     struct ShadowsCameraData
@@ -44,12 +40,12 @@ private:
         Matrix4x4 ProjectionMatrix;
         Vector4 LightPosOrDir;
         float FarPlane;
+        uint32_t ShadowMapLayer;
     };
 
     std::shared_ptr<GraphicsBuffer> m_ShadowsConstantBuffer;
-    std::shared_ptr<Texture2DArray> m_SpotLightShadowMapArray;
+    std::shared_ptr<Texture2DArray> m_PunctualLightShadowAtlas;
     std::shared_ptr<Texture2DArray> m_DirectionLightShadowMap;
-    std::shared_ptr<Texture2DArray> m_PointLightShadowMap;
 
     RenderQueue m_DirectionalLightRenderQueues[GlobalConstants::ShadowCascadeCount];
     RenderQueue m_SpotLightRenderQueues[GlobalConstants::MaxSpotLightSources];
@@ -61,13 +57,16 @@ private:
     ShadowsCameraData m_PointLightCameraData[GlobalConstants::MaxPointLightSources * 6];
 
     std::shared_ptr<RingBuffer> m_ShadowCasterPassBuffer;
+    std::vector<uint32_t> m_PunctualShadowAtlasSlots;
 
     Matrix4x4 m_BiasMatrix;
     std::shared_ptr<Shader> m_Shader;
     std::shared_ptr<Material> m_Material;
 
-    void Render(RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData &cameraData, const std::string& passName);
-    void PrepareCascade(int cascade, RenderData& renderData, const std::shared_ptr<GameObject>& lightGameObject);
+    void Render(RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, const ShadowsCameraData& cameraData, const std::string& passName) const;
+    void PrepareCascade(uint32_t cascade, RenderData& renderData, const std::shared_ptr<GameObject>& lightGameObject);
+
+    bool TryReserveShadowAtlasSlots(Light& light);
 };
 
 #endif //RENDER_ENGINE_SHADOW_CASTER_PASS_H

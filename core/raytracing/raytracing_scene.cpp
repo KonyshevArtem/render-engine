@@ -126,7 +126,7 @@ void RaytracingScene::Update(RenderData& renderData)
 void RaytracingScene::BindResources() const
 {
 	if (m_TLAS.IsValid())
-		GraphicsBackend::Current()->BindTLAS(m_TLAS, GlobalConstants::RTSceneIndex);
+		GraphicsBackend::Current()->BindTLAS(m_TLAS, GlobalConstants::TLASIndex::RT_SCENE);
 	if (m_PerInstanceDataBuffer)
-		GraphicsBackend::Current()->BindBuffer(m_PerInstanceDataBufferView->GetBackendBufferView(), GlobalConstants::RTPerInstanceDataIndex);
+		GraphicsBackend::Current()->BindBuffer(m_PerInstanceDataBufferView->GetBackendBufferView(), GlobalConstants::BufferIndex::RT_PER_INSTANCE_DATA);
 }

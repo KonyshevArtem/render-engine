@@ -27,9 +27,9 @@
 
 namespace ShadowCasterPassLocal
 {
-    constexpr int k_SpotLightShadowMapSize = 1024;
+    constexpr int k_PunctualLightShadowMapSize = 512;
+    constexpr int k_PunctualLightShadowAtlasSlots = 32;
     constexpr int k_DirLightShadowMapSize = 2048;
-    constexpr int k_PointLightShadowMapSize = 512;
 
     struct ShadowCasterPassData
     {
@@ -46,46 +46,9 @@ ShadowCasterPass::ShadowCasterPass() :
     m_Shader(Resources::LoadShader("core_resources/shaders/shadowCaster", {})),
 	m_Material(std::make_shared<Material>(m_Shader, "ShadowCaster"))
 {
-    GraphicsBackendTextureDescriptor shadowMapDescriptor{};
-    shadowMapDescriptor.Format = TextureInternalFormat::DEPTH_32;
-    shadowMapDescriptor.Linear = true;
-    shadowMapDescriptor.RenderTarget = true;
-
-    shadowMapDescriptor.Width = ShadowCasterPassLocal::k_SpotLightShadowMapSize;
-    shadowMapDescriptor.Height = ShadowCasterPassLocal::k_SpotLightShadowMapSize;
-    shadowMapDescriptor.Depth = GlobalConstants::MaxSpotLightSources;
-    m_SpotLightShadowMapArray = Texture2DArray::Create(shadowMapDescriptor, "SpotLightShadowMap");
-
-    shadowMapDescriptor.Width = ShadowCasterPassLocal::k_DirLightShadowMapSize;
-    shadowMapDescriptor.Height = ShadowCasterPassLocal::k_DirLightShadowMapSize;
-    shadowMapDescriptor.Depth = GlobalConstants::ShadowCascadeCount;
-    m_DirectionLightShadowMap = Texture2DArray::Create(shadowMapDescriptor, "DirectionalShadowMap");
-
-    shadowMapDescriptor.Width = ShadowCasterPassLocal::k_PointLightShadowMapSize;
-    shadowMapDescriptor.Height = ShadowCasterPassLocal::k_PointLightShadowMapSize;
-    shadowMapDescriptor.Depth = GlobalConstants::MaxPointLightSources * 6;
-    m_PointLightShadowMap = Texture2DArray::Create(shadowMapDescriptor, "PointLightShadowMap");
-
-    m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
-    m_DirectionLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
-    m_DirectionLightShadowMap->SetComparisonFunction(ComparisonFunction::LEQUAL);
-
-    m_SpotLightShadowMapArray->SetBorderColor({1, 1, 1, 1});
-    m_SpotLightShadowMapArray->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
-    m_SpotLightShadowMapArray->SetFilteringMode(TextureFilteringMode::LINEAR);
-    m_SpotLightShadowMapArray->SetComparisonFunction(ComparisonFunction::LEQUAL);
-
-    m_PointLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
-    m_PointLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
-    m_PointLightShadowMap->SetComparisonFunction(ComparisonFunction::LEQUAL);
-
-    GraphicsBackendBufferDescriptor bufferDescriptor{};
-    bufferDescriptor.AllowCPUWrites = true;
-    bufferDescriptor.Size = sizeof(ShadowsData);
-    m_ShadowsConstantBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "ShadowsData");
-
-    bufferDescriptor.Size = sizeof(ShadowCasterPassLocal::ShadowCasterPassData) * 128;
-    m_ShadowCasterPassBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "ShadowCasterPassBuffer");
+    m_PunctualShadowAtlasSlots.reserve(ShadowCasterPassLocal::k_PunctualLightShadowAtlasSlots);
+    for (int i = ShadowCasterPassLocal::k_PunctualLightShadowAtlasSlots - 1; i >= 0; --i)
+        m_PunctualShadowAtlasSlots.push_back(i);
 }
 
 void ShadowCasterPass::Prepare(RenderData& renderData)
@@ -111,6 +74,51 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
     for (RenderQueue& queue : m_SpotLightRenderQueues)
         queue.Clear();
 
+    GraphicsBackendTextureDescriptor shadowMapDescriptor{};
+    shadowMapDescriptor.Format = TextureInternalFormat::DEPTH_32;
+    shadowMapDescriptor.Linear = true;
+    shadowMapDescriptor.RenderTarget = true;
+
+    if (!m_DirectionLightShadowMap)
+    {
+        shadowMapDescriptor.Width = ShadowCasterPassLocal::k_DirLightShadowMapSize;
+        shadowMapDescriptor.Height = ShadowCasterPassLocal::k_DirLightShadowMapSize;
+        shadowMapDescriptor.Depth = GlobalConstants::ShadowCascadeCount;
+
+        m_DirectionLightShadowMap = Texture2DArray::Create(shadowMapDescriptor, "DirectionalShadowMap");
+        m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
+        m_DirectionLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
+        m_DirectionLightShadowMap->SetComparisonFunction(ComparisonFunction::LEQUAL);
+    }
+
+    if (!m_PunctualLightShadowAtlas)
+    {
+        shadowMapDescriptor.Width = ShadowCasterPassLocal::k_PunctualLightShadowMapSize;
+        shadowMapDescriptor.Height = ShadowCasterPassLocal::k_PunctualLightShadowMapSize;
+        shadowMapDescriptor.Depth = ShadowCasterPassLocal::k_PunctualLightShadowAtlasSlots;
+
+        m_PunctualLightShadowAtlas = Texture2DArray::Create(shadowMapDescriptor, "PunctualLightShadowMapAtlas");
+        m_PunctualLightShadowAtlas->SetBorderColor({ 1, 1, 1, 1 });
+        m_PunctualLightShadowAtlas->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
+        m_PunctualLightShadowAtlas->SetFilteringMode(TextureFilteringMode::LINEAR);
+        m_PunctualLightShadowAtlas->SetComparisonFunction(ComparisonFunction::LEQUAL);
+    }
+
+    GraphicsBackendBufferDescriptor bufferDescriptor{};
+    bufferDescriptor.AllowCPUWrites = true;
+
+    if (!m_ShadowsConstantBuffer)
+    {
+        bufferDescriptor.Size = sizeof(ShadowsData);
+        m_ShadowsConstantBuffer = std::make_shared<GraphicsBuffer>(bufferDescriptor, "ShadowsData");
+    }
+
+    if (!m_ShadowCasterPassBuffer)
+    {
+        bufferDescriptor.Size = sizeof(ShadowCasterPassLocal::ShadowCasterPassData) * 128;
+        m_ShadowCasterPassBuffer = std::make_shared<RingBuffer>(bufferDescriptor, "ShadowCasterPassBuffer");
+    }
+
     const float shadowsDistance = GraphicsSettings::GetShadowDistance();
 
     uint8_t spotLightIndex = 0;
@@ -123,6 +131,9 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
         std::shared_ptr<GameObject> lightGo = light->GetGameObject();
         if (light->Type == LightType::SPOT && spotLightIndex < GlobalConstants::MaxSpotLightSources)
         {
+            if (!TryReserveShadowAtlasSlots(*light))
+                continue;
+
             Profiler::Marker marker("Prepare Spot Light");
 
             const float farPlane = std::min(light->Range, shadowsDistance);
@@ -130,14 +141,19 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
             const Matrix4x4 proj = Matrix4x4::Perspective(light->CutOffAngle * 2, 1, 0.5f, farPlane);
             const Matrix4x4 viewProj = proj * view;
 
-            m_SpotLightCameraData[spotLightIndex] = {view, proj, lightGo->GetPosition().ToVector4(1), farPlane};
+            m_SpotLightCameraData[spotLightIndex] = {view, proj, lightGo->GetPosition().ToVector4(1), farPlane, light->PunctualShadowAtlasSlots[0]};
             m_SpotLightRenderQueues[spotLightIndex].Prepare(viewProj, renderData.Renderers, punctualLightRenderSettings);
-            m_ShadowsGPUData.SpotLightsViewProjMatrices[spotLightIndex] = m_BiasMatrix * viewProj;
+
+            m_ShadowsGPUData.SpotLightShadows[spotLightIndex].ViewProjMatrix = m_BiasMatrix * viewProj;
+            m_ShadowsGPUData.SpotLightShadows[spotLightIndex].ShadowAtlasSlot = light->PunctualShadowAtlasSlots[0];
 
             ++spotLightIndex;
         }
         if (light->Type == LightType::POINT && pointLightsIndex < GlobalConstants::MaxPointLightSources)
         {
+            if (!TryReserveShadowAtlasSlots(*light))
+                continue;
+
             Profiler::Marker marker("Prepare Point Light");
 
             const float farPlane = std::min(light->Range, shadowsDistance);
@@ -147,9 +163,10 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
                 const Matrix4x4 view = pointLightViewMatrices[i] * Matrix4x4::Translation(-lightGo->GetPosition());
                 const Matrix4x4 viewProj = proj * view;
 
-                m_PointLightCameraData[pointLightsIndex * 6 + i] = {view, proj, lightGo->GetPosition().ToVector4(1), farPlane};
+                m_PointLightCameraData[pointLightsIndex * 6 + i] = {view, proj, lightGo->GetPosition().ToVector4(1), farPlane, light->PunctualShadowAtlasSlots[i]};
                 m_PointLightsRenderQueues[pointLightsIndex * 6 + i].Prepare(viewProj, renderData.Renderers, punctualLightRenderSettings);
                 m_ShadowsGPUData.PointLightShadows[pointLightsIndex].ViewProjMatrices[i] = m_BiasMatrix * viewProj;
+                m_ShadowsGPUData.PointLightShadows[pointLightsIndex].ShadowAtlasSlots[i] = light->PunctualShadowAtlasSlots[i];
             }
 
             m_ShadowsGPUData.PointLightShadows[pointLightsIndex].Position = lightGo->GetPosition().ToVector4(0);
@@ -159,12 +176,15 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
         else if (light->Type == LightType::DIRECTIONAL)
         {
             if (renderData.RaytracedShadowsEnabled)
-	            continue;
+            {
+                m_DirectionLightShadowMap = nullptr;
+                continue;
+            }
 
             Profiler::Marker marker("Prepare Directional Light");
 
             std::shared_ptr<Worker::Task> cascadesPrepareTask = std::make_shared<Worker::Task>();
-            for (int i = GlobalConstants::ShadowCascadeCount - 1; i > 0; --i)
+            for (uint32_t i = GlobalConstants::ShadowCascadeCount - 1; i > 0; --i)
             {
                 std::shared_ptr<Worker::Task> task = Worker::CreateTask([this, i, &renderData, &lightGo] { PrepareCascade(i, renderData, lightGo); }, Worker::Priority::TASK);
                 cascadesPrepareTask->AddDependency(task);
@@ -194,14 +214,14 @@ void ShadowCasterPass::Execute(const RenderData& renderData)
 		return;
 
     m_ShadowsConstantBuffer->SetData(&m_ShadowsGPUData, 0, sizeof(ShadowsData));
-    GraphicsBackend::Current()->BindConstantBuffer(m_ShadowsConstantBuffer->GetBackendBuffer(), GlobalConstants::ShadowDataIndex, 0, sizeof(ShadowsData));
+    GraphicsBackend::Current()->BindConstantBuffer(m_ShadowsConstantBuffer->GetBackendBuffer(), GlobalConstants::ConstantBufferIndex::SHADOW_DATA, 0, sizeof(ShadowsData));
 
     for (int i = 0; i < GlobalConstants::MaxSpotLightSources; ++i)
     {
         if (m_SpotLightRenderQueues[i].IsEmpty())
             break;
 
-        Render(m_SpotLightRenderQueues[i], m_SpotLightShadowMapArray, i, m_SpotLightCameraData[i], "Spot Light Shadow Pass " + std::to_string(i));
+        Render(m_SpotLightRenderQueues[i], m_PunctualLightShadowAtlas, m_SpotLightCameraData[i], "Spot Light Shadow Pass " + std::to_string(i));
     }
 
     for (int i = 0; i < GlobalConstants::MaxPointLightSources; ++i)
@@ -210,32 +230,34 @@ void ShadowCasterPass::Execute(const RenderData& renderData)
         {
             const int viewIndex = i * 6 + j;
             if (!m_PointLightsRenderQueues[viewIndex].IsEmpty())
-                Render(m_PointLightsRenderQueues[viewIndex], m_PointLightShadowMap, viewIndex, m_PointLightCameraData[viewIndex], "Point Light Shadow Pass " + std::to_string(i));
+                Render(m_PointLightsRenderQueues[viewIndex], m_PunctualLightShadowAtlas, m_PointLightCameraData[viewIndex], "Point Light Shadow Pass " + std::to_string(i));
         }
     }
 
     for (int i = 0; i < GlobalConstants::ShadowCascadeCount; ++i)
     {
         if (!m_DirectionalLightRenderQueues[i].IsEmpty())
-            Render(m_DirectionalLightRenderQueues[i], m_DirectionLightShadowMap, i, m_DirectionLightCameraData[i], "Directional Light Shadow Pass " + std::to_string(i));
+            Render(m_DirectionalLightRenderQueues[i], m_DirectionLightShadowMap, m_DirectionLightCameraData[i], "Directional Light Shadow Pass " + std::to_string(i));
     }
 
-    GraphicsBackend::Current()->BindTextureSampler(m_DirectionLightShadowMap->GetBackendTexture(), m_DirectionLightShadowMap->GetBackendSampler(), GlobalConstants::DirectionalShadowMapIndex);
-    GraphicsBackend::Current()->BindTextureSampler(m_SpotLightShadowMapArray->GetBackendTexture(), m_SpotLightShadowMapArray->GetBackendSampler(), GlobalConstants::SpotLightShadowMapIndex);
-    GraphicsBackend::Current()->BindTextureSampler(m_PointLightShadowMap->GetBackendTexture(), m_PointLightShadowMap->GetBackendSampler(), GlobalConstants::PointLightShadowMapIndex);
-
-    TextureViewer::RegisterTexture(m_DirectionLightShadowMap, "Shadows/DirectionalSM");
-    TextureViewer::RegisterTexture(m_PointLightShadowMap, "Shadows/PointLightSM");
-    TextureViewer::RegisterTexture(m_SpotLightShadowMapArray, "Shadows/SpotLightSM");
+    TextureViewer::RegisterTexture(m_DirectionLightShadowMap, "Shadows/DirectionalShadowMap");
+    TextureViewer::RegisterTexture(m_PunctualLightShadowAtlas, "Shadows/PunctualLightShadowAtlas");
 }
 
-void ShadowCasterPass::Render(RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, int targetLayer, const ShadowsCameraData& cameraData, const std::string& passName)
+void ShadowCasterPass::BindShadowMaps() const
+{
+	if (m_DirectionLightShadowMap)
+		GraphicsBackend::Current()->BindTextureSampler(m_DirectionLightShadowMap->GetBackendTexture(), m_DirectionLightShadowMap->GetBackendSampler(), GlobalConstants::TextureIndex::DIRECTIONAL_SHADOW_MAP);
+    GraphicsBackend::Current()->BindTextureSampler(m_PunctualLightShadowAtlas->GetBackendTexture(), m_PunctualLightShadowAtlas->GetBackendSampler(), GlobalConstants::TextureIndex::PUNCTUAL_LIGHT_SHADOW_ATLAS);
+}
+
+void ShadowCasterPass::Render(RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, const ShadowsCameraData& cameraData, const std::string& passName) const
 {
     static constexpr GraphicsBackendRenderTargetDescriptor colorTargetDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .LoadAction = LoadAction::DONT_CARE, .StoreAction = StoreAction::DONT_CARE };
 
     Profiler::Marker marker("ShadowCasterPass::Render");
 
-    const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .Texture = target->GetBackendTexture(), .LoadAction = LoadAction::CLEAR, .Layer = targetLayer };
+    const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor { .Attachment = FramebufferAttachment::DEPTH_ATTACHMENT, .Texture = target->GetBackendTexture(), .LoadAction = LoadAction::CLEAR, .Layer = static_cast<int>(cameraData.ShadowMapLayer) };
 
     GraphicsBackend::Current()->AttachRenderTarget(colorTargetDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(depthTargetDescriptor);
@@ -243,9 +265,9 @@ void ShadowCasterPass::Render(RenderQueue& renderQueue, const std::shared_ptr<Te
     ShadowCasterPassLocal::ShadowCasterPassData data;
     data.LightPosWS = cameraData.LightPosOrDir;
     data.ShadowDepthBias = GraphicsSettings::GetShadowDepthBias();
-    uint64_t offset = m_ShadowCasterPassBuffer->SetData(&data, 0, sizeof(data));
+    const uint64_t offset = m_ShadowCasterPassBuffer->SetData(&data, 0, sizeof(data));
 
-    Graphics::SetCameraData(cameraData.ViewMatrix, cameraData.ProjectionMatrix, 0.01, cameraData.FarPlane);
+    Graphics::SetCameraData(cameraData.ViewMatrix, cameraData.ProjectionMatrix, 0.01f, cameraData.FarPlane);
 
     GraphicsBackend::Current()->BeginRenderPass(passName);
     {
@@ -258,14 +280,10 @@ void ShadowCasterPass::Render(RenderQueue& renderQueue, const std::shared_ptr<Te
 
         renderQueue.Draw();
     }
-
-    {
-        Profiler::Marker _("ShadowCaster Execute");
-        GraphicsBackend::Current()->EndRenderPass();
-    }
+    GraphicsBackend::Current()->EndRenderPass();
 }
 
-void ShadowCasterPass::PrepareCascade(int cascade, RenderData& renderData, const std::shared_ptr<GameObject>& lightGameObject)
+void ShadowCasterPass::PrepareCascade(uint32_t cascade, RenderData& renderData, const std::shared_ptr<GameObject>& lightGameObject)
 {
     Profiler::Marker _("ShadowCasterPass::PrepareCascade");
 
@@ -325,6 +343,25 @@ void ShadowCasterPass::PrepareCascade(int cascade, RenderData& renderData, const
     const Matrix4x4 renderProjMatrix = Matrix4x4::Orthographic(-maxExtentViewSpace, maxExtentViewSpace, -maxExtentViewSpace, maxExtentViewSpace, 0.01f, renderFarPlane);
 
     const Vector3 lightDirection = lightGameObject->GetRotation() * Vector3(0, 0, 1);
-    m_DirectionLightCameraData[cascade] = { renderViewMatrix, renderProjMatrix, lightDirection.ToVector4(0), renderFarPlane };
+    m_DirectionLightCameraData[cascade] = { renderViewMatrix, renderProjMatrix, lightDirection.ToVector4(0), renderFarPlane, cascade };
     m_ShadowsGPUData.DirectionalLightViewProjMatrix[cascade] = m_BiasMatrix * renderProjMatrix * renderViewMatrix;
+}
+
+bool ShadowCasterPass::TryReserveShadowAtlasSlots(Light& light)
+{
+    if (!light.PunctualShadowAtlasSlots.empty())
+	    return true;
+
+    const uint32_t slotsCount = light.Type == LightType::POINT ? 6 : 1;
+    if (m_PunctualShadowAtlasSlots.size() < slotsCount)
+	    return false;
+
+    light.PunctualShadowAtlasSlots.reserve(slotsCount);
+    for (uint32_t i = 0; i < slotsCount; ++i)
+    {
+	    light.PunctualShadowAtlasSlots.push_back(m_PunctualShadowAtlasSlots.back());
+	    m_PunctualShadowAtlasSlots.pop_back();
+    }
+
+    return true;
 }

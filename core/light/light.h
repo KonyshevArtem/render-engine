@@ -18,7 +18,7 @@ public:
     DECLARE_COMPONENT_CONSTRUCTORS(Light)
 
     Light();
-    ~Light();
+    virtual ~Light();
 
     Light(const Light &) = delete;
     Light(Light &&)      = delete;
@@ -26,10 +26,11 @@ public:
     Light &operator=(const Light &) = delete;
     Light &operator=(Light &&) = delete;
 
-    LightType  Type;
-    Vector3    Intensity;
-    float      Range;
-    float      CutOffAngle;
+	LightType Type;
+	Vector3 Intensity;
+	float Range;
+	float CutOffAngle;
+    std::vector<uint32_t> PunctualShadowAtlasSlots;
 
 private:
     static std::vector<Light*> s_Lights;

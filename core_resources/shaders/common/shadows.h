@@ -12,16 +12,26 @@ struct ShadowData
     float4x4 LightViewProjMatrix;
 };
 
+struct SpotLightShadowData
+{
+    float4x4 LightViewProjMatrix;
+
+    float3 Padding0;
+    uint ShadowAtlasSlot;
+};
+
 struct PointLightShadowData
 {
     float4x4 LightViewProjMatrices[6];
     float4 LightPosWS;
+
+    uint4 ShadowAtlasSlots[2];
 };
 
 cbuffer Shadows : register(SHADOW_DATA)
 {
     ShadowData _DirLightShadow[SHADOW_CASCADE_COUNT];
-    ShadowData _SpotLightShadows[MAX_SPOT_LIGHT_SOURCES];
+    SpotLightShadowData _SpotLightShadows[MAX_SPOT_LIGHT_SOURCES];
     PointLightShadowData _PointLightShadows[MAX_POINT_LIGHT_SOURCES];
 };
 
@@ -32,11 +42,8 @@ Texture2DArray<float> _DirLightShadowMap : register(DIRECTIONAL_SHADOW_MAP);
 SamplerComparisonState sampler_DirLightShadowMap : register(DIRECTIONAL_SHADOW_MAP_SAMPLER);
 #endif
 
-Texture2DArray<float> _SpotLightShadowMapArray : register(SPOTLIGHT_SHADOW_MAP);
-SamplerComparisonState sampler_SpotLightShadowMapArray : register(SPOTLIGHT_SHADOW_MAP_SAMPLER);
-
-Texture2DArray<float> _PointLightShadowMapArray : register(POINTLIGHT_SHADOW_MAP);
-SamplerComparisonState sampler_PointLightShadowMapArray : register(POINTLIGHT_SHADOW_MAP_SAMPLER);
+Texture2DArray<float> _PunctualLightShadowAtlas : register(PUNCTUAL_LIGHT_SHADOW_ATLAS);
+SamplerComparisonState sampler_PunctualLightShadowAtlas : register(PUNCTUAL_LIGHT_SHADOW_ATLAS_SAMPLER);
 
 bool isFragVisibleZ(float fragZ)
 {
@@ -91,13 +98,14 @@ float getSpotLightShadowTerm(int index, float3 posWS)
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
 
-    return _SpotLightShadowMapArray.SampleCmpLevelZero(sampler_SpotLightShadowMapArray, float3(shadowCoord.xy, index), saturate(shadowCoord.z)).x;
+    uint slot = _SpotLightShadows[index].ShadowAtlasSlot;
+    return _PunctualLightShadowAtlas.SampleCmpLevelZero(sampler_PunctualLightShadowAtlas, float3(shadowCoord.xy, slot), saturate(shadowCoord.z)).x;
     #else
     return 1;
     #endif
 }
 
-int getPointLightShadowMapSlice(float3 lightToFrag)
+uint getPointLightShadowMapSlice(float3 lightToFrag)
 {
     if (abs(lightToFrag.x) > abs(lightToFrag.y) && abs(lightToFrag.x) > abs(lightToFrag.z))
     {
@@ -116,7 +124,7 @@ float getPointLightShadowTerm(int index, float3 posWS)
 {
     #ifdef _RECEIVE_SHADOWS
     float3 lightToFrag = posWS - _PointLightShadows[index].LightPosWS.xyz;
-    int slice = getPointLightShadowMapSlice(lightToFrag);
+    uint slice = getPointLightShadowMapSlice(lightToFrag);
 
     float4 shadowCoord = mul(_PointLightShadows[index].LightViewProjMatrices[slice], float4(posWS, 1));
     shadowCoord = shadowCoord / shadowCoord.w;
@@ -124,8 +132,8 @@ float getPointLightShadowTerm(int index, float3 posWS)
     shadowCoord.y = 1 - shadowCoord.y;
     #endif
 
-    index = index * 6 + slice; // keep this on a separate line, otherwise SPIRV-Cross does not declare _PointLightShadowMapArray as sampler2DArrayShadow
-    return _PointLightShadowMapArray.SampleCmpLevelZero(sampler_PointLightShadowMapArray, float3(shadowCoord.xy, index), saturate(shadowCoord.z)).x;
+    uint slot = _PointLightShadows[index].ShadowAtlasSlots[slice >> 2][slice & 3];
+    return _PunctualLightShadowAtlas.SampleCmpLevelZero(sampler_PunctualLightShadowAtlas, float3(shadowCoord.xy, slot), saturate(shadowCoord.z)).x;
     #else
     return 1;
     #endif

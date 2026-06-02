@@ -379,11 +379,11 @@ void RenderQueue::SetupMatrices(const DrawCallInfo& drawCallInfo) const
 
     if (drawCallInfo.Instanced)
     {
-        GraphicsBackend::Current()->BindBuffer(drawCallInfo.InstancedMatricesEntriesView->GetBackendBufferView(), GlobalConstants::InstancingMatricesEntriesData);
-        GraphicsBackend::Current()->BindBuffer(useTemporaryMatrices ? m_TemporaryMatricesBufferView->GetBackendBufferView() : s_PermanentMatricesBufferView->GetBackendBufferView(), GlobalConstants::TransformMatricesData);
+        GraphicsBackend::Current()->BindBuffer(drawCallInfo.InstancedMatricesEntriesView->GetBackendBufferView(), GlobalConstants::BufferIndex::INSTANCING_MATRICES_ENTRIES);
+        GraphicsBackend::Current()->BindBuffer(useTemporaryMatrices ? m_TemporaryMatricesBufferView->GetBackendBufferView() : s_PermanentMatricesBufferView->GetBackendBufferView(), GlobalConstants::BufferIndex::TRANSFORM_MATRICES);
     }
     else
-	    GraphicsBackend::Current()->BindBuffer(drawCallInfo.MatricesBufferViews[0]->GetBackendBufferView(), GlobalConstants::TransformMatricesData);
+	    GraphicsBackend::Current()->BindBuffer(drawCallInfo.MatricesBufferViews[0]->GetBackendBufferView(), GlobalConstants::BufferIndex::TRANSFORM_MATRICES);
 }
 
 void RenderQueue::SetupShaderPass(const Material* material, const VertexAttributes& vertexAttributes, PrimitiveType primitiveType, uint8_t stencilValue)

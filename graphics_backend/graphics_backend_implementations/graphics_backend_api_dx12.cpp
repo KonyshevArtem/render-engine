@@ -1371,7 +1371,7 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
                     break;
                 case D3D12_DSV_DIMENSION_TEXTURE1DARRAY:
                     desc.Texture1DArray.MipSlice = descriptor.Level;
-                    desc.Texture1DArray.ArraySize = -1;
+                    desc.Texture1DArray.ArraySize = 1;
                     desc.Texture1DArray.FirstArraySlice = descriptor.Layer;
                     break;
                 case D3D12_DSV_DIMENSION_TEXTURE2D:
@@ -1379,11 +1379,11 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
                     break;
                 case D3D12_DSV_DIMENSION_TEXTURE2DARRAY:
                     desc.Texture2DArray.MipSlice = descriptor.Level;
-                    desc.Texture2DArray.ArraySize = -1;
+                    desc.Texture2DArray.ArraySize = 1;
                     desc.Texture2DArray.FirstArraySlice = descriptor.Layer;
                     break;
                 case D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY:
-                    desc.Texture2DMSArray.ArraySize = -1;
+                    desc.Texture2DMSArray.ArraySize = 1;
                     desc.Texture2DMSArray.FirstArraySlice = descriptor.Layer;
                     break;
             }
@@ -1415,7 +1415,7 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
                     break;
                 case D3D12_RTV_DIMENSION_TEXTURE1DARRAY:
                     desc.Texture1DArray.MipSlice = descriptor.Level;
-                    desc.Texture1DArray.ArraySize = -1;
+                    desc.Texture1DArray.ArraySize = 1;
                     desc.Texture1DArray.FirstArraySlice = descriptor.Layer;
                     break;
                 case D3D12_RTV_DIMENSION_TEXTURE2D:
@@ -1423,11 +1423,11 @@ void GraphicsBackendDX12::AttachRenderTarget(const GraphicsBackendRenderTargetDe
                     break;
                 case D3D12_RTV_DIMENSION_TEXTURE2DARRAY:
                     desc.Texture2DArray.MipSlice = descriptor.Level;
-                    desc.Texture2DArray.ArraySize = -1;
+                    desc.Texture2DArray.ArraySize = 1;
                     desc.Texture2DArray.FirstArraySlice = descriptor.Layer;
                     break;
                 case D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY:
-                    desc.Texture2DMSArray.ArraySize = -1;
+                    desc.Texture2DMSArray.ArraySize = 1;
                     desc.Texture2DMSArray.FirstArraySlice = descriptor.Layer;
                     break;
                 case D3D12_RTV_DIMENSION_TEXTURE3D:

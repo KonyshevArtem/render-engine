@@ -15,6 +15,7 @@
 #include "mesh/mesh.h"
 #include "editor/texture_viewer/texture_viewer.h"
 #include "input/input.h"
+#include "global_constants.h"
 
 namespace RaytracingProbesLocal
 {
@@ -58,6 +59,7 @@ RaytracingProbes::RaytracingProbes(const std::shared_ptr<RaytracingScene>& rtSce
 	m_FileWatcher.AddFile("core_resources/shaders/raytracing/raytracing_debug_draw_probes.hlsl");
 	m_FileWatcher.AddFile("core_resources/shaders/raytracing/raytracing_debug_draw_probe_gi.hlsl");
 	m_FileWatcher.AddFile("core_resources/shaders/raytracing/probes_common.h");
+	m_FileWatcher.AddFile("core_resources/shaders/raytracing/probes_sample.h");
 	m_FileWatcher.AddFile("core_resources/shaders/common/lighting.h");
 
 	LoadShaders(false);
@@ -68,6 +70,11 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	if (!m_RaytracingProbesEnabled)
 	{
 		Shader::RemoveGlobalDefine("PROBE_GI");
+
+		m_ProbeLightAtlas = nullptr;
+		m_ProbeDepthAtlas = nullptr;
+		m_ProbeTempLightAtlas = nullptr;
+		m_ProbeTempDepthAtlas = nullptr;
 		return;
 	}
 
@@ -82,19 +89,28 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	const uint32_t paddedLightSize = m_ProbeLightSize + m_ProbeLightPadding + RaytracingProbesLocal::k_ProbesBorderSize;
 
 	GraphicsBackendTextureDescriptor descriptor{};
-	descriptor.Format = TextureInternalFormat::RGBA16F;
 	descriptor.Linear = true;
 	descriptor.ReadWrite = true;
 
+	descriptor.Format = TextureInternalFormat::RGBA16F;
 	descriptor.Width = RaytracingProbesLocal::k_ProbesPerAtlasRow * paddedLightSize;
 	descriptor.Height = std::max<uint32_t>(probesCount / RaytracingProbesLocal::k_ProbesPerAtlasRow, 1) * paddedLightSize;
 	if (!m_ProbeLightAtlas || m_ProbeLightAtlas->GetWidth() != descriptor.Width || m_ProbeLightAtlas->GetHeight() != descriptor.Height)
 		m_ProbeLightAtlas = Texture2D::Create(descriptor, "ProbeLightAtlas");
 
+	descriptor.Format = TextureInternalFormat::RG16F;
+	if (!m_ProbeDepthAtlas || m_ProbeDepthAtlas->GetWidth() != descriptor.Width || m_ProbeDepthAtlas->GetHeight() != descriptor.Height)
+		m_ProbeDepthAtlas = Texture2D::Create(descriptor, "ProbeDepthAtlas");
+
+	descriptor.Format = TextureInternalFormat::RGBA16F;
 	descriptor.Width = std::min<uint32_t>(m_ProbesPerUpdate, RaytracingProbesLocal::k_ProbesPerAtlasRow) * paddedLightSize;
 	descriptor.Height = std::max<uint32_t>(m_ProbesPerUpdate / RaytracingProbesLocal::k_ProbesPerAtlasRow, 1) * paddedLightSize;
-	if (!m_ProbeTempAtlas || m_ProbeTempAtlas->GetWidth() != descriptor.Width || m_ProbeTempAtlas->GetHeight() != descriptor.Height)
-		m_ProbeTempAtlas = Texture2D::Create(descriptor, "ProbeTempAtlas");
+	if (!m_ProbeTempLightAtlas || m_ProbeTempLightAtlas->GetWidth() != descriptor.Width || m_ProbeTempLightAtlas->GetHeight() != descriptor.Height)
+		m_ProbeTempLightAtlas = Texture2D::Create(descriptor, "ProbeTempLightAtlas");
+
+	descriptor.Format = TextureInternalFormat::R16F;
+	if (!m_ProbeTempDepthAtlas || m_ProbeTempDepthAtlas->GetWidth() != descriptor.Width || m_ProbeTempDepthAtlas->GetHeight() != descriptor.Height)
+		m_ProbeTempDepthAtlas = Texture2D::Create(descriptor, "ProbeTempDepthAtlas");
 }
 
 void RaytracingProbes::Execute(const RenderData& renderData)
@@ -111,15 +127,19 @@ void RaytracingProbes::Execute(const RenderData& renderData)
 		m_RaytracingScene->BindResources();
 		UpdateProbesData();
 
+		BindResources();
+
 		// Trace
-		GraphicsBackend::Current()->BindConstantBuffer(m_ProbesDataBuffer->GetBackendBuffer(), 0, 0, sizeof(ProbesData));
-		GraphicsBackend::Current()->BindRWTexture(m_ProbeTempAtlas->GetBackendTexture(), 0);
+		GraphicsBackend::Current()->BindRWTexture(m_ProbeTempLightAtlas->GetBackendTexture(), 0);
+		GraphicsBackend::Current()->BindRWTexture(m_ProbeTempDepthAtlas->GetBackendTexture(), 1);
 		GraphicsBackend::Current()->UseProgram(m_ProbeTraceShader->GetProgram());
 		GraphicsBackend::Current()->Dispatch(m_ProbeLightSize * m_ProbesPerUpdate, m_ProbeLightSize, 1);
 
 		// Integrate
-		GraphicsBackend::Current()->BindTexture(m_ProbeTempAtlas->GetBackendTexture(), 0);
+		GraphicsBackend::Current()->BindTexture(m_ProbeTempLightAtlas->GetBackendTexture(), 0);
+		GraphicsBackend::Current()->BindTexture(m_ProbeTempDepthAtlas->GetBackendTexture(), 1);
 		GraphicsBackend::Current()->BindRWTexture(m_ProbeLightAtlas->GetBackendTexture(), 0);
+		GraphicsBackend::Current()->BindRWTexture(m_ProbeDepthAtlas->GetBackendTexture(), 1);
 		GraphicsBackend::Current()->UseProgram(m_ProbeIntegrateShader->GetProgram());
 		GraphicsBackend::Current()->Dispatch(m_ProbeLightSize * m_ProbesPerUpdate, m_ProbeLightSize, 1);
 
@@ -134,8 +154,10 @@ void RaytracingProbes::Execute(const RenderData& renderData)
 	if (m_UpdateProbeBaseIndex >= probesCount)
 		m_UpdateProbeBaseIndex = 0;
 
-	TextureViewer::RegisterTexture(m_ProbeTempAtlas, "Raytracing/ProbeTempAtlas");
+	TextureViewer::RegisterTexture(m_ProbeTempLightAtlas, "Raytracing/ProbeTempLightAtlas");
+	TextureViewer::RegisterTexture(m_ProbeTempDepthAtlas, "Raytracing/ProbeTempDepthAtlas");
 	TextureViewer::RegisterTexture(m_ProbeLightAtlas, "Raytracing/ProbeLightAtlas");
+	TextureViewer::RegisterTexture(m_ProbeDepthAtlas, "Raytracing/ProbeDepthAtlas");
 }
 
 void RaytracingProbes::ExecuteDebug(const RenderData& renderData)
@@ -243,8 +265,9 @@ void RaytracingProbes::BindResources() const
 	if (!m_RaytracingProbesEnabled)
 		return;
 
-	GraphicsBackend::Current()->BindTextureSampler(m_ProbeLightAtlas->GetBackendTexture(), m_ProbeLightAtlas->GetBackendSampler(), 3);
-	GraphicsBackend::Current()->BindConstantBuffer(m_ProbesDataBuffer->GetBackendBuffer(), 0, 0, sizeof(ProbesData));
+	GraphicsBackend::Current()->BindTextureSampler(m_ProbeLightAtlas->GetBackendTexture(), m_ProbeLightAtlas->GetBackendSampler(), GlobalConstants::TextureIndex::PROBE_LIGHT);
+	GraphicsBackend::Current()->BindTexture(m_ProbeDepthAtlas->GetBackendTexture(), GlobalConstants::TextureIndex::PROBE_DISTANCES);
+	GraphicsBackend::Current()->BindConstantBuffer(m_ProbesDataBuffer->GetBackendBuffer(), GlobalConstants::ConstantBufferIndex::PROBE_DATA, 0, sizeof(ProbesData));
 }
 
 void RaytracingProbes::LoadShaders(bool reload)

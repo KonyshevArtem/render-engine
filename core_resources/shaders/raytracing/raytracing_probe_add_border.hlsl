@@ -1,8 +1,7 @@
-#include "raytracing_common.h"
 #include "probes_common.h"
-#include "../common/lighting.h"
 
 RWTexture2D<float3> OutProbeLightAtlas : register(u0);
+RWTexture2D<float2> OutProbeDepthAtlas : register(u1);
 
 uint2 WrapOctahedral(int2 coord, uint size) 
 {
@@ -19,6 +18,9 @@ void AddBorderPixel(uint2 atlasCoord, int2 unwrappedCoord)
     uint2 wrappedCoord = WrapOctahedral(unwrappedCoord, ProbesData.ProbeLightSize);
     float3 light = OutProbeLightAtlas[atlasCoord + wrappedCoord].xyz;
     OutProbeLightAtlas[atlasCoord + unwrappedCoord] = light;
+
+    float2 distances = OutProbeDepthAtlas[atlasCoord + wrappedCoord].xy;
+    OutProbeDepthAtlas[atlasCoord + unwrappedCoord] = distances;
 }
 
 [numthreads(64, 1, 1)]

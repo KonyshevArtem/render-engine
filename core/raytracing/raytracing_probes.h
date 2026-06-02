@@ -62,8 +62,10 @@ private:
     std::shared_ptr<RaytracingScene> m_RaytracingScene;
 	std::shared_ptr<GraphicsBuffer> m_ProbesDataBuffer;
 	std::shared_ptr<GraphicsBuffer> m_ProbesDebugDataBuffer;
-    std::shared_ptr<Texture> m_ProbeTempAtlas;
+    std::shared_ptr<Texture> m_ProbeTempLightAtlas;
+    std::shared_ptr<Texture> m_ProbeTempDepthAtlas;
     std::shared_ptr<Texture> m_ProbeLightAtlas;
+    std::shared_ptr<Texture> m_ProbeDepthAtlas;
     std::shared_ptr<Texture> m_DebugProbeGITarget;
 
     FileWatcher m_FileWatcher;

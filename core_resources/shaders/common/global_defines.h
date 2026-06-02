@@ -22,7 +22,11 @@
 #define PUNCTUAL_LIGHT_SHADOW_ATLAS            t6
 #define PUNCTUAL_LIGHT_SHADOW_ATLAS_SAMPLER    s6
 #define RAYTRACED_SHADOW_MASK                  DIRECTIONAL_SHADOW_MAP
+#define PROBES_LIGHT_ATLAS                     t3
+#define PROBES_ATLAS_SAMPLER                   s3
+#define PROBES_DISTANCES_ATLAS                 t7
 
+#define PROBE_DATA      b4
 #define LIGHTING_DATA   b5
 #define CAMERA_DATA     b6
 #define SHADOW_DATA     b7

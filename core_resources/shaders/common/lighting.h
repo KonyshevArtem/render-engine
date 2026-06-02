@@ -4,55 +4,8 @@
 #include "global_defines.h"
 #include "shadows.h"
 
-#if defined(DEFERRED_LIGHTING) && defined(PROBE_GI)
-#include "../raytracing/probes_common.h"
-
-Texture2D<float4> ProbeLightAtlas : register(t3);
-SamplerState sampler_ProbeLightAtlas : register(s3);
-
-float3 SampleProbeGI(float3 posWS, float3 normalWS)
-{
-    float3 lightSum = float3(0, 0, 0);
-    float weightSum = 0;
-
-    uint3 gridIndex = WorldPosToGridIndex(posWS);
-    float3 baseWorldPos = GetProbeWorldPosition(FlattenProbeGridIndex(gridIndex));
-    float3 alpha = saturate((posWS - baseWorldPos) / ProbesData.ProbeSpacing);
-
-    for (uint i = 0; i < 8; ++i)
-    {
-        uint3 gridIndexOffset = uint3(i, i >> 1, i >> 2) & uint3(1, 1, 1);
-        uint probeIndex = FlattenProbeGridIndex(gridIndex + gridIndexOffset);
-
-        float3 probeWorldPos = GetProbeWorldPosition(probeIndex);
-        float3 toProbe = normalize(probeWorldPos - posWS);
-        
-        float weight = 1;
-
-        float normalWeight = max(0.0001, (dot(toProbe, normalWS) + 1.0) * 0.5);
-        weight *= normalWeight * normalWeight + 0.2;
-
-        float crushThreshold = 0.2;
-        if (weight < crushThreshold)
-            weight *= weight * weight * (1.0 / (crushThreshold * crushThreshold)); 
-
-        float3 trilinear = lerp(1 - alpha, alpha, gridIndexOffset);
-        weight *= trilinear.x * trilinear.y * trilinear.z;
-
-        uint2 atlasCoord = GetAtlasPixelCoord(probeIndex);
-        float2 localCoord = OctahedralToUV(toProbe) * ProbesData.ProbeLightSize;
-
-        float3 light = ProbeLightAtlas.SampleLevel(sampler_ProbeLightAtlas, (atlasCoord + localCoord) * ProbesData.InvProbeAtlasSize, 0).xyz;
-
-        lightSum += light * weight;
-        weightSum += weight;
-    }
-
-    if (weightSum > 0.001)
-        lightSum /= weightSum;
-
-    return lightSum * 0.5 * PI;
-}
+#ifdef PROBE_GI
+#include "../raytracing/probes_sample.h"
 #endif
 
 /// Data ///
@@ -203,7 +156,7 @@ void getLightSourcePBR(float3 normalWS, float3 viewDirWS, float3 lightDirWS, flo
     diffuse = kD / PI;
 }
 
-float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, float3 cameraPosWS, uint2 pixelPos, bool isOpaque)
+float3 GetDirectLight(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, float3 cameraPosWS, uint2 pixelPos, bool isOpaque)
 {
     float3 viewDirWS = normalize(cameraPosWS - posWS);
     float3 F0 = lerp((float3) 0.04, albedo, metallness);
@@ -260,18 +213,37 @@ float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness
         directLighting += (albedo * diffuse + specular) * radiance;
     }
 
-#if defined(DEFERRED_LIGHTING) && defined(PROBE_GI)
+    return directLighting;
+}
+
+float3 GetIndirectLight(float3 posWS, float3 normalWS, float3 albedo)
+{
+#ifdef PROBE_GI
     float3 indirectLighting = SampleProbeGI(posWS, normalWS);
 #else
     float3 indirectLighting = _AmbientLight;
 #endif
 
-#ifdef _REFLECTION
-    float3 reflectionIrradiance = sampleReflection(normalWS, posWS, roughness, cameraPosWS);
-    indirectLighting += F0 * reflectionIrradiance;
-#endif
+    return albedo.rgb * indirectLighting;
+}
 
-    return albedo.rgb * indirectLighting + directLighting;
+float3 GetReflection(float3 normalWS, float3 posWS, float3 albedo, float roughness, float metallness, float3 cameraPosWS)
+{
+#ifdef _REFLECTION
+    float3 F0 = lerp((float3) 0.04, albedo, metallness);
+    float3 reflectionIrradiance = sampleReflection(normalWS, posWS, roughness, cameraPosWS);
+    return albedo.rgb * F0 * reflectionIrradiance;
+#else  
+    return float3(0, 0, 0);
+#endif
+}
+
+float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, float3 cameraPosWS, uint2 pixelPos, bool isOpaque)
+{
+    float3 directLighting = GetDirectLight(posWS, normalWS, albedo, roughness, metallness, cameraPosWS, pixelPos, isOpaque);
+    float3 indirectLighting = GetIndirectLight(posWS, normalWS, albedo);
+    float3 reflection = GetReflection(normalWS, posWS, albedo, roughness, metallness, cameraPosWS);
+    return indirectLighting + directLighting + reflection;
 }
 
 float3 getLightPBR(float3 posWS, float3 normalWS, float3 albedo, float roughness, float metallness, float3 cameraPosWS)

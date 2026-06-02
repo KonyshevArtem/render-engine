@@ -1,6 +1,8 @@
 #ifndef PROBES_COMMON_H
 #define PROBES_COMMON_H
 
+#include "../common/global_defines.h"
+
 struct ProbeData
 {
     uint3 ProbeGridSize;
@@ -16,7 +18,7 @@ struct ProbeData
     float2 InvProbeAtlasSize;
 };
 
-ConstantBuffer<ProbeData> ProbesData : register(b0);
+ConstantBuffer<ProbeData> ProbesData : register(PROBE_DATA);
 
 float3 GetGridStartPos()
 {

@@ -2,11 +2,15 @@
 #include "probes_common.h"
 #include "../common/lighting.h"
 
-RWTexture2D<float3> OutProbeTempAtlas : register(u0);
+RWTexture2D<float3> OutProbeTempLightAtlas : register(u0);
+RWTexture2D<float> OutProbeTempDepthAtlas : register(u1);
 
 [numthreads(8, 8, 1)]
 void computeMain(uint3 dtid : SV_DispatchThreadID)
 {
+    if (any(dtid.xy >= uint2(ProbesData.ProbesUpdatePerFrame, 1) * ProbesData.ProbeLightSize))
+        return;
+
     uint2 localPixelCoord = dtid.xy % ProbesData.ProbeLightSize;
     uint tempProbeIndex = dtid.x / ProbesData.ProbeLightSize.x;
     uint globalProbeIndex = tempProbeIndex + ProbesData.UpdateProbeBaseIndex;
@@ -27,6 +31,8 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
     while (query.Proceed()){}
 
     float3 light;
+    float3 indirectLight;
+    float distance;
     if (query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
     {
         if (query.CommittedTriangleFrontFace())
@@ -34,13 +40,22 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
             float3 hitPos = ray.Origin + ray.Direction * query.CommittedRayT();
             float3 hitNormal = GetHitWorldNormal(query.CommittedInstanceIndex(), query.CommittedPrimitiveIndex(), query.CommittedWorldToObject3x4());
             
-            light = getLightPBR(hitPos, hitNormal, float3(1, 1, 1), 1, 0, probeWorldPos);
+            light = getLightPBR(hitPos, hitNormal, float3(0.9, 0.9, 0.9) / PI, 1, 0, probeWorldPos);
+            distance = min(ProbesData.ProbeSpacing * 1.5, query.CommittedRayT() - 0.01);
         }
         else
+        {
             light = float3(0, 0, 0);
+            distance = min(ProbesData.ProbeSpacing * 1.5, query.CommittedRayT() - 0.01);
+        }
     }
     else
+    {
         light = SampleReflectionCube(direction, 0);
+        distance = ProbesData.ProbeSpacing * 1.5;
+    }
 
-    OutProbeTempAtlas[GetAtlasPixelCoord(tempProbeIndex) + localPixelCoord] = light;
+    uint2 pixelCoord = GetAtlasPixelCoord(tempProbeIndex) + localPixelCoord;
+    OutProbeTempLightAtlas[pixelCoord] = light;
+    OutProbeTempDepthAtlas[pixelCoord] = distance;
 }

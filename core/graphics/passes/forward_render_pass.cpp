@@ -52,7 +52,8 @@ void ForwardRenderPass::Execute(const RenderData& renderData)
         GraphicsBackend::Current()->SetViewport(0, 0, renderData.Viewport.x, renderData.Viewport.y, 0, 1);
         GraphicsBackend::Current()->SetScissorRect(0, 0, renderData.Viewport.x, renderData.Viewport.y);
 
-		m_RaytracingScene->BindResources();
+		if (m_RaytracingScene)
+			m_RaytracingScene->BindResources();
 
 		m_RenderQueue.Draw();
     }

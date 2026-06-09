@@ -3,7 +3,7 @@
 #include "gameObject/gameObject.h"
 #include "graphics/graphics.h"
 #include "material/material.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "graphics/render_queue/render_queue.h"
 #include "graphics_buffer/graphics_buffer_view.h"
 

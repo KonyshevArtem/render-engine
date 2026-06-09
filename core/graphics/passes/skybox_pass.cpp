@@ -1,6 +1,5 @@
 #include "skybox_pass.h"
 #include "graphics/render_data.h"
-#include "cubemap/cubemap.h"
 #include "mesh/mesh.h"
 #include "editor/profiler/profiler.h"
 #include "graphics_buffer/graphics_buffer.h"

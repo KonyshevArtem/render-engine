@@ -1,6 +1,6 @@
 #include "texture_viewer.h"
 
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "vector2/vector2.h"
 #include "vector3/vector3.h"
@@ -36,7 +36,9 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<TextureView>& textureV
 		}
 
 		const std::shared_ptr<Texture> texture = textureView->GetTexture();
-		const std::shared_ptr<Shader> shader = s_CopyShaders[texture->GetTextureType() == TextureType::TEXTURE_2D_ARRAY ? 1 : 0];
+		GraphicsBackendTextureDescriptor desc = texture->GetTextureDescriptor();
+
+		const std::shared_ptr<Shader> shader = s_CopyShaders[desc.Type == TextureType::TEXTURE_2D_ARRAY ? 1 : 0];
 		if (!shader || !shader->IsValid())
 			return;
 
@@ -60,8 +62,7 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<TextureView>& textureV
 
 			s_DataBuffer = std::make_shared<GraphicsBuffer>(bufferDesc, "TextureViewer/Data");
 		}
-
-		GraphicsBackendTextureDescriptor desc = texture->GetTextureDescriptor();
+		
 		desc.ReadWrite = true;
 		desc.RenderTarget = false;
 		if (GraphicsBackend::Current()->IsDepthFormat(desc.Format))
@@ -69,7 +70,7 @@ void TextureViewer::RegisterTexture(const std::shared_ptr<TextureView>& textureV
 
 		if (!s_SelectedTextureCopy.Texture || s_SelectedTextureCopy.Texture->GetTextureDescriptor() != desc)
 		{
-			s_SelectedTextureCopy.Texture = Texture2D::Create(desc, "Texture Viewer Copy");
+			s_SelectedTextureCopy.Texture = std::make_shared<Texture>(desc, "Texture Viewer Copy");
 
 			GraphicsBackendTextureViewDescriptor viewDesc{};
 			viewDesc.Format = desc.Format;

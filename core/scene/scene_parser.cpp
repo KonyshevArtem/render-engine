@@ -2,7 +2,6 @@
 #include "file_system.h"
 #include "component/component.h"
 #include "nlohmann/json.hpp"
-#include "cubemap/cubemap.h"
 #include "json_common/json_common.h"
 #include "resources/resources.h"
 
@@ -94,7 +93,7 @@ namespace SceneParser
 
         if (!sceneInfo.Settings.Skybox.empty())
         {
-            std::shared_ptr<Worker::Task> skyboxTask = Resources::LoadAsync<Cubemap>(sceneInfo.Settings.Skybox, [scene](std::shared_ptr<Cubemap> skybox)
+            std::shared_ptr<Worker::Task> skyboxTask = Resources::LoadAsync<Texture>(sceneInfo.Settings.Skybox, [scene](std::shared_ptr<Texture> skybox)
                                                                                      { scene->SetSkybox(skybox); });
             loadingTask->AddDependency(skyboxTask);
         }

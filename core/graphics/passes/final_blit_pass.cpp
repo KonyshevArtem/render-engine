@@ -2,7 +2,7 @@
 #include "editor/profiler/profiler.h"
 #include "enums/resource_state.h"
 #include "graphics/render_data.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "material/material.h"
 #include "shader/shader.h"
 #include "types/graphics_backend_render_target_descriptor.h"

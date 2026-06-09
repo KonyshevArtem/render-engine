@@ -4,7 +4,7 @@
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
 #include "graphics/graphics.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 
 CopyDepthPass::CopyDepthPass() :

@@ -1,6 +1,6 @@
 #include "post_process_pass.h"
 #include "editor/profiler/profiler.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "material/material.h"
 #include "shader/shader.h"
 #include "graphics/graphics.h"
@@ -41,6 +41,7 @@ void PostProcessPass::Prepare(RenderData& renderData)
     if (!m_PostProcessedTarget.Texture || m_PostProcessedTarget.Texture->GetWidth() != width || m_PostProcessedTarget.Texture->GetHeight() != height)
     {
         GraphicsBackendTextureDescriptor descriptor;
+		descriptor.Type = TextureType::TEXTURE_2D;
         descriptor.Format = TextureInternalFormat::RGBA8;
         descriptor.Width = width;
         descriptor.Height = height;
@@ -50,7 +51,7 @@ void PostProcessPass::Prepare(RenderData& renderData)
 		GraphicsBackendTextureViewDescriptor viewDescriptor{};
 		viewDescriptor.Format = descriptor.Format;
 
-        m_PostProcessedTarget.Texture = Texture2D::Create(descriptor, "PostProcessedRT");
+        m_PostProcessedTarget.Texture = std::make_shared<Texture>(descriptor, "PostProcessedRT");
 		m_PostProcessedTarget.View = std::make_shared<TextureView>(m_PostProcessedTarget.Texture, viewDescriptor, "PostProcessedRT_View");
     }
 

@@ -1,6 +1,6 @@
 #include "developer_console.h"
 
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "ui/ui_element.h"
 #include "ui/ui_image.h"
 #include "ui/ui_text_field.h"
@@ -60,8 +60,8 @@ void DeveloperConsole::Update()
 void DeveloperConsole::CreateUI()
 {
 	m_Root = UIElement::Create(UIManager::GetPersistentUIRoot(), Vector2(0, 0), Vector2(0, 0));
-	m_Background = UIImage::Create(m_Root, Vector2(0, 0), Vector2(0, 0), Texture2D::White());
-	m_TextField = UITextField::Create(m_Root, Vector2(0, 0), Vector2(0, 0), 20, Texture2D::White());
+	m_Background = UIImage::Create(m_Root, Vector2(0, 0), Vector2(0, 0), Texture::White());
+	m_TextField = UITextField::Create(m_Root, Vector2(0, 0), Vector2(0, 0), 20, Texture::White());
 	m_PromptText = UIText::Create(m_Root, Vector2(0, -20), Vector2(0, 0), L"", 15);
 
 	const Vector4 backgroundColor = Vector4(0, 0, 0, 0.7f);

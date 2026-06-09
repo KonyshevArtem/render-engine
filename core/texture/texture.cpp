@@ -2,9 +2,43 @@
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
 
-Texture::Texture(TextureType textureType, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name) :
+#define DEFINE_TEXTURE(Type, Name, Size, ...) \
+    static std::shared_ptr<Texture> texture; \
+    if (texture == nullptr) \
+    { \
+        constexpr uint8_t pixels[Size] = __VA_ARGS__; \
+        texture = TextureLocal::CreateTexture(Type, &pixels[0], Size, Name); \
+    } \
+    return texture; \
+
+namespace TextureLocal
+{
+    std::shared_ptr<Texture> CreateTexture(TextureType textureType, const uint8_t* pixels, uint8_t size, const std::string& name)
+    {
+        GraphicsBackendTextureDescriptor descriptor{};
+		descriptor.Type = textureType;
+		descriptor.Format = TextureInternalFormat::RGBA8;
+        descriptor.Width = 1;
+        descriptor.Height = 1;
+        descriptor.MipLevels = 1;
+        descriptor.Linear = false;
+		descriptor.RenderTarget = false;
+
+        std::shared_ptr<Texture> texture = std::make_shared<Texture>(descriptor, name);
+        if (textureType == TextureType::TEXTURE_CUBEMAP)
+        {
+            for (int face = 0; face < static_cast<int>(CubemapFace::MAX); ++face)
+                texture->UploadPixels(pixels, size, 0, 0, static_cast<CubemapFace>(face));
+        }
+        else
+            texture->UploadPixels(pixels, size, 0, 0);
+
+        return texture;
+    }
+}
+
+Texture::Texture(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name) :
         m_TextureDescriptor(descriptor),
-		m_TextureType(textureType),
 		m_SamplerName(name + "_Sampler"),
 		m_SamplerDescriptor({}),
 		m_SamplerDirty(true),
@@ -12,13 +46,10 @@ Texture::Texture(TextureType textureType, const GraphicsBackendTextureDescriptor
 {
     Profiler::Marker _("Texture::Texture");
 
-    GraphicsBackendTextureDescriptor textureDescriptor = descriptor;
-	textureDescriptor.Type = textureType;
-
     m_SamplerDescriptor.WrapMode = TextureWrapMode::REPEAT;
     m_SamplerDescriptor.FilteringMode = descriptor.MipLevels > 1 ? TextureFilteringMode::LINEAR_MIPMAP_NEAREST : TextureFilteringMode::LINEAR;
     m_SamplerDescriptor.HasBorderColor = true;
-    m_Texture = GraphicsBackend::Current()->CreateTexture(textureDescriptor, name);
+    m_Texture = GraphicsBackend::Current()->CreateTexture(descriptor, name);
 }
 
 Texture::~Texture()
@@ -63,6 +94,26 @@ const GraphicsBackendSampler& Texture::GetBackendSampler()
     if (m_SamplerDirty)
         RecreateSampler();
     return m_Sampler;
+}
+
+std::shared_ptr<Texture> Texture::White()
+{
+	DEFINE_TEXTURE(TextureType::TEXTURE_2D, "White", 4, { 255, 255, 255, 255 })
+}
+
+std::shared_ptr<Texture> Texture::Normal()
+{
+    DEFINE_TEXTURE(TextureType::TEXTURE_2D, "Normal", 4, { 125, 125, 255, 255 })
+}
+
+std::shared_ptr<Texture> Texture::BlackCube()
+{
+    DEFINE_TEXTURE(TextureType::TEXTURE_CUBEMAP, "BlackCube", 4, { 0, 0, 0, 0 })
+}
+
+std::shared_ptr<Texture> Texture::WhiteCube()
+{
+	DEFINE_TEXTURE(TextureType::TEXTURE_CUBEMAP, "WhiteCube", 4, { 255, 255, 255, 255 })
 }
 
 void Texture::UploadPixels(const void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace) const

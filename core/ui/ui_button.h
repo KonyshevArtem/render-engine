@@ -9,12 +9,12 @@
 
 class UIText;
 class UIImage;
-class Texture2D;
+class Texture;
 
 class UIButton : public UIElement
 {
 public:
-    static std::shared_ptr<UIButton> Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::wstring& text, uint16_t fontSize, const std::shared_ptr<Texture2D> image);
+    static std::shared_ptr<UIButton> Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::wstring& text, uint16_t fontSize, const std::shared_ptr<Texture> image);
 
     void SetImageColor(const Vector4& color);
 

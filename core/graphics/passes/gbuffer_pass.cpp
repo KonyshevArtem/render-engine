@@ -1,6 +1,6 @@
 #include "gbuffer_pass.h"
 #include "graphics/render_data.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "types/graphics_backend_texture_descriptor.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "graphics/render_settings/render_settings.h"
@@ -17,6 +17,7 @@ void GBufferPass::Prepare(RenderData& renderData)
 	if (!m_GBuffers[0].Texture || m_GBuffers[0].Texture->GetWidth() != width || m_GBuffers[0].Texture->GetHeight() != height)
 	{
 		GraphicsBackendTextureDescriptor gBufferDescriptor{};
+		gBufferDescriptor.Type = TextureType::TEXTURE_2D;
 		gBufferDescriptor.Format = TextureInternalFormat::RGBA16F;
 		gBufferDescriptor.Width = width;
 		gBufferDescriptor.Height = height;
@@ -28,7 +29,7 @@ void GBufferPass::Prepare(RenderData& renderData)
 
 		for (int i = 0; i < 2; i++)
 		{
-			m_GBuffers[i].Texture = Texture2D::Create(gBufferDescriptor, "GBuffer_" + std::to_string(i));
+			m_GBuffers[i].Texture = std::make_shared<Texture>(gBufferDescriptor, "GBuffer_" + std::to_string(i));
 			m_GBuffers[i].View = std::make_shared<TextureView>(m_GBuffers[i].Texture, gBufferViewDescriptor, "GBufferView_" + std::to_string(i));
 		}
 	}
@@ -38,6 +39,7 @@ void GBufferPass::Prepare(RenderData& renderData)
 		const TextureInternalFormat depthFormat = GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL ? TextureInternalFormat::DEPTH_32_STENCIL_8 : TextureInternalFormat::DEPTH_24_STENCIL_8;
 
 		GraphicsBackendTextureDescriptor descriptor{};
+		descriptor.Type = TextureType::TEXTURE_2D;
 		descriptor.Format = depthFormat;
 		descriptor.Width = width;
 		descriptor.Height = height;
@@ -47,7 +49,7 @@ void GBufferPass::Prepare(RenderData& renderData)
 		GraphicsBackendTextureViewDescriptor viewDescriptor{};
 		viewDescriptor.Format = depthFormat;
 
-		m_CameraDepthTarget.Texture = Texture2D::Create(descriptor, "CameraDepthRT");
+		m_CameraDepthTarget.Texture = std::make_shared<Texture>(descriptor, "CameraDepthRT");
 		m_CameraDepthTarget.View = std::make_shared<TextureView>(m_CameraDepthTarget.Texture, viewDescriptor, "CameraDepthRT_View");
 	}
 

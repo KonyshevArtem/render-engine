@@ -8,7 +8,7 @@
 #include "graphics/graphics.h"
 #include "graphics/render_data.h"
 #include "texture/texture.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "graphics_buffer/graphics_buffer.h"
@@ -211,6 +211,7 @@ void RaytracingProbes::ExecuteDebug(const RenderData& renderData)
 		if (!m_DebugProbeGITarget.Texture || m_DebugProbeGITarget.Texture->GetWidth() != width || m_DebugProbeGITarget.Texture->GetHeight() != height)
 		{
 			GraphicsBackendTextureDescriptor descriptor;
+			descriptor.Type = TextureType::TEXTURE_2D;
 			descriptor.Format = TextureInternalFormat::RGBA16F;
 			descriptor.Width = width;
 			descriptor.Height = height;
@@ -220,7 +221,7 @@ void RaytracingProbes::ExecuteDebug(const RenderData& renderData)
 			GraphicsBackendTextureViewDescriptor viewDescriptor;
 			viewDescriptor.Format = descriptor.Format;
 
-			m_DebugProbeGITarget.Texture = Texture2D::Create(descriptor, "DebugProbeGITarget");
+			m_DebugProbeGITarget.Texture = std::make_shared<Texture>(descriptor, "DebugProbeGITarget");
 			m_DebugProbeGITarget.View = std::make_shared<TextureView>(m_DebugProbeGITarget.Texture, viewDescriptor, "DebugProbeGITarget_View");
 		}
 
@@ -291,6 +292,7 @@ void RaytracingProbes::UpdateTextureResources(TextureResources& textureResources
 		return;
 
 	GraphicsBackendTextureDescriptor descriptor{};
+	descriptor.Type = TextureType::TEXTURE_2D;
 	descriptor.Linear = true;
 	descriptor.ReadWrite = true;
 	descriptor.Format = format;
@@ -300,7 +302,7 @@ void RaytracingProbes::UpdateTextureResources(TextureResources& textureResources
 	GraphicsBackendTextureViewDescriptor viewDescriptor{};
 	viewDescriptor.Format = format;
 
-	textureResources.Texture = Texture2D::Create(descriptor, name);
+	textureResources.Texture = std::make_shared<Texture>(descriptor, name);
 	textureResources.View = std::make_shared<TextureView>(textureResources.Texture, viewDescriptor, name + "_View");
 
 	viewDescriptor.ReadWrite = true;

@@ -8,7 +8,7 @@
 
 #include <memory>
 
-class Texture2D;
+class Texture;
 
 class CopyDepthPass : public RenderPass
 {
@@ -27,7 +27,7 @@ public:
     CopyDepthPass &operator=(CopyDepthPass&&) = delete;
 
 private:
-    std::shared_ptr<Texture2D> m_SourceDepth;
+    std::shared_ptr<Texture> m_SourceDepth;
     GraphicsBackendFence m_StartFence;
     GraphicsBackendFence m_EndFence;
 };

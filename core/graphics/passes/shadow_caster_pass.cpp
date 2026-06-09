@@ -5,8 +5,8 @@
 #include "graphics/render_settings/render_settings.h"
 #include "light/light.h"
 #include "renderer/renderer.h"
-#include "texture_2d/texture_2d.h"
-#include "texture_2d_array/texture_2d_array.h"
+#include "texture/texture.h"
+#include "texture/texture.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug_group.h"
 #include "editor/profiler/profiler.h"
@@ -75,6 +75,7 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
         queue.Clear();
 
     GraphicsBackendTextureDescriptor shadowMapDescriptor{};
+	shadowMapDescriptor.Type = TextureType::TEXTURE_2D_ARRAY;
     shadowMapDescriptor.Format = TextureInternalFormat::DEPTH_32;
     shadowMapDescriptor.Linear = true;
     shadowMapDescriptor.RenderTarget = true;
@@ -82,13 +83,13 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
 	GraphicsBackendTextureViewDescriptor shadowMapViewDescriptor{};
 	shadowMapViewDescriptor.Format = shadowMapDescriptor.Format;
 
-    if (!m_DirectionLightShadowMap.Texture)
+    if (!m_DirectionLightShadowMap.Texture && !renderData.RaytracedShadowsEnabled)
     {
         shadowMapDescriptor.Width = ShadowCasterPassLocal::k_DirLightShadowMapSize;
         shadowMapDescriptor.Height = ShadowCasterPassLocal::k_DirLightShadowMapSize;
         shadowMapDescriptor.Depth = GlobalConstants::ShadowCascadeCount;
 
-        m_DirectionLightShadowMap.Texture = Texture2DArray::Create(shadowMapDescriptor, "DirectionalShadowMap");
+        m_DirectionLightShadowMap.Texture = std::make_shared<Texture>(shadowMapDescriptor, "DirectionalShadowMap");
         m_DirectionLightShadowMap.Texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
         m_DirectionLightShadowMap.Texture->SetFilteringMode(TextureFilteringMode::LINEAR);
         m_DirectionLightShadowMap.Texture->SetComparisonFunction(ComparisonFunction::LEQUAL);
@@ -101,7 +102,7 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
         shadowMapDescriptor.Height = ShadowCasterPassLocal::k_PunctualLightShadowMapSize;
         shadowMapDescriptor.Depth = ShadowCasterPassLocal::k_PunctualLightShadowAtlasSlots;
 
-        m_PunctualLightShadowAtlas.Texture = Texture2DArray::Create(shadowMapDescriptor, "PunctualLightShadowMapAtlas");
+        m_PunctualLightShadowAtlas.Texture = std::make_shared<Texture>(shadowMapDescriptor, "PunctualLightShadowMapAtlas");
         m_PunctualLightShadowAtlas.Texture->SetBorderColor({ 1, 1, 1, 1 });
         m_PunctualLightShadowAtlas.Texture->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
         m_PunctualLightShadowAtlas.Texture->SetFilteringMode(TextureFilteringMode::LINEAR);

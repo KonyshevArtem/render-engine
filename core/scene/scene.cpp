@@ -6,7 +6,6 @@
 #include "editor/profiler/profiler.h"
 #include "ui/ui_manager.h"
 #include "developer_console/developer_console.h"
-#include "cubemap/cubemap.h"
 
 namespace SceneLocal
 {
@@ -85,11 +84,11 @@ void Scene::Unload()
     UIManager::DestroySceneUI();
 }
 
-void Scene::SetSkybox(const std::shared_ptr<Cubemap>& skybox)
+void Scene::SetSkybox(const std::shared_ptr<Texture>& skybox)
 {
     std::unique_lock lock(m_SkyboxMutex);
 
-	std::shared_ptr<Cubemap> skyboxTex = skybox ? skybox : Cubemap::Black();
+	std::shared_ptr<Texture> skyboxTex = skybox ? skybox : Texture::BlackCube();
 
 	GraphicsBackendTextureViewDescriptor viewDescriptor{};
 	viewDescriptor.Format = skyboxTex->GetTextureDescriptor().Format;

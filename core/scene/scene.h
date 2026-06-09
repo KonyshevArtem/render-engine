@@ -12,7 +12,6 @@
 #include <shared_mutex>
 
 class Light;
-class Cubemap;
 
 class Scene
 {
@@ -26,7 +25,7 @@ public:
     static void Load(const std::string& scenePath);
     static void Unload();
 
-    void SetSkybox(const std::shared_ptr<Cubemap>& skybox);
+    void SetSkybox(const std::shared_ptr<Texture>& skybox);
     std::shared_ptr<TextureView> GetSkybox();
 
     std::shared_ptr<GameObject> FindGameObject(const std::function<bool(const GameObject*)>& predicate);

@@ -6,7 +6,7 @@
 #include "editor/profiler/profiler.h"
 #include "enums/resource_state.h"
 #include "graphics/render_data.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "graphics_buffer/graphics_buffer.h"
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "mesh/mesh.h"
@@ -33,7 +33,7 @@ RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) 
 	DeveloperConsole::AddCommand(L"Raytracing.Shadows.Soft", &m_RaytracedSoftShadowsEnabled);
 	DeveloperConsole::AddCommand(L"Raytracing.Shadows.Samples", &m_RaytracedShadowsSamplesCount);
 
-	m_BlueNoiseTexture.Texture = Resources::Load<Texture2D>("core_resources/textures/noise/blue_noise");
+	m_BlueNoiseTexture.Texture = Resources::Load<Texture>("core_resources/textures/noise/blue_noise");
 
 	GraphicsBackendTextureViewDescriptor noiseTextureViewDescriptor{};
 	noiseTextureViewDescriptor.Format = m_BlueNoiseTexture.Texture->GetTextureDescriptor().Format;
@@ -55,6 +55,7 @@ void RaytracingPass::Prepare(RenderData& renderData)
 		if (!m_RaytracedShadowsTarget.Texture || m_RaytracedShadowsTarget.Texture->GetWidth() != width || m_RaytracedShadowsTarget.Texture->GetHeight() != height)
 		{
 			GraphicsBackendTextureDescriptor textureDescriptor{};
+			textureDescriptor.Type = TextureType::TEXTURE_2D;
 			textureDescriptor.Width = width;
 			textureDescriptor.Height = height;
 			textureDescriptor.MipLevels = 1;
@@ -65,7 +66,7 @@ void RaytracingPass::Prepare(RenderData& renderData)
 			GraphicsBackendTextureViewDescriptor textureViewDescriptor{};
 			textureViewDescriptor.Format = textureDescriptor.Format;
 
-			m_RaytracedShadowsTarget.Texture = Texture2D::Create(textureDescriptor, "Raytracing/RaytracedShadowsTarget");
+			m_RaytracedShadowsTarget.Texture = std::make_shared<Texture>(textureDescriptor, "Raytracing/RaytracedShadowsTarget");
 			m_RaytracedShadowsTarget.View = std::make_shared<TextureView>(m_RaytracedShadowsTarget.Texture, textureViewDescriptor, "Raytracing/RaytracedShadowsTargetView");
 		}
 

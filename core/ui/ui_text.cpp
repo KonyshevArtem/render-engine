@@ -1,7 +1,6 @@
 #include "ui_text.h"
 #include "font/font.h"
 #include "mesh/mesh.h"
-#include "texture_2d_array/texture_2d_array.h"
 #include "editor/profiler/profiler.h"
 #include "resources/resources.h"
 

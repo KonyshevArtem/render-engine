@@ -2,8 +2,7 @@
 #include "nlohmann/json.hpp"
 #include "file_system.h"
 #include "shader/shader.h"
-#include "texture_2d/texture_2d.h"
-#include "cubemap/cubemap.h"
+#include "texture/texture.h"
 #include "resources/resources.h"
 #include "types/graphics_backend_stencil_descriptor.h"
 #include "types/graphics_backend_depth_descriptor.h"
@@ -182,7 +181,7 @@ namespace MaterialParser
     {
         if (async)
         {
-            material->SetTexture(textureInfo.Name, Texture2D::White());
+            material->SetTexture(textureInfo.Name, Texture::White());
 
             const std::string& name = textureInfo.Name;
             Resources::LoadAsync<T>(textureInfo.Path, [material, name](std::shared_ptr<T> texture)
@@ -217,25 +216,15 @@ namespace MaterialParser
 
         for (const TextureInfo& textureInfo: materialInfo.Textures)
         {
-            bool isWhite = textureInfo.Path == "White";
-            bool isNormal = textureInfo.Path == "Normal";
+            const bool isWhite = textureInfo.Path == "White";
+            const bool isNormal = textureInfo.Path == "Normal";
 
-            if (textureInfo.Type == "2D")
-            {
-                if (isWhite)
-                    material->SetTexture(textureInfo.Name, Texture2D::White());
-                else if (isNormal)
-                    material->SetTexture(textureInfo.Name, Texture2D::Normal());
-                else
-                    LoadTexture<Texture2D>(material, textureInfo, asyncTextureLoads);
-            }
-            else if (textureInfo.Type == "Cube")
-            {
-                if (isWhite)
-                    material->SetTexture(textureInfo.Name, Cubemap::White());
-                else
-                    LoadTexture<Cubemap>(material, textureInfo, asyncTextureLoads);
-            }
+            if (isWhite)
+                material->SetTexture(textureInfo.Name, Texture::White());
+            else if (isNormal)
+                material->SetTexture(textureInfo.Name, Texture::Normal());
+            else
+                LoadTexture<Texture>(material, textureInfo, asyncTextureLoads);
         }
 
         for (const FloatInfo& floatInfo : materialInfo.Floats)

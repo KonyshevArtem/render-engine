@@ -20,6 +20,7 @@
 class Texture : public Resource
 {
 public:
+    Texture(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name);
     virtual ~Texture();
 
     void SetMinMipLevel(int minMipLevel);
@@ -28,48 +29,39 @@ public:
     void SetFilteringMode(TextureFilteringMode mode);
     void SetComparisonFunction(ComparisonFunction function);
 
-    inline const GraphicsBackendTexture& GetBackendTexture() const
+    const GraphicsBackendTexture& GetBackendTexture() const
     {
         return m_Texture;
     }
 
     const GraphicsBackendSampler& GetBackendSampler();
 
-    inline uint32_t GetWidth() const
+    uint32_t GetWidth() const
     {
         return m_TextureDescriptor.Width;
     }
 
-    inline uint32_t GetHeight() const
+    uint32_t GetHeight() const
     {
         return m_TextureDescriptor.Height;
     }
 
-    inline uint32_t GetMipLevels() const
+    uint32_t GetMipLevels() const
     {
         return m_TextureDescriptor.MipLevels;
     }
 
-	inline const GraphicsBackendTextureDescriptor& GetTextureDescriptor() const
+	const GraphicsBackendTextureDescriptor& GetTextureDescriptor() const
     {
         return m_TextureDescriptor;
     }
 
-    inline TextureType GetTextureType() const
-    {
-        return m_TextureType;
-    }
-
-    Texture(const Texture &) = delete;
-    Texture(Texture &&) = delete;
-
-    Texture &operator=(const Texture &) = delete;
-    Texture &operator=(Texture &&) = delete;
-
-protected:
-    Texture(TextureType textureType, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name);
-
     void UploadPixels(const void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace = CubemapFace::POSITIVE_X) const;
+
+    static std::shared_ptr<Texture> White();
+    static std::shared_ptr<Texture> Normal();
+    static std::shared_ptr<Texture> BlackCube();
+    static std::shared_ptr<Texture> WhiteCube();
 
 private:
     void RecreateSampler();
@@ -77,7 +69,6 @@ private:
     GraphicsBackendTextureDescriptor m_TextureDescriptor;
     GraphicsBackendTexture m_Texture;
     GraphicsBackendSampler m_Sampler{};
-    TextureType m_TextureType = TextureType::TEXTURE_2D;
     std::string m_SamplerName;
 
     GraphicsBackendSamplerDescriptor m_SamplerDescriptor;

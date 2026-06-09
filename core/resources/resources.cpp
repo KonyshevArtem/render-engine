@@ -1,7 +1,5 @@
 #include "resources.h"
-#include "texture_2d/texture_2d.h"
-#include "texture_2d_array/texture_2d_array.h"
-#include "cubemap/cubemap.h"
+#include "texture/texture.h"
 #include "editor/profiler/profiler.h"
 #include "texture/texture_binary_reader.h"
 #include "material/material.h"
@@ -21,13 +19,13 @@ std::shared_mutex Resources::s_LoadedResourcesMutex;
 std::shared_mutex Resources::s_AsyncLoadRequestsMutex;
 
 template<>
-std::shared_ptr<Texture2D> Resources::Load(const std::filesystem::path& path, bool asyncSubresourceLoads)
+std::shared_ptr<Texture> Resources::Load(const std::filesystem::path& path, bool asyncSubresourceLoads)
 {
-    Profiler::Marker _("Resources::Load<Texture2D>", path.string());
+    Profiler::Marker _("Resources::Load<Texture>", path.string());
 
     const std::string cacheKey = path.string();
 
-    std::shared_ptr<Texture2D> texture;
+    std::shared_ptr<Texture> texture;
     if (TryGetFromCache(cacheKey, texture))
         return texture;
 
@@ -40,59 +38,30 @@ std::shared_ptr<Texture2D> Resources::Load(const std::filesystem::path& path, bo
 
     const TextureHeader& header = reader.GetHeader();
 
+	int facesCount = 1;
+    if (header.Type == TextureType::TEXTURE_CUBEMAP)
+    {
+        facesCount = static_cast<int>(CubemapFace::MAX);
+        if (header.Depth != facesCount)
+        {
+            Debug::LogErrorFormat("[Resources] Number of slices in cubemap {} is {}, expected {}", path.string(), std::to_string(header.Depth), std::to_string(facesCount));
+            return nullptr;
+        }
+    }
+
     GraphicsBackendTextureDescriptor descriptor;
+	descriptor.Type = header.Type;
     descriptor.Width = header.Width;
     descriptor.Height = header.Height;
     descriptor.MipLevels = header.MipCount;
     descriptor.Linear = header.IsLinear;
     descriptor.Format = header.TextureFormat;
 
-    texture = std::shared_ptr<Texture2D>(new Texture2D(descriptor, path.string()));
-    UploadPixels(*texture, 1, header.MipCount, reader);
+    texture = std::make_shared<Texture>(descriptor, path.string());
+    UploadPixels(*texture, facesCount, header.MipCount, reader);
     AddToCache(cacheKey, texture);
 
     return texture;
-}
-
-template<>
-std::shared_ptr<Cubemap> Resources::Load(const std::filesystem::path& path, bool asyncSubresourceLoads)
-{
-    Profiler::Marker _("Resources::Load<Cubemap>", path.string());
-
-    const std::string cacheKey = path.string();
-
-    std::shared_ptr<Cubemap> cubemap;
-    if (TryGetFromCache(cacheKey, cubemap))
-        return cubemap;
-
-    TextureBinaryReader reader;
-    if (!reader.ReadTexture(path))
-    {
-        Debug::LogErrorFormat("[Resources] Cannot load cubemap: {}", path.string());
-        return nullptr;
-    }
-
-    const TextureHeader& header = reader.GetHeader();
-
-    constexpr int facesCount = static_cast<int>(CubemapFace::MAX);
-    if (header.Depth != facesCount)
-    {
-        Debug::LogErrorFormat("[Resources] Number of slices in texture file is {}, expected {}", std::to_string(header.Depth), std::to_string(facesCount));
-        return nullptr;
-    }
-
-    GraphicsBackendTextureDescriptor descriptor;
-    descriptor.Width = header.Width;
-    descriptor.Height = header.Height;
-    descriptor.MipLevels = header.MipCount;
-    descriptor.Linear = header.IsLinear;
-    descriptor.Format = header.TextureFormat;
-
-    cubemap = std::shared_ptr<Cubemap>(new Cubemap(descriptor, path.string()));
-    UploadPixels(*cubemap, facesCount, header.MipCount, reader);
-    AddToCache(cacheKey, cubemap);
-
-    return cubemap;
 }
 
 template<>

@@ -1,6 +1,6 @@
 #include "deferred_light_pass.h"
 #include "graphics/render_data.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "editor/profiler/profiler.h"
 #include "mesh/mesh.h"
 #include "types/graphics_backend_render_target_descriptor.h"
@@ -30,6 +30,7 @@ void DeferredLightPass::Prepare(RenderData& renderData)
     if (!m_CameraColorTarget.Texture || m_CameraColorTarget.Texture->GetWidth() != width || m_CameraColorTarget.Texture->GetHeight() != height)
     {
         GraphicsBackendTextureDescriptor descriptor;
+		descriptor.Type = TextureType::TEXTURE_2D;
         descriptor.Width = width;
         descriptor.Height = height;
         descriptor.Linear = true;
@@ -39,7 +40,7 @@ void DeferredLightPass::Prepare(RenderData& renderData)
 		GraphicsBackendTextureViewDescriptor viewDescriptor{};
 		viewDescriptor.Format = descriptor.Format;
 
-        m_CameraColorTarget.Texture = Texture2D::Create(descriptor, "CameraColorRT");
+        m_CameraColorTarget.Texture = std::make_shared<Texture>(descriptor, "CameraColorRT");
         m_CameraColorTarget.View = std::make_shared<TextureView>(m_CameraColorTarget.Texture, viewDescriptor, "CameraColorRT_View");
     }
 

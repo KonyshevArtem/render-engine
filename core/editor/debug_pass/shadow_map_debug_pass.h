@@ -2,7 +2,7 @@
 #define RENDER_ENGINE_SHADOW_MAP_DEBUG_PASS_H
 
 #include "graphics/passes/render_pass.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 
 class DrawableGeometry;
 

@@ -268,6 +268,7 @@ namespace TextureCompressorBackend
         }
 
         TextureHeader header{};
+		header.Type = typeInfo.Type;
         header.Depth = typeInfo.Count;
         header.Width = images[0]->width();
         header.Height = images[0]->height();

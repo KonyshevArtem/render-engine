@@ -8,8 +8,6 @@ add_library(
 	light/light.h
 	shader/shader.h
 	shader/shader.cpp
-	texture_2d/texture_2d.cpp
-	texture_2d/texture_2d.h
 	material/material.cpp
 	material/material.h
 	scene/scene.h
@@ -29,10 +27,6 @@ add_library(
 	graphics/passes/shadow_caster_pass.cpp
 	graphics/passes/shadow_caster_pass.h
 	graphics/passes/render_pass.h
-	texture_2d_array/texture_2d_array.cpp
-	texture_2d_array/texture_2d_array.h
-	cubemap/cubemap.cpp
-	cubemap/cubemap.h
 	graphics/passes/skybox_pass.cpp
 	graphics/passes/skybox_pass.h
 	texture/texture.cpp

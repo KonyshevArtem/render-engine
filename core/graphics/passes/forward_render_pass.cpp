@@ -3,7 +3,7 @@
 #include "editor/profiler/profiler.h"
 #include "graphics/graphics.h"
 #include "graphics/render_data.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "graphics/render_settings/render_settings.h"
 #include "raytracing/raytracing_scene.h"

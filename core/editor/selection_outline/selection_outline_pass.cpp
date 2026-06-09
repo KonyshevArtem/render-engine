@@ -4,7 +4,7 @@
 #include "material/material.h"
 #include "shader/shader.h"
 #include "editor/hierarchy.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "graphics_backend_api.h"
 #include "graphics_backend_debug_group.h"
 #include "renderer/renderer.h"
@@ -26,12 +26,13 @@ void CheckTexture(TextureResources& textureResources, uint32_t width, uint32_t h
     if (!textureResources.Texture || textureResources.Texture->GetWidth() != width || textureResources.Texture->GetHeight() != height)
     {
         GraphicsBackendTextureDescriptor descriptor;
+		descriptor.Type = TextureType::TEXTURE_2D;
         descriptor.Width = width;
         descriptor.Height = height;
         descriptor.RenderTarget = true;
         descriptor.Format = TextureInternalFormat::RGBA8;
 
-        textureResources.Texture = Texture2D::Create(descriptor, "SilhouetteRT");
+        textureResources.Texture = std::make_shared<Texture>(descriptor, "SilhouetteRT");
         textureResources.Texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
 
 		GraphicsBackendTextureViewDescriptor viewDescriptor{};

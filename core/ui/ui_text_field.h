@@ -9,13 +9,13 @@
 
 class UIText;
 class UIImage;
-class Texture2D;
+class Texture;
 class UIMask;
 
 class UITextField : public UIElement
 {
 public:
-    static std::shared_ptr<UITextField> Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, uint16_t fontSize, const std::shared_ptr<Texture2D> image);
+    static std::shared_ptr<UITextField> Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, uint16_t fontSize, const std::shared_ptr<Texture> image);
 
     const std::wstring& GetText() const;
     void SetText(const std::wstring& text);

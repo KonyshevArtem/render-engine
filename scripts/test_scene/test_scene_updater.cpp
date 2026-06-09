@@ -12,7 +12,7 @@
 #include "ui/ui_text.h"
 #include "ui/ui_text_field.h"
 #include "ui/ui_mask.h"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "debug.h"
 
 std::shared_ptr<TestSceneUpdater> TestSceneUpdater::Create(const nlohmann::json& componentData)
@@ -76,23 +76,23 @@ void TestSceneUpdater::Update()
             instancedCube->GetRenderer()->CastShadows = false;
         }
 
-        const std::shared_ptr<Texture2D> uiTestTexture = Resources::Load<Texture2D>("core_resources/textures/ui/ui_test");
+        const std::shared_ptr<Texture> uiTestTexture = Resources::Load<Texture>("core_resources/textures/ui/ui_test");
         UIImage::Create(nullptr, {10, 20}, {100, 100}, uiTestTexture)->Color = Vector4(1, 0.5f, 0.5f, 0.5f);
         UIImage::Create(nullptr, {10, 100}, {100, 100}, uiTestTexture)->Color = Vector4(0.5f, 1, 0.5f, 0.5f);
         std::shared_ptr<UIText> text = UIText::Create(nullptr, {10, 250}, {150, 32}, L"Hello, Text!\nMultiline?", 32);
 
-        std::shared_ptr<UIButton> reloadButton = UIButton::Create(nullptr, {10, 290}, {100, 50}, L"Reload\nscene", 15, Texture2D::White());
+        std::shared_ptr<UIButton> reloadButton = UIButton::Create(nullptr, {10, 290}, {100, 50}, L"Reload\nscene", 15, Texture::White());
         reloadButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
         reloadButton->OnPress = [](){ Scene::Load("core_resources/scenes/test_scene.scene"); };
 
-        std::shared_ptr<UIButton> deleteButton = UIButton::Create(nullptr, {10, 350}, {100, 50}, L"Delete\ntext", 15, Texture2D::White());
+        std::shared_ptr<UIButton> deleteButton = UIButton::Create(nullptr, {10, 350}, {100, 50}, L"Delete\ntext", 15, Texture::White());
         deleteButton->SetImageColor(Vector4(0.4f, 0.4f, 0.4f, 1));
         deleteButton->OnPress = [text](){ text->Destroy(); };
 
-        std::shared_ptr<UITextField> inputField = UITextField::Create(nullptr, {10, 410}, {150, 30}, 24, Texture2D::White());
+        std::shared_ptr<UITextField> inputField = UITextField::Create(nullptr, {10, 410}, {150, 30}, 24, Texture::White());
         inputField->OnFinish = [text](const std::wstring& inputText){ text->SetText(inputText); };
 
-        UITextField::Create(nullptr, {10, 460}, {150, 30}, 24, Texture2D::White());
+        UITextField::Create(nullptr, {10, 460}, {150, 30}, 24, Texture::White());
 
         std::shared_ptr<UIMask> outerMask = UIMask::Create(nullptr, { 10, 500 }, { 100, 100 });
         UIImage::Create(outerMask, { 0, 0 }, { 140, 140 }, uiTestTexture)->Color = Vector4(1, 0.5f, 0.5f, 0.5f);

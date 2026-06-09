@@ -1,7 +1,7 @@
 #include "font.h"
 #include "Trex/Atlas.hpp"
 #include "Trex/TextShaper.hpp"
-#include "texture_2d/texture_2d.h"
+#include "texture/texture.h"
 #include "editor/profiler/profiler.h"
 #include "string_encoding_util.h"
 
@@ -26,6 +26,7 @@ void Font::Prepare(uint16_t fontSize)
     const Trex::Atlas::Bitmap& bitmap = trexAtlas->GetBitmap();
 
     GraphicsBackendTextureDescriptor descriptor;
+	descriptor.Type = TextureType::TEXTURE_2D;
     descriptor.Width = bitmap.Width();
     descriptor.Height = bitmap.Height();
     descriptor.Linear = true;
@@ -34,7 +35,7 @@ void Font::Prepare(uint16_t fontSize)
     GraphicsBackendTextureViewDescriptor viewDescriptor{};
     viewDescriptor.Format = descriptor.Format;
 
-    std::shared_ptr<Texture> atlas = Texture2D::Create(descriptor, m_FontName + "_Atlas_" + std::to_string(fontSize));
+    std::shared_ptr<Texture> atlas = std::make_shared<Texture>(descriptor, m_FontName + "_Atlas_" + std::to_string(fontSize));
     atlas->UploadPixels(bitmap.Data().data(), bitmap.Data().size(), 0, 0);
     m_Atlas[fontSize] = {};
 	m_Atlas[fontSize].Texture = atlas;

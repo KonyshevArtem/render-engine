@@ -3,6 +3,7 @@
 
 #include "font_data.h"
 #include "resources/resource.h"
+#include "texture/texture_resources.h"
 
 #include <unordered_map>
 #include <memory>
@@ -27,14 +28,14 @@ public:
     void UpdateCharset(const std::wstring& text);
 
     const CommonBlock& GetCommonBlock(uint16_t fontSize) const;
-    const std::shared_ptr<Texture> GetAtlas(uint16_t fontSize) const;
+    const std::shared_ptr<TextureView> GetAtlas(uint16_t fontSize) const;
     uint32_t GetAtlasRevision(uint16_t fontSize) const;
 
     std::vector<Char> ShapeText(const std::span<const wchar_t> text, uint16_t fontSize, float& outTextWidth);
 
 private:
     std::unordered_map<uint16_t, CommonBlock> m_Common;
-    std::unordered_map<uint16_t, std::shared_ptr<Texture>> m_Atlas;
+    std::unordered_map<uint16_t, TextureResources> m_Atlas;
     std::unordered_map<uint16_t, std::shared_ptr<Trex::Atlas>> m_TrexAtlas;
     std::unordered_map<uint16_t, uint32_t> m_AtlasRevision;
 

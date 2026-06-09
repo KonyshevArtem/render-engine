@@ -37,8 +37,8 @@ void ForwardRenderPass::Execute(const RenderData& renderData)
 
     Profiler::Marker marker("ForwardRenderPass::Execute");
 
-    const GraphicsBackendRenderTargetDescriptor colorDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
-    const GraphicsBackendRenderTargetDescriptor depthDescriptor { .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+    const GraphicsBackendRenderTargetDescriptor colorDescriptor { .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+    const GraphicsBackendRenderTargetDescriptor depthDescriptor { .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
 
     GraphicsBackend::Current()->AttachRenderTarget(colorDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(depthDescriptor);

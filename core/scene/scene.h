@@ -2,7 +2,8 @@
 #define RENDER_ENGINE_SCENE_H
 
 #include "gameObject/gameObject.h"
-#include "vector3/vector3.h"
+#include "texture/texture_resources.h"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -18,13 +19,15 @@ class Scene
 public:
     inline static std::shared_ptr<Scene> Current = nullptr;
 
+    Scene();
+
     static void Init();
     static void Update();
     static void Load(const std::string& scenePath);
     static void Unload();
 
     void SetSkybox(const std::shared_ptr<Cubemap>& skybox);
-    std::shared_ptr<Cubemap> GetSkybox();
+    std::shared_ptr<TextureView> GetSkybox();
 
     std::shared_ptr<GameObject> FindGameObject(const std::function<bool(const GameObject*)>& predicate);
     std::vector<std::shared_ptr<GameObject>> FindGameObjects(const std::function<bool(const GameObject*)>& predicate);
@@ -43,7 +46,7 @@ private:
     std::vector<std::shared_ptr<GameObject>> m_GameObjects;
 
     std::shared_mutex m_SkyboxMutex;
-    std::shared_ptr<Cubemap> m_Skybox;
+    TextureResources m_Skybox;
 
     std::atomic<bool> m_IsLoading;
 

@@ -5,11 +5,11 @@
 #include "vector2/vector2.h"
 #include "vector3/vector3.h"
 #include "graphics/passes/render_pass.h"
+#include "texture/texture_resources.h"
 
 struct RenderData;
 class Shader;
 class RaytracingScene;
-class Texture;
 class GraphicsBuffer;
 class Mesh;
 
@@ -62,16 +62,17 @@ private:
     std::shared_ptr<RaytracingScene> m_RaytracingScene;
 	std::shared_ptr<GraphicsBuffer> m_ProbesDataBuffer;
 	std::shared_ptr<GraphicsBuffer> m_ProbesDebugDataBuffer;
-    std::shared_ptr<Texture> m_ProbeTempLightAtlas;
-    std::shared_ptr<Texture> m_ProbeTempDepthAtlas;
-    std::shared_ptr<Texture> m_ProbeLightAtlas;
-    std::shared_ptr<Texture> m_ProbeDepthAtlas;
-    std::shared_ptr<Texture> m_DebugProbeGITarget;
+    TextureResources m_ProbeTempLightAtlas;
+    TextureResources m_ProbeTempDepthAtlas;
+    TextureResources m_ProbeLightAtlas;
+    TextureResources m_ProbeDepthAtlas;
+    TextureResources m_DebugProbeGITarget;
 
     FileWatcher m_FileWatcher;
 
     void LoadShaders(bool reload);
 	void UpdateProbesData() const;
+	void UpdateTextureResources(TextureResources& textureResources, uint32_t width, uint32_t height, TextureInternalFormat format, const std::string& name) const;
 };
 
 #endif

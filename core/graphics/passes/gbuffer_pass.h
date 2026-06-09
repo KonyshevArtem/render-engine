@@ -3,7 +3,7 @@
 
 #include "render_pass.h"
 #include "graphics/render_queue/render_queue.h"
-#include "texture/texture.h"
+#include "texture/texture_resources.h"
 
 class GBufferPass : public RenderPass
 {
@@ -15,8 +15,8 @@ public:
 	void Execute(const RenderData& renderData) override;
 
 private:
-	std::shared_ptr<Texture> m_GBuffers[2];
-	std::shared_ptr<Texture> m_CameraDepthTarget;
+	TextureResources m_GBuffers[2];
+	TextureResources m_CameraDepthTarget;
 
 	RenderQueue m_RenderQueue;
 };

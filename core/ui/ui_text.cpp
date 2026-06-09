@@ -184,7 +184,7 @@ const std::shared_ptr<Mesh> UIText::GetMesh() const
     return m_Mesh;
 }
 
-const std::shared_ptr<Texture> UIText::GetFontAtlas() const
+const std::shared_ptr<TextureView> UIText::GetFontAtlas() const
 {
     return m_Font->GetAtlas(m_FontSize);
 }

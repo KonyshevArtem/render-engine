@@ -8,6 +8,7 @@
 #include "global_constants.h"
 #include "light/light.h"
 #include "graphics_buffer/ring_buffer.h"
+#include "texture/texture_resources.h"
 
 #include <memory>
 #include <vector>
@@ -44,8 +45,8 @@ private:
     };
 
     std::shared_ptr<GraphicsBuffer> m_ShadowsConstantBuffer;
-    std::shared_ptr<Texture2DArray> m_PunctualLightShadowAtlas;
-    std::shared_ptr<Texture2DArray> m_DirectionLightShadowMap;
+    TextureResources m_PunctualLightShadowAtlas;
+    TextureResources m_DirectionLightShadowMap;
 
     RenderQueue m_DirectionalLightRenderQueues[GlobalConstants::ShadowCascadeCount];
     RenderQueue m_SpotLightRenderQueues[GlobalConstants::MaxSpotLightSources];

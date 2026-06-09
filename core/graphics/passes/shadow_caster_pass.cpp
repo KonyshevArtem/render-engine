@@ -79,29 +79,34 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
     shadowMapDescriptor.Linear = true;
     shadowMapDescriptor.RenderTarget = true;
 
-    if (!m_DirectionLightShadowMap)
+	GraphicsBackendTextureViewDescriptor shadowMapViewDescriptor{};
+	shadowMapViewDescriptor.Format = shadowMapDescriptor.Format;
+
+    if (!m_DirectionLightShadowMap.Texture)
     {
         shadowMapDescriptor.Width = ShadowCasterPassLocal::k_DirLightShadowMapSize;
         shadowMapDescriptor.Height = ShadowCasterPassLocal::k_DirLightShadowMapSize;
         shadowMapDescriptor.Depth = GlobalConstants::ShadowCascadeCount;
 
-        m_DirectionLightShadowMap = Texture2DArray::Create(shadowMapDescriptor, "DirectionalShadowMap");
-        m_DirectionLightShadowMap->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
-        m_DirectionLightShadowMap->SetFilteringMode(TextureFilteringMode::LINEAR);
-        m_DirectionLightShadowMap->SetComparisonFunction(ComparisonFunction::LEQUAL);
+        m_DirectionLightShadowMap.Texture = Texture2DArray::Create(shadowMapDescriptor, "DirectionalShadowMap");
+        m_DirectionLightShadowMap.Texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
+        m_DirectionLightShadowMap.Texture->SetFilteringMode(TextureFilteringMode::LINEAR);
+        m_DirectionLightShadowMap.Texture->SetComparisonFunction(ComparisonFunction::LEQUAL);
+		m_DirectionLightShadowMap.View = std::make_shared<TextureView>(m_DirectionLightShadowMap.Texture, shadowMapViewDescriptor, "DirectionalShadowMapView");
     }
 
-    if (!m_PunctualLightShadowAtlas)
+    if (!m_PunctualLightShadowAtlas.Texture)
     {
         shadowMapDescriptor.Width = ShadowCasterPassLocal::k_PunctualLightShadowMapSize;
         shadowMapDescriptor.Height = ShadowCasterPassLocal::k_PunctualLightShadowMapSize;
         shadowMapDescriptor.Depth = ShadowCasterPassLocal::k_PunctualLightShadowAtlasSlots;
 
-        m_PunctualLightShadowAtlas = Texture2DArray::Create(shadowMapDescriptor, "PunctualLightShadowMapAtlas");
-        m_PunctualLightShadowAtlas->SetBorderColor({ 1, 1, 1, 1 });
-        m_PunctualLightShadowAtlas->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
-        m_PunctualLightShadowAtlas->SetFilteringMode(TextureFilteringMode::LINEAR);
-        m_PunctualLightShadowAtlas->SetComparisonFunction(ComparisonFunction::LEQUAL);
+        m_PunctualLightShadowAtlas.Texture = Texture2DArray::Create(shadowMapDescriptor, "PunctualLightShadowMapAtlas");
+        m_PunctualLightShadowAtlas.Texture->SetBorderColor({ 1, 1, 1, 1 });
+        m_PunctualLightShadowAtlas.Texture->SetWrapMode(TextureWrapMode::CLAMP_TO_BORDER);
+        m_PunctualLightShadowAtlas.Texture->SetFilteringMode(TextureFilteringMode::LINEAR);
+        m_PunctualLightShadowAtlas.Texture->SetComparisonFunction(ComparisonFunction::LEQUAL);
+		m_PunctualLightShadowAtlas.View = std::make_shared<TextureView>(m_PunctualLightShadowAtlas.Texture, shadowMapViewDescriptor, "PunctualLightShadowMapAtlasView");
     }
 
     GraphicsBackendBufferDescriptor bufferDescriptor{};
@@ -177,7 +182,7 @@ void ShadowCasterPass::Prepare(RenderData& renderData)
         {
             if (renderData.RaytracedShadowsEnabled)
             {
-                m_DirectionLightShadowMap = nullptr;
+                m_DirectionLightShadowMap.Clear();
                 continue;
             }
 
@@ -221,7 +226,7 @@ void ShadowCasterPass::Execute(const RenderData& renderData)
         if (m_SpotLightRenderQueues[i].IsEmpty())
             break;
 
-        Render(m_SpotLightRenderQueues[i], m_PunctualLightShadowAtlas, m_SpotLightCameraData[i], "Spot Light Shadow Pass " + std::to_string(i));
+        Render(m_SpotLightRenderQueues[i], m_PunctualLightShadowAtlas.Texture, m_SpotLightCameraData[i], "Spot Light Shadow Pass " + std::to_string(i));
     }
 
     for (int i = 0; i < GlobalConstants::MaxPointLightSources; ++i)
@@ -230,25 +235,25 @@ void ShadowCasterPass::Execute(const RenderData& renderData)
         {
             const int viewIndex = i * 6 + j;
             if (!m_PointLightsRenderQueues[viewIndex].IsEmpty())
-                Render(m_PointLightsRenderQueues[viewIndex], m_PunctualLightShadowAtlas, m_PointLightCameraData[viewIndex], "Point Light Shadow Pass " + std::to_string(i));
+                Render(m_PointLightsRenderQueues[viewIndex], m_PunctualLightShadowAtlas.Texture, m_PointLightCameraData[viewIndex], "Point Light Shadow Pass " + std::to_string(i));
         }
     }
 
     for (int i = 0; i < GlobalConstants::ShadowCascadeCount; ++i)
     {
         if (!m_DirectionalLightRenderQueues[i].IsEmpty())
-            Render(m_DirectionalLightRenderQueues[i], m_DirectionLightShadowMap, m_DirectionLightCameraData[i], "Directional Light Shadow Pass " + std::to_string(i));
+            Render(m_DirectionalLightRenderQueues[i], m_DirectionLightShadowMap.Texture, m_DirectionLightCameraData[i], "Directional Light Shadow Pass " + std::to_string(i));
     }
 
-    TextureViewer::RegisterTexture(m_DirectionLightShadowMap, "Shadows/DirectionalShadowMap");
-    TextureViewer::RegisterTexture(m_PunctualLightShadowAtlas, "Shadows/PunctualLightShadowAtlas");
+    TextureViewer::RegisterTexture(m_DirectionLightShadowMap.View, "Shadows/DirectionalShadowMap");
+    TextureViewer::RegisterTexture(m_PunctualLightShadowAtlas.View, "Shadows/PunctualLightShadowAtlas");
 }
 
 void ShadowCasterPass::BindShadowMaps() const
 {
-	if (m_DirectionLightShadowMap)
-		GraphicsBackend::Current()->BindTextureSampler(m_DirectionLightShadowMap->GetBackendTexture(), m_DirectionLightShadowMap->GetBackendSampler(), GlobalConstants::TextureIndex::DIRECTIONAL_SHADOW_MAP);
-    GraphicsBackend::Current()->BindTextureSampler(m_PunctualLightShadowAtlas->GetBackendTexture(), m_PunctualLightShadowAtlas->GetBackendSampler(), GlobalConstants::TextureIndex::PUNCTUAL_LIGHT_SHADOW_ATLAS);
+	if (m_DirectionLightShadowMap.Texture)
+		GraphicsBackend::Current()->BindTextureSampler(m_DirectionLightShadowMap.View->GetBackendTextureView(), m_DirectionLightShadowMap.Texture->GetBackendSampler(), GlobalConstants::TextureIndex::DIRECTIONAL_SHADOW_MAP);
+    GraphicsBackend::Current()->BindTextureSampler(m_PunctualLightShadowAtlas.View->GetBackendTextureView(), m_PunctualLightShadowAtlas.Texture->GetBackendSampler(), GlobalConstants::TextureIndex::PUNCTUAL_LIGHT_SHADOW_ATLAS);
 }
 
 void ShadowCasterPass::Render(RenderQueue& renderQueue, const std::shared_ptr<Texture>& target, const ShadowsCameraData& cameraData, const std::string& passName) const

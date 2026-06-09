@@ -46,14 +46,14 @@ void ShadowMapDebugPass::Execute(const RenderData& renderData)
         DebugData data{};
         data.InvCameraVP = (renderData.ProjectionMatrix * renderData.ViewMatrix).Invert();
 
-        const GraphicsBackendRenderTargetDescriptor colorTarget{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+        const GraphicsBackendRenderTargetDescriptor colorTarget{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
         GraphicsBackend::Current()->AttachRenderTarget(colorTarget);
 
         GraphicsBackend::Current()->BeginRenderPass("Shadow Cascade Visualize Pass");
 
         buffer->SetData(&data, 0, sizeof(data));
         GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
-        GraphicsBackend::Current()->BindTextureSampler(renderData.CameraDepthTarget->GetBackendTexture(), renderData.CameraDepthTarget->GetBackendSampler(), 0);
+        GraphicsBackend::Current()->BindTextureSampler(renderData.CameraDepthTarget.View->GetBackendTextureView(), renderData.CameraDepthTarget.Texture->GetBackendSampler(), 0);
 
         GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::PremultipliedAlphaBlending());
         GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());

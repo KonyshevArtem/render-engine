@@ -36,7 +36,7 @@ void FinalBlitPass::Execute(const RenderData& renderData)
     {
         Profiler::GPUMarker gpuMarker("FinalBlitPass::Execute");
 
-        GraphicsBackend::Current()->BindTextureSampler(renderData.PostProcessedTarget->GetBackendTexture(), renderData.PostProcessedTarget->GetBackendSampler(), 0);
+        GraphicsBackend::Current()->BindTextureSampler(renderData.PostProcessedTarget.View->GetBackendTextureView(), renderData.PostProcessedTarget.Texture->GetBackendSampler(), 0);
         GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
 
         const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();

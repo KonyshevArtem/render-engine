@@ -21,9 +21,10 @@ public:
     void FillImGuiInitData(void* data) override;
     void FillImGuiFrameData(void* data) override;
 
-    GraphicsBackendTexture CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name) override;
+    GraphicsBackendTexture CreateTexture(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name) override;
+    GraphicsBackendTextureView CreateTextureView(const GraphicsBackendTextureViewDescriptor& descriptor, const GraphicsBackendTexture& texture, const std::string& name) override;
     GraphicsBackendSampler CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name) override;
-    void* GetImGuiTextureId(const GraphicsBackendTexture& texture) override;
+    void* GetImGuiTextureId(const GraphicsBackendTextureView& textureView) override;
 
     void GenerateMipmaps(const GraphicsBackendTexture &texture) override;
     void UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData) override;
@@ -100,18 +101,19 @@ public:
     GraphicsBackendTLAS CreateTLAS(const std::vector<GraphicsBackendRaytracingInstanceDescriptor>& instanceDescriptors, const std::string& name) override;
 
 protected:
-    void DeleteTexture_Internal(const GraphicsBackendTexture &texture) override;
-    void DeleteSampler_Internal(const GraphicsBackendSampler &sampler) override;
-    void DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer) override;
+    void DeleteTexture_Internal(const GraphicsBackendTexture& texture) override;
+    void DeleteTextureView_Internal(const GraphicsBackendTextureView& textureView) override;
+    void DeleteSampler_Internal(const GraphicsBackendSampler& sampler) override;
+    void DeleteBuffer_Internal(const GraphicsBackendBuffer& buffer) override;
     void DeleteBufferView_Internal(const GraphicsBackendBufferView& bufferView) override;
-    void DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry) override;
+    void DeleteGeometry_Internal(const GraphicsBackendGeometry& geometry) override;
     void DeleteShader_Internal(GraphicsBackendShaderObject shader) override;
     void DeleteProgram_Internal(GraphicsBackendProgram program) override;
     void DeleteBLAS_Internal(GraphicsBackendBLAS& blas) override;
     void DeleteTLAS_Internal(GraphicsBackendTLAS& tlas) override;
 
-    void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
-    void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) override;
+    void BindTexture_Internal(const GraphicsBackendTextureView& textureView, uint32_t index) override;
+    void BindRWTexture_Internal(const GraphicsBackendTextureView& textureView, uint32_t index) override;
     void BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index) override;
     void BindBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) override;
     void BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size) override;

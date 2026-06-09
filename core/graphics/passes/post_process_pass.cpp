@@ -36,16 +36,22 @@ PostProcessPass::PostProcessPass() :
 
 void PostProcessPass::Prepare(RenderData& renderData)
 {
-    if (m_PostProcessedTarget == nullptr || m_PostProcessedTarget->GetWidth() != renderData.CameraColorTarget->GetWidth() || m_PostProcessedTarget->GetHeight() != renderData.CameraColorTarget->GetHeight())
+	const uint32_t width = renderData.CameraColorTarget.Texture->GetWidth();
+	const uint32_t height = renderData.CameraColorTarget.Texture->GetHeight();
+    if (!m_PostProcessedTarget.Texture || m_PostProcessedTarget.Texture->GetWidth() != width || m_PostProcessedTarget.Texture->GetHeight() != height)
     {
         GraphicsBackendTextureDescriptor descriptor;
-        descriptor.Width = renderData.CameraColorTarget->GetWidth();
-        descriptor.Height = renderData.CameraColorTarget->GetHeight();
+        descriptor.Format = TextureInternalFormat::RGBA8;
+        descriptor.Width = width;
+        descriptor.Height = height;
         descriptor.Linear = true;
         descriptor.RenderTarget = true;
 
-        descriptor.Format = TextureInternalFormat::RGBA8;
-        m_PostProcessedTarget = Texture2D::Create(descriptor, "PostProcessedRT");
+		GraphicsBackendTextureViewDescriptor viewDescriptor{};
+		viewDescriptor.Format = descriptor.Format;
+
+        m_PostProcessedTarget.Texture = Texture2D::Create(descriptor, "PostProcessedRT");
+		m_PostProcessedTarget.View = std::make_shared<TextureView>(m_PostProcessedTarget.Texture, viewDescriptor, "PostProcessedRT_View");
     }
 
     renderData.PostProcessedTarget = m_PostProcessedTarget;
@@ -65,7 +71,7 @@ void PostProcessPass::Execute(const RenderData& renderData)
 
     GraphicsBackendRenderTargetDescriptor rtDesc{};
     rtDesc.Attachment = FramebufferAttachment::COLOR_ATTACHMENT0;
-    rtDesc.Texture = m_PostProcessedTarget->GetBackendTexture();
+    rtDesc.Texture = m_PostProcessedTarget.Texture->GetBackendTexture();
     rtDesc.LoadAction = LoadAction::DONT_CARE;
 
     GraphicsBackend::Current()->AttachRenderTarget(rtDesc);
@@ -77,7 +83,7 @@ void PostProcessPass::Execute(const RenderData& renderData)
 
         m_PostProcessDataBuffer->SetData(&data, 0, sizeof(data));
         GraphicsBackend::Current()->BindConstantBuffer(m_PostProcessDataBuffer->GetBackendBuffer(), 0, 0, sizeof(data));
-        GraphicsBackend::Current()->BindTextureSampler(renderData.CameraColorTarget->GetBackendTexture(), renderData.CameraColorTarget->GetBackendSampler(), 0);
+        GraphicsBackend::Current()->BindTextureSampler(renderData.CameraColorTarget.View->GetBackendTextureView(), renderData.CameraColorTarget.Texture->GetBackendSampler(), 0);
         GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
 
         const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();

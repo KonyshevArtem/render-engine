@@ -1,10 +1,12 @@
 #ifndef RENDER_ENGINE_GRAPHICS_BACKEND_TEXTURE_DESCRIPTOR_H
 #define RENDER_ENGINE_GRAPHICS_BACKEND_TEXTURE_DESCRIPTOR_H
 
+#include "enums/texture_type.h"
 #include "enums/texture_internal_format.h"
 
 struct GraphicsBackendTextureDescriptor
 {
+	TextureType Type = TextureType::TEXTURE_2D;
     uint32_t Width = 1;
     uint32_t Height = 1;
     uint32_t Depth = 1;

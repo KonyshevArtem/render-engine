@@ -9,13 +9,13 @@
 #include "types/graphics_backend_rasterizer_descriptor.h"
 #include "types/graphics_backend_blend_descriptor.h"
 #include "resources/resource.h"
+#include "texture/texture_resources.h"
 
 #include <vector>
 #include <unordered_map>
 #include <memory>
 #include <string>
 
-class Texture;
 class Shader;
 class GraphicsBuffer;
 class GraphicsBufferWrapper;
@@ -51,7 +51,7 @@ public:
         return m_Shader;
     }
 
-    inline const std::unordered_map<uint32_t, std::shared_ptr<Texture>>& GetTextures() const
+    inline const std::unordered_map<uint32_t, TextureResources>& GetTextures() const
     {
         return m_Textures;
     }
@@ -78,7 +78,7 @@ private:
 
     std::shared_ptr<GraphicsBufferWrapper> m_PerMaterialDataBufferWrapper;
     std::shared_ptr<Shader> m_Shader;
-    std::unordered_map<uint32_t, std::shared_ptr<Texture>> m_Textures;
+    std::unordered_map<uint32_t, TextureResources> m_Textures;
     std::string m_Name;
     int m_RenderQueue = 2000;
 };

@@ -398,15 +398,15 @@ void RenderQueue::SetupShaderPass(const Material* material, const VertexAttribut
         for (const auto& pair : material->GetTextures())
         {
             const uint32_t binding = pair.first;
-            const std::shared_ptr<Texture>& texture = pair.second;
+            const TextureResources& texture = pair.second;
 
-            if (!texture)
+            if (!texture.Texture)
             {
                 Debug::LogErrorFormat("[RenderQueue] Texture for binding {} is missing on material: {}", std::to_string(binding), material->GetName());
                 continue;
             }
 
-            GraphicsBackend::Current()->BindTextureSampler(texture->GetBackendTexture(), texture->GetBackendSampler(), binding);
+            GraphicsBackend::Current()->BindTextureSampler(texture.View->GetBackendTextureView(), texture.Texture->GetBackendSampler(), binding);
         }
 
         GraphicsBackend::Current()->SetDepthState(material->DepthDescriptor);

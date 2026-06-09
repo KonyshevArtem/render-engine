@@ -1,7 +1,7 @@
 #ifndef RENDER_ENGINE_TEXTURE_VIEWER_H
 #define RENDER_ENGINE_TEXTURE_VIEWER_H
 
-#include "texture/texture.h"
+#include "texture/texture_resources.h"
 #include "shader/shader.h"
 #include "graphics_buffer/graphics_buffer.h"
 #include "file_watcher.h"
@@ -14,7 +14,7 @@
 class TextureViewer
 {
 public:
-	static void RegisterTexture(const std::shared_ptr<Texture>& texture, const std::string& name);
+	static void RegisterTexture(const std::shared_ptr<TextureView>& textureView, const std::string& name);
 
 	static void SetSelectedTextureName(const std::string& name);
 	static void SetColorMask(Vector4I mask);
@@ -23,7 +23,7 @@ public:
 	static void SetTextureSlice(int slice);
 	static void SetTextureRegisteredCallback(std::function<void(const std::string&)> callback);
 
-	static std::shared_ptr<Texture> GetSelectedTextureCopy();
+	static std::shared_ptr<TextureView> GetSelectedTextureCopy();
 
 private:
 	static std::string s_SelectedTextureName;
@@ -33,7 +33,7 @@ private:
 	static int s_TextureSlice;
 	static std::function<void(const std::string&)> s_TextureRegisteredCallback;
 
-	static std::shared_ptr<Texture> s_SelectedTextureCopy;
+	static TextureResources s_SelectedTextureCopy;
 	static std::shared_ptr<Shader> s_CopyShaders[2];
 	static std::shared_ptr<GraphicsBuffer> s_DataBuffer;
 	static FileWatcher s_FileWatcher;

@@ -73,7 +73,9 @@ add_library(GraphicsBackend
         types/graphics_backend_raytracing_instance_descriptor.h
         types/graphics_backend_tlas_info.h
         helpers/aftermath.h
-        helpers/aftermath.cpp)
+        helpers/aftermath.cpp
+        types/graphics_backend_texture_view.h
+        types/graphics_backend_texture_view_descriptor.h)
 
 if (${RENDER_ENGINE_WINDOWS_PLATFORM})
 

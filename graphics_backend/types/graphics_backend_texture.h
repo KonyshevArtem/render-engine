@@ -7,9 +7,6 @@
 
 class GraphicsBackendTexture
 {
-public:
-	uint32_t BindlessIndex = 0;
-
 private:
     uint64_t Texture;
     TextureType Type;

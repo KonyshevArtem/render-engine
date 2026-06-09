@@ -14,6 +14,7 @@
 #include "types/graphics_backend_program.h"
 #include "types/graphics_backend_program_descriptor.h"
 #include "types/graphics_backend_buffer_view.h"
+#include "types/graphics_backend_texture_view.h"
 #include "enums/indices_data_type.h"
 #include "arguments.h"
 #include "hash.h"
@@ -82,11 +83,18 @@ void GraphicsBackendBase::DeleteTexture(const GraphicsBackendTexture& texture)
     std::lock_guard<std::mutex> lock(m_DeletedTexturesMutex);
 
     m_DeletedTextures.emplace_back(texture);
+}
 
-    auto Predicate = [&texture](const std::pair<uint32_t, GraphicsBackendTexture>& pair)
-    {
-        return pair.second.Texture == texture.Texture;
-    };
+void GraphicsBackendBase::DeleteTextureView(const GraphicsBackendTextureView& textureView)
+{
+    std::lock_guard<std::mutex> lock(m_DeletedTextureViewsMutex);
+
+    m_DeletedTextureViews.emplace_back(textureView);
+
+    auto Predicate = [&textureView](const std::pair<uint32_t, GraphicsBackendTextureView>& pair)
+        {
+            return pair.second.TextureView == textureView.TextureView;
+        };
 
     std::erase_if(m_BoundTextures, Predicate);
     std::erase_if(m_BoundRWTextures, Predicate);
@@ -247,9 +255,9 @@ void GraphicsBackendBase::DeleteResources()
     BaseBackendLocal::DeleteResources<GraphicsBackendTLAS>(m_DeletedTLASes, [this](GraphicsBackendTLAS& TLAS) { DeleteTLAS_Internal(TLAS); });
 }
 
-void GraphicsBackendBase::BindTexture(const GraphicsBackendTexture& texture, uint32_t index)
+void GraphicsBackendBase::BindTexture(const GraphicsBackendTextureView& textureView, uint32_t index)
 {
-    m_BoundTextures[index] = texture;
+    m_BoundTextures[index] = textureView;
     m_BoundTexturesDirtyMask |= 1 << index;
 }
 
@@ -259,15 +267,15 @@ void GraphicsBackendBase::BindSampler(const GraphicsBackendSampler& sampler, uin
     m_BoundSamplersDirtyMask |= 1 << index;
 }
 
-void GraphicsBackendBase::BindTextureSampler(const GraphicsBackendTexture& texture, const GraphicsBackendSampler& sampler, uint32_t index)
+void GraphicsBackendBase::BindTextureSampler(const GraphicsBackendTextureView& textureView, const GraphicsBackendSampler& sampler, uint32_t index)
 {
-    BindTexture(texture, index);
+    BindTexture(textureView, index);
     BindSampler(sampler, index);
 }
 
-void GraphicsBackendBase::BindRWTexture(const GraphicsBackendTexture& texture, uint32_t index)
+void GraphicsBackendBase::BindRWTexture(const GraphicsBackendTextureView& textureView, uint32_t index)
 {
-    m_BoundRWTextures[index] = texture;
+    m_BoundRWTextures[index] = textureView;
     m_BoundRWTexturesDirtyMask |= 1 << index;
 }
 

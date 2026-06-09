@@ -2,11 +2,11 @@
 #define RENDER_ENGINE_POST_PROCESS_PASS_H
 
 #include "render_pass.h"
+#include "texture/texture_resources.h"
 
 struct RenderData;
 class Shader;
 class GraphicsBuffer;
-class Texture;
 
 class PostProcessPass : public RenderPass
 {
@@ -20,7 +20,7 @@ public:
 private:
     std::shared_ptr<Shader> m_PostProcessShader;
     std::shared_ptr<GraphicsBuffer> m_PostProcessDataBuffer;
-    std::shared_ptr<Texture> m_PostProcessedTarget;
+    TextureResources m_PostProcessedTarget;
 };
 
 

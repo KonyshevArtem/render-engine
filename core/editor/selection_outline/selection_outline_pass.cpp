@@ -21,9 +21,9 @@
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "resources/resources.h"
 
-void CheckTexture(std::shared_ptr<Texture2D>& texture, int width, int height)
+void CheckTexture(TextureResources& textureResources, uint32_t width, uint32_t height)
 {
-    if (!texture || texture->GetWidth() != width || texture->GetHeight() != height)
+    if (!textureResources.Texture || textureResources.Texture->GetWidth() != width || textureResources.Texture->GetHeight() != height)
     {
         GraphicsBackendTextureDescriptor descriptor;
         descriptor.Width = width;
@@ -31,8 +31,13 @@ void CheckTexture(std::shared_ptr<Texture2D>& texture, int width, int height)
         descriptor.RenderTarget = true;
         descriptor.Format = TextureInternalFormat::RGBA8;
 
-        texture = Texture2D::Create(descriptor, "SilhouetteRT");
-        texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
+        textureResources.Texture = Texture2D::Create(descriptor, "SilhouetteRT");
+        textureResources.Texture->SetWrapMode(TextureWrapMode::CLAMP_TO_EDGE);
+
+		GraphicsBackendTextureViewDescriptor viewDescriptor{};
+		viewDescriptor.Format = descriptor.Format;
+
+		textureResources.View = std::make_shared<TextureView>(textureResources.Texture, viewDescriptor, "SilhouetteRT_View");
     }
 }
 
@@ -74,7 +79,7 @@ void SelectionOutlinePass::Prepare(RenderData& renderData)
 
 void SelectionOutlinePass::Execute(const RenderData& renderData)
 {
-    static std::shared_ptr<Texture2D> silhouetteRenderTarget = nullptr;
+    static TextureResources silhouetteRenderTarget{};
     static Vector4 outlineColor {1, 0.73f, 0, 1};
 
     Profiler::Marker marker("SelectionOutlinePass::Execute");
@@ -88,7 +93,7 @@ void SelectionOutlinePass::Execute(const RenderData& renderData)
 
     // render selected gameObjects
     {
-        const GraphicsBackendRenderTargetDescriptor colorTarget{ FramebufferAttachment::COLOR_ATTACHMENT0, silhouetteRenderTarget->GetBackendTexture(), LoadAction::CLEAR, StoreAction::STORE };
+        const GraphicsBackendRenderTargetDescriptor colorTarget{ FramebufferAttachment::COLOR_ATTACHMENT0, silhouetteRenderTarget.Texture->GetBackendTexture(), LoadAction::CLEAR, StoreAction::STORE };
         GraphicsBackend::Current()->AttachRenderTarget(colorTarget);
 
         GraphicsBackend::Current()->BeginRenderPass("Selection Outline Pass");
@@ -122,11 +127,11 @@ void SelectionOutlinePass::Execute(const RenderData& renderData)
 
         OutlineData data{};
         data.Color = outlineColor;
-        data.InvTextureSize = Vector2(1.0f / silhouetteRenderTarget->GetWidth(), 1.0f / silhouetteRenderTarget->GetHeight());
+        data.InvTextureSize = Vector2(1.0f / silhouetteRenderTarget.Texture->GetWidth(), 1.0f / silhouetteRenderTarget.Texture->GetHeight());
 
         const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
 
-        const GraphicsBackendRenderTargetDescriptor colorTarget{ FramebufferAttachment::COLOR_ATTACHMENT0, renderData.CameraColorTarget->GetBackendTexture(), LoadAction::LOAD, StoreAction::STORE };
+        const GraphicsBackendRenderTargetDescriptor colorTarget{ FramebufferAttachment::COLOR_ATTACHMENT0, renderData.CameraColorTarget.Texture->GetBackendTexture(), LoadAction::LOAD, StoreAction::STORE };
         GraphicsBackend::Current()->AttachRenderTarget(colorTarget);
 
         GraphicsBackend::Current()->BeginRenderPass("Selection Blit Pass");
@@ -135,7 +140,7 @@ void SelectionOutlinePass::Execute(const RenderData& renderData)
 
             blitDataBuffer->SetData(&data, 0, sizeof(data));
             GraphicsBackend::Current()->BindConstantBuffer(blitDataBuffer->GetBackendBuffer(), 0, 0, sizeof(data));
-            GraphicsBackend::Current()->BindTextureSampler(silhouetteRenderTarget->GetBackendTexture(), silhouetteRenderTarget->GetBackendSampler(), 0);
+            GraphicsBackend::Current()->BindTextureSampler(silhouetteRenderTarget.View->GetBackendTextureView(), silhouetteRenderTarget.Texture->GetBackendSampler(), 0);
 
             GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::AlwaysPassNoWrite());
 

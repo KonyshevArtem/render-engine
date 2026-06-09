@@ -14,7 +14,7 @@ void GBufferPass::Prepare(RenderData& renderData)
 
 	const uint32_t width = renderData.Viewport.x;
 	const uint32_t height = renderData.Viewport.y;
-	if (!m_GBuffers[0] || m_GBuffers[0]->GetWidth() != width || m_GBuffers[0]->GetHeight() != height)
+	if (!m_GBuffers[0].Texture || m_GBuffers[0].Texture->GetWidth() != width || m_GBuffers[0].Texture->GetHeight() != height)
 	{
 		GraphicsBackendTextureDescriptor gBufferDescriptor{};
 		gBufferDescriptor.Format = TextureInternalFormat::RGBA16F;
@@ -23,22 +23,32 @@ void GBufferPass::Prepare(RenderData& renderData)
 		gBufferDescriptor.RenderTarget = true;
 		gBufferDescriptor.Linear = true;
 
+		GraphicsBackendTextureViewDescriptor gBufferViewDescriptor{};
+		gBufferViewDescriptor.Format = gBufferDescriptor.Format;
+
 		for (int i = 0; i < 2; i++)
-			m_GBuffers[i] = Texture2D::Create(gBufferDescriptor, "GBuffer_" + std::to_string(i));
+		{
+			m_GBuffers[i].Texture = Texture2D::Create(gBufferDescriptor, "GBuffer_" + std::to_string(i));
+			m_GBuffers[i].View = std::make_shared<TextureView>(m_GBuffers[i].Texture, gBufferViewDescriptor, "GBufferView_" + std::to_string(i));
+		}
 	}
 
-	if (m_CameraDepthTarget == nullptr || m_CameraDepthTarget->GetWidth() != width || m_CameraDepthTarget->GetHeight() != height)
+	if (!m_CameraDepthTarget.Texture || m_CameraDepthTarget.Texture->GetWidth() != width || m_CameraDepthTarget.Texture->GetHeight() != height)
 	{
 		const TextureInternalFormat depthFormat = GraphicsBackend::Current()->GetName() == GraphicsBackendName::METAL ? TextureInternalFormat::DEPTH_32_STENCIL_8 : TextureInternalFormat::DEPTH_24_STENCIL_8;
 
-		GraphicsBackendTextureDescriptor descriptor;
+		GraphicsBackendTextureDescriptor descriptor{};
+		descriptor.Format = depthFormat;
 		descriptor.Width = width;
 		descriptor.Height = height;
 		descriptor.Linear = true;
 		descriptor.RenderTarget = true;
 
-		descriptor.Format = depthFormat;
-		m_CameraDepthTarget = Texture2D::Create(descriptor, "CameraDepthRT");
+		GraphicsBackendTextureViewDescriptor viewDescriptor{};
+		viewDescriptor.Format = depthFormat;
+
+		m_CameraDepthTarget.Texture = Texture2D::Create(descriptor, "CameraDepthRT");
+		m_CameraDepthTarget.View = std::make_shared<TextureView>(m_CameraDepthTarget.Texture, viewDescriptor, "CameraDepthRT_View");
 	}
 
 	for (int i = 0; i < 2; i++)
@@ -55,9 +65,9 @@ void GBufferPass::Execute(const RenderData& renderData)
 {
 	Profiler::Marker marker("GBufferPass::Execute");
 
-	const GraphicsBackendRenderTargetDescriptor gBuffer0Descriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.GBuffers[0]->GetBackendTexture(), .LoadAction = LoadAction::CLEAR};
-	const GraphicsBackendRenderTargetDescriptor gBuffer1Descriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT1, .Texture = renderData.GBuffers[1]->GetBackendTexture(), .LoadAction = LoadAction::CLEAR};
-	const GraphicsBackendRenderTargetDescriptor depthDescriptor{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
+	const GraphicsBackendRenderTargetDescriptor gBuffer0Descriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.GBuffers[0].Texture->GetBackendTexture(), .LoadAction = LoadAction::CLEAR};
+	const GraphicsBackendRenderTargetDescriptor gBuffer1Descriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT1, .Texture = renderData.GBuffers[1].Texture->GetBackendTexture(), .LoadAction = LoadAction::CLEAR};
+	const GraphicsBackendRenderTargetDescriptor depthDescriptor{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
 
 	GraphicsBackend::Current()->AttachRenderTarget(gBuffer0Descriptor);
 	GraphicsBackend::Current()->AttachRenderTarget(gBuffer1Descriptor);
@@ -77,6 +87,6 @@ void GBufferPass::Execute(const RenderData& renderData)
 	GraphicsBackend::Current()->EndRenderPass();
 
 	for (int i = 0; i < 2; ++i)
-		TextureViewer::RegisterTexture(renderData.GBuffers[i], "GBuffer/" + std::to_string(i));
-	TextureViewer::RegisterTexture(renderData.CameraDepthTarget, "GBuffer/Depth");
+		TextureViewer::RegisterTexture(renderData.GBuffers[i].View, "GBuffer/" + std::to_string(i));
+	TextureViewer::RegisterTexture(renderData.CameraDepthTarget.View, "GBuffer/Depth");
 }

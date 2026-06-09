@@ -71,10 +71,10 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	{
 		Shader::RemoveGlobalDefine("PROBE_GI");
 
-		m_ProbeLightAtlas = nullptr;
-		m_ProbeDepthAtlas = nullptr;
-		m_ProbeTempLightAtlas = nullptr;
-		m_ProbeTempDepthAtlas = nullptr;
+		m_ProbeLightAtlas.Clear();
+		m_ProbeDepthAtlas.Clear();
+		m_ProbeTempLightAtlas.Clear();
+		m_ProbeTempDepthAtlas.Clear();
 		return;
 	}
 
@@ -88,29 +88,15 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	const uint32_t probesCount = m_ProbesGridSize.x * m_ProbesGridSize.y * m_ProbesGridSize.z;
 	const uint32_t paddedLightSize = m_ProbeLightSize + m_ProbeLightPadding + RaytracingProbesLocal::k_ProbesBorderSize;
 
-	GraphicsBackendTextureDescriptor descriptor{};
-	descriptor.Linear = true;
-	descriptor.ReadWrite = true;
+	const uint32_t atlasWidth = RaytracingProbesLocal::k_ProbesPerAtlasRow * paddedLightSize;
+	const uint32_t atlasHeight = std::max<uint32_t>(probesCount / RaytracingProbesLocal::k_ProbesPerAtlasRow, 1) * paddedLightSize;
+	const uint32_t tempAtlasWidth = std::min<uint32_t>(m_ProbesPerUpdate, RaytracingProbesLocal::k_ProbesPerAtlasRow) * paddedLightSize;
+	const uint32_t tempAtlasHeight = std::max<uint32_t>(m_ProbesPerUpdate / RaytracingProbesLocal::k_ProbesPerAtlasRow, 1) * paddedLightSize;
 
-	descriptor.Format = TextureInternalFormat::RGBA16F;
-	descriptor.Width = RaytracingProbesLocal::k_ProbesPerAtlasRow * paddedLightSize;
-	descriptor.Height = std::max<uint32_t>(probesCount / RaytracingProbesLocal::k_ProbesPerAtlasRow, 1) * paddedLightSize;
-	if (!m_ProbeLightAtlas || m_ProbeLightAtlas->GetWidth() != descriptor.Width || m_ProbeLightAtlas->GetHeight() != descriptor.Height)
-		m_ProbeLightAtlas = Texture2D::Create(descriptor, "ProbeLightAtlas");
-
-	descriptor.Format = TextureInternalFormat::RG16F;
-	if (!m_ProbeDepthAtlas || m_ProbeDepthAtlas->GetWidth() != descriptor.Width || m_ProbeDepthAtlas->GetHeight() != descriptor.Height)
-		m_ProbeDepthAtlas = Texture2D::Create(descriptor, "ProbeDepthAtlas");
-
-	descriptor.Format = TextureInternalFormat::RGBA16F;
-	descriptor.Width = std::min<uint32_t>(m_ProbesPerUpdate, RaytracingProbesLocal::k_ProbesPerAtlasRow) * paddedLightSize;
-	descriptor.Height = std::max<uint32_t>(m_ProbesPerUpdate / RaytracingProbesLocal::k_ProbesPerAtlasRow, 1) * paddedLightSize;
-	if (!m_ProbeTempLightAtlas || m_ProbeTempLightAtlas->GetWidth() != descriptor.Width || m_ProbeTempLightAtlas->GetHeight() != descriptor.Height)
-		m_ProbeTempLightAtlas = Texture2D::Create(descriptor, "ProbeTempLightAtlas");
-
-	descriptor.Format = TextureInternalFormat::R16F;
-	if (!m_ProbeTempDepthAtlas || m_ProbeTempDepthAtlas->GetWidth() != descriptor.Width || m_ProbeTempDepthAtlas->GetHeight() != descriptor.Height)
-		m_ProbeTempDepthAtlas = Texture2D::Create(descriptor, "ProbeTempDepthAtlas");
+	UpdateTextureResources(m_ProbeLightAtlas, atlasWidth, atlasHeight, TextureInternalFormat::RGBA16F, "ProbeLightAtlas");
+	UpdateTextureResources(m_ProbeDepthAtlas, atlasWidth, atlasHeight, TextureInternalFormat::RG16F, "ProbeDepthAtlas");
+	UpdateTextureResources(m_ProbeTempLightAtlas, tempAtlasWidth, tempAtlasHeight, TextureInternalFormat::RGBA16F, "ProbeTempLightAtlas");
+	UpdateTextureResources(m_ProbeTempDepthAtlas, tempAtlasWidth, tempAtlasHeight, TextureInternalFormat::R16F, "ProbeTempDepthAtlas");
 }
 
 void RaytracingProbes::Execute(const RenderData& renderData)
@@ -130,16 +116,16 @@ void RaytracingProbes::Execute(const RenderData& renderData)
 		BindResources();
 
 		// Trace
-		GraphicsBackend::Current()->BindRWTexture(m_ProbeTempLightAtlas->GetBackendTexture(), 0);
-		GraphicsBackend::Current()->BindRWTexture(m_ProbeTempDepthAtlas->GetBackendTexture(), 1);
+		GraphicsBackend::Current()->BindRWTexture(m_ProbeTempLightAtlas.RWView->GetBackendTextureView(), 0);
+		GraphicsBackend::Current()->BindRWTexture(m_ProbeTempDepthAtlas.RWView->GetBackendTextureView(), 1);
 		GraphicsBackend::Current()->UseProgram(m_ProbeTraceShader->GetProgram());
 		GraphicsBackend::Current()->Dispatch(m_ProbeLightSize * m_ProbesPerUpdate, m_ProbeLightSize, 1);
 
 		// Integrate
-		GraphicsBackend::Current()->BindTexture(m_ProbeTempLightAtlas->GetBackendTexture(), 0);
-		GraphicsBackend::Current()->BindTexture(m_ProbeTempDepthAtlas->GetBackendTexture(), 1);
-		GraphicsBackend::Current()->BindRWTexture(m_ProbeLightAtlas->GetBackendTexture(), 0);
-		GraphicsBackend::Current()->BindRWTexture(m_ProbeDepthAtlas->GetBackendTexture(), 1);
+		GraphicsBackend::Current()->BindTexture(m_ProbeTempLightAtlas.View->GetBackendTextureView(), 0);
+		GraphicsBackend::Current()->BindTexture(m_ProbeTempDepthAtlas.View->GetBackendTextureView(), 1);
+		GraphicsBackend::Current()->BindRWTexture(m_ProbeLightAtlas.RWView->GetBackendTextureView(), 0);
+		GraphicsBackend::Current()->BindRWTexture(m_ProbeDepthAtlas.RWView->GetBackendTextureView(), 1);
 		GraphicsBackend::Current()->UseProgram(m_ProbeIntegrateShader->GetProgram());
 		GraphicsBackend::Current()->Dispatch(m_ProbeLightSize * m_ProbesPerUpdate, m_ProbeLightSize, 1);
 
@@ -154,10 +140,10 @@ void RaytracingProbes::Execute(const RenderData& renderData)
 	if (m_UpdateProbeBaseIndex >= probesCount)
 		m_UpdateProbeBaseIndex = 0;
 
-	TextureViewer::RegisterTexture(m_ProbeTempLightAtlas, "Raytracing/ProbeTempLightAtlas");
-	TextureViewer::RegisterTexture(m_ProbeTempDepthAtlas, "Raytracing/ProbeTempDepthAtlas");
-	TextureViewer::RegisterTexture(m_ProbeLightAtlas, "Raytracing/ProbeLightAtlas");
-	TextureViewer::RegisterTexture(m_ProbeDepthAtlas, "Raytracing/ProbeDepthAtlas");
+	TextureViewer::RegisterTexture(m_ProbeTempLightAtlas.View, "Raytracing/ProbeTempLightAtlas");
+	TextureViewer::RegisterTexture(m_ProbeTempDepthAtlas.View, "Raytracing/ProbeTempDepthAtlas");
+	TextureViewer::RegisterTexture(m_ProbeLightAtlas.View, "Raytracing/ProbeLightAtlas");
+	TextureViewer::RegisterTexture(m_ProbeDepthAtlas.View, "Raytracing/ProbeDepthAtlas");
 }
 
 void RaytracingProbes::ExecuteDebug(const RenderData& renderData)
@@ -185,7 +171,7 @@ void RaytracingProbes::ExecuteDebug(const RenderData& renderData)
 	}
 
 	debugData.MouseCoord = Vector2I(Input::GetMousePosition().x, Input::GetMousePosition().y);
-	debugData.InvTargetSize = Vector2(1.0f / renderData.CameraDepthTarget->GetWidth(), 1.0f / renderData.CameraDepthTarget->GetHeight());
+	debugData.InvTargetSize = Vector2(1.0f / renderData.CameraDepthTarget.Texture->GetWidth(), 1.0f / renderData.CameraDepthTarget.Texture->GetHeight());
 	m_ProbesDebugDataBuffer->SetData(&debugData, 0, sizeof(debugData));
 
 	UpdateProbesData();
@@ -194,8 +180,8 @@ void RaytracingProbes::ExecuteDebug(const RenderData& renderData)
 	{
 		Profiler::Marker _("RaytracingProbes::DebugDrawProbes");
 
-		const GraphicsBackendRenderTargetDescriptor colorTargetDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
-		const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+		const GraphicsBackendRenderTargetDescriptor colorTargetDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+		const GraphicsBackendRenderTargetDescriptor depthTargetDescriptor{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
 
 		GraphicsBackend::Current()->AttachRenderTarget(colorTargetDescriptor);
 		GraphicsBackend::Current()->AttachRenderTarget(depthTargetDescriptor);
@@ -206,7 +192,7 @@ void RaytracingProbes::ExecuteDebug(const RenderData& renderData)
 
 			BindResources();
 			GraphicsBackend::Current()->BindConstantBuffer(m_ProbesDebugDataBuffer->GetBackendBuffer(), 1, 0, sizeof(debugData));
-			GraphicsBackend::Current()->BindTexture(renderData.CameraDepthTarget->GetBackendTexture(), 1);
+			GraphicsBackend::Current()->BindTexture(renderData.CameraDepthTarget.View->GetBackendTextureView(), 1);
 
 			const uint32_t probesCount = m_ProbesGridSize.x * m_ProbesGridSize.y * m_ProbesGridSize.z;
 
@@ -222,19 +208,23 @@ void RaytracingProbes::ExecuteDebug(const RenderData& renderData)
 
 		const uint32_t width = renderData.Viewport.x;
 		const uint32_t height = renderData.Viewport.y;
-		if (m_DebugProbeGITarget == nullptr || m_DebugProbeGITarget->GetWidth() != width || m_DebugProbeGITarget->GetHeight() != height)
+		if (!m_DebugProbeGITarget.Texture || m_DebugProbeGITarget.Texture->GetWidth() != width || m_DebugProbeGITarget.Texture->GetHeight() != height)
 		{
 			GraphicsBackendTextureDescriptor descriptor;
+			descriptor.Format = TextureInternalFormat::RGBA16F;
 			descriptor.Width = width;
 			descriptor.Height = height;
 			descriptor.Linear = true;
 			descriptor.RenderTarget = true;
 
-			descriptor.Format = TextureInternalFormat::RGBA16F;
-			m_DebugProbeGITarget = Texture2D::Create(descriptor, "DebugProbeGITarget");
+			GraphicsBackendTextureViewDescriptor viewDescriptor;
+			viewDescriptor.Format = descriptor.Format;
+
+			m_DebugProbeGITarget.Texture = Texture2D::Create(descriptor, "DebugProbeGITarget");
+			m_DebugProbeGITarget.View = std::make_shared<TextureView>(m_DebugProbeGITarget.Texture, viewDescriptor, "DebugProbeGITarget_View");
 		}
 
-		const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = m_DebugProbeGITarget->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
+		const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = m_DebugProbeGITarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
 
 		GraphicsBackend::Current()->AttachRenderTarget(colorDescriptor);
 		GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
@@ -246,8 +236,8 @@ void RaytracingProbes::ExecuteDebug(const RenderData& renderData)
 			GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
 
 			BindResources();
-			GraphicsBackend::Current()->BindTexture(renderData.GBuffers[1]->GetBackendTexture(), 0);
-			GraphicsBackend::Current()->BindTexture(renderData.CameraDepthTarget->GetBackendTexture(), 1);
+			GraphicsBackend::Current()->BindTexture(renderData.GBuffers[1].View->GetBackendTextureView(), 0);
+			GraphicsBackend::Current()->BindTexture(renderData.CameraDepthTarget.View->GetBackendTextureView(), 1);
 			GraphicsBackend::Current()->BindConstantBuffer(m_ProbesDebugDataBuffer->GetBackendBuffer(), 1, 0, sizeof(debugData));
 
 			const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
@@ -256,7 +246,7 @@ void RaytracingProbes::ExecuteDebug(const RenderData& renderData)
 		}
 		GraphicsBackend::Current()->EndRenderPass();
 
-		TextureViewer::RegisterTexture(m_DebugProbeGITarget, "Raytracing/DebugProbeGI");
+		TextureViewer::RegisterTexture(m_DebugProbeGITarget.View, "Raytracing/DebugProbeGI");
 	}
 }
 
@@ -265,8 +255,8 @@ void RaytracingProbes::BindResources() const
 	if (!m_RaytracingProbesEnabled)
 		return;
 
-	GraphicsBackend::Current()->BindTextureSampler(m_ProbeLightAtlas->GetBackendTexture(), m_ProbeLightAtlas->GetBackendSampler(), GlobalConstants::TextureIndex::PROBE_LIGHT);
-	GraphicsBackend::Current()->BindTexture(m_ProbeDepthAtlas->GetBackendTexture(), GlobalConstants::TextureIndex::PROBE_DISTANCES);
+	GraphicsBackend::Current()->BindTextureSampler(m_ProbeLightAtlas.View->GetBackendTextureView(), m_ProbeLightAtlas.Texture->GetBackendSampler(), GlobalConstants::TextureIndex::PROBE_LIGHT);
+	GraphicsBackend::Current()->BindTexture(m_ProbeDepthAtlas.View->GetBackendTextureView(), GlobalConstants::TextureIndex::PROBE_DISTANCES);
 	GraphicsBackend::Current()->BindConstantBuffer(m_ProbesDataBuffer->GetBackendBuffer(), GlobalConstants::ConstantBufferIndex::PROBE_DATA, 0, sizeof(ProbesData));
 }
 
@@ -290,7 +280,29 @@ void RaytracingProbes::UpdateProbesData() const
 	data.ProbeLightSize = m_ProbeLightSize;
 	data.ProbesUpdatePerFrame = m_ProbesPerUpdate;
 	data.ProbeLightPaddedSize = m_ProbeLightSize + m_ProbeLightPadding + RaytracingProbesLocal::k_ProbesBorderSize;
-	data.InvProbeAtlasSize = Vector2(1.0f / m_ProbeLightAtlas->GetWidth(), 1.0f / m_ProbeLightAtlas->GetHeight());
+	data.InvProbeAtlasSize = Vector2(1.0f / m_ProbeLightAtlas.Texture->GetWidth(), 1.0f / m_ProbeLightAtlas.Texture->GetHeight());
 
 	m_ProbesDataBuffer->SetData(&data, 0, sizeof(data));
+}
+
+void RaytracingProbes::UpdateTextureResources(TextureResources& textureResources, uint32_t width, uint32_t height, TextureInternalFormat format, const std::string& name) const
+{
+	if (textureResources.Texture && textureResources.Texture->GetWidth() == width && textureResources.Texture->GetHeight() == height)
+		return;
+
+	GraphicsBackendTextureDescriptor descriptor{};
+	descriptor.Linear = true;
+	descriptor.ReadWrite = true;
+	descriptor.Format = format;
+	descriptor.Width = width;
+	descriptor.Height = height;
+
+	GraphicsBackendTextureViewDescriptor viewDescriptor{};
+	viewDescriptor.Format = format;
+
+	textureResources.Texture = Texture2D::Create(descriptor, name);
+	textureResources.View = std::make_shared<TextureView>(textureResources.Texture, viewDescriptor, name + "_View");
+
+	viewDescriptor.ReadWrite = true;
+	textureResources.RWView = std::make_shared<TextureView>(textureResources.Texture, viewDescriptor, name + "_RWView");
 }

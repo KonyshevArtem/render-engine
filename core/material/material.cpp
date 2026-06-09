@@ -36,9 +36,17 @@ void Material::SetTexture(const std::string& name, std::shared_ptr<Texture> text
     if (it == shaderTextures.end())
         return;
 
-    m_Textures[it->second.Binding] = texture;
-    if (texture == nullptr)
-        return;
+    TextureResources textureResources{};
+	textureResources.Texture = texture;
+
+    m_Textures[it->second.Binding] = textureResources;
+    if (!texture)
+	    return;
+
+    GraphicsBackendTextureViewDescriptor viewDesc{};
+	viewDesc.Format = texture->GetTextureDescriptor().Format;
+
+	m_Textures[it->second.Binding].View = std::make_shared<TextureView>(texture, viewDesc, name + "_View");
 
     SetVector(name + "_ST", {0, 0, 1, 1});
 

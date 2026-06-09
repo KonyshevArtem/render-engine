@@ -58,6 +58,8 @@ struct GraphicsBackendBufferViewDescriptor;
 struct GraphicsBackendBufferView;
 struct GraphicsBackendRaytracingInstanceDescriptor;
 struct GraphicsBackendBLASDescriptor;
+struct GraphicsBackendTextureView;
+struct GraphicsBackendTextureViewDescriptor;
 
 class GraphicsBackendBase
 {
@@ -76,16 +78,18 @@ public:
     void IncrementFrameNumber();
     uint64_t GetFrameNumber() const;
 
-    virtual GraphicsBackendTexture CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name) = 0;
+    virtual GraphicsBackendTexture CreateTexture(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name) = 0;
+	virtual GraphicsBackendTextureView CreateTextureView(const GraphicsBackendTextureViewDescriptor& descriptor, const GraphicsBackendTexture& texture, const std::string& name) = 0;
     virtual GraphicsBackendSampler CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name) = 0;
-    virtual void* GetImGuiTextureId(const GraphicsBackendTexture& texture) = 0;
+    virtual void* GetImGuiTextureId(const GraphicsBackendTextureView& textureView) = 0;
     void DeleteTexture(const GraphicsBackendTexture& texture);
+	void DeleteTextureView(const GraphicsBackendTextureView& textureView);
     void DeleteSampler(const GraphicsBackendSampler& sampler);
 
-    void BindTexture(const GraphicsBackendTexture& texture, uint32_t index);
+    void BindTexture(const GraphicsBackendTextureView& textureView, uint32_t index);
     void BindSampler(const GraphicsBackendSampler& sampler, uint32_t index);
-    void BindTextureSampler(const GraphicsBackendTexture& texture, const GraphicsBackendSampler& sampler, uint32_t index);
-    void BindRWTexture(const GraphicsBackendTexture& texture, uint32_t index);
+    void BindTextureSampler(const GraphicsBackendTextureView& textureView, const GraphicsBackendSampler& sampler, uint32_t index);
+    void BindRWTexture(const GraphicsBackendTextureView& textureView, uint32_t index);
 
     virtual void GenerateMipmaps(const GraphicsBackendTexture &texture) = 0;
     virtual void UploadImagePixels(const GraphicsBackendTexture &texture, int level, CubemapFace cubemapFace, int width, int height, int depth, int imageSize, const void *pixelsData) = 0;
@@ -213,18 +217,19 @@ protected:
     void BindResources();
     void DeleteResources();
 
-    virtual void DeleteTexture_Internal(const GraphicsBackendTexture &texture) = 0;
-    virtual void DeleteSampler_Internal(const GraphicsBackendSampler &sampler) = 0;
-    virtual void DeleteBuffer_Internal(const GraphicsBackendBuffer &buffer) = 0;
+    virtual void DeleteTexture_Internal(const GraphicsBackendTexture& texture) = 0;
+    virtual void DeleteTextureView_Internal(const GraphicsBackendTextureView& textureView) = 0;
+    virtual void DeleteSampler_Internal(const GraphicsBackendSampler& sampler) = 0;
+    virtual void DeleteBuffer_Internal(const GraphicsBackendBuffer& buffer) = 0;
     virtual void DeleteBufferView_Internal(const GraphicsBackendBufferView& bufferView) = 0;
-    virtual void DeleteGeometry_Internal(const GraphicsBackendGeometry &geometry) = 0;
+    virtual void DeleteGeometry_Internal(const GraphicsBackendGeometry& geometry) = 0;
     virtual void DeleteShader_Internal(GraphicsBackendShaderObject shader) = 0;
     virtual void DeleteProgram_Internal(GraphicsBackendProgram program) = 0;
     virtual void DeleteBLAS_Internal(GraphicsBackendBLAS& blas){}
     virtual void DeleteTLAS_Internal(GraphicsBackendTLAS& tlas){}
 
-    virtual void BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
-    virtual void BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index) = 0;
+    virtual void BindTexture_Internal(const GraphicsBackendTextureView& textureView, uint32_t index) = 0;
+    virtual void BindRWTexture_Internal(const GraphicsBackendTextureView& textureView, uint32_t index) = 0;
     virtual void BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index) = 0;
     virtual void BindBuffer_Internal(const GraphicsBackendBufferView& bufferView, uint32_t index) = 0;
     virtual void BindConstantBuffer_Internal(const GraphicsBackendBuffer& buffer, uint32_t index, int offset, int size) = 0;
@@ -251,6 +256,7 @@ private:
     std::thread::id m_MainThreadId;
 
     std::vector<GraphicsBackendTexture> m_DeletedTextures;
+    std::vector<GraphicsBackendTextureView> m_DeletedTextureViews;
     std::vector<GraphicsBackendSampler> m_DeletedSamplers;
     std::vector<GraphicsBackendBuffer> m_DeletedBuffers;
     std::vector<GraphicsBackendBufferView> m_DeletedBufferViews;
@@ -261,6 +267,7 @@ private:
     std::vector<GraphicsBackendTLAS> m_DeletedTLASes;
 
     std::mutex m_DeletedTexturesMutex;
+    std::mutex m_DeletedTextureViewsMutex;
     std::mutex m_DeletedSamplersMutex;
     std::mutex m_DeletedBuffersMutex;
     std::mutex m_DeletedBufferViewsMutex;
@@ -270,8 +277,8 @@ private:
     std::mutex m_DeletedBLASesMutex;
     std::mutex m_DeletedTLASesMutex;
 
-    std::unordered_map<uint32_t, GraphicsBackendTexture> m_BoundTextures;
-    std::unordered_map<uint32_t, GraphicsBackendTexture> m_BoundRWTextures;
+    std::unordered_map<uint32_t, GraphicsBackendTextureView> m_BoundTextures;
+    std::unordered_map<uint32_t, GraphicsBackendTextureView> m_BoundRWTextures;
     std::unordered_map<uint32_t, GraphicsBackendSampler> m_BoundSamplers;
     std::unordered_map<uint32_t, GraphicsBackendBufferView> m_BoundBuffers;
     std::unordered_map<uint32_t, BufferBindInfo> m_BoundConstantBuffers;

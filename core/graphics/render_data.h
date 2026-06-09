@@ -3,13 +3,13 @@
 
 #include "matrix4x4/matrix4x4.h"
 #include "vector2/vector2.h"
+#include "texture/texture_resources.h"
 
 #include <vector>
 #include <memory>
 
 class Renderer;
 class Light;
-class Texture;
 class Cubemap;
 class GameObject;
 
@@ -29,16 +29,16 @@ struct RenderData
     Matrix4x4 ViewMatrix = Matrix4x4();
     Matrix4x4 ProjectionMatrix = Matrix4x4();
 
-    std::shared_ptr<Cubemap> Skybox;
+    std::shared_ptr<TextureView> Skybox;
 
-	std::shared_ptr<Texture> GBuffers[2];
-    std::shared_ptr<Texture> CameraColorTarget;
-    std::shared_ptr<Texture> CameraDepthTarget;
+	TextureResources GBuffers[2];
+    TextureResources CameraColorTarget;
+    TextureResources CameraDepthTarget;
 
-    std::shared_ptr<Texture> RaytracedShadowsTarget;
+    TextureResources RaytracedShadowsTarget;
     bool RaytracedShadowsEnabled;
 
-    std::shared_ptr<Texture> PostProcessedTarget;
+    TextureResources PostProcessedTarget;
 
 private:
     void CollectRenderers(const std::shared_ptr<GameObject> &gameObject);

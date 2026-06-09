@@ -27,6 +27,8 @@
 #include "types/graphics_backend_buffer_view.h"
 #include "types/graphics_backend_blas_descriptor.h"
 #include "types/graphics_backend_raytracing_instance_descriptor.h"
+#include "types/graphics_backend_texture_view_descriptor.h"
+#include "types/graphics_backend_texture_view.h"
 #include "helpers/dx12_helpers.h"
 #include "helpers/aftermath.h"
 #include "math_utils.h"
@@ -65,14 +67,11 @@ namespace DX12Local
     {
         ID3D12Resource* Resource;
         D3D12_RESOURCE_STATES State;
-        D3D12_CPU_DESCRIPTOR_HANDLE ReadOnlyDescriptorHandle;
-        D3D12_CPU_DESCRIPTOR_HANDLE RWDescriptorHandle;
-        uint32_t ReadOnlyDescriptorIndex;
-        uint32_t RWDescriptorIndex;
     };
 
     struct ResourceViewData
     {
+		ResourceData* ResourceData;
         D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle;
         uint32_t DescriptorIndex;
     };
@@ -1046,10 +1045,9 @@ void GraphicsBackendDX12::FillImGuiFrameData(void *data)
     imguiData->CommandList = DX12Local::s_RenderCommandList->List;
 }
 
-GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name)
+GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name)
 {
     DXGI_FORMAT dxResourceFormat = DX12Helpers::ToTextureInternalFormat(descriptor.Format, descriptor.Linear);
-    DXGI_FORMAT dxViewFormat = dxResourceFormat;
 
     D3D12_CLEAR_VALUE clearValue;
     D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
@@ -1077,25 +1075,21 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, cons
     {
         case DXGI_FORMAT_D16_UNORM:
             dxResourceFormat = DXGI_FORMAT_R16_TYPELESS;
-            dxViewFormat = DXGI_FORMAT_R16_UNORM;
             break;
         case DXGI_FORMAT_D32_FLOAT:
             dxResourceFormat = DXGI_FORMAT_R32_TYPELESS;
-            dxViewFormat = DXGI_FORMAT_R32_FLOAT;
             break;
         case DXGI_FORMAT_D24_UNORM_S8_UINT:
             dxResourceFormat = DXGI_FORMAT_R24G8_TYPELESS;
-            dxViewFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
             break;
         case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
             dxResourceFormat = DXGI_FORMAT_R32G8X24_TYPELESS;
-            dxViewFormat = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
             break;
     }
 
     uint32_t depth = max(descriptor.Depth, 1);
     D3D12_RESOURCE_DESC desc;
-    switch (type)
+    switch (descriptor.Type)
     {
         case TextureType::TEXTURE_1D:
         case TextureType::TEXTURE_1D_ARRAY:
@@ -1119,7 +1113,7 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, cons
             break;
     }
 
-    D3D12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    const D3D12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
     ID3D12Resource* dxTexture;
     ThrowIfFailed(DX12Local::s_Device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, state, descriptor.RenderTarget ? &clearValue : nullptr, IID_PPV_ARGS(&dxTexture)));
@@ -1130,13 +1124,70 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, cons
     resourceData->Resource = dxTexture;
     resourceData->State = state;
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-    srvDesc.Format = dxViewFormat;
-    srvDesc.ViewDimension = DX12Helpers::ToSRVDimension(type);
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    GraphicsBackendTexture texture;
+    texture.Texture = reinterpret_cast<uint64_t>(resourceData);
+    texture.Format = descriptor.Format;
+    texture.Type = descriptor.Type;
+    texture.IsLinear = descriptor.Linear;
+    return texture;
+}
 
-    switch (srvDesc.ViewDimension)
+GraphicsBackendTextureView GraphicsBackendDX12::CreateTextureView(const GraphicsBackendTextureViewDescriptor& descriptor, const GraphicsBackendTexture& texture, const std::string& name)
+{
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
+    DXGI_FORMAT dxViewFormat = DX12Helpers::ToTextureInternalFormat(descriptor.Format, texture.IsLinear);
+
+    switch (dxViewFormat)
     {
+    case DXGI_FORMAT_D16_UNORM:
+        dxViewFormat = DXGI_FORMAT_R16_UNORM;
+        break;
+    case DXGI_FORMAT_D32_FLOAT:
+        dxViewFormat = DXGI_FORMAT_R32_FLOAT;
+        break;
+    case DXGI_FORMAT_D24_UNORM_S8_UINT:
+        dxViewFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+        break;
+    case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+        dxViewFormat = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+        break;
+    }
+
+    DX12Local::ResourceViewData* resourceViewData = new DX12Local::ResourceViewData();
+    resourceViewData->ResourceData = resourceData;
+    resourceViewData->DescriptorIndex = DX12Local::s_AllocatedResourcesIndexPool.GetFreeIndex();
+    resourceViewData->DescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorHeap.GetCPUHandle(resourceViewData->DescriptorIndex);
+
+    if (descriptor.ReadWrite)
+    {
+        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+        uavDesc.Format = dxViewFormat;
+        uavDesc.ViewDimension = DX12Helpers::ToUAVDimension(texture.Type);
+
+        switch (uavDesc.ViewDimension)
+        {
+        case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
+            uavDesc.Texture1DArray.ArraySize = -1;
+            break;
+        case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
+            uavDesc.Texture2DArray.ArraySize = -1;
+            break;
+        case D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY:
+            uavDesc.Texture2DMSArray.ArraySize = -1;
+            break;
+        }
+
+        DX12Local::s_Device->CreateUnorderedAccessView(resourceData->Resource, nullptr, &uavDesc, resourceViewData->DescriptorHandle);
+    }
+    else
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+        srvDesc.Format = dxViewFormat;
+        srvDesc.ViewDimension = DX12Helpers::ToSRVDimension(texture.Type);
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+        switch (srvDesc.ViewDimension)
+        {
         case D3D12_SRV_DIMENSION_TEXTURE1D:
             srvDesc.Texture1D.MipLevels = -1;
             break;
@@ -1164,44 +1215,15 @@ GraphicsBackendTexture GraphicsBackendDX12::CreateTexture(TextureType type, cons
             srvDesc.TextureCubeArray.MipLevels = -1;
             srvDesc.TextureCubeArray.NumCubes = -1;
             break;
-    }
-
-	resourceData->ReadOnlyDescriptorIndex = DX12Local::s_AllocatedResourcesIndexPool.GetFreeIndex();
-    resourceData->ReadOnlyDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorHeap.GetCPUHandle(resourceData->ReadOnlyDescriptorIndex);
-    DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, resourceData->ReadOnlyDescriptorHandle);
-	DX12Local::s_BoundResourceDescriptorHeap.CopyBindlessDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, resourceData->ReadOnlyDescriptorIndex, resourceData->ReadOnlyDescriptorIndex, 1);
-
-    if (descriptor.ReadWrite)
-    {
-        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-        uavDesc.Format = dxViewFormat;
-        uavDesc.ViewDimension = DX12Helpers::ToUAVDimension(type);
-
-        switch (uavDesc.ViewDimension)
-        {
-	        case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
-                uavDesc.Texture1DArray.ArraySize = -1;
-	            break;
-	        case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
-                uavDesc.Texture2DArray.ArraySize = -1;
-	            break;
-	        case D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY:
-                uavDesc.Texture2DMSArray.ArraySize = -1;
-	            break;
         }
 
-		resourceData->RWDescriptorIndex = DX12Local::s_AllocatedResourcesIndexPool.GetFreeIndex();
-        resourceData->RWDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorHeap.GetCPUHandle(resourceData->RWDescriptorIndex);
-        DX12Local::s_Device->CreateUnorderedAccessView(resourceData->Resource, nullptr, &uavDesc, resourceData->RWDescriptorHandle);
+        DX12Local::s_Device->CreateShaderResourceView(resourceData->Resource, &srvDesc, resourceViewData->DescriptorHandle);
     }
 
-    GraphicsBackendTexture texture;
-    texture.Texture = reinterpret_cast<uint64_t>(resourceData);
-    texture.Format = descriptor.Format;
-    texture.Type = type;
-    texture.IsLinear = descriptor.Linear;
-	texture.BindlessIndex = resourceData->ReadOnlyDescriptorIndex;
-    return texture;
+    GraphicsBackendTextureView textureView{};
+    textureView.TextureView = reinterpret_cast<void*>(resourceViewData);
+	textureView.BindlessIndex = resourceViewData->DescriptorIndex;
+    return textureView;
 }
 
 GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name)
@@ -1231,11 +1253,11 @@ GraphicsBackendSampler GraphicsBackendDX12::CreateSampler(const GraphicsBackendS
     return sampler;
 }
 
-void* GraphicsBackendDX12::GetImGuiTextureId(const GraphicsBackendTexture& texture)
+void* GraphicsBackendDX12::GetImGuiTextureId(const GraphicsBackendTextureView& textureView)
 {
-	const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
+	const DX12Local::ResourceViewData* resourceViewData = reinterpret_cast<DX12Local::ResourceViewData*>(textureView.TextureView);
 
-	const uint32_t descriptorIndex = resourceData->ReadOnlyDescriptorIndex;
+	const uint32_t descriptorIndex = resourceViewData->DescriptorIndex;
 	DX12Local::s_ImGuiDescriptorHeap.CopyDescriptors(DX12Local::s_AllocatedResourcesDescriptorHeap, descriptorIndex, 0, 1);
 
 	const D3D12_GPU_DESCRIPTOR_HANDLE handle = DX12Local::s_ImGuiDescriptorHeap.GetGPUHandle(0);
@@ -1246,10 +1268,16 @@ void* GraphicsBackendDX12::GetImGuiTextureId(const GraphicsBackendTexture& textu
 void GraphicsBackendDX12::DeleteTexture_Internal(const GraphicsBackendTexture& texture)
 {
     const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
-    DX12Local::s_AllocatedResourcesIndexPool.ReturnIndex(resourceData->ReadOnlyDescriptorIndex);
     Aftermath::UnregisterResource(resourceData->Resource);
     resourceData->Resource->Release();
     delete resourceData;
+}
+
+void GraphicsBackendDX12::DeleteTextureView_Internal(const GraphicsBackendTextureView& textureView)
+{
+    const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(textureView.TextureView);
+    DX12Local::s_AllocatedResourcesIndexPool.ReturnIndex(resourceViewData->DescriptorIndex);
+    delete resourceViewData;
 }
 
 void GraphicsBackendDX12::DeleteSampler_Internal(const GraphicsBackendSampler& sampler)
@@ -1259,26 +1287,26 @@ void GraphicsBackendDX12::DeleteSampler_Internal(const GraphicsBackendSampler& s
     delete samplerData;
 }
 
-void GraphicsBackendDX12::BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
+void GraphicsBackendDX12::BindTexture_Internal(const GraphicsBackendTextureView& textureView, uint32_t index)
 {
     assert(index < DX12Local::k_MaxResourcesPerDraw);
 
-    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
-    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
+    const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(textureView.TextureView);
+    DX12Local::TransitionResource(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_TexturesDescriptorsOffset);
-    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->ReadOnlyDescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void GraphicsBackendDX12::BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
+void GraphicsBackendDX12::BindRWTexture_Internal(const GraphicsBackendTextureView& textureView, uint32_t index)
 {
     assert(index < DX12Local::k_MaxResourcesPerDraw);
 
-    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
-    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, DX12Local::s_RenderCommandList->List);
+    const DX12Local::ResourceViewData* resourceData = static_cast<DX12Local::ResourceViewData*>(textureView.TextureView);
+    DX12Local::TransitionResource(resourceData->ResourceData, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, DX12Local::s_RenderCommandList->List);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWTexturesDescriptorsOffset);
-    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->RWDescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 }
 
@@ -1480,6 +1508,7 @@ GraphicsBackendBufferView GraphicsBackendDX12::CreateBufferView(const GraphicsBa
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
 
     DX12Local::ResourceViewData* resourceViewData = new DX12Local::ResourceViewData();
+	resourceViewData->ResourceData = resourceData;
 	resourceViewData->DescriptorIndex = DX12Local::s_AllocatedResourcesIndexPool.GetFreeIndex();
     resourceViewData->DescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorHeap.GetCPUHandle(resourceViewData->DescriptorIndex);
 
@@ -1574,6 +1603,7 @@ void GraphicsBackendDX12::BindBuffer_Internal(const GraphicsBackendBufferView& b
     assert(index < DX12Local::k_MaxResourcesPerDraw);
     
     const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(bufferView.BufferView);
+    DX12Local::TransitionResource(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_BuffersDescriptorsOffset);
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1585,7 +1615,8 @@ void GraphicsBackendDX12::BindConstantBuffer_Internal(const GraphicsBackendBuffe
 
     size = Math::Align(size, GetConstantBufferOffsetAlignment());
 
-    const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+    DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
+    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
 
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
     cbvDesc.BufferLocation = resourceData->Resource->GetGPUVirtualAddress() + offset;
@@ -1599,6 +1630,7 @@ void GraphicsBackendDX12::BindRWBuffer_Internal(const GraphicsBackendBufferView&
     assert(index < DX12Local::k_MaxResourcesPerDraw);
     
     const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(bufferView.BufferView);
+    DX12Local::TransitionResource(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, DX12Local::s_RenderCommandList->List);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWBufferDescriptorsOffset);
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1608,10 +1640,10 @@ void GraphicsBackendDX12::BindTLAS_Internal(const GraphicsBackendTLAS& TLAS, uin
 {
     assert(index < DX12Local::k_MaxRTResources);
 
-    const DX12Local::ResourceData* tlasData = static_cast<DX12Local::ResourceData*>(TLAS.TLAS);
+    const DX12Local::ResourceViewData* tlasViewData = static_cast<DX12Local::ResourceViewData*>(TLAS.TLAS);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_RTResourcesDescriptorsOffset);
-    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, tlasData->ReadOnlyDescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, tlasViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void GraphicsBackendDX12::SetBufferData(const GraphicsBackendBuffer& buffer, long offset, long size, const void* data)
@@ -1864,10 +1896,12 @@ void GraphicsBackendDX12::DeleteBLAS_Internal(GraphicsBackendBLAS& blas)
 
 void GraphicsBackendDX12::DeleteTLAS_Internal(GraphicsBackendTLAS& tlas)
 {
-    const DX12Local::ResourceData* tlasData = static_cast<DX12Local::ResourceData*>(tlas.TLAS);
-    DX12Local::s_AllocatedResourcesIndexPool.ReturnIndex(tlasData->ReadOnlyDescriptorIndex);
+    const DX12Local::ResourceViewData* tlasViewData = static_cast<DX12Local::ResourceViewData*>(tlas.TLAS);
+    const DX12Local::ResourceData* tlasData = static_cast<DX12Local::ResourceData*>(tlasViewData->ResourceData);
+    DX12Local::s_AllocatedResourcesIndexPool.ReturnIndex(tlasViewData->DescriptorIndex);
     tlasData->Resource->Release();
     delete tlasData;
+	delete tlasViewData;
 }
 
 void GraphicsBackendDX12::UseProgram(const GraphicsBackendProgram& program)
@@ -2444,12 +2478,14 @@ GraphicsBackendTLAS GraphicsBackendDX12::CreateTLAS(const std::vector<GraphicsBa
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srvDesc.RaytracingAccelerationStructure.Location = resultBufferData->Resource->GetGPUVirtualAddress();
 
-	resultBufferData->ReadOnlyDescriptorIndex = DX12Local::s_AllocatedResourcesIndexPool.GetFreeIndex();
-    resultBufferData->ReadOnlyDescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorHeap.GetCPUHandle(resultBufferData->ReadOnlyDescriptorIndex);
-    DX12Local::s_Device->CreateShaderResourceView(nullptr, &srvDesc, resultBufferData->ReadOnlyDescriptorHandle);
+	DX12Local::ResourceViewData* tlasViewData = new DX12Local::ResourceViewData();
+	tlasViewData->ResourceData = resultBufferData;
+	tlasViewData->DescriptorIndex = DX12Local::s_AllocatedResourcesIndexPool.GetFreeIndex();
+    tlasViewData->DescriptorHandle = DX12Local::s_AllocatedResourcesDescriptorHeap.GetCPUHandle(tlasViewData->DescriptorIndex);
+    DX12Local::s_Device->CreateShaderResourceView(nullptr, &srvDesc, tlasViewData->DescriptorHandle);
 
     GraphicsBackendTLAS tlas{};
-    tlas.TLAS = resultBufferData;
+    tlas.TLAS = tlasViewData;
     return tlas;
 }
 

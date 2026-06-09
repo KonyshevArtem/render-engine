@@ -3,6 +3,7 @@
 
 #include "ui_element.h"
 #include "vector4/vector4.h"
+#include "texture/texture_view.h"
 
 #include <memory>
 #include <string>
@@ -45,7 +46,7 @@ public:
     void PrepareMesh();
 
     const std::shared_ptr<Mesh> GetMesh() const;
-    const std::shared_ptr<Texture> GetFontAtlas() const;
+    const std::shared_ptr<TextureView> GetFontAtlas() const;
     const std::shared_ptr<Font> GetFont() const;
     uint16_t GetFontSize() const;
     Vector2 GetTextSize() const;

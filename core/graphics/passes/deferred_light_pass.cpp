@@ -27,16 +27,20 @@ void DeferredLightPass::Prepare(RenderData& renderData)
 
     const uint32_t width = renderData.Viewport.x;
     const uint32_t height = renderData.Viewport.y;
-    if (m_CameraColorTarget == nullptr || m_CameraColorTarget->GetWidth() != width || m_CameraColorTarget->GetHeight() != height)
+    if (!m_CameraColorTarget.Texture || m_CameraColorTarget.Texture->GetWidth() != width || m_CameraColorTarget.Texture->GetHeight() != height)
     {
         GraphicsBackendTextureDescriptor descriptor;
         descriptor.Width = width;
         descriptor.Height = height;
         descriptor.Linear = true;
         descriptor.RenderTarget = true;
-
         descriptor.Format = TextureInternalFormat::RGBA16F;
-        m_CameraColorTarget = Texture2D::Create(descriptor, "CameraColorRT");
+
+		GraphicsBackendTextureViewDescriptor viewDescriptor{};
+		viewDescriptor.Format = descriptor.Format;
+
+        m_CameraColorTarget.Texture = Texture2D::Create(descriptor, "CameraColorRT");
+        m_CameraColorTarget.View = std::make_shared<TextureView>(m_CameraColorTarget.Texture, viewDescriptor, "CameraColorRT_View");
     }
 
     renderData.CameraColorTarget = m_CameraColorTarget;
@@ -65,10 +69,10 @@ void DeferredLightPass::Execute(const RenderData& renderData)
         m_LightingDataBuffer = std::make_shared<GraphicsBuffer>(descriptor, "DeferredLight/Data");
     }
     
-	constants.InvTargetSize = Vector2(1.0f / renderData.CameraColorTarget->GetWidth(), 1.0f / renderData.CameraColorTarget->GetHeight());
+	constants.InvTargetSize = Vector2(1.0f / renderData.CameraColorTarget.Texture->GetWidth(), 1.0f / renderData.CameraColorTarget.Texture->GetHeight());
     m_LightingDataBuffer->SetData(&constants, 0, sizeof(constants));
 
-    const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
+    const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
 
     GraphicsBackend::Current()->AttachRenderTarget(colorDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
@@ -82,8 +86,8 @@ void DeferredLightPass::Execute(const RenderData& renderData)
         GraphicsBackend::Current()->SetDepthState(GraphicsBackendDepthDescriptor::Disabled());
 
         for (int i = 0; i < 2; i++)
-	        GraphicsBackend::Current()->BindTexture(renderData.GBuffers[i]->GetBackendTexture(), i);
-        GraphicsBackend::Current()->BindTexture(renderData.CameraDepthTarget->GetBackendTexture(), 2);
+	        GraphicsBackend::Current()->BindTexture(renderData.GBuffers[i].View->GetBackendTextureView(), i);
+        GraphicsBackend::Current()->BindTexture(renderData.CameraDepthTarget.View->GetBackendTextureView(), 2);
 		GraphicsBackend::Current()->BindConstantBuffer(m_LightingDataBuffer->GetBackendBuffer(), 1, 0, sizeof(constants));
 
         if (m_RaytracingProbes)

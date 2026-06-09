@@ -6,6 +6,7 @@
 #include "editor/profiler/profiler.h"
 #include "ui/ui_manager.h"
 #include "developer_console/developer_console.h"
+#include "cubemap/cubemap.h"
 
 namespace SceneLocal
 {
@@ -51,6 +52,11 @@ namespace SceneLocal
 
 std::filesystem::path Scene::s_PendingScenePath = "";
 
+Scene::Scene()
+{
+    SetSkybox(nullptr);
+}
+
 void Scene::Init()
 {
     DeveloperConsole::AddFunctionCommand(L"Scene.Load", [](const std::string& scene) { Load(scene); });
@@ -82,13 +88,20 @@ void Scene::Unload()
 void Scene::SetSkybox(const std::shared_ptr<Cubemap>& skybox)
 {
     std::unique_lock lock(m_SkyboxMutex);
-    m_Skybox = skybox;
+
+	std::shared_ptr<Cubemap> skyboxTex = skybox ? skybox : Cubemap::Black();
+
+	GraphicsBackendTextureViewDescriptor viewDescriptor{};
+	viewDescriptor.Format = skyboxTex->GetTextureDescriptor().Format;
+
+    m_Skybox.Texture = skyboxTex;
+	m_Skybox.View = std::make_shared<TextureView>(skyboxTex, viewDescriptor, "SkyboxView");
 }
 
-std::shared_ptr<Cubemap> Scene::GetSkybox()
+std::shared_ptr<TextureView> Scene::GetSkybox()
 {
     std::shared_lock lock(m_SkyboxMutex);
-    return m_Skybox;
+    return m_Skybox.View;
 }
 
 std::shared_ptr<GameObject> Scene::FindGameObject(const std::function<bool(const GameObject *)>& predicate)

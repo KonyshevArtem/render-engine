@@ -77,8 +77,8 @@ void UIRenderPass::Execute(const RenderData& renderData)
 
     const std::shared_ptr<Mesh> quadMesh = Mesh::GetQuadMesh();
 
-    const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.PostProcessedTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
-    const GraphicsBackendRenderTargetDescriptor depthDescriptor{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
+    const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.PostProcessedTarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+    const GraphicsBackendRenderTargetDescriptor depthDescriptor{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::CLEAR };
 
     GraphicsBackend::Current()->AttachRenderTarget(colorDescriptor);
     GraphicsBackend::Current()->AttachRenderTarget(depthDescriptor);
@@ -102,7 +102,7 @@ void UIRenderPass::Execute(const RenderData& renderData)
                 const uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
 
                 GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
-                GraphicsBackend::Current()->BindTextureSampler(image->Image->GetBackendTexture(), image->Image->GetBackendSampler(), 0);
+                GraphicsBackend::Current()->BindTextureSampler(image->Image.View->GetBackendTextureView(), image->Image.Texture->GetBackendSampler(), 0);
 
                 GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::AlphaBlending());
                 GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());
@@ -114,8 +114,8 @@ void UIRenderPass::Execute(const RenderData& renderData)
             if (const UIText* text = dynamic_cast<UIText*>(element))
             {
                 const std::shared_ptr<Mesh> textMesh = text->GetMesh();
-                const std::shared_ptr<Texture> fontAtlas = text->GetFontAtlas();
-                if (!textMesh || !fontAtlas || !m_TextShader || !m_TextShader->IsValid())
+                const std::shared_ptr<TextureView> fontAtlasView = text->GetFontAtlas();
+                if (!textMesh || !fontAtlasView || !m_TextShader || !m_TextShader->IsValid())
                     continue;
 
                 UIData data;
@@ -124,7 +124,7 @@ void UIRenderPass::Execute(const RenderData& renderData)
                 const uint64_t offset = m_UIDataBuffer->SetData(&data, 0, sizeof(data));
 
                 GraphicsBackend::Current()->BindConstantBuffer(m_UIDataBuffer->GetBackendBuffer(), 0, offset, sizeof(data));
-                GraphicsBackend::Current()->BindTextureSampler(fontAtlas->GetBackendTexture(), fontAtlas->GetBackendSampler(), 0);
+                GraphicsBackend::Current()->BindTextureSampler(fontAtlasView->GetBackendTextureView(), fontAtlasView->GetTexture()->GetBackendSampler(), 0);
 
                 GraphicsBackend::Current()->SetBlendState(GraphicsBackendBlendDescriptor::AlphaBlending());
                 GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::NoCull());

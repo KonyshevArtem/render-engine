@@ -3,6 +3,7 @@
 
 #include "file_watcher.h"
 #include "graphics/passes/render_pass.h"
+#include "texture/texture_resources.h"
 
 #include <random>
 
@@ -29,15 +30,15 @@ private:
     std::shared_ptr<GraphicsBuffer> m_PrimaryRaysDebugDataBuffer;
     bool m_PrimaryRaysDebugEnabled;
 
+    TextureResources m_RaytracedShadowsTarget;
     std::shared_ptr<Shader> m_RaytracedShadowsShaders[2];
-    std::shared_ptr<Texture> m_RaytracedShadowsTarget;
     std::shared_ptr<GraphicsBuffer> m_RaytracedShadowsDataBuffer;
     bool m_RaytracedShadowsEnabled;
     bool m_RaytracedSoftShadowsEnabled;
     int m_RaytracedShadowsSamplesCount = 1;
 
     std::shared_ptr<RaytracingScene> m_RaytracingScene;
-    std::shared_ptr<Texture> m_BlueNoiseTexture;
+    TextureResources m_BlueNoiseTexture;
 
 	FileWatcher m_FileWatcher;
     std::mt19937 m_Rng;

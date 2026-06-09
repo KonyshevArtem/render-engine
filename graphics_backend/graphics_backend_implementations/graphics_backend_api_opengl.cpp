@@ -25,6 +25,8 @@
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "types/graphics_backend_buffer_view_descriptor.h"
 #include "types/graphics_backend_buffer_view.h"
+#include "types/graphics_backend_Texture_view_descriptor.h"
+#include "types/graphics_backend_texture_view.h"
 #include "helpers/opengl_helpers.h"
 #include "debug.h"
 #include "arguments.h"
@@ -77,6 +79,13 @@ namespace OpenGLLocal
         TextureInternalFormat Format;
         uint32_t Offset;
         uint32_t Size;
+    };
+
+    struct TextureViewData
+    {
+        GLuint GLTexture;
+        TextureType Type;
+        GLenum Format;
     };
 
     struct RenderTargetState
@@ -345,14 +354,14 @@ void GraphicsBackendOpenGL::FillImGuiFrameData(void *data)
 {
 }
 
-GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(TextureType type, const GraphicsBackendTextureDescriptor& descriptor, const std::string& name)
+GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(const GraphicsBackendTextureDescriptor& descriptor, const std::string& name)
 {
     InitContext();
 
     GraphicsBackendTexture texture{};
     glGenTextures(1, reinterpret_cast<GLuint *>(&texture.Texture));
 
-    const GLenum textureType = OpenGLHelpers::ToTextureType(type);
+    const GLenum textureType = OpenGLHelpers::ToTextureType(descriptor.Type);
     glBindTexture(textureType, texture.Texture);
     glTexParameteri(textureType, GL_TEXTURE_BASE_LEVEL, 0);
     glTexParameteri(textureType, GL_TEXTURE_MAX_LEVEL, descriptor.MipLevels - 1);
@@ -360,16 +369,30 @@ GraphicsBackendTexture GraphicsBackendOpenGL::CreateTexture(TextureType type, co
 	    glObjectLabel(GL_TEXTURE, texture.Texture, name.length(), name.c_str());
 
     const GLenum internalFormat = OpenGLHelpers::ToTextureInternalFormat(descriptor.Format, descriptor.Linear);
-    if (IsTexture3D(type))
+    if (IsTexture3D(descriptor.Type))
 	    glTexStorage3D(textureType, descriptor.MipLevels, internalFormat, descriptor.Width, descriptor.Height, descriptor.Depth);
     else
 	    glTexStorage2D(textureType, descriptor.MipLevels, internalFormat, descriptor.Width, descriptor.Height);
 
-    texture.Type = type;
+    texture.Type = descriptor.Type;
     texture.Format = descriptor.Format;
     texture.IsLinear = descriptor.Linear;
     texture.ReadWrite = descriptor.ReadWrite;
     return texture;
+}
+
+GraphicsBackendTextureView GraphicsBackendOpenGL::CreateTextureView(const GraphicsBackendTextureViewDescriptor& descriptor, const GraphicsBackendTexture& texture, const std::string& name)
+{
+    InitContext();
+
+    OpenGLLocal::TextureViewData* viewData = new OpenGLLocal::TextureViewData();
+    viewData->GLTexture = texture.Texture;
+    viewData->Type = texture.Type;
+    viewData->Format = OpenGLHelpers::ToTextureInternalFormat(texture.Format, texture.IsLinear);
+
+    GraphicsBackendTextureView textureView{};
+    textureView.TextureView = viewData;
+    return textureView;
 }
 
 GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(const GraphicsBackendSamplerDescriptor& descriptor, const std::string& name)
@@ -407,9 +430,10 @@ GraphicsBackendSampler GraphicsBackendOpenGL::CreateSampler(const GraphicsBacken
     return sampler;
 }
 
-void* GraphicsBackendOpenGL::GetImGuiTextureId(const GraphicsBackendTexture& texture)
+void* GraphicsBackendOpenGL::GetImGuiTextureId(const GraphicsBackendTextureView& textureView)
 {
-    return reinterpret_cast<void*>(texture.Texture);
+    const OpenGLLocal::TextureViewData* viewData = static_cast<OpenGLLocal::TextureViewData*>(textureView.TextureView);
+    return reinterpret_cast<void*>(viewData->GLTexture);
 }
 
 void GraphicsBackendOpenGL::DeleteTexture_Internal(const GraphicsBackendTexture &texture)
@@ -417,23 +441,32 @@ void GraphicsBackendOpenGL::DeleteTexture_Internal(const GraphicsBackendTexture 
     glDeleteTextures(1, reinterpret_cast<const GLuint *>(&texture.Texture));
 }
 
+void GraphicsBackendOpenGL::DeleteTextureView_Internal(const GraphicsBackendTextureView& textureView)
+{
+    const OpenGLLocal::TextureViewData* viewData = static_cast<OpenGLLocal::TextureViewData*>(textureView.TextureView);
+    delete viewData;
+}
+
 void GraphicsBackendOpenGL::DeleteSampler_Internal(const GraphicsBackendSampler &sampler)
 {
     glDeleteSamplers(1, reinterpret_cast<const GLuint *>(&sampler.Sampler));
 }
 
-void GraphicsBackendOpenGL::BindTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
+void GraphicsBackendOpenGL::BindTexture_Internal(const GraphicsBackendTextureView& textureView, uint32_t index)
 {
+	const OpenGLLocal::TextureViewData* viewData = static_cast<OpenGLLocal::TextureViewData*>(textureView.TextureView);
+
     glActiveTexture(OpenGLHelpers::ToTextureUnit(index));
-    glBindTexture(OpenGLHelpers::ToTextureType(texture.Type), texture.Texture);
+    glBindTexture(OpenGLHelpers::ToTextureType(viewData->Type), viewData->GLTexture);
     glUniform1i(index, index);
 }
 
-void GraphicsBackendOpenGL::BindRWTexture_Internal(const GraphicsBackendTexture& texture, uint32_t index)
+void GraphicsBackendOpenGL::BindRWTexture_Internal(const GraphicsBackendTextureView& textureView, uint32_t index)
 {
-    const GLboolean layered = texture.Type == TextureType::TEXTURE_1D || texture.Type == TextureType::TEXTURE_2D || texture.Type == TextureType::TEXTURE_3D ? GL_FALSE : GL_TRUE;
-    const GLenum access = texture.ReadWrite ? GL_READ_WRITE : GL_READ_ONLY;
-    glBindImageTexture(index, texture.Texture, 0, layered, 0, access, OpenGLHelpers::ToTextureInternalFormat(texture.Format, texture.IsLinear));
+    const OpenGLLocal::TextureViewData* viewData = static_cast<OpenGLLocal::TextureViewData*>(textureView.TextureView);
+
+    const GLboolean layered = viewData->Type == TextureType::TEXTURE_1D || viewData->Type == TextureType::TEXTURE_2D || viewData->Type == TextureType::TEXTURE_3D ? GL_FALSE : GL_TRUE;
+    glBindImageTexture(index, viewData->GLTexture, 0, layered, 0, GL_READ_WRITE, viewData->Format);
 }
 
 void GraphicsBackendOpenGL::BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index)

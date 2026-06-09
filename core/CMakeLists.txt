@@ -162,7 +162,10 @@ add_library(
 	editor/texture_viewer/texture_viewer.h
 	editor/texture_viewer/texture_viewer.cpp
 	raytracing/raytracing_probes.h
-	raytracing/raytracing_probes.cpp)
+	raytracing/raytracing_probes.cpp
+	texture/texture_view.h
+	texture/texture_view.cpp
+	texture/texture_resources.h)
 
 target_include_directories(Core PUBLIC .)
 target_link_libraries(Core Math DebugUtil Hash GraphicsBackend AppleFoundation nlohmann_json::nlohmann_json trex StringEncodingUtil StringSplit FileSystem)

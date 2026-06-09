@@ -12,10 +12,13 @@ Texture::Texture(TextureType textureType, const GraphicsBackendTextureDescriptor
 {
     Profiler::Marker _("Texture::Texture");
 
+    GraphicsBackendTextureDescriptor textureDescriptor = descriptor;
+	textureDescriptor.Type = textureType;
+
     m_SamplerDescriptor.WrapMode = TextureWrapMode::REPEAT;
     m_SamplerDescriptor.FilteringMode = descriptor.MipLevels > 1 ? TextureFilteringMode::LINEAR_MIPMAP_NEAREST : TextureFilteringMode::LINEAR;
     m_SamplerDescriptor.HasBorderColor = true;
-    m_Texture = GraphicsBackend::Current()->CreateTexture(m_TextureType, m_TextureDescriptor, name);
+    m_Texture = GraphicsBackend::Current()->CreateTexture(textureDescriptor, name);
 }
 
 Texture::~Texture()

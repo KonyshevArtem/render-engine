@@ -65,8 +65,8 @@ void GizmosPass::Execute(const RenderData& renderData)
     if (m_GizmosQueue.IsEmpty())
         return;
 
-    const std::shared_ptr<Texture> colorTarget = m_Mode == Mode::GIZMOS_3D ? renderData.CameraColorTarget : renderData.PostProcessedTarget;
-    const std::shared_ptr<Texture> depthTarget = m_Mode == Mode::GIZMOS_3D ? renderData.CameraDepthTarget : nullptr;
+    const std::shared_ptr<Texture> colorTarget = m_Mode == Mode::GIZMOS_3D ? renderData.CameraColorTarget.Texture : renderData.PostProcessedTarget.Texture;
+    const std::shared_ptr<Texture> depthTarget = m_Mode == Mode::GIZMOS_3D ? renderData.CameraDepthTarget.Texture : nullptr;
 
     const GraphicsBackendRenderTargetDescriptor colorDescriptor{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = colorTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
     GraphicsBackendRenderTargetDescriptor depthDescriptor = GraphicsBackendRenderTargetDescriptor::EmptyDepth();

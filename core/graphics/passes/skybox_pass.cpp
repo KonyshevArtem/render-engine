@@ -45,8 +45,8 @@ void SkyboxPass::Execute(const RenderData& renderData)
     data.MVPMatrix = mvpMatrix;
     buffer->SetData(&data, 0, sizeof(data));
 
-	GraphicsBackendRenderTargetDescriptor colorTarget{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
-	GraphicsBackendRenderTargetDescriptor depthTarget{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+	GraphicsBackendRenderTargetDescriptor colorTarget{ .Attachment = FramebufferAttachment::COLOR_ATTACHMENT0, .Texture = renderData.CameraColorTarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
+	GraphicsBackendRenderTargetDescriptor depthTarget{ .Attachment = FramebufferAttachment::DEPTH_STENCIL_ATTACHMENT, .Texture = renderData.CameraDepthTarget.Texture->GetBackendTexture(), .LoadAction = LoadAction::LOAD };
 
 	GraphicsBackend::Current()->AttachRenderTarget(colorTarget);
 	GraphicsBackend::Current()->AttachRenderTarget(depthTarget);
@@ -62,7 +62,7 @@ void SkyboxPass::Execute(const RenderData& renderData)
 		Profiler::GPUMarker gpuMarker("SkyboxPass::Execute");
         GraphicsBackend::Current()->BindConstantBuffer(buffer->GetBackendBuffer(), 0, 0, sizeof(data));
 
-        GraphicsBackend::Current()->BindTextureSampler(renderData.Skybox->GetBackendTexture(), renderData.Skybox->GetBackendSampler(), 0);
+        GraphicsBackend::Current()->BindTextureSampler(renderData.Skybox->GetBackendTextureView(), renderData.Skybox->GetTexture()->GetBackendSampler(), 0);
 
         GraphicsBackend::Current()->SetRasterizerState(GraphicsBackendRasterizerDescriptor::CullFront());
         GraphicsBackend::Current()->UseProgram(shader->GetProgram(m_Mesh));

@@ -31,9 +31,14 @@ void Font::Prepare(uint16_t fontSize)
     descriptor.Linear = true;
     descriptor.Format = TextureInternalFormat::R8;
 
+    GraphicsBackendTextureViewDescriptor viewDescriptor{};
+    viewDescriptor.Format = descriptor.Format;
+
     std::shared_ptr<Texture> atlas = Texture2D::Create(descriptor, m_FontName + "_Atlas_" + std::to_string(fontSize));
-    atlas->UploadPixels(reinterpret_cast<const void*>(bitmap.Data().data()), bitmap.Data().size(), 0, 0);
-    m_Atlas[fontSize] = atlas;
+    atlas->UploadPixels(bitmap.Data().data(), bitmap.Data().size(), 0, 0);
+    m_Atlas[fontSize] = {};
+	m_Atlas[fontSize].Texture = atlas;
+	m_Atlas[fontSize].View = std::make_shared<TextureView>(atlas, viewDescriptor, m_FontName + "_AtlasView_" + std::to_string(fontSize));
 
     CommonBlock commonBlock;
     commonBlock.LineHeight = trexAtlas->GetFont()->GetMetrics().height;
@@ -69,15 +74,15 @@ const CommonBlock& Font::GetCommonBlock(uint16_t fontSize) const
     return it != m_Common.end() ? it->second : empty;
 }
 
-const std::shared_ptr<Texture> Font::GetAtlas(uint16_t fontSize) const
+const std::shared_ptr<TextureView> Font::GetAtlas(uint16_t fontSize) const
 {
-    auto it = m_Atlas.find(fontSize);
-    return it != m_Atlas.end() ? it->second : nullptr;
+    const auto it = m_Atlas.find(fontSize);
+    return it != m_Atlas.end() ? it->second.View : nullptr;
 }
 
 uint32_t Font::GetAtlasRevision(uint16_t fontSize) const
 {
-    auto it = m_AtlasRevision.find(fontSize);
+    const auto it = m_AtlasRevision.find(fontSize);
     return it != m_AtlasRevision.end() ? it->second : 0;
 }
 

@@ -153,14 +153,16 @@ void TextureViewerWindow::OnTextureRegistered(const std::string& textureName)
 
 void TextureViewerWindow::DrawInternal()
 {
-	const std::shared_ptr<Texture> selectedTexture = TextureViewer::GetSelectedTextureCopy();
-    if (!selectedTexture)
+	const std::shared_ptr<TextureView> selectedTextureView = TextureViewer::GetSelectedTextureCopy();
+    if (!selectedTextureView || !selectedTextureView->GetTexture())
         return;
+
+	const std::shared_ptr<Texture> texture = selectedTextureView->GetTexture();
 
 	const ImVec2 contentRegion = ImGui::GetContentRegionAvail();
 	const float maxW = contentRegion.x;
 	const float maxH = contentRegion.y - ImGui::GetTextLineHeight();
-	const float aspect = static_cast<float>(selectedTexture->GetWidth()) / static_cast<float>(selectedTexture->GetHeight());
+	const float aspect = static_cast<float>(texture->GetWidth()) / static_cast<float>(texture->GetHeight());
 	ImVec2 imageSize{ maxW, maxW / aspect };
 	if (imageSize.y > maxH)
 	{
@@ -176,7 +178,7 @@ void TextureViewerWindow::DrawInternal()
 
 	ImDrawList* drawList = ImGui::GetWindowDrawList();
 	drawList->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerNearest);
-	ImGui::Image(GraphicsBackend::Current()->GetImGuiTextureId(selectedTexture->GetBackendTexture()), imageSize, uv0, uv1);
+	ImGui::Image(GraphicsBackend::Current()->GetImGuiTextureId(selectedTextureView->GetBackendTextureView()), imageSize, uv0, uv1);
 	drawList->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerLinear);
 
 	if (ImGui::IsItemHovered())
@@ -216,7 +218,7 @@ void TextureViewerWindow::DrawInternal()
 
 	ImGui::EndChild();
 
-	ImGui::Text("Size: %ix%i", selectedTexture->GetWidth(), selectedTexture->GetHeight());
+	ImGui::Text("Size: %ix%i", texture->GetWidth(), texture->GetHeight());
 }
 
 #endif

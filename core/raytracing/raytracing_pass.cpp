@@ -33,7 +33,11 @@ RaytracingPass::RaytracingPass(const std::shared_ptr<RaytracingScene>& rtScene) 
 	DeveloperConsole::AddCommand(L"Raytracing.Shadows.Soft", &m_RaytracedSoftShadowsEnabled);
 	DeveloperConsole::AddCommand(L"Raytracing.Shadows.Samples", &m_RaytracedShadowsSamplesCount);
 
-	m_BlueNoiseTexture = Resources::Load<Texture2D>("core_resources/textures/noise/blue_noise");
+	m_BlueNoiseTexture.Texture = Resources::Load<Texture2D>("core_resources/textures/noise/blue_noise");
+
+	GraphicsBackendTextureViewDescriptor noiseTextureViewDescriptor{};
+	noiseTextureViewDescriptor.Format = m_BlueNoiseTexture.Texture->GetTextureDescriptor().Format;
+	m_BlueNoiseTexture.View = std::make_shared<TextureView>(m_BlueNoiseTexture.Texture, noiseTextureViewDescriptor, "Raytracing/BlueNoiseTextureView");
 }
 
 void RaytracingPass::Prepare(RenderData& renderData)
@@ -46,16 +50,23 @@ void RaytracingPass::Prepare(RenderData& renderData)
 	{
 		Shader::AddGlobalDefine("_RAYTRACED_SHADOWS");
 
-		if (!m_RaytracedShadowsTarget || m_RaytracedShadowsTarget->GetWidth() != renderData.CameraDepthTarget->GetWidth() || m_RaytracedShadowsTarget->GetHeight() != renderData.CameraDepthTarget->GetHeight())
+		const uint32_t width = renderData.CameraDepthTarget.Texture->GetWidth();
+		const uint32_t height = renderData.CameraDepthTarget.Texture->GetHeight();
+		if (!m_RaytracedShadowsTarget.Texture || m_RaytracedShadowsTarget.Texture->GetWidth() != width || m_RaytracedShadowsTarget.Texture->GetHeight() != height)
 		{
 			GraphicsBackendTextureDescriptor textureDescriptor{};
-			textureDescriptor.Width = renderData.CameraDepthTarget->GetWidth();
-			textureDescriptor.Height = renderData.CameraDepthTarget->GetHeight();
+			textureDescriptor.Width = width;
+			textureDescriptor.Height = height;
 			textureDescriptor.MipLevels = 1;
 			textureDescriptor.Format = TextureInternalFormat::R16F;
 			textureDescriptor.Linear = true;
 			textureDescriptor.RenderTarget = true;
-			m_RaytracedShadowsTarget = Texture2D::Create(textureDescriptor, "Raytracing/RaytracedShadowsTarget");
+
+			GraphicsBackendTextureViewDescriptor textureViewDescriptor{};
+			textureViewDescriptor.Format = textureDescriptor.Format;
+
+			m_RaytracedShadowsTarget.Texture = Texture2D::Create(textureDescriptor, "Raytracing/RaytracedShadowsTarget");
+			m_RaytracedShadowsTarget.View = std::make_shared<TextureView>(m_RaytracedShadowsTarget.Texture, textureViewDescriptor, "Raytracing/RaytracedShadowsTargetView");
 		}
 
 		renderData.RaytracedShadowsTarget = m_RaytracedShadowsTarget;
@@ -80,9 +91,10 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 	Profiler::Marker _("RaytracingPass::ExecuteRaytracedShadows");
 
 	GraphicsBackendRenderTargetDescriptor colorTargetDescriptor{};
-	colorTargetDescriptor.Texture = renderData.RaytracedShadowsTarget->GetBackendTexture();
+	colorTargetDescriptor.Texture = renderData.RaytracedShadowsTarget.Texture->GetBackendTexture();
 	colorTargetDescriptor.Attachment = FramebufferAttachment::COLOR_ATTACHMENT0;
 	colorTargetDescriptor.LoadAction = LoadAction::CLEAR;
+
 	GraphicsBackend::Current()->AttachRenderTarget(colorTargetDescriptor);
 	GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
 
@@ -102,7 +114,7 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 
 		std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
-		constants.InvTargetSize = Vector2(1.0f / renderData.RaytracedShadowsTarget->GetWidth(), 1.0f / renderData.RaytracedShadowsTarget->GetHeight());
+		constants.InvTargetSize = Vector2(1.0f / renderData.RaytracedShadowsTarget.Texture->GetWidth(), 1.0f / renderData.RaytracedShadowsTarget.Texture->GetHeight());
 		constants.ShadowsDistance = GraphicsSettings::GetShadowDistance();
 		constants.SamplesCount = m_RaytracedShadowsSamplesCount;
 		constants.Random = Vector2(dist(m_Rng), dist(m_Rng));
@@ -122,20 +134,20 @@ void RaytracingPass::ExecuteRaytracedShadows(const RenderData& renderData)
 
 		m_RaytracingScene->BindResources();
 
-		GraphicsBackend::Current()->BindTexture(renderData.CameraDepthTarget->GetBackendTexture(), 0);
-		GraphicsBackend::Current()->BindTexture(renderData.GBuffers[1]->GetBackendTexture(), 1);
-		GraphicsBackend::Current()->BindTextureSampler(m_BlueNoiseTexture->GetBackendTexture(), m_BlueNoiseTexture->GetBackendSampler(), 2);
+		GraphicsBackend::Current()->BindTexture(renderData.CameraDepthTarget.View->GetBackendTextureView(), 0);
+		GraphicsBackend::Current()->BindTexture(renderData.GBuffers[1].View->GetBackendTextureView(), 1);
+		GraphicsBackend::Current()->BindTextureSampler(m_BlueNoiseTexture.View->GetBackendTextureView(), m_BlueNoiseTexture.Texture->GetBackendSampler(), 2);
 		GraphicsBackend::Current()->BindConstantBuffer(m_RaytracedShadowsDataBuffer->GetBackendBuffer(), 0, 0, sizeof(constants));
 
 		const std::shared_ptr<Mesh> fullscreenMesh = Mesh::GetFullscreenMesh();
 		GraphicsBackend::Current()->UseProgram(shader->GetProgram(fullscreenMesh));
 		GraphicsBackend::Current()->DrawElements(fullscreenMesh->GetGraphicsBackendGeometry(), fullscreenMesh->GetPrimitiveType(), fullscreenMesh->GetElementsCount(), fullscreenMesh->GetIndicesDataType());
 
-		GraphicsBackend::Current()->BindTexture(renderData.RaytracedShadowsTarget->GetBackendTexture(), GlobalConstants::TextureIndex::RT_SHADOW_MASK);
+		GraphicsBackend::Current()->BindTexture(renderData.RaytracedShadowsTarget.View->GetBackendTextureView(), GlobalConstants::TextureIndex::RT_SHADOW_MASK);
 	}
 	GraphicsBackend::Current()->EndRenderPass();
 
-	TextureViewer::RegisterTexture(renderData.RaytracedShadowsTarget, "Raytracing/Shadows");
+	TextureViewer::RegisterTexture(renderData.RaytracedShadowsTarget.View, "Raytracing/Shadows");
 }
 
 void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
@@ -149,9 +161,10 @@ void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 		return;
 
 	GraphicsBackendRenderTargetDescriptor colorTargetDescriptor{};
-	colorTargetDescriptor.Texture = renderData.CameraColorTarget->GetBackendTexture();
+	colorTargetDescriptor.Texture = renderData.CameraColorTarget.Texture->GetBackendTexture();
 	colorTargetDescriptor.Attachment = FramebufferAttachment::COLOR_ATTACHMENT0;
 	colorTargetDescriptor.LoadAction = LoadAction::CLEAR;
+
 	GraphicsBackend::Current()->AttachRenderTarget(colorTargetDescriptor);
 	GraphicsBackend::Current()->AttachRenderTarget(GraphicsBackendRenderTargetDescriptor::EmptyDepth());
 
@@ -165,7 +178,7 @@ void RaytracingPass::ExecutePrimaryRaysDebug(const RenderData& renderData)
 			Vector2 Padding0;
 		} constants;
 
-		constants.TargetSize = Vector2UI(renderData.CameraColorTarget->GetWidth(), renderData.CameraColorTarget->GetHeight());
+		constants.TargetSize = Vector2UI(renderData.CameraColorTarget.Texture->GetWidth(), renderData.CameraColorTarget.Texture->GetHeight());
 
 		if (!m_PrimaryRaysDebugDataBuffer)
 		{

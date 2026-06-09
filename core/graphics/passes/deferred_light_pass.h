@@ -4,7 +4,7 @@
 #include "render_pass.h"
 #include "graphics_buffer/graphics_buffer.h"
 #include "shader/shader.h"
-#include "texture/texture.h"
+#include "texture/texture_resources.h"
 #include "raytracing/raytracing_probes.h"
 #include "file_watcher.h"
 #include "graphics/passes/shadow_caster_pass.h"
@@ -20,7 +20,7 @@ public:
 
 private:
 	std::shared_ptr<Shader> m_LightShader;
-	std::shared_ptr<Texture> m_CameraColorTarget;
+	TextureResources m_CameraColorTarget;
 	std::shared_ptr<GraphicsBuffer> m_LightingDataBuffer;
 
 	std::shared_ptr<ShadowCasterPass> m_ShadowCasterPass;

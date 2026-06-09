@@ -1,4 +1,5 @@
 #include "ui_image.h"
+#include "texture_2d/texture_2d.h"
 
 std::shared_ptr<UIImage> UIImage::Create(std::shared_ptr<UIElement> parent, const Vector2& position, const Vector2& size, const std::shared_ptr<Texture2D> image)
 {
@@ -7,9 +8,13 @@ std::shared_ptr<UIImage> UIImage::Create(std::shared_ptr<UIElement> parent, cons
     return uiImage;
 }
 
-UIImage::UIImage(const Vector2 &position, const Vector2& size, const std::shared_ptr<Texture2D> image) :
+UIImage::UIImage(const Vector2 &position, const Vector2& size, std::shared_ptr<Texture2D> image) :
     UIElement(position, size),
-    Color(1, 1, 1, 1),
-    Image(image)
+    Color(1, 1, 1, 1)
 {
+	GraphicsBackendTextureViewDescriptor viewDescriptor{};
+	viewDescriptor.Format = image->GetTextureDescriptor().Format;
+
+    Image.Texture = image;
+	Image.View = std::make_shared<TextureView>(image, viewDescriptor, "UIImage_TextureView");
 }

@@ -153,16 +153,14 @@ namespace Graphics
 #endif
     }
 
-    void SetLightingData(const std::vector<Light*>& lights, const std::shared_ptr<Texture>& skybox)
+    void SetLightingData(const std::vector<Light*>& lights, const std::shared_ptr<TextureView>& skybox)
     {
-        const std::shared_ptr<Texture> reflectionCube = skybox ? skybox : Cubemap::Black();
-
         LightingData lightingData{};
         lightingData.AmbientLight = GraphicsSettings::GetAmbientLightColor() * GraphicsSettings::GetAmbientLightIntensity();
         lightingData.PointLightsCount = 0;
         lightingData.SpotLightsCount = 0;
         lightingData.HasDirectionalLight = -1;
-        lightingData.ReflectionCubeMips = reflectionCube->GetMipLevels();
+        lightingData.ReflectionCubeMips = skybox->GetTexture()->GetMipLevels();
 
         for (Light* light : lights)
         {
@@ -194,7 +192,7 @@ namespace Graphics
             }
         }
 
-        GraphicsBackend::Current()->BindTextureSampler(reflectionCube->GetBackendTexture(), reflectionCube->GetBackendSampler(), GlobalConstants::TextureIndex::REFLECTION_CUBE);
+        GraphicsBackend::Current()->BindTextureSampler(skybox->GetBackendTextureView(), skybox->GetTexture()->GetBackendSampler(), GlobalConstants::TextureIndex::REFLECTION_CUBE);
 
         s_LightingDataBuffer->SetData(&lightingData, 0, sizeof(lightingData));
         GraphicsBackend::Current()->BindConstantBuffer(s_LightingDataBuffer->GetBackendBuffer(), GlobalConstants::ConstantBufferIndex::LIGHTING_DATA, 0, sizeof(lightingData));

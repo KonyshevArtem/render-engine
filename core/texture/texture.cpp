@@ -2,18 +2,18 @@
 #include "graphics_backend_api.h"
 #include "editor/profiler/profiler.h"
 
-#define DEFINE_TEXTURE(Type, Name, Size, ...) \
+#define DEFINE_TEXTURE(Type, Name, Linear, Size, ...) \
     static std::shared_ptr<Texture> texture; \
     if (texture == nullptr) \
     { \
         constexpr uint8_t pixels[Size] = __VA_ARGS__; \
-        texture = TextureLocal::CreateTexture(Type, &pixels[0], Size, Name); \
+        texture = TextureLocal::CreateTexture(Type, &pixels[0], Linear, Size, Name); \
     } \
     return texture; \
 
 namespace TextureLocal
 {
-    std::shared_ptr<Texture> CreateTexture(TextureType textureType, const uint8_t* pixels, uint8_t size, const std::string& name)
+    std::shared_ptr<Texture> CreateTexture(TextureType textureType, const uint8_t* pixels, bool linear, uint8_t size, const std::string& name)
     {
         GraphicsBackendTextureDescriptor descriptor{};
 		descriptor.Type = textureType;
@@ -21,7 +21,7 @@ namespace TextureLocal
         descriptor.Width = 1;
         descriptor.Height = 1;
         descriptor.MipLevels = 1;
-        descriptor.Linear = false;
+        descriptor.Linear = linear;
 		descriptor.RenderTarget = false;
 
         std::shared_ptr<Texture> texture = std::make_shared<Texture>(descriptor, name);
@@ -98,22 +98,22 @@ const GraphicsBackendSampler& Texture::GetBackendSampler()
 
 std::shared_ptr<Texture> Texture::White()
 {
-	DEFINE_TEXTURE(TextureType::TEXTURE_2D, "White", 4, { 255, 255, 255, 255 })
+	DEFINE_TEXTURE(TextureType::TEXTURE_2D, "White", false, 4, { 255, 255, 255, 255 })
 }
 
 std::shared_ptr<Texture> Texture::Normal()
 {
-    DEFINE_TEXTURE(TextureType::TEXTURE_2D, "Normal", 4, { 125, 125, 255, 255 })
+    DEFINE_TEXTURE(TextureType::TEXTURE_2D, "Normal", true, 4, { 125, 125, 255, 255 })
 }
 
 std::shared_ptr<Texture> Texture::BlackCube()
 {
-    DEFINE_TEXTURE(TextureType::TEXTURE_CUBEMAP, "BlackCube", 4, { 0, 0, 0, 0 })
+    DEFINE_TEXTURE(TextureType::TEXTURE_CUBEMAP, "BlackCube", false, 4, { 0, 0, 0, 0 })
 }
 
 std::shared_ptr<Texture> Texture::WhiteCube()
 {
-	DEFINE_TEXTURE(TextureType::TEXTURE_CUBEMAP, "WhiteCube", 4, { 255, 255, 255, 255 })
+	DEFINE_TEXTURE(TextureType::TEXTURE_CUBEMAP, "WhiteCube", false, 4, { 255, 255, 255, 255 })
 }
 
 void Texture::UploadPixels(const void *pixels, int size, int depth, int mipLevel, CubemapFace cubemapFace) const

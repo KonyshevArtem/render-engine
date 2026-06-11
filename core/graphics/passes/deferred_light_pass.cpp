@@ -16,6 +16,7 @@ DeferredLightPass::DeferredLightPass(std::shared_ptr<RaytracingProbes> raytracin
 
 	m_FileWatcher.AddFile("core_resources/shaders/deferred_light.hlsl");
 	m_FileWatcher.AddFile("core_resources/shaders/common/lighting.h");
+	m_FileWatcher.AddFile("core_resources/shaders/raytracing/probes_sample.h");
 }
 
 void DeferredLightPass::Prepare(RenderData& renderData)

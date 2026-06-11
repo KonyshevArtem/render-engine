@@ -97,6 +97,10 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	UpdateTextureResources(m_ProbeDepthAtlas, atlasWidth, atlasHeight, TextureInternalFormat::RG16F, "ProbeDepthAtlas");
 	UpdateTextureResources(m_ProbeTempLightAtlas, tempAtlasWidth, tempAtlasHeight, TextureInternalFormat::RGBA16F, "ProbeTempLightAtlas");
 	UpdateTextureResources(m_ProbeTempDepthAtlas, tempAtlasWidth, tempAtlasHeight, TextureInternalFormat::R16F, "ProbeTempDepthAtlas");
+
+	m_UpdateProbeBaseIndex += m_ProbesPerUpdate;
+	if (m_UpdateProbeBaseIndex >= probesCount)
+		m_UpdateProbeBaseIndex = 0;
 }
 
 void RaytracingProbes::Execute(const RenderData& renderData)
@@ -134,11 +138,6 @@ void RaytracingProbes::Execute(const RenderData& renderData)
 		GraphicsBackend::Current()->Dispatch(m_ProbesPerUpdate, 1, 1);
 	}
 	GraphicsBackend::Current()->EndComputePass();
-
-	const uint32_t probesCount = m_ProbesGridSize.x * m_ProbesGridSize.y * m_ProbesGridSize.z;
-	m_UpdateProbeBaseIndex += m_ProbesPerUpdate;
-	if (m_UpdateProbeBaseIndex >= probesCount)
-		m_UpdateProbeBaseIndex = 0;
 
 	TextureViewer::RegisterTexture(m_ProbeTempLightAtlas.View, "Raytracing/ProbeTempLightAtlas");
 	TextureViewer::RegisterTexture(m_ProbeTempDepthAtlas.View, "Raytracing/ProbeTempDepthAtlas");

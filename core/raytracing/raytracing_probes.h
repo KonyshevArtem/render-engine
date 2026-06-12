@@ -73,6 +73,7 @@ private:
     void LoadShaders(bool reload);
 	void UpdateProbesData() const;
 	void UpdateTextureResources(TextureResources& textureResources, uint32_t width, uint32_t height, TextureInternalFormat format, const std::string& name) const;
+    void ClearTextureResources();
 };
 
 #endif

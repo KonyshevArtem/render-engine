@@ -71,10 +71,7 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	{
 		Shader::RemoveGlobalDefine("PROBE_GI");
 
-		m_ProbeLightAtlas.Clear();
-		m_ProbeDepthAtlas.Clear();
-		m_ProbeTempLightAtlas.Clear();
-		m_ProbeTempDepthAtlas.Clear();
+		ClearTextureResources();
 		return;
 	}
 
@@ -83,7 +80,10 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	Profiler::Marker _("RaytracingProbes::Prepare");
 
 	if (m_FileWatcher.FilesChanged())
+	{
 		LoadShaders(true);
+		ClearTextureResources();
+	}
 
 	const uint32_t probesCount = m_ProbesGridSize.x * m_ProbesGridSize.y * m_ProbesGridSize.z;
 	const uint32_t paddedLightSize = m_ProbeLightSize + m_ProbeLightPadding + RaytracingProbesLocal::k_ProbesBorderSize;
@@ -306,4 +306,12 @@ void RaytracingProbes::UpdateTextureResources(TextureResources& textureResources
 
 	viewDescriptor.ReadWrite = true;
 	textureResources.RWView = std::make_shared<TextureView>(textureResources.Texture, viewDescriptor, name + "_RWView");
+}
+
+void RaytracingProbes::ClearTextureResources()
+{
+	m_ProbeLightAtlas.Clear();
+	m_ProbeDepthAtlas.Clear();
+	m_ProbeTempLightAtlas.Clear();
+	m_ProbeTempDepthAtlas.Clear();
 }

@@ -47,9 +47,15 @@ uint FlattenProbeGridIndex(uint3 gridIndex)
     return gridIndex.x + gridIndex.y * ProbesData.ProbeGridSize.x + gridIndex.z * ProbesData.ProbeGridSize.x * ProbesData.ProbeGridSize.y;
 }
 
+uint2 GetAtlasPixelCoord(uint probeIndex, bool addBorder)
+{
+    uint border = addBorder ? 2 : 0;
+    return uint2(probeIndex % ProbesData.ProbesPerRow, probeIndex / ProbesData.ProbesPerRow) * (ProbesData.ProbeLightPaddedSize + border);
+}
+
 uint2 GetAtlasPixelCoord(uint probeIndex)
 {
-    return uint2(probeIndex % ProbesData.ProbesPerRow, probeIndex / ProbesData.ProbesPerRow) * ProbesData.ProbeLightPaddedSize;
+    return GetAtlasPixelCoord(probeIndex, true);
 }
 
 float SignNotZero(float v)

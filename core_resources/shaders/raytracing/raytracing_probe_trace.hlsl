@@ -55,7 +55,7 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
         distance = ProbesData.ProbeSpacing * 1.5;
     }
 
-    uint2 pixelCoord = GetAtlasPixelCoord(tempProbeIndex) + localPixelCoord;
+    uint2 pixelCoord = GetAtlasPixelCoord(tempProbeIndex, false) + localPixelCoord;
     OutProbeTempLightAtlas[pixelCoord] = light;
     OutProbeTempDepthAtlas[pixelCoord] = distance;
 }

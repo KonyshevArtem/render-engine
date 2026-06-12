@@ -22,7 +22,7 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
     float weightSum = 0;
 
     float3 targetDirection = UVtoOctahedral((float2(localPixelCoord) + 0.5) / ProbesData.ProbeLightSize);
-    uint2 baseTempPixelCoord = GetAtlasPixelCoord(tempProbeIndex);
+    uint2 baseTempPixelCoord = GetAtlasPixelCoord(tempProbeIndex, false);
     for (uint x = 0; x < ProbesData.ProbeLightSize; ++x)
     {
         for (uint y = 0; y < ProbesData.ProbeLightSize; ++y)

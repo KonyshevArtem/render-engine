@@ -32,7 +32,7 @@ RaytracingProbes::RaytracingProbes(const std::shared_ptr<RaytracingScene>& rtSce
 	m_ProbesPerUpdate(1024),
 	m_UpdateProbeBaseIndex(0),
 	m_ProbeLightSize(8),
-	m_ProbeLightPadding(1),
+	m_ProbeLightPadding(0),
 	m_RaytracingScene(rtScene)
 {
 	DeveloperConsole::AddCommand(L"Raytracing.Probes.Enabled", &m_RaytracingProbesEnabled);
@@ -86,10 +86,11 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	}
 
 	const uint32_t probesCount = m_ProbesGridSize.x * m_ProbesGridSize.y * m_ProbesGridSize.z;
-	const uint32_t paddedLightSize = m_ProbeLightSize + m_ProbeLightPadding + RaytracingProbesLocal::k_ProbesBorderSize;
+	const uint32_t paddedLightSize = m_ProbeLightSize + m_ProbeLightPadding;
+	const uint32_t paddedLightSizeWithBorder = paddedLightSize + RaytracingProbesLocal::k_ProbesBorderSize;
 
-	const uint32_t atlasWidth = RaytracingProbesLocal::k_ProbesPerAtlasRow * paddedLightSize;
-	const uint32_t atlasHeight = std::max<uint32_t>(probesCount / RaytracingProbesLocal::k_ProbesPerAtlasRow, 1) * paddedLightSize;
+	const uint32_t atlasWidth = RaytracingProbesLocal::k_ProbesPerAtlasRow * paddedLightSizeWithBorder;
+	const uint32_t atlasHeight = std::max<uint32_t>(probesCount / RaytracingProbesLocal::k_ProbesPerAtlasRow, 1) * paddedLightSizeWithBorder;
 	const uint32_t tempAtlasWidth = std::min<uint32_t>(m_ProbesPerUpdate, RaytracingProbesLocal::k_ProbesPerAtlasRow) * paddedLightSize;
 	const uint32_t tempAtlasHeight = std::max<uint32_t>(m_ProbesPerUpdate / RaytracingProbesLocal::k_ProbesPerAtlasRow, 1) * paddedLightSize;
 
@@ -279,7 +280,7 @@ void RaytracingProbes::UpdateProbesData() const
 	data.UpdateProbeBaseIndex = m_UpdateProbeBaseIndex;
 	data.ProbeLightSize = m_ProbeLightSize;
 	data.ProbesUpdatePerFrame = m_ProbesPerUpdate;
-	data.ProbeLightPaddedSize = m_ProbeLightSize + m_ProbeLightPadding + RaytracingProbesLocal::k_ProbesBorderSize;
+	data.ProbeLightPaddedSize = m_ProbeLightSize + m_ProbeLightPadding;
 	data.InvProbeAtlasSize = Vector2(1.0f / m_ProbeLightAtlas.Texture->GetWidth(), 1.0f / m_ProbeLightAtlas.Texture->GetHeight());
 
 	m_ProbesDataBuffer->SetData(&data, 0, sizeof(data));

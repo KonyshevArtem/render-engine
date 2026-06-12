@@ -434,6 +434,7 @@ namespace DX12Local
 
     ResourceData* s_BoundRWTextures[k_MaxResourcesPerDraw];
     ResourceData* s_BoundRWBuffers[k_MaxResourcesPerDraw];
+    std::vector<D3D12_RESOURCE_BARRIER> s_PendingTransitions;
 
     void GetHardwareAdapter(IDXGIFactory7* pFactory, IDXGIAdapter4** ppAdapter)
     {
@@ -665,6 +666,26 @@ namespace DX12Local
     {
         TransitionResources(1, &resourceData, &stateAfter, commandList);
     }
+
+    void AddPendingResourceTransition(ResourceData* resourceData, D3D12_RESOURCE_STATES stateAfter)
+    {
+        if (resourceData->State == stateAfter)
+            return;
+
+        const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resourceData->Resource, resourceData->State, stateAfter);
+        resourceData->State = stateAfter;
+
+        s_PendingTransitions.push_back(barrier);
+	}
+
+    void FlushPendingResourceTransitions(ID3D12GraphicsCommandList6* commandList)
+    {
+        if (s_PendingTransitions.empty())
+            return;
+
+        commandList->ResourceBarrier(static_cast<UINT>(s_PendingTransitions.size()), s_PendingTransitions.data());
+        s_PendingTransitions.clear();
+	}
 
     ID3D12Resource* GetUploadBuffer(const std::thread::id& threadId, uint64_t requiredSize)
     {
@@ -1295,7 +1316,7 @@ void GraphicsBackendDX12::BindTexture_Internal(const GraphicsBackendTextureView&
     assert(index < DX12Local::k_MaxResourcesPerDraw);
 
     const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(textureView.TextureView);
-    DX12Local::TransitionResource(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
+	DX12Local::AddPendingResourceTransition(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_TexturesDescriptorsOffset);
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1306,7 +1327,7 @@ void GraphicsBackendDX12::BindRWTexture_Internal(const GraphicsBackendTextureVie
     assert(index < DX12Local::k_MaxResourcesPerDraw);
 
     const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(textureView.TextureView);
-    DX12Local::TransitionResource(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, DX12Local::s_RenderCommandList->List);
+    DX12Local::AddPendingResourceTransition(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWTexturesDescriptorsOffset);
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1607,7 +1628,7 @@ void GraphicsBackendDX12::BindBuffer_Internal(const GraphicsBackendBufferView& b
     assert(index < DX12Local::k_MaxResourcesPerDraw);
     
     const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(bufferView.BufferView);
-    DX12Local::TransitionResource(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
+    DX12Local::AddPendingResourceTransition(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_BuffersDescriptorsOffset);
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1620,7 +1641,7 @@ void GraphicsBackendDX12::BindConstantBuffer_Internal(const GraphicsBackendBuffe
     size = Math::Align(size, GetConstantBufferOffsetAlignment());
 
     DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
-    DX12Local::TransitionResource(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, DX12Local::s_RenderCommandList->List);
+	DX12Local::AddPendingResourceTransition(resourceData, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
     cbvDesc.BufferLocation = resourceData->Resource->GetGPUVirtualAddress() + offset;
@@ -1634,7 +1655,7 @@ void GraphicsBackendDX12::BindRWBuffer_Internal(const GraphicsBackendBufferView&
     assert(index < DX12Local::k_MaxResourcesPerDraw);
     
     const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(bufferView.BufferView);
-    DX12Local::TransitionResource(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, DX12Local::s_RenderCommandList->List);
+	DX12Local::AddPendingResourceTransition(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWBufferDescriptorsOffset);
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1954,7 +1975,8 @@ void GraphicsBackendDX12::DrawArraysInstanced(const GraphicsBackendGeometry& geo
     const DX12Local::GeometryData* geometryData = reinterpret_cast<DX12Local::GeometryData*>(geometry.Geometry);
     DX12Local::ResourceData* vertexBufferData = reinterpret_cast<DX12Local::ResourceData*>(geometry.VertexBuffer.Buffer);
 
-    DX12Local::TransitionResource(vertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, DX12Local::s_RenderCommandList->List);
+	DX12Local::AddPendingResourceTransition(vertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+    DX12Local::FlushPendingResourceTransitions(DX12Local::s_RenderCommandList->List);
 
     DX12Local::s_RenderCommandList->List->RSSetViewports(1, &DX12Local::s_CurrentViewport);
     DX12Local::s_RenderCommandList->List->RSSetScissorRects(1, &DX12Local::s_CurrentScissorsRect);
@@ -1978,8 +2000,9 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
     DX12Local::ResourceData* vertexBufferData = reinterpret_cast<DX12Local::ResourceData*>(geometry.VertexBuffer.Buffer);
     DX12Local::ResourceData* indexBufferData = reinterpret_cast<DX12Local::ResourceData*>(geometry.IndexBuffer.Buffer);
 
-    DX12Local::TransitionResource(vertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, DX12Local::s_RenderCommandList->List);
-    DX12Local::TransitionResource(indexBufferData, D3D12_RESOURCE_STATE_INDEX_BUFFER, DX12Local::s_RenderCommandList->List);
+	DX12Local::AddPendingResourceTransition(vertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	DX12Local::AddPendingResourceTransition(indexBufferData, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	DX12Local::FlushPendingResourceTransitions(DX12Local::s_RenderCommandList->List);
 
     DX12Local::s_RenderCommandList->List->RSSetViewports(1, &DX12Local::s_CurrentViewport);
     DX12Local::s_RenderCommandList->List->RSSetScissorRects(1, &DX12Local::s_CurrentScissorsRect);
@@ -1992,6 +2015,8 @@ void GraphicsBackendDX12::DrawElementsInstanced(const GraphicsBackendGeometry& g
 void GraphicsBackendDX12::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
     BindResources(ProgramType::COMPUTE);
+
+    DX12Local::FlushPendingResourceTransitions(DX12Local::s_RenderCommandList->List);
 
     const ThreadGroupSize& tgSize = m_CurrentProgram.ThreadGroupSize;
     x = (x + tgSize.X - 1) / tgSize.X;

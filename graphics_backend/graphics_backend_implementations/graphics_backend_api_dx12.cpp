@@ -432,6 +432,9 @@ namespace DX12Local
     HANDLE s_CopyQueueFenceEvent;
     uint64_t s_FenceValue;
 
+    ResourceData* s_BoundRWTextures[k_MaxResourcesPerDraw];
+    ResourceData* s_BoundRWBuffers[k_MaxResourcesPerDraw];
+
     void GetHardwareAdapter(IDXGIFactory7* pFactory, IDXGIAdapter4** ppAdapter)
     {
         for (UINT i = 0; pFactory->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(ppAdapter)) != DXGI_ERROR_NOT_FOUND; ++i)
@@ -1302,12 +1305,13 @@ void GraphicsBackendDX12::BindRWTexture_Internal(const GraphicsBackendTextureVie
 {
     assert(index < DX12Local::k_MaxResourcesPerDraw);
 
-    const DX12Local::ResourceViewData* resourceData = static_cast<DX12Local::ResourceViewData*>(textureView.TextureView);
-    DX12Local::TransitionResource(resourceData->ResourceData, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, DX12Local::s_RenderCommandList->List);
+    const DX12Local::ResourceViewData* resourceViewData = static_cast<DX12Local::ResourceViewData*>(textureView.TextureView);
+    DX12Local::TransitionResource(resourceViewData->ResourceData, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, DX12Local::s_RenderCommandList->List);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWTexturesDescriptorsOffset);
-    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+	DX12Local::s_BoundRWTextures[index] = resourceViewData->ResourceData;
 }
 
 void GraphicsBackendDX12::BindSampler_Internal(const GraphicsBackendSampler& sampler, uint32_t index)
@@ -1634,6 +1638,8 @@ void GraphicsBackendDX12::BindRWBuffer_Internal(const GraphicsBackendBufferView&
 
     const D3D12_CPU_DESCRIPTOR_HANDLE destHandle = DX12Local::s_BoundResourceStagingDescriptorHeap.GetCPUHandle(index + DX12Local::k_RWBufferDescriptorsOffset);
     DX12Local::s_Device->CopyDescriptorsSimple(1, destHandle, resourceViewData->DescriptorHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	DX12Local::s_BoundRWBuffers[index] = resourceViewData->ResourceData;
 }
 
 void GraphicsBackendDX12::BindTLAS_Internal(const GraphicsBackendTLAS& TLAS, uint32_t index)
@@ -1993,6 +1999,22 @@ void GraphicsBackendDX12::Dispatch(uint32_t x, uint32_t y, uint32_t z)
     z = (z + tgSize.Z - 1) / tgSize.Z;
     
     DX12Local::s_RenderCommandList->List->Dispatch(x, y, z);
+
+    int barrierCount = 0;
+    CD3DX12_RESOURCE_BARRIER uavBarriers[DX12Local::k_MaxResourcesPerDraw * 2];
+    auto FillUAVBarriers = [&barrierCount, &uavBarriers](DX12Local::ResourceData** boundUAVs, uint32_t shaderBindings)
+        {
+            for (int i = 0; i < DX12Local::k_MaxResourcesPerDraw; ++i)
+            {
+                const uint32_t bindingBit = 1 << i;
+                if ((shaderBindings & bindingBit) != 0 && boundUAVs[i])
+	                uavBarriers[barrierCount++] = CD3DX12_RESOURCE_BARRIER::UAV(boundUAVs[i]->Resource);
+            }
+        };
+
+	FillUAVBarriers(DX12Local::s_BoundRWBuffers, m_CurrentProgram.RWBufferBindings);
+	FillUAVBarriers(DX12Local::s_BoundRWTextures, m_CurrentProgram.RWTextureBindings);
+	DX12Local::s_RenderCommandList->List->ResourceBarrier(barrierCount, uavBarriers);
 }
 
 void GraphicsBackendDX12::CopyTextureToTexture(const GraphicsBackendTexture& source, const GraphicsBackendRenderTargetDescriptor& destinationDescriptor, unsigned int sourceX, unsigned int sourceY, unsigned int destinationX, unsigned int destinationY, unsigned int width, unsigned int height, GPUQueue queue)
@@ -2223,6 +2245,12 @@ void GraphicsBackendDX12::EndComputePass()
 
     DX12Local::s_RenderCommandList->Execute();
     DX12Local::s_RenderCommandList->Reset();
+
+    for (int i = 0; i < DX12Local::k_MaxResourcesPerDraw; ++i)
+    {
+        DX12Local::s_BoundRWTextures[i] = nullptr;
+		DX12Local::s_BoundRWBuffers[i] = nullptr;
+    }
 }
 
 GraphicsBackendFence GraphicsBackendDX12::CreateFence(FenceType fenceType, const std::string& name)

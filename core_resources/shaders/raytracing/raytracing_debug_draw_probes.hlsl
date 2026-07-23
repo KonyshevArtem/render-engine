@@ -30,7 +30,8 @@ Varyings vertexMain(Attributes input, uint instanceID : SV_InstanceID)
     Varyings output;
 
     float scale = 0.1;
-    float4 worldPos = float4(input.PositionOS * scale + GetProbeWorldPosition(instanceID), 1);
+    uint3 probeGridIndex = ProbeIndexToGridIndex(instanceID);
+    float4 worldPos = float4(input.PositionOS * scale + GetProbeWorldPosition(probeGridIndex), 1);
 
     output.PositionCS = mul(_VPMatrix, worldPos);
     output.Normal = input.NormalOS;
@@ -52,7 +53,8 @@ float4 fragmentMain(Varyings input) : SV_Target
     for (uint i = 0; i < 8; ++i)
     {
         uint3 gridIndexOffset = uint3(i & 1, (i >> 1) & 1, (i >> 2) & 1);
-        uint probeIndex = FlattenProbeGridIndex(gridIndex + gridIndexOffset);
+        uint3 probeGridIndex = WrapProbeGridIndex(gridIndex + gridIndexOffset);
+        uint probeIndex = FlattenProbeGridIndex(probeGridIndex);
         
         if (probeIndex == input.ProbeIndex)
         {

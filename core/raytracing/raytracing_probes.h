@@ -39,6 +39,12 @@ private:
         uint32_t ProbesUpdatePerFrame;
         uint32_t ProbeLightPaddedSize;
 		Vector2 InvProbeAtlasSize;
+
+        Vector3I GridCenter;
+        float Padding0;
+
+        Vector3I GridOffset;
+        float Padding1;
 	};
 
     bool m_RaytracingProbesEnabled;
@@ -47,6 +53,7 @@ private:
 
 	float m_ProbeSpacing;
 	Vector3I m_ProbesGridSize;
+    Vector3I m_ProbesGridOffset;
     uint32_t m_ProbesPerUpdate;
 	uint32_t m_UpdateProbeBaseIndex;
     uint32_t m_ProbeLightSize;

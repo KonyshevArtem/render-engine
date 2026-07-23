@@ -8,7 +8,6 @@
 #include "graphics/graphics.h"
 #include "graphics/render_data.h"
 #include "texture/texture.h"
-#include "texture/texture.h"
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "graphics_buffer/graphics_buffer.h"
@@ -102,6 +101,8 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	m_UpdateProbeBaseIndex += m_ProbesPerUpdate;
 	if (m_UpdateProbeBaseIndex >= probesCount)
 		m_UpdateProbeBaseIndex = 0;
+
+	m_ProbesGridOffset = Vector3I(renderData.ViewMatrix.Invert().GetPosition() / m_ProbeSpacing);
 }
 
 void RaytracingProbes::Execute(const RenderData& renderData)
@@ -282,6 +283,8 @@ void RaytracingProbes::UpdateProbesData() const
 	data.ProbesUpdatePerFrame = m_ProbesPerUpdate;
 	data.ProbeLightPaddedSize = m_ProbeLightSize + m_ProbeLightPadding;
 	data.InvProbeAtlasSize = Vector2(1.0f / m_ProbeLightAtlas.Texture->GetWidth(), 1.0f / m_ProbeLightAtlas.Texture->GetHeight());
+	data.GridCenter = m_ProbesGridOffset * static_cast<int>(m_ProbeSpacing);
+	data.GridOffset = m_ProbesGridOffset;
 
 	m_ProbesDataBuffer->SetData(&data, 0, sizeof(data));
 }

@@ -14,10 +14,11 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
     uint2 localPixelCoord = dtid.xy % ProbesData.ProbeLightSize;
     uint tempProbeIndex = dtid.x / ProbesData.ProbeLightSize.x;
     uint globalProbeIndex = tempProbeIndex + ProbesData.UpdateProbeBaseIndex;
+    uint3 probeGridIndex = ProbeIndexToGridIndex(globalProbeIndex);
 
     float2 uv = (float2(localPixelCoord) + 0.5) / ProbesData.ProbeLightSize;
     float3 direction = UVtoOctahedral(uv);
-    float3 probeWorldPos = GetProbeWorldPosition(globalProbeIndex);
+    float3 probeWorldPos = GetProbeWorldPosition(probeGridIndex);
 
     RayDesc ray;
     ray.Origin = probeWorldPos;

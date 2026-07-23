@@ -16,30 +16,47 @@ struct ProbeData
     uint ProbesUpdatePerFrame;
     uint ProbeLightPaddedSize;
     float2 InvProbeAtlasSize;
+
+    int3 ProbeGridCenter;
+    float Padding0;
+
+    int3 ProbeGridOffset;
+    float Padding1;
 };
 
 ConstantBuffer<ProbeData> ProbesData : register(PROBE_DATA);
 
+uint3 WrapProbeGridIndex(uint3 gridIndex)
+{
+    return gridIndex % ProbesData.ProbeGridSize;
+}
+
+uint3 ProbeIndexToGridIndex(uint probeIndex)
+{
+    uint3 idx;
+    idx.x = probeIndex % ProbesData.ProbeGridSize.x;
+    idx.y = (probeIndex / ProbesData.ProbeGridSize.x) % ProbesData.ProbeGridSize.y;
+    idx.z = probeIndex / (ProbesData.ProbeGridSize.x * ProbesData.ProbeGridSize.y);
+    return idx;
+}
+
 float3 GetGridStartPos()
 {
     float3 halfGridSize = float3(ProbesData.ProbeGridSize - 1) * ProbesData.ProbeSpacing * 0.5;
-    return -halfGridSize;
+    return ProbesData.ProbeGridCenter - halfGridSize;
 }
 
-float3 GetProbeWorldPosition(uint probeIndex)
+float3 GetProbeWorldPosition(uint3 probeGridIndex)
 {
-    uint3 probeGridPos;
-    probeGridPos.x = probeIndex % ProbesData.ProbeGridSize.x;
-    probeGridPos.y = (probeIndex / ProbesData.ProbeGridSize.x) % ProbesData.ProbeGridSize.y;
-    probeGridPos.z = probeIndex / (ProbesData.ProbeGridSize.x * ProbesData.ProbeGridSize.y);
-
-    return GetGridStartPos() + probeGridPos * ProbesData.ProbeSpacing;
+    uint3 localGridIndex = (int3(probeGridIndex) - ProbesData.ProbeGridOffset + ProbesData.ProbeGridSize) % ProbesData.ProbeGridSize;
+    return GetGridStartPos() + float3(localGridIndex) * ProbesData.ProbeSpacing;
 }
 
 uint3 WorldPosToGridIndex(float3 worldPos)
 {
     float3 gridPos = (worldPos - GetGridStartPos()) / ProbesData.ProbeSpacing;
-    return clamp(uint3(gridPos), 0, ProbesData.ProbeGridSize - 1);
+    uint3 globalGridIndex = (gridPos + ProbesData.ProbeGridOffset + ProbesData.ProbeGridSize) % ProbesData.ProbeGridSize;
+    return clamp(globalGridIndex, 0, ProbesData.ProbeGridSize - 1);
 }
 
 uint FlattenProbeGridIndex(uint3 gridIndex)

@@ -19,6 +19,9 @@ public:
     Vector3Base(T _x, T _y, T _z) : x(_x), y(_y), z(_z) {}
     Vector3Base(Vector4Base<T> _vector4) : x(_vector4.x), y(_vector4.y), z(_vector4.z) {}
 
+    template<typename OtherT>
+    Vector3Base(Vector3Base<OtherT> vector) : x(T(vector.x)), y(T(vector.y)), z(T(vector.z)) {}
+
     static const Vector3Base& Zero()
     {
         static const Vector3Base zero{ 0, 0, 0 };
@@ -89,6 +92,11 @@ public:
     Vector3Base operator/(const Vector3Base& _vector) const
     {
         return { x / _vector.x, y / _vector.y, z / _vector.z };
+    }
+
+    Vector3Base operator/(T val) const
+    {
+        return { x / val, y / val, z / val };
     }
 
     Vector4Base<T> ToVector4(T _w) const

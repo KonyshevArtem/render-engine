@@ -17,15 +17,16 @@ float3 SampleProbeGI(float3 posWS, float3 normalWS)
     posWS += normalWS * ProbesData.ProbeSpacing * 0.1;
 
     uint3 gridIndex = WorldPosToGridIndex(posWS);
-    float3 baseWorldPos = GetProbeWorldPosition(FlattenProbeGridIndex(gridIndex));
+    float3 baseWorldPos = GetProbeWorldPosition(gridIndex);
     float3 alpha = saturate((posWS - baseWorldPos) / ProbesData.ProbeSpacing);
 
     for (uint i = 0; i < 8; ++i)
     {
         uint3 gridIndexOffset = uint3(i, i >> 1, i >> 2) & uint3(1, 1, 1);
-        uint probeIndex = FlattenProbeGridIndex(gridIndex + gridIndexOffset);
+        uint3 probeGridIndex = WrapProbeGridIndex(gridIndex + gridIndexOffset);
+        uint probeIndex = FlattenProbeGridIndex(probeGridIndex);
 
-        float3 probeWorldPos = GetProbeWorldPosition(probeIndex);
+        float3 probeWorldPos = GetProbeWorldPosition(probeGridIndex);
         float3 toProbe = normalize(probeWorldPos - posWS);
 
         uint2 atlasCoord = GetAtlasPixelCoord(probeIndex);

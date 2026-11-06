@@ -18,7 +18,6 @@ namespace Aftermath
     std::mutex s_Mutex;
     std::string s_LastEventMarker;
 
-    std::unordered_map<const void*, GFSDK_Aftermath_ResourceHandle> s_RegisteredResourceHandles;
     std::unordered_map<const void*, GFSDK_Aftermath_ContextHandle> s_ContextHandles;
 
     std::string GetTimestampedFilename(const std::string& base, const std::string& ext)
@@ -104,26 +103,8 @@ namespace Aftermath
 
 	void RegisterResource(void* resourcePtr)
 	{
-        if (!s_Enabled)
-	        return;
-
-        GFSDK_Aftermath_ResourceHandle handle;
-        GFSDK_Aftermath_DX12_RegisterResource(static_cast<ID3D12Resource*>(resourcePtr), &handle);
-
-        s_RegisteredResourceHandles[resourcePtr] = handle;
-	}
-
-	void UnregisterResource(const void* resourcePtr)
-	{
-        if (!s_Enabled)
-            return;
-
-        const auto it = s_RegisteredResourceHandles.find(resourcePtr);
-        if (it == s_RegisteredResourceHandles.end())
-            return;
-
-        GFSDK_Aftermath_DX12_UnregisterResource(it->second);
-        s_RegisteredResourceHandles.erase(it);
+        if (s_Enabled)
+            GFSDK_Aftermath_DX12_UpdateResourceInfo(static_cast<ID3D12Resource*>(resourcePtr));
 	}
 
 	void CreateContextHandle(void* commandListPtr)

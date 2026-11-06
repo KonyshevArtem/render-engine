@@ -971,16 +971,10 @@ void GraphicsBackendDX12::InitNewFrame()
         DX12Local::WaitForFrameEnd();
 
         for (DX12Local::ResourceData& backbuffer : DX12Local::s_ColorBackbuffers)
-        {
-            Aftermath::UnregisterResource(backbuffer.Resource);
             backbuffer.Resource->Release();
-        }
 
         for (DX12Local::ResourceData& backbuffer : DX12Local::s_DepthBackbuffers)
-        {
-            Aftermath::UnregisterResource(backbuffer.Resource);
             backbuffer.Resource->Release();
-        }
 
         const DXGI_FORMAT format = DX12Helpers::ToTextureInternalFormat(DX12Local::k_SwapChainColorFormat, true);
         DX12Local::s_SwapChain->ResizeBuffers(GraphicsBackend::GetMaxFramesInFlight(), windowWidth, windowHeight, format, 0);
@@ -1292,7 +1286,6 @@ void* GraphicsBackendDX12::GetImGuiTextureId(const GraphicsBackendTextureView& t
 void GraphicsBackendDX12::DeleteTexture_Internal(const GraphicsBackendTexture& texture)
 {
     const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(texture.Texture);
-    Aftermath::UnregisterResource(resourceData->Resource);
     resourceData->Resource->Release();
     delete resourceData;
 }
@@ -1611,7 +1604,6 @@ GraphicsBackendBufferView GraphicsBackendDX12::CreateBufferView(const GraphicsBa
 void GraphicsBackendDX12::DeleteBuffer_Internal(const GraphicsBackendBuffer& buffer)
 {
     const DX12Local::ResourceData* resourceData = reinterpret_cast<DX12Local::ResourceData*>(buffer.Buffer);
-    Aftermath::UnregisterResource(resourceData->Resource);
     resourceData->Resource->Release();
     delete resourceData;
 }

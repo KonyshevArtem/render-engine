@@ -272,10 +272,10 @@ are the following:
   address seen in the case of a crash due to a GPU page fault. Since the
   tracking happens on the driver-level, it will provide only basic resource
   information, such as the size of the resource, the format, and the current
-  deletion status of the resource object. Developers may also want to register
-  the D3D12 resources created by their application using the
-  `GFSDK_Aftermath_DX12_RegisterResource` function, which will allow Aftermath
-  to track additional information, such as the resource's debug name.
+  deletion status of the resource object. Developers may also want to update
+  resource information for the D3D12 resources created by their application using
+  the `GFSDK_Aftermath_DX12_UpdateResourceInfo` function, which will allow
+  Aftermath to track additional information, such as the resource's debug name.
 
 * `GFSDK_Aftermath_FeatureFlags_GenerateShaderDebugInfo` - this instructs the
   shader compiler to generate debug information (line tables for mapping from
@@ -359,6 +359,9 @@ The supported configuration flag bits are:
   stack capturing can cause considerable CPU overhead during command buffer
   recording.
 
+  Shader Binary Impact: Enabling this flag does not by itself affect shader
+  compilation or the shader binaries retrieved by `vkGetShaderBinaryEXT`.
+
   Note: When enabling this feature, Aftermath GPU crash dumps will include file paths
   to the crashing application's executable as well as all DLLs or DSOs it has loaded.
 
@@ -370,6 +373,9 @@ The supported configuration flag bits are:
   deletion status of the resource object, as well as the resource's debug name
   set via `vkSetDebugUtilsObjectNameEXT`.
 
+  Shader Binary Impact: Enabling this flag does not by itself affect shader
+  compilation or the shader binaries retrieved by `vkGetShaderBinaryEXT`.
+
 * `VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_DEBUG_INFO_BIT_NV` - this instructs the
   shader compiler to generate debug information (line tables). Whether a mapping
   from the SPIR-V code to the shader microcode or a mapping from the shader's
@@ -380,10 +386,17 @@ The supported configuration flag bits are:
   considerable shader compilation overhead and additional overhead for handling
   the corresponding shader debug information callbacks.
 
+  Shader Binary Impact: Enabling this flag changes the shader compiler's debug
+  information generation settings and may affect the shader binaries retrieved
+  by `vkGetShaderBinaryEXT`.
+
 * `VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_ERROR_REPORTING_BIT_NV` - this
   flag puts the GPU in a special mode that allows it to report more runtime
   shader errors. The additional information may help in debugging rendering
   corruption or crashes due to errors in shader execution.
+
+  Shader Binary Impact: Enabling this flag does not by itself affect shader
+  compilation or the shader binaries retrieved by `vkGetShaderBinaryEXT`.
 
   Note: Enabling this feature does not cause any performance overhead, but it may result
   in additional crashes being reported for shaders that exhibit undefined behavior, which
@@ -1153,13 +1166,20 @@ of generating source shader debug information:
    Compilation example using the Vulkan SDK toolchain:
    ```
         glslangValidator -V -g -o ./full/shader.spv shader.vert
-        spirv-remap --map all --strip-all --input full/shader.spv --output ./stripped/
-   ````
+        spirv-opt --strip-debug --strip-nonsemantic ./full/shader.spv -o ./stripped/shader.spv
+   ```
 
    Compilation example using the Microsoft DirectX Shader Compiler:
    ```
         dxc -spirv -Zi [..] -Fo ./full/shader.spv shader.hlsl
-        spirv-remap --map all --strip-all --input full/shader.spv --output ./stripped/
+        spirv-opt --strip-debug --strip-nonsemantic ./full/shader.spv -o ./stripped/shader.spv
+   ```
+
+   Note: If your spirv-opt does not support --strip-nonsemantic, omit that option.
+
+   Alternative (if available):
+   ```
+        spirv-remap --strip-all --input full/shader.spv --output ./stripped/
    ```
 
    The (crash dump decoder) application then needs to pass the contents of the
@@ -1184,9 +1204,12 @@ of generating source shader debug information:
 * Nsight Aftermath is fully supported on Windows 10 and newer, with limited support on
   Windows 7.
 
-* Nsight Aftermath event markers and resource tracking is incompatible with the
-  D3D debug layer and tools using D3D API interception, such as Microsoft PIX
-  or Nsight Graphics.
+* The D3D12 debug layer is supported with Nsight Aftermath, including event
+  markers and resource tracking.
+
+* An active Microsoft PIX graphics analysis session cannot be used concurrently
+  with Nsight Aftermath because its D3D API interception conflicts with event
+  markers and resource tracking.
 
 * Shader line mappings are only supported for DXIL shaders, i.e., Shader Model 6 or
   above. Line mappings for shaders in DXBC shader byte code format are unsupported.

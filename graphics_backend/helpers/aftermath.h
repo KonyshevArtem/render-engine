@@ -11,7 +11,6 @@ namespace Aftermath
 	void Initialize(void* devicePtr);
 
 	void RegisterResource(void* resourcePtr);
-	void UnregisterResource(const void* resourcePtr);
 
 	void CreateContextHandle(void* commandListPtr);
 	void SetEventMarker(const void* commandListPtr, const std::string& name);

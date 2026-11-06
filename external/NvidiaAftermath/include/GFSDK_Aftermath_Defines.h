@@ -110,7 +110,7 @@
 //
 /////////////////////////////////////////////////////////////////////////
 GFSDK_AFTERMATH_DECLARE_ENUM(Version){
-    GFSDK_Aftermath_Version_API = 0x000021A // Version 2.26
+    GFSDK_Aftermath_Version_API = 0x000021B // Version 2.27
 };
 
 /////////////////////////////////////////////////////////////////////////
@@ -162,7 +162,8 @@ GFSDK_AFTERMATH_DECLARE_ENUM(Result){
     // Looks like the library has already been initialized.
     GFSDK_Aftermath_Result_FAIL_AlreadyInitialized = GFSDK_Aftermath_Result_Fail | 9,
 
-    // A debug layer not compatible with Aftermath has been detected.
+    // Legacy result code retained for compatibility. The D3D debug layer is supported,
+    // and this result is no longer returned by the SDK.
     GFSDK_Aftermath_Result_FAIL_D3DDebugLayerNotCompatible = GFSDK_Aftermath_Result_Fail | 10,
 
     // Aftermath failed to initialize in the graphics driver.
@@ -196,7 +197,7 @@ GFSDK_AFTERMATH_DECLARE_ENUM(Result){
     // The version of the D3D DLL is not compatible with Aftermath.
     GFSDK_Aftermath_Result_FAIL_D3dDllNotSupported = GFSDK_Aftermath_Result_Fail | 20,
 
-    // D3D DLL interception is not compatible with Aftermath.
+    // An incompatible D3D API interception tool has been detected.
     GFSDK_Aftermath_Result_FAIL_D3dDllInterceptionNotSupported = GFSDK_Aftermath_Result_Fail | 21,
 
     // Aftermath is disabled on the system by the current user.

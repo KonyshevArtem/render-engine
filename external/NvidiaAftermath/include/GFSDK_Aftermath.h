@@ -50,8 +50,8 @@
  *       'GFSDK_Aftermath_Result_FAIL_NvApiIncompatible'.
  *
  *
- *  o) A D3D API debug layer, such as PIX or other graphics debuggers, was detected
- *     that is incompatible with Aftermath:
+ *  o) An incompatible D3D API interception tool, such as an active Microsoft PIX
+ *     graphics analysis session, was detected:
  *       'GFSDK_Aftermath_Result_FAIL_D3dDllInterceptionNotSupported'
  *
  *
@@ -273,17 +273,6 @@ GFSDK_AFTERMATH_DECLARE_ENUM(FeatureFlags){
 GFSDK_AFTERMATH_DECLARE_HANDLE(GFSDK_Aftermath_ContextHandle);
 
 /////////////////////////////////////////////////////////////////////////
-// GFSDK_Aftermath_ResourceHandle
-// ---------------------------------
-//
-// Used with the 'GFSDK_Aftermath_DX12_RegisterResource' and
-// 'GFSDK_Aftermath_DX12_UnregisterResource' entry points to reference an API
-// resource object.
-//
-/////////////////////////////////////////////////////////////////////////
-GFSDK_AFTERMATH_DECLARE_HANDLE(GFSDK_Aftermath_ResourceHandle);
-
-/////////////////////////////////////////////////////////////////////////
 // GFSDK_Aftermath_ContextData
 // ---------------------------------
 //
@@ -311,8 +300,8 @@ typedef struct GFSDK_Aftermath_ContextData
 /////////////////////////////////////////////////////////////////////////
 typedef struct GFSDK_Aftermath_ResourceDescriptor
 {
-    // This is available in DX12 only and only if the application registers the
-    // resource pointers using 'GFSDK_Aftermath_DX12_RegisterResource'.
+    // This is available in DX12 only and only if the application updates
+    // resource info using 'GFSDK_Aftermath_DX12_UpdateResourceInfo'.
 #ifdef __d3d12_h__
     GFSDK_AFTERMATH_DECLARE_POINTER_MEMBER(ID3D12Resource*, pAppResource);
 #else
@@ -553,60 +542,23 @@ GFSDK_Aftermath_API GFSDK_Aftermath_GetDeviceStatus(GFSDK_Aftermath_Device_Statu
 GFSDK_Aftermath_API GFSDK_Aftermath_GetPageFaultInformation(GFSDK_Aftermath_PageFaultInformation* pOutPageFaultInformation);
 
 /////////////////////////////////////////////////////////////////////////
-// GFSDK_Aftermath_DX12_RegisterResource
+// GFSDK_Aftermath_DX12_UpdateResourceInfo
 // ---------------------------------
 //
 // pResource;
-//      ID3D12Resource to register.
-//
-// pOutResourceHandle;
-//      OUTPUT: Aftermath resource handle for the resource that was registered.
+//      ID3D12Resource to update.
 //
 //// DESCRIPTION;
-//      Registers an 'ID3D12Resource' with Aftermath. This allows Aftermath to map
-//      the GPU virtual address of a page fault to the corresponding 'ID3D12Resource'
-//      pointer and the driver level resource tracking data (enabled via
-//      'GFSDK_Aftermath_FeatureFlags_EnableResourceTracking'). If called after
-//      'ID3D12Object::SetName', it will also allow tracking of the debug object name
-//      assigned to the resource (requires R530 driver).
-//
-//      NOTE: This function is only supported on Windows 10 RS4 and later. It will
-//      return 'GFSDK_Aftermath_Result_FAIL_D3dDllNotSupported', if the version of the
-//      D3D DLL loaded by the application is not supported.
-//
-//      NOTE: This function is not compatible with graphics debuggers, such as Nsight
-//      Graphics, PIX, or the Visual Studio Graphics Debugger. It may fail with
-//      'GFSDK_Aftermath_Result_FAIL_D3dDllInterceptionNotSupported' when called, if
-//      such a debugger is active.
-//
-//      NOTE: This is a BETA FEATURE and may not work with all versions of Windows.
+//      Updates resource metadata for an 'ID3D12Resource'. This allows Aftermath to
+//      associate application-visible resource identity and debug name data with
+//      the driver level resource tracking data enabled via
+//      'GFSDK_Aftermath_FeatureFlags_EnableResourceTracking'. If called after
+//      'ID3D12Object::SetName', it will also update the tracked debug object name
+//      assigned to the resource.
 //
 /////////////////////////////////////////////////////////////////////////
 #if defined(__d3d12_h__)
-GFSDK_Aftermath_API GFSDK_Aftermath_DX12_RegisterResource(ID3D12Resource* const pApiResource, GFSDK_Aftermath_ResourceHandle* pOutResourceHandle);
-#endif
-
-/////////////////////////////////////////////////////////////////////////
-// GFSDK_Aftermath_DX12_UnregisterResource
-// ---------------------------------
-//
-// resourceHandle;
-//      Aftermath resource handle for a resource that was registered earlier with
-//      'GFSDK_Aftermath_DX12_RegisterResource'.
-//
-//// DESCRIPTION;
-//      Unregisters a previously registered resource. This will tell Aftermath
-//      that the resource tracking data that was allocated for this resource
-//      may be reused in LRU order for new resources being registered via
-//      'GFSDK_Aftermath_DX12_RegisterResource'. Aftermath will guarantee a
-//      look-back of the least recently unregistered 1024 resources before
-//      reusing the corresponding tracking data.
-//
-//      NOTE: This is a BETA FEATURE and may not work with all versions of Windows.
-//
-/////////////////////////////////////////////////////////////////////////
-#if defined(__d3d12_h__)
-GFSDK_Aftermath_API GFSDK_Aftermath_DX12_UnregisterResource(const GFSDK_Aftermath_ResourceHandle resourceHandle);
+GFSDK_Aftermath_API GFSDK_Aftermath_DX12_UpdateResourceInfo(ID3D12Resource* const pApiResource);
 #endif
 
 /////////////////////////////////////////////////////////////////////////
@@ -621,15 +573,14 @@ GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_DX11_CreateContext
 
 #if defined(__d3d12_h__)
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_DX12_Initialize)(GFSDK_Aftermath_Version version, uint32_t flags, ID3D12Device* const pDx12Device);
-GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_DX12_CreateContextHandle)(IUnknown* const pDx12CommandList, GFSDK_Aftermath_ContextHandle* pOutContextHandle);
-GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_DX12_RegisterResource)(ID3D12Resource* const pApiResource, GFSDK_Aftermath_ResourceHandle* pOutResourceHandle);
-GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_DX12_UnregisterResource)(const GFSDK_Aftermath_ResourceHandle resourceHandle);
+GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_DX12_CreateContextHandle)(IUnknown* const pDx12Unknown, GFSDK_Aftermath_ContextHandle* pOutContextHandle);
+GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_DX12_UpdateResourceInfo)(ID3D12Resource* const pApiResource);
 #endif
 
 #if defined(__d3d11_h__) || defined(__d3d12_h__)
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_ReleaseContextHandle)(const GFSDK_Aftermath_ContextHandle contextHandle);
-GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_SetEventMarker)(const GFSDK_Aftermath_ContextHandle contextHandle, const void* markerData, const uint32_t markerDataSize);
-GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GetData)(const uint32_t numContexts, const GFSDK_Aftermath_ContextHandle* ppContextHandles, GFSDK_Aftermath_ContextData* pOutContextData);
+GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_SetEventMarker)(const GFSDK_Aftermath_ContextHandle contextHandle, const void* pMarkerData, const uint32_t markerDataSize);
+GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GetData)(const uint32_t numContexts, const GFSDK_Aftermath_ContextHandle* pContextHandles, GFSDK_Aftermath_ContextData* pOutContextData);
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GetContextError)(const GFSDK_Aftermath_ContextData* pContextData);
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GetDeviceStatus)(GFSDK_Aftermath_Device_Status* pOutStatus);
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GetPageFaultInformation)(GFSDK_Aftermath_PageFaultInformation* pOutPageFaultInformation);

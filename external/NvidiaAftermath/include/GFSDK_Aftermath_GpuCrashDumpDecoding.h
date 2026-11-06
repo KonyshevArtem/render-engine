@@ -143,9 +143,12 @@ typedef struct GFSDK_Aftermath_GpuCrashDump_BaseInfo
 {
     char applicationName[GFSDK_Aftermath_MAX_STRING_LENGTH + 1];
     char creationDate[GFSDK_Aftermath_MAX_STRING_LENGTH + 1];
-    uint32_t creationTickCount;
+    uint32_t creationTickCount; // Deprecated. Use dumpTick for 64-bit dump tick values.
     uint32_t pid;
     GFSDK_Aftermath_GraphicsApi graphicsApi;
+    uint64_t aftermathEnableTick;
+    uint64_t dumpTick;
+    uint64_t dumpEpochTimestamp;
 } GFSDK_Aftermath_GpuCrashDump_BaseInfo;
 
 ////////////////////////////////////////////////////////////////////////
@@ -306,9 +309,9 @@ typedef struct GFSDK_Aftermath_GpuCrashDump_ResourceInfo
 
     uint32_t format; // DXGI_Format for DX, VkFormat for Vulkan
 
-    // For DX12, and only if the application registers the resource pointers using
-    //     'GFSDK_Aftermath_DX12_RegisterResource', this is the 'ID3D12Resource' pointer
-    //     that was registered and cast to 'uint64_t'.
+    // For DX12, and only if the application updates resource info using
+    //     'GFSDK_Aftermath_DX12_UpdateResourceInfo', this is the 'ID3D12Resource' pointer
+    //     cast to 'uint64_t'.
     //     Note, if the resource was destroyed, this is a dangling pointer.
     // For DX11, this is unsupported and will always be 0.
     // For Vulkan, this is the VkImage or VkBuffer handle cast to 'uint64_t'.
@@ -325,6 +328,10 @@ typedef struct GFSDK_Aftermath_GpuCrashDump_ResourceInfo
     GFSDK_AFTERMATH_DECLARE_BOOLEAN_MEMBER(bWasDestroyed);
     GFSDK_Aftermath_ResourceResidency residency;
     uint32_t createDestroyTickCount;
+    uint64_t createTick;
+    uint64_t destroyTick;
+    uint64_t lastMakeResidentTick;
+    uint64_t lastEvictTick;
 } GFSDK_Aftermath_GpuCrashDump_ResourceInfo;
 
 ////////////////////////////////////////////////////////////////////////
@@ -1021,13 +1028,19 @@ GFSDK_Aftermath_API GFSDK_Aftermath_GpuCrashDump_GetEventMarkersInfo(
 //         Compilation example using Vulkan SDK toolchain:
 //
 //              glslangValidator -V -g -o ./full/shader.spv shader.vert
-//              spirv-remap --map all --strip-all --input full/shader.spv --output ./stripped/
+//              spirv-opt --strip-debug --strip-nonsemantic ./full/shader.spv -o ./stripped/shader.spv
 //
 //         Compilation example using the DirectX Shader Compiler:
 //
 //              dxc -spirv -Zi [..] -Fo ./full/shader.spv shader.hlsl
-//              spirv-remap --map all --strip-all --input full/shader.spv --output ./stripped/
+//              spirv-opt --strip-debug --strip-nonsemantic ./full/shader.spv -o ./stripped/shader.spv
 //
+//
+//         Note: If your spirv-opt does not support --strip-nonsemantic, omit that option.
+//
+//         Alternative (if available):
+//
+//              spirv-remap --strip-all --input full/shader.spv --output ./stripped/
 //         Then pass the content of ./full/shader.spv and ./stripped/shader.spv to
 //         'GFSDK_Aftermath_GetShaderDebugNameSpirv' to generate the debug name to use with
 //         'shaderSourceDebugInfoLookupCb'.
@@ -1279,7 +1292,7 @@ GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GpuCrashDump_GetPa
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GpuCrashDump_GetPageFaultResourceInfo)(const GFSDK_Aftermath_GpuCrashDump_Decoder decoder, const uint32_t resourceInfoCount, GFSDK_Aftermath_GpuCrashDump_ResourceInfo* pResourceInfo);
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GpuCrashDump_GetActiveShadersInfoCount)(const GFSDK_Aftermath_GpuCrashDump_Decoder decoder, uint32_t* pShaderCount);
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GpuCrashDump_GetActiveShadersInfo)(const GFSDK_Aftermath_GpuCrashDump_Decoder decoder, const uint32_t shaderInfoBufferCount, GFSDK_Aftermath_GpuCrashDump_ShaderInfo* pShaderInfo);
-GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GpuCrashDump_GetEventMarkersInfoCount)(const GFSDK_Aftermath_GpuCrashDump_Decoder decoder, const uint32_t markerInfoBufferCount);
+GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GpuCrashDump_GetEventMarkersInfoCount)(const GFSDK_Aftermath_GpuCrashDump_Decoder decoder, uint32_t* pMarkerCount);
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GpuCrashDump_GetEventMarkersInfo)(const GFSDK_Aftermath_GpuCrashDump_Decoder decoder, const uint32_t markerInfoBufferCount, GFSDK_Aftermath_GpuCrashDump_EventMarkerInfo* pMarkerInfo);
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GpuCrashDump_GenerateJSON)(const GFSDK_Aftermath_GpuCrashDump_Decoder decoder, uint32_t decoderFlags, uint32_t formatFlags, PFN_GFSDK_Aftermath_ShaderDebugInfoLookupCb shaderDebugInfoLookupCb, PFN_GFSDK_Aftermath_ShaderLookupCb shaderLookupCb, PFN_GFSDK_Aftermath_ShaderSourceDebugInfoLookupCb shaderSourceDebugInfoLookupCb, void* pUserData, uint32_t* pJsonSize);
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GpuCrashDump_GetJSON)(const GFSDK_Aftermath_GpuCrashDump_Decoder decoder, const uint32_t jsonBufferSize, char* pJson);
@@ -1287,7 +1300,7 @@ GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GetShaderDebugInfo
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GetShaderHashForShaderInfo)(const GFSDK_Aftermath_GpuCrashDump_Decoder decoder, const GFSDK_Aftermath_GpuCrashDump_ShaderInfo* pShaderInfo, GFSDK_Aftermath_ShaderBinaryHash* pShaderHash);
 #if defined(__d3d12_h__)
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GetShaderHash)(GFSDK_Aftermath_Version apiVersion, const D3D12_SHADER_BYTECODE* pShader, GFSDK_Aftermath_ShaderBinaryHash* pShaderHash);
-GFSDK_Aftermath_PFN (*GPFN_GFSDK_Aftermath_GetShaderDebugName)(GFSDK_Aftermath_Version apiVersion, const D3D12_SHADER_BYTECODE* pShader, GFSDK_Aftermath_ShaderDebugName* pShaderDebugName);
+GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GetShaderDebugName)(GFSDK_Aftermath_Version apiVersion, const D3D12_SHADER_BYTECODE* pShader, GFSDK_Aftermath_ShaderDebugName* pShaderDebugName);
 #endif
 #if defined(VULKAN_H_)
 GFSDK_Aftermath_PFN(GFSDK_AFTERMATH_CALL* PFN_GFSDK_Aftermath_GetShaderHashSpirv)(GFSDK_Aftermath_Version apiVersion, const GFSDK_Aftermath_SpirvCode* pShader, GFSDK_Aftermath_ShaderBinaryHash* pShaderHash);

@@ -14,6 +14,9 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
     uint2 localPixelCoord = dtid.xy % ProbesData.ProbeLightSize;
     uint tempProbeIndex = dtid.x / ProbesData.ProbeLightSize.x;
     uint globalProbeIndex = tempProbeIndex + ProbesData.UpdateProbeBaseIndex;
+    if (globalProbeIndex >= ProbesData.ProbesCount)
+        return;
+
     uint3 probeGridIndex = ProbeIndexToGridIndex(globalProbeIndex);
 
     float2 uv = (float2(localPixelCoord) + 0.5) / ProbesData.ProbeLightSize;
@@ -31,8 +34,9 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
     query.TraceRayInline(RTScene, RAY_FLAG_NONE, 0xFF, ray);
     while (query.Proceed()){}
 
+    float maxDistance = GetProbeMaxRayDistance();
+
     float3 light;
-    float3 indirectLight;
     float distance;
     if (query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
     {
@@ -40,20 +44,20 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
         {
             float3 hitPos = ray.Origin + ray.Direction * query.CommittedRayT();
             float3 hitNormal = GetHitWorldNormal(query.CommittedInstanceIndex(), query.CommittedPrimitiveIndex(), query.CommittedWorldToObject3x4());
-            
-            light = getLightPBR(hitPos, hitNormal, float3(0.9, 0.9, 0.9) / PI, 1, 0, probeWorldPos);
-            distance = min(ProbesData.ProbeSpacing * 1.5, query.CommittedRayT() - 0.01);
+
+            light = getLightPBR(hitPos, hitNormal, float3(0.9, 0.9, 0.9), 1, 0, probeWorldPos);
+            distance = min(maxDistance, query.CommittedRayT());
         }
         else
         {
             light = float3(0, 0, 0);
-            distance = min(ProbesData.ProbeSpacing * 1.5, query.CommittedRayT() - 0.01);
+            distance = -min(maxDistance, query.CommittedRayT() * 0.2);
         }
     }
     else
     {
         light = SampleReflectionCube(direction, 0);
-        distance = ProbesData.ProbeSpacing * 1.5;
+        distance = maxDistance;
     }
 
     uint2 pixelCoord = GetAtlasPixelCoord(tempProbeIndex, false) + localPixelCoord;

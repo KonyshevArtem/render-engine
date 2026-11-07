@@ -88,10 +88,14 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	const uint32_t paddedLightSize = m_ProbeLightSize + m_ProbeLightPadding;
 	const uint32_t paddedLightSizeWithBorder = paddedLightSize + RaytracingProbesLocal::k_ProbesBorderSize;
 
-	const uint32_t atlasWidth = RaytracingProbesLocal::k_ProbesPerAtlasRow * paddedLightSizeWithBorder;
-	const uint32_t atlasHeight = std::max<uint32_t>(probesCount / RaytracingProbesLocal::k_ProbesPerAtlasRow, 1) * paddedLightSizeWithBorder;
-	const uint32_t tempAtlasWidth = std::min<uint32_t>(m_ProbesPerUpdate, RaytracingProbesLocal::k_ProbesPerAtlasRow) * paddedLightSize;
-	const uint32_t tempAtlasHeight = std::max<uint32_t>(m_ProbesPerUpdate / RaytracingProbesLocal::k_ProbesPerAtlasRow, 1) * paddedLightSize;
+	const uint32_t probesPerRow = RaytracingProbesLocal::k_ProbesPerAtlasRow;
+	const uint32_t atlasRows = std::max<uint32_t>((probesCount + probesPerRow - 1) / probesPerRow, 1);
+	const uint32_t tempAtlasRows = std::max<uint32_t>((m_ProbesPerUpdate + probesPerRow - 1) / probesPerRow, 1);
+
+	const uint32_t atlasWidth = probesPerRow * paddedLightSizeWithBorder;
+	const uint32_t atlasHeight = atlasRows * paddedLightSizeWithBorder;
+	const uint32_t tempAtlasWidth = std::min<uint32_t>(m_ProbesPerUpdate, probesPerRow) * paddedLightSize;
+	const uint32_t tempAtlasHeight = tempAtlasRows * paddedLightSize;
 
 	UpdateTextureResources(m_ProbeLightAtlas, atlasWidth, atlasHeight, TextureInternalFormat::RGBA16F, "ProbeLightAtlas");
 	UpdateTextureResources(m_ProbeDepthAtlas, atlasWidth, atlasHeight, TextureInternalFormat::RG16F, "ProbeDepthAtlas");
@@ -101,8 +105,9 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	m_UpdateProbeBaseIndex += m_ProbesPerUpdate;
 	if (m_UpdateProbeBaseIndex >= probesCount)
 		m_UpdateProbeBaseIndex = 0;
-
-	m_ProbesGridOffset = Vector3I(renderData.ViewMatrix.Invert().GetPosition() / m_ProbeSpacing);
+	
+	const Vector3 cameraGridPos = renderData.ViewMatrix.Invert().GetPosition() / m_ProbeSpacing;
+	m_ProbesGridOffset = Vector3I(static_cast<int>(std::floor(cameraGridPos.x)), static_cast<int>(std::floor(cameraGridPos.y)), static_cast<int>(std::floor(cameraGridPos.z)));
 }
 
 void RaytracingProbes::Execute(const RenderData& renderData)
@@ -283,7 +288,7 @@ void RaytracingProbes::UpdateProbesData() const
 	data.ProbesUpdatePerFrame = m_ProbesPerUpdate;
 	data.ProbeLightPaddedSize = m_ProbeLightSize + m_ProbeLightPadding;
 	data.InvProbeAtlasSize = Vector2(1.0f / m_ProbeLightAtlas.Texture->GetWidth(), 1.0f / m_ProbeLightAtlas.Texture->GetHeight());
-	data.GridCenter = m_ProbesGridOffset * static_cast<int>(m_ProbeSpacing);
+	data.GridCenter = Vector3(m_ProbesGridOffset) * m_ProbeSpacing;
 	data.GridOffset = m_ProbesGridOffset;
 
 	m_ProbesDataBuffer->SetData(&data, 0, sizeof(data));

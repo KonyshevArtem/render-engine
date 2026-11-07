@@ -40,7 +40,7 @@ private:
         uint32_t ProbeLightPaddedSize;
 		Vector2 InvProbeAtlasSize;
 
-        Vector3I GridCenter;
+        Vector3 GridCenter;
         float Padding0;
 
         Vector3I GridOffset;

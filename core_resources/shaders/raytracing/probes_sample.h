@@ -16,22 +16,26 @@ float3 SampleProbeGI(float3 posWS, float3 normalWS)
 
     posWS += normalWS * ProbesData.ProbeSpacing * 0.1;
 
-    uint3 gridIndex = WorldPosToGridIndex(posWS);
-    float3 baseWorldPos = GetProbeWorldPosition(gridIndex);
-    float3 alpha = saturate((posWS - baseWorldPos) / ProbesData.ProbeSpacing);
+    float3 localGridPos = WorldPosToLocalGridPos(posWS);
+    int3 baseLocalGridIndex = WorldPosToLocalGridIndex(posWS);
+    float3 alpha = saturate(localGridPos - float3(baseLocalGridIndex));
 
     for (uint i = 0; i < 8; ++i)
     {
-        uint3 gridIndexOffset = uint3(i, i >> 1, i >> 2) & uint3(1, 1, 1);
-        uint3 probeGridIndex = WrapProbeGridIndex(gridIndex + gridIndexOffset);
-        uint probeIndex = FlattenProbeGridIndex(probeGridIndex);
+        int3 gridIndexOffset = int3(i, i >> 1, i >> 2) & int3(1, 1, 1);
+        int3 localGridIndex = clamp(baseLocalGridIndex + gridIndexOffset, 0, int3(ProbesData.ProbeGridSize) - 1);
+        uint probeIndex = FlattenProbeGridIndex(LocalToStorageGridIndex(localGridIndex));
 
-        float3 probeWorldPos = GetProbeWorldPosition(probeGridIndex);
+        float3 probeWorldPos = GetProbeWorldPositionFromLocal(localGridIndex);
         float3 toProbe = normalize(probeWorldPos - posWS);
 
         uint2 atlasCoord = GetAtlasPixelCoord(probeIndex);
-        float2 localCoord = OctahedralToUV(-normalWS) * ProbesData.ProbeLightSize;
-        
+        float2 localCoord = OctahedralToUV(normalWS) * ProbesData.ProbeLightSize;
+
+        float4 lightAndBackfaceRatio = ProbeLightAtlas.SampleLevel(ProbeAtlasSampler, (atlasCoord + localCoord) * ProbesData.InvProbeAtlasSize, 0);
+        if (IsProbeBlocked(lightAndBackfaceRatio.w))
+            continue;
+
         float weight = 1;
 
         float normalWeight = max(0.0001, (dot(toProbe, normalWS) + 1.0) * 0.5);
@@ -62,16 +66,14 @@ float3 SampleProbeGI(float3 posWS, float3 normalWS)
         float3 trilinear = lerp(1 - alpha, alpha, gridIndexOffset);
         weight *= trilinear.x * trilinear.y * trilinear.z;
 
-        float3 light = ProbeLightAtlas.SampleLevel(ProbeAtlasSampler, (atlasCoord + localCoord) * ProbesData.InvProbeAtlasSize, 0).xyz;
-
-        lightSum += light * weight;
+        lightSum += lightAndBackfaceRatio.xyz * weight;
         weightSum += weight;
     }
 
     if (weightSum > 0.001)
         lightSum /= weightSum;
-    
-    return lightSum * 0.5 * PI;
+
+    return lightSum;
 }
 
 #endif

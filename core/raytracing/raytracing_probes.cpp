@@ -11,6 +11,7 @@
 #include "types/graphics_backend_buffer_descriptor.h"
 #include "types/graphics_backend_render_target_descriptor.h"
 #include "graphics_buffer/graphics_buffer.h"
+#include "graphics_buffer/graphics_buffer_view.h"
 #include "mesh/mesh.h"
 #include "editor/texture_viewer/texture_viewer.h"
 #include "input/input.h"
@@ -29,7 +30,7 @@ RaytracingProbes::RaytracingProbes(const std::shared_ptr<RaytracingScene>& rtSce
 	m_ProbeSpacing(2.0f),
 	m_ProbesGridSize(32, 8, 32),
 	m_ProbesPerUpdate(1024),
-	m_UpdateProbeBaseIndex(0),
+	m_NextUpdateProbeIndex(0),
 	m_ProbeLightSize(8),
 	m_ProbeLightPadding(0),
 	m_RaytracingScene(rtScene)
@@ -102,10 +103,8 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 	UpdateTextureResources(m_ProbeTempLightAtlas, tempAtlasWidth, tempAtlasHeight, TextureInternalFormat::RGBA16F, "ProbeTempLightAtlas");
 	UpdateTextureResources(m_ProbeTempDepthAtlas, tempAtlasWidth, tempAtlasHeight, TextureInternalFormat::R16F, "ProbeTempDepthAtlas");
 
-	m_UpdateProbeBaseIndex += m_ProbesPerUpdate;
-	if (m_UpdateProbeBaseIndex >= probesCount)
-		m_UpdateProbeBaseIndex = 0;
-	
+	CollectUpdateProbeIndices(probesCount);
+
 	const Vector3 cameraGridPos = renderData.ViewMatrix.Invert().GetPosition() / m_ProbeSpacing;
 	m_ProbesGridOffset = Vector3I(static_cast<int>(std::floor(cameraGridPos.x)), static_cast<int>(std::floor(cameraGridPos.y)), static_cast<int>(std::floor(cameraGridPos.z)));
 }
@@ -113,6 +112,10 @@ void RaytracingProbes::Prepare(RenderData& renderData)
 void RaytracingProbes::Execute(const RenderData& renderData)
 {
 	if (!m_RaytracingProbesEnabled || !m_ProbeTraceShader || !m_ProbeTraceShader->IsValid() || !m_ProbeIntegrateShader || !m_ProbeIntegrateShader->IsValid())
+		return;
+
+	const uint32_t updateProbesCount = static_cast<uint32_t>(m_UpdateProbeIndices.size());
+	if (updateProbesCount == 0)
 		return;
 
 	Profiler::Marker _("RaytracingProbes::Execute");
@@ -126,11 +129,14 @@ void RaytracingProbes::Execute(const RenderData& renderData)
 
 		BindResources();
 
+		UploadUpdateProbeIndices();
+		GraphicsBackend::Current()->BindBuffer(m_UpdateProbeIndicesBufferView->GetBackendBufferView(), 0);
+
 		// Trace
 		GraphicsBackend::Current()->BindRWTexture(m_ProbeTempLightAtlas.RWView->GetBackendTextureView(), 0);
 		GraphicsBackend::Current()->BindRWTexture(m_ProbeTempDepthAtlas.RWView->GetBackendTextureView(), 1);
 		GraphicsBackend::Current()->UseProgram(m_ProbeTraceShader->GetProgram());
-		GraphicsBackend::Current()->Dispatch(m_ProbeLightSize * m_ProbesPerUpdate, m_ProbeLightSize, 1);
+		GraphicsBackend::Current()->Dispatch(m_ProbeLightSize * updateProbesCount, m_ProbeLightSize, 1);
 
 		// Integrate
 		GraphicsBackend::Current()->BindTexture(m_ProbeTempLightAtlas.View->GetBackendTextureView(), 0);
@@ -138,11 +144,11 @@ void RaytracingProbes::Execute(const RenderData& renderData)
 		GraphicsBackend::Current()->BindRWTexture(m_ProbeLightAtlas.RWView->GetBackendTextureView(), 0);
 		GraphicsBackend::Current()->BindRWTexture(m_ProbeDepthAtlas.RWView->GetBackendTextureView(), 1);
 		GraphicsBackend::Current()->UseProgram(m_ProbeIntegrateShader->GetProgram());
-		GraphicsBackend::Current()->Dispatch(m_ProbeLightSize * m_ProbesPerUpdate, m_ProbeLightSize, 1);
+		GraphicsBackend::Current()->Dispatch(m_ProbeLightSize * updateProbesCount, m_ProbeLightSize, 1);
 
 		// Add border
 		GraphicsBackend::Current()->UseProgram(m_ProbeAddBorderShader->GetProgram());
-		GraphicsBackend::Current()->Dispatch(m_ProbesPerUpdate, 1, 1);
+		GraphicsBackend::Current()->Dispatch(updateProbesCount, 1, 1);
 	}
 	GraphicsBackend::Current()->EndComputePass();
 
@@ -283,15 +289,47 @@ void RaytracingProbes::UpdateProbesData() const
 	data.Spacing = m_ProbeSpacing;
 	data.ProbesPerRow = RaytracingProbesLocal::k_ProbesPerAtlasRow;
 	data.ProbeCount = m_ProbesGridSize.x * m_ProbesGridSize.y * m_ProbesGridSize.z;
-	data.UpdateProbeBaseIndex = m_UpdateProbeBaseIndex;
 	data.ProbeLightSize = m_ProbeLightSize;
-	data.ProbesUpdatePerFrame = m_ProbesPerUpdate;
+	data.ProbesUpdatePerFrame = static_cast<uint32_t>(m_UpdateProbeIndices.size());
 	data.ProbeLightPaddedSize = m_ProbeLightSize + m_ProbeLightPadding;
 	data.InvProbeAtlasSize = Vector2(1.0f / m_ProbeLightAtlas.Texture->GetWidth(), 1.0f / m_ProbeLightAtlas.Texture->GetHeight());
 	data.GridCenter = Vector3(m_ProbesGridOffset) * m_ProbeSpacing;
 	data.GridOffset = m_ProbesGridOffset;
 
 	m_ProbesDataBuffer->SetData(&data, 0, sizeof(data));
+}
+
+void RaytracingProbes::CollectUpdateProbeIndices(uint32_t probesCount)
+{
+	m_UpdateProbeIndices.clear();
+	if (probesCount == 0)
+		return;
+	
+	const uint32_t updateCount = std::min(m_ProbesPerUpdate, probesCount);
+	m_NextUpdateProbeIndex %= probesCount;
+
+	m_UpdateProbeIndices.reserve(updateCount);
+	for (uint32_t i = 0; i < updateCount; ++i)
+		m_UpdateProbeIndices.push_back((m_NextUpdateProbeIndex + i) % probesCount);
+
+	m_NextUpdateProbeIndex = (m_NextUpdateProbeIndex + updateCount) % probesCount;
+}
+
+void RaytracingProbes::UploadUpdateProbeIndices()
+{
+	const uint32_t count = static_cast<uint32_t>(m_UpdateProbeIndices.size());
+	const uint32_t size = count * sizeof(uint32_t);
+	if (!m_UpdateProbeIndicesBuffer || m_UpdateProbeIndicesBuffer->GetSize() < size)
+	{
+		GraphicsBackendBufferDescriptor descriptor{};
+		descriptor.Size = size;
+		descriptor.AllowCPUWrites = true;
+
+		m_UpdateProbeIndicesBuffer = std::make_shared<GraphicsBuffer>(descriptor, "RaytracingProbesUpdateIndices");
+		m_UpdateProbeIndicesBufferView = std::make_shared<GraphicsBufferView>(m_UpdateProbeIndicesBuffer, GraphicsBackendBufferViewDescriptor::Structured(count, sizeof(uint32_t), 0, false), "RaytracingProbesUpdateIndicesView");
+	}
+
+	m_UpdateProbeIndicesBuffer->SetData(m_UpdateProbeIndices.data(), 0, size);
 }
 
 void RaytracingProbes::UpdateTextureResources(TextureResources& textureResources, uint32_t width, uint32_t height, TextureInternalFormat format, const std::string& name) const

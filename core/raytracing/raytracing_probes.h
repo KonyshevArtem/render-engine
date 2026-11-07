@@ -7,10 +7,13 @@
 #include "graphics/passes/render_pass.h"
 #include "texture/texture_resources.h"
 
+#include <vector>
+
 struct RenderData;
 class Shader;
 class RaytracingScene;
 class GraphicsBuffer;
+class GraphicsBufferView;
 class Mesh;
 
 class RaytracingProbes : public RenderPass
@@ -33,7 +36,7 @@ private:
 
         uint32_t ProbesPerRow;
         uint32_t ProbeCount;
-        uint32_t UpdateProbeBaseIndex;
+        uint32_t Padding2;
         uint32_t ProbeLightSize;
 
         uint32_t ProbesUpdatePerFrame;
@@ -55,9 +58,11 @@ private:
 	Vector3I m_ProbesGridSize;
     Vector3I m_ProbesGridOffset;
     uint32_t m_ProbesPerUpdate;
-	uint32_t m_UpdateProbeBaseIndex;
+    uint32_t m_NextUpdateProbeIndex;
     uint32_t m_ProbeLightSize;
     uint32_t m_ProbeLightPadding;
+    
+    std::vector<uint32_t> m_UpdateProbeIndices;
 
     std::shared_ptr<Shader> m_ProbeTraceShader;
     std::shared_ptr<Shader> m_ProbeIntegrateShader;
@@ -69,6 +74,9 @@ private:
     std::shared_ptr<RaytracingScene> m_RaytracingScene;
 	std::shared_ptr<GraphicsBuffer> m_ProbesDataBuffer;
 	std::shared_ptr<GraphicsBuffer> m_ProbesDebugDataBuffer;
+	std::shared_ptr<GraphicsBuffer> m_UpdateProbeIndicesBuffer;
+	std::shared_ptr<GraphicsBufferView> m_UpdateProbeIndicesBufferView;
+
     TextureResources m_ProbeTempLightAtlas;
     TextureResources m_ProbeTempDepthAtlas;
     TextureResources m_ProbeLightAtlas;
@@ -79,6 +87,8 @@ private:
 
     void LoadShaders(bool reload);
 	void UpdateProbesData() const;
+	void CollectUpdateProbeIndices(uint32_t probesCount);
+	void UploadUpdateProbeIndices();
 	void UpdateTextureResources(TextureResources& textureResources, uint32_t width, uint32_t height, TextureInternalFormat format, const std::string& name) const;
     void ClearTextureResources();
 };

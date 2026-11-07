@@ -5,6 +5,8 @@
 RWTexture2D<float3> OutProbeTempLightAtlas : register(u0);
 RWTexture2D<float> OutProbeTempDepthAtlas : register(u1);
 
+StructuredBuffer<uint> UpdateProbeIndices : register(t0, space1);
+
 [numthreads(8, 8, 1)]
 void computeMain(uint3 dtid : SV_DispatchThreadID)
 {
@@ -13,9 +15,7 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
 
     uint2 localPixelCoord = dtid.xy % ProbesData.ProbeLightSize;
     uint tempProbeIndex = dtid.x / ProbesData.ProbeLightSize.x;
-    uint globalProbeIndex = tempProbeIndex + ProbesData.UpdateProbeBaseIndex;
-    if (globalProbeIndex >= ProbesData.ProbesCount)
-        return;
+    uint globalProbeIndex = UpdateProbeIndices[tempProbeIndex];
 
     uint3 probeGridIndex = ProbeIndexToGridIndex(globalProbeIndex);
 

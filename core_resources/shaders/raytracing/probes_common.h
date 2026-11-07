@@ -10,7 +10,7 @@ struct ProbeData
 
     uint ProbesPerRow;
     uint ProbesCount;
-    uint UpdateProbeBaseIndex;
+    uint Padding2;
     uint ProbeLightSize;
 
     uint ProbesUpdatePerFrame;

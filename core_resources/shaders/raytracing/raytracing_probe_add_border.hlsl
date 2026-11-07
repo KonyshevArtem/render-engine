@@ -3,6 +3,8 @@
 RWTexture2D<float4> OutProbeLightAtlas : register(u0);
 RWTexture2D<float2> OutProbeDepthAtlas : register(u1);
 
+StructuredBuffer<uint> UpdateProbeIndices : register(t0, space1);
+
 uint2 WrapOctahedral(int2 coord, uint size) 
 {
     int2 wrapped = coord;
@@ -28,9 +30,7 @@ void computeMain(uint3 dtid : SV_DispatchThreadID)
     if (dtid.x >= ProbesData.ProbesUpdatePerFrame)
         return;
 
-    uint probeIndex = dtid.x + ProbesData.UpdateProbeBaseIndex;
-    if (probeIndex >= ProbesData.ProbesCount)
-        return;
+    uint probeIndex = UpdateProbeIndices[dtid.x];
 
     uint2 atlasCoord = GetAtlasPixelCoord(probeIndex);
 
